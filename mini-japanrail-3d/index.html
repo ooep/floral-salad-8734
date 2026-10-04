@@ -1336,7 +1336,7 @@ function pairKm(t, i) {
 /* ---------------- 地图与自定义列车层 ---------------- */
 const QUAD = [[-1,-1],[1,-1],[1,1], [-1,-1],[1,1],[-1,1]];
 const MAXT = 9000, STRIDE = 12;
-let vbo = null, vao = null, uni = new Map(), glRef = null, bufArr = new Float32Array(MAXT * 6 * STRIDE);
+let vbo = null, vao = null, uni = new Map(), glRef = null, bufArr = new Float32Array(MAXT * 42 * STRIDE); /* 倾斜视角立体盒:每列车 底6+顶6+4侧24=36 + 光晕 6 最坏 42 顶点 */
 let __renderCount = 0, __glErr = 0, __lastDraw = 0, __lastArgs = null;
 const trainShaderLayer = {
   id: 'trains-gl', type: 'custom', renderingMode: '2d', shaderMap: new Map(),
@@ -1345,7 +1345,7 @@ const trainShaderLayer = {
     const vs = `#version 300 es
 ${sd.vertexShaderPrelude}
 ${sd.define}
-in vec2 a_pos; in vec2 a_dir; in vec2 a_corner; in vec4 a_color; in float a_glow;
+in vec2 a_pos; in vec2 a_dir; in vec2 a_corner; in vec4 a_color; in float a_glow; in float a_h;
 uniform vec2 u_ndcScale;
 out vec2 v_uv; flat out vec2 v_h; out vec4 v_color; out float v_glow;
 void main() {
@@ -1355,7 +1355,9 @@ void main() {
   vec2 ax = d.xy / d.w - c2;
   ax = length(ax) < 1e-10 ? vec2(1.0,0.0) : normalize(ax);
   vec2 pp = vec2(-ax.y, ax.x);
-  vec2 off = (a_corner.x * ax + a_corner.y * pp) * u_ndcScale;
+  // 伪3D立体盒:底面沿屏幕平面;顶面/侧面沿屏幕向上偏移 a_h 像素(CSS px→NDC 用 u_ndcScale.y)。
+  // 俯视时只画底面(平面矩形),倾斜时画 底+顶+4侧 → 四角尖尖的长条立方体
+  vec2 off = (a_corner.x * ax + a_corner.y * pp) * u_ndcScale + vec2(0.0, a_h * u_ndcScale.y);
   // z 固定 0:projectTile 的 z 在 mercator 变体下超出视景体会被 GPU 图元裁剪整段剪掉
   gl_Position = vec4((c2 + off) * c.w, 0.0, c.w);
   v_uv = a_corner;
@@ -1366,9 +1368,9 @@ void main() {
 precision mediump float;
 in vec2 v_uv; flat in vec2 v_h; in vec4 v_color; in float v_glow;
 out vec4 fragColor;
-float sdRound(vec2 p, vec2 b, float r) { vec2 q = abs(p) - b + r; return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r; }
+float sdBox(vec2 p, vec2 b) { vec2 q = abs(p) - b; return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0); }
 void main() {
-  float d = sdRound(v_uv, v_h, min(v_h.x, v_h.y) * 0.55);
+  float d = sdBox(v_uv, v_h); // 尖角矩形(四角尖尖的长条盒)
   float a;
   if (v_glow > 0.5) {
     // 光晕:只在车体轮廓外,向外淡出
@@ -1395,7 +1397,7 @@ void main() {
       u_tr: gl.getUniformLocation(p,'u_projection_transition'),
       a_pos: gl.getAttribLocation(p,'a_pos'), a_dir: gl.getAttribLocation(p,'a_dir'),
       a_corner: gl.getAttribLocation(p,'a_corner'), a_color: gl.getAttribLocation(p,'a_color'),
-      a_glow: gl.getAttribLocation(p,'a_glow'),
+      a_glow: gl.getAttribLocation(p,'a_glow'), a_h: gl.getAttribLocation(p,'a_h'),
     });
     this.shaderMap.set(sd.variantName, p);
     return p;
@@ -1441,11 +1443,12 @@ void main() {
     gl.enableVertexAttribArray(U.a_corner); gl.vertexAttribPointer(U.a_corner, 2, gl.FLOAT, false, STRIDE*4, 16);
     gl.enableVertexAttribArray(U.a_color);  gl.vertexAttribPointer(U.a_color, 4, gl.FLOAT, false, STRIDE*4, 24);
     gl.enableVertexAttribArray(U.a_glow);   gl.vertexAttribPointer(U.a_glow, 1, gl.FLOAT, false, STRIDE*4, 40);
+    gl.enableVertexAttribArray(U.a_h);      gl.vertexAttribPointer(U.a_h, 1, gl.FLOAT, false, STRIDE*4, 44);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     gl.disable(gl.DEPTH_TEST);
     gl.depthMask(false);
-    gl.drawArrays(gl.TRIANGLES, 0, visibleCount * 6);
+    gl.drawArrays(gl.TRIANGLES, 0, visibleCount); // visibleCount 为总顶点数
     const e = gl.getError();
     if (e) __glErr = e;
     __lastDraw = visibleCount;
@@ -1466,13 +1469,17 @@ function updateTrains(M) {
   visibleTrips.length = 0;
   const z = map.getZoom();
   let L, W;
-  // 尺寸曲线(以 CSS 像素计,配合上面 dpr 补偿):低 zoom 小巧,高 zoom 逐级放大更好看
-  if (z < 3.5) { L = 3.0 + (z - 1) * 0.6; W = Math.max(1.8, L * 0.5); }
-  else if (z < 8) { const f = (z - 3.5) / 4.5; L = 5.6 + f * 6; W = 2.8 + f * 2; }
+  // 尺寸曲线(以 CSS 像素计,配合 dpr 补偿):国家/区域视图(低 zoom)小巧不遮挡,
+  // 城市级(高 zoom)逐级放大;倾斜模式盒子高度另算
+  if (z < 3.5) { L = 1.8 + (z - 1) * 0.4; W = Math.max(1.2, L * 0.5); }
+  else if (z < 8) { const f = (z - 3.5) / 4.5; L = 3.6 + f * 5; W = 1.8 + f * 1.8; }
   else if (z < 12) { const f = (z - 8) / 4; L = 11.6 + f * 9; W = 4.8 + f * 3; }
   else { const f = Math.min(1, (z - 12) / 3); L = 20.6 + f * 22; W = 7.8 + f * 7; }
   L *= trainSizeMul; W *= trainSizeMul;
   const glowOn = $('swTrail').classList.contains('on');
+  // 倾斜(3D)模式:画立体盒(底+顶+4侧),俯视只画平面矩形
+  const pitchOn = map.getPitch() > 0.5;
+  const Hpx = Math.max(3, Math.min(30, W * 0.9)); // 盒高(屏幕 px,≈宽的 0.9 → 长条立方)
   // 方向向量在屏幕上的长度保持 ~8px:固定 1.2e-4 在低 zoom(全国视图)被投影浮点误差吞掉 → 方盒朝向乱;
   // 高 zoom 若用大偏移则跨经度产生曲率误差 → 按 mercator 像素换算自适应(clamp 1.5e-6~2.5e-3)
   const eps = Math.max(1.5e-6, Math.min(2.5e-3, 8 / (512 * Math.pow(2, z))));
@@ -1487,7 +1494,7 @@ function updateTrains(M) {
     const p = trainPosition(t, M2);
     if (!p) continue;
     if (!selKind[p[4]]) continue;
-    if (n >= MAXT - 1) break;
+    if (n >= MAXT - 1 || vtx * STRIDE + 36 * STRIDE > bufArr.length) break;
     let color = t.color;
     if (p[3]) { const lc = lineColor.get(p[3]); if (lc) color = lc; }
     const [r, g, b] = t._rgb && t._line === p[3] ? t._rgb : (t._rgb = hexToRgb(color), t._rgb);
@@ -1497,40 +1504,67 @@ function updateTrains(M) {
     const my = (1 - Math.log(Math.tan(Math.PI/4 + lat * Math.PI/360)) / Math.PI) / 2;
     let dxm = Math.sin(p[2]) * eps, dym = -Math.cos(p[2]) * eps; // mercator y 向南为正,北上取负
     if (p[5] === 0 && p[2] === 0) { dxm = eps; dym = 0; }
-    let o = n * 6 * STRIDE;
+    // 底面(俯视/倾斜都画,平面矩形)
+    let o = vtx * STRIDE;
     for (let q = 0; q < 6; q++) {
       bufArr[o++] = mx; bufArr[o++] = my;
       bufArr[o++] = dxm; bufArr[o++] = dym;
       bufArr[o++] = QUAD[q][0] * L; bufArr[o++] = QUAD[q][1] * W;
       bufArr[o++] = r; bufArr[o++] = g; bufArr[o++] = b; bufArr[o++] = 1;
-      bufArr[o++] = 0; bufArr[o++] = 0; // glow + pad
+      bufArr[o++] = 0; bufArr[o++] = 0; // glow + h
+    }
+    vtx += 6;
+    if (pitchOn) {
+      // 顶面:同底面矩形,屏幕向上偏移 Hpx(亮)
+      o = vtx * STRIDE;
+      for (let q = 0; q < 6; q++) {
+        bufArr[o++] = mx; bufArr[o++] = my;
+        bufArr[o++] = dxm; bufArr[o++] = dym;
+        bufArr[o++] = QUAD[q][0] * L; bufArr[o++] = QUAD[q][1] * W;
+        bufArr[o++] = r; bufArr[o++] = g; bufArr[o++] = b; bufArr[o++] = 1;
+        bufArr[o++] = 0; bufArr[o++] = Hpx;
+      }
+      vtx += 6;
+      // 4 个侧面(墙):暗色 ×0.72,构成四角尖尖的立方盒
+      const WALLS = [[-1,-1,1,-1],[-1,1,1,1],[-1,-1,-1,1],[1,-1,1,1]];
+      for (const [ax, ay, bx, by] of WALLS) {
+        o = vtx * STRIDE; vtx += 6;
+        const pts = [[ax, ay, 0], [ax, ay, Hpx], [bx, by, Hpx], [bx, by, 0]];
+        for (const qi of [0, 1, 2, 0, 2, 3]) {
+          const cx = pts[qi][0], cy = pts[qi][1], h = pts[qi][2];
+          bufArr[o++] = mx; bufArr[o++] = my;
+          bufArr[o++] = dxm; bufArr[o++] = dym;
+          bufArr[o++] = cx * L; bufArr[o++] = cy * W;
+          bufArr[o++] = r * 0.72; bufArr[o++] = g * 0.72; bufArr[o++] = b * 0.72; bufArr[o++] = 1;
+          bufArr[o++] = 0; bufArr[o++] = h;
+        }
+      }
     }
     visibleTrips.push(t); visibleXY[n * 2] = lng; visibleXY[n * 2 + 1] = lat;
     n++;
     if (drawGlow) glowPass.push([mx, my, dxm, dym, r, g, b]);
   }
-  // 光晕 pass(与车体同一缓冲,第二遍绘制)
-  let gi = n;
+  // 光晕 pass(与车体同一缓冲,第二遍绘制,始终在地面层)
   if (drawGlow) {
     for (const [mx, my, dxm, dym, r, g, b] of glowPass) {
-      if (gi >= MAXT - 1) break;
-      let o = gi * 6 * STRIDE;
+      if (n >= MAXT - 1 || vtx * STRIDE + 6 * STRIDE > bufArr.length) break;
+      let o = vtx * STRIDE;
       const GL = L * 2.6, GW = W * 2.6;
       for (let q = 0; q < 6; q++) {
         bufArr[o++] = mx; bufArr[o++] = my;
         bufArr[o++] = dxm; bufArr[o++] = dym;
         bufArr[o++] = QUAD[q][0] * GL; bufArr[o++] = QUAD[q][1] * GW;
         bufArr[o++] = r; bufArr[o++] = g; bufArr[o++] = b; bufArr[o++] = 1;
-        bufArr[o++] = 1; bufArr[o++] = 0; // glow + pad
+        bufArr[o++] = 1; bufArr[o++] = 0; // glow + h
       }
-      gi++;
+      vtx += 6;
     }
   }
-  visibleCount = gi;
+  visibleCount = vtx; // 顶点总数(俯视 6/列车,倾斜 36/列车 + 光晕 6/个)
   // 上传
   if (glRef && visibleCount > 0) {
     glRef.bindBuffer(glRef.ARRAY_BUFFER, vbo);
-    glRef.bufferSubData(glRef.ARRAY_BUFFER, 0, bufArr, 0, visibleCount * 6 * STRIDE);
+    glRef.bufferSubData(glRef.ARRAY_BUFFER, 0, bufArr, 0, visibleCount * STRIDE);
   }
   return n;
 }

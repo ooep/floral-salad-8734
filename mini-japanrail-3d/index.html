@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Mini JapanRail 3D — 全日本铁路实时运行</title>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.9.0/dist/maplibre-gl.css">
+<style>
+  :root { --bg:#07090f; --panel:rgba(12,16,26,.88); --line:#1e2634; --txt:#cfd6e4; --dim:#7d8798; --accent:#4f8ef7; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { width:100%; height:100%; overflow:hidden; background:var(--bg); font-family:-apple-system,"SF Pro SC","PingFang SC","Hiragino Sans GB","Noto Sans CJK SC",sans-serif; color:var(--txt); }
+  #map { position:absolute; inset:0; }
+  #hud { position:absolute; top:0; left:0; right:0; padding:8px 10px 6px; display:flex; align-items:center; gap:8px; background:linear-gradient(rgba(7,9,15,.92),rgba(7,9,15,0)); z-index:5; pointer-events:none; }
+  #hud .brand { font-size:13px; font-weight:700; letter-spacing:.5px; white-space:nowrap; }
+  #hud .brand b { color:var(--accent); }
+  #hud .st { font-size:11px; color:var(--dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1; text-align:right; }
+  #ctrls { position:absolute; top:44px; right:10px; display:flex; flex-direction:column; gap:8px; z-index:6; align-items:flex-end; }
+  .btn { min-width:46px; min-height:42px; padding:0 13px; border:1px solid var(--line); border-radius:9px; background:var(--panel); color:var(--txt); font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px; backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); user-select:none; -webkit-user-select:none; }
+  .btn.on { background:rgba(79,142,247,.22); border-color:var(--accent); color:#fff; }
+  .grp { display:flex; flex-direction:column; gap:3px; border:1px solid var(--line); border-radius:9px; background:var(--panel); padding:4px 4px; backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); }
+  .grp .row { display:flex; align-items:center; gap:4px; flex-wrap:wrap; }
+  .grp .lab { font-size:10px; color:var(--dim); padding:0 4px; }
+  .grp .btn { border:0; border-radius:7px; background:transparent; min-height:30px; min-width:34px; padding:0 9px; font-size:11px; }
+  .grp .btn.on { background:rgba(79,142,247,.22); color:#fff; }
+  #tip { position:absolute; display:none; pointer-events:none; z-index:7; max-width:230px; padding:7px 10px; border-radius:8px; background:var(--panel); border:1px solid var(--line); font-size:11px; line-height:1.5; backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); box-shadow:0 4px 14px rgba(0,0,0,.5); }
+  #tip .ln { font-weight:600; }
+  #tip .sg { color:var(--dim); }
+  .foot { position:absolute; bottom:8px; left:10px; font-size:10px; color:var(--dim); z-index:5; pointer-events:none; text-shadow:0 1px 3px #000; max-width:70%; }
+  .maplibregl-ctrl-bottom-right { display:none; }
+  .maplibregl-ctrl-attrib { background:rgba(0,0,0,.35)!important; color:var(--dim)!important; font-size:9px!important; }
+  .maplibregl-ctrl-attrib a { color:var(--dim)!important; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div id="hud">
+  <div class="brand">🚄 <b>Mini JapanRail 3D</b></div>
+  <div class="st" id="status">加载数据中…</div>
+</div>
+<div id="ctrls">
+  <button class="btn" id="btnLive">⚡ 实时</button>
+  <div class="grp">
+    <div class="row"><span class="lab">视角</span>
+      <button class="btn on" id="btn3d">3D</button>
+      <button class="btn" id="btn2d">2D</button>
+    </div>
+    <div class="row"><span class="lab">运行日</span>
+      <button class="btn on" data-day="auto" id="dayAuto">自动</button>
+      <button class="btn" data-day="1" id="dayWd">平日</button>
+      <button class="btn" data-day="2" id="daySa">周六</button>
+      <button class="btn" data-day="4" id="daySu">周日·假</button>
+    </div>
+    <div class="row"><span class="lab">倍速</span>
+      <button class="btn" data-sp="0.5" id="sp05">0.5×</button>
+      <button class="btn on" data-sp="1" id="sp1">1×</button>
+      <button class="btn" data-sp="2" id="sp2">2×</button>
+      <button class="btn" data-sp="4" id="sp4">4×</button>
+    </div>
+  </div>
+  <button class="btn" id="btnFollow">🎯 跟随</button>
+</div>
+<div id="tip"></div>
+<div class="foot">本地时刻表驱动 · 运行时零外部请求 · 计划时刻不含延误</div>
+<script src="https://unpkg.com/maplibre-gl@5.9.0/dist/maplibre-gl.js"></script>
+<script>
+(function () {
+  'use strict';
+  /* ---------- 常量 ---------- */
+  var TRAIN_FILES = { 1: 'data/trains_wd.json', 2: 'data/trains_sa.json', 4: 'data/trains_su.json' };
+  var SEG_URL = 'data/segments3d.geojson', STA_URL = 'data/stations3d.geojson', TMAP_URL = 'data/tmaps.json';
+  var GLYPHS = 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf';
+  // 日本节假日 2026-2027（bit4 视同周日·假日）；后续年份按官方公告追加
+  var HOLIDAYS = {
+    '2026-01-01': 1, '2026-01-12': 1, '2026-02-11': 1, '2026-03-20': 1, '2026-04-29': 1,
+    '2026-05-03': 1, '2026-05-04': 1, '2026-05-05': 1, '2026-05-06': 1, '2026-07-20': 1,
+    '2026-08-11': 1, '2026-09-21': 1, '2026-09-22': 1, '2026-09-23': 1, '2026-10-12': 1,
+    '2026-11-03': 1, '2026-11-23': 1, '2026-12-23': 1,
+    '2027-01-01': 1, '2027-01-11': 1, '2027-02-11': 1, '2027-03-22': 1, '2027-04-29': 1,
+    '2027-05-03': 1, '2027-05-04': 1, '2027-05-05': 1, '2027-07-19': 1, '2027-08-11': 1,
+    '2027-09-20': 1, '2027-09-23': 1, '2027-10-11': 1, '2027-11-03': 1, '2027-11-23': 1,
+    '2027-12-23': 1
+  };
+  var SHINK = ['Hayabusa', 'Komachi', 'Yamabiko', 'Tsubasa', 'Kagayaki', 'Toki', 'Hakutaka', 'Asama', 'Nasuno', 'Tanigawa'];
+  var JST_OFFSET = 9 * 3600 * 1000;
+  /* ---------- 状态 ---------- */
+  var map = null, trains = null, tmaps = null, trainFC = null;
+  var segSrc = null, staSrc = null;
+  var stationCoord = null, segIndex = null, edgeLine = null, adj = null, pathMemo = null;
+  var liveOn = false, dayMode = 'auto', trainsBit = 0;
+  var speed = 1, followId = null, followTrain = null;
+  var timer = null, dataReady = false;
+  /* ---------- DOM ---------- */
+  var statusEl = document.getElementById('status'), tipEl = document.getElementById('tip');
+  var btnLive = document.getElementById('btnLive'), btnFollow = document.getElementById('btnFollow');
+  var dayBtns = { auto: document.getElementById('dayAuto'), 1: document.getElementById('dayWd'), 2: document.getElementById('daySa'), 4: document.getElementById('daySu') };
+  var spBtns = { '0.5': document.getElementById('sp05'), '1': document.getElementById('sp1'), '2': document.getElementById('sp2'), '4': document.getElementById('sp4') };
+  /* ---------- 工具 ---------- */
+  function jstNow() { return new Date(Date.now() + JST_OFFSET); }
+  function todayBit() {
+    var n = jstNow(), d = n.getUTCDay();
+    var key = n.toISOString().slice(0, 10);
+    if (HOLIDAYS[key]) return 4;
+    return (d >= 1 && d <= 5) ? 1 : (d === 6 ? 2 : 4);
+  }
+  function minOfDayJST(t) { return ((t / 1000) % 86400) / 60; }
+  function activeBit() { return dayMode === 'auto' ? todayBit() : dayMode; }
+  function loadJSON(url) { return fetch(url).then(function (r) { return r.json(); }); }
+  function setStatus(s) { statusEl.textContent = s; }
+  function pad(n) { return String(n).padStart(2, '0'); }
+  /* ---------- 几何索引 ---------- */
+  function buildIndices() {
+    stationCoord = new Map();
+    staSrc.features.forEach(function (f) { stationCoord.set(f.properties.station, f.geometry.coordinates); });
+    segIndex = new Map(); edgeLine = new Map(); adj = new Map(); pathMemo = new Map();
+    segSrc.features.forEach(function (f) {
+      var p = f.properties, g = f.geometry;
+      var coords = g.type === 'MultiLineString'
+        ? g.coordinates.reduce(function (a, l) { return a.concat(l); }, [])
+        : g.coordinates;
+      var k1 = p.from + '|' + p.to, k2 = p.to + '|' + p.from;
+      if (!segIndex.has(k1)) segIndex.set(k1, []);
+      if (!segIndex.has(k2)) segIndex.set(k2, []);
+      segIndex.get(k1).push(coords);
+      segIndex.get(k2).push(coords.slice().reverse());
+      edgeLine.set(k1, p.line || ''); edgeLine.set(k2, p.line || '');
+      if (!adj.has(p.from)) adj.set(p.from, new Set());
+      if (!adj.has(p.to)) adj.set(p.to, new Set());
+      adj.get(p.from).add(p.to); adj.get(p.to).add(p.from);
+    });
+  }
+  function pathAlong(A, B) {
+    var key = A + '|' + B;
+    if (pathMemo.has(key)) return pathMemo.get(key);
+    if (!adj.has(A) || !adj.has(B)) { pathMemo.set(key, null); return null; }
+    var prev = new Map([[A, null]]), q = [A];
+    while (q.length && !prev.has(B)) {
+      var cur = q.shift(), nbs = adj.get(cur) || [];
+      for (var i = 0; i < nbs.length; i++) {
+        var nb = nbs[i];
+        if (!prev.has(nb)) { prev.set(nb, cur); q.push(nb); }
+      }
+    }
+    if (!prev.has(B)) { pathMemo.set(key, null); return null; }
+    var stops = [B], c2 = B;
+    while (c2 !== A) { c2 = prev.get(c2); stops.push(c2); }
+    stops.reverse();
+    var cc = [], lens = [], tl = 0, lines = [];
+    for (var j = 0; j < stops.length - 1; j++) {
+      var k = stops[j] + '|' + stops[j + 1];
+      var cand = segIndex.get(k), co = (cand && cand.length) ? cand[0] : null;
+      if (!co) { pathMemo.set(key, null); return null; }
+      if (j === 0) cc = cc.concat(co); else cc = cc.concat(co.slice(1));
+      lines.push(edgeLine.get(k) || '');
+      var L = 0;
+      for (var m = 1; m < co.length; m++) L += Math.hypot(co[m][0] - co[m - 1][0], co[m][1] - co[m - 1][1]);
+      lens.push(L); tl += L;
+    }
+    var lineAt = function (frac) {
+      if (tl <= 0) return lines[0] || '';
+      var t = frac * tl, acc = 0;
+      for (var i = 0; i < lens.length; i++) { if (acc + lens[i] >= t) return lines[i] || ''; acc += lens[i]; }
+      return lines[lines.length - 1] || '';
+    };
+    var m = { coords: cc, lineAt: lineAt };
+    pathMemo.set(key, m);
+    return m;
+  }
+  function pointAlong(coords, frac) {
+    if (!coords || coords.length < 2) return null;
+    if (frac <= 0) return coords[0];
+    if (frac >= 1) return coords[coords.length - 1];
+    var total = 0;
+    for (var i = 1; i < coords.length; i++) total += Math.hypot(coords[i][0] - coords[i - 1][0], coords[i][1] - coords[i - 1][1]);
+    if (total <= 0) return coords[0];
+    var target = frac * total, acc = 0;
+    for (var i = 1; i < coords.length; i++) {
+      var dx = coords[i][0] - coords[i - 1][0], dy = coords[i][1] - coords[i - 1][1];
+      var seg = Math.hypot(dx, dy);
+      if (acc + seg >= target) {
+        var f = seg === 0 ? 0 : (target - acc) / seg;
+        return [coords[i - 1][0] + dx * f, coords[i - 1][1] + dy * f];
+      }
+      acc += seg;
+    }
+    return coords[coords.length - 1];
+  }
+  /* ---------- 时刻表解码 ---------- */
+  function schsOf(t) { if (!t.__s) t.__s = t.s.split(',').map(Number); return t.__s; }
+  function inWindow(t, M) {
+    var w = t.w; if (!w) return false;
+    var comma = w.indexOf(',');
+    if (comma < 0) return false;
+    var lo = +w.slice(0, comma), hi = +w.slice(comma + 1), MM = M;
+    if (hi < 300 && M > 1400) MM = M - 1440;
+    else if (lo > 1400 && M < 300) MM = M + 1440;
+    return MM >= lo && MM <= hi;
+  }
+  function iconColor(ic) {
+    if (SHINK.indexOf(ic) >= 0) return '#2e9e44';
+    if (ic === '特') return '#ff5a5a';
+    if (ic === '急' || ic === '快') return '#ffb340';
+    if (ic === '準' || ic === '区' || ic === '通' || ic === '回') return '#9aa5b5';
+    if (ic === '各' || ic === '普') return '#4f8ef7';
+    return '#8fd0ff';
+  }
+  function trainPosition(t, M) {
+    var tm = tmaps[t.t];
+    if (!tm || !tm.s_jas || tm.s_jas.length < 2) return null;
+    var st = tm.s_jas, schs = schsOf(t), N = st.length;
+    if (!schs || schs.length < 2 * N - 2) return null;
+    var dep = [], arr = [];
+    dep[0] = schs[0];
+    for (var i = 1; i < N; i++) {
+      arr[i] = dep[i - 1] + schs[2 * i - 1];
+      dep[i] = (i < N - 1) ? arr[i] + schs[2 * i] : arr[i];
+    }
+    var MM = M;
+    if (dep[N - 1] < 300 && M > 1400) MM = M - 1440;
+    if (dep[0] > 1400 && M < 300) MM = M + 1440;
+    if (MM < dep[0] - 1e-6 || MM > arr[N - 1] + 1e-6) return null;
+    var meta = { color: iconColor(t.i), icon: t.i, line: (tm.lines && tm.lines.length === 1) ? tm.lines[0] : '' };
+    function placeAt(S) {
+      var c = stationCoord.get(S);
+      return c ? { pt: c, line: meta.line } : null;
+    }
+    function placeBetween(A, B, frac) {
+      var segs = segIndex.get(A + '|' + B);
+      if (segs && segs.length) {
+        var pt = pointAlong(segs[0], frac);
+        if (pt) return { pt: pt, line: edgeLine.get(A + '|' + B) || meta.line };
+      }
+      var path = pathAlong(A, B);
+      if (path) {
+        var pt2 = pointAlong(path.coords, frac);
+        if (pt2) return { pt: pt2, line: path.lineAt(frac) || meta.line };
+      }
+      var ca = stationCoord.get(A), cb = stationCoord.get(B);
+      if (ca && cb) return { pt: [ca[0] + (cb[0] - ca[0]) * frac, ca[1] + (cb[1] - ca[1]) * frac], line: meta.line };
+      if (ca) return { pt: ca, line: meta.line };
+      if (cb) return { pt: cb, line: meta.line };
+      return null;
+    }
+    for (var i = 0; i < N - 1; i++) {
+      if (MM >= dep[i] - 1e-6 && MM <= arr[i + 1] + 1e-6) {
+        var run = arr[i + 1] - dep[i];
+        var frac = run <= 0 ? 0 : (MM - dep[i]) / run;
+        var r = placeBetween(st[i], st[i + 1], frac);
+        if (r) return r;
+      }
+      if (i + 1 < N - 1 && MM > arr[i + 1] + 1e-6 && MM <= dep[i + 1] + 1e-6) {
+        var r2 = placeAt(st[i + 1]);
+        if (r2) return r2;
+      }
+    }
+    return null;
+  }
+  /* ---------- 渲染 ---------- */
+  var simBase = 0;
+  function simNow() { if (!simBase) simBase = Date.now(); return simBase + (Date.now() - simBase) * speed; }
+  function refreshTrains() {
+    if (!liveOn || !trains || !tmaps || !trainFC) return;
+    var bit = activeBit(), M = minOfDayJST(simNow());
+    var feats = [], list = trains.T;
+    for (var k = 0; k < list.length; k++) {
+      var t = list[k];
+      if (!(t.r & bit)) continue;
+      if (!inWindow(t, M)) continue;
+      var pos = trainPosition(t, M);
+      if (!pos) continue;
+      feats.push({
+        type: 'Feature',
+        properties: { id: t._, icon: pos.icon, color: pos.color, from: pos.A, to: pos.B, line: pos.line || '' },
+        geometry: { type: 'Point', coordinates: pos.pt }
+      });
+    }
+    trainFC.features = feats;
+    map.getSource('trains').setData(trainFC);
+    if (followId) {
+      followTrain = null;
+      for (var j = 0; j < feats.length; j++) {
+        if (feats[j].properties.id === followId) { followTrain = feats[j]; break; }
+      }
+      if (!followTrain) stopFollow();
+    }
+    var d = jstNow();
+    var label = { 1: '平日', 2: '周六', 4: '周日·假' }[bit] || '?';
+    setStatus(feats.length + '/' + (trains.n || list.length) + ' 列运行 · ' + label + ' · ' + speed + '× · ' + pad(d.getUTCHours()) + ':' + pad(d.getUTCMinutes()) + ':' + pad(d.getUTCSeconds()) + ' JST');
+  }
+  function loadTrains(bit) {
+    var f = TRAIN_FILES[bit];
+    if (!f) return Promise.resolve();
+    return loadJSON(f).then(function (d) {
+      trains = d; trainsBit = bit;
+      if (trainFC) refreshTrains();
+    }).catch(function () { setStatus('⚡ 时刻表加载失败 ' + f); });
+  }
+  /* ---------- 列车图层 ---------- */
+  function ensureLiveLayers() {
+    if (map.getSource('trains')) return;
+    map.addSource('trains', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+    map.addLayer({ id: 'trains-glow', type: 'circle', source: 'trains',
+      paint: {
+        'circle-radius': ['interpolate', ['exponential', 1.5], ['zoom'], 3, 7, 9, 9, 13, 12],
+        'circle-color': ['get', 'color'],
+        'circle-opacity': 0.22,
+        'circle-stroke-width': 0
+      } });
+    map.addLayer({ id: 'trains', type: 'circle', source: 'trains',
+      paint: {
+        'circle-radius': ['interpolate', ['exponential', 1.5], ['zoom'], 3, 2.4, 9, 3.4, 13, 4.4],
+        'circle-color': ['get', 'color'],
+        'circle-opacity': 0.95,
+        'circle-stroke-color': '#ffffff',
+        'circle-stroke-width': 0.6
+      } });
+    map.on('mousemove', 'trains', function (e) {
+      if (!e.features.length) return;
+      var p = e.features[0].properties;
+      tipEl.style.transform = '';
+      tipEl.style.left = (e.point.x + 14) + 'px';
+      tipEl.style.top = (e.point.y + 14) + 'px';
+      tipEl.style.display = 'block';
+      tipEl.innerHTML = '<div class="ln" style="color:' + p.color + '">' + (p.icon ? p.icon + ' ' : '') + (p.line || '') + '</div><div class="sg">' + (p.from === p.to ? p.from : p.from + ' → ' + p.to) + '</div>';
+      map.getCanvas().style.cursor = 'pointer';
+    });
+    map.on('mouseleave', 'trains', function () { tipEl.style.display = 'none'; map.getCanvas().style.cursor = ''; });
+    map.on('click', 'trains', function (e) {
+      if (!e.features.length) return;
+      startFollow(e.features[0].properties.id);
+    });
+  }
+  function startFollow(id) {
+    followId = id; followTrain = null;
+    btnFollow.classList.add('on');
+    btnFollow.textContent = '🎯 跟随中';
+  }
+  function stopFollow() {
+    followId = null; followTrain = null;
+    btnFollow.classList.remove('on');
+    btnFollow.textContent = '🎯 跟随';
+  }
+  /* ---------- 地图 ---------- */
+  function initMap() {
+    map = new maplibregl.Map({
+      container: 'map',
+      projection: { type: 'globe' },
+      center: [139.55, 36.4],
+      zoom: 3.2,
+      pitch: 50,
+      bearing: 0,
+      minZoom: 1.5,
+      maxZoom: 15,
+      attributionControl: false,
+      style: {
+        version: 8,
+        sources: {},
+        layers: [{ id: 'bg', type: 'background', paint: { 'background-color': '#07090f' } }]
+      }
+    });
+    map.addControl(new maplibregl.NavigationControl({ showCompass: true, visualizePitch: true }), 'bottom-right');
+    map.on('load', function () {
+      Promise.all([loadJSON(SEG_URL), loadJSON(STA_URL), loadJSON(TMAP_URL)]).then(function (arr) {
+        segSrc = arr[0]; staSrc = arr[1]; tmaps = arr[2];
+        buildIndices();
+        map.addSource('segs', { type: 'geojson', data: segSrc });
+        map.addLayer({ id: 'segs-glow', type: 'line', source: 'segs',
+          paint: {
+            'line-color': ['get', 'color'],
+            'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 3, 2.2, 9, 4.5, 14, 8],
+            'line-opacity': 0.16,
+            'line-blur': 1.6
+          } });
+        map.addLayer({ id: 'segs', type: 'line', source: 'segs',
+          paint: {
+            'line-color': ['get', 'color'],
+            'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 3, 0.7, 9, 1.6, 14, 3.2],
+            'line-opacity': 0.92
+          } });
+        map.addSource('stas', { type: 'geojson', data: staSrc });
+        map.addLayer({ id: 'stas', type: 'circle', source: 'stas',
+          paint: {
+            'circle-radius': ['interpolate', ['exponential', 1.5], ['zoom'], 3, 1.1, 9, 1.8, 13, 3],
+            'circle-color': '#b9c3d4',
+            'circle-opacity': 0.5,
+            'circle-stroke-color': '#07090f',
+            'circle-stroke-width': 0.4
+          } });
+        map.addLayer({ id: 'stas-label', type: 'symbol', source: 'stas',
+          minzoom: 10.5,
+          layout: {
+            'text-field': ['get', 'station'],
+            'text-size': 10.5,
+            'text-font': ['Open Sans Regular'],
+            'text-offset': [0, 0.8],
+            'text-anchor': 'top',
+            'text-allow-overlap': false
+          },
+          paint: { 'text-color': '#8fa0b8', 'text-halo-color': 'rgba(7,9,15,0.85)', 'text-halo-width': 1.2 } });
+        dataReady = true;
+        setStatus('数据就绪 · 点 ⚡ 实时 查看全日本列车');
+      }).catch(function (e) { setStatus('数据加载失败: ' + e.message); });
+    });
+    map.on('click', function (e) {
+      if (!followId) return;
+      var hit = map.queryRenderedFeatures(e.point, { layers: ['trains'] });
+      if (!hit.length) stopFollow();
+    });
+  }
+  /* ---------- 控件 ---------- */
+  btnLive.addEventListener('click', function () {
+    liveOn = !liveOn;
+    btnLive.classList.toggle('on', liveOn);
+    if (liveOn) {
+      if (!dataReady) { btnLive.classList.remove('on'); liveOn = false; setStatus('数据未就绪，稍候再试'); return; }
+      ensureLiveLayers();
+      var bit = activeBit();
+      var p = (trains && trainsBit === bit) ? Promise.resolve() : loadTrains(bit);
+      p.then(function () {
+        trainFC = { type: 'FeatureCollection', features: [] };
+        refreshTrains();
+        if (!timer) timer = setInterval(function () {
+          var b = activeBit();
+          if (b !== trainsBit) { loadTrains(b); return; }
+          refreshTrains();
+        }, 1000);
+      });
+    } else {
+      if (timer) { clearInterval(timer); timer = null; }
+      if (map.getSource('trains')) map.getSource('trains').setData({ type: 'FeatureCollection', features: [] });
+      stopFollow();
+    }
+  });
+  Object.keys(dayBtns).forEach(function (k) {
+    dayBtns[k].addEventListener('click', function () {
+      dayMode = k;
+      Object.keys(dayBtns).forEach(function (x) { dayBtns[x].classList.toggle('on', x === k); });
+      if (liveOn) {
+        var b = activeBit();
+        if (b !== trainsBit) loadTrains(b); else refreshTrains();
+      }
+    });
+  });
+  Object.keys(spBtns).forEach(function (k) {
+    spBtns[k].addEventListener('click', function () {
+      speed = parseFloat(k);
+      Object.keys(spBtns).forEach(function (x) { spBtns[x].classList.toggle('on', x === k); });
+    });
+  });
+  document.getElementById('btn3d').addEventListener('click', function () {
+    map.setProjection({ type: 'globe' });
+    map.easeTo({ pitch: 55, bearing: 0, duration: 1200 });
+    document.getElementById('btn3d').classList.add('on');
+    document.getElementById('btn2d').classList.remove('on');
+  });
+  document.getElementById('btn2d').addEventListener('click', function () {
+    map.setProjection({ type: 'mercator' });
+    map.easeTo({ pitch: 0, bearing: 0, duration: 1200 });
+    document.getElementById('btn2d').classList.add('on');
+    document.getElementById('btn3d').classList.remove('on');
+  });
+  btnFollow.addEventListener('click', function () {
+    if (followId) { stopFollow(); return; }
+    if (!liveOn) btnLive.click();
+    tipEl.style.display = 'block';
+    tipEl.style.left = '50%';
+    tipEl.style.top = '44%';
+    tipEl.style.transform = 'translateX(-50%)';
+    tipEl.innerHTML = '<div class="sg">点击地图上任意一列列车开始跟随</div>';
+    setTimeout(function () {
+      if (!followId) { tipEl.style.display = 'none'; tipEl.style.transform = ''; }
+    }, 4000);
+  });
+  /* ---------- 跟随 ---------- */
+  setInterval(function () {
+    if (followId && followTrain && liveOn) {
+      var c = followTrain.geometry.coordinates;
+      map.easeTo({ center: c, duration: 0 });
+    }
+  }, 300);
+  /* ---------- 启动 ---------- */
+  initMap();
+})();
+</script>
+</body>
+</html>

@@ -47,6 +47,7 @@ jobs:
           cp index.html favicon.png dist/
           cp -r data/segments.geojson data/stations.geojson data/names_en.json dist/data/
           cp -r data/live dist/data/
+          cp -r mini-japanrail-3d dist/   # Mini JapanRail 3D 子站 → /mini-japanrail-3d/
 
       - name: Configure Pages
         uses: actions/configure-pages@v5

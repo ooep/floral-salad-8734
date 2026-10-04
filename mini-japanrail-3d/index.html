@@ -477,8 +477,200 @@ async function loadTrainsFile(bit) {
 const TRANSFER_KM = 1.6;
 /* ---------------- 索引构建 ---------------- */
 /* 站名归一化:去掉括号注记(如「栄町(千葉県)」→「栄町」),tmaps 与几何数据的命名差异主要在此 */
-function normName(n) { return String(n).replace(/\([^)]*\)/g, '').replace(/駅$/, '').trim(); }
+function normName(n) { return String(n).replace(/\([^)]*\)/g, '').replace(/[ケヶ]/g, 'ヶ').replace(/駅$/, '').trim(); }
 let endCoord = null, nameOf = null;
+/* ================= 修复:同名站消歧(跨城错配根因) ================= */
+const stationCands = new Map();
+function addCand(nk, op, line, coords) {
+  if (!nk || !coords) return;
+  if (!stationCands.has(nk)) stationCands.set(nk, []);
+  const arr = stationCands.get(nk);
+  if (!arr.some(c => Math.abs(c.coords[0] - coords[0]) < 1e-9 && Math.abs(c.coords[1] - coords[1]) < 1e-9)) {
+    arr.push({ op: op || '', line: line || '', coords });
+  }
+}
+function matchLine(a, b) {
+  a = a || ''; b = b || '';
+  if (!a || !b) return 0;
+  if (a === b) return 3;
+  if (a.includes(b) || b.includes(a)) return 2;
+  const strip = s => s.replace(/[ヶケ]/g, 'ヶ').replace(/号線|線|本線|快速線|新線|支線/g, '');
+  const an = strip(a), bn = strip(b);
+  if (an && bn && (an.includes(bn) || bn.includes(an))) return 1;
+  return 0;
+}
+/* 解析站坐标:优先括号注记/线路集合消歧,多候选无信号时返回 null(不再取第一个 -> 杜绝跨城错配) */
+function resolveCoord(rawName, lineSet, prevCoord) {
+  const bracket = (String(rawName).match(/\(([^)]*)\)/) || [])[1] || '';
+  const base = normName(rawName);
+  const cands = stationCands.get(base);
+  if (!cands || !cands.length) return null;
+  if (cands.length === 1) return cands[0].coords;
+  let best = null, bestScore = -1;
+  for (const c of cands) {
+    let score = 0;
+    if (bracket) {
+      if (c.op && (c.op.includes(bracket.slice(0, 2)) || bracket.slice(0, 2).includes(c.op.slice(0, 2)))) score += 4;
+      if (bracket === '地下鉄' && /地下鉄|高速電気軌道|交通局|市営/.test(c.op)) score += 4;
+      if (c.line && c.line.includes(bracket.slice(0, 2))) score += 3;
+    }
+    if (c.line) {
+      for (const ln of lineSet || []) { const s = matchLine(ln, c.line); if (s > 0) { score += s; break; } }
+    }
+    if (score > bestScore) { bestScore = score; best = c; }
+  }
+  if (bestScore >= 2 && best) return best.coords;
+  if (prevCoord) {
+    let bd = 1e18, bc = null;
+    for (const c of cands) {
+      const dx = (c.coords[0] - prevCoord[0]) * Math.cos((c.coords[1] + prevCoord[1]) * Math.PI / 180);
+      const dy = c.coords[1] - prevCoord[1];
+      const d = dx * dx + dy * dy;
+      if (d < bd) { bd = d; bc = c; }
+    }
+    if (bc) return bc.coords;
+  }
+  return null;
+}
+/* ================= 修复:轨道投影(几何段存在但缺中间站节点,如青函隧道) ================= */
+let segGrid = new Map(), weldInfo = new Map();
+const GRID = 0.08;
+function distToSegmentProj(px, py, ax, ay, bx, by) {
+  const dx = bx - ax, dy = by - ay;
+  const t = ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy || 1e-12);
+  const t2 = Math.max(0, Math.min(1, t));
+  return { d: Math.hypot(px - (ax + dx * t2), py - (ay + dy * t2)), t: t2 };
+}
+/* 站坐标 -> 最近几何段投影点 */
+function projToTrack(c) {
+  if (!c) return null;
+  const gx = Math.floor(c[0] / GRID), gy = Math.floor(c[1] / GRID);
+  const lat0 = c[1] * Math.PI / 180;
+  let best = null, bestD = 1e18;
+  for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) {
+    const segs = segGrid.get((gx + dx) * 100000 + (gy + dy));
+    if (!segs) continue;
+    for (const [a, b, k, ei] of segs) {
+      const ax = (a[0] - c[0]) * Math.cos(lat0) * 111.32, ay = (a[1] - c[1]) * 110.57;
+      const bx = (b[0] - c[0]) * Math.cos(lat0) * 111.32, by = (b[1] - c[1]) * 110.57;
+      const r = distToSegmentProj(0, 0, ax, ay, bx, by);
+      if (r.d < bestD) { bestD = r.d; best = { segKey: k, ei, a, b, t: r.t }; }
+    }
+  }
+  if (!best || bestD > 10) return null;
+  const entry = segIndex.get(best.segKey)[best.ei];
+  const co = entry.coords;
+  const P = [best.a[0] + (best.b[0] - best.a[0]) * best.t, best.a[1] + (best.b[1] - best.a[1]) * best.t];
+  let i = 1;
+  for (; i < co.length; i++) {
+    const a = co[i - 1], b = co[i];
+    if ((b[0] - a[0]) * (P[0] - a[0]) + (b[1] - a[1]) * (P[1] - a[1]) > 0 &&
+        (a[0] - b[0]) * (P[0] - b[0]) + (a[1] - b[1]) * (P[1] - b[1]) > 0) break;
+  }
+  if (i >= co.length) i = co.length - 1;
+  let sub = 0;
+  for (let j = 1; j < i; j++) sub += geoKm(co[j - 1], co[j]);
+  sub += geoKm(co[i - 1], P);
+  return { segKey: best.segKey, ei: best.ei, entry, co, i, P, lenTo0: sub, lenToN: entry.len - sub, na: best.segKey.split('|')[0], nb: best.segKey.split('|')[1] };
+}
+const segSubCache = new Map();
+/* 同段截取:A/B 投影落在同一几何段时,沿段截取 A→B 子路径(覆盖几何段存在但缺中间站节点) */
+function segSubPath(A, B, ca, cb) {
+  const key = A + '|' + B;
+  if (segSubCache.has(key)) return segSubCache.get(key);
+  if (!ca || !cb) { segSubCache.set(key, null); return null; }
+  const pa = projToTrack(ca), pb = projToTrack(cb);
+  let out = null;
+  if (pa && pb) {
+    const ka = pa.segKey, kb = pb.segKey;
+    const revA = ka.split('|')[1] + '|' + ka.split('|')[0];
+    if ((ka === kb || revA === kb) && pa.entry === pb.entry) {
+      const co = pa.co;
+      const ia = pa.i, ib = pb.i;
+      if (ia !== ib && Math.abs(ia - ib) >= 2) {
+        const sub = ia < ib ? co.slice(ia, ib + 1) : co.slice(ib, ia + 1).slice().reverse();
+        if (sub.length >= 2) out = withLen(sub);
+      }
+    }
+  }
+  if (segSubCache.size > 40000) segSubCache.clear();
+  segSubCache.set(key, out);
+  return out;
+}
+/* ================= 修复:站序重建折线库(几何缺失区间用时刻表停站序列重建轨道走向) ================= */
+let seqCoordsCache = [], seqIdx = new Map();
+const routeCache = new Map(), routeCoreCache = new Map();
+function routeCore(A, B, lineSet, mode) {
+  const ckey = A + '|' + B + '|' + (mode === 'max' ? 'x' : 'n');
+  const cc = routeCoreCache.get(ckey);
+  if (cc !== undefined) return cc;
+  const la = seqIdx.get(A), lb = seqIdx.get(B);
+  if (!la || !lb) { routeCoreCache.set(ckey, null); return null; }
+  let best = null, bestScore = mode === 'max' ? -1 : 1e18;
+  for (const [ea, ia] of la) {
+    for (const [eb, ib] of lb) {
+      if (ea !== eb || ia >= ib) continue;
+      const ent = seqCoordsCache[ea];
+      const span = ib - ia;
+      if (span > 40) continue;
+      const coords = ent.C.slice(ia, ib + 1);
+      if (coords.length < 2) continue;
+      const ca0 = coords[0], cb0 = coords[coords.length - 1];
+      const straight = geoKm(ca0, cb0);
+      let L = 0;
+      for (let k = 1; k < coords.length; k++) L += geoKm(coords[k - 1], coords[k]);
+      if (straight > 0.1 && L > straight * 2.6 + 8) continue;
+      const match = lineSet && ent.ls && [...lineSet].some(l => ent.ls.has(l));
+      const score = mode === 'max' ? span + (match ? 0.5 : 0) : span - (match ? 0.5 : 0);
+      if ((mode === 'max' && score > bestScore) || (mode !== 'max' && score < bestScore)) {
+        bestScore = score; best = { S: ent.S.slice(ia, ib + 1), C: coords };
+      }
+    }
+  }
+  if (routeCoreCache.size > 60000) routeCoreCache.clear();
+  routeCoreCache.set(ckey, best);
+  return best;
+}
+function refinePath(base, lineSet, depth) {
+  const S = base.S, C = base.C;
+  if (depth <= 0 || S.length < 3) return base;
+  const newS = [S[0]], newC = [C[0]];
+  for (let k = 1; k < S.length; k++) {
+    const sub = routeCore(S[k - 1], S[k], lineSet, 'max');
+    if (sub && sub.S.length > 2 && sub.C.length > 2) {
+      const r = refinePath(sub, lineSet, depth - 1);
+      newS.push(...r.S.slice(1)); newC.push(...r.C.slice(1));
+    } else {
+      newS.push(S[k]); newC.push(C[k]);
+    }
+  }
+  return { S: newS, C: newC };
+}
+function routeByStops(A, B, lineSet) {
+  const key = A + '|' + B;
+  const cached = routeCache.get(key);
+  if (cached !== undefined) return cached;
+  let base = routeCore(A, B, lineSet, 'min');
+  if (!base || base.C.length <= 2) {
+    const alt = routeCore(A, B, lineSet, 'max');
+    if (alt && (!base || alt.C.length > base.C.length)) base = alt;
+  }
+  const out = base ? withLen(refinePath(base, lineSet, 3).C) : null;
+  if (routeCache.size > 40000) routeCache.clear();
+  routeCache.set(key, out);
+  return out;
+}
+/* 折线 + 累计长封装(避免 trainPosition 每帧重算) */
+function withLen(path) {
+  const cum = new Float64Array(path.length);
+  let L = 0;
+  for (let k = 1; k < path.length; k++) {
+    const dx = (path[k][0] - path[k-1][0]) * Math.cos((path[k][1] + path[k-1][1]) / 2 * Math.PI / 180) * 111.32;
+    const dy = (path[k][1] - path[k-1][1]) * 110.57;
+    L += Math.hypot(dx, dy); cum[k] = L;
+  }
+  return { coords: path, cum, len: L };
+}
 function buildStaticIndex() {
   stationCoord = new Map(); stationCoordLine = new Map(); stationLines = new Map();
   endCoord = new Map(); nameOf = new Map();
@@ -534,6 +726,124 @@ function buildStaticIndex() {
       register(p.to, p.from, rev, p.line, p.color, p.kind);
     }
   }
+  /* ===== 修复:同名站候选表(站表 line/op + 几何段端点反哺) ===== */
+  stationCands.clear();
+  for (const f of staFC.features) {
+    const p = f.properties, c = f.geometry.coordinates;
+    addCand(normName(p.station), p.op, p.line, c);
+  }
+  for (const f of segFC.features) {
+    const p = f.properties, g = f.geometry;
+    const parts = g.type === 'MultiLineString' ? g.coordinates : [g.coordinates];
+    for (const co of parts) {
+      if (co.length < 2) continue;
+      addCand(normName(p.from), '', p.line, co[0]);
+      addCand(normName(p.to), '', p.line, co[co.length - 1]);
+    }
+  }
+  /* ===== 修复:轨道段网格索引(投影接入) ===== */
+  segGrid = new Map();
+  for (const [k, arr] of segIndex) {
+    for (let ei = 0; ei < arr.length; ei++) {
+      const e = arr[ei];
+      const co = e.coords;
+      for (let i = 1; i < co.length; i++) {
+        const a = co[i - 1], b = co[i];
+        const gx0 = Math.floor(Math.min(a[0], b[0]) / GRID), gx1 = Math.floor(Math.max(a[0], b[0]) / GRID);
+        const gy0 = Math.floor(Math.min(a[1], b[1]) / GRID), gy1 = Math.floor(Math.max(a[1], b[1]) / GRID);
+        for (let gx = gx0; gx <= gx1; gx++) for (let gy = gy0; gy <= gy1; gy++) {
+          const gk = gx * 100000 + gy;
+          if (!segGrid.has(gk)) segGrid.set(gk, []);
+          segGrid.get(gk).push([a, b, k, ei]);
+        }
+      }
+    }
+  }
+  /* ===== 修复:段中间点焊接(几何段在某中间点与另一段端点交汇时分割注册,使图连通) ===== */
+  weldInfo = new Map();
+  (function weldSegments() {
+    const epGrid = new Map(), EPS = 0.08, WELD_KM = 0.18;
+    const addEp = (c, nm) => {
+      const gx = Math.floor(c[0] / EPS), gy = Math.floor(c[1] / EPS);
+      const gk = gx * 100000 + gy;
+      if (!epGrid.has(gk)) epGrid.set(gk, []);
+      epGrid.get(gk).push([c[0], c[1], nm]);
+    };
+    for (const [k, arr] of segIndex) {
+      const [na, nb] = k.split('|');
+      for (const e of arr) {
+        addEp(e.coords[0], na); addEp(e.coords[e.coords.length - 1], nb);
+      }
+    }
+    const snap = [...segIndex.entries()];
+    for (const [k, arr] of snap) {
+      const [na, nb] = k.split('|');
+      for (let ei = 0; ei < arr.length; ei++) {
+        const e = arr[ei];
+        const co = e.coords;
+        if (co.length < 4) continue;
+        for (let i = 1; i < co.length - 1; i += 1) {
+          const gx = Math.floor(co[i][0] / EPS), gy = Math.floor(co[i][1] / EPS);
+          let hit = null, hitD = 1e18;
+          for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) {
+            const cell = epGrid.get((gx + dx) * 100000 + (gy + dy));
+            if (!cell) continue;
+            for (const [ex, ey, nm] of cell) {
+              if (nm === na || nm === nb) continue;
+              const d = geoKm([ex, ey], co[i]);
+              if (d < hitD) { hitD = d; hit = nm; }
+            }
+          }
+          if (hit && hitD <= WELD_KM) {
+            register(na, hit, co.slice(0, i + 1), e.line, e.color, e.kind);
+            register(hit, nb, co.slice(i), e.line, e.color, e.kind);
+            const wk = k + '#' + ei;
+            if (!weldInfo.has(wk)) weldInfo.set(wk, []);
+            weldInfo.get(wk).push({ idx: i, node: hit });
+            break;
+          }
+        }
+      }
+    }
+  })();
+  /* ===== 修复:站序折线库(几何缺失区间用时刻表停站序列重建轨道走向) ===== */
+  seqCoordsCache = []; seqIdx = new Map();
+  (function buildSeqCoords() {
+    const seen = new Set();
+    for (const tid in tmaps) {
+      const v = tmaps[tid];
+      if (!v || !v.s_jas || v.s_jas.length < 2) continue;
+      const raw = v.s_jas;
+      const lsSet = new Set((v.lines || []).map(normName));
+      const S = raw.map(normName);
+      const skey = S.join('|');
+      if (seen.has(skey)) continue;
+      seen.add(skey);
+      const C = [];
+      const keepIdx = [];
+      for (let i = 0; i < raw.length; i++) {
+        const c = resolveCoord(raw[i], lsSet) || stationCoord.get(S[i]);
+        if (c) { C.push([c[0], c[1]]); keepIdx.push(i); }
+      }
+      const S2 = [], C2 = [];
+      for (let k = 0; k < keepIdx.length; k++) {
+        const idx = keepIdx[k];
+        if (k > 0) {
+          const d = geoKm(C[k - 1], C[k]);
+          if (d > 250) continue;
+        }
+        S2.push(S[idx]); C2.push(C[k]);
+      }
+      if (C2.length >= 2) seqCoordsCache.push({ S: S2, C: C2, ls: lsSet });
+    }
+    for (let ei = 0; ei < seqCoordsCache.length; ei++) {
+      const S = seqCoordsCache[ei].S;
+      for (let i = 0; i < S.length; i++) {
+        if (!seqIdx.has(S[i])) seqIdx.set(S[i], []);
+        seqIdx.get(S[i]).push([ei, i]);
+      }
+    }
+  })();
   // 路线搜索图 v2:节点 = (站,线),乘车边沿段,换乘边需同站坐标 < 800m(防异地同名站焊接)
   routeNodes = new Map(); routeGraph = new Map(); stationLinesAt = new Map();
   function nodeKey(st, ln) { return st + '|' + ln; }
@@ -636,6 +946,9 @@ function parseTrips(json) {
       if (i - 1 >= 0) { const e = segIndex.get(jasN[i-1] + '|' + jasN[i]); if (e) return e[0].coords[e[0].coords.length - 1]; }
       if (i + 1 < N) { const e = segIndex.get(jasN[i] + '|' + jasN[i+1]); if (e) return e[0].coords[0]; }
       for (const ln of linesN) { const c = stationCoordLine.get(ln + '|' + jasN[i]); if (c) return c; }
+      const prev = i > 0 ? stopC[i - 1] : null;
+      const c = resolveCoord(jas[i], linesN, prev);
+      if (c) return c;
       return null; /* 不做全局同名回退:跨城同名站会把骨架拉到另一座城市(列车乱飞的根因) */
     }
     const stopC = new Array(N);
@@ -677,12 +990,14 @@ function windowShift(t, M) {
 }
 /* 无直接轨道段时,仅限本班次自身线路集合内 BFS;失败则交给骨架线(不跨线兜底,避免窜线) */const bfsMemo = new Map();
 function findPathOnLines(A, B, lineSet) {
-  const key = A + '|' + B;
+  const lsKey = lineSet ? [...lineSet].sort().join(',') : '';
+  const key = A + '|' + B + '|' + lsKey;
   if (bfsMemo.has(key)) return bfsMemo.get(key);
   const result = bfsRaw(A, B, (line) => lineSet.has(normName(line)));
-  bfsMemo.set(key, result);
+  const out = result ? withLen(result) : null;
   if (bfsMemo.size > 30000) bfsMemo.clear();
-  return result;
+  bfsMemo.set(key, out);
+  return out;
 }
 function bfsRaw(A, B, lineFilter) {
   if (!adj.has(A) || !adj.has(B)) return null;
@@ -715,53 +1030,122 @@ const bridgeMemo = new Map();
 function geoKm(a, b) {
   return Math.hypot((b[0]-a[0]) * Math.cos((a[1]+b[1])/2 * Math.PI/180) * 111.32, (b[1]-a[1]) * 110.57);
 }
-function bridgePath(A, B) {
-  const key = A + '|' + B;
+function bridgePath(A, B, lineSet, rawA, rawB) {
+  const lsKey = lineSet ? [...lineSet].sort().join(',') : '';
+  const key = A + '|' + B + '|' + lsKey;
   if (bridgeMemo.has(key)) return bridgeMemo.get(key);
-  const r = bridgePathRaw(A, B);
+  const r = bridgePathRaw(A, B, lineSet, rawA, rawB);
+  const out = r ? withLen(r) : null;
   if (bridgeMemo.size > 20000) bridgeMemo.clear();
-  bridgeMemo.set(key, r);
-  return r;
+  bridgeMemo.set(key, out);
+  return out;
 }
-function bridgePathRaw(A, B) {
-  if (!adj.has(A) || !adj.has(B)) return null;
-  const ca = stationCoord.get(A), cb = stationCoord.get(B);
+function bridgePathRaw(A, B, lineSet, rawA, rawB) {
+  const ca = resolveCoord(rawA || A, lineSet) || stationCoord.get(A);
+  const cb = resolveCoord(rawB || B, lineSet) || stationCoord.get(B);
   if (!ca || !cb) return null;
   const straight = geoKm(ca, cb);
   if (straight < 0.1) return null;
   const cap = straight * 1.6 + 3;
+  const VIR = '\u0001P:';
+  const projInfo = new Map();
+  let sNode = A, sPos = ca, tNode = B, tPos = cb;
+  if (!adj.has(A)) {
+    const p = projToTrack(ca);
+    if (!p) return null;
+    sNode = VIR + A; sPos = p.P; projInfo.set(sNode, p);
+  }
+  if (!adj.has(B)) {
+    const p = projToTrack(cb);
+    if (!p) return null;
+    tNode = VIR + B; tPos = p.P; projInfo.set(tNode, p);
+  }
+  if (geoKm(sPos, tPos) < 0.05) return null;
   const h = n => { const c = stationCoord.get(n); return c ? geoKm(c, cb) : 0; };
-  const best = new Map([[A, 0]]);
+  const best = new Map([[sNode, { g: 0, pos: sPos }]]);
   const prev = new Map();
   const pq = new Heap();
-  pq.push([h(A), 0, A]);
+  pq.push([h(sNode), 0, sNode, sPos]);
   let pops = 0;
   while (pq.size) {
-    const [, g, cur] = pq.pop();
-    if (g > (best.get(cur) ?? 1e18)) continue;
-    if (cur === B) {
-      const stops = [B]; let c = B;
-      while (c !== A) { c = prev.get(c); stops.push(c); }
+    const [, g, cur, pos] = pq.pop();
+    const bs = best.get(cur);
+    if (bs && (g > bs.g + 1e-9)) continue;
+    if (cur === tNode) {
+      const stops = [tNode]; let c = tNode;
+      while (c !== sNode) { const pc = prev.get(c); if (!pc) return null; stops.push(pc[0]); c = pc[0]; }
       stops.reverse();
       const coords = [];
       for (let j = 0; j < stops.length - 1; j++) {
-        const e = segIndex.get(stops[j] + '|' + stops[j+1]);
-        if (!e) return null;
-        const co = e[0].coords;
-        if (j === 0) coords.push(...co); else coords.push(...co.slice(1));
+        const sub = prev.get(stops[j + 1])[2];
+        if (!sub) return null;
+        if (j === 0) coords.push(...sub); else coords.push(...sub.slice(1));
       }
       return coords;
     }
     if (++pops > 4000) return null;
+    const pj = projInfo.get(cur);
+    if (pj) {
+      const pairs = [[pj.na, pj.lenTo0, pj.co.slice(0, pj.i).slice().reverse(), pj.co[0]],
+                     [pj.nb, pj.lenToN, pj.co.slice(pj.i), pj.co[pj.co.length - 1]]];
+      const wl = weldInfo.get(pj.segKey + '#' + pj.ei) || [];
+      for (const w of wl) {
+        if (w.idx === pj.i) continue;
+        if (w.idx < pj.i) {
+          pairs.push([w.node, pj.lenTo0 - pj.entry.cum[w.idx], pj.co.slice(w.idx, pj.i).slice().reverse(), pj.co[w.idx]]);
+        } else {
+          pairs.push([w.node, pj.lenToN - (pj.entry.len - pj.entry.cum[w.idx]), pj.co.slice(pj.i, w.idx + 1), pj.co[w.idx]]);
+        }
+      }
+      for (const [nb, subLen, subCo, nbPos] of pairs) {
+        if (!adj.has(nb)) continue;
+        const ng = g + subLen;
+        if (ng > cap) continue;
+        const nbBest = best.get(nb);
+        if (!nbBest || ng < nbBest.g - 1e-9) {
+          const sc = [pj.P].concat(subCo);
+          best.set(nb, { g: ng, pos: nbPos }); prev.set(nb, [cur, nbPos, sc]);
+          pq.push([ng + h(nb), ng, nb, nbPos]);
+        }
+      }
+      continue;
+    }
+    const tProj = projInfo.get(tNode);
     for (const nb of adj.get(cur)) {
       if (nb === cur) continue;
-      const e = segIndex.get(cur + '|' + nb);
-      if (!e) continue;
-      const ng = g + (e[0].len || 0.1);
+      if (tProj && (nb === tProj.na || nb === tProj.nb)) {
+        const tArr = segIndex.get(tProj.segKey);
+        if (tArr && tArr.some(x => x === tProj.entry)) {
+          const e0 = tProj.entry;
+          let sub2, ng2;
+          if (nb === tProj.na) { sub2 = e0.coords.slice(0, tProj.i).concat([tProj.P]); ng2 = g + tProj.lenTo0; }
+          else { sub2 = [tProj.P].concat(e0.coords.slice(tProj.i).slice().reverse()); ng2 = g + tProj.lenToN; }
+          if (ng2 <= cap) {
+            const tb = best.get(tNode);
+            if (!tb || ng2 < tb.g - 1e-9) {
+              best.set(tNode, { g: ng2, pos: tProj.P }); prev.set(tNode, [cur, tProj.P, sub2]);
+              pq.push([ng2, ng2, tNode, tProj.P]);
+            }
+          }
+        }
+      }
+      const arr = segIndex.get(cur + '|' + nb);
+      if (!arr) continue;
+      let bestE = null, bestD = 1e18, bestEpos = null;
+      for (const e of arr) {
+        const c0 = e.coords[0], cN = e.coords[e.coords.length - 1];
+        const d0 = geoKm(c0, pos), dN = geoKm(cN, pos);
+        if (d0 < bestD) { bestD = d0; bestE = e; bestEpos = cN; }
+        if (dN < bestD) { bestD = dN; bestE = e; bestEpos = c0; }
+      }
+      if (!bestE) continue;
+      if (bestD > 10) continue;
+      const ng = g + (bestE.len || 0.1);
       if (ng > cap) continue;
-      if (ng < (best.get(nb) ?? 1e18) - 1e-9) {
-        best.set(nb, ng); prev.set(nb, cur);
-        pq.push([ng + h(nb), ng, nb]);
+      const nbBest = best.get(nb);
+      if (!nbBest || ng < nbBest.g - 1e-9) {
+        best.set(nb, { g: ng, pos: bestEpos }); prev.set(nb, [cur, bestEpos, bestE.coords]);
+        pq.push([ng + h(nb), ng, nb, bestEpos]);
       }
     }
   }
@@ -799,16 +1183,8 @@ function trainPosition(t, M) {
   let coords = null, cum = null, len = 0, line = '', kind = '';
   if (segEntry) { coords = segEntry.coords; cum = segEntry.cum; len = segEntry.len; line = segEntry.line; kind = segEntry.kind; }
   if (!coords) {
-    const path = findPathOnLines(A, B, t.lineSet || (t.lineSet = new Set(t.lines))) || bridgePath(A, B);
-    if (path) {
-      let L = 0; const c2 = new Float64Array(path.length);
-      for (let k = 1; k < path.length; k++) {
-        const dx = (path[k][0]-path[k-1][0]) * Math.cos((path[k][1]+path[k-1][1])/2 * Math.PI/180) * 111.32;
-        const dy = (path[k][1]-path[k-1][1]) * 110.57;
-        L += Math.hypot(dx, dy); c2[k] = L;
-      }
-      coords = path; cum = c2; len = L; line = ''; kind = '';
-    }
+    const path = findPathOnLines(A, B, t.lineSet || (t.lineSet = new Set(t.lines))) || segSubPath(A, B, t.stopC[i], t.stopC[i+1]) || bridgePath(A, B, t.lineSet, t.jas[i], t.jas[i+1]) || routeByStops(A, B, t.lineSet);
+    if (path) { coords = path.coords; cum = path.cum; len = path.len; line = ''; kind = ''; }
   }
   if (coords) {
     if (len <= 0) { _pos[0] = coords[0][0]; _pos[1] = coords[0][1]; }
@@ -1188,27 +1564,33 @@ function addMapLayers() {
   map.addLayer({ id: 'segs', type: 'line', source: 'segs', paint: {
     'line-color': ['get', 'color'], 'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 2, 0.7, 9, 1.7, 14, 3.6],
     'line-opacity': 0.92 } });
-  map.addSource('stas', { type: 'geojson', data: staFC });
-  map.addLayer({ id: 'stas', type: 'circle', source: 'stas', paint: {
-    'circle-radius': ['interpolate', ['exponential', 1.5], ['zoom'], 3, 1, 9, 1.8, 13, 3.2],
-    'circle-color': '#b9c3d4', 'circle-opacity': 0.55, 'circle-stroke-color': '#06080e', 'circle-stroke-width': 0.4 } });
-  map.addLayer({ id: 'stas-label', type: 'symbol', source: 'stas', minzoom: 9.5, layout: {
-    'text-field': ['get', 'station'], 'text-size': ['interpolate', ['linear'], ['zoom'], 9.5, 9.5, 14, 13],
-    'text-font': ['Noto Sans Regular'], 'text-offset': [0, 0.85], 'text-anchor': 'top', 'text-allow-overlap': false, 'text-optional': true },
-    paint: { 'text-color': '#a7b4ca', 'text-halo-color': 'rgba(6,8,14,0.9)', 'text-halo-width': 1.3 } });
-  map.addLayer(trainShaderLayer, 'stas-label');
-  // 高亮层
-  map.addSource('hl', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
-  map.addLayer({ id: 'hl-line', type: 'line', source: 'hl', layout: { 'line-cap': 'round' }, paint: {
-    'line-color': ['get', 'color'], 'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 2, 2, 9, 4.5, 14, 8],
-    'line-opacity': 0.28, 'line-blur': 1.5 } });
-  map.addLayer({ id: 'hl-core', type: 'line', source: 'hl', layout: { 'line-cap': 'round' }, paint: {
-    'line-color': ['get', 'color'], 'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 2, 1, 9, 2.2, 14, 4],
-    'line-opacity': 0.98 } });
-  map.addSource('hl-sta', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
-  map.addLayer({ id: 'hl-sta', type: 'circle', source: 'hl-sta', paint: {
-    'circle-radius': ['interpolate', ['exponential', 1.5], ['zoom'], 3, 7, 10, 10, 14, 14],
-    'circle-color': '#ffffff', 'circle-opacity': 0.25, 'circle-stroke-color': '#6ee7f7', 'circle-stroke-width': 2 } });
+  if (!map.getSource('stas')) {
+    map.addSource('stas', { type: 'geojson', data: staFC });
+    map.addLayer({ id: 'stas', type: 'circle', source: 'stas', paint: {
+      'circle-radius': ['interpolate', ['exponential', 1.5], ['zoom'], 3, 1, 9, 1.8, 13, 3.2],
+      'circle-color': '#b9c3d4', 'circle-opacity': 0.55, 'circle-stroke-color': '#06080e', 'circle-stroke-width': 0.4 } });
+    map.addLayer({ id: 'stas-label', type: 'symbol', source: 'stas', minzoom: 9.5, layout: {
+      'text-field': ['get', 'station'], 'text-size': ['interpolate', ['linear'], ['zoom'], 9.5, 9.5, 14, 13],
+      'text-font': ['Noto Sans Regular'], 'text-offset': [0, 0.85], 'text-anchor': 'top', 'text-allow-overlap': false, 'text-optional': true },
+      paint: { 'text-color': '#a7b4ca', 'text-halo-color': 'rgba(6,8,14,0.9)', 'text-halo-width': 1.3 } });
+    map.addLayer(trainShaderLayer, 'stas-label');
+  }
+  // 高亮层(仅首次创建,避免每帧重复 addSource/addLayer)
+  if (!map.getSource('hl')) {
+    map.addSource('hl', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+    map.addLayer({ id: 'hl-line', type: 'line', source: 'hl', layout: { 'line-cap': 'round' }, paint: {
+      'line-color': ['get', 'color'], 'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 2, 2, 9, 4.5, 14, 8],
+      'line-opacity': 0.28, 'line-blur': 1.5 } });
+    map.addLayer({ id: 'hl-core', type: 'line', source: 'hl', layout: { 'line-cap': 'round' }, paint: {
+      'line-color': ['get', 'color'], 'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 2, 1, 9, 2.2, 14, 4],
+      'line-opacity': 0.98 } });
+  }
+  if (!map.getSource('hl-sta')) {
+    map.addSource('hl-sta', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+    map.addLayer({ id: 'hl-sta', type: 'circle', source: 'hl-sta', paint: {
+      'circle-radius': ['interpolate', ['exponential', 1.5], ['zoom'], 3, 7, 10, 10, 14, 14],
+      'circle-color': '#ffffff', 'circle-opacity': 0.25, 'circle-stroke-color': '#6ee7f7', 'circle-stroke-width': 2 } });
+  }
 }
 
 /* ---------------- 渲染循环 ---------------- */

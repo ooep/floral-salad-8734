@@ -45,11 +45,15 @@ jobs:
       - name: Build local train files
         run: python3 scripts/build_trains.py --src data/timetables --out data/live
 
+      - name: Sync Mini JapanRail 3D data + contract verify
+        # 契约校验不通过则 exit 1 → 后续 commit/部署中止,旧数据保持,页面不受影响
+        run: python3 scripts/sync_mini_3d.py
+
       - name: Commit refreshed data
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A data/timetables data/live
+          git add -A data/timetables data/live mini-japanrail-3d/data
           if git diff --cached --quiet; then
             echo "no data change"
           else

@@ -69,7 +69,9 @@ def decode_stops(train):
     schs = train.get("schs") or []
     if not schs:
         return []
-    N = (len(schs) + 1) // 2
+    # schs 长度 = 2N-2(N=站数); (L+1)//2 对偶数 L 恒少 1 站 → 全量构建后 s 长度
+    # 与页面 2N-2 校验不符,3D 页所有列车会被跳过。正确 N = L//2 + 1
+    N = len(schs) // 2 + 1
     dep0 = schs[0]
     stops = [{"arr": None, "dep": dep0}]
     for i in range(1, N):

@@ -708,6 +708,65 @@ function bfsRaw(A, B, lineFilter) {
   }
   return coords;
 }
+/* 全网搭桥:本线集合 BFS 失败后的 A* 兜底——在全部真实轨道邻接上找一条
+   路程 ≤ 直线距离 1.6 倍 + 3km 的连续路径(填充几何数据洞,
+   如東海道新幹線静岡区间沿平行的東海道本線走,不再直线飞越伊豆半岛) */
+const bridgeMemo = new Map();
+function geoKm(a, b) {
+  return Math.hypot((b[0]-a[0]) * Math.cos((a[1]+b[1])/2 * Math.PI/180) * 111.32, (b[1]-a[1]) * 110.57);
+}
+function bridgePath(A, B) {
+  const key = A + '|' + B;
+  if (bridgeMemo.has(key)) return bridgeMemo.get(key);
+  const r = bridgePathRaw(A, B);
+  if (bridgeMemo.size > 20000) bridgeMemo.clear();
+  bridgeMemo.set(key, r);
+  return r;
+}
+function bridgePathRaw(A, B) {
+  if (!adj.has(A) || !adj.has(B)) return null;
+  const ca = stationCoord.get(A), cb = stationCoord.get(B);
+  if (!ca || !cb) return null;
+  const straight = geoKm(ca, cb);
+  if (straight < 0.1) return null;
+  const cap = straight * 1.6 + 3;
+  const h = n => { const c = stationCoord.get(n); return c ? geoKm(c, cb) : 0; };
+  const best = new Map([[A, 0]]);
+  const prev = new Map();
+  const pq = new Heap();
+  pq.push([h(A), 0, A]);
+  let pops = 0;
+  while (pq.size) {
+    const [, g, cur] = pq.pop();
+    if (g > (best.get(cur) ?? 1e18)) continue;
+    if (cur === B) {
+      const stops = [B]; let c = B;
+      while (c !== A) { c = prev.get(c); stops.push(c); }
+      stops.reverse();
+      const coords = [];
+      for (let j = 0; j < stops.length - 1; j++) {
+        const e = segIndex.get(stops[j] + '|' + stops[j+1]);
+        if (!e) return null;
+        const co = e[0].coords;
+        if (j === 0) coords.push(...co); else coords.push(...co.slice(1));
+      }
+      return coords;
+    }
+    if (++pops > 4000) return null;
+    for (const nb of adj.get(cur)) {
+      if (nb === cur) continue;
+      const e = segIndex.get(cur + '|' + nb);
+      if (!e) continue;
+      const ng = g + (e[0].len || 0.1);
+      if (ng > cap) continue;
+      if (ng < (best.get(nb) ?? 1e18) - 1e-9) {
+        best.set(nb, ng); prev.set(nb, cur);
+        pq.push([ng + h(nb), ng, nb]);
+      }
+    }
+  }
+  return null;
+}
 /* 主入口:返回 [lng, lat, heading(rad), lineName, kind, kmh] 或 null */
 const _pos = [0, 0, 0, '', '', 0];
 function trainPosition(t, M) {
@@ -740,7 +799,7 @@ function trainPosition(t, M) {
   let coords = null, cum = null, len = 0, line = '', kind = '';
   if (segEntry) { coords = segEntry.coords; cum = segEntry.cum; len = segEntry.len; line = segEntry.line; kind = segEntry.kind; }
   if (!coords) {
-    const path = findPathOnLines(A, B, t.lineSet || (t.lineSet = new Set(t.lines)));
+    const path = findPathOnLines(A, B, t.lineSet || (t.lineSet = new Set(t.lines))) || bridgePath(A, B);
     if (path) {
       let L = 0; const c2 = new Float64Array(path.length);
       for (let k = 1; k < path.length; k++) {
@@ -814,7 +873,8 @@ function pickSeg(t, A, B, prev) {
     let best = arr[0], bd = 1e18;
     for (const e of arr) {
       const c0 = e.coords[0];
-      const d = (c0[0]-prev[0]) * Math.cos((c0[1]+prev[1])/2 * Math.PI/180) ** 2 + (c0[1]-prev[1]) ** 2;
+      const dx = (c0[0]-prev[0]) * Math.cos((c0[1]+prev[1])/2 * Math.PI/180), dy = c0[1]-prev[1];
+      const d = dx*dx + dy*dy; // 平方欧氏距离(旧式 dx 漏平方,经向权重失真)
       if (d < bd) { bd = d; best = e; }
     }
     return best;
@@ -1001,7 +1061,7 @@ function updateTrains(M) {
     const lng = p[0], lat = p[1];
     const mx = (lng + 180) / 360;
     const my = (1 - Math.log(Math.tan(Math.PI/4 + lat * Math.PI/360)) / Math.PI) / 2;
-    let dxm = Math.sin(p[2]) * eps, dym = Math.cos(p[2]) * eps;
+    let dxm = Math.sin(p[2]) * eps, dym = -Math.cos(p[2]) * eps; // mercator y 向南为正,北上取负
     if (p[5] === 0 && p[2] === 0) { dxm = eps; dym = 0; }
     let o = n * 6 * STRIDE;
     for (let q = 0; q < 6; q++) {
@@ -1272,9 +1332,12 @@ function pickTrain(px, py, radius) {
 }
 function onMapClick(e) {
   if (!dataReady || !liveOn) return;
-  const t = pickTrain(e.point.x, e.point.y, 14);
+  const px = (e.offsetX !== undefined ? e.offsetX : e.point && e.point.x);
+  const py = (e.offsetY !== undefined ? e.offsetY : e.point && e.point.y);
+  const t = pickTrain(px, py, 14);
   if (t) { showTrainDetail(t); return; }
-  const feats = map.queryRenderedFeatures(e.point, { layers: ['stas'] });
+  const pt = (e.offsetX !== undefined) ? [px, py] : e.point;
+  const feats = map.queryRenderedFeatures(pt, { layers: ['stas'] });
   if (feats.length) { showStationDetail(feats[0].properties.station); return; }
   // 空白
   stopFollow();
@@ -1685,7 +1748,7 @@ window.__probe = (lineFilter, limit) => {
     let i = 0;
     while (i < t.N - 2 && M2 > t.arr[i+1]) i++;
     const e = pickSeg(t, t.jasN[i], t.jasN[i + 1], t.stopC[i]);
-    out.push({ trip: t.t, line: p[3], devM: e ? Math.round(distToPoly(p, e)) : -1, kmh: Math.round(p[5]), from: t.jas[i], to: t.jas[i + 1] });
+    out.push({ trip: t.t, line: p[3], devM: e ? Math.round(distToPoly(p, e)) : -1, kmh: Math.round(p[5]), from: t.jas[i], to: t.jas[i + 1], x: p[0], y: p[1] });
     if (out.length >= (limit || 50)) break;
   }
   return out;

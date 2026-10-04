@@ -1370,14 +1370,20 @@ in vec2 v_uv; flat in vec2 v_h; in vec4 v_color; in float v_glow;
 out vec4 fragColor;
 float sdBox(vec2 p, vec2 b) { vec2 q = abs(p) - b; return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0); }
 void main() {
-  float d = sdBox(v_uv, v_h); // 尖角矩形(四角尖尖的长条盒)
   float a;
-  if (v_glow > 0.5) {
-    // 光晕:只在车体轮廓外,向外淡出
-    float outer = max(v_h.x, v_h.y) * 1.5;
-    a = 0.30 * smoothstep(0.0, 2.0, d) * (1.0 - smoothstep(outer * 0.55, outer, d));
+  if (v_glow > 1.5) {
+    // 侧面墙:四边形本身即墙面(sdBox 会把它判成盒轮廓边缘 → alpha 仅 0.1 近透明),
+    // 直出暗色,构成立体盒侧壁
+    a = 1.0;
   } else {
-    a = v_color.a * (1.0 - smoothstep(-0.8, 0.2, d));
+    float d = sdBox(v_uv, v_h); // 尖角矩形(四角尖尖的长条盒)
+    if (v_glow > 0.5) {
+      // 光晕:只在车体轮廓外,向外淡出
+      float outer = max(v_h.x, v_h.y) * 1.5;
+      a = 0.30 * smoothstep(0.0, 2.0, d) * (1.0 - smoothstep(outer * 0.55, outer, d));
+    } else {
+      a = v_color.a * (1.0 - smoothstep(-0.8, 0.2, d));
+    }
   }
   if (a < 0.004) discard;
   fragColor = vec4(v_color.rgb * a, a);
@@ -1465,7 +1471,7 @@ function hexToRgb(hex) {
 let trainSizeMul = 1;
 const visibleTrips = [], visibleXY = new Float32Array(MAXT * 2);
 function updateTrains(M) {
-  let n = 0;
+  let n = 0, vtx = 0; // vtx:总顶点数(俯视 6/列车,倾斜 36/列车 + 光晕 6/个)
   visibleTrips.length = 0;
   const z = map.getZoom();
   let L, W;
@@ -1536,7 +1542,7 @@ function updateTrains(M) {
           bufArr[o++] = dxm; bufArr[o++] = dym;
           bufArr[o++] = cx * L; bufArr[o++] = cy * W;
           bufArr[o++] = r * 0.72; bufArr[o++] = g * 0.72; bufArr[o++] = b * 0.72; bufArr[o++] = 1;
-          bufArr[o++] = 0; bufArr[o++] = h;
+          bufArr[o++] = 2; bufArr[o++] = h; // glow=2 标记侧面(直出暗色)
         }
       }
     }

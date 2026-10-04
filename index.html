@@ -1916,13 +1916,17 @@ document.addEventListener('click', () => { if (aboutOpen) setAboutOpen(false); }
         adj = new Map(); edgeCoords = new Map(); edgeLine = new Map(); pathMemo = new Map();
         allFeats.forEach(f => {
             const p = f.properties;
+            // MultiLineString 归一化为单条线（约 32/4729 段为分片几何）
+            const coords = f.geometry.type === 'MultiLineString'
+                ? f.geometry.coordinates.reduce((a, l) => a.concat(l), [])
+                : f.geometry.coordinates;
             const k1 = p.from + '|' + p.to, k2 = p.to + '|' + p.from;
             if (!segIndex.has(k1)) segIndex.set(k1, []);
             if (!segIndex.has(k2)) segIndex.set(k2, []);
-            segIndex.get(k1).push(f.geometry.coordinates);
-            segIndex.get(k2).push(f.geometry.coordinates.slice().reverse());
-            edgeCoords.set(k1, f.geometry.coordinates);
-            edgeCoords.set(k2, f.geometry.coordinates.slice().reverse());
+            segIndex.get(k1).push(coords);
+            segIndex.get(k2).push(coords.slice().reverse());
+            edgeCoords.set(k1, coords);
+            edgeCoords.set(k2, coords.slice().reverse());
             edgeLine.set(k1, p.line || ''); edgeLine.set(k2, p.line || '');
             if (!adj.has(p.from)) adj.set(p.from, new Set());
             if (!adj.has(p.to)) adj.set(p.to, new Set());

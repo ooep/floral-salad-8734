@@ -20,16 +20,21 @@ tmaps = L("data/live/tmaps.json")
 
 stationCoord = {f["properties"]["station"]: f["geometry"]["coordinates"] for f in stas}
 adj, edgeCoords, edgeLine, segIndex = {}, {}, {}, {}
+def norm(c):
+    return c[0] if f["geometry"]["type"] == "MultiLineString" else c
 for f in segs:
     p = f["properties"]
+    c = f["geometry"]["coordinates"]
+    if f["geometry"]["type"] == "MultiLineString":
+        c = [pt for line in c for pt in line]
     adj.setdefault(p["from"], set()).add(p["to"])
     adj.setdefault(p["to"], set()).add(p["from"])
-    edgeCoords[p["from"] + "|" + p["to"]] = f["geometry"]["coordinates"]
-    edgeCoords[p["to"] + "|" + p["from"]] = f["geometry"]["coordinates"][::-1]
+    edgeCoords[p["from"] + "|" + p["to"]] = c
+    edgeCoords[p["to"] + "|" + p["from"]] = c[::-1]
     edgeLine[p["from"] + "|" + p["to"]] = p.get("line", "")
     edgeLine[p["to"] + "|" + p["from"]] = p.get("line", "")
-    segIndex.setdefault(p["from"] + "|" + p["to"], []).append(f["geometry"]["coordinates"])
-    segIndex.setdefault(p["to"] + "|" + p["from"], []).append(f["geometry"]["coordinates"][::-1])
+    segIndex.setdefault(p["from"] + "|" + p["to"], []).append(c)
+    segIndex.setdefault(p["to"] + "|" + p["from"], []).append(c[::-1])
 
 pathMemo = {}
 def pointAlong(coords, frac):

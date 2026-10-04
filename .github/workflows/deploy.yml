@@ -1,0 +1,89 @@
+name: Build & deploy site
+
+# 每日一次：刷新 tmap 归属缓存(按需)、抓最新实时快照、提交数据，
+# 并部署到 GitHub Pages + Cloudflare Pages(如配置 CF_API_TOKEN)。
+# GitHub Pages: Actions 方式部署(仓库 Settings→Pages→Source: GitHub Actions)。
+# Cloudflare Pages: 项目 floral-salad-8734，仓库需配置 Secret: CF_API_TOKEN。
+
+on:
+  schedule:
+    - cron: '30 2 * * *'   # 02:30 UTC = 11:30 JST
+  workflow_dispatch:
+    inputs:
+      force_tmaps:
+        description: '强制重建 tmap 归属缓存（全量，约23分钟）'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Build tmap attribution cache
+        if: ${{ !github.event.inputs.force_tmaps }}
+        run: python3 scripts/railaround_build_tmaps.py --skip-if-cached
+
+      - name: Force rebuild tmap attribution cache
+        if: ${{ github.event.inputs.force_tmaps }}
+        run: python3 scripts/railaround_build_tmaps.py
+
+      - name: Fetch fresh live snapshot
+        run: python3 scripts/fetch_live.py
+
+      - name: Commit data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A data/live
+          if git diff --cached --quiet; then
+            echo "no data change"
+          else
+            git commit -m "chore(data): refresh live caches $(date -u +%Y-%m-%d)"
+            git push
+          fi
+
+      - name: Prepare deploy dir
+        run: |
+          rm -rf dist && mkdir -p dist/data
+          cp index.html favicon.png dist/
+          cp -r data/segments.geojson data/stations.geojson data/names_en.json dist/data/
+          cp -r data/live dist/data/
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Deploy to Cloudflare Pages
+        if: ${{ env.CF_API_TOKEN != '' }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+        run: |
+          npx wrangler@4 pages deploy dist --project-name floral-salad-8734 --branch main --commit-dirty=true

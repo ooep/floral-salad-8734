@@ -1,0 +1,5 @@
+.DS_Store
+*.log
+.secrets/
+__MACOSX/
+__pycache__/

@@ -1,0 +1,45 @@
+name: Rail timetable full refresh
+
+on:
+  schedule:
+    # 每周日 03:00 UTC 全量刷新时刻表（约 577 线 × 3 请求 ≈ 65 分钟，单线程节流）
+    - cron: '0 3 * * 0'
+  workflow_dispatch:
+    inputs:
+      only:
+        description: '只刷新单条线路名（留空 = 全量）'
+        type: string
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  timetable:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Fetch all timetables (throttled 2.2s/request)
+        run: python scripts/fetch_timetables.py --only "${{ github.event.inputs.only }}"
+
+      - name: Commit updated timetables
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A data/timetables
+          if git diff --cached --quiet; then
+            echo "timetables unchanged; skip commit"
+          else
+            git commit -m "chore(data): refresh full timetables $(date -u +%Y-%m-%d)"
+            git push
+          fi

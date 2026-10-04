@@ -162,57 +162,6 @@ button { font-family:inherit; }
   #side { width:calc(100vw - 20px); }
   #status { display:none; }
 }
-/* ============ 车站底部抽屉(时刻表) ============ */
-#sheetMask { position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:20; display:none; }
-#sheet { position:fixed; left:50%; bottom:0; transform:translate(-50%,102%); width:min(520px,100vw); height:76vh; background:linear-gradient(180deg,#0d1220,#080b13); border:1px solid var(--line); border-bottom:0; border-radius:20px 20px 0 0; box-shadow:0 -10px 40px rgba(0,0,0,.6); z-index:21; display:flex; flex-direction:column; transition:transform .3s cubic-bezier(.2,.8,.2,1); }
-#sheet.open { transform:translate(-50%,0); }
-#sheet .grab { width:42px; height:5px; border-radius:3px; background:rgba(150,170,200,.35); margin:8px auto 0; flex:none; }
-#sheet .sh-head { padding:10px 18px 4px; display:flex; align-items:flex-start; flex:none; }
-#sheet .sh-nm { font-size:30px; font-weight:900; line-height:1.05; }
-#sheet .sh-sub { font-size:12.5px; color:var(--dim); margin-top:4px; }
-#sheet .sh-x { margin-left:auto; flex:none; }
-#sheet .sh-tabs { display:flex; border-bottom:1px solid var(--line); flex:none; margin-top:8px; }
-#sheet .sh-tabs button { flex:1; padding:11px 0; background:none; border:0; color:var(--dim); font-size:14px; font-weight:700; cursor:pointer; border-bottom:2px solid transparent; }
-#sheet .sh-tabs button.on { color:#fff; border-bottom-color:var(--acc,#4f8ef7); }
-#sheet .sh-body { flex:1; overflow-y:auto; padding:6px 12px 24px; -webkit-overflow-scrolling:touch; }
-#sheet .grp-op { display:flex; align-items:center; gap:8px; padding:14px 4px 6px; font-size:12px; font-weight:800; color:#cfe0ff; }
-#sheet .grp-op .op-ic { min-width:22px; height:22px; padding:0 4px; border-radius:6px; background:#22a447; color:#fff; font-size:10px; font-weight:900; display:flex; align-items:center; justify-content:center; }
-.lrow { display:flex; align-items:center; gap:11px; padding:11px 12px; margin:7px 0; border:1.5px solid var(--lc,#4f8ef7); border-radius:12px; background:rgba(10,14,24,.6); cursor:pointer; user-select:none; -webkit-user-select:none; }
-.lrow .lb { width:34px; height:30px; border-radius:8px; background:#fff; color:#111; font-weight:900; font-size:14px; display:flex; align-items:center; justify-content:center; flex:none; }
-.lrow .lnm { font-size:17px; font-weight:800; color:var(--lc,#4f8ef7); flex:1; }
-.lrow .lgo { width:30px; height:30px; border-radius:9px; background:rgba(120,140,180,.18); display:flex; align-items:center; justify-content:center; font-size:12px; transition:transform .2s; flex:none; }
-.lrow.open .lgo { background:var(--lc,#4f8ef7); color:#fff; transform:rotate(90deg); }
-.lpanel { margin:2px 0 10px; border-left:3px solid var(--lc,#4f8ef7); padding:0 0 0 10px; display:none; }
-.lpanel.open { display:block; }
-.type-chips { display:flex; gap:6px; padding:6px 0 8px; flex-wrap:wrap; }
-.type-chips .tc { padding:4px 14px; border-radius:8px; font-size:13px; font-weight:800; cursor:pointer; background:rgba(120,140,180,.15); color:var(--dim); }
-.type-chips .tc.on { background:#ffcc00; color:#111; }
-.dir { margin:8px 0; border-radius:12px; overflow:hidden; border:1px solid color-mix(in srgb,var(--lc,#4f8ef7) 45%, transparent); background:color-mix(in srgb,var(--lc,#4f8ef7) 10%, transparent); }
-.dir .d-head { display:flex; align-items:center; padding:10px 12px; gap:8px; }
-.dir .d-to { font-size:15.5px; font-weight:800; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.dir .d-more { font-size:12px; color:#ffd9a0; cursor:pointer; white-space:nowrap; padding:4px 8px; border-radius:7px; background:rgba(255,255,255,.08); }
-.dir .d-more.on { background:var(--lc,#4f8ef7); color:#fff; }
-.hour-row { display:flex; align-items:stretch; background:rgba(6,9,16,.55); }
-.hour-row .hr-h { width:56px; flex:none; background:var(--lc,#e3000b); color:#fff; font-size:26px; font-weight:900; display:flex; align-items:center; justify-content:center; font-variant-numeric:tabular-nums; }
-.hour-row .hr-list { display:flex; overflow-x:auto; padding:8px 10px; flex:1; -webkit-overflow-scrolling:touch; }
-.hour-row .hr-t { flex:none; width:52px; text-align:center; align-self:center; }
-.hour-row .hr-t .dot { width:9px; height:9px; border-radius:50%; background:#9fb0c8; margin:0 auto 3px; }
-.hour-row .hr-t .m { font-size:18px; font-weight:800; color:#dfe7f2; font-variant-numeric:tabular-nums; }
-.hour-row .hr-t .d { font-size:10px; color:var(--dim); margin-top:1px; white-space:nowrap; }
-.day { display:none; border-top:1px dashed rgba(150,170,200,.25); }
-.day.open { display:block; }
-.day .dlg { font-size:11px; color:var(--dim); line-height:1.7; padding:8px 12px; }
-.day .dlg b { color:#ffcc00; }
-.dg-row { display:flex; border-bottom:1px solid rgba(120,140,180,.12); }
-.dg-row .dg-h { width:44px; flex:none; background:var(--lc,#e3000b); color:#fff; font-size:21px; font-weight:900; display:flex; align-items:center; justify-content:center; }
-.dg-row .dg-cells { display:flex; overflow-x:auto; padding:6px 8px; flex:1; -webkit-overflow-scrolling:touch; }
-.dg-cell { flex:none; min-width:44px; text-align:center; padding:4px 2px; border-radius:6px; }
-.dg-cell.rapid { background:rgba(207,18,37,.28); }
-.dg-cell.local { background:rgba(20,50,110,.35); }
-.dg-cell .m { font-size:16px; font-weight:800; color:#eef3fb; font-variant-numeric:tabular-nums; }
-.dg-cell .d { font-size:9.5px; color:#c9d6ea; margin-top:1px; white-space:nowrap; }
-.dg-cell .tag { display:block; font-size:9px; color:#ffd27a; }
-#sheet .empty { padding:30px 16px; text-align:center; color:var(--dim); font-size:13px; }
 </style>
 </head>
 <body>
@@ -311,16 +260,6 @@ button { font-family:inherit; }
 
 <div id="detail"></div>
 <div id="tip"></div>
-<div id="sheetMask"></div>
-<div id="sheet">
-  <div class="grab"></div>
-  <div class="sh-head">
-    <div><div class="sh-nm" id="shNm">駅名</div><div class="sh-sub" id="shSub"></div></div>
-    <button class="btn icon sh-x" id="shX">✕</button>
-  </div>
-  <div class="sh-tabs"><button id="tabList">列表</button><button id="tabGrid" class="on">一览</button></div>
-  <div class="sh-body" id="shBody"><div class="empty">時刻表を読込中…</div></div>
-</div>
 <div id="toast"></div>
 <div class="foot" id="footNote"></div>
 
@@ -1957,161 +1896,24 @@ function stopFollow(silent) {
   }
 }
 
-/* ---------------- 车站抽屉(时刻表) ---------------- */
-const SYM = { '京葉線':'JE','中央線':'JC','総武線':'JB','武蔵野線':'JM','東海道線':'JT','宇都宮線':'JU','高崎線':'JU','山手線':'JY','埼京線':'JA','京浜東北線':'JK','根岸線':'JK','横須賀線':'JO','湘南新宿ライン':'JS','南武線':'JN','鶴見線':'JI','相模線':'SG','八高線':'HG','青梅線':'JC','常磐線':'JJ','水戸線':'JJ','東北本線':'JU','内房線':'JE','外房線':'JE','鹿島線':'JE','成田線':'JE','東海道本線':'JT','総武本線':'JB' };
-const OP_SHORT = { '東日本旅客鉄道':'JR東日本','東海旅客鉄道':'JR東海','西日本旅客鉄道':'JR西日本','北海道旅客鉄道':'JR北海道','四国旅客鉄道':'JR四国','九州旅客鉄道':'JR九州','東京地下鉄':'東京メトロ','大阪市高速電気軌道':'Osaka Metro','名古屋市':'名古屋市地下鉄','横浜市':'横浜市地下鉄','東京都':'都営地下鉄','名古屋鉄道':'名鉄','近畿日本鉄道':'近鉄','東武鉄道':'東武','西武鉄道':'西武','京成電鉄':'京成','京王電鉄':'京王','小田急電鉄':'小田急','東急電鉄':'東急','京浜急行電鉄':'京急','南海電気鉄道':'南海','阪急電鉄':'阪急','阪神電気鉄道':'阪神','京阪電気鉄道':'京阪','山陽電気鉄道':'山陽','神戸電鉄':'神鉄','大阪市':'大阪市','東京モノレール':'東京モノレール','多摩都市モノレール':'多摩モノレール','横浜新都市交通':'シーサイドライン','大阪モノレール':'大阪モノレール','埼玉新都市交通':'ニューシャトル','北総鉄道':'北総','首都圏新都市鉄道':'つくばEXP','東京臨海高速鉄道':'りんかい' };
-function opShort(o) { return OP_SHORT[o] || o || ''; }
-function shortTerm(s) { return String(s).replace(/[（(].*?[)）]/g, '').slice(0, 2); }
-function isRapidType(tp) { return ['特','急','快','準','区','通','回'].indexOf(tp) >= 0; }
-let lineOp = null, boardCache = new Map(), sheetStation = null, sheetFlat = false;
-function buildLineOp() { if (lineOp) return; lineOp = new Map(); segFC.features.forEach(f => { const p = f.properties; if (p.line && !lineOp.has(p.line)) lineOp.set(p.line, p.op || ''); }); }
-function groupDirs(items) {
-  const arr = items.filter(r => r.idx < r.entry.length - 1);
-  const src = arr.length ? arr : items.slice();
-  if (!src.length) return [];
-  src.forEach(r => r.side = 0);
-  src[0].side = 1;
-  for (let a = 1; a < src.length; a++) {
-    let X = null;
-    for (let x = 0; x < src[0].entry.length; x++) {
-      if (x === src[0].idx) continue;
-      const j = src[a].entry.indexOf(src[0].entry[x]);
-      if (j >= 0 && j !== src[a].idx) { X = src[0].entry[x]; break; }
-    }
-    if (!X) { src[a].side = 1; continue; }
-    const ix0 = src[0].entry.indexOf(X), ixa = src[a].entry.indexOf(X);
-    const s0 = ix0 > src[0].idx ? 1 : -1, sa = ixa > src[a].idx ? 1 : -1;
-    src[a].side = (s0 === sa) ? 1 : -1;
-  }
-  const g1 = src.filter(r => r.side === 1), g2 = src.filter(r => r.side === -1);
-  return [g1, g2].filter(g => g.length).map(g => {
-    const tc = {}; g.forEach(r => tc[r.term] = (tc[r.term] || 0) + 1);
-    const terms = Object.keys(tc).sort((a, b) => tc[b] - tc[a]);
-    return { trains: g.slice().sort((a, b) => a.dep - b.dep), terms };
-  });
-}
-function buildBoard(station) {
-  const nk = normName(station);
-  if (boardCache.has(nk)) return boardCache.get(nk);
-  buildLineOp();
-  const byLine = new Map();
-  for (let k = 0; k < tripList.length; k++) {
-    const t = tripList[k];
-    if (t.bad || !(t.r & dayBit)) continue;
-    const jn = t.jasN, idx = jn.indexOf(nk);
-    if (idx < 0 || idx >= t.N - 1) continue;
-    const dep = t.dep[idx], term = t.jas[t.N - 1];
-    for (let li = 0; li < t.linesN.length; li++) {
-      const ln = t.linesN[li]; if (!ln) continue;
-      if (!byLine.has(ln)) byLine.set(ln, { name: ln, color: lineColor.get(ln) || '#888', op: lineOp.get(ln) || '', items: [] });
-      byLine.get(ln).items.push({ dep, term, type: t.i, entry: jn, idx });
-    }
-  }
-  const lines = [];
-  byLine.forEach(L => { L.dirs = groupDirs(L.items); lines.push(L); });
-  lines.sort((a, b) => (a.op || '').localeCompare(b.op || '') || a.name.localeCompare(b.name));
-  const ops = [], opMap = new Map();
-  lines.forEach(L => { if (!opMap.has(L.op)) { opMap.set(L.op, { op: L.op, lines: [] }); ops.push(opMap.get(L.op)); } opMap.get(L.op).lines.push(L); });
-  const board = { ops }; boardCache.set(nk, board); return board;
-}
-function dayGridHtml(L, d) {
-  const tc = {}; d.trains.forEach(r => tc[r.term] = (tc[r.term] || 0) + 1);
-  const def = Object.keys(tc).sort((a, b) => tc[b] - tc[a])[0] || '';
-  const byH = {};
-  d.trains.forEach(r => { const hh = Math.floor(r.dep / 60); (byH[hh] = byH[hh] || []).push(r); });
-  const hours = Object.keys(byH).map(Number).sort((a, b) => a - b);
-  let h = '<div class="day"><div class="dlg">種別：<b>快速</b> / 無印=普通<br>終点：無印=' + esc(def);
-  Object.keys(tc).forEach(t2 => { if (t2 !== def) h += ' / ' + esc(shortTerm(t2)) + '-' + esc(t2); });
-  h += '</div>';
-  hours.forEach(hh => {
-    h += '<div class="dg-row"><div class="dg-h">' + hh + '</div><div class="dg-cells">';
-    byH[hh].forEach(r => {
-      const mm = pad(Math.round(r.dep % 60));
-      const cls = isRapidType(r.type) ? 'rapid' : 'local';
-      const tag = (r.type && r.type !== '普' && r.type !== '各') ? esc(r.type) : '';
-      h += '<div class="dg-cell ' + cls + '" data-type="' + esc(r.type) + '"><span class="tag">' + tag + '</span><div class="m">' + mm + '</div><div class="d">' + (r.term === def ? '' : esc(r.term)) + '</div></div>';
-    });
-    h += '</div></div>';
-  });
-  return h + '</div>';
-}
-function dirHtml(L, d, hour) {
-  let h = '<div class="dir" style="--lc:' + L.color + '">';
-  h += '<div class="d-head"><span class="d-to">往 ' + esc(d.terms.join('、')) + '</span><span class="d-more">方向 ▸</span></div>';
-  const cur = d.trains.filter(r => Math.floor(r.dep / 60) === hour);
-  h += '<div class="hour-row"><div class="hr-h">' + hour + '</div><div class="hr-list">';
-  if (cur.length) cur.forEach(r => {
-    h += '<div class="hr-t" data-type="' + esc(r.type) + '"><span class="dot"></span><div class="m">' + pad(Math.round(r.dep % 60)) + '</div><div class="d">' + esc(r.term) + '</div></div>';
-  });
-  else h += '<div style="align-self:center;color:var(--dim);font-size:11px;padding:0 8px">この時刻の列車はありません</div>';
-  h += '</div></div>' + dayGridHtml(L, d) + '</div>';
-  return h;
-}
-function lineRowHtml(L, hour) {
-  const sym = SYM[L.name] || '';
-  let h = '<div class="lrow" style="--lc:' + L.color + '"><span class="lb">' + (sym ? esc(sym) : '●') + '</span><span class="lnm">' + esc(L.name) + '</span><span class="lgo">▶</span></div>';
-  h += '<div class="lpanel" style="--lc:' + L.color + '">';
-  const types = {}; L.dirs.forEach(d => d.trains.forEach(r => types[r.type] = 1));
-  h += '<div class="type-chips">';
-  Object.keys(types).sort().forEach(tp => h += '<span class="tc on" data-type="' + esc(tp) + '">' + esc(tp || '普') + '</span>');
-  h += '</div>';
-  L.dirs.forEach(d => h += dirHtml(L, d, hour));
-  return h + '</div>';
-}
-function renderStationBody() {
-  if (!sheetStation) return;
-  const board = buildBoard(sheetStation);
-  $('shSub').textContent = board.ops.map(o => opShort(o.op)).join(' · ');
-  const M = curMin(), hour = Math.floor(((M % 1440) + 1440) % 1440 / 60);
-  let html = '';
-  const groups = sheetFlat ? [{ op: '', lines: board.ops.reduce((a, o) => a.concat(o.lines), []) }] : board.ops;
-  groups.forEach(g => {
-    if (!g.lines.length) return;
-    if (!sheetFlat) html += '<div class="grp-op"><span class="op-ic">' + esc(opShort(g.op).slice(0, 2)) + '</span>' + esc(opShort(g.op)) + '</div>';
-    g.lines.forEach(L => html += lineRowHtml(L, hour));
-  });
-  $('shBody').innerHTML = html || '<div class="empty">この駅の時刻データがありません</div>';
-  bindSheet();
-}
-function bindSheet() {
-  document.querySelectorAll('#shBody .lrow').forEach(row => {
-    row.onclick = () => { row.classList.toggle('open'); row.nextElementSibling.classList.toggle('open'); };
-  });
-  document.querySelectorAll('#shBody .d-more').forEach(m => {
-    m.onclick = e => {
-      e.stopPropagation(); m.classList.toggle('on');
-      const day = m.closest('.dir').querySelector('.day');
-      if (day) day.classList.toggle('open');
-      m.textContent = m.classList.contains('on') ? '方向 ▾' : '方向 ▸';
-    };
-  });
-  document.querySelectorAll('#shBody .type-chips .tc').forEach(c => {
-    c.onclick = () => {
-      c.classList.toggle('on');
-      const panel = c.closest('.lpanel'), on = new Set();
-      panel.querySelectorAll('.tc.on').forEach(x => on.add(x.getAttribute('data-type')));
-      panel.querySelectorAll('.hr-t, .dg-cell').forEach(cell => { cell.style.display = on.has(cell.getAttribute('data-type')) ? '' : 'none'; });
-    };
-  });
-}
-function closeSheet() { $('sheet').classList.remove('open'); $('sheetMask').style.display = 'none'; }
+/* ---------------- 车站详情 ---------------- */
 function showStationDetail(name) {
-  const c = stationCoord.get(normName(name));
-  if (c) setHighlight([], c);
-  sheetStation = name; sheetFlat = false;
-  $('shNm').textContent = name;
-  document.getElementById('tabList').classList.remove('on');
-  document.getElementById('tabGrid').classList.add('on');
-  $('sheet').classList.add('open');
-  $('sheetMask').style.display = 'block';
-  detailEl.style.display = 'none';
-  if (tripList && tripList.length) renderStationBody();
-  if (c) map.flyTo({ center: c, zoom: Math.max(map.getZoom(), 12), pitch: Math.min(map.getPitch(), 55), duration: 1200 });
+  const nk = normName(name);
+  const lines = Array.from(stationLines.get(nk) || []);
+  const c = stationCoord.get(nk);
+  detailEl.style.display = 'block';
+  detailEl.dataset.tid = 'sta' + name;
+  detailEl.innerHTML =
+    '<div class="d-h"><span class="d-ic" style="color:#6ee7f7;background:rgba(110,231,247,.15)">🚉</span>' +
+    '<div class="d-t"><div class="d-nm">' + name + '</div><div class="d-sb">' + T().station + ' · ' + lines.length + ' ' + T().line + '</div></div>' +
+    '<button class="btn icon d-x" id="dClose">✕</button></div>' +
+    '<div class="d-meta" style="display:flex;flex-wrap:wrap;gap:4px">' +
+    lines.slice(0, 14).map(l => '<span class="lnchip" data-ln="' + l + '" style="background:' + (lineColor.get(l) || '#888') + ';cursor:pointer">' + l + '</span>').join('') +
+    (lines.length > 14 ? '<span style="color:var(--dim);font-size:10.5px">+' + (lines.length - 14) + '</span>' : '') + '</div>';
+  $('dClose').onclick = () => { detailEl.style.display = 'none'; clearHighlight(); };
+  detailEl.querySelectorAll('[data-ln]').forEach(el => el.addEventListener('click', () => highlightLine(el.dataset.ln)));
+  if (c) map.flyTo({ center: c, zoom: Math.max(map.getZoom(), 11), pitch: Math.min(map.getPitch(), 50), duration: 1000 });
 }
-document.getElementById('shX').addEventListener('click', closeSheet);
-document.getElementById('sheetMask').addEventListener('click', closeSheet);
-document.getElementById('tabGrid').addEventListener('click', function () { sheetFlat = false; this.classList.add('on'); document.getElementById('tabList').classList.remove('on'); renderStationBody(); });
-document.getElementById('tabList').addEventListener('click', function () { sheetFlat = true; this.classList.add('on'); document.getElementById('tabGrid').classList.remove('on'); renderStationBody(); });
 
 /* ---------------- 搜索 ---------------- */
 let sugTimer = 0;

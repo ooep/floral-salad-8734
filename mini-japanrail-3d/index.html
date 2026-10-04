@@ -3,120 +3,261 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Mini JapanRail 3D — 全日本铁路实时运行</title>
+<title>Mini JapanRail 3D — 全日本铁路实时运行地图</title>
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.9.0/dist/maplibre-gl.css">
 <style>
-  :root { --bg:#07090f; --panel:rgba(12,16,26,.88); --line:#1e2634; --txt:#cfd6e4; --dim:#7d8798; --accent:#4f8ef7; }
+  :root {
+    --bg:#06080e; --panel:rgba(13,17,27,.82); --panel2:rgba(20,26,40,.92);
+    --line:rgba(120,140,180,.18); --txt:#d7dee9; --dim:#7f8ba0; --acc:#4f8ef7; --acc2:#6ee7f7;
+    --shadow:0 8px 32px rgba(0,0,0,.55); --r:14px;
+  }
   * { margin:0; padding:0; box-sizing:border-box; }
-  html,body { width:100%; height:100%; overflow:hidden; background:var(--bg); font-family:-apple-system,"SF Pro SC","PingFang SC","Hiragino Sans GB","Noto Sans CJK SC",sans-serif; color:var(--txt); }
+  html,body { width:100%; height:100%; overflow:hidden; background:var(--bg); font-family:-apple-system,"SF Pro SC","PingFang SC","Hiragino Sans GB","Noto Sans CJK SC","Yu Gothic UI",sans-serif; color:var(--txt); -webkit-tap-highlight-color:transparent; }
   #map { position:absolute; inset:0; }
-  #hud { position:absolute; top:0; left:0; right:0; padding:8px 10px 6px; display:flex; align-items:center; gap:8px; background:linear-gradient(rgba(7,9,15,.92),rgba(7,9,15,0)); z-index:5; pointer-events:none; }
-  #hud .brand { font-size:13px; font-weight:700; letter-spacing:.5px; white-space:nowrap; }
-  #hud .brand b { color:var(--accent); }
-  #hud .st { font-size:11px; color:var(--dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1; text-align:right; }
-  #ctrls { position:absolute; top:44px; right:10px; display:flex; flex-direction:column; gap:8px; z-index:6; align-items:flex-end; }
-  .btn { min-width:46px; min-height:42px; padding:0 13px; border:1px solid var(--line); border-radius:9px; background:var(--panel); color:var(--txt); font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px; backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); user-select:none; -webkit-user-select:none; }
-  .btn.on { background:rgba(79,142,247,.22); border-color:var(--accent); color:#fff; }
-  .grp { display:flex; flex-direction:column; gap:3px; border:1px solid var(--line); border-radius:9px; background:var(--panel); padding:4px 4px; backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); }
-  .grp .row { display:flex; align-items:center; gap:4px; flex-wrap:wrap; }
-  .grp .lab { font-size:10px; color:var(--dim); padding:0 4px; }
-  .grp .btn { border:0; border-radius:7px; background:transparent; min-height:30px; min-width:34px; padding:0 9px; font-size:11px; }
-  .grp .btn.on { background:rgba(79,142,247,.22); color:#fff; }
-  #tip { position:absolute; display:none; pointer-events:none; z-index:7; max-width:230px; padding:7px 10px; border-radius:8px; background:var(--panel); border:1px solid var(--line); font-size:11px; line-height:1.5; backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); box-shadow:0 4px 14px rgba(0,0,0,.5); }
-  #tip .ln { font-weight:600; }
-  #tip .sg { color:var(--dim); }
-  .foot { position:absolute; bottom:8px; left:10px; font-size:10px; color:var(--dim); z-index:5; pointer-events:none; text-shadow:0 1px 3px #000; max-width:70%; }
+  ::-webkit-scrollbar { width:6px; } ::-webkit-scrollbar-thumb { background:rgba(120,140,180,.3); border-radius:3px; }
+  /* ---------- 顶栏 ---------- */
+  #hud { position:absolute; top:0; left:0; right:0; padding:10px 12px 8px; display:flex; align-items:center; gap:10px; background:linear-gradient(rgba(6,8,14,.92),rgba(6,8,14,.4),rgba(6,8,14,0)); z-index:5; pointer-events:none; }
+  #hud .brand { font-size:14px; font-weight:800; letter-spacing:.4px; display:flex; align-items:center; gap:7px; text-shadow:0 1px 6px rgba(0,0,0,.6); }
+  #hud .brand .lg { width:26px; height:26px; border-radius:8px; background:linear-gradient(135deg,var(--acc),var(--acc2)); display:flex; align-items:center; justify-content:center; font-size:14px; box-shadow:0 0 14px rgba(79,142,247,.5); }
+  #hud .brand b { background:linear-gradient(90deg,#8fc1ff,#6ee7f7); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+  #hud .st { font-size:11px; color:var(--dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1; text-align:right; text-shadow:0 1px 4px rgba(0,0,0,.8); }
+  /* ---------- 右侧按钮组 ---------- */
+  #topr { position:absolute; top:46px; right:10px; display:flex; flex-direction:column; gap:8px; z-index:7; align-items:flex-end; }
+  .btn { min-width:46px; min-height:44px; padding:0 14px; border:1px solid var(--line); border-radius:12px; background:var(--panel); color:var(--txt); font-size:12px; font-weight:600; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); box-shadow:var(--shadow); user-select:none; -webkit-user-select:none; transition:all .15s; }
+  .btn:hover { border-color:var(--acc); background:rgba(79,142,247,.14); }
+  .btn:active { transform:scale(.97); }
+  .btn.on { background:rgba(79,142,247,.25); border-color:var(--acc); color:#fff; box-shadow:0 0 18px rgba(79,142,247,.35); }
+  .btn.icon { padding:0; width:44px; }
+  /* ---------- 左侧面板 ---------- */
+  #side { position:absolute; top:58px; left:10px; width:min(332px,calc(100vw - 20px)); max-height:calc(100vh - 150px); display:flex; flex-direction:column; background:var(--panel); border:1px solid var(--line); border-radius:var(--r); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); box-shadow:var(--shadow); z-index:6; overflow:hidden auto; transition:transform .25s ease, opacity .25s; }
+  #side.collapsed { transform:translateX(calc(-100% - 24px)); opacity:0; pointer-events:none; }
+  #side .sec { padding:10px 12px; border-top:1px solid var(--line); }
+  #side .sec:first-child { border-top:0; }
+  #side .sec-t { font-size:10.5px; font-weight:700; letter-spacing:1.2px; color:var(--dim); text-transform:uppercase; margin-bottom:8px; display:flex; align-items:center; gap:6px; }
+  #side .sec-t::after { content:''; flex:1; height:1px; background:linear-gradient(90deg,var(--line),transparent); }
+  /* 搜索 */
+  #search { width:100%; min-height:40px; padding:0 12px; border:1px solid var(--line); border-radius:10px; background:rgba(6,8,14,.6); color:var(--txt); font-size:13px; outline:none; transition:border-color .15s; }
+  #search:focus { border-color:var(--acc); }
+  #sug { margin-top:6px; max-height:180px; overflow-y:auto; display:none; border:1px solid var(--line); border-radius:10px; background:var(--panel2); }
+  #sug .sug-it { padding:8px 11px; font-size:12px; cursor:pointer; display:flex; justify-content:space-between; gap:8px; }
+  #sug .sug-it:hover { background:rgba(79,142,247,.16); }
+  #sug .sug-it .k { color:var(--dim); font-size:10px; align-self:center; }
+  #sug .sug-it .hl { color:var(--acc2); }
+  /* 过滤 */
+  .frow { display:flex; flex-wrap:wrap; gap:5px; }
+  .chip { padding:4px 10px; border-radius:16px; border:1px solid var(--line); font-size:11px; cursor:pointer; color:var(--dim); background:transparent; transition:all .15s; }
+  .chip.on { background:rgba(79,142,247,.22); border-color:var(--acc); color:#fff; }
+  /* 图例 */
+  .leg { display:flex; align-items:center; gap:8px; font-size:11.5px; padding:2.5px 0; }
+  .leg .dot { width:10px; height:10px; border-radius:50%; box-shadow:0 0 8px currentColor; }
+  .leg .bar { width:18px; height:4px; border-radius:2px; box-shadow:0 0 6px currentColor; }
+  .leg .nm { color:var(--txt); } .leg .ds { color:var(--dim); font-size:10px; margin-left:auto; }
+  /* 开关行 */
+  .sw { display:flex; align-items:center; justify-content:space-between; padding:5px 0; font-size:12px; cursor:pointer; }
+  .sw .trk { width:38px; height:22px; border-radius:11px; background:rgba(120,140,180,.25); position:relative; transition:background .2s; flex:none; }
+  .sw .trk::after { content:''; position:absolute; top:2px; left:2px; width:18px; height:18px; border-radius:50%; background:#cfd6e4; transition:all .2s; }
+  .sw.on .trk { background:var(--acc); } .sw.on .trk::after { left:18px; background:#fff; }
+  /* 数据/帮助 */
+  .data-row { display:flex; justify-content:space-between; font-size:11px; color:var(--dim); padding:2px 0; }
+  .data-row b { color:var(--txt); font-weight:600; }
+  .help p { font-size:11.5px; color:var(--dim); line-height:1.7; }
+  /* ---------- 底部时钟条 ---------- */
+  #clock { position:absolute; bottom:12px; left:50%; transform:translateX(-50%); width:min(560px,calc(100vw - 20px)); background:var(--panel); border:1px solid var(--line); border-radius:var(--r); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); box-shadow:var(--shadow); z-index:7; padding:9px 14px 11px; display:none; }
+  #clock .r1 { display:flex; align-items:center; gap:8px; }
+  #clock .r1 .t { font-size:20px; font-weight:800; font-variant-numeric:tabular-nums; letter-spacing:1px; }
+  #clock .r1 .t .ampm { font-size:11px; color:var(--dim); font-weight:600; }
+  #clock .r1 .sp { margin-left:auto; display:flex; gap:4px; }
+  #clock .spb { padding:3px 9px; border-radius:8px; border:1px solid var(--line); font-size:11px; cursor:pointer; color:var(--dim); background:transparent; }
+  #clock .spb.on { background:rgba(79,142,247,.22); color:#fff; border-color:var(--acc); }
+  #clock .r2 { display:flex; align-items:center; gap:8px; margin-top:6px; }
+  #clock input[type=range] { flex:1; -webkit-appearance:none; appearance:none; height:4px; border-radius:2px; background:rgba(120,140,180,.3); outline:none; }
+  #clock input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:16px; height:16px; border-radius:50%; background:var(--acc); border:3px solid #0b1020; box-shadow:0 0 10px rgba(79,142,247,.6); cursor:pointer; }
+  #clock .now { font-size:11px; color:var(--acc); cursor:pointer; font-weight:600; white-space:nowrap; }
+  /* ---------- 详情卡 ---------- */
+  #detail { position:absolute; bottom:84px; left:50%; transform:translateX(-50%); width:min(400px,calc(100vw - 24px)); background:var(--panel); border:1px solid var(--line); border-radius:var(--r); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); box-shadow:var(--shadow); z-index:8; padding:14px 16px; display:none; }
+  #detail .d-h { display:flex; align-items:center; gap:10px; }
+  #detail .d-ic { width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:17px; font-weight:800; box-shadow:0 0 16px currentColor; flex:none; }
+  #detail .d-t { flex:1; min-width:0; }
+  #detail .d-nm { font-size:15px; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #detail .d-sb { font-size:11px; color:var(--dim); margin-top:2px; }
+  #detail .d-act { display:flex; gap:8px; margin-top:12px; }
+  #detail .d-act .btn { min-height:36px; font-size:12px; flex:1; padding:0 10px; }
+  #detail .d-x { margin-left:auto; }
+  /* ---------- 悬浮 ---------- */
+  #tip { position:absolute; display:none; pointer-events:none; z-index:9; max-width:230px; padding:8px 12px; border-radius:11px; background:var(--panel); border:1px solid var(--line); font-size:11.5px; line-height:1.6; backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); box-shadow:var(--shadow); }
+  #tip .ln { font-weight:700; font-size:12.5px; }
+  #tip .sg { color:var(--dim); font-size:10.5px; }
+  .foot { position:absolute; bottom:8px; left:10px; font-size:9.5px; color:var(--dim); z-index:5; pointer-events:none; text-shadow:0 1px 3px #000; opacity:.8; }
+  #toast { position:absolute; top:52px; left:50%; transform:translateX(-50%); background:var(--panel2); border:1px solid var(--line); color:var(--txt); font-size:12px; padding:7px 16px; border-radius:10px; z-index:10; display:none; box-shadow:var(--shadow); }
   .maplibregl-ctrl-bottom-right { display:none; }
   .maplibregl-ctrl-attrib { background:rgba(0,0,0,.35)!important; color:var(--dim)!important; font-size:9px!important; }
   .maplibregl-ctrl-attrib a { color:var(--dim)!important; }
+  .maplibregl-ctrl-group { background:var(--panel)!important; border:1px solid var(--line)!important; backdrop-filter:blur(10px); }
+  .maplibregl-ctrl-group button { background:var(--panel)!important; }
+  .maplibregl-ctrl-group button span { filter:invert(.8); }
+  @media (max-width:480px) {
+    #clock { width:calc(100vw - 16px); padding:8px 12px 10px; }
+    #detail { bottom:80px; }
+    #side { top:52px; width:calc(100vw - 20px); }
+  }
 </style>
 </head>
 <body>
 <div id="map"></div>
 <div id="hud">
-  <div class="brand">🚄 <b>Mini JapanRail 3D</b></div>
-  <div class="st" id="status">加载数据中…</div>
+  <div class="brand"><span class="lg">🚄</span><b data-i18n="title">Mini JapanRail 3D</b></div>
+  <div class="st" id="status" data-i18n="loading">加载数据中…</div>
 </div>
-<div id="ctrls">
-  <button class="btn" id="btnLive">⚡ 实时</button>
-  <div class="grp">
-    <div class="row"><span class="lab">视角</span>
-      <button class="btn on" id="btn3d">3D</button>
-      <button class="btn" id="btn2d">2D</button>
-    </div>
-    <div class="row"><span class="lab">运行日</span>
-      <button class="btn on" data-day="auto" id="dayAuto">自动</button>
-      <button class="btn" data-day="1" id="dayWd">平日</button>
-      <button class="btn" data-day="2" id="daySa">周六</button>
-      <button class="btn" data-day="4" id="daySu">周日·假</button>
-    </div>
-    <div class="row"><span class="lab">倍速</span>
-      <button class="btn" data-sp="0.5" id="sp05">0.5×</button>
-      <button class="btn on" data-sp="1" id="sp1">1×</button>
-      <button class="btn" data-sp="2" id="sp2">2×</button>
-      <button class="btn" data-sp="4" id="sp4">4×</button>
+<div id="toast"></div>
+<div id="side">
+  <div class="sec">
+    <div class="sec-t" data-i18n="searchT">搜索</div>
+    <input id="search" type="text" data-i18n-ph="searchPh" placeholder="车站 / 线路（日文名）…" autocomplete="off">
+    <div id="sug"></div>
+    <div style="display:flex;gap:6px;margin-top:8px;">
+      <input id="rFrom" type="text" style="flex:1;min-width:0;min-height:34px;padding:0 10px;border:1px solid var(--line);border-radius:9px;background:rgba(6,8,14,.6);color:var(--txt);font-size:11.5px;outline:none;" placeholder="起点站" autocomplete="off">
+      <input id="rTo" type="text" style="flex:1;min-width:0;min-height:34px;padding:0 10px;border:1px solid var(--line);border-radius:9px;background:rgba(6,8,14,.6);color:var(--txt);font-size:11.5px;outline:none;" placeholder="终点站" autocomplete="off">
+      <button id="rGo" class="btn" style="min-height:34px;min-width:52px;padding:0 10px;font-size:11.5px;" data-i18n="routeGo">路线</button>
     </div>
   </div>
-  <button class="btn" id="btnFollow">🎯 跟随</button>
+  <div class="sec">
+    <div class="sec-t" data-i18n="filterT">线路类型</div>
+    <div class="frow" id="kindRow">
+      <button class="chip on" data-kind="鉄道">鉄道</button>
+      <button class="chip on" data-kind="路面電車">路面電車</button>
+      <button class="chip on" data-kind="モノレール">モノレール</button>
+      <button class="chip on" data-kind="案内軌条式">新交通</button>
+      <button class="chip on" data-kind="鋼索鉄道">鋼索</button>
+      <button class="chip on" data-kind="浮上式">浮上</button>
+    </div>
+  </div>
+  <div class="sec">
+    <div class="sec-t" data-i18n="legendT">图例</div>
+    <div class="leg"><span class="dot" style="color:#2e9e44"></span><span class="nm" data-i18n="lg1">新干线</span><span class="ds">Hayabusa / Nozomi 等</span></div>
+    <div class="leg"><span class="dot" style="color:#ff5a5a"></span><span class="nm" data-i18n="lg2">特急</span><span class="ds">特</span></div>
+    <div class="leg"><span class="dot" style="color:#ffb340"></span><span class="nm" data-i18n="lg3">急行 / 快速</span><span class="ds">急 / 快</span></div>
+    <div class="leg"><span class="dot" style="color:#9aa5b5"></span><span class="nm" data-i18n="lg4">通勤 / 区間 / 準急</span><span class="ds">通 / 区 / 準 / 回</span></div>
+    <div class="leg"><span class="dot" style="color:#4f8ef7"></span><span class="nm" data-i18n="lg5">各停 / 普通</span><span class="ds">各 / 普</span></div>
+    <div class="leg"><span class="bar" style="color:#6ee7f7"></span><span class="nm" data-i18n="lg6">轨道 = 官方线路色</span><span class="ds"></span></div>
+  </div>
+  <div class="sec">
+    <div class="sec-t" data-i18n="setT">设置</div>
+    <div class="sw on" id="swLabel"><span data-i18n="sw1">车站标签</span><span class="trk"></span></div>
+    <div class="sw on" id="swGlow"><span data-i18n="sw2">轨道光晕</span><span class="trk"></span></div>
+    <div class="sw on" id="swSta"><span data-i18n="sw3">车站点</span><span class="trk"></span></div>
+  </div>
+  <div class="sec">
+    <div class="sec-t" data-i18n="dataT">数据</div>
+    <div class="data-row"><span data-i18n="d1">时刻表构建</span><b id="dBuild">-</b></div>
+    <div class="data-row"><span data-i18n="d2">唯一班次</span><b id="dCount">-</b></div>
+    <div class="data-row"><span data-i18n="d3">线路 / 车站</span><b id="dNet">-</b></div>
+    <div class="data-row"><span data-i18n="d4">数据源</span><b>RailAround 577线</b></div>
+  </div>
+  <div class="sec">
+    <div class="sec-t" data-i18n="helpT">帮助</div>
+    <div class="help">
+      <p data-i18n="h1">🖱 拖动 = 平移 · 双指 = 缩放 / 旋转 / 倾斜</p>
+      <p data-i18n="h2">点击列车 = 详情 + 跟随 · 点空白 = 取消</p>
+      <p data-i18n="h3">点击车站 = 该站线路详情</p>
+      <p data-i18n="h4">底部时钟可暂停 / 拖动时间 / 倍速回放</p>
+      <p data-i18n="h5">搜索支持日文站名（如 新宿 / 大阪）</p>
+    </div>
+  </div>
 </div>
+<div id="topr">
+  <button class="btn" id="btnLive">⚡ <span data-i18n="live">实时</span></button>
+  <button class="btn icon on" id="btn3d" title="3D 地球">🌐</button>
+  <button class="btn icon" id="btn2d" title="2D 平面">🗺️</button>
+  <button class="btn icon" id="btnLang" title="Language">文</button>
+  <button class="btn icon" id="btnSide" title="面板">☰</button>
+</div>
+<div id="clock">
+  <div class="r1">
+    <button class="btn icon" id="btnPlay" title="播放/暂停">⏸</button>
+    <div class="t"><span id="cTime">--:--</span><span class="ampm" id="cAmpm"></span></div>
+    <div class="sp">
+      <button class="spb" data-sp="0.5">0.5×</button>
+      <button class="spb on" data-sp="1">1×</button>
+      <button class="spb" data-sp="2">2×</button>
+      <button class="spb" data-sp="4">4×</button>
+      <button class="spb" data-sp="8">8×</button>
+    </div>
+  </div>
+  <div class="r2">
+    <input type="range" id="cSlider" min="0" max="1439" value="0" step="1">
+    <span class="now" id="cNow" data-i18n="now">回到现在</span>
+  </div>
+</div>
+<div id="detail"></div>
 <div id="tip"></div>
-<div class="foot">本地时刻表驱动 · 运行时零外部请求 · 计划时刻不含延误</div>
+<div class="foot" data-i18n="foot">本地时刻表驱动 · 运行时零外部请求 · 计划时刻不含延误</div>
 <script src="https://unpkg.com/maplibre-gl@5.9.0/dist/maplibre-gl.js"></script>
 <script>
 (function () {
   'use strict';
-  /* ---------- 常量 ---------- */
+  /* ================= 常量 ================= */
   var TRAIN_FILES = { 1: 'data/trains_wd.json', 2: 'data/trains_sa.json', 4: 'data/trains_su.json' };
   var SEG_URL = 'data/segments3d.geojson', STA_URL = 'data/stations3d.geojson', TMAP_URL = 'data/tmaps.json';
-  var GLYPHS = 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf';
-  // 日本节假日 2026-2027（bit4 视同周日·假日）；后续年份按官方公告追加
-  var HOLIDAYS = {
-    '2026-01-01': 1, '2026-01-12': 1, '2026-02-11': 1, '2026-03-20': 1, '2026-04-29': 1,
-    '2026-05-03': 1, '2026-05-04': 1, '2026-05-05': 1, '2026-05-06': 1, '2026-07-20': 1,
-    '2026-08-11': 1, '2026-09-21': 1, '2026-09-22': 1, '2026-09-23': 1, '2026-10-12': 1,
-    '2026-11-03': 1, '2026-11-23': 1, '2026-12-23': 1,
-    '2027-01-01': 1, '2027-01-11': 1, '2027-02-11': 1, '2027-03-22': 1, '2027-04-29': 1,
-    '2027-05-03': 1, '2027-05-04': 1, '2027-05-05': 1, '2027-07-19': 1, '2027-08-11': 1,
-    '2027-09-20': 1, '2027-09-23': 1, '2027-10-11': 1, '2027-11-03': 1, '2027-11-23': 1,
-    '2027-12-23': 1
+  var JST = 9 * 3600 * 1000;
+  var HOLIDAYS = { '2026-01-01':1,'2026-01-12':1,'2026-02-11':1,'2026-03-20':1,'2026-04-29':1,'2026-05-03':1,'2026-05-04':1,'2026-05-05':1,'2026-05-06':1,'2026-07-20':1,'2026-08-11':1,'2026-09-21':1,'2026-09-22':1,'2026-09-23':1,'2026-10-12':1,'2026-11-03':1,'2026-11-23':1,'2026-12-23':1,'2027-01-01':1,'2027-01-11':1,'2027-02-11':1,'2027-03-22':1,'2027-04-29':1,'2027-05-03':1,'2027-05-04':1,'2027-05-05':1,'2027-07-19':1,'2027-08-11':1,'2027-09-20':1,'2027-09-23':1,'2027-10-11':1,'2027-11-03':1,'2027-11-23':1,'2027-12-23':1 };
+  var SHINK = ['Hayabusa','Komachi','Yamabiko','Tsubasa','Kagayaki','Toki','Hakutaka','Asama','Nasuno','Tanigawa'];
+  var I18N = {
+    zh: { title:'Mini JapanRail 3D', loading:'加载数据中…', live:'实时', searchT:'搜索', searchPh:'车站 / 线路（日文名）…', filterT:'线路类型', legendT:'图例', lg1:'新干线', lg2:'特急', lg3:'急行 / 快速', lg4:'通勤 / 区間 / 準急', lg5:'各停 / 普通', lg6:'轨道 = 官方线路色', setT:'设置', sw1:'车站标签', sw2:'轨道光晕', sw3:'车站点', dataT:'数据', d1:'时刻表构建', d2:'唯一班次', d3:'线路 / 车站', d4:'数据源', helpT:'帮助', h1:'🖱 拖动 = 平移 · 双指 = 缩放 / 旋转 / 倾斜', h2:'点击列车 = 详情 + 跟随 · 点空白 = 取消', h3:'点击车站 = 该站线路详情', h4:'底部时钟可暂停 / 拖动时间 / 倍速回放', h5:'搜索支持日文站名（如 新宿 / 大阪）', now:'回到现在', foot:'本地时刻表驱动 · 运行时零外部请求 · 计划时刻不含延误', follow:'跟随', followCancel:'取消跟随', locate:'定位', dFollow:'跟随此列车', dStop:'停止跟随', staLine:'途经线路', to:'→', paused:'暂停', station:'车站', routeGo:'路线', routeErr:'找不到车站' },
+    ja: { title:'ミニ日本鉄道3D', loading:'データ読込中…', live:'リアルタイム', searchT:'検索', searchPh:'駅 / 路線（日本語名）…', filterT:'路線種別', legendT:'凡例', lg1:'新幹線', lg2:'特急', lg3:'急行 / 快速', lg4:'通勤 / 区間 / 準急', lg5:'各停 / 普通', lg6:'路線 = 公式路線色', setT:'設定', sw1:'駅ラベル', sw2:'軌道グロー', sw3:'駅ドット', dataT:'データ', d1:'時刻表構築', d2:'ユニーク列車', d3:'路線 / 駅', d4:'データソース', helpT:'ヘルプ', h1:'🖱 ドラッグ = 移動 · 2本指 = ズーム / 回転 / 傾き', h2:'列車クリック = 詳細 + 追跡 · 空白 = 解除', h3:'駅クリック = 駅の路線詳細', h4:'下部時計で一時停止 / 時間ドラッグ / 倍速再生', h5:'検索は日本語駅名対応（新宿 / 大阪など）', now:'現在に戻る', foot:'ローカル時刻表駆動 · 実行時外部リクエストなし · 計画時刻・遅延含まず', follow:'追跡', followCancel:'追跡解除', locate:'位置', dFollow:'この列車を追跡', dStop:'追跡停止', staLine:'経由路線', to:'→', paused:'一時停止', station:'駅', routeGo:'ルート', routeErr:'駅が見つかりません' },
+    en: { title:'Mini JapanRail 3D', loading:'Loading data…', live:'Live', searchT:'Search', searchPh:'Station / Line (Japanese)…', filterT:'Line types', legendT:'Legend', lg1:'Shinkansen', lg2:'Limited Express', lg3:'Express / Rapid', lg4:'Commuter / Section / Semi-Exp', lg5:'Local', lg6:'Track = official line color', setT:'Settings', sw1:'Station labels', sw2:'Track glow', sw3:'Station dots', dataT:'Data', d1:'Timetable built', d2:'Unique trains', d3:'Lines / Stations', d4:'Data source', helpT:'Help', h1:'🖱 Drag = pan · Two fingers = zoom / rotate / tilt', h2:'Click a train = detail + follow · Click blank = cancel', h3:'Click a station = its lines', h4:'Bottom clock: pause / scrub time / speed replay', h5:'Search Japanese names (Shinjuku, Osaka…)', now:'Now', foot:'Local timetable driven · zero runtime requests · scheduled, no delays', follow:'Follow', followCancel:'Stop follow', locate:'Locate', dFollow:'Follow this train', dStop:'Stop follow', staLine:'Lines served', to:'→', paused:'Paused', station:'Station', routeGo:'Route', routeErr:'Station not found' }
   };
-  var SHINK = ['Hayabusa', 'Komachi', 'Yamabiko', 'Tsubasa', 'Kagayaki', 'Toki', 'Hakutaka', 'Asama', 'Nasuno', 'Tanigawa'];
-  var JST_OFFSET = 9 * 3600 * 1000;
-  /* ---------- 状态 ---------- */
+  /* ================= 状态 ================= */
   var map = null, trains = null, tmaps = null, trainFC = null;
   var segSrc = null, staSrc = null;
   var stationCoord = null, segIndex = null, edgeLine = null, adj = null, pathMemo = null;
-  var liveOn = false, dayMode = 'auto', trainsBit = 0;
-  var speed = 1, followId = null, followTrain = null;
-  var timer = null, dataReady = false;
-  /* ---------- DOM ---------- */
-  var statusEl = document.getElementById('status'), tipEl = document.getElementById('tip');
-  var btnLive = document.getElementById('btnLive'), btnFollow = document.getElementById('btnFollow');
-  var dayBtns = { auto: document.getElementById('dayAuto'), 1: document.getElementById('dayWd'), 2: document.getElementById('daySa'), 4: document.getElementById('daySu') };
-  var spBtns = { '0.5': document.getElementById('sp05'), '1': document.getElementById('sp1'), '2': document.getElementById('sp2'), '4': document.getElementById('sp4') };
-  /* ---------- 工具 ---------- */
-  function jstNow() { return new Date(Date.now() + JST_OFFSET); }
+  var stationLines = null;
+  var liveOn = false, dayMode = 'auto', trainsBit = 0, dataReady = false;
+  var speed = 1, paused = false, vJST = 0, runT0 = 0;
+  var followId = null, followTrain = null, followName = '';
+  var selKind = { '鉄道':1,'路面電車':1,'モノレール':1,'案内軌条式':1,'鋼索鉄道':1,'浮上式':1 };
+  var lang = 'zh', hlLine = '', hlStation = null;
+  var timer = null, sugTimer = null, sliderSync = true;
+  /* ================= DOM ================= */
+  function $(id) { return document.getElementById(id); }
+  var statusEl = $('status'), tipEl = $('tip'), sideEl = $('side'), clockEl = $('clock');
+  var searchEl = $('search'), sugEl = $('sug'), detailEl = $('detail');
+  var sliderEl = $('cSlider'), cTimeEl = $('cTime'), cAmpmEl = $('cAmpm');
+  var btnLive = $('btnLive');
+  /* ================= 时间 ================= */
+  function jstNow() { return new Date(Date.now() + JST); }
   function todayBit() {
-    var n = jstNow(), d = n.getUTCDay();
-    var key = n.toISOString().slice(0, 10);
+    var n = jstNow(), key = n.toISOString().slice(0, 10);
     if (HOLIDAYS[key]) return 4;
+    var d = n.getUTCDay();
     return (d >= 1 && d <= 5) ? 1 : (d === 6 ? 2 : 4);
   }
   function minOfDayJST(t) { return ((t / 1000) % 86400) / 60; }
+  function fmtHm(min) {
+    min = ((Math.round(min) % 1440) + 1440) % 1440;
+    var h = Math.floor(min / 60), m = Math.round(min % 60);
+    return pad(h) + ':' + pad(m);
+  }
+  function pad(n) { return String(n).padStart(2, '0'); }
   function activeBit() { return dayMode === 'auto' ? todayBit() : dayMode; }
+  /* 虚拟时钟：simNow() 返回 JST 毫秒 */
+  function simNow() { return runT0 ? vJST + (Date.now() - runT0) * speed : vJST; }
+  function doPlay() { vJST = simNow(); runT0 = Date.now(); paused = false; $('btnPlay').textContent = '⏸'; }
+  function doPause() { vJST = simNow(); runT0 = 0; paused = true; $('btnPlay').textContent = '▶'; }
+  function doSetSpeed(s) { vJST = simNow(); speed = s; runT0 = runT0 ? Date.now() : 0; }
+  function doNow() { vJST = Date.now() + JST; runT0 = Date.now(); paused = false; $('btnPlay').textContent = '⏸'; }
+  function curMin() { return paused ? parseFloat(sliderEl.value) : minOfDayJST(simNow()); }
+  /* ================= 数据 ================= */
   function loadJSON(url) { return fetch(url).then(function (r) { return r.json(); }); }
   function setStatus(s) { statusEl.textContent = s; }
-  function pad(n) { return String(n).padStart(2, '0'); }
-  /* ---------- 几何索引 ---------- */
+  function toast(s) { var t = $('toast'); t.textContent = s; t.style.display = 'block'; clearTimeout(toast._t); toast._t = setTimeout(function () { t.style.display = 'none'; }, 2200); }
+  /* ================= 索引 ================= */
   function buildIndices() {
     stationCoord = new Map();
     staSrc.features.forEach(function (f) { stationCoord.set(f.properties.station, f.geometry.coordinates); });
-    segIndex = new Map(); edgeLine = new Map(); adj = new Map(); pathMemo = new Map();
+    segIndex = new Map(); edgeLine = new Map(); adj = new Map(); pathMemo = new Map(); stationLines = new Map();
     segSrc.features.forEach(function (f) {
       var p = f.properties, g = f.geometry;
-      var coords = g.type === 'MultiLineString'
-        ? g.coordinates.reduce(function (a, l) { return a.concat(l); }, [])
-        : g.coordinates;
+      var coords = g.type === 'MultiLineString' ? g.coordinates.reduce(function (a, l) { return a.concat(l); }, []) : g.coordinates;
       var k1 = p.from + '|' + p.to, k2 = p.to + '|' + p.from;
       if (!segIndex.has(k1)) segIndex.set(k1, []);
       if (!segIndex.has(k2)) segIndex.set(k2, []);
@@ -126,6 +267,12 @@
       if (!adj.has(p.from)) adj.set(p.from, new Set());
       if (!adj.has(p.to)) adj.set(p.to, new Set());
       adj.get(p.from).add(p.to); adj.get(p.to).add(p.from);
+      if (p.line) {
+        if (!stationLines.has(p.from)) stationLines.set(p.from, new Set());
+        if (!stationLines.has(p.to)) stationLines.set(p.to, new Set());
+        stationLines.get(p.from).add(p.line);
+        stationLines.get(p.to).add(p.line);
+      }
     });
   }
   function pathAlong(A, B) {
@@ -135,10 +282,7 @@
     var prev = new Map([[A, null]]), q = [A];
     while (q.length && !prev.has(B)) {
       var cur = q.shift(), nbs = adj.get(cur) || [];
-      for (var i = 0; i < nbs.length; i++) {
-        var nb = nbs[i];
-        if (!prev.has(nb)) { prev.set(nb, cur); q.push(nb); }
-      }
+      for (var i = 0; i < nbs.length; i++) { var nb = nbs[i]; if (!prev.has(nb)) { prev.set(nb, cur); q.push(nb); } }
     }
     if (!prev.has(B)) { pathMemo.set(key, null); return null; }
     var stops = [B], c2 = B;
@@ -176,15 +320,12 @@
     for (var i = 1; i < coords.length; i++) {
       var dx = coords[i][0] - coords[i - 1][0], dy = coords[i][1] - coords[i - 1][1];
       var seg = Math.hypot(dx, dy);
-      if (acc + seg >= target) {
-        var f = seg === 0 ? 0 : (target - acc) / seg;
-        return [coords[i - 1][0] + dx * f, coords[i - 1][1] + dy * f];
-      }
+      if (acc + seg >= target) { var f = seg === 0 ? 0 : (target - acc) / seg; return [coords[i - 1][0] + dx * f, coords[i - 1][1] + dy * f]; }
       acc += seg;
     }
     return coords[coords.length - 1];
   }
-  /* ---------- 时刻表解码 ---------- */
+  /* ================= 时刻表解码 ================= */
   function schsOf(t) { if (!t.__s) t.__s = t.s.split(',').map(Number); return t.__s; }
   function inWindow(t, M) {
     var w = t.w; if (!w) return false;
@@ -218,26 +359,17 @@
     if (dep[N - 1] < 300 && M > 1400) MM = M - 1440;
     if (dep[0] > 1400 && M < 300) MM = M + 1440;
     if (MM < dep[0] - 1e-6 || MM > arr[N - 1] + 1e-6) return null;
-    var meta = { color: iconColor(t.i), icon: t.i, line: (tm.lines && tm.lines.length === 1) ? tm.lines[0] : '' };
-    function placeAt(S) {
-      var c = stationCoord.get(S);
-      return c ? { pt: c, line: meta.line } : null;
-    }
+    var meta = { color: iconColor(t.i), icon: t.i, line: (tm.lines && tm.lines.length === 1) ? tm.lines[0] : '', dep: dep, arr: arr };
+    function placeAt(S) { var c = stationCoord.get(S); return c ? { pt: c, line: meta.line, dep: dep, arr: arr } : null; }
     function placeBetween(A, B, frac) {
       var segs = segIndex.get(A + '|' + B);
-      if (segs && segs.length) {
-        var pt = pointAlong(segs[0], frac);
-        if (pt) return { pt: pt, line: edgeLine.get(A + '|' + B) || meta.line };
-      }
+      if (segs && segs.length) { var pt = pointAlong(segs[0], frac); if (pt) return { pt: pt, line: edgeLine.get(A + '|' + B) || meta.line, dep: dep, arr: arr }; }
       var path = pathAlong(A, B);
-      if (path) {
-        var pt2 = pointAlong(path.coords, frac);
-        if (pt2) return { pt: pt2, line: path.lineAt(frac) || meta.line };
-      }
+      if (path) { var pt2 = pointAlong(path.coords, frac); if (pt2) return { pt: pt2, line: path.lineAt(frac) || meta.line, dep: dep, arr: arr }; }
       var ca = stationCoord.get(A), cb = stationCoord.get(B);
-      if (ca && cb) return { pt: [ca[0] + (cb[0] - ca[0]) * frac, ca[1] + (cb[1] - ca[1]) * frac], line: meta.line };
-      if (ca) return { pt: ca, line: meta.line };
-      if (cb) return { pt: cb, line: meta.line };
+      if (ca && cb) return { pt: [ca[0] + (cb[0] - ca[0]) * frac, ca[1] + (cb[1] - ca[1]) * frac], line: meta.line, dep: dep, arr: arr };
+      if (ca) return { pt: ca, line: meta.line, dep: dep, arr: arr };
+      if (cb) return { pt: cb, line: meta.line, dep: dep, arr: arr };
       return null;
     }
     for (var i = 0; i < N - 1; i++) {
@@ -254,12 +386,10 @@
     }
     return null;
   }
-  /* ---------- 渲染 ---------- */
-  var simBase = 0;
-  function simNow() { if (!simBase) simBase = Date.now(); return simBase + (Date.now() - simBase) * speed; }
+  /* ================= 渲染 ================= */
   function refreshTrains() {
     if (!liveOn || !trains || !tmaps || !trainFC) return;
-    var bit = activeBit(), M = minOfDayJST(simNow());
+    var bit = activeBit(), M = curMin();
     var feats = [], list = trains.T;
     for (var k = 0; k < list.length; k++) {
       var t = list[k];
@@ -269,7 +399,7 @@
       if (!pos) continue;
       feats.push({
         type: 'Feature',
-        properties: { id: t._, icon: pos.icon, color: pos.color, from: pos.A, to: pos.B, line: pos.line || '' },
+        properties: { id: t._, icon: pos.icon, color: pos.color, from: pos.A, to: pos.B, line: pos.line || '', t0: fmtHm(pos.dep[0]), t1: fmtHm(pos.arr[pos.arr.length - 1]) },
         geometry: { type: 'Point', coordinates: pos.pt }
       });
     }
@@ -280,38 +410,54 @@
       for (var j = 0; j < feats.length; j++) {
         if (feats[j].properties.id === followId) { followTrain = feats[j]; break; }
       }
-      if (!followTrain) stopFollow();
+      if (!followTrain) { stopFollow(); toast(I18N[lang].followCancel); }
     }
     var d = jstNow();
-    var label = { 1: '平日', 2: '周六', 4: '周日·假' }[bit] || '?';
-    setStatus(feats.length + '/' + (trains.n || list.length) + ' 列运行 · ' + label + ' · ' + speed + '× · ' + pad(d.getUTCHours()) + ':' + pad(d.getUTCMinutes()) + ':' + pad(d.getUTCSeconds()) + ' JST');
+    var label = { 1: '平日', 2: '周六', 4: '周日·假' }[bit];
+    var st = feats.length + '/' + (trains.n || list.length) + ' ' + I18N[lang].live + ' · ' + label + ' · ' + (paused ? I18N[lang].paused : speed + '×') + ' · ' + pad(d.getUTCHours()) + ':' + pad(d.getUTCMinutes()) + ':' + pad(d.getUTCSeconds()) + ' JST';
+    setStatus(st);
+    if (sliderSync && !paused) sliderEl.value = String(Math.floor(curMin()));
+    cTimeEl.textContent = fmtHm(M);
+    cAmpmEl.textContent = (Math.floor(((M % 1440) + 1440) % 1440 / 60) < 12) ? 'AM' : 'PM';
   }
   function loadTrains(bit) {
     var f = TRAIN_FILES[bit];
     if (!f) return Promise.resolve();
     return loadJSON(f).then(function (d) {
       trains = d; trainsBit = bit;
+      $('dBuild').textContent = d.b || '-';
+      $('dCount').textContent = (d.n || 0).toLocaleString();
       if (trainFC) refreshTrains();
-    }).catch(function () { setStatus('⚡ 时刻表加载失败 ' + f); });
+    }).catch(function () { setStatus('⚡ ' + TRAIN_FILES[bit] + ' 加载失败'); });
   }
-  /* ---------- 列车图层 ---------- */
+  /* ================= 图层 ================= */
+  function kindFilter() {
+    var ks = [];
+    for (var k in selKind) if (selKind[k]) ks.push(k);
+    if (!ks.length) return ['==', ['get', 'kind'], '__none__'];
+    return ['in', ['get', 'kind']].concat(ks);
+  }
+  function applyKind() {
+    map.setFilter('segs', kindFilter());
+    map.setFilter('segs-glow', kindFilter());
+  }
   function ensureLiveLayers() {
     if (map.getSource('trains')) return;
     map.addSource('trains', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
     map.addLayer({ id: 'trains-glow', type: 'circle', source: 'trains',
       paint: {
-        'circle-radius': ['interpolate', ['exponential', 1.5], ['zoom'], 3, 7, 9, 9, 13, 12],
+        'circle-radius': ['interpolate', ['exponential', 1.5], ['zoom'], 2.5, 8, 9, 10, 13, 14],
         'circle-color': ['get', 'color'],
-        'circle-opacity': 0.22,
+        'circle-opacity': 0.25,
         'circle-stroke-width': 0
       } });
     map.addLayer({ id: 'trains', type: 'circle', source: 'trains',
       paint: {
-        'circle-radius': ['interpolate', ['exponential', 1.5], ['zoom'], 3, 2.4, 9, 3.4, 13, 4.4],
+        'circle-radius': ['interpolate', ['exponential', 1.5], ['zoom'], 2.5, 3.2, 9, 4.2, 13, 5.5],
         'circle-color': ['get', 'color'],
-        'circle-opacity': 0.95,
-        'circle-stroke-color': '#ffffff',
-        'circle-stroke-width': 0.6
+        'circle-opacity': 0.98,
+        'circle-stroke-color': 'rgba(255,255,255,.9)',
+        'circle-stroke-width': 0.7
       } });
     map.on('mousemove', 'trains', function (e) {
       if (!e.features.length) return;
@@ -320,26 +466,209 @@
       tipEl.style.left = (e.point.x + 14) + 'px';
       tipEl.style.top = (e.point.y + 14) + 'px';
       tipEl.style.display = 'block';
-      tipEl.innerHTML = '<div class="ln" style="color:' + p.color + '">' + (p.icon ? p.icon + ' ' : '') + (p.line || '') + '</div><div class="sg">' + (p.from === p.to ? p.from : p.from + ' → ' + p.to) + '</div>';
+      tipEl.innerHTML = '<div class="ln" style="color:' + p.color + '">' + (p.icon ? p.icon + ' ' : '') + (p.line || '') + '</div><div class="sg">' + (p.from === p.to ? p.from : p.from + ' ' + I18N[lang].to + ' ' + p.to) + ' · ' + p.t0 + '–' + p.t1 + '</div>';
       map.getCanvas().style.cursor = 'pointer';
     });
     map.on('mouseleave', 'trains', function () { tipEl.style.display = 'none'; map.getCanvas().style.cursor = ''; });
     map.on('click', 'trains', function (e) {
       if (!e.features.length) return;
-      startFollow(e.features[0].properties.id);
+      var p = e.features[0].properties;
+      startFollow(p.id, (p.icon || '') + ' ' + (p.line || p.from));
+      showTrainDetail(p);
     });
   }
-  function startFollow(id) {
-    followId = id; followTrain = null;
-    btnFollow.classList.add('on');
-    btnFollow.textContent = '🎯 跟随中';
+  function applyHl() {
+    if (hlLine) {
+      if (!map.getSource('hl')) map.addSource('hl', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+      var feats = segSrc.features.filter(function (f) { return f.properties.line === hlLine; });
+      map.getSource('hl').setData({ type: 'FeatureCollection', features: feats });
+      if (!map.getLayer('hl-line')) {
+        map.addLayer({ id: 'hl-line', type: 'line', source: 'hl',
+          paint: { 'line-color': '#ffffff', 'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 3, 1.4, 9, 3, 14, 5.5], 'line-opacity': 0.95, 'line-blur': 0.4 } });
+      }
+    } else if (map.getLayer('hl-line')) {
+      map.removeLayer('hl-line');
+    }
+    if (hlStation) {
+      if (!map.getSource('hl-sta')) map.addSource('hl-sta', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+      map.getSource('hl-sta').setData({ type: 'FeatureCollection', features: [{ type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: hlStation } }] });
+      if (!map.getLayer('hl-sta')) {
+        map.addLayer({ id: 'hl-sta', type: 'circle', source: 'hl-sta',
+          paint: { 'circle-radius': ['interpolate', ['exponential', 1.5], ['zoom'], 3, 6, 10, 9, 14, 13], 'circle-color': '#ffffff', 'circle-opacity': 0.35, 'circle-stroke-color': '#6ee7f7', 'circle-stroke-width': 1.6 } });
+      }
+    } else if (map.getLayer('hl-sta')) {
+      map.removeLayer('hl-sta');
+    }
+  }
+  /* ================= 搜索 ================= */
+  var stationNames = null, lineNames = null;
+  function buildSearch() {
+    stationNames = [];
+    staSrc.features.forEach(function (f) { stationNames.push({ n: f.properties.station, c: f.geometry.coordinates }); });
+    stationNames.sort(function (a, b) { return a.n.length - b.n.length; });
+    var ls = new Set();
+    segSrc.features.forEach(function (f) { if (f.properties.line) ls.add(f.properties.line); });
+    lineNames = Array.from(ls).sort();
+  }
+  function runSearch(q) {
+    q = (q || '').trim();
+    if (!q) { sugEl.style.display = 'none'; sugEl.innerHTML = ''; return; }
+    var st = [], ln = [];
+    for (var i = 0; i < stationNames.length && st.length < 6; i++) {
+      if (stationNames[i].n.indexOf(q) >= 0) st.push(stationNames[i]);
+    }
+    for (var j = 0; j < lineNames.length && ln.length < 4; j++) {
+      if (lineNames[j].indexOf(q) >= 0) ln.push(lineNames[j]);
+    }
+    if (!st.length && !ln.length) { sugEl.style.display = 'block'; sugEl.innerHTML = '<div class="sug-it"><span>' + q + '</span></div>'; return; }
+    var html = '';
+    st.forEach(function (s) { html += '<div class="sug-it" data-type="sta" data-name="' + s.n + '"><span>' + s.n.replace(new RegExp(q, 'g'), '<span class="hl">' + q + '</span>') + '</span><span class="k">' + I18N[lang].station + '</span></div>'; });
+    ln.forEach(function (l) { html += '<div class="sug-it" data-type="line" data-name="' + l + '"><span>' + l.replace(new RegExp(q, 'g'), '<span class="hl">' + q + '</span>') + '</span><span class="k">🚈</span></div>'; });
+    sugEl.innerHTML = html;
+    sugEl.style.display = 'block';
+  }
+  function pickSug(it) {
+    var name = it.getAttribute('data-name');
+    if (it.getAttribute('data-type') === 'sta') {
+      var c = stationCoord.get(name);
+      if (!c) return;
+      hlStation = c; hlLine = ''; applyHl();
+      map.flyTo({ center: c, zoom: 12, pitch: 55, duration: 1400 });
+      showStationDetail(name);
+    } else {
+      hlLine = name; hlStation = null; applyHl();
+      var f = segSrc.features.filter(function (x) { return x.properties.line === name; })[0];
+      if (f) {
+        var g = f.geometry, co = g.type === 'MultiLineString' ? g.coordinates[0] : g.coordinates;
+        var mid = co[Math.floor(co.length / 2)];
+        map.flyTo({ center: mid, zoom: 9, pitch: 55, duration: 1400 });
+      }
+      toast('🚈 ' + name);
+    }
+    sugEl.style.display = 'none'; sugEl.innerHTML = '';
+    searchEl.value = '';
+  }
+  /* ================= 路线搜索 ================= */
+  function resolveStation(q) {
+    q = (q || '').trim();
+    if (!q) return null;
+    if (stationCoord.has(q)) return q;
+    for (var i = 0; i < stationNames.length; i++) {
+      if (stationNames[i].n.indexOf(q) >= 0) return stationNames[i].n;
+    }
+    return null;
+  }
+  function findRoute(A, B) {
+    if (!adj.has(A) || !adj.has(B)) return null;
+    var prev = new Map([[A, null]]), q = [A];
+    while (q.length && !prev.has(B)) {
+      var cur = q.shift(), nbs = adj.get(cur) || [];
+      for (var i = 0; i < nbs.length; i++) { var nb = nbs[i]; if (!prev.has(nb)) { prev.set(nb, cur); q.push(nb); } }
+    }
+    if (!prev.has(B)) return null;
+    var stops = [B], c2 = B;
+    while (c2 !== A) { c2 = prev.get(c2); stops.push(c2); }
+    stops.reverse();
+    var coords = [], lines = [];
+    for (var j = 0; j < stops.length - 1; j++) {
+      var k = stops[j] + '|' + stops[j + 1];
+      var cand = segIndex.get(k), co = (cand && cand.length) ? cand[0] : null;
+      if (!co) return null;
+      if (j === 0) coords = coords.concat(co); else coords = coords.concat(co.slice(1));
+      lines.push(edgeLine.get(k) || '');
+    }
+    // 换乘次数：相邻段线路名变化次数
+    var xfr = 0;
+    for (var m = 1; m < lines.length; m++) if (lines[m] !== lines[m - 1]) xfr++;
+    return { stops: stops, coords: coords, lines: lines, xfr: xfr };
+  }
+  function renderRoute(rt) {
+    hlLine = ''; hlStation = null;
+    if (!map.getSource('rt')) map.addSource('rt', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+    map.getSource('rt').setData({
+      type: 'FeatureCollection',
+      features: [{ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: rt.coords } }]
+    });
+    if (!map.getLayer('rt-line')) {
+      map.addLayer({ id: 'rt-line', type: 'line', source: 'rt',
+        paint: {
+          'line-color': '#ffffff',
+          'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 3, 2.2, 9, 4.5, 14, 8],
+          'line-opacity': 0.95, 'line-blur': 0.5,
+          'line-dasharray': [0.5, 2]
+        } });
+    }
+  }
+  $('rGo').addEventListener('click', function () {
+    var A = resolveStation($('rFrom').value), B = resolveStation($('rTo').value);
+    if (!A || !B) { toast('❌ ' + (I18N[lang].routeErr || '找不到车站')); return; }
+    if (A === B) { toast('同站'); return; }
+    var rt = findRoute(A, B);
+    if (!rt) { toast('❌ 无连通路径'); return; }
+    renderRoute(rt);
+    // 飞行到路径包围盒
+    var lons = rt.coords.map(function (c) { return c[0]; }), lats = rt.coords.map(function (c) { return c[1]; });
+    map.fitBounds([[Math.min.apply(null, lons), Math.min.apply(null, lats)], [Math.max.apply(null, lons), Math.max.apply(null, lats)]], { padding: 70, pitch: 50, duration: 1400 });
+    var uniq = [], last = '';
+    rt.lines.forEach(function (l) { if (l && l !== last) { uniq.push(l); last = l; } });
+    var msg = A + ' ' + I18N[lang].to + ' ' + B + ': ' + rt.stops.length + ' 站 · ' + rt.xfr + ' 换乘 · ' + uniq.join(' → ');
+    toast('🚉 ' + msg);
+    var h = '<div class="d-h"><span class="d-ic" style="color:#fff;background:rgba(255,255,255,.12)">🚉</span>' +
+      '<div class="d-t"><div class="d-nm">' + A + ' ' + I18N[lang].to + ' ' + B + '</div><div class="d-sb">' + rt.stops.length + ' 站 · ' + rt.xfr + ' 换乘 · ' + uniq.join(' → ') + '</div></div>' +
+      '<button class="btn icon d-x" id="dClose">✕</button></div>';
+    detailEl.innerHTML = h;
+    detailEl.style.display = 'block';
+    $('dClose').onclick = function () { detailEl.style.display = 'none'; };
+  });
+  /* ================= 详情 ================= */
+  function showTrainDetail(p) {
+    var h = '<div class="d-h"><span class="d-ic" style="color:' + p.color + ';background:color-mix(in srgb,' + p.color + ' 18%, transparent)">' + (p.icon || '🚄') + '</span>' +
+      '<div class="d-t"><div class="d-nm">' + (p.line || (p.from + '→' + p.to)) + '</div><div class="d-sb">' + (p.icon || '') + ' · ' + p.from + ' ' + I18N[lang].to + ' ' + p.to + ' · ' + p.t0 + '–' + p.t1 + '</div></div>' +
+      '<button class="btn icon d-x" id="dClose">✕</button></div>' +
+      '<div class="d-act"><button class="btn on" id="dFollow">🎯 ' + I18N[lang].dFollow + '</button><button class="btn" id="dLoc">📍 ' + I18N[lang].locate + '</button></div>';
+    detailEl.innerHTML = h;
+    detailEl.style.display = 'block';
+    $('dClose').onclick = function () { detailEl.style.display = 'none'; };
+    $('dFollow').onclick = function () {
+      if (followId === p.id) { stopFollow(); } else { startFollow(p.id, (p.icon || '') + ' ' + (p.line || p.from)); }
+    };
+    $('dLoc').onclick = function () {
+      var f = trainFC.features.filter(function (x) { return x.properties.id === p.id; })[0];
+      if (f) map.flyTo({ center: f.geometry.coordinates, zoom: 11, pitch: 60, duration: 1200 });
+    };
+  }
+  function showStationDetail(name) {
+    var lines = stationLines.get(name) || new Set();
+    var ls = Array.from(lines).slice(0, 12);
+    var h = '<div class="d-h"><span class="d-ic" style="color:#6ee7f7;background:rgba(110,231,247,.15)">🚉</span>' +
+      '<div class="d-t"><div class="d-nm">' + name + '</div><div class="d-sb">' + I18N[lang].staLine + ': ' + (ls.length ? ls.join(' · ') : '-') + '</div></div>' +
+      '<button class="btn icon d-x" id="dClose">✕</button></div>';
+    detailEl.innerHTML = h;
+    detailEl.style.display = 'block';
+    $('dClose').onclick = function () { detailEl.style.display = 'none'; };
+  }
+  /* ================= 跟随 ================= */
+  function startFollow(id, name) {
+    followId = id; followTrain = null; followName = name || '';
+    if (!liveOn) { btnLive.click(); }
+    toast('🎯 ' + I18N[lang].follow + ': ' + followName);
   }
   function stopFollow() {
-    followId = null; followTrain = null;
-    btnFollow.classList.remove('on');
-    btnFollow.textContent = '🎯 跟随';
+    followId = null; followTrain = null; followName = '';
   }
-  /* ---------- 地图 ---------- */
+  /* ================= 多语言 ================= */
+  function applyLang() {
+    var t = I18N[lang];
+    document.documentElement.lang = lang === 'zh' ? 'zh-Hans' : lang;
+    var nodes = document.querySelectorAll('[data-i18n]');
+    for (var i = 0; i < nodes.length; i++) {
+      var k = nodes[i].getAttribute('data-i18n');
+      if (t[k]) nodes[i].textContent = t[k];
+    }
+    var ph = document.querySelectorAll('[data-i18n-ph]');
+    for (var j = 0; j < ph.length; j++) ph[j].placeholder = t[ph[j].getAttribute('data-i18n-ph')];
+  }
+  /* ================= 地图 ================= */
   function initMap() {
     map = new maplibregl.Map({
       container: 'map',
@@ -354,35 +683,35 @@
       style: {
         version: 8,
         sources: {},
-        layers: [{ id: 'bg', type: 'background', paint: { 'background-color': '#07090f' } }]
+        layers: [{ id: 'bg', type: 'background', paint: { 'background-color': '#06080e' } }]
       }
     });
     map.addControl(new maplibregl.NavigationControl({ showCompass: true, visualizePitch: true }), 'bottom-right');
     map.on('load', function () {
       Promise.all([loadJSON(SEG_URL), loadJSON(STA_URL), loadJSON(TMAP_URL)]).then(function (arr) {
         segSrc = arr[0]; staSrc = arr[1]; tmaps = arr[2];
-        buildIndices();
+        buildIndices(); buildSearch();
         map.addSource('segs', { type: 'geojson', data: segSrc });
         map.addLayer({ id: 'segs-glow', type: 'line', source: 'segs',
           paint: {
             'line-color': ['get', 'color'],
-            'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 3, 2.2, 9, 4.5, 14, 8],
-            'line-opacity': 0.16,
-            'line-blur': 1.6
+            'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 3, 2.4, 9, 5, 14, 9],
+            'line-opacity': 0.18,
+            'line-blur': 2
           } });
         map.addLayer({ id: 'segs', type: 'line', source: 'segs',
           paint: {
             'line-color': ['get', 'color'],
-            'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 3, 0.7, 9, 1.6, 14, 3.2],
+            'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 3, 0.8, 9, 1.7, 14, 3.4],
             'line-opacity': 0.92
           } });
         map.addSource('stas', { type: 'geojson', data: staSrc });
         map.addLayer({ id: 'stas', type: 'circle', source: 'stas',
           paint: {
-            'circle-radius': ['interpolate', ['exponential', 1.5], ['zoom'], 3, 1.1, 9, 1.8, 13, 3],
+            'circle-radius': ['interpolate', ['exponential', 1.5], ['zoom'], 3, 1.2, 9, 2, 13, 3.4],
             'circle-color': '#b9c3d4',
-            'circle-opacity': 0.5,
-            'circle-stroke-color': '#07090f',
+            'circle-opacity': 0.6,
+            'circle-stroke-color': '#06080e',
             'circle-stroke-width': 0.4
           } });
         map.addLayer({ id: 'stas-label', type: 'symbol', source: 'stas',
@@ -391,28 +720,38 @@
             'text-field': ['get', 'station'],
             'text-size': 10.5,
             'text-font': ['Open Sans Regular'],
-            'text-offset': [0, 0.8],
+            'text-offset': [0, 0.9],
             'text-anchor': 'top',
             'text-allow-overlap': false
           },
-          paint: { 'text-color': '#8fa0b8', 'text-halo-color': 'rgba(7,9,15,0.85)', 'text-halo-width': 1.2 } });
+          paint: { 'text-color': '#a7b4ca', 'text-halo-color': 'rgba(6,8,14,0.9)', 'text-halo-width': 1.3 } });
+        map.on('click', 'stas', function (e) {
+          if (!e.features.length) return;
+          var nm = e.features[0].properties.station;
+          var c = stationCoord.get(nm);
+          if (c) { hlStation = c; hlLine = ''; applyHl(); showStationDetail(nm); }
+        });
+        applyKind();
         dataReady = true;
-        setStatus('数据就绪 · 点 ⚡ 实时 查看全日本列车');
-      }).catch(function (e) { setStatus('数据加载失败: ' + e.message); });
+        $('dNet').textContent = '577 / 8,532';
+        setStatus('✓ ' + I18N[lang].live + ' → ' + (lang === 'zh' ? '点右上角 ⚡' : (lang === 'ja' ? '右上 ⚡ をタップ' : 'tap ⚡ top-right')));
+        setTimeout(function () { if (!liveOn) setStatus('⚡ ' + I18N[lang].live); }, 2600);
+      }).catch(function (e) { setStatus('ERR: ' + e.message); });
     });
     map.on('click', function (e) {
       if (!followId) return;
       var hit = map.queryRenderedFeatures(e.point, { layers: ['trains'] });
-      if (!hit.length) stopFollow();
+      if (!hit.length) { stopFollow(); toast(I18N[lang].followCancel); }
     });
   }
-  /* ---------- 控件 ---------- */
+  /* ================= 控件 ================= */
   btnLive.addEventListener('click', function () {
     liveOn = !liveOn;
     btnLive.classList.toggle('on', liveOn);
     if (liveOn) {
-      if (!dataReady) { btnLive.classList.remove('on'); liveOn = false; setStatus('数据未就绪，稍候再试'); return; }
+      if (!dataReady) { btnLive.classList.remove('on'); liveOn = false; toast('数据未就绪'); return; }
       ensureLiveLayers();
+      clockEl.style.display = 'block';
       var bit = activeBit();
       var p = (trains && trainsBit === bit) ? Promise.resolve() : loadTrains(bit);
       p.then(function () {
@@ -427,48 +766,60 @@
     } else {
       if (timer) { clearInterval(timer); timer = null; }
       if (map.getSource('trains')) map.getSource('trains').setData({ type: 'FeatureCollection', features: [] });
+      clockEl.style.display = 'none';
       stopFollow();
     }
   });
-  Object.keys(dayBtns).forEach(function (k) {
-    dayBtns[k].addEventListener('click', function () {
-      dayMode = k;
-      Object.keys(dayBtns).forEach(function (x) { dayBtns[x].classList.toggle('on', x === k); });
-      if (liveOn) {
-        var b = activeBit();
-        if (b !== trainsBit) loadTrains(b); else refreshTrains();
-      }
+  document.querySelectorAll('#kindRow .chip').forEach(function (c) {
+    c.addEventListener('click', function () {
+      var k = c.getAttribute('data-kind');
+      selKind[k] = !selKind[k];
+      c.classList.toggle('on', selKind[k]);
+      if (map.getSource('segs')) applyKind();
     });
   });
-  Object.keys(spBtns).forEach(function (k) {
-    spBtns[k].addEventListener('click', function () {
-      speed = parseFloat(k);
-      Object.keys(spBtns).forEach(function (x) { spBtns[x].classList.toggle('on', x === k); });
+  $('swLabel').addEventListener('click', function () { this.classList.toggle('on'); map.setLayoutProperty('stas-label', 'visibility', this.classList.contains('on') ? 'visible' : 'none'); });
+  $('swGlow').addEventListener('click', function () { this.classList.toggle('on'); map.setLayoutProperty('segs-glow', 'visibility', this.classList.contains('on') ? 'visible' : 'none'); });
+  $('swSta').addEventListener('click', function () { this.classList.toggle('on'); map.setLayoutProperty('stas', 'visibility', this.classList.contains('on') ? 'visible' : 'none'); });
+  document.querySelectorAll('.spb').forEach(function (b) {
+    b.addEventListener('click', function () {
+      doSetSpeed(parseFloat(b.getAttribute('data-sp')));
+      document.querySelectorAll('.spb').forEach(function (x) { x.classList.toggle('on', x === b); });
     });
   });
+  $('btnPlay').addEventListener('click', function () { if (paused) doPlay(); else doPause(); });
+  $('cNow').addEventListener('click', function () { doNow(); if (liveOn) refreshTrains(); });
+  sliderEl.addEventListener('input', function () {
+    doPause();
+    sliderSync = false;
+    vJST = parseFloat(sliderEl.value) * 60000;
+    if (liveOn) refreshTrains();
+    sliderSync = true;
+  });
+  searchEl.addEventListener('input', function () {
+    clearTimeout(sugTimer);
+    var q = this.value;
+    sugTimer = setTimeout(function () { runSearch(q); }, 160);
+  });
+  searchEl.addEventListener('keydown', function (e) { if (e.key === 'Enter') { var it = sugEl.querySelector('.sug-it'); if (it) pickSug(it); } });
+  sugEl.addEventListener('click', function (e) { var it = e.target.closest('.sug-it'); if (it) pickSug(it); });
   document.getElementById('btn3d').addEventListener('click', function () {
     map.setProjection({ type: 'globe' });
     map.easeTo({ pitch: 55, bearing: 0, duration: 1200 });
-    document.getElementById('btn3d').classList.add('on');
-    document.getElementById('btn2d').classList.remove('on');
+    $('btn3d').classList.add('on'); $('btn2d').classList.remove('on');
   });
   document.getElementById('btn2d').addEventListener('click', function () {
     map.setProjection({ type: 'mercator' });
     map.easeTo({ pitch: 0, bearing: 0, duration: 1200 });
-    document.getElementById('btn2d').classList.add('on');
-    document.getElementById('btn3d').classList.remove('on');
+    $('btn2d').classList.add('on'); $('btn3d').classList.remove('on');
   });
-  btnFollow.addEventListener('click', function () {
-    if (followId) { stopFollow(); return; }
-    if (!liveOn) btnLive.click();
-    tipEl.style.display = 'block';
-    tipEl.style.left = '50%';
-    tipEl.style.top = '44%';
-    tipEl.style.transform = 'translateX(-50%)';
-    tipEl.innerHTML = '<div class="sg">点击地图上任意一列列车开始跟随</div>';
-    setTimeout(function () {
-      if (!followId) { tipEl.style.display = 'none'; tipEl.style.transform = ''; }
-    }, 4000);
+  document.getElementById('btnLang').addEventListener('click', function () {
+    lang = lang === 'zh' ? 'ja' : (lang === 'ja' ? 'en' : 'zh');
+    applyLang();
+  });
+  document.getElementById('btnSide').addEventListener('click', function () {
+    sideEl.classList.toggle('collapsed');
+    $('btnSide').textContent = sideEl.classList.contains('collapsed') ? '☰' : '✕';
   });
   /* ---------- 跟随 ---------- */
   setInterval(function () {
@@ -476,9 +827,11 @@
       var c = followTrain.geometry.coordinates;
       map.easeTo({ center: c, duration: 0 });
     }
-  }, 300);
+  }, 250);
   /* ---------- 启动 ---------- */
+  doNow();
   initMap();
+  applyLang();
 })();
 </script>
 </body>

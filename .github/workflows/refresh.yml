@@ -1,4 +1,4 @@
-name: Refresh full timetables (manual)
+name: Refresh timetables (weekly + manual)
 
 # 唯一会访问 RailAround 的工作流。每周自动抓一次全表维护总时刻表，
 # 也可手动触发（workflow_dispatch）。

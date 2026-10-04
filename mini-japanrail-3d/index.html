@@ -1429,7 +1429,11 @@ void main() {
     gl.uniform4f(U.u_tmc, D.tileMercatorCoords[0], D.tileMercatorCoords[1], D.tileMercatorCoords[2], D.tileMercatorCoords[3]);
     gl.uniform4f(U.u_cp, D.clippingPlane[0], D.clippingPlane[1], D.clippingPlane[2], D.clippingPlane[3]);
     gl.uniform1f(U.u_tr, D.projectionTransition);
-    gl.uniform2f(U.u_ndcScale, 2 / gl.drawingBufferWidth, 2 / gl.drawingBufferHeight);
+    // dpr 补偿:u_ndcScale 以 CSS 显示尺寸为基准(而非 drawingBuffer buffer 像素),
+    // 高分屏 dpr>1 时 buffer 翻倍会让方盒实际缩小一半——按 用户既定规范 用显示尺寸计算
+    const cw = map.getCanvas().clientWidth || gl.drawingBufferWidth;
+    const dpr = cw > 0 ? gl.drawingBufferWidth / cw : 1;
+    gl.uniform2f(U.u_ndcScale, 2 * dpr / gl.drawingBufferWidth, 2 * dpr / gl.drawingBufferHeight);
     gl.bindVertexArray(vao);
     gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
     gl.enableVertexAttribArray(U.a_pos);    gl.vertexAttribPointer(U.a_pos, 2, gl.FLOAT, false, STRIDE*4, 0);
@@ -1462,13 +1466,16 @@ function updateTrains(M) {
   visibleTrips.length = 0;
   const z = map.getZoom();
   let L, W;
-  if (z < 3.5) { L = 2.6 + (z - 1) * 0.5; W = Math.max(1.6, L * 0.55); }
-  else if (z < 8) { const f = (z - 3.5) / 4.5; L = 4.8 + f * 4.5; W = 2.6 + f * 1.6; }
-  else if (z < 12) { const f = (z - 8) / 4; L = 9.3 + f * 6; W = 4.2 + f * 2.2; }
-  else { const f = Math.min(1, (z - 12) / 3); L = 15.3 + f * 7; W = 6.4 + f * 2.6; }
+  // 尺寸曲线(以 CSS 像素计,配合上面 dpr 补偿):低 zoom 小巧,高 zoom 逐级放大更好看
+  if (z < 3.5) { L = 3.0 + (z - 1) * 0.6; W = Math.max(1.8, L * 0.5); }
+  else if (z < 8) { const f = (z - 3.5) / 4.5; L = 5.6 + f * 6; W = 2.8 + f * 2; }
+  else if (z < 12) { const f = (z - 8) / 4; L = 11.6 + f * 9; W = 4.8 + f * 3; }
+  else { const f = Math.min(1, (z - 12) / 3); L = 20.6 + f * 22; W = 7.8 + f * 7; }
   L *= trainSizeMul; W *= trainSizeMul;
   const glowOn = $('swTrail').classList.contains('on');
-  const eps = 1.2e-4;
+  // 方向向量在屏幕上的长度保持 ~8px:固定 1.2e-4 在低 zoom(全国视图)被投影浮点误差吞掉 → 方盒朝向乱;
+  // 高 zoom 若用大偏移则跨经度产生曲率误差 → 按 mercator 像素换算自适应(clamp 1.5e-6~2.5e-3)
+  const eps = Math.max(1.5e-6, Math.min(2.5e-3, 8 / (512 * Math.pow(2, z))));
   const drawGlow = glowOn && z < 9;
   const glowPass = [];
   for (let idx = 0; idx < tripList.length; idx++) {

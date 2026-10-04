@@ -392,7 +392,7 @@ const HOLIDAYS = (() => {
     }
     for (let t = 0; t < 370; t++) {
       const dt = new Date(Date.UTC(y, 0, 1+t));
-      const k = keyOf(dt), kp = keyOf(new Date(dt-86400000)), kn = keyOf(new Date(dt+86400000));
+      const t0 = dt.getTime(), k = keyOf(dt), kp = keyOf(new Date(t0-86400000)), kn = keyOf(new Date(t0+86400000));
       const wd = dt.getUTCDay();
       if (wd >= 1 && wd <= 5 && set.has(kp) && set.has(kn) && !set.has(k)) set.add(k);
     }

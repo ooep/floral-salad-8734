@@ -1,0 +1,85 @@
+name: Refresh full timetables (manual)
+
+# 唯一会访问 RailAround 的工作流（手动触发，默认不自动跑）。
+# 流程: 全量抓取时刻表(fetch_timetables.py, 2.2s/请求节流) → 构建页面本地列车文件
+# (build_trains.py) → 提交 → 部署 Pages。
+# 若想每周自动刷新，取消下方 schedule 注释并按需改时间。
+
+on:
+  workflow_dispatch:
+    inputs:
+      only:
+        description: '只刷新单条线路名（留空 = 全量，约 65 分钟）'
+        type: string
+        required: false
+        default: ''
+  # schedule:
+  #   - cron: '0 3 * * 0'   # 每周日 03:00 UTC
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: refresh-pages
+  cancel-in-progress: true
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Fetch full timetables (throttled 2.2s/request)
+        run: python3 scripts/fetch_timetables.py --only "${{ github.event.inputs.only }}"
+
+      - name: Build local train files
+        run: python3 scripts/build_trains.py --src data/timetables --out data/live
+
+      - name: Commit refreshed data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A data/timetables data/live
+          if git diff --cached --quiet; then
+            echo "no data change"
+          else
+            git commit -m "chore(data): refresh timetables $(date -u +%Y-%m-%d)"
+            git push
+          fi
+
+      - name: Prepare deploy dir
+        run: |
+          rm -rf dist && mkdir -p dist/data
+          cp index.html favicon.png dist/
+          cp -r data/segments.geojson data/stations.geojson data/names_en.json dist/data/
+          cp -r data/live dist/data/
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Deploy to Cloudflare Pages
+        if: ${{ env.CF_API_TOKEN != '' }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+        run: |
+          npx wrangler@4 pages deploy dist --project-name floral-salad-8734 --branch main --commit-dirty=true

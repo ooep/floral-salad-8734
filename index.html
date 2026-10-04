@@ -279,7 +279,7 @@ body { background: #07090d; color: #eee; font-family: 'Nunito', system-ui, sans-
 <div id="map"></div>
 <div id="langtoggle"><span id="lang-en">EN</span><span id="lang-ja">日本語</span><span id="lang-zh">中文</span></div>
 <div id="aboutbtn" title="about">?</div>
-<div id="livetoggle" title="实时列车位置（RailAround 快照，GitHub Action 每10分钟更新）">⚡<span>实时</span></div>
+<div id="livetoggle" title="实时列车位置（本地时刻表驱动：按今日运行日+当前时间过滤，无需外部抓取）">⚡<span>实时</span></div>
 <div id="livestatus"></div>
 <div id="bottomleft">
     <div id="ctrlbtn" title="controls"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg></div>
@@ -1888,10 +1888,10 @@ document.addEventListener('click', () => { if (aboutOpen) setAboutOpen(false); }
     const LIVECTRL = document.getElementById('livetoggle');
     const LIVESTATUS = document.getElementById('livestatus');
     const tipEl = document.getElementById('tooltip');
-    let liveOn = false, latest = null, tmaps = null;
+    let liveOn = false, tmaps = null, trains = null, trainsBit = 0;
     let stationCoord = null, segIndex = null, trainFC = null;
     let adj = null, edgeCoords = null, edgeLine = null, pathMemo = null;
-    let timer = null, refreshTimer = null;
+    let timer = null;
     const SHINK = ['Hayabusa', 'Komachi', 'Yamabiko', 'Tsubasa', 'Kagayaki', 'Toki', 'Hakutaka', 'Asama', 'Nasuno', 'Tanigawa'];
     function iconColor(ic) {
         if (SHINK.includes(ic)) return '#2e9e44';
@@ -1902,12 +1902,38 @@ document.addEventListener('click', () => { if (aboutOpen) setAboutOpen(false); }
         return '#9aa0ab';
     }
     // rday 位掩码: 1=平日 2=周六 4=周日·假日（JST 当日）
+    // 日本国民の祝日・振替休日（2026-2027）。以后年份请按官方公告更新：
+    // https://www8.cao.go.jp/chosei/shukujitsu/gaiyou.html
+    const HOLIDAYS = new Set([
+        '2026-01-01','2026-01-12','2026-02-11','2026-02-23','2026-03-20','2026-04-29',
+        '2026-05-03','2026-05-04','2026-05-05','2026-05-06','2026-07-20','2026-08-11',
+        '2026-09-21','2026-09-23','2026-10-12','2026-11-03','2026-11-23',
+        '2027-01-01','2027-01-11','2027-02-11','2027-02-23','2027-03-21','2027-03-22','2027-04-29',
+        '2027-05-03','2027-05-04','2027-05-05','2027-07-19','2027-08-11',
+        '2027-09-20','2027-09-23','2027-10-11','2027-11-03','2027-11-23',
+    ]);
     function todayBit() {
         const now = new Date(Date.now() + 9 * 3600 * 1000);
+        const y = now.getUTCFullYear();
+        const md = String(now.getUTCMonth() + 1).padStart(2, '0') + '-' + String(now.getUTCDate()).padStart(2, '0');
+        if (HOLIDAYS.has(y + '-' + md)) return 4;
         const d = now.getUTCDay();
         return (d >= 1 && d <= 5) ? 1 : (d === 6 ? 2 : 4);
     }
     function minOfDayJST() { return ((Date.now() / 1000 + 9 * 3600) % 86400) / 60; }
+    // 本地时刻表文件：按运行日分组，页面只加载今日对应的一份（无外部抓取）
+    const TRAIN_FILES = { 1: 'data/live/trains_wd.json', 2: 'data/live/trains_sa.json', 4: 'data/live/trains_su.json' };
+    function inWindow(t, M) {
+        const w = t.w;
+        if (!w) return false;
+        const comma = w.indexOf(',');
+        if (comma < 0) return false;
+        let lo = +w.slice(0, comma), hi = +w.slice(comma + 1), MM = M;
+        if (hi < 300 && M > 1400) MM = M - 1440;
+        else if (lo > 1400 && M < 300) MM = M + 1440;
+        return MM >= lo && MM <= hi;
+    }
+    function schsOf(t) { if (!t.__s) t.__s = t.s.split(',').map(Number); return t.__s; }
 
     function buildIndices() {
         stationCoord = new Map();
@@ -2005,10 +2031,10 @@ document.addEventListener('click', () => { if (aboutOpen) setAboutOpen(false); }
     }
     // schs 解码 + 定位：返回 {pt, A, B, color, icon, line} 或 null
     function trainPosition(t, M) {
-        const tm = tmaps ? tmaps[t.tmap_id] : null;
+        const tm = tmaps ? tmaps[t.t] : null;
         if (!tm || !tm.s_jas || tm.s_jas.length < 2) return null;
-        const st = tm.s_jas, schs = t.schs, N = st.length;
-        if (schs.length < 2 * N - 2) return null;
+        const st = tm.s_jas, schs = schsOf(t), N = st.length;
+        if (!schs || schs.length < 2 * N - 2) return null;
         const dep = [], arr = [];
         dep[0] = schs[0];
         for (let i = 1; i < N; i++) {
@@ -2019,7 +2045,7 @@ document.addEventListener('click', () => { if (aboutOpen) setAboutOpen(false); }
         if (dep[N - 1] < 300 && M > 1400) MM = M - 1440;
         if (dep[0] > 1400 && M < 300) MM = M + 1440;
         if (MM < dep[0] - 1e-6 || MM > arr[N - 1] + 1e-6) return null;
-        const meta = { color: iconColor(t.icon), icon: t.icon, line: (tm.lines && tm.lines.length === 1) ? tm.lines[0] : '' };
+        const meta = { color: iconColor(t.i), icon: t.i, line: (tm.lines && tm.lines.length === 1) ? tm.lines[0] : '' };
         const placeAt = (S) => {
             const c = stationCoord.get(S);
             if (c) return { pt: c, A: S, B: S, color: meta.color, icon: meta.icon, line: meta.line };
@@ -2059,12 +2085,15 @@ document.addEventListener('click', () => { if (aboutOpen) setAboutOpen(false); }
         return null;
     }
     function refreshPositions() {
-        if (!liveOn || !latest || !tmaps || !trainFC) return;
+        if (!liveOn || !trains || !tmaps || !trainFC) return;
         const bit = todayBit();
         const M = minOfDayJST();
         const feats = [];
-        for (const t of latest.trains) {
-            if (!(t.rday & bit)) continue;
+        const list = trains.T;
+        for (let k = 0; k < list.length; k++) {
+            const t = list[k];
+            if (!(t.r & bit)) continue;
+            if (!inWindow(t, M)) continue;
             const pos = trainPosition(t, M);
             if (!pos) continue;
             feats.push({
@@ -2078,15 +2107,20 @@ document.addEventListener('click', () => { if (aboutOpen) setAboutOpen(false); }
         if (LIVESTATUS) {
             const d = new Date();
             const pad = n => String(n).padStart(2, '0');
-            LIVESTATUS.textContent = '⚡ ' + feats.length + '/' + latest.count + ' 列运行 · 快照 ' + latest.fetched_at_jst + ' · ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds()) + ' JST';
+            LIVESTATUS.textContent = '⚡ ' + feats.length + '/' + (trains.n || list.length) + ' 列运行 · 本地时刻表 @ ' + (trains.b || '') + ' · ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds()) + ' JST';
         }
     }
-    async function refreshData() {
+    async function loadTrains(bit) {
+        const f = TRAIN_FILES[bit];
+        if (!f) return;
         try {
-            const r = await fetch('data/live/latest.json?t=' + Date.now());
-            latest = await r.json();
+            const r = await fetch(f);
+            trains = await r.json();
+            trainsBit = bit;
             refreshPositions();
-        } catch (e) { /* 快照未就绪时保持旧数据 */ }
+        } catch (e) {
+            if (LIVESTATUS) LIVESTATUS.textContent = '⚡ 本地时刻表加载失败（' + f + '）';
+        }
     }
     function ensureReady(cb) {
         if (sfcData && allFeats && allFeats.length && map.getSource('segs')) cb();
@@ -2126,13 +2160,19 @@ document.addEventListener('click', () => { if (aboutOpen) setAboutOpen(false); }
                     map.on('mouseleave', 'live-trains', () => { tipEl.style.display = 'none'; map.getCanvas().style.cursor = ''; });
                 }
                 trainFC = { type: 'FeatureCollection', features: [] };
-                await refreshData();
-                if (!timer) timer = setInterval(refreshPositions, 1000);
-                if (!refreshTimer) refreshTimer = setInterval(refreshData, 60000);
+                const bit = todayBit();
+                if (!trains || trainsBit !== bit) await loadTrains(bit);
+                else refreshPositions();
+                if (!timer) {
+                    timer = setInterval(() => {
+                        const b = todayBit();
+                        if (b !== trainsBit) { loadTrains(b); return; }
+                        refreshPositions();
+                    }, 1000);
+                }
             });
         } else {
             if (timer) { clearInterval(timer); timer = null; }
-            if (refreshTimer) { clearInterval(refreshTimer); refreshTimer = null; }
             if (map.getSource('live-trains')) map.getSource('live-trains').setData({ type: 'FeatureCollection', features: [] });
         }
     }

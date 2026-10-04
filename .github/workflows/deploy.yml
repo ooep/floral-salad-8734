@@ -1,22 +1,18 @@
 name: Build & deploy site
 
-# 每日一次：刷新 tmap 归属缓存(按需)、抓最新实时快照、提交数据，
-# 并部署到 GitHub Pages + Cloudflare Pages(如配置 CF_API_TOKEN)。
-# GitHub Pages: Actions 方式部署(仓库 Settings→Pages→Source: GitHub Actions)。
-# Cloudflare Pages: 项目 floral-salad-8734，仓库需配置 Secret: CF_API_TOKEN。
+# 纯本地数据部署：不访问任何外部接口。
+# 页面「⚡实时」图层读取仓库内 data/live/trains_*.json（本地时刻表，按今日运行日加载），
+# 客户端按当前 JST 时间过滤渲染。数据刷新走 refresh.yml（手动）。
+# GitHub Pages: Actions 方式部署（仓库 Settings→Pages→Source: GitHub Actions）。
+# Cloudflare Pages: 项目 floral-salad-8734，仓库需配置 Secret: CF_API_TOKEN（可选）。
 
 on:
-  schedule:
-    - cron: '30 2 * * *'   # 02:30 UTC = 11:30 JST
-  workflow_dispatch:
-    inputs:
-      force_tmaps:
-        description: '强制重建 tmap 归属缓存（全量，约23分钟）'
-        type: boolean
-        default: false
+  push:
+    branches: [main]
+  workflow_dispatch: {}
 
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 
@@ -30,36 +26,20 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Build tmap attribution cache
-        if: ${{ !github.event.inputs.force_tmaps }}
-        run: python3 scripts/railaround_build_tmaps.py --skip-if-cached
-
-      - name: Force rebuild tmap attribution cache
-        if: ${{ github.event.inputs.force_tmaps }}
-        run: python3 scripts/railaround_build_tmaps.py
-
-      - name: Fetch fresh live snapshot
-        run: python3 scripts/fetch_live.py
-
-      - name: Commit data
+      - name: Verify data assets
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A data/live
-          if git diff --cached --quiet; then
-            echo "no data change"
-          else
-            git commit -m "chore(data): refresh live caches $(date -u +%Y-%m-%d)"
-            git push
-          fi
+          python3 - <<'PY'
+          import json, os
+          for f in ['index.html','data/segments.geojson','data/stations.geojson',
+                    'data/live/tmaps.json','data/live/trains_wd.json',
+                    'data/live/trains_sa.json','data/live/trains_su.json']:
+              assert os.path.exists(f), 'missing: ' + f
+          print('数据资产完整: 页面 + 地图 + tmaps + 三份本地时刻表')
+          for n in ['wd','sa','su']:
+              d = json.load(open('data/live/trains_%s.json' % n, encoding='utf-8'))
+              print('trains_%s.json: %d 班次 @ %s' % (n, d['n'], d['b']))
+          PY
 
       - name: Prepare deploy dir
         run: |

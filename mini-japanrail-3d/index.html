@@ -1836,14 +1836,16 @@ function showTrainDetail(t) {
 function updateDetailLive(t, p, M, rebuild) {
   if (!p) { p = trainPosition(t, windowShift(t, M)); }
   if (!p) return;
+  const M2 = windowShift(t, M); // 跨日对齐:午夜后 M 归零,而班次分钟是前一日绝对分钟(如 00:28 → 1468),直接相减会得到 1000+ 分钟的假 ETA
   const col = p[3] ? (lineColor.get(p[3]) || t.color) : t.color;
   let i = 0;
   const { dep, arr, N, jas } = t;
-  while (i < N - 1 && M > arr[i+1]) i++;
-  const running = M <= arr[i+1] + 1e-6;
-  const nextNm = jas[running ? i + 1 : i + 1];
+  while (i < N - 1 && M2 > arr[i+1]) i++;
+  const running = i < N - 1 && M2 <= arr[i+1] + 1e-6;
+  const ni = Math.min(i + 1, N - 1); // 已终到时显示终点站,不越界
+  const nextNm = jas[ni];
   let eta = '';
-  if (running) { const m = Math.max(0, Math.round(arr[i+1] - M)); eta = T().eta + m + T().min; }
+  if (running) { const m = Math.max(0, Math.round(arr[ni] - M2)); eta = T().eta + m + T().min; }
   if (rebuild || detailEl.dataset.tid != String(t.t) + t.w0) {
     detailEl.dataset.tid = String(t.t) + t.w0;
     const uniqLines = t.lines || [];

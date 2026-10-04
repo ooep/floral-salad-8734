@@ -505,7 +505,13 @@ function resolveCoord(rawName, lineSet, prevCoord) {
   const base = normName(rawName);
   const cands = stationCands.get(base);
   if (!cands || !cands.length) return null;
-  if (cands.length === 1) return cands[0].coords;
+  if (cands.length === 1) {
+    const c = cands[0];
+    /* 单候选也要校验括号注记:候选线路与班次线路无交集 → 站表缺该站(三川(新潟県)→室蘭線 北海道)
+       而非无条件取回,否则错配坐标会拉跨整段站序折线 */
+    if (bracket && lineSet && c.line && ![...lineSet].some(ln => matchLine(ln, c.line) > 0)) return null;
+    return c.coords;
+  }
   let best = null, bestScore = -1;
   for (const c of cands) {
     let score = 0;
@@ -688,6 +694,16 @@ function buildStaticIndex() {
   segIndex = new Map(); adj = new Map();
   const polyCache = new Map();
   function register(a, b, coords, line, color, kind) {
+    /* 方向修复:源数据部分段 from/to 与坐标方向相反(如上越新幹線「大宮|熊谷」coords 实为熊谷→大宮),
+       导致路径从错误端开始。用站表权威坐标判断:coords[0] 应接近 key 前站 */
+    if (coords.length >= 2) {
+      const ca = stationCoord.get(normName(a));
+      const cb = stationCoord.get(normName(b));
+      if (ca && cb && geoKm(ca, cb) > 0.5 && geoKm(coords[0], cb) + geoKm(coords[coords.length - 1], ca) <
+                       geoKm(coords[0], ca) + geoKm(coords[coords.length - 1], cb)) {
+        coords = coords.slice().reverse();
+      }
+    }
     let pc = polyCache.get(coords);
     if (!pc) {
       const cum = new Float64Array(coords.length); let L = 0;
@@ -977,7 +993,13 @@ function parseTrips(json) {
       }
     }
     const bad = skX.length < 2 || skLen < 0.5;
-    trips.push({ t: t.t, r: t.r, i: t.i || '', w0, w1, dep, arr, N, jas, jasN, stopC, lines, linesN, lineSet, skX, skY, skStop, skCum, skLen, bad, color: typeColor(t.i) });
+    /* 已知站索引:区间站无坐标时,用上下游最近已知站对重建轨道路径(如磐越西線咲花/日出谷/三川) */
+    const skUp = new Int16Array(N), skDn = new Int16Array(N);
+    let lastK = -1;
+    for (let i = 0; i < N; i++) { skUp[i] = lastK; if (stopC[i]) lastK = i; }
+    lastK = -1;
+    for (let i = N - 1; i >= 0; i--) { skDn[i] = lastK; if (stopC[i]) lastK = i; }
+    trips.push({ t: t.t, r: t.r, i: t.i || '', w0, w1, dep, arr, N, jas, jasN, stopC, lines, linesN, lineSet, skX, skY, skStop, skCum, skLen, bad, skUp, skDn, color: typeColor(t.i) });
   }
   return trips;
 }
@@ -989,12 +1011,21 @@ function windowShift(t, M) {
   return M;
 }
 /* 无直接轨道段时,仅限本班次自身线路集合内 BFS;失败则交给骨架线(不跨线兜底,避免窜线) */const bfsMemo = new Map();
-function findPathOnLines(A, B, lineSet) {
+function findPathOnLines(A, B, lineSet, rawA, rawB) {
   const lsKey = lineSet ? [...lineSet].sort().join(',') : '';
   const key = A + '|' + B + '|' + lsKey;
   if (bfsMemo.has(key)) return bfsMemo.get(key);
   const result = bfsRaw(A, B, (line) => lineSet.has(normName(line)));
-  const out = result ? withLen(result) : null;
+  let out = null;
+  if (result) {
+    const ca = resolveCoord(rawA || A, lineSet) || stationCoord.get(A);
+    const cb = resolveCoord(rawB || B, lineSet) || stationCoord.get(B);
+    /* 轨道/直线比:平原 1.3-1.6,山区间 2.5+;1.6 会把真实路径(大宮→高崎 上越段 77km vs 直线 30km)误拒。
+       2.5+3 仍能拦住跨线绕路(秩父本線 108km vs 直线 30km → 78km cap) */
+    const cap = (ca && cb && geoKm(ca, cb) > 0.1) ? geoKm(ca, cb) * 2.5 + 3 : 1e9;
+    const L = withLen(result).len;
+    if (L <= cap) out = withLen(result);
+  }
   if (bfsMemo.size > 30000) bfsMemo.clear();
   bfsMemo.set(key, out);
   return out;
@@ -1018,7 +1049,10 @@ function bfsRaw(A, B, lineFilter) {
   for (let j = 0; j < stops.length - 1; j++) {
     const e = segIndex.get(stops[j] + '|' + stops[j+1]);
     if (!e) return null;
-    const co = e[0].coords;
+    // 取匹配线路的 entry(防同名站对混入其它线路段,如 大宮|熊谷 的秩父本線 0.9km 噪声段)
+    let en = e[0];
+    if (lineFilter) { const m = e.find(x => lineFilter(x.line)); if (m) en = m; }
+    const co = en.coords;
     if (j === 0) coords.push(...co); else coords.push(...co.slice(1));
   }
   return coords;
@@ -1046,7 +1080,7 @@ function bridgePathRaw(A, B, lineSet, rawA, rawB) {
   if (!ca || !cb) return null;
   const straight = geoKm(ca, cb);
   if (straight < 0.1) return null;
-  const cap = straight * 1.6 + 3;
+  const cap = straight * 2.5 + 3;
   const VIR = '\u0001P:';
   const projInfo = new Map();
   let sNode = A, sPos = ca, tNode = B, tPos = cb;
@@ -1170,26 +1204,43 @@ function trainPosition(t, M) {
   if (frac < 0) {
     // 停車中:站位置(预计算,几何对齐)+ 朝向 = 本区间轨道方向
     const c = t.stopC[i + 1];
-    if (!c) return null;
-    const e = pickSeg(t, A, B, t.stopC[i]);
-    if (e) {
-      const co = e.coords;
-      _pos[2] = Math.atan2(co[co.length-1][0] - co[0][0], co[co.length-1][1] - co[0][1]);
+    if (c) {
+      const e = pickSeg(t, A, B, t.stopC[i]);
+      if (e) {
+        const co = e.coords;
+        _pos[2] = Math.atan2(co[co.length-1][0] - co[0][0], co[co.length-1][1] - co[0][1]);
+      }
+      _pos[0] = c[0]; _pos[1] = c[1]; _pos[3] = e ? e.line : lineOfPair(t, i); _pos[4] = kindOfPair(t, i); _pos[5] = 0;
+      return _pos;
     }
-    _pos[0] = c[0]; _pos[1] = c[1]; _pos[3] = e ? e.line : lineOfPair(t, i); _pos[4] = kindOfPair(t, i); _pos[5] = 0;
-    return _pos;
+    /* 无坐标站停车(磐越西線咲花/日出谷等):fallthrough 到已知站对路径定位,列车不消失 */
   }
   const segEntry = pickSeg(t, A, B, t.stopC[i]);
   let coords = null, cum = null, len = 0, line = '', kind = '';
+  let fPos = frac;
   if (segEntry) { coords = segEntry.coords; cum = segEntry.cum; len = segEntry.len; line = segEntry.line; kind = segEntry.kind; }
   if (!coords) {
-    const path = findPathOnLines(A, B, t.lineSet || (t.lineSet = new Set(t.lines))) || segSubPath(A, B, t.stopC[i], t.stopC[i+1]) || bridgePath(A, B, t.lineSet, t.jas[i], t.jas[i+1]) || routeByStops(A, B, t.lineSet);
+    let path = null;
+    if (t.stopC[i] && t.stopC[i+1]) {
+      path = findPathOnLines(A, B, t.lineSet || (t.lineSet = new Set(t.lines)), t.jas[i], t.jas[i+1]) || segSubPath(A, B, t.stopC[i], t.stopC[i+1]) || bridgePath(A, B, t.lineSet, t.jas[i], t.jas[i+1]) || routeByStops(A, B, t.lineSet);
+    } else {
+      /* 区间站无坐标:用上下游最近已知站对重建轨道路径(磐越西線五泉→津川 真实几何),时间映射到该站对 */
+      const a2 = t.stopC[i] ? i : t.skUp[i];
+      const b2 = t.stopC[i+1] ? i+1 : t.skDn[i+1];
+      if (a2 >= 0 && b2 > a2) {
+        path = findPathOnLines(t.jasN[a2], t.jasN[b2], t.lineSet || (t.lineSet = new Set(t.lines)), t.jas[a2], t.jas[b2]) || (t.stopC[a2] && t.stopC[b2] ? segSubPath(t.stopC[a2], t.stopC[b2]) : null) || bridgePath(t.jasN[a2], t.jasN[b2], t.lineSet, t.jas[a2], t.jas[b2]) || routeByStops(t.jasN[a2], t.jasN[b2], t.lineSet);
+      }
+      if (path) {
+        const m0 = t.dep[a2], m1 = Math.max(t.arr[b2], m0 + 1);
+        fPos = Math.min(1, Math.max(0, (M - m0) / (m1 - m0)));
+      }
+    }
     if (path) { coords = path.coords; cum = path.cum; len = path.len; line = ''; kind = ''; }
   }
   if (coords) {
     if (len <= 0) { _pos[0] = coords[0][0]; _pos[1] = coords[0][1]; }
     else {
-      const target = frac * len;
+      const target = fPos * len;
       let lo = 1, hi = cum.length - 1;
       while (lo < hi) { const mid = (lo + hi) >> 1; if (cum[mid] < target) lo = mid + 1; else hi = mid; }
       const k = lo, c0 = coords[k-1], c1 = coords[k];

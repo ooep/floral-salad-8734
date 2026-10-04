@@ -1879,7 +1879,7 @@ function onMapClick(e) {
   if (t) { showTrainDetail(t); return; }
   const pt = (e.offsetX !== undefined) ? [px, py] : e.point;
   const feats = map.queryRenderedFeatures(pt, { layers: ['stas'] });
-  if (feats.length) { showStationDetail(feats[0].properties.station); return; }
+  if (feats.length) { showStationDetail(feats[0].properties.station, feats[0].geometry.coordinates); return; }
   // 空白
   stopFollow();
   liveDetailTrip = null;
@@ -1963,7 +1963,7 @@ const OP_SHORT = { '東日本旅客鉄道':'JR東日本','東海旅客鉄道':'J
 function opShort(o) { return OP_SHORT[o] || o || ''; }
 function shortTerm(s) { return String(s).replace(/[（(].*?[)）]/g, '').slice(0, 2); }
 function isRapidType(tp) { return ['特','急','快','準','区','通','回'].indexOf(tp) >= 0; }
-let lineOp = null, boardCache = new Map(), sheetStation = null, sheetFlat = false;
+let lineOp = null, boardCache = new Map(), sheetStation = null, sheetCoord = null, sheetFlat = false;
 function buildLineOp() { if (lineOp) return; lineOp = new Map(); segFC.features.forEach(f => { const p = f.properties; if (p.line && !lineOp.has(p.line)) lineOp.set(p.line, p.op || ''); }); }
 function groupDirs(items) {
   const arr = items.filter(r => r.idx < r.entry.length - 1);
@@ -1990,16 +1990,35 @@ function groupDirs(items) {
     return { trains: g.slice().sort((a, b) => a.dep - b.dep), terms };
   });
 }
-function buildBoard(station) {
+function distKm(c1, c2) {
+  return Math.hypot((c1[0] - c2[0]) * 111.32 * Math.cos((c1[1] + c2[1]) / 2 * Math.PI / 180), (c1[1] - c2[1]) * 110.97);
+}
+function buildBoard(station, coord) {
   const nk = normName(station);
-  if (boardCache.has(nk)) return boardCache.get(nk);
+  const ck = coord ? (nk + '|' + coord[0].toFixed(3) + ',' + coord[1].toFixed(3)) : nk;
+  if (boardCache.has(ck)) return boardCache.get(ck);
   buildLineOp();
   const byLine = new Map();
   for (let k = 0; k < tripList.length; k++) {
     const t = tripList[k];
     if (t.bad || !(t.r & dayBit)) continue;
-    const jn = t.jasN, idx = jn.indexOf(nk);
-    if (idx < 0 || idx >= t.N - 1) continue;
+    const jn = t.jasN;
+    // 同名站：找出所有匹配索引，按用户点击坐标取最近的一个
+    let idx = -1;
+    if (coord && t.stopC) {
+      let bestD = 2.5; // 2.5km 阈值
+      for (let i = 0; i < jn.length; i++) {
+        if (jn[i] !== nk) continue;
+        const c = t.stopC[i]; if (!c) continue;
+        const d = distKm(c, coord);
+        if (d < bestD) { bestD = d; idx = i; }
+      }
+      if (idx < 0) continue;
+    } else {
+      idx = jn.indexOf(nk);
+      if (idx < 0) continue;
+    }
+    if (idx >= t.N - 1) continue;
     const dep = t.dep[idx], term = t.jas[t.N - 1];
     for (let li = 0; li < t.linesN.length; li++) {
       const ln = t.linesN[li]; if (!ln) continue;
@@ -2012,7 +2031,7 @@ function buildBoard(station) {
   lines.sort((a, b) => (a.op || '').localeCompare(b.op || '') || a.name.localeCompare(b.name));
   const ops = [], opMap = new Map();
   lines.forEach(L => { if (!opMap.has(L.op)) { opMap.set(L.op, { op: L.op, lines: [] }); ops.push(opMap.get(L.op)); } opMap.get(L.op).lines.push(L); });
-  const board = { ops }; boardCache.set(nk, board); return board;
+  const board = { ops }; boardCache.set(ck, board); return board;
 }
 function dayGridHtml(L, d) {
   const tc = {}; d.trains.forEach(r => tc[r.term] = (tc[r.term] || 0) + 1);
@@ -2060,7 +2079,7 @@ function lineRowHtml(L, hour) {
 }
 function renderStationBody() {
   if (!sheetStation) return;
-  const board = buildBoard(sheetStation);
+  const board = buildBoard(sheetStation, sheetCoord);
   $('shSub').textContent = board.ops.map(o => opShort(o.op)).join(' · ');
   const M = curMin(), hour = Math.floor(((M % 1440) + 1440) % 1440 / 60);
   let html = '';
@@ -2095,10 +2114,10 @@ function bindSheet() {
   });
 }
 function closeSheet() { $('sheet').classList.remove('open'); $('sheetMask').style.display = 'none'; }
-function showStationDetail(name) {
-  const c = stationCoord.get(normName(name));
+function showStationDetail(name, coord) {
+  const c = coord || stationCoord.get(normName(name));
   if (c) setHighlight([], c);
-  sheetStation = name; sheetFlat = false;
+  sheetStation = name; sheetCoord = coord || null; sheetFlat = false;
   $('shNm').textContent = name;
   document.getElementById('tabList').classList.remove('on');
   document.getElementById('tabGrid').classList.add('on');
@@ -2142,7 +2161,7 @@ function runSearch(q) {
       if (!c) return;
       setHighlight([], c);
       map.flyTo({ center: c, zoom: Math.max(map.getZoom(), 12), pitch: Math.min(map.getPitch(), 55), duration: 1200 });
-      showStationDetail(nm);
+      showStationDetail(nm, c);
     } else highlightLine(nm);
   }));
 }

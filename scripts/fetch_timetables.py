@@ -29,7 +29,8 @@ SLEEP = 2.2
 MAX_RETRY = 3
 
 # 参考日编码（正确 rday 位掩码机制）：
-# trainSTime = Date.UTC(2024,0, day, 3, 0, 0)  （JST 12:00 -> UTC 03:00）
+# trainSTime = 参考日 JST 03:00 -> UTC 前日 18:00
+# （实测 JST 12:00 窗口对大线会缺 0-9 点早高峰班次;03:00 窗口返回全日 4226 班 ⊇ 12:00 窗口 2874 班）
 # day: 2=平日(2024-01-02 周二) 6=周六(2024-01-06) 7=周日(2024-01-07)
 RUNADAYS = {"weekday": (2, 1), "saturday": (6, 2), "sunday": (7, 4)}
 
@@ -56,7 +57,7 @@ def _http(method, url, body=None):
 
 def get_trains(rw_ids, day):
     import time as _t
-    train_stime = int(datetime.datetime(2024, 1, day, 3, 0, 0, tzinfo=datetime.timezone.utc).timestamp() * 1000)
+    train_stime = int(datetime.datetime(2024, 1, day - 1, 18, 0, 0, tzinfo=datetime.timezone.utc).timestamp() * 1000)
     sys_stime = int(_t.time() * 1000)
     url = (f"{BASE}/api/train?type=railway&ids={','.join(map(str, rw_ids))}"
            f"&trainSTime={train_stime}&systemSTime={sys_stime}&multiplier=1"

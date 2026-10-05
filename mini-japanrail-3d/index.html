@@ -564,8 +564,8 @@ async function loadTrainsFile(bit) {
 
 const TRANSFER_KM = 1.6;
 /* ---------------- 索引构建 ---------------- */
-/* 站名归一化:去掉括号注记(如「栄町(千葉県)」→「栄町」),tmaps 与几何数据的命名差异主要在此 */
-function normName(n) { return String(n).replace(/\([^)]*\)/g, '').replace(/[ケヶ]/g, 'ヶ').replace(/駅$/, '').trim(); }
+/* 站名归一化:去掉括号注记(如「栄町(千葉県)」→「栄町」,含全角（）),tmaps 与几何数据的命名差异主要在此 */
+function normName(n) { return String(n).replace(/[（(][^）)]*[）)]/g, '').replace(/[ケヶ]/g, 'ヶ').replace(/駅$/, '').trim(); }
 let endCoord = null, nameOf = null;
 /* ================= 修复:同名站消歧(跨城错配根因) ================= */
 const stationCands = new Map();

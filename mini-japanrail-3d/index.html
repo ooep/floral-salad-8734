@@ -582,6 +582,15 @@ function normLineName(s) {
   s = s || '';
   return s.replace(_stripRe, 'ヶ').replace(_stripRe2, '');
 }
+/* norm 缓存:matchLine/lineMatches 在 distToLineSet/projToTrack 里对每段每帧调用,
+   norm 是正则字符串处理(单次 ~0.3µs), 无缓存时密段区 2700 段 × 多次 = 6ms/次 是卡顿元凶;
+   线路名总数有限(几百条), 缓存后 O(1) */
+const normCache = new Map();
+function normCached(s) {
+  let v = normCache.get(s);
+  if (v === undefined) { v = normLineName(s); normCache.set(s, v); }
+  return v;
+}
 function matchLine(a, b) {
   a = a || ''; b = b || '';
   if (!a || !b) return 0;
@@ -590,12 +599,24 @@ function matchLine(a, b) {
   if (LINES_MAP[a] && LINES_MAP[a].includes(b)) return 3;
   if (LINES_MAP[b] && LINES_MAP[b].includes(a)) return 3;
   if (a.includes(b) || b.includes(a)) return 2;
-  const an = normLineName(a), bn = normLineName(b);
-  if (an && bn && (an.includes(bn) || bn.includes(an))) return 1;
+  const an = normCached(a), bn = normCached(b);
+  if (an && bn && (an.includes(bn) || bn.includes(an))) {
+    /* 新幹線 vs 在来線:norm 前缀包含(東海道新幹 vs 東海道)会让新干线列车误用在来线段
+       (豊橋→熱海 直线段 159km 跳跃), 禁止弱匹配 */
+    if ((an.includes('新幹') && !bn.includes('新幹')) || (bn.includes('新幹') && !an.includes('新幹'))) return 0;
+    return 1;
+  }
   return 0;
 }
 /* 快速线路匹配: 规范化集合命中走 Set(O(1)), 否则慢路径 matchLine ——
    渲染热路径(distToLineSet/projToTrack/pickSeg)每帧大量调用,避免逐段跑正则 */
+const matchCache = new Map();
+function matchLineCached(a, b) {
+  const k = a + '\u0001' + b;
+  let v = matchCache.get(k);
+  if (v === undefined) { v = matchLine(a, b); matchCache.set(k, v); if (matchCache.size > 200000) matchCache.clear(); }
+  return v;
+}
 function lineMatches(lineSet, line) {
   if (!lineSet || !lineSet.size || !line) return false;
   let ns = lineSet._n;
@@ -605,9 +626,9 @@ function lineMatches(lineSet, line) {
     lineSet._n = ns;
   }
   if (ns.has(line)) return true;
-  const sn = normLineName(line);
+  const sn = normCached(line);
   if (ns.has(sn)) return true;
-  for (const ln of lineSet) if (matchLine(ln, line) > 0) return true;
+  for (const ln of lineSet) if (matchLineCached(ln, line) > 0) return true;
   return false;
 }
 /* 解析站坐标:优先括号注记/线路集合消歧,多候选无信号时返回 null(不再取第一个 -> 杜绝跨城错配) */
@@ -722,15 +743,15 @@ function projToTrack(c, lineSet, sName) {
   return { segKey: best.segKey, ei: best.ei, entry, co, i, P, lenTo0: sub, lenToN: entry.len - sub, na: best.segKey.split('|')[0], nb: best.segKey.split('|')[1] };
 }
 const segSubCache = new Map();
-/* 位置到途经线路的最近距离(网格近邻 + 线路匹配; >8km 视为线路外) */
+/* 位置到途经线路的最近距离(网格近邻 + 线路匹配; >8km 视为线路外)。
+   本格命中(≈轨道上)即早退, 避免 3×3 全扫 —— 路径中点大多在线, 9 倍提速 */
 function distToLineSet(lng, lat, lineSet) {
   if (!lineSet || !lineSet.size) return 0;
   const gx = Math.floor(lng / GRID), gy = Math.floor(lat / GRID);
   const lat0 = lat * Math.PI / 180;
   let best = 1e9;
-  for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) {
-    const segs = segGrid.get((gx + dx) * 100000 + (gy + dy));
-    if (!segs) continue;
+  const scan = (segs) => {
+    if (!segs) return;
     for (const [a, b, k, ei] of segs) {
       const e0 = segIndex.get(k) ? segIndex.get(k)[ei] : null;
       if (!e0 || !lineMatches(lineSet, e0.line)) continue;
@@ -742,6 +763,12 @@ function distToLineSet(lng, lat, lineSet) {
       const d = Math.hypot(0 - (ax + dx2 * t2), 0 - (ay + dy2 * t2));
       if (d < best) best = d;
     }
+  };
+  scan(segGrid.get(gx * 100000 + gy));
+  if (best < 0.05) return best; /* 已在线(50m), 无需扫邻格 */
+  for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) {
+    if (dx === 0 && dy === 0) continue;
+    scan(segGrid.get((gx + dx) * 100000 + (gy + dy)));
   }
   return best;
 }
@@ -1243,7 +1270,17 @@ function bfsRaw(A, B, lineFilter) {
     const cur = q.shift(), nbs = adj.get(cur);
     for (const nb of nbs) {
       if (prev.has(nb)) continue;
-      if (lineFilter) { const e = segIndex.get(cur + '|' + nb); if (!e || !e.some(x => lineFilter(x.line))) continue; }
+      if (lineFilter) {
+        const e = segIndex.get(cur + '|' + nb);
+        if (!e || !e.some(x => lineFilter(x.line))) continue;
+        /* 防跳跃边:段端点须与两端站坐标衔接(异常段如「熱海|豊橋」coords 实为熱海 3 点,
+           BFS 会把它当 159km 邻接边, 列车沿直线飞越伊豆半岛) */
+        const cc = stationCoord.get(cur), cn = stationCoord.get(nb);
+        if (cc && cn) {
+          const ok = e.some(x => geoKm(x.coords[0], cc) < 6 && geoKm(x.coords[x.coords.length - 1], cn) < 6);
+          if (!ok) continue;
+        }
+      }
       prev.set(nb, cur); q.push(nb);
     }
   }
@@ -1391,14 +1428,26 @@ function bridgePathRaw(A, B, lineSet, rawA, rawB) {
   }
   return null;
 }
+/* 增量区间定位:帧间 M 单调推进(或拖动回退),缓存上次区间索引,
+   避免每辆活跃车每帧从头 while(dep/arr 最长 30+ 站的班次 × 数千辆是卡顿元凶) */
+function locateSeg(t, M2) {
+  const { arr, N } = t;
+  let i = t._i;
+  if (i === undefined || i >= N - 1) i = 0;
+  if (M2 >= (t._iM === undefined ? -1e9 : t._iM)) {
+    while (i < N - 1 && M2 > arr[i + 1]) i++;
+  } else {
+    while (i > 0 && M2 <= arr[i]) i--;
+  }
+  t._i = i; t._iM = M2;
+  return i;
+}
 /* 主入口:返回 [lng, lat, heading(rad), lineName, kind, kmh] 或 null */
 const _pos = [0, 0, 0, '', '', 0];
 function trainPosition(t, M) {
   const { dep, arr, N, jas } = t;
   if (M < dep[0] - 1e-6 || M > arr[N-1] + 1e-6) return null;
-  let i = 0;
-  while (i < N - 1 && M > arr[i+1]) i++;
-  if (i >= N - 1) i = N - 2;
+  const i = locateSeg(t, M);
   const running = M <= arr[i+1] + 1e-6;
   let frac = 0, kmh = 0;
   if (running) {
@@ -1730,7 +1779,14 @@ function hexToRgb(hex) {
 }
 let trainSizeMul = 1;
 const visibleTrips = [], visibleXY = new Float32Array(MAXT * 2);
+/* 按日预过滤:r 掩码不随帧变化,一次过滤后每帧只遍历当日班次(省 57049×N 次 & 分支) */
+let dayList = null, dayListBit = -1, dayListSrc = null;
 function updateTrains(M) {
+  if (dayList === null || dayListSrc !== tripList || dayListBit !== dayBit) {
+    dayList = [];
+    for (let k = 0; k < tripList.length; k++) { const t = tripList[k]; if (t.r & dayBit) dayList.push(t); }
+    dayListBit = dayBit; dayListSrc = tripList;
+  }
   let n = 0, vtx = 0; // vtx:总顶点数(俯视 6/列车,倾斜 36/列车 + 光晕 6/个)
   visibleTrips.length = 0;
   const z = map.getZoom();
@@ -1751,10 +1807,9 @@ function updateTrains(M) {
   const eps = Math.max(1.5e-6, Math.min(2.5e-3, 8 / (512 * Math.pow(2, z))));
   const drawGlow = glowOn && z < 9;
   const glowPass = [];
-  for (let idx = 0; idx < tripList.length; idx++) {
-    const t = tripList[idx];
+  for (let idx = 0; idx < dayList.length; idx++) {
+    const t = dayList[idx];
     if (t.bad) continue;
-    if (!(t.r & dayBit)) continue;
     const M2 = windowShift(t, M);
     if (M2 < t.w0 || M2 > t.w1) continue;
     const p = trainPosition(t, M2);
@@ -1953,6 +2008,7 @@ function addMapLayers() {
 }
 
 /* ---------------- 渲染循环 ---------------- */
+let lastActiveN = -1, lastFpsSec = -1;
 function startLoop() {
   const tick = () => {
     rafId = requestAnimationFrame(tick);
@@ -1962,8 +2018,8 @@ function startLoop() {
     if (!dataReady) return;
     const M = curMin();
     const n = updateTrains(M);
-    $('dActive').textContent = n.toLocaleString();
-    $('dFps').textContent = Math.round(fps);
+    if (n !== lastActiveN) { $('dActive').textContent = n.toLocaleString(); lastActiveN = n; }
+    if (Math.floor(now / 1000) !== lastFpsSec) { $('dFps').textContent = Math.round(fps); lastFpsSec = Math.floor(now / 1000); }
     refreshClockUI(M);
     if (followTrip) {
       if (performance.now() - followStartT > 950) {
@@ -1982,13 +2038,17 @@ function startLoop() {
 
 /* ---------------- 时钟 UI ---------------- */
 let sliderDragging = false;
+let lastClockStr = '', lastSliderVal = -1, lastDayStr = '';
 function refreshClockUI(M) {
-  cTimeEl.textContent = fmtHMS(M);
+  const cs = fmtHMS(M);
+  if (cs !== lastClockStr) { cTimeEl.textContent = cs; lastClockStr = cs; }
   const p = jstDateParts(simNow());
   const effBit = dayMode === 'auto' ? bitOfDate(simNow()) : dayMode;
   const label = DAY_LABEL[effBit];
-  cDayEl.textContent = (clockMode === 'live' ? '● ' : '⏵ ') + (label ? label[lang] : '') + ' ' + pad(p.m) + '/' + pad(p.d);
-  if (!sliderDragging && clockMode === 'live') sliderEl.value = Math.floor(M);
+  const ds = (clockMode === 'live' ? '● ' : '⏵ ') + (label ? label[lang] : '') + ' ' + pad(p.m) + '/' + pad(p.d);
+  if (ds !== lastDayStr) { cDayEl.textContent = ds; lastDayStr = ds; }
+  const sv = Math.floor(M);
+  if (!sliderDragging && clockMode === 'live' && sv !== lastSliderVal) { sliderEl.value = sv; lastSliderVal = sv; }
   $('dDay').textContent = (label ? label[lang] : '') + ' · ' + (clockMode === 'live' ? T().liveMode : (paused ? T().paused : speed + '× ' + T().playMode));
 }
 sliderEl.addEventListener('pointerdown', () => { sliderDragging = true; });
@@ -2105,9 +2165,8 @@ function updateDetailLive(t, p, M, rebuild) {
   if (!p) return;
   const M2 = windowShift(t, M); // 跨日对齐:午夜后 M 归零,而班次分钟是前一日绝对分钟(如 00:28 → 1468),直接相减会得到 1000+ 分钟的假 ETA
   const col = p[3] ? (lineColor.get(p[3]) || t.color) : t.color;
-  let i = 0;
+  const i = locateSeg(t, M2);
   const { dep, arr, N, jas } = t;
-  while (i < N - 1 && M2 > arr[i+1]) i++;
   const running = i < N - 1 && M2 <= arr[i+1] + 1e-6;
   const ni = Math.min(i + 1, N - 1); // 已终到时显示终点站,不越界
   const nextNm = jas[ni];
@@ -2132,10 +2191,14 @@ function updateDetailLive(t, p, M, rebuild) {
     $('dFollow').onclick = () => { if (followTrip === t) stopFollow(); else startFollow(t); };
     $('dLoc').onclick = () => { if (p) map.flyTo({ center: [p[0], p[1]], zoom: Math.max(map.getZoom(), 12), pitch: 55, duration: 1200 }); };
   } else {
+    /* 每帧 innerHTML 重写有 GC/排版开销:内容不变时跳过,只写变化行 */
     const st = detailEl.querySelector('.d-meta');
-    if (st) st.children[0].innerHTML = '<span class="lb">' + T().status + '</span>' + (running ? T().running + ' · ' + Math.round(p[5]) + ' ' + T().kmh : '<b>' + T().dwelling + '</b> @ ' + jas[i]);
-    const nx = detailEl.querySelector('.d-meta').children[1];
-    if (nx) nx.innerHTML = '<span class="lb">' + T().next + '</span>' + nextNm + ' ' + eta;
+    if (st) {
+      const s1 = '<span class="lb">' + T().status + '</span>' + (running ? T().running + ' · ' + Math.round(p[5]) + ' ' + T().kmh : '<b>' + T().dwelling + '</b> @ ' + jas[i]);
+      if (s1 !== t._dS1) { st.children[0].innerHTML = s1; t._dS1 = s1; }
+      const s2 = '<span class="lb">' + T().next + '</span>' + nextNm + ' ' + eta;
+      if (s2 !== t._dS2) { st.children[1].innerHTML = s2; t._dS2 = s2; }
+    }
   }
 }
 let followStartT = 0;

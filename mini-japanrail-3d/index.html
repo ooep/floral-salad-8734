@@ -490,6 +490,10 @@ const pad = n => String(n).padStart(2, '0');
 
 /* ---------------- 全局状态 ---------------- */
 let segFC = null, staFC = null, tmaps = null, trainJSON = null;
+/* 官方权威站坐标/区间折线映射 (station_map.json v2, RailAround 官方几何构建):
+   tmap_stops[t] = 每车次每站 [lng,lat](与 tmaps[t].s_jas 等长等序),
+   tmap_lids[t] = 每区间官方线段 ID(符号=方向), segments[id] = 官方折线坐标 */
+let stationMap = null;
 let segIndex = null, edgeInfo = null, adj = null, stationCoord = null, stationCoordLine = null;
 let LINES_MAP = {};
 let lineColor = new Map(), lineKind = new Map(), stationLines = new Map();
@@ -527,10 +531,10 @@ function syncSim() { if (clockMode === 'manual' && !paused) { simEpoch = simNow(
 
 /* ---------------- 数据加载(带进度) ---------------- */
 const loaderMsg = $('lMsg'), lbarF = $('lbarF');
-const loadSizes = { 'data/segments3d.geojson': 9054890, 'data/stations3d.geojson': 1422796, 'data/tmaps.json': 3158412 };
-const loadOrder = ['data/segments3d.geojson', 'data/stations3d.geojson', 'data/tmaps.json'];
+const loadSizes = { 'data/segments3d.geojson': 9054890, 'data/stations3d.geojson': 1422796, 'data/tmaps.json': 3158412, 'data/station_map.json': 11006682 };
+const loadOrder = ['data/segments3d.geojson', 'data/stations3d.geojson', 'data/tmaps.json', 'data/station_map.json'];
 function updateBar(fileIdx, got, size) {
-  const per = 92 / 3;
+  const per = 92 / loadOrder.length;
   const frac = Math.min(1, size ? got / size : 0);
   const base = fileIdx * per + frac * per;
   lbarF.style.width = Math.min(99, base) + '%';
@@ -1184,12 +1188,29 @@ function parseTrips(json) {
       dep[i] = (i < N - 1) ? arr[i] + s[2*i] : arr[i];
     }
     const [w0, w1] = t.w.split(',').map(Number);
+    /* 零运行时长区间平滑(时刻表分钟取整致 run=0: 旧逻辑整区间卡起点站、到点瞬移, 路面电车扎堆抽搐):
+       给零区间分配 0.5min 平滑窗, 优先"借用本站停车末段"(车在停车最后 0.5min 滑向下一站),
+       本站无停车可借时, 窗口落在到达时刻前 0.25min(与前区间尾段微量重叠, 幅度仅几十米) */
+    const sStart = new Float64Array(Math.max(0, N - 1)), sRun = new Float64Array(Math.max(0, N - 1));
+    for (let i = 0; i < N - 1; i++) {
+      const run = arr[i+1] - dep[i];
+      if (run > 0) { sStart[i] = dep[i]; sRun[i] = run; }
+      else {
+        const dwell = dep[i] - arr[i];           // 本站停车时长
+        const borrow = Math.min(0.5, Math.max(0, dwell));
+        sRun[i] = borrow > 0.05 ? borrow : 0.25;
+        sStart[i] = arr[i+1] - sRun[i];
+      }
+    }
     const lines = tm.lines || [];
     const linesN = lines.map(normName);
     const jas = tm.s_jas, jasN = jas.map(normName);
     const lineSet = new Set(linesN);
-    /* 每站坐标预解析:① 相邻轨道段端点(几何对齐) ② 站表线语境 ③ 全局首匹配 */
+    /* 每站坐标: ① 官方权威映射(按车次+站序由官方区间折线端点拼出, 跨城同名天然消歧)
+       ② 相邻轨道段端点(几何对齐) ③ 站表线语境 ④ 全局匹配 */
+    const smStops = officialStopsFor(t.t, N);
     function stopCoordAt(i) {
+      if (smStops && smStops[i]) return smStops[i];
       if (i - 1 >= 0) { const e = segIndex.get(jasN[i-1] + '|' + jasN[i]); if (e) return e[0].coords[e[0].coords.length - 1]; }
       if (i + 1 < N) { const e = segIndex.get(jasN[i] + '|' + jasN[i+1]); if (e) return e[0].coords[0]; }
       for (const ln of linesN) { const c = stationCoordLine.get(ln + '|' + jasN[i]); if (c) return c; }
@@ -1232,7 +1253,7 @@ function parseTrips(json) {
     for (let i = 0; i < N; i++) { skUp[i] = lastK; if (stopC[i]) lastK = i; }
     lastK = -1;
     for (let i = N - 1; i >= 0; i--) { skDn[i] = lastK; if (stopC[i]) lastK = i; }
-    trips.push({ t: t.t, r: t.r, i: t.i || '', w0, w1, dep, arr, N, jas, jasN, stopC, lines, linesN, lineSet, skX, skY, skStop, skCum, skLen, bad, skUp, skDn, color: typeColor(t.i) });
+    trips.push({ t: t.t, r: t.r, i: t.i || '', w0, w1, dep, arr, N, jas, jasN, stopC, lines, linesN, lineSet, sStart, sRun, skX, skY, skStop, skCum, skLen, bad, skUp, skDn, color: typeColor(t.i) });
   }
   return trips;
 }
@@ -1430,6 +1451,51 @@ function bridgePathRaw(A, B, lineSet, rawA, rawB) {
 }
 /* 增量区间定位:帧间 M 单调推进(或拖动回退),缓存上次区间索引,
    避免每辆活跃车每帧从头 while(dep/arr 最长 30+ 站的班次 × 数千辆是卡顿元凶) */
+/* 官方区间折线兜底: station_map.segments 按 tmap_lids 取该区间官方轨道几何(与本站几何同源),
+   自有 segments3d 截不出子路径时使用 —— 保证列车始终沿轨道, 绝不跨城直线/乱飞。
+   区间 id 支持复合段 '1068@3896'(多段首尾相接), 每段符号独立定向。 */
+function officialPathByLid(lid) {
+  if (!stationMap || !stationMap.segments) return null;
+  const parts = String(lid).split('@');
+  let out = null;
+  for (const p of parts) {
+    const L = p | 0;
+    let pts = stationMap.segments[String(Math.abs(L))];
+    if (!pts || pts.length < 2) return null;
+    if (L < 0) pts = pts.slice().reverse();
+    if (!out) out = pts.slice();
+    else if (geoKm(out[out.length-1], pts[0]) < 0.3) out.push(...pts.slice(1));
+    else out.push(...pts);
+  }
+  return out && out.length >= 2 ? out : null;
+}
+function officialPath(t, i) {
+  if (!stationMap || !stationMap.tmap_lids) return null;
+  const lids = stationMap.tmap_lids[String(t.t)];
+  if (!lids || lids[i] == null) return null;
+  const out = officialPathByLid(lids[i]);
+  return out ? withLen(out) : null;
+}
+/* 按车次拼每站官方坐标(区间折线端点相接), 与 tmaps[t].s_jas 等长等序; 同 tmap 缓存 */
+function officialStopsFor(tid, N) {
+  if (!stationMap || !stationMap.tmap_lids) return null;
+  const cache = stationMap._stopsCache || (stationMap._stopsCache = new Map());
+  const ck = String(tid) + ':' + N;
+  if (cache.has(ck)) return cache.get(ck);
+  const lids = stationMap.tmap_lids[String(tid)];
+  let stops = null;
+  if (lids && lids.length >= N - 1) {
+    stops = new Array(N).fill(null);
+    for (let i = 1; i < N; i++) {
+      const path = officialPathByLid(lids[i-1]);
+      if (!path) continue;
+      stops[i-1] = path[0]; stops[i] = path[path.length-1];
+    }
+    if (stops.every(c => !c)) stops = null;
+  }
+  cache.set(ck, stops);
+  return stops;
+}
 function locateSeg(t, M2) {
   const { arr, N } = t;
   let i = t._i;
@@ -1447,14 +1513,26 @@ const _pos = [0, 0, 0, '', '', 0];
 function trainPosition(t, M) {
   const { dep, arr, N, jas } = t;
   if (M < dep[0] - 1e-6 || M > arr[N-1] + 1e-6) return null;
-  const i = locateSeg(t, M);
+  let i = locateSeg(t, M);
+  /* 零时长区间前瞻: 下一区间 run=0 且其平滑窗已开始(本站无停车可借时窗口提前到
+     当前区间末端), 提前进入该区间渲染滑动 —— 消除连发零区间的到站瞬间冲刺 */
+  if (i < N - 2 && arr[i+1] - dep[i] > 0 && arr[i+2] - dep[i+1] <= 0 &&
+      M >= t.sStart[i+1] && M <= arr[i+2] + 1e-6) i += 1;
+  const runRaw = arr[i+1] - dep[i];
   const running = M <= arr[i+1] + 1e-6;
-  let frac = 0, kmh = 0;
+  let frac = -1, kmh = 0;
   if (running) {
-    const run = arr[i+1] - dep[i];
-    frac = run <= 0 ? 0 : (M - dep[i]) / run;
-    if (run > 0) kmh = pairKm(t, i) / (run / 60);
-  } else frac = -1; // 停车
+    if (runRaw > 0) {
+      frac = (M - dep[i]) / runRaw;
+      if (M >= dep[i] - 1e-9) kmh = pairKm(t, i) / (runRaw / 60);
+    } else {
+      /* 零运行时长(分钟取整): 在平滑窗 sStart..arr[i+1] 内沿区间滑动, 窗外停起点站 */
+      const r0 = (t.sRun && t.sRun[i]) || 0.25;
+      const t0 = (t.sStart && t.sStart[i] != null) ? t.sStart[i] : arr[i+1] - r0;
+      if (M >= t0) { frac = Math.min(1, (M - t0) / r0); kmh = Math.min(pairKm(t, i) / (r0 / 60), 120); }
+      else frac = 0;
+    }
+  }
   const A = t.jasN[i], B = t.jasN[i+1];
   if (frac < 0) {
     // 停車中:站位置(预计算,几何对齐)+ 朝向 = 本区间轨道方向
@@ -1468,6 +1546,10 @@ function trainPosition(t, M) {
       if (e) {
         const co = e.coords;
         _pos[2] = Math.atan2(co[co.length-1][0] - co[0][0], co[co.length-1][1] - co[0][1]);
+      } else {
+        const op = officialPath(t, i); // 自有几何无该站对段时, 朝向取官方区间折线
+        if (op) { const co = op.coords, k = Math.min(2, co.length - 1);
+          _pos[2] = Math.atan2(co[k][0]-co[0][0], co[k][1]-co[0][1]); }
       }
       _pos[0] = c[0]; _pos[1] = c[1]; _pos[3] = e ? e.line : lineOfPair(t, i); _pos[4] = kindOfPair(t, i); _pos[5] = 0;
       return _pos;
@@ -1499,7 +1581,7 @@ function trainPosition(t, M) {
       if (cA && cB && geoKm(cA, cB) > 300) cB = null;
       let a2 = -1, b2 = -1, m0 = 0, m1 = 1;
       if (cA && cB) {
-        path = segSubPath(A, B, cA, cB, lsT) || findPathOnLines(A, B, lsT, t.jas[i], t.jas[i+1]) || bridgePath(A, B, lsT, t.jas[i], t.jas[i+1]) || routeByStops(A, B, lsT);
+        path = segSubPath(A, B, cA, cB, lsT) || officialPath(t, i) || findPathOnLines(A, B, lsT, t.jas[i], t.jas[i+1]) || bridgePath(A, B, lsT, t.jas[i], t.jas[i+1]) || routeByStops(A, B, lsT);
         m0 = t.dep[i]; m1 = Math.max(t.arr[i+1], m0 + 1);
       } else {
         /* 区间站无坐标:用上下游最近已知站对重建轨道路径(磐越西線五泉→津川 真实几何),时间映射到该站对 */
@@ -1539,7 +1621,6 @@ function trainPosition(t, M) {
       coords = fb.coords; cum = fb.cum; len = fb.len; line = fb.line; kind = fb.kind;
       fPos = fb.m1 > fb.m0 ? Math.min(1, Math.max(0, (M - fb.m0) / (fb.m1 - fb.m0))) : 0;
     }
-    if (t.jasN[0] === '宇都宮' && M === 319) console.log('DBG2 M319', 'i='+i, 'segEntry:', !!segEntry, 'fb:', !!fb.coords, 'len:', len, 'fPos:', fPos.toFixed(3));
   }
   if (coords) {
     if (len <= 0) { _pos[0] = coords[0][0]; _pos[1] = coords[0][1]; }
@@ -1936,13 +2017,30 @@ function mapReadyPromise() {
 }
 async function boot() {
   try {
-    const [s, st, tm, lm] = await Promise.all([
+    const [s, st, tm, lm, sm] = await Promise.all([
       fetchJSON('data/segments3d.geojson', 'loadingSeg'),
       fetchJSON('data/stations3d.geojson', 'loadingSta'),
       fetchJSON('data/tmaps.json', 'loadingTm'),
       fetchJSON('data/lines_map.json', '').catch(() => ({})),
+      fetchJSON('data/station_map.json', 'loadingTm').catch(() => null),
     ]);
-    segFC = s; staFC = st; tmaps = tm; LINES_MAP = lm || {};
+    segFC = s; staFC = st; tmaps = tm; LINES_MAP = lm || {}; stationMap = sm && sm.version === 2 ? sm : null;
+    /* 官方补缺轨道/车站(地图遗漏的新开线/私铁, 如西鉄甘木線/北大阪急行延伸/夢洲):
+       合并进同一 GeoJSON, 渲染/索引/寻路自动一致; 不改任何既有几何 */
+    if (stationMap && Array.isArray(stationMap.extra_segments)) {
+      for (const e of stationMap.extra_segments) {
+        segFC.features.push({ type: 'Feature',
+          properties: { from: e.from, to: e.to, line: e.line, color: e.color, kind: e.kind || 'rail', op: '', official: 1 },
+          geometry: { type: 'LineString', coordinates: e.coords } });
+      }
+      for (const z of (stationMap.extra_stations || [])) {
+        staFC.features.push({ type: 'Feature',
+          properties: { station: z.name, op: '', line: z.line, official: 1 },
+          geometry: { type: 'Point', coordinates: z.coord } });
+      }
+      console.log('[station_map] official extra: +' + stationMap.extra_segments.length + ' segs +' +
+        (stationMap.extra_stations || []).length + ' stations');
+    }
     lbarF.style.width = '95%';
     loaderMsg.textContent = T().loading + ' ' + T().loadingTr + ' …';
     dayBitAuto = bitOfDate(Date.now());

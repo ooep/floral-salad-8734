@@ -599,6 +599,17 @@ function resolveCoord(rawName, lineSet, prevCoord) {
     if (bracket && lineSet && c.line && ![...lineSet].some(ln => matchLine(ln, c.line) > 0)) return null;
     return c.coords;
   }
+  /* 近距候选合并:多候选(站表 + 段端点双登记)彼此 <3km 视为同一站,直接返回最近 */
+  {
+    let allNear = true, any = null;
+    for (const c of cands) {
+      for (const d of cands) {
+        if (c !== d && geoKm(c.coords, d.coords) > 3) { allNear = false; break; }
+      }
+      if (!allNear) break;
+    }
+    if (allNear) return cands[0].coords;
+  }
   let best = null, bestScore = -1;
   for (const c of cands) {
     let score = 0;
@@ -634,8 +645,10 @@ function distToSegmentProj(px, py, ax, ay, bx, by) {
   const t2 = Math.max(0, Math.min(1, t));
   return { d: Math.hypot(px - (ax + dx * t2), py - (ay + dy * t2)), t: t2 };
 }
-/* 站坐标 -> 最近几何段投影点 */
-function projToTrack(c) {
+/* 站坐标 -> 最近几何段投影点
+   sName(可选): 站名锚定——投影点若落在段端点(t<0.05 或 >0.95), 要求该端点站名与 sName 匹配,
+   否则跳过(防止站坐标吸附到相邻段的粗化端点, 如 宇都宮 被 間々田|小山 尾端点 139.89878 截胡) */
+function projToTrack(c, lineSet, sName) {
   if (!c) return null;
   const gx = Math.floor(c[0] / GRID), gy = Math.floor(c[1] / GRID);
   const lat0 = c[1] * Math.PI / 180;
@@ -644,9 +657,25 @@ function projToTrack(c) {
     const segs = segGrid.get((gx + dx) * 100000 + (gy + dy));
     if (!segs) continue;
     for (const [a, b, k, ei] of segs) {
+      if (lineSet && lineSet.size) {
+        const e0 = segIndex.get(k) ? segIndex.get(k)[ei] : null;
+        if (!e0 || ![...lineSet].some(ln => matchLine(ln, e0.line) > 0)) continue;
+      }
       const ax = (a[0] - c[0]) * Math.cos(lat0) * 111.32, ay = (a[1] - c[1]) * 110.57;
       const bx = (b[0] - c[0]) * Math.cos(lat0) * 111.32, by = (b[1] - c[1]) * 110.57;
       const r = distToSegmentProj(0, 0, ax, ay, bx, by);
+      if (sName && r.d < 2) {
+        /* 站名锚定:仅当投影点实际离"整段首/末端点" <2km 时, 要求该端点站名与当前站匹配,
+           否则跳过(宇都宮 与 間々田|小山 尾端点相距仅 13m, 防吸附相邻段粗化端点;
+           段中间折线段端点不参与, 防误伤) */
+        const coAll = segIndex.get(k)[ei].coords;
+        const dHead = geoKm(coAll[0], c), dTail = geoKm(coAll[coAll.length - 1], c);
+        if (dHead < 2 || dTail < 2) {
+          const sk = k.split('|');
+          const endName = dHead < dTail ? normName(sk[0]) : normName(sk[1]);
+          if (endName !== sName) continue;
+        }
+      }
       if (r.d < bestD) { bestD = r.d; best = { segKey: k, ei, a, b, t: r.t }; }
     }
   }
@@ -657,8 +686,10 @@ function projToTrack(c) {
   let i = 1;
   for (; i < co.length; i++) {
     const a = co[i - 1], b = co[i];
-    if ((b[0] - a[0]) * (P[0] - a[0]) + (b[1] - a[1]) * (P[1] - a[1]) > 0 &&
-        (a[0] - b[0]) * (P[0] - b[0]) + (a[1] - b[1]) * (P[1] - b[1]) > 0) break;
+    /* 允许投影点与折线段端点重合(>= 0):否则站坐标恰好落在段端点时
+       i 定位循环不 break, 一路走到段尾(宇都宮 P=段首 → i=603 段尾) */
+    if ((b[0] - a[0]) * (P[0] - a[0]) + (b[1] - a[1]) * (P[1] - a[1]) >= -1e-9 &&
+        (a[0] - b[0]) * (P[0] - b[0]) + (a[1] - b[1]) * (P[1] - b[1]) >= -1e-9) break;
   }
   if (i >= co.length) i = co.length - 1;
   let sub = 0;
@@ -667,22 +698,76 @@ function projToTrack(c) {
   return { segKey: best.segKey, ei: best.ei, entry, co, i, P, lenTo0: sub, lenToN: entry.len - sub, na: best.segKey.split('|')[0], nb: best.segKey.split('|')[1] };
 }
 const segSubCache = new Map();
+/* 位置到途经线路的最近距离(网格近邻 + 线路匹配; >8km 视为线路外) */
+function distToLineSet(lng, lat, lineSet) {
+  if (!lineSet || !lineSet.size) return 0;
+  const gx = Math.floor(lng / GRID), gy = Math.floor(lat / GRID);
+  const lat0 = lat * Math.PI / 180;
+  let best = 1e9;
+  for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) {
+    const segs = segGrid.get((gx + dx) * 100000 + (gy + dy));
+    if (!segs) continue;
+    for (const [a, b, k, ei] of segs) {
+      const e0 = segIndex.get(k) ? segIndex.get(k)[ei] : null;
+      if (!e0 || ![...lineSet].some(ln => matchLine(ln, e0.line) > 0)) continue;
+      const ax = (a[0] - lng) * Math.cos(lat0) * 111.32, ay = (a[1] - lat) * 110.57;
+      const bx = (b[0] - lng) * Math.cos(lat0) * 111.32, by = (b[1] - lat) * 110.57;
+      const dx2 = bx - ax, dy2 = by - ay;
+      const t = ((-ax) * dx2 + (-ay) * dy2) / (dx2 * dx2 + dy2 * dy2 || 1e-12);
+      const t2 = Math.max(0, Math.min(1, t));
+      const d = Math.hypot(0 - (ax + dx2 * t2), 0 - (ay + dy2 * t2));
+      if (d < best) best = d;
+    }
+  }
+  return best;
+}
 /* 同段截取:A/B 投影落在同一几何段时,沿段截取 A→B 子路径(覆盖几何段存在但缺中间站节点) */
-function segSubPath(A, B, ca, cb) {
-  const key = A + '|' + B;
+function segSubPath(A, B, ca, cb, lineSet) {
+  const key = A + '|' + B + (lineSet ? '|' + [...lineSet].sort().join(',') : '');
   if (segSubCache.has(key)) return segSubCache.get(key);
   if (!ca || !cb) { segSubCache.set(key, null); return null; }
-  const pa = projToTrack(ca), pb = projToTrack(cb);
+  const pa = projToTrack(ca, lineSet, normName(A)), pb = projToTrack(cb, lineSet, normName(B));
   let out = null;
   if (pa && pb) {
     const ka = pa.segKey, kb = pb.segKey;
     const revA = ka.split('|')[1] + '|' + ka.split('|')[0];
-    if ((ka === kb || revA === kb) && pa.entry === pb.entry) {
-      const co = pa.co;
-      const ia = pa.i, ib = pb.i;
-      if (ia !== ib && Math.abs(ia - ib) >= 2) {
-        const sub = ia < ib ? co.slice(ia, ib + 1) : co.slice(ib, ia + 1).slice().reverse();
-        if (sub.length >= 2) out = withLen(sub);
+    if (ka === kb || revA === kb) {
+      const sameEntry = pa.entry === pb.entry;
+      /* 同几何正反注册(黒磯|宇都宮 vs 宇都宮|黒磯):len 近似相等 + 端点互换 */
+      const sameGeo = !sameEntry && Math.abs(pa.entry.len - pb.entry.len) < 0.01 &&
+        geoKm(pa.co[0], pb.co[pb.co.length - 1]) < 0.1 && geoKm(pa.co[pa.co.length - 1], pb.co[0]) < 0.1;
+      if (sameEntry || sameGeo) {
+        const co = pa.co;
+        const ia = pa.i;
+        let ib = ia, bd = 1e18;
+        if (sameEntry) ib = pb.i;
+        else {
+          /* pb 投影点映射到 pa 折线(同几何反向注册时定位一致索引) */
+          for (let j = 1; j < co.length; j++) {
+            const d = distToSegmentProj(pb.P[0], pb.P[1], co[j-1][0], co[j-1][1], co[j][0], co[j][1]).d;
+            if (d < bd) { bd = d; ib = j; }
+          }
+        }
+        if (ia !== ib) {
+          let sub;
+          if (sameEntry) {
+            /* 同段(同 key):按段坐标方向截取 A→B——段 co 可能反向注册(宇都宮|黒磯 的 co 实为黒磯→宇都宮),
+               dirRev=true 时 A 在上游意味着 ia > ib */
+            const coA = co[0], coN = co[co.length - 1];
+            const fromC = stationCoord.get(ka.split('|')[0]);
+            const dirRev = fromC ? geoKm(coA, fromC) > geoKm(coN, fromC) : false;
+            const aIsUp = dirRev ? ia > ib : ia < ib;
+            sub = aIsUp
+              ? (ia < ib ? co.slice(ia, ib + 1) : co.slice(ib, ia + 1).slice().reverse())
+              : (ia < ib ? co.slice(ia, ib + 1).slice().reverse() : co.slice(ib, ia + 1));
+          } else {
+            sub = ia < ib ? co.slice(ia, ib + 1) : co.slice(ib, ia + 1).slice().reverse();
+          }
+          if (sub.length >= 2) out = withLen(sub);
+        } else if (geoKm(pa.P, pb.P) > 0.1) {
+          /* 同折线段:两点投影点间直接连线(站距 < 段点密度时也能定位) */
+          out = withLen([pa.P, pb.P]);
+        }
       }
     }
   }
@@ -840,8 +925,16 @@ function buildStaticIndex() {
     const parts = g.type === 'MultiLineString' ? g.coordinates : [g.coordinates];
     for (const co of parts) {
       if (co.length < 2) continue;
-      addCand(normName(p.from), '', p.line, co[0]);
-      addCand(normName(p.to), '', p.line, co[co.length - 1]);
+      const fm = normName(p.from), to = normName(p.to);
+      const cfa = stationCoord.get(fm), cta = stationCoord.get(to);
+      let c0 = co[0], cN = co[co.length - 1];
+      /* 方向修复:原始段可能 from/to 与坐标方向相反(如 宇都宮|黒磯 段 co 实为黒磯→宇都宮),
+         登记端点必须与站名对应,否则把相邻站坐标混入候选(近距合并被 16km 噪声破坏) */
+      if (cfa && cta && geoKm(c0, cta) + geoKm(cN, cfa) < geoKm(c0, cfa) + geoKm(cN, cta)) {
+        c0 = co[co.length - 1]; cN = co[0];
+      }
+      addCand(fm, '', p.line, c0);
+      addCand(to, '', p.line, cN);
     }
   }
   /* ===== 修复:轨道段网格索引(投影接入) ===== */
@@ -1052,6 +1145,8 @@ function parseTrips(json) {
       const prev = i > 0 ? stopC[i - 1] : null;
       const c = resolveCoord(jas[i], linesN, prev);
       if (c) return c;
+      const g = stationCoord.get(jasN[i]);
+      if (g) return g; /* 站表首候选兜底:骨架 400km/h 校验会丢弃跨城错配点 */
       return null; /* 不做全局同名回退:跨城同名站会把骨架拉到另一座城市(列车乱飞的根因) */
     }
     const stopC = new Array(N);
@@ -1102,7 +1197,7 @@ function findPathOnLines(A, B, lineSet, rawA, rawB) {
   const lsKey = lineSet ? [...lineSet].sort().join(',') : '';
   const key = A + '|' + B + '|' + lsKey;
   if (bfsMemo.has(key)) return bfsMemo.get(key);
-  const result = bfsRaw(A, B, (line) => lineSet.has(normName(line)));
+  const result = bfsRaw(A, B, (line) => line ? [...lineSet].some(ln => matchLine(ln, line) > 0) : false);
   let out = null;
   if (result) {
     const ca = resolveCoord(rawA || A, lineSet) || stationCoord.get(A);
@@ -1290,7 +1385,9 @@ function trainPosition(t, M) {
   const A = t.jasN[i], B = t.jasN[i+1];
   if (frac < 0) {
     // 停車中:站位置(预计算,几何对齐)+ 朝向 = 本区间轨道方向
-    const c = t.stopC[i + 1];
+    /* M ∈ (arr[i], dep[i]) 时列车停在"区间起点站 i"(如 静岡 470-478 停站期),
+       取 stopC[i] 而非 stopC[i+1](下一站), 否则停车时显示到下一站(跑过头) */
+    const c = t.stopC[i] || t.stopC[i + 1];
     if (c) {
       const e = pickSeg(t, A, B, t.stopC[i]);
       if (e) {
@@ -1308,21 +1405,37 @@ function trainPosition(t, M) {
   if (segEntry) { coords = segEntry.coords; cum = segEntry.cum; len = segEntry.len; line = segEntry.line; kind = segEntry.kind; }
   if (!coords) {
     let path = null;
-    if (t.stopC[i] && t.stopC[i+1]) {
-      path = findPathOnLines(A, B, t.lineSet || (t.lineSet = new Set(t.lines)), t.jas[i], t.jas[i+1]) || segSubPath(A, B, t.stopC[i], t.stopC[i+1]) || bridgePath(A, B, t.lineSet, t.jas[i], t.jas[i+1]) || routeByStops(A, B, t.lineSet);
+    /* 站坐标:优先停靠预解析坐标;失败时用 resolveCoord 消歧(带上一站坐标兜底,防同名站错配),
+       最后才用站表首候选(岡本/野崎等带括号站可能跨城同名) */
+    const lsT = t.lineSet || (t.lineSet = new Set(t.lines));
+    const prevC = i > 0 ? (t.stopC[i - 1] || null) : null;
+    let cA = t.stopC[i] || resolveCoord(t.jas[i], lsT, prevC) || stationCoord.get(A) || null;
+    let cB = t.stopC[i + 1] || resolveCoord(t.jas[i + 1], lsT, cA) || stationCoord.get(B) || null;
+    /* 防跨城同名错配:站距 >300km 视为站表错配(岡本/野崎等跨城同名),放弃该坐标走上下游骨架 */
+    if (cA && cB && geoKm(cA, cB) > 300) cB = null;
+    if (cA && cB) {
+      path = segSubPath(A, B, cA, cB, lsT) || findPathOnLines(A, B, lsT, t.jas[i], t.jas[i+1]) || bridgePath(A, B, lsT, t.jas[i], t.jas[i+1]) || routeByStops(A, B, lsT);
     } else {
       /* 区间站无坐标:用上下游最近已知站对重建轨道路径(磐越西線五泉→津川 真实几何),时间映射到该站对 */
       const a2 = t.stopC[i] ? i : t.skUp[i];
       const b2 = t.stopC[i+1] ? i+1 : t.skDn[i+1];
       if (a2 >= 0 && b2 > a2) {
-        path = findPathOnLines(t.jasN[a2], t.jasN[b2], t.lineSet || (t.lineSet = new Set(t.lines)), t.jas[a2], t.jas[b2]) || (t.stopC[a2] && t.stopC[b2] ? segSubPath(t.stopC[a2], t.stopC[b2]) : null) || bridgePath(t.jasN[a2], t.jasN[b2], t.lineSet, t.jas[a2], t.jas[b2]) || routeByStops(t.jasN[a2], t.jasN[b2], t.lineSet);
+        path = segSubPath(t.jasN[a2], t.jasN[b2], t.stopC[a2], t.stopC[b2], lsT) || findPathOnLines(t.jasN[a2], t.jasN[b2], lsT, t.jas[a2], t.jas[b2]) || (t.stopC[a2] && t.stopC[b2] ? segSubPath(t.stopC[a2], t.stopC[b2]) : null) || bridgePath(t.jasN[a2], t.jasN[b2], lsT, t.jas[a2], t.jas[b2]) || routeByStops(t.jasN[a2], t.jasN[b2], lsT);
       }
       if (path) {
         const m0 = t.dep[a2], m1 = Math.max(t.arr[b2], m0 + 1);
         fPos = Math.min(1, Math.max(0, (M - m0) / (m1 - m0)));
       }
     }
+    /* 方向对齐:fallback 路径必须 A→B(上一站→下一站),反了则反转 */
+    if (path && t.stopC[i] && t.stopC[i+1]) {
+      const c0 = path.coords[0], c1 = path.coords[path.coords.length - 1];
+      if (geoKm(t.stopC[i], c1) < geoKm(t.stopC[i], c0)) {
+        path = withLen(path.coords.slice().reverse());
+      }
+    }
     if (path) { coords = path.coords; cum = path.cum; len = path.len; line = ''; kind = ''; }
+    if (t.jasN[0] === '宇都宮' && M === 319) console.log('DBG2 M319', 'i='+i, 'segEntry:', !!segEntry, 'path:', !!path, 'len:', len, 'fPos:', fPos.toFixed(3), 'cA:', cA && cA.join(','), 'cB:', cB && cB.join(','), 'skStop:', t.skStop && [...t.skStop]);
   }
   if (coords) {
     if (len <= 0) { _pos[0] = coords[0][0]; _pos[1] = coords[0][1]; }
@@ -1340,6 +1453,19 @@ function trainPosition(t, M) {
     }
     if (!line) line = lineOfPair(t, i);
     if (!kind) kind = lineKind.get(line) || '鉄道';
+    /* 线路约束(MC 核心):列车只能出现在途经线路上——fallback 路径位置若偏离
+       途经线路 >8km,投影钳制回途经线路段(杜绝跨线乱飞/漂移) */
+    if (!segEntry) {
+      const ls = t.lineSet || (t.lineSet = new Set(t.lines));
+      if (ls && ls.size && distToLineSet(_pos[0], _pos[1], ls) > 8) {
+        const pp = projToTrack([_pos[0], _pos[1]], ls);
+        if (pp) {
+          _pos[0] = pp.P[0]; _pos[1] = pp.P[1];
+          const kk = Math.max(1, Math.min(pp.co.length - 1, pp.i));
+          _pos[2] = Math.atan2(pp.co[kk][0] - pp.co[kk-1][0], pp.co[kk][1] - pp.co[kk-1][1]);
+        }
+      }
+    }
     _pos[3] = line; _pos[4] = kind; _pos[5] = kmh;
     return _pos;
   }
@@ -1382,7 +1508,7 @@ function pickSeg(t, A, B, prev) {
   const arr = segIndex.get(A + '|' + B);
   if (!arr || !arr.length) return null;
   if (arr.length === 1) return arr[0];
-  for (const e of arr) if (t.lineSet.has(normName(e.line))) return e;
+  for (const e of arr) if (t.lineSet && [...t.lineSet].some(ln => matchLine(ln, e.line) > 0)) return e;
   if (prev) {
     let best = arr[0], bd = 1e18;
     for (const e of arr) {

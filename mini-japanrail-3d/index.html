@@ -291,6 +291,7 @@ button { font-family:inherit; }
     <div class="sw on" id="swSta"><span id="tSw3">车站点</span><span class="trk"></span></div>
     <div class="sw on" id="swBase"><span id="tSw4">底图瓦片</span><span class="trk"></span></div>
     <div class="sw on" id="swTrail"><span id="tSw5">列车光晕</span><span class="trk"></span></div>
+    <div class="sw" id="swCopyBad"><span id="tSw6">复制异常车辆</span><span class="trk"></span></div>
     <div class="sec-t" id="tTheme" style="margin-top:12px">主题</div>
     <div class="frow" id="themeRow">
       <button class="chip" data-theme="dark">🌙 深色</button>
@@ -432,7 +433,7 @@ const I18N = {
     title:'Mini JapanRail 3D', sub:'全日本铁路实时运行地图', loading:'准备中…', live:'实时', follow:'跟随中', followStop:'取消跟随',
     searchT:'搜索', searchPh:'车站 / 线路(日文名)…', routeT:'路线搜索', routeFrom:'起点站', routeTo:'终点站',
     filterT:'线路类型', legendT:'图例', dayT:'运行日', dayAuto:'自动', setT:'设置', dataT:'数据', helpT:'帮助',
-    sw1:'车站标签', sw2:'轨道光晕', sw3:'车站点', sw4:'底图瓦片', sw5:'列车光晕',
+    sw1:'车站标签', sw2:'轨道光晕', sw3:'车站点', sw4:'底图瓦片', sw5:'列车光晕', sw6:'复制异常车辆',
     d1:'在途列车', d2:'今日班次', d3:'运行日', d4:'线路 / 车站', d5:'时刻表构建', d6:'帧率',
     now:'回到现在', station:'车站', line:'线路', stops:'站', transfers:'换乘', routeMile:'里程', routeNone:'未找到连通路径(请检查站名)',
     routeSame:'起终点相同', badStation:'找不到车站', h1:'🖱 拖动平移 · 滚轮缩放 · 右键旋转/倾斜', h2:'点击列车 = 详情 + 相机跟随 · 点空白取消',
@@ -447,7 +448,7 @@ const I18N = {
     title:'ミニ日本鉄道3D', sub:'全国鉄道リアルタイムマップ', loading:'準備中…', live:'リアルタイム', follow:'追跡中', followStop:'追跡解除',
     searchT:'検索', searchPh:'駅 / 路線(日本語名)…', routeT:'経路検索', routeFrom:'出発駅', routeTo:'到着駅',
     filterT:'路線種別', legendT:'凡例', dayT:'運行日', dayAuto:'自動', setT:'設定', dataT:'データ', helpT:'ヘルプ',
-    sw1:'駅ラベル', sw2:'軌道グロー', sw3:'駅ドット', sw4:'背景タイル', sw5:'列車グロー',
+    sw1:'駅ラベル', sw2:'軌道グロー', sw3:'駅ドット', sw4:'背景タイル', sw5:'列車グロー', sw6:'異常列車コピー',
     d1:'運行中列車', d2:'本日列車', d3:'運行日', d4:'路線 / 駅', d5:'時刻表構築', d6:'フレーム率',
     now:'現在に戻る', station:'駅', line:'路線', stops:'駅', transfers:'乗換', routeMile:'距離', routeNone:'連絡経路なし(駅名確認)',
     routeSame:'同一点', badStation:'駅が見つかりません', h1:'🖱 ドラッグ移動 · ホイール拡縮 · 右回転/傾き', h2:'列車クリック = 詳細 + 追跡 · 空白で解除',
@@ -462,7 +463,7 @@ const I18N = {
     title:'Mini JapanRail 3D', sub:'Japan Rail Live Map', loading:'Preparing…', live:'Live', follow:'Following', followStop:'Stop follow',
     searchT:'Search', searchPh:'Station / Line (Japanese)…', routeT:'Route search', routeFrom:'From', routeTo:'To',
     filterT:'Line types', legendT:'Legend', dayT:'Service day', dayAuto:'Auto', setT:'Settings', dataT:'Data', helpT:'Help',
-    sw1:'Station labels', sw2:'Track glow', sw3:'Station dots', sw4:'Basemap tiles', sw5:'Train glow',
+    sw1:'Station labels', sw2:'Track glow', sw3:'Station dots', sw4:'Basemap tiles', sw5:'Train glow', sw6:'Copy off-rail trains',
     d1:'Active trains', d2:'Trips today', d3:'Service day', d4:'Lines / Stations', d5:'Timetable built', d6:'FPS',
     now:'Now', station:'Station', line:'Line', stops:'stops', transfers:'transfers', routeMile:'Distance', routeNone:'No connected route (check names)',
     routeSame:'Same stations', badStation:'Station not found', h1:'🖱 Drag to pan · Scroll to zoom · Right-drag rotate/tilt', h2:'Click train = detail + follow · Blank = cancel',
@@ -2357,6 +2358,50 @@ $('swGlow').addEventListener('click', function () { this.classList.toggle('on');
 $('swSta').addEventListener('click', function () { this.classList.toggle('on'); map.setLayoutProperty('stas', 'visibility', this.classList.contains('on') ? 'visible' : 'none'); });
 $('swBase').addEventListener('click', function () { this.classList.toggle('on'); map.setLayoutProperty('basemap', 'visibility', this.classList.contains('on') ? 'visible' : 'none'); });
 $('swTrail').addEventListener('click', function () { this.classList.toggle('on'); });
+/* 异常(游离)车辆检测 + 一键复制 */
+const OFF_RAIL_KM = 3;
+function distToRail(c) {
+  const gx = Math.floor(c[0] / GRID), gy = Math.floor(c[1] / GRID);
+  const lat0 = c[1] * Math.PI / 180;
+  let bestD = 1e18;
+  for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) {
+    const segs = segGrid.get((gx + dx) * 100000 + (gy + dy));
+    if (!segs) continue;
+    for (const [a, b] of segs) {
+      const ax = (a[0] - c[0]) * Math.cos(lat0) * 111.32, ay = (a[1] - c[1]) * 110.57;
+      const bx = (b[0] - c[0]) * Math.cos(lat0) * 111.32, by = (b[1] - c[1]) * 110.57;
+      const r = distToSegmentProj(0, 0, ax, ay, bx, by);
+      if (r.d < bestD) bestD = r.d;
+    }
+  }
+  return bestD;
+}
+function collectOffRail(M) {
+  const out = [];
+  for (const t of tripList) {
+    if (t.bad) continue;
+    const p = trainPosition(t, M);
+    if (!p) continue;
+    const d = distToRail([p[0], p[1]]);
+    if (d > OFF_RAIL_KM) {
+      let ni = 0; while (ni < t.N - 1 && M > t.arr[ni + 1]) ni++;
+      out.push({ trip: t.t || '', line: p[3] || (t.lines && t.lines[0]) || '', from: t.jas[0], to: t.jas[t.N - 1], lng: p[0].toFixed(4), lat: p[1].toFixed(4), dist: d.toFixed(1), kmh: Math.round(p[5] || 0), next: t.jas[ni + 1] });
+    }
+  }
+  return out;
+}
+$('swCopyBad').addEventListener('click', () => {
+  const M = paused ? Math.round((simEpoch - simDateBase()) / 60000) : curMin();
+  const bad = collectOffRail(M);
+  if (!bad.length) { toast('✓ 当前无异常车辆 (距轨道 >' + OFF_RAIL_KM + 'km)'); return; }
+  const txt = bad.map(b => `[游离] #${b.trip} ${b.line} ${b.from}→${b.to} pos(${b.lng},${b.lat}) 距轨${b.dist}km ${b.kmh}km/h 下一站${b.next}`).join('\n');
+  const s = `异常车辆 ${bad.length} 辆 (距轨道 >${OFF_RAIL_KM}km) @ M=${M}:\n${txt}`;
+  const done = () => toast(`✓ 已复制 ${bad.length} 辆异常车辆`);
+  const fallbackCopy = (txt) => { const ta = document.createElement('textarea'); ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (e) {} ta.remove(); };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(s).then(done).catch(() => { fallbackCopy(s); done(); });
+  } else { fallbackCopy(s); done(); }
+});
 $('btnProj').addEventListener('click', () => {
   const cur = map.getProjection().type;
   const to = cur === 'globe' ? 'mercator' : 'globe';
@@ -2398,7 +2443,7 @@ function applyLang() {
   searchEl.placeholder = t.searchPh;
   $('rFrom').placeholder = t.routeFrom; $('rTo').placeholder = t.routeTo;
   $('dayAuto').textContent = t.dayAuto;
-  $('tSw1').textContent = t.sw1; $('tSw2').textContent = t.sw2; $('tSw3').textContent = t.sw3; $('tSw4').textContent = t.sw4; $('tSw5').textContent = t.sw5;
+  $('tSw1').textContent = t.sw1; $('tSw2').textContent = t.sw2; $('tSw3').textContent = t.sw3; $('tSw4').textContent = t.sw4; $('tSw5').textContent = t.sw5; $('tSw6').textContent = t.sw6;
   $('tD1').textContent = t.d1; $('tD2').textContent = t.d2; $('tD3').textContent = t.d3; $('tD4').textContent = t.d4; $('tD5').textContent = t.d5; $('tD6').textContent = t.d6;
   $('cNow').textContent = t.now;
   $('footNote').textContent = t.h6 + ' · 国土地理院 / OpenFreeMap · ' + t.sub;

@@ -2185,6 +2185,17 @@ function shortTerm(s) { return String(s).replace(/[（(].*?[)）]/g, '').slice(0
 function isRapidType(tp) { return ['特','急','快','準','区','通','回'].indexOf(tp) >= 0; }
 let lineOp = null, boardCache = new Map(), sheetStation = null, sheetCoord = null, sheetFlat = false;
 function buildLineOp() { if (lineOp) return; lineOp = new Map(); segFC.features.forEach(f => { const p = f.properties; if (p.line && !lineOp.has(p.line)) lineOp.set(p.line, p.op || ''); }); }
+// 时刻表用全名(函館本線), 地图用简称(函館線), 做变体匹配
+function opForLine(lname) {
+  if (lineOp.has(lname)) return lineOp.get(lname);
+  const alt = lname.replace('本線', '線');
+  if (lineOp.has(alt)) return lineOp.get(alt);
+  const core = lname.replace('本線', '').replace('線', '');
+  if (core.length >= 2) {
+    for (const [k, v] of lineOp) { if (v && k.includes(core)) return v; }
+  }
+  return '';
+}
 function groupDirs(items) {
   const arr = items.filter(r => r.idx < r.entry.length - 1);
   const src = arr.length ? arr : items.slice();
@@ -2240,9 +2251,12 @@ function buildBoard(station, coord) {
     }
     if (idx >= t.N - 1) continue;
     const dep = t.dep[idx], term = t.jas[t.N - 1];
+    // 同趟车经过多线, 取第一个非空公司做兜底(石勝線这类op缺失的也归对公司)
+    let tripOp = '';
+    for (let li = 0; li < t.linesN.length; li++) { const o = opForLine(t.linesN[li]); if (o) { tripOp = o; break; } }
     for (let li = 0; li < t.linesN.length; li++) {
       const ln = t.linesN[li]; if (!ln) continue;
-      if (!byLine.has(ln)) byLine.set(ln, { name: ln, color: lineColor.get(ln) || '#888', op: lineOp.get(ln) || '', items: [] });
+      if (!byLine.has(ln)) byLine.set(ln, { name: ln, color: lineColor.get(ln) || '#888', op: opForLine(ln) || tripOp || '', items: [] });
       byLine.get(ln).items.push({ dep, term, type: t.i, entry: jn, idx });
     }
   }

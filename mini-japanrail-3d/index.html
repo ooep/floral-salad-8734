@@ -1779,8 +1779,6 @@ function hexToRgb(hex) {
 }
 let trainSizeMul = 1;
 const visibleTrips = [], visibleXY = new Float32Array(MAXT * 2);
-/* 盒子朝向平滑状态:tripId → 上一帧方位(rad), 限制角速度防抽搐 */
-const bearingMap = new Map();
 /* 按日预过滤:r 掩码不随帧变化,一次过滤后每帧只遍历当日班次(省 57049×N 次 & 分支) */
 let dayList = null, dayListBit = -1, dayListSrc = null;
 function updateTrains(M) {
@@ -1809,8 +1807,6 @@ function updateTrains(M) {
   const eps = Math.max(1.5e-6, Math.min(2.5e-3, 8 / (512 * Math.pow(2, z))));
   const drawGlow = glowOn && z < 9;
   const glowPass = [];
-  /* 盒子朝向角速度限制:停车↔运行切换(整段方向 vs 当前小段方向)与站间折线拐角会让盒子
-     一帧猛转 >90°(抽搐)。每帧 clamp 到 ±34°,真实列车转弯远慢于此,视觉平滑不突兀 */
   for (let idx = 0; idx < dayList.length; idx++) {
     const t = dayList[idx];
     if (t.bad) continue;
@@ -1820,17 +1816,6 @@ function updateTrains(M) {
     if (!p) continue;
     if (!selKind[p[4]]) continue;
     if (n >= MAXT - 1 || vtx * STRIDE + 36 * STRIDE > bufArr.length) break;
-    let br = p[2];
-    if (p[5] !== 0) {
-      const pb = bearingMap.get(t.t);
-      if (pb !== undefined) {
-        let d = br - pb;
-        d = ((d + Math.PI) % (2 * Math.PI)) - Math.PI;
-        if (d > 0.6) br = pb + 0.6; else if (d < -0.6) br = pb - 0.6;
-      }
-      bearingMap.set(t.t, br);
-    } else bearingMap.set(t.t, br);
-    if (bearingMap.size > 12000) bearingMap.clear();
     let color = t.color;
     if (p[3]) { const lc = lineColor.get(p[3]); if (lc) color = lc; }
     const [r, g, b] = t._rgb && t._line === p[3] ? t._rgb : (t._rgb = hexToRgb(color), t._rgb);
@@ -1838,7 +1823,7 @@ function updateTrains(M) {
     const lng = p[0], lat = p[1];
     const mx = (lng + 180) / 360;
     const my = (1 - Math.log(Math.tan(Math.PI/4 + lat * Math.PI/360)) / Math.PI) / 2;
-    let dxm = Math.sin(br) * eps, dym = -Math.cos(br) * eps; // mercator y 向南为正,北上取负
+    let dxm = Math.sin(p[2]) * eps, dym = -Math.cos(p[2]) * eps; // mercator y 向南为正,北上取负
     if (p[5] === 0 && p[2] === 0) { dxm = eps; dym = 0; }
     // 底面(俯视/倾斜都画,平面矩形)
     let o = vtx * STRIDE;
@@ -2685,7 +2670,6 @@ function collectOffRail(M) {
   const out = [];
   for (const t of tripList) {
     if (t.bad) continue;
-    if (M < t.dep[0] || M > t.arr[t.N - 1]) continue; /* 只报当前时刻在跑的班次, 排除已收班/未发车 */
     const p = trainPosition(t, M);
     if (!p) continue;
     const d = distToRail([p[0], p[1]]);

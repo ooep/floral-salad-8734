@@ -246,7 +246,6 @@ button { font-family:inherit; }
   <button class="btn" id="btnLive">⚡ <span id="tLive">实时</span></button>
   <button class="btn icon on" id="btnProj" title="3D / 2D">🌐</button>
   <button class="btn icon" id="btnLang" title="Language">文A</button>
-  <button class="btn icon" id="btnTheme" title="浅色/深色">🌙</button>
   <button class="btn icon" id="btnSide" title="Panel">☰</button>
 </div>
 
@@ -292,6 +291,12 @@ button { font-family:inherit; }
     <div class="sw on" id="swSta"><span id="tSw3">车站点</span><span class="trk"></span></div>
     <div class="sw on" id="swBase"><span id="tSw4">底图瓦片</span><span class="trk"></span></div>
     <div class="sw on" id="swTrail"><span id="tSw5">列车光晕</span><span class="trk"></span></div>
+    <div class="sec-t" id="tTheme" style="margin-top:12px">主题</div>
+    <div class="frow" id="themeRow">
+      <button class="chip" data-theme="dark">🌙 深色</button>
+      <button class="chip" data-theme="light">☀️ 浅色</button>
+      <button class="chip on" data-theme="auto">🖥️ 跟随</button>
+    </div>
   </div>
   <div class="sec">
     <div class="sec-t" id="tData">数据</div>
@@ -2361,10 +2366,19 @@ $('btnProj').addEventListener('click', () => {
 });
 $('btnLang').addEventListener('click', () => { lang = lang === 'zh' ? 'ja' : (lang === 'ja' ? 'en' : 'zh'); localStorage.setItem('mjr3d_lang', lang); applyLang(); });
 $('btnSide').addEventListener('click', () => { sideEl.classList.toggle('collapsed'); $('btnSide').textContent = sideEl.classList.contains('collapsed') ? '☰' : '✕'; });
-// 浅色/深色模式
-function applyTheme(t){ document.documentElement.setAttribute('data-theme', t); $('btnTheme').textContent = t === 'light' ? '☀️' : '🌙'; }
-$('btnTheme').addEventListener('click', () => { const cur = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light'; localStorage.setItem('mjr3d_theme', cur); applyTheme(cur); });
-applyTheme(localStorage.getItem('mjr3d_theme') || 'dark');
+// 主题：dark / light / auto(跟随系统)
+const mq = window.matchMedia('(prefers-color-scheme: light)');
+function applyThemeMode() {
+  let mode = localStorage.getItem('mjr3d_theme') || 'auto';
+  const resolved = (mode === 'auto') ? (mq.matches ? 'light' : 'dark') : mode;
+  document.documentElement.setAttribute('data-theme', resolved);
+  document.querySelectorAll('#themeRow .chip').forEach(c => c.classList.toggle('on', c.dataset.theme === mode));
+}
+document.querySelectorAll('#themeRow .chip').forEach(c => c.addEventListener('click', () => {
+  localStorage.setItem('mjr3d_theme', c.dataset.theme); applyThemeMode();
+}));
+mq.addEventListener('change', applyThemeMode);
+applyThemeMode();
 $('brand').addEventListener('click', () => map.flyTo({ center: [137.2, 36.8], zoom: 3.4, pitch: 0, bearing: 0, duration: 1500 }));
 document.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT') { if (e.key === 'Escape') e.target.blur(); return; }

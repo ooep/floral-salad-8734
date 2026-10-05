@@ -12,6 +12,24 @@
   --line:rgba(120,140,180,.18); --txt:#d7dee9; --dim:#7f8ba0; --acc:#4f8ef7; --acc2:#6ee7f7;
   --shadow:0 8px 32px rgba(0,0,0,.55); --r:14px;
 }
+:root[data-theme="light"] {
+  --bg:#eef1f6; --panel:rgba(255,255,255,.88); --panel2:rgba(245,247,251,.96);
+  --line:rgba(30,50,90,.15); --txt:#1a2333; --dim:#64748b; --acc:#2563eb; --acc2:#0891b2;
+  --shadow:0 8px 32px rgba(30,50,90,.18);
+}
+:root[data-theme="light"] .tbox { background:rgba(255,255,255,.8); color:var(--txt); }
+:root[data-theme="light"] .btn { color:var(--txt); }
+:root[data-theme="light"] .btn.on { color:#fff; }
+:root[data-theme="light"] .chip.on, :root[data-theme="light"] .spb.on { color:#fff; }
+:root[data-theme="light"] #status { text-shadow:0 1px 4px rgba(255,255,255,.6); }
+:root[data-theme="light"] #sheet { background:linear-gradient(180deg,#f4f6fb,#e9edf4); border-color:var(--line); box-shadow:0 -10px 40px rgba(30,50,90,.25); }
+:root[data-theme="light"] #sheet .sh-nm { color:var(--txt); }
+:root[data-theme="light"] .lrow { background:rgba(255,255,255,.7); }
+:root[data-theme="light"] .hour-row { background:rgba(240,243,248,.8); }
+:root[data-theme="light"] .dg-cell.local { background:rgba(200,215,240,.5); }
+:root[data-theme="light"] .dg-cell.rapid { background:rgba(255,180,190,.45); }
+:root[data-theme="light"] .dg-cell .m, :root[data-theme="light"] .hr-t .m { color:#1a2333; }
+:root[data-theme="light"] .day .dlg, :root[data-theme="light"] .d { color:var(--dim); }
 * { margin:0; padding:0; box-sizing:border-box; }
 html,body { width:100%; height:100%; overflow:hidden; background:var(--bg); color:var(--txt);
   font-family:-apple-system,"SF Pro SC","PingFang SC","Hiragino Sans GB","Noto Sans CJK SC","Yu Gothic UI","Noto Sans JP",sans-serif;
@@ -228,6 +246,7 @@ button { font-family:inherit; }
   <button class="btn" id="btnLive">⚡ <span id="tLive">实时</span></button>
   <button class="btn icon on" id="btnProj" title="3D / 2D">🌐</button>
   <button class="btn icon" id="btnLang" title="Language">文A</button>
+  <button class="btn icon" id="btnTheme" title="浅色/深色">🌙</button>
   <button class="btn icon" id="btnSide" title="Panel">☰</button>
 </div>
 
@@ -2342,6 +2361,10 @@ $('btnProj').addEventListener('click', () => {
 });
 $('btnLang').addEventListener('click', () => { lang = lang === 'zh' ? 'ja' : (lang === 'ja' ? 'en' : 'zh'); localStorage.setItem('mjr3d_lang', lang); applyLang(); });
 $('btnSide').addEventListener('click', () => { sideEl.classList.toggle('collapsed'); $('btnSide').textContent = sideEl.classList.contains('collapsed') ? '☰' : '✕'; });
+// 浅色/深色模式
+function applyTheme(t){ document.documentElement.setAttribute('data-theme', t); $('btnTheme').textContent = t === 'light' ? '☀️' : '🌙'; }
+$('btnTheme').addEventListener('click', () => { const cur = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light'; localStorage.setItem('mjr3d_theme', cur); applyTheme(cur); });
+applyTheme(localStorage.getItem('mjr3d_theme') || 'dark');
 $('brand').addEventListener('click', () => map.flyTo({ center: [137.2, 36.8], zoom: 3.4, pitch: 0, bearing: 0, duration: 1500 }));
 document.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT') { if (e.key === 'Escape') e.target.blur(); return; }

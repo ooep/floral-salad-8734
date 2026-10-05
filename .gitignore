@@ -3,3 +3,4 @@
 .secrets/
 __MACOSX/
 __pycache__/
+data/timetables/

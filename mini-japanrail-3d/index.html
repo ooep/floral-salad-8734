@@ -34,6 +34,14 @@
 html,body { width:100%; height:100%; overflow:hidden; background:var(--bg); color:var(--txt);
   font-family:-apple-system,"SF Pro SC","PingFang SC","Hiragino Sans GB","Noto Sans CJK SC","Yu Gothic UI","Noto Sans JP",sans-serif;
   -webkit-tap-highlight-color:transparent; }
+/* iOS 刘海/底部横条安全区 */
+@supports (padding: max(0px)) {
+  #hud { padding-top: max(10px, env(safe-area-inset-top)); }
+  #topr { top: calc(46px + env(safe-area-inset-top)); }
+  #clock { bottom: max(12px, env(safe-area-inset-bottom)); }
+  #detail { bottom: max(14px, env(safe-area-inset-bottom)); }
+  .foot { bottom: max(8px, env(safe-area-inset-bottom)); }
+}
 #map { position:absolute; inset:0; }
 ::-webkit-scrollbar { width:6px; } ::-webkit-scrollbar-thumb { background:rgba(120,140,180,.3); border-radius:3px; }
 button { font-family:inherit; }
@@ -123,8 +131,9 @@ button { font-family:inherit; }
 #clock .r1 { display:flex; align-items:center; gap:10px; }
 #clock .t { font-size:20px; font-weight:800; font-variant-numeric:tabular-nums; letter-spacing:1px; min-width:74px; text-align:center; }
 #clock .daychip { font-size:10.5px; padding:3px 9px; border-radius:12px; border:1px solid var(--line); color:var(--dim); white-space:nowrap; }
-#clock .sp { margin-left:auto; display:flex; gap:4px; }
-.spb { padding:3px 9px; border-radius:8px; border:1px solid var(--line); font-size:11px; cursor:pointer; color:var(--dim); background:transparent; }
+#clock .sp { margin-left:auto; display:flex; gap:4px; overflow-x:auto; max-width:46%; scrollbar-width:none; }
+#clock .sp::-webkit-scrollbar { display:none; }
+.spb { padding:3px 9px; border-radius:8px; border:1px solid var(--line); font-size:11px; cursor:pointer; color:var(--dim); background:transparent; white-space:nowrap; flex:none; }
 .spb.on { background:rgba(79,142,247,.22); color:#fff; border-color:var(--acc); }
 #clock .r2 { display:flex; align-items:center; gap:10px; margin-top:7px; }
 #clock input[type=range] { flex:1; -webkit-appearance:none; appearance:none; height:4px; border-radius:2px; background:rgba(120,140,180,.3); outline:none; }
@@ -165,6 +174,10 @@ button { font-family:inherit; }
 @keyframes pulse { 0%,100%{transform:scale(1);opacity:.9;} 50%{transform:scale(1.12);opacity:1;} }
 #loader .lt { font-size:15px; font-weight:800; letter-spacing:1px; }
 #loader .lb { font-size:11px; color:var(--dim); }
+#loader .lpd { display:flex; align-items:center; gap:10px; font-size:10.5px; color:var(--dim); }
+#loader .lpd b { color:var(--acc2); font-variant-numeric:tabular-nums; }
+#lRetry { display:none; min-height:40px; padding:0 22px; border:1px solid var(--acc); border-radius:12px; background:rgba(79,142,247,.18); color:var(--txt); font-size:12.5px; font-weight:700; cursor:pointer; }
+#lRetry:hover { background:rgba(79,142,247,.32); }
 #lbar { width:min(320px,70vw); height:4px; border-radius:2px; background:rgba(120,140,180,.2); overflow:hidden; }
 #lbarF { height:100%; width:0%; border-radius:2px; background:linear-gradient(90deg,var(--acc),var(--acc2)); transition:width .2s; }
 
@@ -359,14 +372,16 @@ button { font-family:inherit; }
   <div class="lgi">🚄</div>
   <div class="lt" id="lTitle">Mini JapanRail 3D</div>
   <div id="lbar"><div id="lbarF"></div></div>
-  <div class="lb" id="lMsg">准备中…</div>
+  <div class="lpd"><span id="lMsg">准备中…</span><b id="lPct">0%</b></div>
+  <button id="lRetry">↻ 重试</button>
 </div>
 
 <script>
 window.__errs = [];
-window.addEventListener('error', e => { window.__errs.push(String(e.message || e) + ' @ ' + String(e.error && e.error.stack || '').split('\n').slice(0, 4).join(' | ').slice(0, 400)); document.getElementById('lMsg').textContent = 'ERR ' + (e.message || e); });
-window.addEventListener('unhandledrejection', e => { window.__errs.push('REJ ' + (e.reason && e.reason.message || e.reason)); });
-(() => { const oc = console.error; console.error = function () { window.__errs.push('CERR ' + Array.from(arguments).map(a => (a && a.message) ? a.message : String(a)).join(' ;; ').slice(0, 300)); return oc.apply(console, arguments); }; })();
+function __pushErr(s) { window.__errs.push(String(s).slice(0, 500)); if (window.__errs.length > 300) window.__errs.shift(); }
+window.addEventListener('error', e => { __pushErr(String(e.message || e) + ' @ ' + String(e.error && e.error.stack || '').split('\n').slice(0, 4).join(' | ').slice(0, 400)); document.getElementById('lMsg').textContent = 'ERR ' + (e.message || e); });
+window.addEventListener('unhandledrejection', e => { __pushErr('REJ ' + (e.reason && e.reason.message || e.reason)); });
+(() => { const oc = console.error; console.error = function () { __pushErr('CERR ' + Array.from(arguments).map(a => (a && a.message) ? a.message : String(a)).join(' ;; ').slice(0, 300)); return oc.apply(console, arguments); }; })();
 </script>
 
 <script type="module">
@@ -469,6 +484,7 @@ const I18N = {
     followBtn:'🎯 跟随此列车', locateBtn:'📍 定位', stopFollowBtn:'⬜ 停止跟随', tripId:'班次', viaLines:'途经线路',
     loadingSeg:'轨道网络', loadingSta:'车站', loadingTm:'班次映射', loadingTr:'时刻表', loaded:'完成', goLive:'数据就绪 — 点击右上 ⚡ 开始',
     dayFileNote:'时刻表', paused:'暂停', liveMode:'实时', playMode:'回放', fps:'FPS',
+    retry:'重试', loadingIdx:'构建索引', loadingPr:'解析时刻表', adapt:'性能模式:帧率低,已自动关闭列车光晕', cacheOn:'离线缓存已启用',
   },
   ja: {
     title:'ミニ日本鉄道3D', sub:'全国鉄道リアルタイムマップ', loading:'準備中…', live:'リアルタイム', follow:'追跡中', followStop:'追跡解除',
@@ -484,6 +500,7 @@ const I18N = {
     followBtn:'🎯 列車を追跡', locateBtn:'📍 位置', stopFollowBtn:'⬜ 追跡停止', tripId:'列車', viaLines:'経由路線',
     loadingSeg:'軌道網', loadingSta:'駅', loadingTm:'列車マップ', loadingTr:'時刻表', loaded:'完了', goLive:'準備完了 — 右上 ⚡ で開始',
     dayFileNote:'時刻表', paused:'一時停止', liveMode:'リアルタイム', playMode:'再生', fps:'FPS',
+    retry:'再試行', loadingIdx:'索引構築', loadingPr:'時刻表解析', adapt:'省電力モード:低FPSのため列車グローをOFF', cacheOn:'オフラインキャッシュ有効',
   },
   en: {
     title:'Mini JapanRail 3D', sub:'Japan Rail Live Map', loading:'Preparing…', live:'Live', follow:'Following', followStop:'Stop follow',
@@ -499,6 +516,7 @@ const I18N = {
     followBtn:'🎯 Follow train', locateBtn:'📍 Locate', stopFollowBtn:'⬜ Stop follow', tripId:'Trip', viaLines:'Lines',
     loadingSeg:'Track network', loadingSta:'Stations', loadingTm:'Trip map', loadingTr:'Timetable', loaded:'done', goLive:'Ready — tap ⚡ top-right',
     dayFileNote:'Timetable', paused:'Paused', liveMode:'Live', playMode:'Replay', fps:'FPS',
+    retry:'Retry', loadingIdx:'Building index', loadingPr:'Parsing timetable', adapt:'Performance mode: low FPS, train glow off', cacheOn:'Offline cache enabled',
   },
 };
 let lang = localStorage.getItem('mjr3d_lang') || (['ja','en'].includes(navigator.language?.slice(0,2)) ? navigator.language.slice(0,2) : 'zh');
@@ -525,12 +543,14 @@ let segIndex = null, edgeInfo = null, adj = null, stationCoord = null, stationCo
 let LINES_MAP = {};
 let lineColor = new Map(), lineKind = new Map(), stationLines = new Map();
 let tripList = [], activeList = [], visibleCount = 0, totalTripsToday = 0;
+let tripsByStation = new Map();
 let searchIndex = [], lineIndex = [];
-let map = null, trainsLayer = null, dataReady = false, liveOn = false;
+let map = null, trainsLayer = null, dataReady = false, liveOn = false, booting = false;
 let clockMode = 'live', paused = false, speed = 1, simEpoch = 0, wallT0 = 0;
 let dayMode = 'auto', dayBit = 1, dayBitAuto = 1;
 let followTrip = null, selKind = Object.fromEntries(KINDS.map(k => [k, true]));
 let fps = 0, lastFrameT = 0, rafId = 0;
+let glowAutoOff = false, lowFpsN = 0, frameSkip = false, adaptToastDone = false, followNullT = 0;
 const hasWebgl2 = (() => { try { return !!document.createElement('canvas').getContext('webgl2'); } catch { return false; } })();
 
 /* ---------------- 时间 ---------------- */
@@ -556,41 +576,116 @@ function simDateBase() { const p = jstDateParts(simNow()); return Date.UTC(p.y, 
 function doNow() { clockMode = 'live'; paused = false; $('btnPlay').textContent = '⏸'; }
 function syncSim() { if (clockMode === 'manual' && !paused) { simEpoch = simNow(); wallT0 = Date.now(); } }
 
-/* ---------------- 数据加载(带进度) ---------------- */
-const loaderMsg = $('lMsg'), lbarF = $('lbarF');
-const loadSizes = { 'data/segments3d.geojson': 9054890, 'data/stations3d.geojson': 1422796, 'data/tmaps.json': 3158412, 'data/station_map.json': 11006682, 'data/tokkyu.json': 59100 };
-const loadOrder = ['data/segments3d.geojson', 'data/stations3d.geojson', 'data/tmaps.json', 'data/station_map.json', 'data/tokkyu.json'];
+/* ---------------- 数据加载(带进度 + IndexedDB 缓存) ---------------- */
+const loaderMsg = $('lMsg'), lbarF = $('lbarF'), lPctEl = $('lPct');
+/* 进度条阶段:文件下载解析 0→55%,索引构建 55→78%,时刻表解析 78→97%,完成 100% */
+const FILES_PCT = 55, IDX_PCT = 78, PRS_PCT = 97;
+/* 数据版本号:segments/stations/station_map 等静态数据每次变更时必须递增,
+   否则 IndexedDB 缓存可能让旧数据(如已修的幽灵直线)继续生效 */
+const DATA_VERSION = '2026-10-06a';
+const loadSizes = { 'data/segments3d.geojson': 9054890, 'data/stations3d.geojson': 1422796, 'data/tmaps.json': 3158412, 'data/station_map.json': 11006682, 'data/tokkyu.json': 59100, 'data/trains_wd.json': 13494947, 'data/trains_sa.json': 12228166, 'data/trains_su.json': 12284312 };
+let _fileTotal = 7, _fileIdx = 0;
+function nextFileIdx() { return _fileIdx++; }
+function setPct(p) { lbarF.style.width = Math.min(100, p) + '%'; lPctEl.textContent = Math.round(p) + '%'; }
+function setLoadMsg(s) { loaderMsg.textContent = s; }
+function setPhase(lo, hi, f) { setPct(lo + (hi - lo) * Math.max(0, Math.min(1, f))); }
 function updateBar(fileIdx, got, size) {
-  const per = 92 / loadOrder.length;
+  const per = FILES_PCT / _fileTotal;
   const frac = Math.min(1, size ? got / size : 0);
-  const base = fileIdx * per + frac * per;
-  lbarF.style.width = Math.min(99, base) + '%';
+  setPct(fileIdx * per + frac * per);
 }
-async function fetchJSON(url, phaseKey) {
+let idb = null;
+function openIDB() {
+  return new Promise((res, rej) => {
+    try {
+      const r = indexedDB.open('mjr3d-cache', 1);
+      r.onupgradeneeded = () => { try { r.result.createObjectStore('files'); } catch (e) {} };
+      r.onsuccess = () => res(r.result);
+      r.onerror = () => rej(r.error);
+    } catch (e) { rej(e); }
+  });
+}
+function idbGet(key) {
+  return new Promise(res => {
+    if (!idb) return res(null);
+    try {
+      const tx = idb.transaction('files', 'readonly');
+      const req = tx.objectStore('files').get(key);
+      req.onsuccess = () => res(req.result || null);
+      req.onerror = () => res(null);
+    } catch (e) { res(null); }
+  });
+}
+function idbPut(key, val) {
+  return new Promise(res => {
+    if (!idb) return res();
+    try {
+      const tx = idb.transaction('files', 'readwrite');
+      tx.objectStore('files').put(val, key);
+      tx.oncomplete = () => res();
+      tx.onerror = () => res();
+    } catch (e) { res(); }
+  });
+}
+/* 带缓存读取:首次下载解析并写入 IDB;之后若服务端 Last-Modified 未变(304)直接用缓存(秒开),
+   变化则下载新数据并回写;服务端无 Last-Modified 时以 DATA_VERSION 为准 */
+async function fetchJSONWithCache(url, phaseKey, fileIdx) {
+  const key = DATA_VERSION + '|' + url;
+  const fIdx = fileIdx != null ? fileIdx : nextFileIdx();
+  try {
+    if (!idb) idb = await openIDB();
+    const cached = await idbGet(key);
+    if (cached && cached.v === DATA_VERSION && cached.j != null) {
+      const lm = cached.lm;
+      if (lm) {
+        const res = await fetch(url, { headers: { 'If-Modified-Since': lm } });
+        if (res.status === 304) { updateBar(fIdx, 1, 1); return cached.j; }
+        if (res.ok) {
+          const j = await res.json();
+          updateBar(fIdx, 1, 1);
+          await idbPut(key, { v: DATA_VERSION, j, lm: res.headers.get('Last-Modified') || lm });
+          return j;
+        }
+      } else { updateBar(fIdx, 1, 1); return cached.j; }
+    }
+  } catch (e) { console.warn('[cache]', e); }
   const res = await fetch(url);
   if (!res.ok) throw new Error(url + ' HTTP ' + res.status);
-  const fileIdx = Math.max(0, loadOrder.indexOf(url));
   const est = loadSizes[url] || 0;
   const total = +res.headers.get('content-length') || est;
-  if (!res.body) { const j = await res.json(); updateBar(fileIdx, 1, 1); return j; }
-  const reader = res.body.getReader(), chunks = [];
-  let got = 0;
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    chunks.push(value); got += value.length;
-    updateBar(fileIdx, got, total);
-    loaderMsg.textContent = T().loading + ' ' + T()[phaseKey] + ' — ' + (got / 1048576).toFixed(1) + ' MB';
+  let j;
+  if (!res.body) { j = await res.json(); updateBar(fIdx, 1, 1); }
+  else {
+    const reader = res.body.getReader(), chunks = [];
+    let got = 0;
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value); got += value.length;
+      updateBar(fIdx, got, total);
+      if (phaseKey && T()[phaseKey]) setLoadMsg(T().loading + ' ' + T()[phaseKey] + ' — ' + (got / 1048576).toFixed(1) + ' MB');
+    }
+    const buf = new TextDecoder().decode(await new Blob(chunks).arrayBuffer());
+    j = JSON.parse(buf);
+    updateBar(fIdx, 1, 1);
   }
-  const buf = new TextDecoder().decode(await new Blob(chunks).arrayBuffer());
-  return JSON.parse(buf);
-}
-async function loadTrainsFile(bit) {
-  const url = TRAIN_FILES[bit];
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(url + ' HTTP ' + res.status);
-  const j = await res.json();
+  try { if (idb) await idbPut(key, { v: DATA_VERSION, j, lm: res.headers.get('Last-Modified') || '' }); } catch (e) {}
   return j;
+}
+function yieldToUI() { return new Promise(r => setTimeout(r, 0)); }
+/* 索引缓存:静态数据(segments/stations/tmaps/station_map)未变时,二次访问直接从 IDB 恢复,
+   跳过 ~8s 的索引构建(segment 网格/焊接/寻路图/搜索索引等) */
+const IDX_CACHE_KEY = 'idx|' + DATA_VERSION;
+function saveIndexes() {
+  try { if (idb) idbPut(IDX_CACHE_KEY, { v: DATA_VERSION, stationCoord, stationCoordLine, stationLines, endCoord, nameOf, segIndex, adj, stationCands, segGrid, weldInfo, seqCoordsCache, seqIdx, routeNodes, routeGraph, stationLinesAt, searchIndex, lineIndex, lineColor, lineKind }); } catch (e) { console.warn('[idx-cache]', e); }
+}
+function restoreIndexes(c) {
+  stationCoord = c.stationCoord; stationCoordLine = c.stationCoordLine; stationLines = c.stationLines;
+  endCoord = c.endCoord; nameOf = c.nameOf; segIndex = c.segIndex; adj = c.adj;
+  stationCands.clear(); if (c.stationCands) for (const [k, v] of c.stationCands) stationCands.set(k, v);
+  segGrid = c.segGrid; weldInfo = c.weldInfo; seqCoordsCache = c.seqCoordsCache; seqIdx = c.seqIdx;
+  routeNodes = c.routeNodes; routeGraph = c.routeGraph; stationLinesAt = c.stationLinesAt;
+  searchIndex = c.searchIndex; lineIndex = c.lineIndex; lineColor = c.lineColor; lineKind = c.lineKind;
 }
 
 const TRANSFER_KM = 1.6;
@@ -931,7 +1026,12 @@ function withLen(path) {
   }
   return { coords: path, cum, len: L };
 }
-function buildStaticIndex() {
+/* ================= 索引构建(分片化:每 64 次迭代让出主线程,避免长阻塞白屏) ================= */
+async function buildStaticIndexAsync(onPhase) {
+  const report = f => { if (onPhase) onPhase(f); };
+  /* 基于时间的分片:连续工作 >16ms 才让出一次主线程(界面不卡,开销≈0) */
+  let lastYieldT = performance.now();
+  const ck = async () => { const n = performance.now(); if (n - lastYieldT > 16) { lastYieldT = n; await yieldToUI(); } };
   stationCoord = new Map(); stationCoordLine = new Map(); stationLines = new Map();
   endCoord = new Map(); nameOf = new Map();
   staFC.features.forEach(f => {
@@ -1035,11 +1135,12 @@ function buildStaticIndex() {
           segGrid.get(gk).push([a, b, k, ei]);
         }
       }
+      await ck();
     }
   }
   /* ===== 修复:段中间点焊接(几何段在某中间点与另一段端点交汇时分割注册,使图连通) ===== */
   weldInfo = new Map();
-  (function weldSegments() {
+  await (async function weldSegments() {
     const epGrid = new Map(), EPS = 0.08, WELD_KM = 0.18;
     const addEp = (c, nm) => {
       const gx = Math.floor(c[0] / EPS), gy = Math.floor(c[1] / EPS);
@@ -1081,12 +1182,14 @@ function buildStaticIndex() {
             break;
           }
         }
+        await ck();
       }
     }
   })();
+  report(0.4); await yieldToUI();
   /* ===== 修复:站序折线库(几何缺失区间用时刻表停站序列重建轨道走向) ===== */
   seqCoordsCache = []; seqIdx = new Map();
-  (function buildSeqCoords() {
+  await (async function buildSeqCoords() {
     const seen = new Set();
     for (const tid in tmaps) {
       const v = tmaps[tid];
@@ -1113,6 +1216,7 @@ function buildStaticIndex() {
         S2.push(S[idx]); C2.push(C[k]);
       }
       if (C2.length >= 2) seqCoordsCache.push({ S: S2, C: C2, ls: lsSet });
+      await ck();
     }
     for (let ei = 0; ei < seqCoordsCache.length; ei++) {
       const S = seqCoordsCache[ei].S;
@@ -1122,6 +1226,7 @@ function buildStaticIndex() {
       }
     }
   })();
+  report(0.6); await yieldToUI();
   // 路线搜索图 v2:节点 = (站,线),乘车边沿段,换乘边需同站坐标 < 800m(防异地同名站焊接)
   routeNodes = new Map(); routeGraph = new Map(); stationLinesAt = new Map();
   function nodeKey(st, ln) { return st + '|' + ln; }
@@ -1173,6 +1278,7 @@ function buildStaticIndex() {
     const km = Math.hypot((cb[0]-ca[0]) * 111.32 * Math.cos((ca[1]+cb[1])/2 * Math.PI/180), (cb[1]-ca[1]) * 110.57);
     pushEdge(na, nb, km, lnN);
     pushEdge(nb, na, km, lnN);
+    await ck();
   }
   for (const [nk, info] of routeNodes) {
     if (!stationLinesAt.has(info.st)) stationLinesAt.set(info.st, []);
@@ -1185,104 +1291,139 @@ function buildStaticIndex() {
       const dy = (A.y - B.y) * 110.57;
       if (Math.hypot(dx, dy) < 0.8) { pushEdge(nodes[i], nodes[j], TRANSFER_KM, ''); pushEdge(nodes[j], nodes[i], TRANSFER_KM, ''); }
     }
+    await ck();
   }
-  // 搜索索引(显示名)
+  report(0.9); await yieldToUI();
+  // 搜索索引(显示名,Set 去重 O(n) 替代原 some 全扫)
   searchIndex = []; lineIndex = Array.from(lineColor.keys());
-  staFC.features.forEach(f => { if (!searchIndex.some(s => s.n === f.properties.station)) searchIndex.push({ n: f.properties.station, c: f.geometry.coordinates }); });
+  const seenSt = new Set();
+  staFC.features.forEach(f => { const n = f.properties.station; if (!seenSt.has(n)) { seenSt.add(n); searchIndex.push({ n, c: f.geometry.coordinates }); } });
   searchIndex.sort((a, b) => a.n.length - b.n.length);
   lineIndex.sort();
+  report(1);
   $('dNet').textContent = lineIndex.length.toLocaleString() + ' / ' + searchIndex.length.toLocaleString();
 }
 let routeGraph = null, routeNodes = null, stationLinesAt = null;
 
-/* 班次解析:s 首项=首站发车分钟,之后为相对前一站事件的差值(arr, dep 交替,终点只有 arr) */
-function parseTrips(json) {
+/* 班次解析(分片化):s 首项=首站发车分钟,之后为相对前一站事件的差值(arr, dep 交替,终点只有 arr) */
+async function parseTripsAsync(json, onPhase) {
   const trips = [];
   const T0 = json.T || [];
-  for (let idx = 0; idx < T0.length; idx++) {
-    const t = T0[idx];
-    const tm = tmaps[t.t];
-    if (!tm || !tm.s_jas || tm.s_jas.length < 2) continue;
-    const sArr = t.s.split(',');
-    const N = tm.s_jas.length;
-    if (sArr.length !== 2 * N - 2) continue;
-    const s = new Float64Array(sArr.length);
-    for (let i = 0; i < sArr.length; i++) s[i] = +sArr[i];
-    const dep = new Float64Array(N), arr = new Float64Array(N);
-    dep[0] = s[0];
-    for (let i = 1; i < N; i++) {
-      arr[i] = dep[i-1] + s[2*i - 1];
-      dep[i] = (i < N - 1) ? arr[i] + s[2*i] : arr[i];
+  const n0 = T0.length;
+  tripsByStation = new Map(); // 站→班次索引:车站时刻表抽屉秒开(替代每次全表扫描)
+  /* 基于时间分片:连续解析 >16ms 让出一次主线程,进度平滑、界面不卡 */
+  let lastYieldT = performance.now();
+  for (let idx = 0; idx < n0; idx++) {
+    const t = parseTrip(T0[idx]);
+    if (!t) continue;
+    trips.push(t);
+    for (let i = 0; i < t.N; i++) {
+      const nk = t.jasN[i];
+      if (!tripsByStation.has(nk)) tripsByStation.set(nk, []);
+      tripsByStation.get(nk).push(t);
     }
-    const [w0, w1] = t.w.split(',').map(Number);
-    /* 零运行时长区间平滑(时刻表分钟取整致 run=0: 旧逻辑整区间卡起点站、到点瞬移, 路面电车扎堆抽搐):
-       给零区间分配 0.5min 平滑窗, 优先"借用本站停车末段"(车在停车最后 0.5min 滑向下一站),
-       本站无停车可借时, 窗口落在到达时刻前 0.25min(与前区间尾段微量重叠, 幅度仅几十米) */
-    const sStart = new Float64Array(Math.max(0, N - 1)), sRun = new Float64Array(Math.max(0, N - 1));
-    for (let i = 0; i < N - 1; i++) {
-      const run = arr[i+1] - dep[i];
-      if (run > 0) { sStart[i] = dep[i]; sRun[i] = run; }
-      else {
-        const dwell = dep[i] - arr[i];           // 本站停车时长
-        const borrow = Math.min(0.5, Math.max(0, dwell));
-        sRun[i] = borrow > 0.05 ? borrow : 0.25;
-        sStart[i] = arr[i+1] - sRun[i];
-      }
+    const n = performance.now();
+    if (n - lastYieldT > 16) {
+      lastYieldT = n;
+      if (onPhase) onPhase(idx / n0);
+      await yieldToUI();
     }
-    const lines = tm.lines || [];
-    const linesN = lines.map(normName);
-    const jas = tm.s_jas, jasN = jas.map(normName);
-    const lineSet = new Set(linesN);
-    /* 每站坐标: ① 官方权威映射(按车次+站序由官方区间折线端点拼出, 跨城同名天然消歧)
-       ② 相邻轨道段端点(几何对齐) ③ 站表线语境 ④ 全局匹配 */
-    const smStops = officialStopsFor(t.t, N);
-    function stopCoordAt(i) {
-      if (smStops && smStops[i]) return smStops[i];
-      if (i - 1 >= 0) { const e = segIndex.get(jasN[i-1] + '|' + jasN[i]); if (e) return e[0].coords[e[0].coords.length - 1]; }
-      if (i + 1 < N) { const e = segIndex.get(jasN[i] + '|' + jasN[i+1]); if (e) return e[0].coords[0]; }
-      for (const ln of linesN) { const c = stationCoordLine.get(ln + '|' + jasN[i]); if (c) return c; }
-      const prev = i > 0 ? stopC[i - 1] : null;
-      const c = resolveCoord(jas[i], linesN, prev);
-      if (c) return c;
-      const g = stationCoord.get(jasN[i]);
-      if (g) return g; /* 站表首候选兜底:骨架 400km/h 校验会丢弃跨城错配点 */
-      return null; /* 不做全局同名回退:跨城同名站会把骨架拉到另一座城市(列车乱飞的根因) */
-    }
-    const stopC = new Array(N);
-    for (let i = 0; i < N; i++) stopC[i] = stopCoordAt(i);
-    // 坐标骨架:相邻已知站间隐含时速 > 400km 的坐标视为错配,剔除
-    const skX = [], skY = [], skStop = [];
-    let lastGood = null;
-    for (let i = 0; i < N; i++) {
-      if (!stopC[i]) continue;
-      if (lastGood !== null) {
-        const li = skStop[skStop.length - 1];
-        const hours = Math.max(0.01, (arr[i] - dep[li]) / 60);
-        const km = Math.hypot((stopC[i][0]-stopC[li][0]) * 111.32 * Math.cos((stopC[i][1]+stopC[li][1])/2 * Math.PI/180), (stopC[i][1]-stopC[li][1]) * 110.57);
-        if (km / hours > 400) continue; // 跨城错配坐标,丢弃该点
-      }
-      skX.push(stopC[i][0]); skY.push(stopC[i][1]); skStop.push(i);
-      lastGood = i;
-    }
-    let skCum = null, skLen = 0;
-    if (skX.length >= 2) {
-      skCum = new Float64Array(skX.length);
-      for (let i = 1; i < skX.length; i++) {
-        const dx = (skX[i]-skX[i-1]) * Math.cos((skY[i]+skY[i-1])/2 * Math.PI/180) * 111.32;
-        const dy = (skY[i]-skY[i-1]) * 110.57;
-        skLen += Math.hypot(dx, dy); skCum[i] = skLen;
-      }
-    }
-    const bad = skX.length < 2 || skLen < 0.5;
-    /* 已知站索引:区间站无坐标时,用上下游最近已知站对重建轨道路径(如磐越西線咲花/日出谷/三川) */
-    const skUp = new Int16Array(N), skDn = new Int16Array(N);
-    let lastK = -1;
-    for (let i = 0; i < N; i++) { skUp[i] = lastK; if (stopC[i]) lastK = i; }
-    lastK = -1;
-    for (let i = N - 1; i >= 0; i--) { skDn[i] = lastK; if (stopC[i]) lastK = i; }
-    trips.push({ t: t.t, r: t.r, i: t.i || '', nm: tripName(t.i || '', N, jas, linesN), w0, w1, dep, arr, N, jas, jasN, stopC, lines, linesN, lineSet, sStart, sRun, skX, skY, skStop, skCum, skLen, bad, skUp, skDn, color: typeColor(t.i) });
   }
+  if (onPhase) onPhase(1);
   return trips;
+}
+function parseTrip(t) {
+  const tm = tmaps[t.t];
+  if (!tm || !tm.s_jas || tm.s_jas.length < 2) return null;
+  const sArr = t.s.split(',');
+  const N = tm.s_jas.length;
+  if (sArr.length !== 2 * N - 2) return null;
+  const s = new Float64Array(sArr.length);
+  for (let i = 0; i < sArr.length; i++) s[i] = +sArr[i];
+  const dep = new Float64Array(N), arr = new Float64Array(N);
+  dep[0] = s[0];
+  for (let i = 1; i < N; i++) {
+    arr[i] = dep[i-1] + s[2*i - 1];
+    dep[i] = (i < N - 1) ? arr[i] + s[2*i] : arr[i];
+  }
+  const [w0, w1] = t.w.split(',').map(Number);
+  /* 零运行时长区间平滑(时刻表分钟取整致 run=0: 旧逻辑整区间卡起点站、到点瞬移, 路面电车扎堆抽搐):
+     给零区间分配 0.5min 平滑窗, 优先"借用本站停车末段"(车在停车最后 0.5min 滑向下一站),
+     本站无停车可借时, 窗口落在到达时刻前 0.25min(与前区间尾段微量重叠, 幅度仅几十米) */
+  const sStart = new Float64Array(Math.max(0, N - 1)), sRun = new Float64Array(Math.max(0, N - 1));
+  for (let i = 0; i < N - 1; i++) {
+    const run = arr[i+1] - dep[i];
+    if (run > 0) { sStart[i] = dep[i]; sRun[i] = run; }
+    else {
+      const dwell = dep[i] - arr[i];           // 本站停车时长
+      const borrow = Math.min(0.5, Math.max(0, dwell));
+      sRun[i] = borrow > 0.05 ? borrow : 0.25;
+      sStart[i] = arr[i+1] - sRun[i];
+    }
+  }
+  const lines = tm.lines || [];
+  const linesN = lines.map(normName);
+  const jas = tm.s_jas, jasN = jas.map(normName);
+  const lineSet = new Set(linesN);
+  /* 每站坐标: ① 官方权威映射(按车次+站序由官方区间折线端点拼出, 跨城同名天然消歧)
+     ② 相邻轨道段端点(几何对齐) ③ 站表线语境 ④ 全局匹配 */
+  const smStops = officialStopsFor(t.t, N);
+  function stopCoordAt(i) {
+    if (smStops && smStops[i]) return smStops[i];
+    if (i - 1 >= 0) { const e = segIndex.get(jasN[i-1] + '|' + jasN[i]); if (e) return e[0].coords[e[0].coords.length - 1]; }
+    if (i + 1 < N) { const e = segIndex.get(jasN[i] + '|' + jasN[i+1]); if (e) return e[0].coords[0]; }
+    for (const ln of linesN) { const c = stationCoordLine.get(ln + '|' + jasN[i]); if (c) return c; }
+    const prev = i > 0 ? stopC[i - 1] : null;
+    const c = resolveCoord(jas[i], linesN, prev);
+    if (c) return c;
+    const g = stationCoord.get(jasN[i]);
+    if (g) return g; /* 站表首候选兜底:骨架 400km/h 校验会丢弃跨城错配点 */
+    return null; /* 不做全局同名回退:跨城同名站会把骨架拉到另一座城市(列车乱飞的根因) */
+  }
+  const stopC = new Array(N);
+  for (let i = 0; i < N; i++) stopC[i] = stopCoordAt(i);
+  // 坐标骨架:相邻已知站间隐含时速 > 400km 的坐标视为错配,剔除
+  const skX = [], skY = [], skStop = [];
+  let lastGood = null;
+  for (let i = 0; i < N; i++) {
+    if (!stopC[i]) continue;
+    if (lastGood !== null) {
+      const li = skStop[skStop.length - 1];
+      const hours = Math.max(0.01, (arr[i] - dep[li]) / 60);
+      const km = Math.hypot((stopC[i][0]-stopC[li][0]) * 111.32 * Math.cos((stopC[i][1]+stopC[li][1])/2 * Math.PI/180), (stopC[i][1]-stopC[li][1]) * 110.57);
+      if (km / hours > 400) continue; // 跨城错配坐标,丢弃该点
+    }
+    skX.push(stopC[i][0]); skY.push(stopC[i][1]); skStop.push(i);
+    lastGood = i;
+  }
+  let skCum = null, skLen = 0;
+  if (skX.length >= 2) {
+    skCum = new Float64Array(skX.length);
+    for (let i = 1; i < skX.length; i++) {
+      const dx = (skX[i]-skX[i-1]) * Math.cos((skY[i]+skY[i-1])/2 * Math.PI/180) * 111.32;
+      const dy = (skY[i]-skY[i-1]) * 110.57;
+      skLen += Math.hypot(dx, dy); skCum[i] = skLen;
+    }
+  }
+  const bad = skX.length < 2 || skLen < 0.5;
+  /* 已知站索引:区间站无坐标时,用上下游最近已知站对重建轨道路径(如磐越西線咲花/日出谷/三川) */
+  const skUp = new Int16Array(N), skDn = new Int16Array(N);
+  let lastK = -1;
+  for (let i = 0; i < N; i++) { skUp[i] = lastK; if (stopC[i]) lastK = i; }
+  lastK = -1;
+  for (let i = N - 1; i >= 0; i--) { skDn[i] = lastK; if (stopC[i]) lastK = i; }
+  /* 视口裁剪包围盒(mercator,含缓冲):渲染帧跳过视野外班次,城市级缩放可省 90%+ 计算 */
+  let mx0 = 9, mx1 = -9, my0 = 9, my1 = -9;
+  for (let i = 0; i < N; i++) {
+    const c = stopC[i]; if (!c) continue;
+    const mx = (c[0] + 180) / 360;
+    const my = (1 - Math.log(Math.tan(Math.PI/4 + c[1] * Math.PI/360)) / Math.PI) / 2;
+    if (mx < mx0) mx0 = mx; if (mx > mx1) mx1 = mx;
+    if (my < my0) my0 = my; if (my > my1) my1 = my;
+  }
+  if (mx0 > mx1) { mx0 = 0; mx1 = 1; my0 = 0; my1 = 1; }
+  /* 班次包围盒 = 停站坐标包络(列车插值/骨架均在站间,边距仅防浮点与贴边,~16km) */
+  return { t: t.t, r: t.r, i: t.i || '', nm: tripName(t.i || '', N, jas, linesN), w0, w1, dep, arr, N, jas, jasN, stopC, lines, linesN, lineSet, sStart, sRun, skX, skY, skStop, skCum, skLen, bad, skUp, skDn, color: typeColor(t.i), mx0: mx0 - 0.0005, mx1: mx1 + 0.0005, my0: my0 - 0.0007, my1: my1 + 0.0007 };
 }
 
 /* ---------------- 位置引擎 ---------------- */
@@ -1898,6 +2039,22 @@ function updateTrains(M) {
   let n = 0, vtx = 0; // vtx:总顶点数(俯视 6/列车,倾斜 36/列车 + 光晕 6/个)
   visibleTrips.length = 0;
   const z = map.getZoom();
+  /* 视口裁剪:z≥5 时跳过班次包围盒(mercator)与视野不相交的列车 ——
+     城市级缩放(首都圈/大阪)时视野外列车占 90%+,裁剪后 CPU 计算与 GPU 上传大幅下降 */
+  let vp = null;
+  if (z >= 5) {
+    /* 视口缓冲随缩放递减:z=7 时 ±0.03(≈1000km),z=10 ±0.0038(≈130km),z=13 ±0.0005(≈16km) */
+    const vm = Math.min(0.03, 0.03 * Math.pow(2, 7 - z));
+    const b = map.getBounds();
+    const w = b.getWest(), e = b.getEast(), s = b.getSouth(), n = b.getNorth();
+    /* 注意 mercator Y 随纬度增大而减小:北边界 my 更小,南边界 my 更大 */
+    const myN = (1 - Math.log(Math.tan(Math.PI/4 + n * Math.PI/360)) / Math.PI) / 2;
+    const myS = (1 - Math.log(Math.tan(Math.PI/4 + s * Math.PI/360)) / Math.PI) / 2;
+    const mx0 = (w + 180) / 360 - vm, mx1 = (e + 180) / 360 + vm;
+    const my0 = Math.max(0, myN - vm * 1.35);
+    const my1 = Math.min(1, myS + vm * 1.35);
+    vp = { mx0, mx1, my0, my1 };
+  }
   let L, W;
   // 尺寸曲线(以 CSS 像素计,配合 dpr 补偿):国家/区域视图(低 zoom)小巧不遮挡,
   // 城市级(高 zoom)逐级放大;倾斜模式盒子高度另算
@@ -1906,7 +2063,7 @@ function updateTrains(M) {
   else if (z < 12) { const f = (z - 8) / 4; L = 11.6 + f * 9; W = 4.8 + f * 3; }
   else { const f = Math.min(1, (z - 12) / 3); L = 20.6 + f * 22; W = 7.8 + f * 7; }
   L *= trainSizeMul; W *= trainSizeMul;
-  const glowOn = $('swTrail').classList.contains('on');
+  const glowOn = $('swTrail').classList.contains('on') && !glowAutoOff;
   // 倾斜(3D)模式:画立体盒(底+顶+4侧),俯视只画平面矩形
   const pitchOn = map.getPitch() > 0.5;
   const Hpx = Math.max(3, Math.min(30, W * 0.9)); // 盒高(屏幕 px,≈宽的 0.9 → 长条立方)
@@ -1918,6 +2075,8 @@ function updateTrains(M) {
   for (let idx = 0; idx < dayList.length; idx++) {
     const t = dayList[idx];
     if (t.bad) continue;
+    /* 视口裁剪:班次包围盒(含缓冲)与视野不相交 → 跳过(位置计算 + 顶点构建全省) */
+    if (vp && (t.mx1 < vp.mx0 || t.mx0 > vp.mx1 || t.my1 < vp.my0 || t.my0 > vp.my1)) continue;
     const M2 = windowShift(t, M);
     if (M2 < t.w0 || M2 > t.w1) continue;
     const p = trainPosition(t, M2);
@@ -2028,6 +2187,9 @@ function initMap() {
     attributionControl: false,
   });
   map.addControl(new maplibregl.NavigationControl({ showCompass: true, visualizePitch: true }), 'bottom-left');
+  map.addControl(new maplibregl.ScaleControl({ maxWidth: 110, unit: 'metric' }), 'bottom-right');
+  let stateSaveT = 0;
+  map.on('moveend', () => { clearTimeout(stateSaveT); stateSaveT = setTimeout(stateHash, 700); });
   map.on('style.load', () => { try { map.setProjection({ type: 'globe' }); } catch (e) { console.warn('globe unavailable', e); } });
   map.on('error', e => { const m = e && e.error && (e.error.message || String(e.error)) || String(e || ''); window.__errs.push('MAP ' + m.slice(0, 200)); });
   map.on('dragstart', () => { if (followTrip) stopFollow(true); });
@@ -2036,23 +2198,59 @@ function initMap() {
 }
 function mapReadyPromise() {
   return new Promise(res => {
+    if (map.loaded()) return res(); /* 地图早已就绪时直接放行,避免白等 9s */
     let done = false;
     const fin = () => { if (!done) { done = true; res(); } };
     map.once('load', fin);
     setTimeout(fin, 9000); // 瓦片 CDN 病理阻塞时兜底
   });
 }
-async function boot() {
+/* ---------------- URL 状态持久化(刷新/分享保留视角、投影、语言、主题、实时) ---------------- */
+let urlState = null, lastWrittenHash = '';
+function parseHashState() {
   try {
-    const [s, st, tm, lm, sm, tk] = await Promise.all([
-      fetchJSON('data/segments3d.geojson', 'loadingSeg'),
-      fetchJSON('data/stations3d.geojson', 'loadingSta'),
-      fetchJSON('data/tmaps.json', 'loadingTm'),
-      fetchJSON('data/lines_map.json', '').catch(() => ({})),
-      fetchJSON('data/station_map.json', 'loadingTm').catch(() => null),
-      fetchJSON('data/tokkyu.json', '').catch(() => null),
+    const m = location.hash.match(/mjr3d=([^&]+)/);
+    if (!m) return null;
+    return JSON.parse(decodeURIComponent(escape(atob(m[1]))));
+  } catch (e) { return null; }
+}
+function stateHash() {
+  try {
+    const c = map.getCenter();
+    const h = { c: [+c.lng.toFixed(4), +c.lat.toFixed(4)], z: +map.getZoom().toFixed(2), p: +map.getPitch().toFixed(1), b: +map.getBearing().toFixed(1), j: map.getProjection().type, l: lang, m: localStorage.getItem('mjr3d_theme') || 'auto', v: liveOn ? 1 : 0 };
+    location.hash = 'mjr3d=' + btoa(unescape(encodeURIComponent(JSON.stringify(h))));
+    lastWrittenHash = location.hash;
+  } catch (e) {}
+}
+function applyUrlState() {
+  const h = urlState; if (!h) return;
+  if (h.l && I18N[h.l]) { lang = h.l; localStorage.setItem('mjr3d_lang', lang); }
+  if (h.m) { localStorage.setItem('mjr3d_theme', h.m); applyThemeMode(); }
+  if (h.c && h.z && map) { try { map.jumpTo({ center: [h.c[0], h.c[1]], zoom: h.z, pitch: h.p || 0, bearing: h.b || 0 }); } catch (e) {} }
+  if (h.j && map) { try { map.setProjection({ type: h.j }); } catch (e) {} }
+  if (h.v && dataReady) setLive(true);
+}
+async function boot() {
+  if (booting) return;
+  booting = true;
+  const retryBtn = $('lRetry');
+  if (retryBtn) retryBtn.style.display = 'none';
+  try {
+    _fileTotal = 7; _fileIdx = 0;
+    /* 当日时刻表与 6 个静态数据文件并行下载(含 tokkyu 特急爱称表, 原实现串行) */
+    dayBitAuto = bitOfDate(Date.now());
+    dayBit = dayMode === 'auto' ? dayBitAuto : dayMode;
+    const [s, st, tm, lm, sm, tk, tj] = await Promise.all([
+      fetchJSONWithCache('data/segments3d.geojson', 'loadingSeg', 0),
+      fetchJSONWithCache('data/stations3d.geojson', 'loadingSta', 1),
+      fetchJSONWithCache('data/tmaps.json', 'loadingTm', 2),
+      fetchJSONWithCache('data/lines_map.json', '', 3).catch(() => ({})),
+      fetchJSONWithCache('data/station_map.json', 'loadingTm', 4).catch(() => null),
+      fetchJSONWithCache('data/tokkyu.json', '', 5).catch(() => null),
+      fetchJSONWithCache(TRAIN_FILES[dayBit], 'loadingTr', 6),
     ]);
     segFC = s; staFC = st; tmaps = tm; LINES_MAP = lm || {}; stationMap = sm && sm.version === 2 ? sm : null; TOKKYU = tk;
+    trainJSON = tj;
     /* 官方补缺轨道/车站(地图遗漏的新开线/私铁, 如西鉄甘木線/北大阪急行延伸/夢洲):
        合并进同一 GeoJSON, 渲染/索引/寻路自动一致; 不改任何既有几何 */
     if (stationMap && Array.isArray(stationMap.extra_segments)) {
@@ -2069,33 +2267,43 @@ async function boot() {
       console.log('[station_map] official extra: +' + stationMap.extra_segments.length + ' segs +' +
         (stationMap.extra_stations || []).length + ' stations');
     }
-    lbarF.style.width = '95%';
-    loaderMsg.textContent = T().loading + ' ' + T().loadingTr + ' …';
-    dayBitAuto = bitOfDate(Date.now());
-    dayBit = dayMode === 'auto' ? dayBitAuto : dayMode;
-    const tj = await loadTrainsFile(dayBit);
-    trainJSON = tj;
-    lbarF.style.width = '98%';
-    buildStaticIndex();
-    tripList = parseTrips(tj);
-    totalTripsToday = tj.n || tripList.length;
+    /* 地图先行:轨道/车站网络先渲染(仅需原始 GeoJSON),索引与时刻表随后分片构建 */
     await mapReadyPromise();
     addMapLayers();
+    /* 索引构建/恢复:进度 55→78% */
+    setPhase(FILES_PCT, IDX_PCT, 0);
+    const idxCache = await idbGet(IDX_CACHE_KEY);
+    if (idxCache && idxCache.v === DATA_VERSION && idxCache.segIndex) {
+      restoreIndexes(idxCache); /* 二次访问:直接恢复索引,秒过 */
+      setPhase(FILES_PCT, IDX_PCT, 1);
+    } else {
+      setLoadMsg(T().loading + ' ' + T().loadingIdx + ' …');
+      await buildStaticIndexAsync(f => setPhase(FILES_PCT, IDX_PCT, f));
+      saveIndexes();
+    }
+    /* 时刻表解析:分片让出主线程,进度 78→97% */
+    setPhase(IDX_PCT, PRS_PCT, 0);
+    setLoadMsg(T().loading + ' ' + T().loadingPr + ' …');
+    tripList = await parseTripsAsync(tj, f => setPhase(IDX_PCT, PRS_PCT, f));
+    totalTripsToday = tj.n || tripList.length;
     dataReady = true;
     $('dBuild').textContent = tj.b || '-';
     $('dCount').textContent = totalTripsToday.toLocaleString();
-    lbarF.style.width = '100%';
-    loaderMsg.textContent = '✓ ' + T().loaded;
+    setPct(100);
+    setLoadMsg('✓ ' + T().loaded);
     setTimeout(() => { $('loader').classList.add('hide'); }, 350);
+    applyUrlState();
     setStatus(T().goLive);
     if (!liveOn) setTimeout(() => { if (!liveOn) { setLive(true); } }, 600);
     startLoop();
   } catch (err) {
     console.error(err);
-    loaderMsg.textContent = '⚠ ' + (err.message || err);
+    setLoadMsg('⚠ ' + (err.message || err));
     setStatus('ERR ' + (err.message || err));
-  }
+    if (retryBtn) retryBtn.style.display = 'block';
+  } finally { booting = false; }
 }
+$('lRetry').addEventListener('click', () => { boot(); });
 function addMapLayers() {
   map.addSource('segs', { type: 'geojson', data: segFC });
   map.addLayer({ id: 'segs-glow', type: 'line', source: 'segs', paint: {
@@ -2136,6 +2344,12 @@ function addMapLayers() {
 /* ---------------- 渲染循环 ---------------- */
 let lastActiveN = -1, lastFpsSec = -1;
 function startLoop() {
+  function tickFollow(M) {
+    if (performance.now() - followStartT <= 950) return;
+    const p = trainPosition(followTrip, windowShift(followTrip, M));
+    if (p) { followNullT = 0; map.jumpTo({ center: [p[0], p[1]] }); }
+    else if (++followNullT > 180) stopFollow(true); /* 到终点约 3s 后自动停止跟随 */
+  }
   const tick = () => {
     rafId = requestAnimationFrame(tick);
     const now = performance.now();
@@ -2143,17 +2357,25 @@ function startLoop() {
     lastFrameT = now;
     if (!dataReady) return;
     const M = curMin();
+    refreshClockUI(M);
+    /* 自适应降载:持续低帧率 → 自动关列车光晕 → 仍不足则隔帧更新(保交互优先于动画流畅) */
+    if (fps < 22) lowFpsN++; else if (fps > 30) lowFpsN = Math.max(0, lowFpsN - 2);
+    if (lowFpsN > 300) {
+      glowAutoOff = true;
+      if (!adaptToastDone) { adaptToastDone = true; toast(T().adapt, 3200); }
+    }
+    if (lowFpsN > 900) frameSkip = !frameSkip; else frameSkip = false;
+    /* 暂停且无跟随/详情、或页面隐藏:位置不变,跳过顶点重建与重绘(省 CPU/GPU/电量) */
+    const staticFrame = (paused && !followTrip && !liveDetailTrip && !sliderDragging) || document.hidden;
+    if (staticFrame || frameSkip) {
+      if (followTrip) tickFollow(M);
+      return;
+    }
     const n = updateTrains(M);
     if (n !== lastActiveN) { $('dActive').textContent = n.toLocaleString(); lastActiveN = n; }
     if (Math.floor(now / 1000) !== lastFpsSec) { $('dFps').textContent = Math.round(fps); lastFpsSec = Math.floor(now / 1000); }
-    refreshClockUI(M);
-    if (followTrip) {
-      if (performance.now() - followStartT > 950) {
-        const p = trainPosition(followTrip, windowShift(followTrip, M));
-        if (p) map.jumpTo({ center: [p[0], p[1]] });
-      }
-      updateDetailLive(followTrip, null, M);
-    } else if (liveDetailTrip) {
+    if (followTrip) { tickFollow(M); updateDetailLive(followTrip, null, M); }
+    else if (liveDetailTrip) {
       const p = trainPosition(liveDetailTrip, windowShift(liveDetailTrip, M));
       updateDetailLive(liveDetailTrip, p, M);
     }
@@ -2204,6 +2426,7 @@ function setLive(on) {
   clockEl.style.display = on ? 'block' : 'none';
   if (on) { doNow(); refreshClockUI(curMin()); }
   else { stopFollow(); }
+  stateHash();
 }
 document.querySelectorAll('.spb').forEach(b => b.addEventListener('click', () => {
   speed = parseFloat(b.dataset.sp);
@@ -2215,6 +2438,7 @@ document.querySelectorAll('#dayRow .chip').forEach(c => c.addEventListener('clic
   document.querySelectorAll('#dayRow .chip').forEach(x => x.classList.toggle('on', x === c));
   dayMode = c.dataset.day === 'auto' ? 'auto' : +c.dataset.day;
   await ensureDayFile();
+  stateHash();
 }));
 async function ensureDayFile() {
   const want = dayMode === 'auto' ? bitOfDate(simNow()) : dayMode;
@@ -2223,9 +2447,9 @@ async function ensureDayFile() {
   if (!TRAIN_FILES[want]) return;
   setStatus('⏳ ' + T()[DAY_LABEL[want] ? 'dayFileNote' : ''] + ' …');
   try {
-    const tj = await loadTrainsFile(want);
+    const tj = await fetchJSONWithCache(TRAIN_FILES[want], 'loadingTr');
     trainJSON = tj;
-    tripList = parseTrips(tj);
+    tripList = await parseTripsAsync(tj);
     totalTripsToday = tj.n || tripList.length;
     $('dBuild').textContent = tj.b || '-';
     $('dCount').textContent = totalTripsToday.toLocaleString();
@@ -2479,8 +2703,10 @@ function buildBoard(station, coord) {
   if (boardCache.has(ck)) return boardCache.get(ck);
   buildLineOp();
   const byLine = new Map();
-  for (let k = 0; k < tripList.length; k++) {
-    const t = tripList[k];
+  /* 用预索引(解析时刻表时构建)只遍历途经本站的班次,替代原 5.7 万班次全表扫描 */
+  const stTrips = (tripsByStation && tripsByStation.get(nk)) || [];
+  for (let k = 0; k < stTrips.length; k++) {
+    const t = stTrips[k];
     if (t.bad || !(t.r & dayBit)) continue;
     const jn = t.jasN;
     // 同名站：找出所有匹配索引，按用户点击坐标取最近的一个
@@ -2845,8 +3071,9 @@ $('btnProj').addEventListener('click', () => {
   try { map.setProjection({ type: to }); } catch (e) {}
   $('btnProj').textContent = to === 'globe' ? '🌐' : '🗺️';
   map.easeTo({ pitch: to === 'globe' ? 45 : 0, duration: 900 });
+  stateHash();
 });
-$('btnLang').addEventListener('click', () => { lang = lang === 'zh' ? 'ja' : (lang === 'ja' ? 'en' : 'zh'); localStorage.setItem('mjr3d_lang', lang); applyLang(); });
+$('btnLang').addEventListener('click', () => { lang = lang === 'zh' ? 'ja' : (lang === 'ja' ? 'en' : 'zh'); localStorage.setItem('mjr3d_lang', lang); applyLang(); stateHash(); });
 $('btnSide').addEventListener('click', () => { sideEl.classList.toggle('collapsed'); $('btnSide').textContent = sideEl.classList.contains('collapsed') ? '☰' : '✕'; });
 // 主题：dark / light / auto(跟随系统)
 const mq = window.matchMedia('(prefers-color-scheme: light)');
@@ -2857,7 +3084,7 @@ function applyThemeMode() {
   document.querySelectorAll('#themeRow .chip').forEach(c => c.classList.toggle('on', c.dataset.theme === mode));
 }
 document.querySelectorAll('#themeRow .chip').forEach(c => c.addEventListener('click', () => {
-  localStorage.setItem('mjr3d_theme', c.dataset.theme); applyThemeMode();
+  localStorage.setItem('mjr3d_theme', c.dataset.theme); applyThemeMode(); stateHash();
 }));
 mq.addEventListener('change', applyThemeMode);
 applyThemeMode();
@@ -2885,6 +3112,7 @@ function applyLang() {
   $('cNow').textContent = t.now;
   $('footNote').textContent = t.h6 + ' · 国土地理院 / OpenFreeMap · ' + t.sub;
   $('lTitle').textContent = t.title;
+  $('lRetry').textContent = '↻ ' + t.retry;
   buildKindRow();
   buildLegend();
   buildHelp();
@@ -2907,10 +3135,20 @@ function buildHelp() {
 }
 
 /* ---------------- 启动 ---------------- */
+urlState = parseHashState();
+if (urlState) {
+  if (urlState.l && I18N[urlState.l]) { lang = urlState.l; localStorage.setItem('mjr3d_lang', lang); }
+  if (urlState.m) { localStorage.setItem('mjr3d_theme', urlState.m); applyThemeMode(); }
+}
 initMap();
 applyLang();
 boot();
-window.__dbg = () => ({ map: !!map, dataReady, tripList: tripList.length, dayBit, errs: window.__errs, msg: document.getElementById('lMsg').textContent, active: visibleCount, rc: __renderCount, glErr: __glErr, layer: !!map.getLayer('trains-gl'), variant: __lastArgs && __lastArgs.variant });
+window.addEventListener('hashchange', () => {
+  if (location.hash === lastWrittenHash) return; /* 本页自己写入的,忽略 */
+  urlState = parseHashState();
+  if (urlState && urlState.c && map) { try { map.jumpTo({ center: [urlState.c[0], urlState.c[1]], zoom: urlState.z, pitch: urlState.p || 0, bearing: urlState.b || 0 }); } catch (e) {} }
+});
+window.__dbg = () => ({ map: !!map, dataReady, tripList: tripList.length, dayBit, errs: window.__errs, msg: document.getElementById('lMsg').textContent, active: visibleCount, rc: __renderCount, glErr: __glErr, layer: !!map.getLayer('trains-gl'), variant: __lastArgs && __lastArgs.variant, cache: !!idb, glowAutoOff, stIdx: tripsByStation.size });
 window.__bufSample = () => Array.from(bufArr.slice(0, 36).map(x => +x.toFixed(6)));
 window.__map = map;
 window.__uni = uni;

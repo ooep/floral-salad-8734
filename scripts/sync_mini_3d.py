@@ -19,7 +19,7 @@ GitHub 上旧数据保持原样，不会引起页面乱飞/空白）。
 
 用法: python3 scripts/sync_mini_3d.py [--out mini-japanrail-3d/data]
 """
-import argparse, json, os, re, sys
+import argparse, json, os, re, subprocess, sys
 
 def norm_ok(s):
     """s 字段为纯数字逗号串"""
@@ -109,6 +109,22 @@ def main():
             with open(dst, "wb") as f:
                 f.write(data)
             print(f"  sync {fname} ({len(data)/1e6:.1f}MB) -> {os.path.relpath(dst, root)}")
+
+    # 同步后生成特急爱称表（基于已同步的 trains_*.json + tmaps.json，与页面渲染同源；
+    # 失败不阻断主同步——页面降级为仅显示种别 icon）
+    tokkyu_script = os.path.join(root, "mini-japanrail-3d", "scripts", "build_tokkyu.py")
+    if os.path.exists(tokkyu_script):
+        rc = subprocess.run(
+            [sys.executable, tokkyu_script, "--src", os.path.abspath(out), "--out", os.path.abspath(out)],
+            check=False, capture_output=True, text=True)
+        if rc.returncode:
+            print("  [WARN] build_tokkyu.py 失败，tokkyu.json 未更新（主数据已同步）")
+            if rc.stdout: print("  " + rc.stdout.strip().replace("\n", "\n  "))
+            if rc.stderr: print("  " + rc.stderr.strip().replace("\n", "\n  "))
+        else:
+            print("  tokkyu.json 特急爱称表已更新 ✓")
+    else:
+        print("  [WARN] build_tokkyu.py 不存在，跳过爱称表生成")
     print("Mini JapanRail 3D 数据同步完成 ✓")
 
 if __name__ == "__main__":

@@ -152,6 +152,10 @@ button { font-family:inherit; }
   background:var(--panel); border:1px solid var(--line); font-size:11.5px; line-height:1.6;
   backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); box-shadow:var(--shadow); }
 #tip .ln { font-weight:700; font-size:12.5px; } #tip .sg { color:var(--dim); font-size:10.5px; }
+#trTag { position:absolute; display:none; pointer-events:none; z-index:10; max-width:200px; padding:3px 9px; border-radius:10px;
+  background:rgba(14,22,38,.92); border:1px solid rgba(255,255,255,.18); color:#fff; font-size:11.5px; font-weight:700; white-space:nowrap;
+  backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); box-shadow:0 2px 8px rgba(0,0,0,.35); transform:translate(-50%,-50%); }
+#trTag::before { content:''; position:absolute; left:50%; top:100%; transform:translateX(-50%); border:4px solid transparent; border-top-color:rgba(255,255,255,.35); }
 
 /* ---------- 加载遮罩 ---------- */
 #loader { position:absolute; inset:0; z-index:50; background:radial-gradient(ellipse at 50% 42%,#0c1322 0%,#06080e 70%);
@@ -336,6 +340,7 @@ button { font-family:inherit; }
 </div>
 
 <div id="detail"></div>
+<div id="trTag"></div>
 <div id="tip"></div>
 <div id="sheetMask"></div>
 <div id="sheet">
@@ -396,6 +401,27 @@ function typeColor(ic) {
   if (!ic) return '#8fd0ff';
   for (const [re, c] of TYPE_COLOR) if (re.test(ic)) return c;
   return '#8fd0ff';
+}
+/* ---- 特急爱称识别（tokkyu.json：按「起点>终点|途经线路」签名映射，普适于时刻表变化） ---- */
+let TOKKYU = null; // {sh: icon->日语名, nm: 签名->爱称, nmI: 签名|icon->爱称}
+const TOKKYU_ICONS = new Set(['特','関','紀','中','丹','寝','京','ミ','フ','富','九','川','Ｔ','Ｓ','Ｎ','ホ','拝','ラ','ア','エ','空']);
+/* 特殊 icon 的兜底名（签名表未命中时使用；签名命中优先） */
+const ICON_NAME = {
+  '関':'はるか','紀':'くろしお','丹':'こうのとり','ミ':'ミュースカイ','フ':'フジサン特急','富':'フジサン特急',
+  '九':'九州横断特急','京':'京王特急','川':'川越特急','Ｔ':'東武特急','Ｓ':'直通特急','Ｎ':'西鉄特急',
+  'ホ':'ホームライナー','拝':'拝島ライナー','ア':'アクセス特急','エ':'アクセス特急','空':'空港快速',
+  '寝':'寝台特急','中':'中央線特急','ラ':'ライナー'
+};
+function tripSig(N, jas, linesN) {
+  const o = normName(jas[0]), d = normName(jas[N - 1]);
+  return o + '>' + d + '|' + (linesN || []).map(normName).sort().join('|');
+}
+function tripName(ic, N, jas, linesN) {
+  if (!TOKKYU) return null;
+  if (TOKKYU.sh[ic]) return TOKKYU.sh[ic];            // 新干线：icon 自带英文名 → 日语名
+  if (!TOKKYU_ICONS.has(ic)) return null;             // 非特急级不参与
+  const sig = tripSig(N, jas, linesN);
+  return TOKKYU.nmI[sig + '|' + ic] || TOKKYU.nm[sig] || ICON_NAME[ic] || null;
 }
 /* 日本节假日 2024–2030(固定日 + 春分/秋分),振替休日与国民の休日按规则推导 */
 const HOLIDAY_BASE = {
@@ -483,6 +509,7 @@ const T = () => I18N[lang];
 const $ = id => document.getElementById(id);
 const statusEl = $('status'), tipEl = $('tip'), sideEl = $('side'), clockEl = $('clock'), detailEl = $('detail');
 const searchEl = $('search'), sugEl = $('sug'), sliderEl = $('cSlider'), cTimeEl = $('cTime'), cDayEl = $('cDay');
+const trTagEl = $('trTag');
 const toastEl = $('toast');
 function toast(s, ms = 2400) { toastEl.textContent = s; toastEl.style.display = 'block'; clearTimeout(toast._t); toast._t = setTimeout(() => toastEl.style.display = 'none', ms); }
 function setStatus(s) { statusEl.textContent = s; }
@@ -531,8 +558,8 @@ function syncSim() { if (clockMode === 'manual' && !paused) { simEpoch = simNow(
 
 /* ---------------- 数据加载(带进度) ---------------- */
 const loaderMsg = $('lMsg'), lbarF = $('lbarF');
-const loadSizes = { 'data/segments3d.geojson': 9054890, 'data/stations3d.geojson': 1422796, 'data/tmaps.json': 3158412, 'data/station_map.json': 11006682 };
-const loadOrder = ['data/segments3d.geojson', 'data/stations3d.geojson', 'data/tmaps.json', 'data/station_map.json'];
+const loadSizes = { 'data/segments3d.geojson': 9054890, 'data/stations3d.geojson': 1422796, 'data/tmaps.json': 3158412, 'data/station_map.json': 11006682, 'data/tokkyu.json': 2048 };
+const loadOrder = ['data/segments3d.geojson', 'data/stations3d.geojson', 'data/tmaps.json', 'data/station_map.json', 'data/tokkyu.json'];
 function updateBar(fileIdx, got, size) {
   const per = 92 / loadOrder.length;
   const frac = Math.min(1, size ? got / size : 0);
@@ -1253,7 +1280,7 @@ function parseTrips(json) {
     for (let i = 0; i < N; i++) { skUp[i] = lastK; if (stopC[i]) lastK = i; }
     lastK = -1;
     for (let i = N - 1; i >= 0; i--) { skDn[i] = lastK; if (stopC[i]) lastK = i; }
-    trips.push({ t: t.t, r: t.r, i: t.i || '', w0, w1, dep, arr, N, jas, jasN, stopC, lines, linesN, lineSet, sStart, sRun, skX, skY, skStop, skCum, skLen, bad, skUp, skDn, color: typeColor(t.i) });
+    trips.push({ t: t.t, r: t.r, i: t.i || '', nm: tripName(t.i || '', N, jas, linesN), w0, w1, dep, arr, N, jas, jasN, stopC, lines, linesN, lineSet, sStart, sRun, skX, skY, skStop, skCum, skLen, bad, skUp, skDn, color: typeColor(t.i) });
   }
   return trips;
 }
@@ -2017,14 +2044,15 @@ function mapReadyPromise() {
 }
 async function boot() {
   try {
-    const [s, st, tm, lm, sm] = await Promise.all([
+    const [s, st, tm, lm, sm, tk] = await Promise.all([
       fetchJSON('data/segments3d.geojson', 'loadingSeg'),
       fetchJSON('data/stations3d.geojson', 'loadingSta'),
       fetchJSON('data/tmaps.json', 'loadingTm'),
       fetchJSON('data/lines_map.json', '').catch(() => ({})),
       fetchJSON('data/station_map.json', 'loadingTm').catch(() => null),
+      fetchJSON('data/tokkyu.json', '').catch(() => null),
     ]);
-    segFC = s; staFC = st; tmaps = tm; LINES_MAP = lm || {}; stationMap = sm && sm.version === 2 ? sm : null;
+    segFC = s; staFC = st; tmaps = tm; LINES_MAP = lm || {}; stationMap = sm && sm.version === 2 ? sm : null; TOKKYU = tk;
     /* 官方补缺轨道/车站(地图遗漏的新开线/私铁, 如西鉄甘木線/北大阪急行延伸/夢洲):
        合并进同一 GeoJSON, 渲染/索引/寻路自动一致; 不改任何既有几何 */
     if (stationMap && Array.isArray(stationMap.extra_segments)) {
@@ -2129,6 +2157,16 @@ function startLoop() {
       const p = trainPosition(liveDetailTrip, windowShift(liveDetailTrip, M));
       updateDetailLive(liveDetailTrip, p, M);
     }
+    /* 跟随列车名称标签:钉在列车屏幕位置 */
+    if (followTrip) {
+      const p = trainPosition(followTrip, windowShift(followTrip, M));
+      if (p && followTrip.nm) {
+        const pp = map.project([p[0], p[1]]);
+        trTagEl.style.left = pp.x + 'px'; trTagEl.style.top = pp.y + 'px';
+        trTagEl.textContent = followTrip.nm;
+        trTagEl.style.display = 'block';
+      } else trTagEl.style.display = 'none';
+    } else trTagEl.style.display = 'none';
     map.triggerRepaint();
   };
   rafId = requestAnimationFrame(tick);
@@ -2191,7 +2229,7 @@ async function ensureDayFile() {
     totalTripsToday = tj.n || tripList.length;
     $('dBuild').textContent = tj.b || '-';
     $('dCount').textContent = totalTripsToday.toLocaleString();
-    followTrip = null; liveDetailTrip = null; detailEl.style.display = 'none';
+    followTrip = null; liveDetailTrip = null; detailEl.style.display = 'none'; trTagEl.style.display = 'none';
     setStatus('✓ ' + T().loaded);
   } catch (e) { setStatus('ERR ' + e.message); }
 }
@@ -2216,7 +2254,7 @@ function onMouseMove(e) {
     const col = p && p[3] ? (lineColor.get(p[3]) || hit.color) : hit.color;
     tipEl.style.left = (e.offsetX + 14) + 'px'; tipEl.style.top = (e.offsetY + 14) + 'px';
     tipEl.style.display = 'block';
-    tipEl.innerHTML = '<div class="ln" style="color:' + col + '">' + (hit.i ? hit.i + ' ' : '') + (p && p[3] ? p[3] : '') + '</div>' +
+    tipEl.innerHTML = '<div class="ln" style="color:' + col + '">' + (hit.nm ? hit.nm + ' · ' : (hit.i ? hit.i + ' ' : '')) + (p && p[3] ? p[3] : '') + '</div>' +
       '<div class="sg">' + (p ? (p[5] > 0 ? Math.round(p[5]) + ' km/h' : T().dwelling) : '') + '</div>';
   } else tipEl.style.display = 'none';
 }
@@ -2275,14 +2313,14 @@ function updateDetailLive(t, p, M, rebuild) {
     const uniqLines = t.lines || [];
     detailEl.innerHTML =
       '<div class="d-h"><span class="d-ic" style="color:' + col + ';background:' + col + '22">' + (t.i ? t.i : '🚄') + '</span>' +
-      '<div class="d-t"><div class="d-nm">' + (p[3] ? p[3] : (uniqLines[0] || t.i)) + '</div>' +
+      '<div class="d-t"><div class="d-nm">' + (t.nm || p[3] || uniqLines[0] || t.i) + '</div>' +
       '<div class="d-sb">' + t.jas[0] + ' → ' + t.jas[N-1] + ' · ' + fmtHm(t.dep[0]) + '–' + fmtHm(t.arr[N-1]) + '</div></div>' +
       '<button class="btn icon d-x" id="dClose">✕</button></div>' +
       '<div class="d-meta">' +
       '<div><span class="lb">' + T().status + '</span>' + (running ? T().running + ' · ' + Math.round(p[5]) + ' ' + T().kmh : '<b>' + T().dwelling + '</b> @ ' + jas[i]) + '</div>' +
       '<div><span class="lb">' + T().next + '</span>' + nextNm + ' ' + eta + '</div>' +
       (uniqLines.length ? '<div><span class="lb">' + T().viaLines + '</span>' + uniqLines.slice(0, 4).map(l => '<span class="lnchip" style="background:' + (lineColor.get(l) || '#888') + '">' + l + '</span>').join('') + (uniqLines.length > 4 ? ' +' + (uniqLines.length - 4) : '') + '</div>' : '') +
-      '<div><span class="lb">' + T().tripId + '</span>#' + t.t + ' · ' + t.i + '</div></div>' +
+      '<div><span class="lb">' + T().tripId + '</span>#' + t.t + ' · ' + (t.nm || t.i) + '</div></div>' +
       '<div class="d-act"><button class="btn' + (followTrip === t ? ' on' : '') + '" id="dFollow">' + (followTrip === t ? T().stopFollowBtn : T().followBtn) + '</button>' +
       '<button class="btn" id="dLoc">' + T().locateBtn + '</button></div>';
     $('dClose').onclick = () => { detailEl.style.display = 'none'; liveDetailTrip = null; if (followTrip) stopFollow(); };
@@ -2307,12 +2345,13 @@ function startFollow(t) {
   liveDetailTrip = t;
   const p = trainPosition(t, windowShift(t, curMin()));
   if (p) map.flyTo({ center: [p[0], p[1]], zoom: Math.max(map.getZoom(), 11.5), pitch: Math.max(map.getPitch(), 45), duration: 900 });
-  toast('🎯 ' + T().follow + ' · #' + t.t);
+  toast('🎯 ' + T().follow + (t.nm ? ' · ' + t.nm : '') + ' · #' + t.t);
   if (detailEl.style.display === 'block') showTrainDetail(t);
 }
 function stopFollow(silent) {
   if (followTrip && !silent) toast(T().followStop);
   followTrip = null;
+  trTagEl.style.display = 'none';
   if (detailEl.style.display === 'block' && $('dFollow')) {
     $('dFollow').classList.remove('on'); $('dFollow').textContent = T().followBtn;
   }

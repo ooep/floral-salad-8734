@@ -558,7 +558,7 @@ function syncSim() { if (clockMode === 'manual' && !paused) { simEpoch = simNow(
 
 /* ---------------- 数据加载(带进度) ---------------- */
 const loaderMsg = $('lMsg'), lbarF = $('lbarF');
-const loadSizes = { 'data/segments3d.geojson': 9054890, 'data/stations3d.geojson': 1422796, 'data/tmaps.json': 3158412, 'data/station_map.json': 11006682, 'data/tokkyu.json': 2048 };
+const loadSizes = { 'data/segments3d.geojson': 9054890, 'data/stations3d.geojson': 1422796, 'data/tmaps.json': 3158412, 'data/station_map.json': 11006682, 'data/tokkyu.json': 59100 };
 const loadOrder = ['data/segments3d.geojson', 'data/stations3d.geojson', 'data/tmaps.json', 'data/station_map.json', 'data/tokkyu.json'];
 function updateBar(fileIdx, got, size) {
   const per = 92 / loadOrder.length;

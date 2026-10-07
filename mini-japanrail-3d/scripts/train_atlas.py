@@ -22,6 +22,8 @@ OUT = os.path.join(ROOT, 'data')
 CELL_W, CELL_H = 44, 52
 IMG_W, IMG_H = 40, 48
 PAD = 2
+# 未知线路/爱称兜底图（E217 湘南色，通用通勤电车外观）
+FALLBACK_FILE = '02_east/tokaido-line__e217td.png'
 
 def build():
     lines = json.load(open(LINES))
@@ -38,6 +40,7 @@ def build():
             idx_of[f] = len(uniq); uniq.append(f)
     for f in line_map.values(): add(f)
     for f in tok_map.values(): add(f)
+    add(FALLBACK_FILE)  # 保证兜底图在图集中
 
     cols = 24
     rows = math.ceil(len(uniq) / cols)
@@ -61,6 +64,7 @@ def build():
         'size': [W, H],
         'line': {ln: idx_of[f] for ln, f in line_map.items()},
         'tokkyu': {nm: idx_of[f] for nm, f in tok_map.items()},
+        'fallback': idx_of[FALLBACK_FILE],
     }
     json.dump(data, open(os.path.join(OUT, 'train_icons_atlas.json'), 'w'), ensure_ascii=False, indent=1)
     print(f'图集: {W}x{H}px, 唯一图 {len(uniq)}, 线路键 {len(line_map)}, 爱称键 {len(tok_map)}')

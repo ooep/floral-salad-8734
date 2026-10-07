@@ -2156,7 +2156,7 @@ function updateTrains(M) {
     if (iconMode) {
       if (t.nm) { const tv = ATLAS.tokkyu[t.nm]; if (tv !== undefined) uvIdx = tv; }
       if (uvIdx < 0) {
-        for (let li = 0; li < t.lines.length && uvIdx < 0; li++) { const lv = ATLAS.line[t.lines[li]]; if (lv !== undefined) uvIdx = lv; }
+        for (let li = 0; li < t.lines.length && uvIdx < 0; li++) { if (t.lines.length > 1 && t.lines[li] === '山手線') continue; const lv = ATLAS.line[t.lines[li]]; if (lv !== undefined) uvIdx = lv; }
         if (uvIdx < 0) { const pv = ATLAS.line[p[3]]; if (pv !== undefined) uvIdx = pv; }
         // 未知线路/爱称(如时刻表更新新增)→ 用通用兜底图,不回退方盒
         if (uvIdx < 0) uvIdx = ATLAS.fallback !== undefined ? ATLAS.fallback : -1;

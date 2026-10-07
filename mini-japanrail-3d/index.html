@@ -309,6 +309,11 @@ button { font-family:inherit; }
     <div class="sw on" id="swBase"><span id="tSw4">底图瓦片</span><span class="trk"></span></div>
     <div class="sw on" id="swTrail"><span id="tSw5">列车光晕</span><span class="trk"></span></div>
     <div class="sw" id="swCopyBad"><span id="tSw6">复制异常车辆</span><span class="trk"></span></div>
+    <div class="sec-t" id="tMode" style="margin-top:12px">列车显示</div>
+    <div class="frow" id="trainModeRow">
+      <button class="chip on" data-mode="3d" id="tMode3d">3D</button>
+      <button class="chip" data-mode="icon" id="tModeIcon">图标</button>
+    </div>
     <div class="sec-t" id="tTheme" style="margin-top:12px">主题</div>
     <div class="frow" id="themeRow">
       <button class="chip" data-theme="dark">🌙 深色</button>
@@ -475,6 +480,7 @@ const I18N = {
     searchT:'搜索', searchPh:'车站 / 线路(日文名)…', routeT:'路线搜索', routeFrom:'起点站', routeTo:'终点站',
     filterT:'线路类型', legendT:'图例', dayT:'运行日', dayAuto:'自动', setT:'设置', dataT:'数据', helpT:'帮助',
     sw1:'车站标签', sw2:'轨道光晕', sw3:'车站点', sw4:'底图瓦片', sw5:'列车光晕', sw6:'复制异常车辆',
+    modeT:'列车显示', mode3d:'3D', modeIcon:'图标',
     d1:'在途列车', d2:'今日班次', d3:'运行日', d4:'线路 / 车站', d5:'时刻表构建', d6:'帧率',
     now:'回到现在', station:'车站', line:'线路', stops:'站', transfers:'换乘', routeMile:'里程', routeNone:'未找到连通路径(请检查站名)',
     routeSame:'起终点相同', badStation:'找不到车站', h1:'🖱 拖动平移 · 滚轮缩放 · 右键旋转/倾斜', h2:'点击列车 = 详情 + 相机跟随 · 点空白取消',
@@ -491,6 +497,7 @@ const I18N = {
     searchT:'検索', searchPh:'駅 / 路線(日本語名)…', routeT:'経路検索', routeFrom:'出発駅', routeTo:'到着駅',
     filterT:'路線種別', legendT:'凡例', dayT:'運行日', dayAuto:'自動', setT:'設定', dataT:'データ', helpT:'ヘルプ',
     sw1:'駅ラベル', sw2:'軌道グロー', sw3:'駅ドット', sw4:'背景タイル', sw5:'列車グロー', sw6:'異常列車コピー',
+    modeT:'列車表示', mode3d:'3D', modeIcon:'アイコン',
     d1:'運行中列車', d2:'本日列車', d3:'運行日', d4:'路線 / 駅', d5:'時刻表構築', d6:'フレーム率',
     now:'現在に戻る', station:'駅', line:'路線', stops:'駅', transfers:'乗換', routeMile:'距離', routeNone:'連絡経路なし(駅名確認)',
     routeSame:'同一点', badStation:'駅が見つかりません', h1:'🖱 ドラッグ移動 · ホイール拡縮 · 右回転/傾き', h2:'列車クリック = 詳細 + 追跡 · 空白で解除',
@@ -507,6 +514,7 @@ const I18N = {
     searchT:'Search', searchPh:'Station / Line (Japanese)…', routeT:'Route search', routeFrom:'From', routeTo:'To',
     filterT:'Line types', legendT:'Legend', dayT:'Service day', dayAuto:'Auto', setT:'Settings', dataT:'Data', helpT:'Help',
     sw1:'Station labels', sw2:'Track glow', sw3:'Station dots', sw4:'Basemap tiles', sw5:'Train glow', sw6:'Copy off-rail trains',
+    modeT:'Train display', mode3d:'3D', modeIcon:'Icon',
     d1:'Active trains', d2:'Trips today', d3:'Service day', d4:'Lines / Stations', d5:'Timetable built', d6:'FPS',
     now:'Now', station:'Station', line:'Line', stops:'stops', transfers:'transfers', routeMile:'Distance', routeNone:'No connected route (check names)',
     routeSame:'Same stations', badStation:'Station not found', h1:'🖱 Drag to pan · Scroll to zoom · Right-drag rotate/tilt', h2:'Click train = detail + follow · Blank = cancel',
@@ -1893,7 +1901,7 @@ function pairKm(t, i) {
 
 /* ---------------- 地图与自定义列车层 ---------------- */
 const QUAD = [[-1,-1],[1,-1],[1,1], [-1,-1],[1,1],[-1,1]];
-const MAXT = 9000, STRIDE = 12;
+const MAXT = 9000, STRIDE = 13; /* 12 + a_uv(图集索引 float,-1=无纹理) */
 let vbo = null, vao = null, uni = new Map(), glRef = null, bufArr = new Float32Array(MAXT * 42 * STRIDE); /* 倾斜视角立体盒:每列车 底6+顶6+4侧24=36 + 光晕 6 最坏 42 顶点 */
 let __renderCount = 0, __glErr = 0, __lastDraw = 0, __lastArgs = null;
 const trainShaderLayer = {
@@ -1903,9 +1911,9 @@ const trainShaderLayer = {
     const vs = `#version 300 es
 ${sd.vertexShaderPrelude}
 ${sd.define}
-in vec2 a_pos; in vec2 a_dir; in vec2 a_corner; in vec4 a_color; in float a_glow; in float a_h;
+in vec2 a_pos; in vec2 a_dir; in vec2 a_corner; in vec4 a_color; in float a_glow; in float a_h; in float a_uv;
 uniform vec2 u_ndcScale;
-out vec2 v_uv; flat out vec2 v_h; out vec4 v_color; out float v_glow;
+out vec2 v_uv; flat out vec2 v_h; out vec4 v_color; out float v_glow; out float v_uvIdx;
 void main() {
   vec4 c = projectTile(a_pos);
   vec4 d = projectTile(a_pos + a_dir);
@@ -1921,13 +1929,25 @@ void main() {
   v_uv = a_corner;
   v_h = abs(a_corner) * (a_glow > 0.5 ? 1.0 / 2.6 : 1.0); // 光晕 quad 是车体的 2.6 倍,v_h 恢复为车体半宽
   v_color = a_color; v_glow = a_glow;
+  v_uvIdx = a_uv; // 图标模式:图集索引;-1 = 颜色方盒
 }`;
     const fs = `#version 300 es
 precision mediump float;
-in vec2 v_uv; flat in vec2 v_h; in vec4 v_color; in float v_glow;
+in vec2 v_uv; flat in vec2 v_h; in vec4 v_color; in float v_glow; in float v_uvIdx;
+uniform sampler2D u_atlas; uniform vec2 u_atlasSize; uniform vec2 u_cell; uniform vec2 u_img; uniform float u_cols;
 out vec4 fragColor;
 float sdBox(vec2 p, vec2 b) { vec2 q = abs(p) - b; return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0); }
 void main() {
+  if (v_uvIdx >= -0.5) {
+    // 图标模式:车头小贴图(图集格子内 40×48,2px padding 防 bleed)
+    float col = mod(v_uvIdx, u_cols);
+    float row = floor(v_uvIdx / u_cols);
+    vec2 tc = (vec2(col, row) * u_cell + (v_uv * 0.5 + 0.5) * u_img + 2.0) / u_atlasSize;
+    vec4 tex = texture(u_atlas, tc);
+    if (tex.a < 0.004) discard;
+    fragColor = vec4(tex.rgb * tex.a, tex.a);
+    return;
+  }
   float a;
   if (v_glow > 1.5) {
     // 侧面墙:四边形本身即墙面(sdBox 会把它判成盒轮廓边缘 → alpha 仅 0.1 近透明),
@@ -1962,6 +1982,10 @@ void main() {
       a_pos: gl.getAttribLocation(p,'a_pos'), a_dir: gl.getAttribLocation(p,'a_dir'),
       a_corner: gl.getAttribLocation(p,'a_corner'), a_color: gl.getAttribLocation(p,'a_color'),
       a_glow: gl.getAttribLocation(p,'a_glow'), a_h: gl.getAttribLocation(p,'a_h'),
+      a_uv: gl.getAttribLocation(p,'a_uv'),
+      u_atlas: gl.getUniformLocation(p,'u_atlas'), u_atlasSize: gl.getUniformLocation(p,'u_atlasSize'),
+      u_cell: gl.getUniformLocation(p,'u_cell'), u_img: gl.getUniformLocation(p,'u_img'),
+      u_cols: gl.getUniformLocation(p,'u_cols'),
     });
     this.shaderMap.set(sd.variantName, p);
     return p;
@@ -2008,10 +2032,31 @@ void main() {
     gl.enableVertexAttribArray(U.a_color);  gl.vertexAttribPointer(U.a_color, 4, gl.FLOAT, false, STRIDE*4, 24);
     gl.enableVertexAttribArray(U.a_glow);   gl.vertexAttribPointer(U.a_glow, 1, gl.FLOAT, false, STRIDE*4, 40);
     gl.enableVertexAttribArray(U.a_h);      gl.vertexAttribPointer(U.a_h, 1, gl.FLOAT, false, STRIDE*4, 44);
+    gl.enableVertexAttribArray(U.a_uv);     gl.vertexAttribPointer(U.a_uv, 1, gl.FLOAT, false, STRIDE*4, 48);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     gl.disable(gl.DEPTH_TEST);
     gl.depthMask(false);
+    // 图标模式:首次就绪时上传图集纹理;每帧绑定 + 设置 atlas uniforms
+    if (ATLAS_READY && !atlasTex && ATLAS_IMG) {
+      atlasTex = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, atlasTex);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, ATLAS_IMG);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.bindTexture(gl.TEXTURE_2D, null);
+    }
+    if (ATLAS && atlasTex) {
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, atlasTex);
+      gl.uniform1i(U.u_atlas, 0);
+      gl.uniform2f(U.u_atlasSize, ATLAS.size[0], ATLAS.size[1]);
+      gl.uniform2f(U.u_cell, ATLAS.cell[0], ATLAS.cell[1]);
+      gl.uniform2f(U.u_img, ATLAS.img[0], ATLAS.img[1]);
+      gl.uniform1f(U.u_cols, ATLAS.cols);
+    }
     gl.drawArrays(gl.TRIANGLES, 0, visibleCount); // visibleCount 为总顶点数
     const e = gl.getError();
     if (e) __glErr = e;
@@ -2027,6 +2072,18 @@ function hexToRgb(hex) {
   return [(n >> 16 & 255) / 255, (n >> 8 & 255) / 255, (n & 255) / 255];
 }
 let trainSizeMul = 1;
+/* ---- 列车显示模式(3D 立体盒 / 图标贴图) ---- */
+let trainMode = localStorage.getItem('mjr3d_trainmode') || '3d';
+let ATLAS = null, ATLAS_IMG = null, ATLAS_READY = false, atlasTex = null;
+function loadTrainAtlas() {
+  fetch('data/train_icons_atlas.json').then(r => r.ok ? r.json() : null).then(j => {
+    if (!j) return;
+    ATLAS = j;
+    const im = new Image();
+    im.onload = () => { ATLAS_IMG = im; ATLAS_READY = true; };
+    im.src = 'data/train_icons_atlas.png';
+  }).catch(() => {});
+}
 const visibleTrips = [], visibleXY = new Float32Array(MAXT * 2);
 /* 按日预过滤:r 掩码不随帧变化,一次过滤后每帧只遍历当日班次(省 57049×N 次 & 分支) */
 let dayList = null, dayListBit = -1, dayListSrc = null;
@@ -2063,14 +2120,16 @@ function updateTrains(M) {
   else if (z < 12) { const f = (z - 8) / 4; L = 11.6 + f * 9; W = 4.8 + f * 3; }
   else { const f = Math.min(1, (z - 12) / 3); L = 20.6 + f * 22; W = 7.8 + f * 7; }
   L *= trainSizeMul; W *= trainSizeMul;
+  const iconMode = trainMode === 'icon' && ATLAS_READY && !!ATLAS;
+  if (iconMode) W = L * (ATLAS.img[0] / ATLAS.img[1]); // 图标模式:贴图纵横比 40:48(行驶方向=L 对应图高向),不做立体盒
   const glowOn = $('swTrail').classList.contains('on') && !glowAutoOff;
-  // 倾斜(3D)模式:画立体盒(底+顶+4侧),俯视只画平面矩形
-  const pitchOn = map.getPitch() > 0.5;
+  // 倾斜(3D)模式:画立体盒(底+顶+4侧),俯视只画平面矩形;图标模式始终平面贴图
+  const pitchOn = map.getPitch() > 0.5 && !iconMode;
   const Hpx = Math.max(3, Math.min(30, W * 0.9)); // 盒高(屏幕 px,≈宽的 0.9 → 长条立方)
   // 方向向量在屏幕上的长度保持 ~8px:固定 1.2e-4 在低 zoom(全国视图)被投影浮点误差吞掉 → 方盒朝向乱;
   // 高 zoom 若用大偏移则跨经度产生曲率误差 → 按 mercator 像素换算自适应(clamp 1.5e-6~2.5e-3)
   const eps = Math.max(1.5e-6, Math.min(2.5e-3, 8 / (512 * Math.pow(2, z))));
-  const drawGlow = glowOn && z < 9;
+  const drawGlow = glowOn && z < 9 && !iconMode;
   const glowPass = [];
   for (let idx = 0; idx < dayList.length; idx++) {
     const t = dayList[idx];
@@ -2087,6 +2146,16 @@ function updateTrains(M) {
     if (p[3]) { const lc = lineColor.get(p[3]); if (lc) color = lc; }
     const [r, g, b] = t._rgb && t._line === p[3] ? t._rgb : (t._rgb = hexToRgb(color), t._rgb);
     t._line = p[3];
+    // 图标模式:爱称命中 → tokkyu 图;否则当前/途经线路名 → line 图;都未命中回退颜色方盒
+    let uvIdx = -1;
+    if (iconMode) {
+      if (t.nm) uvIdx = ATLAS.tokkyu[t.nm];
+      if (uvIdx === undefined) {
+        for (let li = 0; li < t.lines.length && uvIdx === undefined; li++) uvIdx = ATLAS.line[t.lines[li]];
+        if (uvIdx === undefined) uvIdx = ATLAS.line[p[3]];
+        if (uvIdx === undefined) uvIdx = -1;
+      }
+    }
     const lng = p[0], lat = p[1];
     const mx = (lng + 180) / 360;
     const my = (1 - Math.log(Math.tan(Math.PI/4 + lat * Math.PI/360)) / Math.PI) / 2;
@@ -2100,6 +2169,7 @@ function updateTrains(M) {
       bufArr[o++] = QUAD[q][0] * L; bufArr[o++] = QUAD[q][1] * W;
       bufArr[o++] = r; bufArr[o++] = g; bufArr[o++] = b; bufArr[o++] = 1;
       bufArr[o++] = 0; bufArr[o++] = 0; // glow + h
+      bufArr[o++] = uvIdx; // 图标模式贴图索引;-1 = 颜色方盒
     }
     vtx += 6;
     if (pitchOn) {
@@ -2111,6 +2181,7 @@ function updateTrains(M) {
         bufArr[o++] = QUAD[q][0] * L; bufArr[o++] = QUAD[q][1] * W;
         bufArr[o++] = r; bufArr[o++] = g; bufArr[o++] = b; bufArr[o++] = 1;
         bufArr[o++] = 0; bufArr[o++] = Hpx;
+        bufArr[o++] = -1;
       }
       vtx += 6;
       // 4 个侧面(墙):暗色 ×0.72,构成四角尖尖的立方盒
@@ -2125,6 +2196,7 @@ function updateTrains(M) {
           bufArr[o++] = cx * L; bufArr[o++] = cy * W;
           bufArr[o++] = r * 0.72; bufArr[o++] = g * 0.72; bufArr[o++] = b * 0.72; bufArr[o++] = 1;
           bufArr[o++] = 2; bufArr[o++] = h; // glow=2 标记侧面(直出暗色)
+          bufArr[o++] = -1;
         }
       }
     }
@@ -2144,6 +2216,7 @@ function updateTrains(M) {
         bufArr[o++] = QUAD[q][0] * GL; bufArr[o++] = QUAD[q][1] * GW;
         bufArr[o++] = r; bufArr[o++] = g; bufArr[o++] = b; bufArr[o++] = 1;
         bufArr[o++] = 1; bufArr[o++] = 0; // glow + h
+        bufArr[o++] = -1;
       }
       vtx += 6;
     }
@@ -2295,6 +2368,7 @@ async function boot() {
     applyUrlState();
     setStatus(T().goLive);
     if (!liveOn) setTimeout(() => { if (!liveOn) { setLive(true); } }, 600);
+    loadTrainAtlas(); /* 图标模式图集:异步加载,不阻塞主流程 */
     startLoop();
   } catch (err) {
     console.error(err);
@@ -3021,7 +3095,15 @@ $('swGlow').addEventListener('click', function () { this.classList.toggle('on');
 $('swSta').addEventListener('click', function () { this.classList.toggle('on'); map.setLayoutProperty('stas', 'visibility', this.classList.contains('on') ? 'visible' : 'none'); });
 $('swBase').addEventListener('click', function () { this.classList.toggle('on'); map.setLayoutProperty('basemap', 'visibility', this.classList.contains('on') ? 'visible' : 'none'); });
 $('swTrail').addEventListener('click', function () { this.classList.toggle('on'); });
-/* 异常(游离)车辆检测 + 一键复制 */
+/* 列车显示模式(3D/图标)切换 */
+document.querySelectorAll('#trainModeRow .chip').forEach(c => {
+  c.classList.toggle('on', c.dataset.mode === trainMode);
+  c.addEventListener('click', () => {
+    trainMode = c.dataset.mode;
+    localStorage.setItem('mjr3d_trainmode', trainMode);
+    document.querySelectorAll('#trainModeRow .chip').forEach(x => x.classList.toggle('on', x === c));
+  });
+});/* 异常(游离)车辆检测 + 一键复制 */
 const OFF_RAIL_KM = 3;
 function distToRail(c) {
   const gx = Math.floor(c[0] / GRID), gy = Math.floor(c[1] / GRID);
@@ -3108,6 +3190,7 @@ function applyLang() {
   $('rFrom').placeholder = t.routeFrom; $('rTo').placeholder = t.routeTo;
   $('dayAuto').textContent = t.dayAuto;
   $('tSw1').textContent = t.sw1; $('tSw2').textContent = t.sw2; $('tSw3').textContent = t.sw3; $('tSw4').textContent = t.sw4; $('tSw5').textContent = t.sw5; $('tSw6').textContent = t.sw6;
+  $('tMode').textContent = t.modeT; $('tMode3d').textContent = t.mode3d; $('tModeIcon').textContent = t.modeIcon;
   $('tD1').textContent = t.d1; $('tD2').textContent = t.d2; $('tD3').textContent = t.d3; $('tD4').textContent = t.d4; $('tD5').textContent = t.d5; $('tD6').textContent = t.d6;
   $('cNow').textContent = t.now;
   $('footNote').textContent = t.h6 + ' · 国土地理院 / OpenFreeMap · ' + t.sub;

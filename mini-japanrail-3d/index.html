@@ -1935,6 +1935,7 @@ void main() {
 precision mediump float;
 in vec2 v_uv; flat in vec2 v_h; in vec4 v_color; in float v_glow; in float v_uvIdx;
 uniform sampler2D u_atlas; uniform vec2 u_atlasSize; uniform vec2 u_cell; uniform vec2 u_img; uniform float u_cols;
+uniform vec2 u_quadSize; /* 方块屏幕尺寸(L,W):a_corner 存的是尺寸值,UV 需除回归一化 [-1,1] */
 out vec4 fragColor;
 float sdBox(vec2 p, vec2 b) { vec2 q = abs(p) - b; return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0); }
 void main() {
@@ -1942,7 +1943,8 @@ void main() {
     // 图标模式:车头小贴图(图集格子内 40×48,2px padding 防 bleed)
     float col = mod(v_uvIdx, u_cols);
     float row = floor(v_uvIdx / u_cols);
-    vec2 tc = (vec2(col, row) * u_cell + (v_uv * 0.5 + 0.5) * u_img + 2.0) / u_atlasSize;
+    vec2 uv01 = vec2((v_uv.y / u_quadSize.y) * 0.5 + 0.5, (v_uv.x / u_quadSize.x) * 0.5 + 0.5); // a_corner 带尺寸,除 L,W 回归一化;转置让图高48沿行驶方向、图宽40沿横向,比例不变
+    vec2 tc = (vec2(col, row) * u_cell + uv01 * u_img + 2.0) / u_atlasSize;
     vec4 tex = texture(u_atlas, tc);
     if (tex.a < 0.004) discard;
     fragColor = vec4(tex.rgb * tex.a, tex.a);
@@ -1985,7 +1987,7 @@ void main() {
       a_uv: gl.getAttribLocation(p,'a_uv'),
       u_atlas: gl.getUniformLocation(p,'u_atlas'), u_atlasSize: gl.getUniformLocation(p,'u_atlasSize'),
       u_cell: gl.getUniformLocation(p,'u_cell'), u_img: gl.getUniformLocation(p,'u_img'),
-      u_cols: gl.getUniformLocation(p,'u_cols'),
+      u_cols: gl.getUniformLocation(p,'u_cols'), u_quadSize: gl.getUniformLocation(p,'u_quadSize'),
     });
     this.shaderMap.set(sd.variantName, p);
     return p;
@@ -2056,6 +2058,7 @@ void main() {
       gl.uniform2f(U.u_cell, ATLAS.cell[0], ATLAS.cell[1]);
       gl.uniform2f(U.u_img, ATLAS.img[0], ATLAS.img[1]);
       gl.uniform1f(U.u_cols, ATLAS.cols);
+      gl.uniform2f(U.u_quadSize, lastQuad[0], lastQuad[1]);
     }
     gl.drawArrays(gl.TRIANGLES, 0, visibleCount); // visibleCount 为总顶点数
     const e = gl.getError();
@@ -2085,6 +2088,7 @@ function loadTrainAtlas() {
   }).catch(() => {});
 }
 const visibleTrips = [], visibleXY = new Float32Array(MAXT * 2);
+let lastQuad = [1, 1]; /* 图标模式方块屏幕尺寸(L,W),shader UV 归一化用 */
 /* 按日预过滤:r 掩码不随帧变化,一次过滤后每帧只遍历当日班次(省 57049×N 次 & 分支) */
 let dayList = null, dayListBit = -1, dayListSrc = null;
 function updateTrains(M) {
@@ -2122,6 +2126,7 @@ function updateTrains(M) {
   L *= trainSizeMul; W *= trainSizeMul;
   const iconMode = trainMode === 'icon' && ATLAS_READY && !!ATLAS;
   if (iconMode) W = L * (ATLAS.img[0] / ATLAS.img[1]); // 图标模式:贴图纵横比 40:48(行驶方向=L 对应图高向),不做立体盒
+  lastQuad[0] = L; lastQuad[1] = W; /* 供 shader 把带尺寸的 a_corner 除回归一化 UV */
   const glowOn = $('swTrail').classList.contains('on') && !glowAutoOff;
   // 倾斜(3D)模式:画立体盒(底+顶+4侧),俯视只画平面矩形;图标模式始终平面贴图
   const pitchOn = map.getPitch() > 0.5 && !iconMode;

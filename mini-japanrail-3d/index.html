@@ -1857,8 +1857,17 @@ function trainPosition(t, M) {
 function pickSeg(t, A, B, prev) {
   const arr = segIndex.get(A + '|' + B);
   if (!arr || !arr.length) return null;
-  if (arr.length === 1) return arr[0];
-  for (const e of arr) if (lineMatches(t.lineSet, e.line)) return e;
+  if (t.lineSet && t.lineSet.size) {
+    for (const e of arr) if (lineMatches(t.lineSet, e.line)) return e;
+    /* 纯新干线车被塞到并行在来线段(西九州新干线諫早→長崎 vs 長崎本线、九州新干线小倉→博多 vs 鹿児島本线):
+       本班次全是新干线(不含在来线名,排除秋田/山形新干线直行在来线改轨),但候选段全是在来线 → 走官方 lid 几何 */
+    let tripShink = false, tripZairaishu = false, segShink = false;
+    for (const ln of t.lineSet) { if (!ln) continue;
+      if (ln.includes('新幹')) tripShink = true; else tripZairaishu = true; }
+    for (const e of arr) if (e.line && e.line.includes('新幹')) { segShink = true; break; }
+    if (tripShink && !tripZairaishu && !segShink) return null;
+    if (arr.length === 1) return arr[0];
+  } else if (arr.length === 1) return arr[0];
   if (prev) {
     let best = arr[0], bd = 1e18;
     for (const e of arr) {
@@ -1874,7 +1883,11 @@ function pickSeg(t, A, B, prev) {
 function lineOfPair(t, i) {
   if (t._lof && t._lof[i] !== undefined) return t._lof[i];
   const e = pickSeg(t, t.jasN[i], t.jasN[i+1], t.stopC[i]);
-  const r = e ? e.line : '';
+  let r = e ? e.line : '';
+  if (!r && t.lines && t.lines.length) {
+    /* 该站对无本班次段(新干线整段不分站等):用本班次线路色,多线路跳过山手線 */
+    for (const ln of t.lines) { if (t.lines.length > 1 && ln === '山手線') continue; r = ln; break; }
+  }
   (t._lof = t._lof || [])[i] = r;
   return r;
 }

@@ -2154,11 +2154,10 @@ function updateTrains(M) {
     // 图标模式:爱称命中 → tokkyu 图;否则当前/途经线路名 → line 图;都未命中回退颜色方盒
     let uvIdx = -1;
     if (iconMode) {
-      if (t.nm) uvIdx = ATLAS.tokkyu[t.nm];
-      if (uvIdx === undefined) {
-        for (let li = 0; li < t.lines.length && uvIdx === undefined; li++) uvIdx = ATLAS.line[t.lines[li]];
-        if (uvIdx === undefined) uvIdx = ATLAS.line[p[3]];
-        if (uvIdx === undefined) uvIdx = -1;
+      if (t.nm) { const tv = ATLAS.tokkyu[t.nm]; if (tv !== undefined) uvIdx = tv; }
+      if (uvIdx < 0) {
+        for (let li = 0; li < t.lines.length && uvIdx < 0; li++) { const lv = ATLAS.line[t.lines[li]]; if (lv !== undefined) uvIdx = lv; }
+        if (uvIdx < 0) { const pv = ATLAS.line[p[3]]; if (pv !== undefined) uvIdx = pv; }
       }
     }
     const lng = p[0], lat = p[1];

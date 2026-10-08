@@ -128,6 +128,20 @@ button { font-family:inherit; }
 .data-row b { color:var(--txt); font-weight:600; text-align:right; }
 .help p { font-size:11.5px; color:var(--dim); line-height:1.7; }
 
+/* 数据统计卡片 */
+.stats { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+.stat { background:var(--panel2); border:1px solid var(--line); border-radius:7px; padding:7px 10px; min-width:0; }
+.stat .s-lb { font-size:10px; color:var(--dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.stat .s-v { font-size:15px; font-weight:700; font-variant-numeric:tabular-nums; color:var(--txt); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+/* 搜索图标前缀 */
+.search-wrap { position:relative; }
+.search-wrap .s-ic { position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--dim); pointer-events:none; display:flex; }
+.search-wrap .tbox { padding-left:30px; }
+
+/* 路线箭头 */
+.route-arrow { align-self:center; color:var(--dim); font-size:11px; flex:none; }
+
 /* ---------- 运行日 ---------- */
 #dayRow { display:flex; gap:5px; }
 
@@ -136,7 +150,9 @@ button { font-family:inherit; }
   background:var(--panel); border:1px solid var(--line); border-radius:var(--r); backdrop-filter:blur(14px);
   -webkit-backdrop-filter:blur(14px); box-shadow:var(--shadow); z-index:7; padding:8px 14px 10px; display:none; }
 #clock .r1 { display:flex; align-items:center; gap:10px; }
-#clock .t { font-size:19px; font-weight:700; font-variant-numeric:tabular-nums; letter-spacing:.5px; min-width:74px; text-align:center; }
+#clock .ct { text-align:center; }
+#clock .t { font-size:19px; font-weight:700; font-variant-numeric:tabular-nums; letter-spacing:.5px; min-width:74px; line-height:1.1; }
+#clock .tz { font-size:9px; font-weight:600; letter-spacing:.8px; color:var(--dim); margin-top:1px; }
 #clock .daychip { font-size:10.5px; padding:3px 9px; border-radius:7px; border:1px solid var(--line); color:var(--dim); white-space:nowrap; }
 #clock .sp { margin-left:auto; display:flex; gap:4px; overflow-x:auto; max-width:46%; scrollbar-width:none; }
 #clock .sp::-webkit-scrollbar { display:none; }
@@ -159,6 +175,7 @@ button { font-family:inherit; }
 #detail .d-sb { font-size:11px; color:var(--dim); margin-top:2px; }
 #detail .d-meta { margin-top:9px; font-size:11.5px; line-height:1.8; color:var(--txt); }
 #detail .d-meta .lb { color:var(--dim); margin-right:6px; }
+#detail .d-sep { border-top:1px solid var(--line); margin:10px 0 0; }
 #detail .d-act { display:flex; gap:8px; margin-top:10px; }
 #detail .d-act .btn { min-height:34px; font-size:12px; flex:1; padding:0 10px; }
 #detail .d-x { margin-left:auto; flex:none; min-height:30px; min-width:30px; width:30px; }
@@ -278,14 +295,18 @@ button { font-family:inherit; }
 <div id="side">
   <div class="sec">
     <div class="sec-t" id="tSearch">搜索</div>
-    <input id="search" class="tbox" type="text" autocomplete="off" spellcheck="false">
+    <div class="search-wrap">
+      <span class="s-ic"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg></span>
+      <input id="search" class="tbox" type="text" autocomplete="off" spellcheck="false">
+    </div>
     <div id="sug"></div>
   </div>
   <div class="sec">
     <div class="sec-t" id="tRoute">路线搜索</div>
     <div id="routeRow">
-      <input id="rFrom" class="tbox" type="text" autocomplete="off" spellcheck="false">
-      <input id="rTo" class="tbox" type="text" autocomplete="off" spellcheck="false">
+      <input id="rFrom" class="tbox" type="text" autocomplete="off" spellcheck="false" placeholder="起点">
+      <span class="route-arrow"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h14M13 6l6 6-6 6"/></svg></span>
+      <input id="rTo" class="tbox" type="text" autocomplete="off" spellcheck="false" placeholder="终点">
       <button id="rGo" class="btn"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h14M13 6l6 6-6 6"/></svg></button>
     </div>
     <div id="routeRes">
@@ -332,12 +353,14 @@ button { font-family:inherit; }
   </div>
   <div class="sec">
     <div class="sec-t" id="tData">数据</div>
-    <div class="data-row"><span id="tD1">在途列车</span><b id="dActive">-</b></div>
-    <div class="data-row"><span id="tD2">今日班次</span><b id="dCount">-</b></div>
-    <div class="data-row"><span id="tD3">运行日</span><b id="dDay">-</b></div>
-    <div class="data-row"><span id="tD4">线路 / 车站</span><b id="dNet">-</b></div>
-    <div class="data-row"><span id="tD5">时刻表构建</span><b id="dBuild">-</b></div>
-    <div class="data-row"><span id="tD6">帧率</span><b id="dFps">-</b></div>
+    <div class="stats">
+      <div class="stat"><div class="s-lb" id="tD1">在途列车</div><div class="s-v" id="dActive">-</div></div>
+      <div class="stat"><div class="s-lb" id="tD2">今日班次</div><div class="s-v" id="dCount">-</div></div>
+      <div class="stat"><div class="s-lb" id="tD3">运行日</div><div class="s-v" id="dDay">-</div></div>
+      <div class="stat"><div class="s-lb" id="tD4">线路 / 车站</div><div class="s-v" id="dNet">-</div></div>
+      <div class="stat"><div class="s-lb" id="tD5">时刻表构建</div><div class="s-v" id="dBuild">-</div></div>
+      <div class="stat"><div class="s-lb" id="tD6">帧率</div><div class="s-v" id="dFps">-</div></div>
+    </div>
   </div>
   <div class="sec">
     <div class="sec-t" id="tHelp">帮助</div>
@@ -348,8 +371,9 @@ button { font-family:inherit; }
 <div id="clock">
   <div class="r1">
     <button class="btn icon" id="btnPlay"><svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M7 5.5v13a.8.8 0 0 0 1.22.68l10.6-6.5a.8.8 0 0 0 0-1.36L8.22 4.82A.8.8 0 0 0 7 5.5z"/></svg></button>
-    <div>
+    <div class="ct">
       <div class="t" id="cTime">--:--:--</div>
+      <div class="tz" id="cTz">JST</div>
     </div>
     <div class="daychip" id="cDay">-</div>
     <div class="sp">
@@ -2678,6 +2702,7 @@ function updateDetailLive(t, p, M, rebuild) {
       '<div><span class="lb">' + T().next + '</span>' + nextNm + ' ' + eta + '</div>' +
       (uniqLines.length ? '<div><span class="lb">' + T().viaLines + '</span>' + uniqLines.slice(0, 4).map(l => '<span class="lnchip" style="background:' + (lineColor.get(l) || '#888') + '">' + l + '</span>').join('') + (uniqLines.length > 4 ? ' +' + (uniqLines.length - 4) : '') + '</div>' : '') +
       '<div><span class="lb">' + T().tripId + '</span>#' + t.t + ' · ' + (t.nm || t.i) + '</div></div>' +
+      '<div class="d-sep"></div>' +
       '<div class="d-act"><button class="btn' + (followTrip === t ? ' on' : '') + '" id="dFollow">' + (followTrip === t ? ICO.stop : ICO.follow) + ' ' + (followTrip === t ? T().stopFollowBtn : T().followBtn) + '</button>' +
       '<button class="btn" id="dLoc">' + ICO.loc + ' ' + T().locateBtn + '</button></div>';
     $('dClose').onclick = () => { detailEl.style.display = 'none'; liveDetailTrip = null; if (followTrip) stopFollow(); };

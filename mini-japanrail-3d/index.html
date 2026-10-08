@@ -103,7 +103,9 @@ button { font-family:inherit; }
 #side { position:absolute; top:56px; left:8px; width:260px; max-height:calc(100vh - 130px);
   display:flex; flex-direction:column; background:var(--panel); border:1px solid var(--line); border-radius:var(--r);
   backdrop-filter:blur(20px) saturate(1.4); -webkit-backdrop-filter:blur(20px) saturate(1.4); box-shadow:var(--shadow); z-index:6; overflow:hidden;
-  transition:width .2s ease, opacity .2s; }
+  transition:width .2s ease, opacity .2s, transform .28s cubic-bezier(.2,.9,.3,1.1);
+  animation:sideIn .28s cubic-bezier(.2,.9,.3,1.12); }
+@keyframes sideIn { from { opacity:0; transform:translateX(-14px) scale(.97); } to { opacity:1; transform:translateX(0) scale(1); } }
 #sideTabs { display:flex; gap:2px; padding:4px; background:var(--panel2); border-bottom:1px solid var(--line); flex:none; }
 .stab { flex:1; height:28px; display:flex; align-items:center; justify-content:center; gap:3px; background:transparent; border:0;
   border-radius:var(--r-xs); color:var(--dim); font-size:11px; font-weight:600; cursor:pointer; transition:background .12s,color .12s; }

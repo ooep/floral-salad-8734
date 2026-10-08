@@ -78,6 +78,10 @@ button { font-family:inherit; }
 .btn:active { transform:scale(.97); }
 .btn:focus-visible { outline:2px solid var(--acc); outline-offset:1px; }
 .btn.on { background:var(--acc); border-color:var(--acc); color:#fff; }
+#btnLive { position:relative; display:inline-flex; align-items:center; gap:7px; }
+#btnLive::before { content:''; width:6px; height:6px; border-radius:50%; background:currentColor; opacity:.4; flex:none; }
+#btnLive.on::before { background:#34d399; opacity:1; animation:livepulse 1.6s ease-out infinite; }
+@keyframes livepulse { 0% { box-shadow:0 0 0 0 rgba(52,211,153,.5); } 70% { box-shadow:0 0 0 7px rgba(52,211,153,0); } 100% { box-shadow:0 0 0 0 rgba(52,211,153,0); } }
 .btn.icon { padding:0; width:40px; }
 .btn:disabled { opacity:.45; cursor:default; }
 
@@ -114,9 +118,12 @@ button { font-family:inherit; }
 .tbox::placeholder { color:var(--dim); opacity:.7; }
 #sug { margin-top:6px; max-height:200px; overflow-y:auto; display:none; border:1px solid var(--line); border-radius:8px; background:var(--panel2); }
 .sug-it { padding:8px 11px; font-size:12px; cursor:pointer; display:flex; justify-content:space-between; gap:8px; align-items:center; }
-.sug-it:hover, .sug-it:focus-visible { background:var(--acc-soft); outline:none; }
+.sug-it:hover, .sug-it:focus-visible, .sug-it.hl-it { background:var(--acc-soft); outline:none; }
+.sug-it.hl-it { box-shadow:inset 2px 0 0 var(--acc); }
 .sug-it .k { color:var(--dim); font-size:10px; align-self:center; flex:none; }
 .sug-it .hl { color:var(--acc); font-weight:700; }
+.sug-empty { padding:10px 12px; font-size:12px; color:var(--dim); }
+.sug-empty .sug-q { color:var(--txt); }
 
 /* 路线 */
 #routeRow { display:flex; gap:6px; margin-top:8px; }
@@ -189,7 +196,11 @@ button { font-family:inherit; }
 .spb { padding:3px 9px; border-radius:6px; border:1px solid var(--line); font-size:11px; cursor:pointer; color:var(--dim); background:transparent; white-space:nowrap; flex:none; transition:background .12s,border-color .12s,color .12s; }
 .spb:hover { border-color:var(--acc-border); color:var(--txt); }
 .spb.on { background:var(--acc); color:#fff; border-color:var(--acc); }
-#clock .r2 { display:flex; align-items:center; gap:10px; margin-top:7px; }
+#clock .r2 { position:relative; display:flex; align-items:center; gap:10px; margin-top:7px; }
+#cBub { position:absolute; top:-26px; transform:translateX(-50%); background:var(--panel2); border:1px solid var(--line);
+  border-radius:6px; padding:2px 8px; font-size:11px; font-weight:600; font-variant-numeric:tabular-nums; color:var(--txt);
+  pointer-events:none; opacity:0; transition:opacity .12s; white-space:nowrap; z-index:1; }
+#cBub.show { opacity:1; }
 #clock input[type=range] { flex:1; -webkit-appearance:none; appearance:none; height:3px; border-radius:2px; background:rgba(120,140,180,.28); outline:none; }
 #clock input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--acc); border:2px solid var(--panel); cursor:pointer; }
 #clock .now { font-size:11px; color:var(--acc); cursor:pointer; font-weight:600; white-space:nowrap; border-radius:5px; padding:3px 6px; }
@@ -198,7 +209,10 @@ button { font-family:inherit; }
 /* ---------- 详情卡 ---------- */
 #detail { position:absolute; left:10px; bottom:14px; width:min(320px,calc(100vw - 20px)); background:var(--panel);
   border:1px solid var(--line); border-radius:var(--r); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
-  box-shadow:var(--shadow); z-index:8; padding:13px 15px; display:none; }
+  box-shadow:var(--shadow); z-index:8; padding:13px 15px; display:none; opacity:0; transform:translateY(8px) scale(.985);
+  transition:opacity .18s ease, transform .18s ease; }
+#detail.show { opacity:1; transform:none; }
+#detail.following { border-color:var(--acc-border); box-shadow:0 4px 16px var(--shadow), 0 0 0 1px var(--acc-soft) inset; }
 #detail .d-h { display:flex; align-items:center; gap:10px; }
 #detail .d-ic { width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:800; flex:none; }
 #detail .d-t { flex:1; min-width:0; }
@@ -450,6 +464,7 @@ button { font-family:inherit; }
     </div>
   </div>
   <div class="r2">
+    <span class="c-bub" id="cBub"></span>
     <input type="range" id="cSlider" min="0" max="1439" value="0" step="1">
     <span class="now" id="cNow">回到现在</span>
   </div>
@@ -576,7 +591,7 @@ const I18N = {
   zh: {
     title:'Mini JapanRail 3D', sub:'全日本铁路实时运行地图', loading:'准备中…', live:'实时', follow:'跟随中', followStop:'取消跟随',
     searchT:'搜索', searchPh:'车站 / 线路(日文名)…', routeT:'路线搜索', routeFrom:'起点站', routeTo:'终点站',
-    tabRoute:'路线', aSearchPh:'搜索车站 / 线路…', badgeLive:'在途', badgeToday:'今日',
+    tabRoute:'路线', aSearchPh:'搜索车站 / 线路…', badgeLive:'在途', badgeToday:'今日', noMatch:'无匹配结果',
     filterT:'线路类型', legendT:'图例', dayT:'运行日', dayAuto:'自动', setT:'设置', dataT:'数据', helpT:'帮助',
     sw1:'车站标签', sw2:'轨道光晕', sw3:'车站点', sw4:'底图瓦片', sw5:'列车光晕', sw6:'复制异常车辆',
     modeT:'列车显示', mode3d:'3D', modeIcon:'图标',
@@ -594,7 +609,7 @@ const I18N = {
   ja: {
     title:'ミニ日本鉄道3D', sub:'全国鉄道リアルタイムマップ', loading:'準備中…', live:'リアルタイム', follow:'追跡中', followStop:'追跡解除',
     searchT:'検索', searchPh:'駅 / 路線(日本語名)…', routeT:'経路検索', routeFrom:'出発駅', routeTo:'到着駅',
-    tabRoute:'路線', aSearchPh:'駅 / 路線を検索…', badgeLive:'走行中', badgeToday:'本日',
+    tabRoute:'路線', aSearchPh:'駅 / 路線を検索…', badgeLive:'走行中', badgeToday:'本日', noMatch:'該当なし',
     filterT:'路線種別', legendT:'凡例', dayT:'運行日', dayAuto:'自動', setT:'設定', dataT:'データ', helpT:'ヘルプ',
     sw1:'駅ラベル', sw2:'軌道グロー', sw3:'駅ドット', sw4:'背景タイル', sw5:'列車グロー', sw6:'異常列車コピー',
     modeT:'列車表示', mode3d:'3D', modeIcon:'アイコン',
@@ -612,7 +627,7 @@ const I18N = {
   en: {
     title:'Mini JapanRail 3D', sub:'Japan Rail Live Map', loading:'Preparing…', live:'Live', follow:'Following', followStop:'Stop follow',
     searchT:'Search', searchPh:'Station / Line (Japanese)…', routeT:'Route search', routeFrom:'From', routeTo:'To',
-    tabRoute:'Route', aSearchPh:'Search station / line…', badgeLive:'Live', badgeToday:'Today',
+    tabRoute:'Route', aSearchPh:'Search station / line…', badgeLive:'Live', badgeToday:'Today', noMatch:'No matches',
     filterT:'Line types', legendT:'Legend', dayT:'Service day', dayAuto:'Auto', setT:'Settings', dataT:'Data', helpT:'Help',
     sw1:'Station labels', sw2:'Track glow', sw3:'Station dots', sw4:'Basemap tiles', sw5:'Train glow', sw6:'Copy off-rail trains',
     modeT:'Train display', mode3d:'3D', modeIcon:'Icon',
@@ -2635,12 +2650,14 @@ function refreshClockUI(M) {
   if (!sliderDragging && clockMode === 'live' && sv !== lastSliderVal) { sliderEl.value = sv; lastSliderVal = sv; }
   $('dDay').textContent = (label ? label[lang] : '') + ' · ' + (clockMode === 'live' ? T().liveMode : (paused ? T().paused : speed + '× ' + T().playMode));
 }
-sliderEl.addEventListener('pointerdown', () => { sliderDragging = true; });
-sliderEl.addEventListener('pointerup', () => { sliderDragging = false; });
+function bubSync() { const b = $('cBub'); b.textContent = fmtHMS(parseFloat(sliderEl.value)); b.style.left = Math.min(96, Math.max(4, sliderEl.value / 1439 * 100)) + '%'; }
+sliderEl.addEventListener('pointerdown', () => { sliderDragging = true; bubSync(); $('cBub').classList.add('show'); });
+sliderEl.addEventListener('pointerup', () => { sliderDragging = false; setTimeout(() => $('cBub').classList.remove('show'), 350); });
 sliderEl.addEventListener('input', () => {
   if (clockMode === 'live') enterManual(parseFloat(sliderEl.value));
   else { if (!paused) doPause(); simEpoch = simDateBase() + parseFloat(sliderEl.value) * 60000; }
   cTimeEl.textContent = fmtHMS(parseFloat(sliderEl.value));
+  bubSync();
 });
 $('cNow').addEventListener('click', () => { doNow(); toast(T().liveMode); });
 $('btnPlay').addEventListener('click', () => { if (paused) doResume(); else doPause(); });
@@ -2681,7 +2698,7 @@ async function ensureDayFile() {
     $('dBuild').textContent = tj.b || '-';
     $('dCount').textContent = totalTripsToday.toLocaleString();
     $('bCount').textContent = totalTripsToday.toLocaleString();
-    followTrip = null; liveDetailTrip = null; detailEl.style.display = 'none'; trTagEl.style.display = 'none';
+    followTrip = null; liveDetailTrip = null; closeDetail(); trTagEl.style.display = 'none';
     setStatus('✓ ' + T().loaded);
   } catch (e) { setStatus('ERR ' + e.message); }
 }
@@ -2731,18 +2748,29 @@ function onMapClick(e) {
   // 空白
   stopFollow();
   liveDetailTrip = null;
-  detailEl.style.display = 'none';
+  closeDetail();
   clearHighlight();
   $('routeRes').style.display = 'none';
 }
 
 /* ---------------- 详情卡 ---------------- */
+let detailTimer = 0;
+function openDetail() {
+  clearTimeout(detailTimer);
+  detailEl.style.display = 'block';
+  requestAnimationFrame(() => requestAnimationFrame(() => detailEl.classList.add('show')));
+}
+function closeDetail() {
+  clearTimeout(detailTimer);
+  detailEl.classList.remove('show');
+  detailTimer = setTimeout(() => { detailEl.style.display = 'none'; }, 190);
+}
 function showTrainDetail(t) {
   liveDetailTrip = t;
   if (!sideEl.classList.contains('collapsed')) { sideEl.classList.add('collapsed'); $('btnSide').innerHTML = ICO.menu; }
-  detailEl.style.display = 'block';
+  openDetail();
   updateDetailLive(t, null, curMin(), true);
-  $('dClose').onclick = () => { detailEl.style.display = 'none'; liveDetailTrip = null; if (followTrip) stopFollow(); };
+  $('dClose').onclick = () => { closeDetail(); liveDetailTrip = null; if (followTrip) stopFollow(); };
   $('dFollow').onclick = () => { if (followTrip === t) stopFollow(); else startFollow(t); };
   $('dLoc').onclick = () => {
     const p = trainPosition(t, windowShift(t, curMin()));
@@ -2777,7 +2805,7 @@ function updateDetailLive(t, p, M, rebuild) {
       '<div class="d-sep"></div>' +
       '<div class="d-act"><button class="btn' + (followTrip === t ? ' on' : '') + '" id="dFollow">' + (followTrip === t ? ICO.stop : ICO.follow) + ' ' + (followTrip === t ? T().stopFollowBtn : T().followBtn) + '</button>' +
       '<button class="btn" id="dLoc">' + ICO.loc + ' ' + T().locateBtn + '</button></div>';
-    $('dClose').onclick = () => { detailEl.style.display = 'none'; liveDetailTrip = null; if (followTrip) stopFollow(); };
+    $('dClose').onclick = () => { closeDetail(); liveDetailTrip = null; if (followTrip) stopFollow(); };
     $('dFollow').onclick = () => { if (followTrip === t) stopFollow(); else startFollow(t); };
     $('dLoc').onclick = () => { if (p) map.flyTo({ center: [p[0], p[1]], zoom: Math.max(map.getZoom(), 12), pitch: 55, duration: 1200 }); };
   } else {
@@ -2800,13 +2828,16 @@ function startFollow(t) {
   const p = trainPosition(t, windowShift(t, curMin()));
   if (p) map.flyTo({ center: [p[0], p[1]], zoom: Math.max(map.getZoom(), 11.5), pitch: Math.max(map.getPitch(), 45), duration: 900 });
   toast(T().follow + (t.nm ? ' · ' + t.nm : '') + ' · #' + t.t);
-  if (detailEl.style.display === 'block') showTrainDetail(t);
+  if (liveDetailTrip) showTrainDetail(t);
+  detailEl.classList.add('following');
+  const df = $('dFollow'); if (df) { df.classList.add('on'); df.textContent = T().followBtn; }
 }
 function stopFollow(silent) {
   if (followTrip && !silent) toast(T().followStop);
   followTrip = null;
   trTagEl.style.display = 'none';
-  if (detailEl.style.display === 'block' && $('dFollow')) {
+  detailEl.classList.remove('following');
+  if (liveDetailTrip && $('dFollow')) {
     $('dFollow').classList.remove('on'); $('dFollow').textContent = T().followBtn;
   }
 }
@@ -3065,7 +3096,7 @@ function showStationDetail(name, coord) {
   document.getElementById('tabGrid').classList.add('on');
   $('sheet').classList.add('open');
   $('sheetMask').style.display = 'block';
-  detailEl.style.display = 'none';
+  closeDetail();
   if (tripList && tripList.length) renderStationBody();
   if (c) map.flyTo({ center: c, zoom: Math.max(map.getZoom(), 12), pitch: Math.min(map.getPitch(), 55), duration: 1200 });
 }
@@ -3080,7 +3111,23 @@ searchEl.addEventListener('input', () => {
   clearTimeout(sugTimer);
   sugTimer = setTimeout(() => runSearch(searchEl.value), 140);
 });
-searchEl.addEventListener('keydown', e => { if (e.key === 'Enter') { const it = sugEl.querySelector('.sug-it'); if (it) it.click(); } });
+let sugIdx = -1;
+function setSugIdx(i, its) {
+  sugIdx = i;
+  its.forEach((it, j) => it.classList.toggle('hl-it', j === i));
+  if (i >= 0 && its[i]) its[i].scrollIntoView({ block: 'nearest' });
+}
+searchEl.addEventListener('keydown', e => {
+  const its = sugEl.querySelectorAll('.sug-it');
+  if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && its.length) {
+    e.preventDefault();
+    const n = e.key === 'ArrowDown' ? (sugIdx + 1) % its.length : (sugIdx - 1 + its.length) % its.length;
+    setSugIdx(n, its);
+  } else if (e.key === 'Enter') {
+    const it = its.length ? (sugIdx >= 0 ? its[sugIdx] : its[0]) : null;
+    if (it) { e.preventDefault(); it.click(); }
+  } else if (e.key === 'Escape') { sugEl.style.display = 'none'; searchEl.blur(); }
+});
 document.addEventListener('click', e => { if (!sugEl.contains(e.target) && e.target !== searchEl) sugEl.style.display = 'none'; });
 function esc(s) { return s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function hlName(n, q) { const i = n.indexOf(q); return i < 0 ? esc(n) : esc(n.slice(0, i)) + '<span class="hl">' + esc(q) + '</span>' + esc(n.slice(i + q.length)); }
@@ -3090,14 +3137,15 @@ function runSearch(q) {
   const sts = [], lns = [];
   for (const s of searchIndex) { if (s.n.includes(q)) { sts.push(s); if (sts.length >= 7) break; } }
   for (const l of lineIndex) { if (l.includes(q)) { lns.push(l); if (lns.length >= 4) break; } }
-  if (!sts.length && !lns.length) { sugEl.innerHTML = '<div class="sug-it"><span>' + esc(q) + '</span><span class="k">0</span></div>'; sugEl.style.display = 'block'; return; }
+  if (!sts.length && !lns.length) { sugEl.innerHTML = '<div class="sug-empty">' + esc(T().noMatch) + ' <span class="sug-q">' + esc(q) + '</span></div>'; sugEl.style.display = 'block'; return; }
   sugEl.innerHTML =
     sts.map(s => '<div class="sug-it" data-type="sta" data-name="' + esc(s.n) + '"><span>' + hlName(s.n, q) + '</span><span class="k">' + T().station + '</span></div>').join('') +
-    lns.map(l => '<div class="sug-it" data-type="ln" data-name="' + esc(l) + '"><span>🚈 ' + hlName(l, q) + '</span><span class="k">' + T().line + '</span></div>').join('');
+    lns.map(l => '<div class="sug-it" data-type="ln" data-name="' + esc(l) + '"><span>' + ICO.train.replace('width="16"', 'width="12"').replace('height="16"', 'height="12"') + ' ' + hlName(l, q) + '</span><span class="k">' + T().line + '</span></div>').join('');
   sugEl.style.display = 'block';
-  sugEl.querySelectorAll('.sug-it').forEach(it => it.addEventListener('click', () => {
+  sugIdx = -1;
+  sugEl.querySelectorAll('.sug-it').forEach((it, i) => it.addEventListener('click', () => {
     const nm = it.dataset.name;
-    sugEl.style.display = 'none'; searchEl.value = '';
+    sugEl.style.display = 'none'; searchEl.value = ''; sugIdx = -1;
     if (it.dataset.type === 'sta') {
       const c = stationCoord.get(normName(nm));
       if (!c) return;
@@ -3106,6 +3154,7 @@ function runSearch(q) {
       showStationDetail(nm, c);
     } else highlightLine(nm);
   }));
+  sugEl.querySelectorAll('.sug-it').forEach((it, i) => it.addEventListener('mouseenter', () => setSugIdx(i, sugEl.querySelectorAll('.sug-it'))));
 }
 function highlightLine(lname) {
   const feats = segFC.features.filter(f => f.properties.line === lname);
@@ -3113,8 +3162,8 @@ function highlightLine(lname) {
   setHighlight(feats.map(f => ({ type: 'Feature', properties: { color: f.properties.color || '#4f8ef7' }, geometry: f.geometry })), null);
   const co = feats[0].geometry.type === 'MultiLineString' ? feats[0].geometry.coordinates[0] : feats[0].geometry.coordinates;
   map.fitBounds(featsToBounds(feats), { padding: 80, pitch: Math.min(map.getPitch(), 45), duration: 1300 });
-  detailEl.style.display = 'none';
-  toast('🚈 ' + lname);
+  closeDetail();
+  toast(lname);
 }
 function featsToBounds(feats) {
   let x0 = 999, y0 = 999, x1 = -999, y1 = -999;
@@ -3227,7 +3276,7 @@ function renderRoute(rt, A, B) {
     const fs = segFC.features.filter(f => f.properties.line === l.line);
     if (fs.length) map.fitBounds(featsToBounds(fs), { padding: 80, duration: 1000 });
   }));
-  detailEl.style.display = 'none';
+  closeDetail();
 }
 
 /* ---------------- 类型过滤 / 设置 ---------------- */
@@ -3346,7 +3395,7 @@ $('brand').addEventListener('click', () => map.flyTo({ center: [137.2, 36.8], zo
 document.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT') { if (e.key === 'Escape') e.target.blur(); return; }
   if (e.code === 'Space' && dataReady) { e.preventDefault(); if (paused) doResume(); else doPause(); }
-  if (e.key === 'Escape') { stopFollow(); detailEl.style.display = 'none'; sugEl.style.display = 'none'; clearHighlight(); $('routeRes').style.display = 'none'; }
+  if (e.key === 'Escape') { stopFollow(); closeDetail(); sugEl.style.display = 'none'; clearHighlight(); $('routeRes').style.display = 'none'; }
 });
 
 /* ---------------- i18n 应用 ---------------- */

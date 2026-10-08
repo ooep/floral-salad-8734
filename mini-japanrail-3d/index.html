@@ -25,7 +25,6 @@
 :root[data-theme="light"] .btn.on { color:#fff; }
 :root[data-theme="light"] .chip.on, :root[data-theme="light"] .spb.on { color:#fff; }
 :root[data-theme="light"] #status { text-shadow:0 1px 4px rgba(255,255,255,.6); }
-:root[data-theme="light"] #hud { background:linear-gradient(rgba(244,246,250,.96),rgba(244,246,250,.6),transparent); }
 :root[data-theme="light"] #sheet { background:linear-gradient(180deg,#f7f9fc,#eef1f6); border-color:var(--line); box-shadow:0 -10px 30px rgba(15,23,42,.12); }
 :root[data-theme="light"] #sheet .sh-nm { color:var(--txt); }
 :root[data-theme="light"] .lrow { background:rgba(255,255,255,.7); }
@@ -40,8 +39,9 @@ html,body { width:100%; height:100%; overflow:hidden; background:var(--bg); colo
   -webkit-tap-highlight-color:transparent; }
 /* iOS 刘海/底部横条安全区 */
 @supports (padding: max(0px)) {
-  #hud { padding-top: max(10px, env(safe-area-inset-top)); }
-  #topr { top: calc(46px + env(safe-area-inset-top)); }
+  #appbar { padding-top: env(safe-area-inset-top); height:calc(48px + env(safe-area-inset-top)); }
+  #side { top: calc(56px + env(safe-area-inset-top)); }
+  #status { top: calc(56px + env(safe-area-inset-top)); }
   #clock { bottom: max(12px, env(safe-area-inset-bottom)); }
   #detail { bottom: max(14px, env(safe-area-inset-bottom)); }
   .foot { bottom: max(8px, env(safe-area-inset-bottom)); }
@@ -50,16 +50,27 @@ html,body { width:100%; height:100%; overflow:hidden; background:var(--bg); colo
 ::-webkit-scrollbar { width:6px; } ::-webkit-scrollbar-thumb { background:rgba(120,140,180,.3); border-radius:3px; }
 button { font-family:inherit; }
 
-/* ---------- 顶栏 ---------- */
-#hud { position:absolute; top:0; left:0; right:0; padding:10px 12px 8px; display:flex; align-items:center; gap:10px;
-  background:linear-gradient(rgba(10,14,20,.96),rgba(10,14,20,.55),transparent); z-index:5; pointer-events:none; }
-#hud .brand { font-size:13.5px; font-weight:700; letter-spacing:.2px; display:flex; align-items:center; gap:8px; text-shadow:0 1px 4px rgba(0,0,0,.5); cursor:pointer; }
-#hud .brand .lg { width:24px; height:24px; border-radius:7px; background:var(--acc); color:#fff; display:flex; align-items:center; justify-content:center; flex:none; }
-#hud .brand b { color:var(--txt); font-weight:700; }
-#status { font-size:11px; color:var(--dim); margin-left:auto; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-shadow:0 1px 3px rgba(0,0,0,.7); }
+/* ---------- 顶部应用栏 ---------- */
+#appbar { position:absolute; top:0; left:0; right:0; height:48px; padding:0 12px; display:flex; align-items:center; gap:12px;
+  background:var(--panel); border-bottom:1px solid var(--line); z-index:9; }
+#appbar .brand { font-size:13.5px; font-weight:700; letter-spacing:.2px; display:flex; align-items:center; gap:8px; cursor:pointer; flex:none; white-space:nowrap; }
+#appbar .brand .lg { width:24px; height:24px; border-radius:7px; background:var(--acc); color:#fff; display:flex; align-items:center; justify-content:center; flex:none; }
+#appbar .brand b { color:var(--txt); font-weight:700; }
+.a-search { flex:1; min-width:0; max-width:420px; height:32px; padding:0 12px; display:flex; align-items:center; gap:8px; border:1px solid var(--line);
+  border-radius:8px; background:var(--panel2); color:var(--dim); font-size:12.5px; cursor:pointer; transition:border-color .15s, background .15s; }
+.a-search:hover, .a-search:focus-visible { border-color:var(--acc-border); background:var(--panel); outline:none; }
+.a-search span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.badge { display:flex; gap:8px; flex:none; }
+.badge .b-it { display:flex; align-items:baseline; gap:4px; padding:4px 9px; border-radius:7px; background:var(--panel2); border:1px solid var(--line); }
+.badge .b-lb { font-size:10px; color:var(--dim); }
+.badge b { font-size:13px; font-weight:700; font-variant-numeric:tabular-nums; color:var(--txt); }
+.a-btns { display:flex; gap:6px; flex:none; }
 
-/* ---------- 右侧按钮组 ---------- */
-#topr { position:absolute; top:46px; right:10px; display:flex; flex-direction:column; gap:8px; z-index:7; align-items:flex-end; }
+/* 状态横幅（应用栏下方居中） */
+#status { position:absolute; top:56px; left:50%; transform:translateX(-50%); font-size:11px; color:var(--dim); z-index:8;
+  background:var(--panel); border:1px solid var(--line); border-radius:7px; padding:4px 12px; box-shadow:var(--shadow);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:70vw; pointer-events:none; transition:opacity .2s; }
+#status.err { color:#f87171; border-color:rgba(248,113,113,.4); }
 .btn { min-width:44px; min-height:40px; padding:0 13px; border:1px solid var(--line); border-radius:8px; background:var(--panel);
   color:var(--txt); font-size:12px; font-weight:600; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;
   backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); box-shadow:var(--shadow); user-select:none; -webkit-user-select:none; transition:background .12s,border-color .12s,transform .06s; }
@@ -70,17 +81,31 @@ button { font-family:inherit; }
 .btn.icon { padding:0; width:40px; }
 .btn:disabled { opacity:.45; cursor:default; }
 
-/* ---------- 左侧面板 ---------- */
-#side { position:absolute; top:52px; left:10px; width:min(320px,calc(100vw - 20px)); max-height:calc(100vh - 150px);
+/* ---------- 左侧工具面板 ---------- */
+#side { position:absolute; top:56px; left:10px; width:300px; max-height:calc(100vh - 150px);
   display:flex; flex-direction:column; background:var(--panel); border:1px solid var(--line); border-radius:var(--r);
-  backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); box-shadow:var(--shadow); z-index:6; overflow:hidden auto;
-  transition:transform .2s ease, opacity .2s; }
-#side.collapsed { transform:translateX(calc(-100% - 24px)); opacity:0; pointer-events:none; }
+  backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); box-shadow:var(--shadow); z-index:6; overflow:hidden;
+  transition:width .2s ease, opacity .2s; }
+#sideTabs { display:flex; border-bottom:1px solid var(--line); flex:none; }
+.stab { flex:1; height:38px; display:flex; align-items:center; justify-content:center; gap:6px; background:transparent; border:0;
+  color:var(--dim); font-size:11.5px; font-weight:600; cursor:pointer; transition:color .12s, background .12s; }
+.stab:hover { color:var(--txt); background:var(--acc-soft); }
+.stab.on { color:var(--acc); box-shadow:inset 0 -2px 0 var(--acc); }
+#sideBody { overflow-y:auto; }
+.stab-sec { display:none; }
+.stab-sec.on { display:block; }
 #side .sec { padding:11px 13px; border-top:1px solid var(--line); }
 #side .sec:first-child { border-top:0; }
 .sec-t { font-size:11px; font-weight:700; letter-spacing:.6px; color:var(--dim); margin-bottom:8px;
   display:flex; align-items:center; gap:6px; }
 .sec-t::after { content:''; flex:1; height:1px; background:var(--line); }
+
+/* 收起态：44px 图标条 */
+#side.collapsed { width:44px; opacity:1; pointer-events:auto; }
+#side.collapsed #sideBody, #side.collapsed .st-lb { display:none; }
+#side.collapsed #sideTabs { flex-direction:column; border-bottom:0; }
+#side.collapsed .stab { height:44px; box-shadow:none; }
+#side.collapsed .stab.on { box-shadow:inset 3px 0 0 var(--acc); }
 
 /* 搜索 */
 .tbox { width:100%; min-height:36px; padding:0 12px; border:1px solid var(--line); border-radius:8px; background:var(--panel2);
@@ -152,6 +177,9 @@ button { font-family:inherit; }
   background:var(--panel); border:1px solid var(--line); border-radius:var(--r); backdrop-filter:blur(14px);
   -webkit-backdrop-filter:blur(14px); box-shadow:var(--shadow); z-index:7; padding:8px 14px 10px; display:none; }
 #clock .r1 { display:flex; align-items:center; gap:10px; }
+#clock .ldot { width:8px; height:8px; border-radius:50%; background:#f87171; flex:none; animation:ldot 1.8s ease-in-out infinite; }
+#clock .ldot.on { background:#34d399; }
+@keyframes ldot { 0%,100%{opacity:1;} 50%{opacity:.35;} }
 #clock .ct { text-align:center; }
 #clock .t { font-size:19px; font-weight:700; font-variant-numeric:tabular-nums; letter-spacing:.5px; min-width:74px; line-height:1.1; }
 #clock .tz { font-size:9px; font-weight:600; letter-spacing:.8px; color:var(--dim); margin-top:1px; }
@@ -209,7 +237,7 @@ button { font-family:inherit; }
 #lbar { width:min(320px,70vw); height:3px; border-radius:2px; background:rgba(120,140,180,.2); overflow:hidden; }
 #lbarF { height:100%; width:0%; border-radius:2px; background:var(--acc); transition:width .2s; }
 
-#toast { position:absolute; top:52px; left:50%; transform:translateX(-50%); background:var(--panel2); border:1px solid var(--line);
+#toast { position:absolute; top:56px; left:50%; transform:translateX(-50%); background:var(--panel2); border:1px solid var(--line);
   color:var(--txt); font-size:12px; padding:7px 16px; border-radius:8px; z-index:40; display:none; box-shadow:var(--shadow); max-width:80vw;
   opacity:0; transition:opacity .18s ease; }
 #toast.show { opacity:1; }
@@ -223,9 +251,15 @@ button { font-family:inherit; }
 .maplibregl-ctrl-group button:hover { background:var(--panel2)!important; }
 
 @media (max-width:640px) {
+  #appbar { padding:0 8px; gap:6px; }
+  #appbar .brand { font-size:12.5px; }
+  .a-search { max-width:none; }
+  .badge { display:none; }
+  #btnLang { display:none; }
   #clock { width:calc(100vw - 16px); padding:8px 12px 10px; }
   #detail { width:calc(100vw - 20px); }
-  #side { width:calc(100vw - 20px); }
+  #side { top:56px; left:0; width:100vw; max-height:calc(100vh - 150px); border-radius:0; }
+  #side.collapsed { width:44px; border-radius:0 var(--r) var(--r) 0; }
   #status { display:none; }
   /* 表单元素 ≥16px 防止 iOS 聚焦自动缩放 */
   .tbox, #rFrom, #rTo { font-size:16px; }
@@ -293,96 +327,114 @@ button { font-family:inherit; }
 <body>
 <div id="map"></div>
 
-<div id="hud">
-  <div class="brand" id="brand"><span class="lg"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15h16M5 15l1.5-6A2 2 0 0 1 8.4 7.5h7.2a2 2 0 0 1 1.9 1.5L19 15M7 18.5h.01M17 18.5h.01"/><circle cx="8" cy="18.5" r="1"/><circle cx="16" cy="18.5" r="1"/></svg></span><b id="brandT">Mini JapanRail 3D</b></div>
-  <div id="status"></div>
-</div>
-
-<div id="topr">
-  <button class="btn" id="btnLive"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16zm0 3.2a4.8 4.8 0 1 1 0 9.6 4.8 4.8 0 0 1 0-9.6z"/></svg> <span id="tLive">实时</span></button>
-  <button class="btn icon on" id="btnProj" title="3D / 2D"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><ellipse cx="12" cy="12" rx="3.6" ry="8.5"/><path d="M3.8 12h16.4M12 3.5c2.2 2.6 2.2 14.4 0 17M12 3.5c-2.2 2.6-2.2 14.4 0 17"/></svg></button>
-  <button class="btn icon" id="btnLang" title="Language"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M3.8 12h16.4M12 3.5a13 13 0 0 1 0 17M12 3.5a13 13 0 0 0 0 17"/></svg></button>
-  <button class="btn icon" id="btnSide" title="Panel"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg></button>
-</div>
+<header id="appbar">
+  <div class="brand" id="brand"><span class="lg"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15h16M5 15l1.5-6A2 2 0 0 1 8.4 7.5h7.2a2 2 0 0 1 1.9 1.5L19 15M7 18.5h.01M17 18.5h.01"/><circle cx="8" cy="18.5" r="1"/><circle cx="16" cy="18.5" r="1"/></svg></span><b id="brandT">Mini JapanRail 3D</b></div>
+  <div class="a-search" id="aSearch" role="button" tabindex="0"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg><span id="aSearchPh">搜索车站 / 线路…</span></div>
+  <div class="badge" id="badge"><div class="b-it"><span class="b-lb" id="bLiveLb">在途</span><b id="bLive">-</b></div><div class="b-it"><span class="b-lb" id="bCountLb">今日</span><b id="bCount">-</b></div></div>
+  <div class="a-btns">
+    <button class="btn" id="btnLive"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16zm0 3.2a4.8 4.8 0 1 1 0 9.6 4.8 4.8 0 0 1 0-9.6z"/></svg> <span id="tLive">实时</span></button>
+    <button class="btn icon" id="btnProj" title="3D / 2D"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><ellipse cx="12" cy="12" rx="3.6" ry="8.5"/><path d="M3.8 12h16.4M12 3.5c2.2 2.6 2.2 14.4 0 17M12 3.5c-2.2 2.6-2.2 14.4 0 17"/></svg></button>
+    <button class="btn icon" id="btnLang" title="Language"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M3.8 12h16.4M12 3.5a13 13 0 0 1 0 17M12 3.5a13 13 0 0 0 0 17"/></svg></button>
+    <button class="btn icon" id="btnSide" title="Panel"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg></button>
+  </div>
+</header>
+<div id="status"></div>
 
 <div id="side">
-  <div class="sec">
-    <div class="sec-t" id="tSearch">搜索</div>
-    <div class="search-wrap">
-      <span class="s-ic"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg></span>
-      <input id="search" class="tbox" type="text" autocomplete="off" spellcheck="false">
-    </div>
-    <div id="sug"></div>
+  <div id="sideTabs">
+    <button class="stab on" data-tab="route" id="tabRoute"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="17" r="2.2"/><circle cx="19" cy="5" r="2.2"/><path d="M5 19C5 11 11 5 19 5M5 14.5c5-1 8-2 9-4"/></svg><span class="st-lb" id="tabRouteLb">路线</span></button>
+    <button class="stab" data-tab="search" id="tabSearch"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg><span class="st-lb" id="tabSearchLb">搜索</span></button>
+    <button class="stab" data-tab="legend" id="tabLegend"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="7" cy="6" r="1.2"/><circle cx="7" cy="12" r="1.2"/><circle cx="7" cy="18" r="1.2"/></svg><span class="st-lb" id="tabLegendLb">图例</span></button>
+    <button class="stab" data-tab="set" id="tabSet"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10z"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"/></svg><span class="st-lb" id="tabSetLb">设置</span></button>
   </div>
-  <div class="sec">
-    <div class="sec-t" id="tRoute">路线搜索</div>
-    <div id="routeRow">
-      <input id="rFrom" class="tbox" type="text" autocomplete="off" spellcheck="false" placeholder="起点">
-      <span class="route-arrow"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h14M13 6l6 6-6 6"/></svg></span>
-      <input id="rTo" class="tbox" type="text" autocomplete="off" spellcheck="false" placeholder="终点">
-      <button id="rGo" class="btn"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h14M13 6l6 6-6 6"/></svg></button>
+  <div id="sideBody">
+    <div class="stab-sec" data-tab="route">
+      <div class="sec">
+        <div class="sec-t" id="tRoute">路线搜索</div>
+        <div id="routeRow">
+          <input id="rFrom" class="tbox" type="text" autocomplete="off" spellcheck="false" placeholder="起点">
+          <span class="route-arrow"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h14M13 6l6 6-6 6"/></svg></span>
+          <input id="rTo" class="tbox" type="text" autocomplete="off" spellcheck="false" placeholder="终点">
+          <button id="rGo" class="btn"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h14M13 6l6 6-6 6"/></svg></button>
+        </div>
+        <div id="routeRes">
+          <div id="routeSum"></div>
+          <div id="routeLegs"></div>
+        </div>
+      </div>
+      <div class="sec">
+        <div class="sec-t" id="tFilter">线路类型</div>
+        <div class="frow" id="kindRow"></div>
+      </div>
+      <div class="sec">
+        <div class="sec-t" id="tDay">运行日</div>
+        <div class="frow" id="dayRow">
+          <button class="chip on" data-day="auto" id="dayAuto">自动</button>
+          <button class="chip" data-day="1">平日</button>
+          <button class="chip" data-day="2">周六</button>
+          <button class="chip" data-day="4">周日・假</button>
+        </div>
+      </div>
     </div>
-    <div id="routeRes">
-      <div id="routeSum"></div>
-      <div id="routeLegs"></div>
+    <div class="stab-sec" data-tab="search">
+      <div class="sec">
+        <div class="sec-t" id="tSearch">搜索</div>
+        <div class="search-wrap">
+          <span class="s-ic"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg></span>
+          <input id="search" class="tbox" type="text" autocomplete="off" spellcheck="false">
+        </div>
+        <div id="sug"></div>
+      </div>
     </div>
-  </div>
-  <div class="sec">
-    <div class="sec-t" id="tFilter">线路类型</div>
-    <div class="frow" id="kindRow"></div>
-  </div>
-  <div class="sec">
-    <div class="sec-t" id="tLegend">图例</div>
-    <div id="legendBox"></div>
-  </div>
-  <div class="sec">
-    <div class="sec-t" id="tDay">运行日</div>
-    <div class="frow" id="dayRow">
-      <button class="chip on" data-day="auto" id="dayAuto">自动</button>
-      <button class="chip" data-day="1">平日</button>
-      <button class="chip" data-day="2">周六</button>
-      <button class="chip" data-day="4">周日・假</button>
+    <div class="stab-sec" data-tab="legend">
+      <div class="sec">
+        <div class="sec-t" id="tLegend">图例</div>
+        <div id="legendBox"></div>
+      </div>
     </div>
-  </div>
-  <div class="sec">
-    <div class="sec-t" id="tSet">设置</div>
-    <div class="sw on" id="swLabel"><span id="tSw1">车站标签</span><span class="trk"></span></div>
-    <div class="sw on" id="swGlow"><span id="tSw2">轨道光晕</span><span class="trk"></span></div>
-    <div class="sw on" id="swSta"><span id="tSw3">车站点</span><span class="trk"></span></div>
-    <div class="sw on" id="swBase"><span id="tSw4">底图瓦片</span><span class="trk"></span></div>
-    <div class="sw on" id="swTrail"><span id="tSw5">列车光晕</span><span class="trk"></span></div>
-    <div class="sw" id="swCopyBad"><span id="tSw6">复制异常车辆</span><span class="trk"></span></div>
-    <div class="sec-t" id="tMode" style="margin-top:12px">列车显示</div>
-    <div class="frow" id="trainModeRow">
-      <button class="chip on" data-mode="3d" id="tMode3d">3D</button>
-      <button class="chip" data-mode="icon" id="tModeIcon">图标</button>
+    <div class="stab-sec" data-tab="set">
+      <div class="sec">
+        <div class="sec-t" id="tSet">设置</div>
+        <div class="sw on" id="swLabel"><span id="tSw1">车站标签</span><span class="trk"></span></div>
+        <div class="sw on" id="swGlow"><span id="tSw2">轨道光晕</span><span class="trk"></span></div>
+        <div class="sw on" id="swSta"><span id="tSw3">车站点</span><span class="trk"></span></div>
+        <div class="sw on" id="swBase"><span id="tSw4">底图瓦片</span><span class="trk"></span></div>
+        <div class="sw on" id="swTrail"><span id="tSw5">列车光晕</span><span class="trk"></span></div>
+        <div class="sw" id="swCopyBad"><span id="tSw6">复制异常车辆</span><span class="trk"></span></div>
+        <div class="sec-t" id="tMode" style="margin-top:12px">列车显示</div>
+        <div class="frow" id="trainModeRow">
+          <button class="chip on" data-mode="3d" id="tMode3d">3D</button>
+          <button class="chip" data-mode="icon" id="tModeIcon">图标</button>
+        </div>
+        <div class="sec-t" id="tTheme" style="margin-top:12px">主题</div>
+        <div class="frow" id="themeRow">
+          <button class="chip" data-theme="dark"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M20 13.5A8.5 8.5 0 0 1 10.5 4a8.5 8.5 0 1 0 9.5 9.5z"/></svg> 深色</button>
+          <button class="chip" data-theme="light"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"/></svg> 浅色</button>
+          <button class="chip on" data-theme="auto"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg> 跟随</button>
+        </div>
+      </div>
+      <div class="sec">
+        <div class="sec-t" id="tData">数据</div>
+        <div class="stats">
+          <div class="stat"><div class="s-lb" id="tD1">在途列车</div><div class="s-v" id="dActive">-</div></div>
+          <div class="stat"><div class="s-lb" id="tD2">今日班次</div><div class="s-v" id="dCount">-</div></div>
+          <div class="stat"><div class="s-lb" id="tD3">运行日</div><div class="s-v" id="dDay">-</div></div>
+          <div class="stat"><div class="s-lb" id="tD4">线路 / 车站</div><div class="s-v" id="dNet">-</div></div>
+          <div class="stat"><div class="s-lb" id="tD5">时刻表构建</div><div class="s-v" id="dBuild">-</div></div>
+          <div class="stat"><div class="s-lb" id="tD6">帧率</div><div class="s-v" id="dFps">-</div></div>
+        </div>
+      </div>
+      <div class="sec">
+        <div class="sec-t" id="tHelp">帮助</div>
+        <div class="help" id="helpBox"></div>
+      </div>
     </div>
-    <div class="sec-t" id="tTheme" style="margin-top:12px">主题</div>
-    <div class="frow" id="themeRow">
-      <button class="chip" data-theme="dark"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M20 13.5A8.5 8.5 0 0 1 10.5 4a8.5 8.5 0 1 0 9.5 9.5z"/></svg> 深色</button>
-      <button class="chip" data-theme="light"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"/></svg> 浅色</button>
-      <button class="chip on" data-theme="auto"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg> 跟随</button>
-    </div>
-  </div>
-  <div class="sec">
-    <div class="sec-t" id="tData">数据</div>
-    <div class="stats">
-      <div class="stat"><div class="s-lb" id="tD1">在途列车</div><div class="s-v" id="dActive">-</div></div>
-      <div class="stat"><div class="s-lb" id="tD2">今日班次</div><div class="s-v" id="dCount">-</div></div>
-      <div class="stat"><div class="s-lb" id="tD3">运行日</div><div class="s-v" id="dDay">-</div></div>
-      <div class="stat"><div class="s-lb" id="tD4">线路 / 车站</div><div class="s-v" id="dNet">-</div></div>
-      <div class="stat"><div class="s-lb" id="tD5">时刻表构建</div><div class="s-v" id="dBuild">-</div></div>
-      <div class="stat"><div class="s-lb" id="tD6">帧率</div><div class="s-v" id="dFps">-</div></div>
-    </div>
-  </div>
-  <div class="sec">
-    <div class="sec-t" id="tHelp">帮助</div>
-    <div class="help" id="helpBox"></div>
   </div>
 </div>
 
 <div id="clock">
   <div class="r1">
+    <span class="ldot" id="cDot"></span>
     <button class="btn icon" id="btnPlay"><svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M7 5.5v13a.8.8 0 0 0 1.22.68l10.6-6.5a.8.8 0 0 0 0-1.36L8.22 4.82A.8.8 0 0 0 7 5.5z"/></svg></button>
     <div class="ct">
       <div class="t" id="cTime">--:--:--</div>
@@ -524,6 +576,7 @@ const I18N = {
   zh: {
     title:'Mini JapanRail 3D', sub:'全日本铁路实时运行地图', loading:'准备中…', live:'实时', follow:'跟随中', followStop:'取消跟随',
     searchT:'搜索', searchPh:'车站 / 线路(日文名)…', routeT:'路线搜索', routeFrom:'起点站', routeTo:'终点站',
+    tabRoute:'路线', aSearchPh:'搜索车站 / 线路…', badgeLive:'在途', badgeToday:'今日',
     filterT:'线路类型', legendT:'图例', dayT:'运行日', dayAuto:'自动', setT:'设置', dataT:'数据', helpT:'帮助',
     sw1:'车站标签', sw2:'轨道光晕', sw3:'车站点', sw4:'底图瓦片', sw5:'列车光晕', sw6:'复制异常车辆',
     modeT:'列车显示', mode3d:'3D', modeIcon:'图标',
@@ -541,6 +594,7 @@ const I18N = {
   ja: {
     title:'ミニ日本鉄道3D', sub:'全国鉄道リアルタイムマップ', loading:'準備中…', live:'リアルタイム', follow:'追跡中', followStop:'追跡解除',
     searchT:'検索', searchPh:'駅 / 路線(日本語名)…', routeT:'経路検索', routeFrom:'出発駅', routeTo:'到着駅',
+    tabRoute:'路線', aSearchPh:'駅 / 路線を検索…', badgeLive:'走行中', badgeToday:'本日',
     filterT:'路線種別', legendT:'凡例', dayT:'運行日', dayAuto:'自動', setT:'設定', dataT:'データ', helpT:'ヘルプ',
     sw1:'駅ラベル', sw2:'軌道グロー', sw3:'駅ドット', sw4:'背景タイル', sw5:'列車グロー', sw6:'異常列車コピー',
     modeT:'列車表示', mode3d:'3D', modeIcon:'アイコン',
@@ -558,6 +612,7 @@ const I18N = {
   en: {
     title:'Mini JapanRail 3D', sub:'Japan Rail Live Map', loading:'Preparing…', live:'Live', follow:'Following', followStop:'Stop follow',
     searchT:'Search', searchPh:'Station / Line (Japanese)…', routeT:'Route search', routeFrom:'From', routeTo:'To',
+    tabRoute:'Route', aSearchPh:'Search station / line…', badgeLive:'Live', badgeToday:'Today',
     filterT:'Line types', legendT:'Legend', dayT:'Service day', dayAuto:'Auto', setT:'Settings', dataT:'Data', helpT:'Help',
     sw1:'Station labels', sw2:'Track glow', sw3:'Station dots', sw4:'Basemap tiles', sw5:'Train glow', sw6:'Copy off-rail trains',
     modeT:'Train display', mode3d:'3D', modeIcon:'Icon',
@@ -638,12 +693,12 @@ function simNow() {
 function curMin() { return minOfDay(simNow()); }
 function fmtHMS(min) { min = ((min % 1440) + 1440) % 1440; const h = Math.floor(min / 60), m = Math.floor(min % 60), s = Math.floor((min * 60) % 60); return pad(h) + ':' + pad(m) + ':' + pad(s); }
 function fmtHm(min) { min = ((Math.round(min) % 1440) + 1440) % 1440; return pad(Math.floor(min / 60)) + ':' + pad(min % 60 | 0); }
-function doPlay() { if (clockMode === 'live') { enterManual(curMin()); } paused = false; $('btnPlay').innerHTML = ICO.play; syncSim(); }
-function doPause() { if (clockMode === 'live') enterManual(curMin()); paused = true; simEpoch = simNow(); $('btnPlay').innerHTML = ICO.play; }
-function doResume() { paused = false; wallT0 = Date.now(); $('btnPlay').innerHTML = ICO.pause; }
+function doPlay() { if (clockMode === 'live') { enterManual(curMin()); } paused = false; $('btnPlay').innerHTML = ICO.play; syncSim(); syncLiveDot(); }
+function doPause() { if (clockMode === 'live') enterManual(curMin()); paused = true; simEpoch = simNow(); $('btnPlay').innerHTML = ICO.play; syncLiveDot(); }
+function doResume() { paused = false; wallT0 = Date.now(); $('btnPlay').innerHTML = ICO.pause; syncLiveDot(); }
 function enterManual(min) { clockMode = 'manual'; simEpoch = simDateBase() + min * 60000; wallT0 = Date.now(); }
 function simDateBase() { const p = jstDateParts(simNow()); return Date.UTC(p.y, p.m - 1, p.d) - JST; }
-function doNow() { clockMode = 'live'; paused = false; $('btnPlay').innerHTML = ICO.pause; }
+function doNow() { clockMode = 'live'; paused = false; $('btnPlay').innerHTML = ICO.pause; syncLiveDot(); }
 function syncSim() { if (clockMode === 'manual' && !paused) { simEpoch = simNow(); wallT0 = Date.now(); } }
 
 /* ---------------- 数据加载(带进度 + IndexedDB 缓存) ---------------- */
@@ -2458,6 +2513,7 @@ async function boot() {
     dataReady = true;
     $('dBuild').textContent = tj.b || '-';
     $('dCount').textContent = totalTripsToday.toLocaleString();
+    $('bCount').textContent = totalTripsToday.toLocaleString();
     setPct(100);
     setLoadMsg('✓ ' + T().loaded);
     setTimeout(() => { $('loader').classList.add('hide'); }, 350);
@@ -2542,7 +2598,7 @@ function startLoop() {
       return;
     }
     const n = updateTrains(M);
-    if (n !== lastActiveN) { $('dActive').textContent = n.toLocaleString(); lastActiveN = n; }
+    if (n !== lastActiveN) { $('dActive').textContent = n.toLocaleString(); lastActiveN = n; $('bLive').textContent = n.toLocaleString(); }
     if (Math.floor(now / 1000) !== lastFpsSec) { $('dFps').textContent = Math.round(fps); lastFpsSec = Math.floor(now / 1000); }
     if (followTrip) { tickFollow(M); updateDetailLive(followTrip, null, M); }
     else if (liveDetailTrip) {
@@ -2598,6 +2654,7 @@ function setLive(on) {
   else { stopFollow(); }
   stateHash();
 }
+function syncLiveDot() { const el = $('cDot'); if (el) el.classList.toggle('on', clockMode === 'live' && !paused); }
 document.querySelectorAll('.spb').forEach(b => b.addEventListener('click', () => {
   speed = parseFloat(b.dataset.sp);
   document.querySelectorAll('.spb').forEach(x => x.classList.toggle('on', x === b));
@@ -2623,6 +2680,7 @@ async function ensureDayFile() {
     totalTripsToday = tj.n || tripList.length;
     $('dBuild').textContent = tj.b || '-';
     $('dCount').textContent = totalTripsToday.toLocaleString();
+    $('bCount').textContent = totalTripsToday.toLocaleString();
     followTrip = null; liveDetailTrip = null; detailEl.style.display = 'none'; trTagEl.style.display = 'none';
     setStatus('✓ ' + T().loaded);
   } catch (e) { setStatus('ERR ' + e.message); }
@@ -2681,6 +2739,7 @@ function onMapClick(e) {
 /* ---------------- 详情卡 ---------------- */
 function showTrainDetail(t) {
   liveDetailTrip = t;
+  if (!sideEl.classList.contains('collapsed')) { sideEl.classList.add('collapsed'); $('btnSide').innerHTML = ICO.menu; }
   detailEl.style.display = 'block';
   updateDetailLive(t, null, curMin(), true);
   $('dClose').onclick = () => { detailEl.style.display = 'none'; liveDetailTrip = null; if (followTrip) stopFollow(); };
@@ -3254,6 +3313,22 @@ $('btnProj').addEventListener('click', () => {
 });
 $('btnLang').addEventListener('click', () => { lang = lang === 'zh' ? 'ja' : (lang === 'ja' ? 'en' : 'zh'); localStorage.setItem('mjr3d_lang', lang); applyLang(); stateHash(); });
 $('btnSide').addEventListener('click', () => { sideEl.classList.toggle('collapsed'); $('btnSide').innerHTML = sideEl.classList.contains('collapsed') ? ICO.menu : ICO.close; });
+/* 工具面板 Tab */
+function showTab(tab, focusSearch) {
+  document.querySelectorAll('#sideTabs .stab').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
+  document.querySelectorAll('#sideBody .stab-sec').forEach(s => s.classList.toggle('on', s.dataset.tab === tab));
+  if (focusSearch && tab === 'search') setTimeout(() => { searchEl.focus(); }, 60);
+}
+document.querySelectorAll('#sideTabs .stab').forEach(b => b.addEventListener('click', () => {
+  if (sideEl.classList.contains('collapsed')) { sideEl.classList.remove('collapsed'); $('btnSide').innerHTML = ICO.close; }
+  showTab(b.dataset.tab);
+}));
+$('aSearch').addEventListener('click', () => {
+  if (sideEl.classList.contains('collapsed')) { sideEl.classList.remove('collapsed'); $('btnSide').innerHTML = ICO.close; }
+  showTab('search', true);
+});
+$('aSearch').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('aSearch').click(); } });
+showTab('route');
 // 主题：dark / light / auto(跟随系统)
 const mq = window.matchMedia('(prefers-color-scheme: light)');
 function applyThemeMode() {
@@ -3283,6 +3358,9 @@ function applyLang() {
   $('tSearch').textContent = t.searchT; $('tRoute').textContent = t.routeT; $('tFilter').textContent = t.filterT;
   $('tLegend').textContent = t.legendT; $('tDay').textContent = t.dayT; $('tSet').textContent = t.setT;
   $('tData').textContent = t.dataT; $('tHelp').textContent = t.helpT;
+  $('tabRouteLb').textContent = t.tabRoute; $('tabSearchLb').textContent = t.searchT; $('tabLegendLb').textContent = t.legendT; $('tabSetLb').textContent = t.setT;
+  $('aSearchPh').textContent = t.aSearchPh;
+  $('bLiveLb').textContent = t.badgeLive; $('bCountLb').textContent = t.badgeToday;
   searchEl.placeholder = t.searchPh;
   $('rFrom').placeholder = t.routeFrom; $('rTo').placeholder = t.routeTo;
   $('dayAuto').textContent = t.dayAuto;

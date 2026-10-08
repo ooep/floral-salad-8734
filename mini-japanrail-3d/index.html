@@ -420,7 +420,6 @@ button { font-family:inherit; }
     <button class="btn icon" id="btnSide" title="Panel"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg></button>
   </div>
 </header>
-<div id="status"></div>
 
 <div id="side">
   <div id="sideTabs">
@@ -778,12 +777,12 @@ const T = () => I18N[lang];
 
 /* ---------------- DOM ---------------- */
 const $ = id => document.getElementById(id);
-const statusEl = $('status'), tipEl = $('tip'), sideEl = $('side'), clockEl = $('clock'), detailEl = $('detail');
+const tipEl = $('tip'), sideEl = $('side'), clockEl = $('clock'), detailEl = $('detail');
 const searchEl = $('search'), sugEl = $('sug'), sliderEl = $('cSlider'), cTimeEl = $('cTime'), cDayEl = $('cDay');
 const trTagEl = $('trTag');
 const toastEl = $('toast');
 function toast(s, ms = 2400) { toastEl.textContent = s; toastEl.style.display = 'block'; requestAnimationFrame(() => toastEl.classList.add('show')); clearTimeout(toast._t); toast._t = setTimeout(() => { toastEl.classList.remove('show'); setTimeout(() => toastEl.style.display = 'none', 200); }, ms); }
-function setStatus(s) { statusEl.textContent = s; }
+function setStatus(s) { /* 状态提示条已移除,保留空函数兼容调用 */ }
 const pad = n => String(n).padStart(2, '0');
 /* 防抖/节流工具 */
 function debounce(fn, ms) { let t; return function(...a) { clearTimeout(t); t = setTimeout(() => fn.apply(this, a), ms); }; }

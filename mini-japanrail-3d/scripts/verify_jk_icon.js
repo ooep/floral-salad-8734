@@ -19,6 +19,7 @@ const ATLAS = JSON.parse(fs.readFileSync(path.join(DATA, 'train_icons_atlas.json
 function normName(n) { return String(n).replace(/\([^)]*\)/g, '').replace(/[ケヶ]/g, 'ヶ').replace(/駅$/, '').trim(); }
 
 const ICON_SKIP_LINES = new Set(['山手線', '東海道本線', '東北本線']);
+const ICON_PRIORITY_LINES = new Set(['武蔵野線']);
 const JK_ONLY_STA = new Set(['与野', '北浦和', '南浦和', '蕨', '西川口', '川口', '東十条', '王子', '上中里', '大井町', '大森', '蒲田', '桜木町', '関内', '石川町', '山手', '根岸', '磯子', '新子安', '新杉田', '洋光台', '港南台', '本郷台']);
 function isKeihinTohokuTrip(t) {
   if (!t || !t.lines || !t.lines.length) return false;
@@ -35,6 +36,7 @@ function lineIconFor(t) {
   if (!ATLAS || !t || !t.lines) return -1;
   if (isKeihinTohokuTrip(t)) { const v = ATLAS.line['根岸線']; if (v !== undefined) return v; }
   if (t.lines.length > 1) {
+    for (const ln of ICON_PRIORITY_LINES) { if (t.lines.includes(ln)) { const v = ATLAS.line[ln]; if (v !== undefined) return v; } }
     for (const ln of t.lines) { if (ICON_SKIP_LINES.has(ln)) continue; const v = ATLAS.line[ln]; if (v !== undefined) return v; }
     if (ATLAS.fallback !== undefined) return ATLAS.fallback;
   }
@@ -48,6 +50,7 @@ function trainIconIdx(t, lineName) {
   if (!ATLAS) return -1;
   if (t.nm && ATLAS.tokkyu[t.nm] !== undefined) return ATLAS.tokkyu[t.nm];
   if (isKeihinTohokuTrip(t)) { const v = ATLAS.line['根岸線']; if (v !== undefined) return v; }
+  if (t.lines.length > 1 && t.lines.every(ln => ICON_SKIP_LINES.has(ln)) && ATLAS.fallback !== undefined) return ATLAS.fallback;
   if (lineName && ATLAS.line[lineName] !== undefined) return ATLAS.line[lineName];
   const li = lineIconFor(t);
   if (li >= 0) return li;
@@ -125,6 +128,46 @@ for (const p3 of ['東北線', '東海道線', '山手線', '根岸線']) {
 }
 const yt = trips.find(x => x.tid === '4331');
 report(trainIconIdx(yt, '山手線') === 109, `山手线4331 trainIconIdx(p3=山手線) = ${trainIconIdx(yt, '山手線')} 期望109`);
+
+/* 7) 武藏野线直通: 直通列车车体为E231武藏野线涂装, 应优先武蔵野線图标(152) */
+const musa = [
+  ['1660', ['東北本線', '武蔵野線']],        // 府中本町→大宮
+  ['2058', ['東北本線', '京葉線', '武蔵野線']], // 大宮→海浜幕張
+  ['1257', ['東北本線', '中央本線', '武蔵野線']], // 大宮→八王子
+  ['3970', ['東海道本線', '横須賀線', '武蔵野線']], // 吉川美南→鎌倉
+];
+for (const [tid, lines] of musa) {
+  const t = trips.find(x => x.tid === tid);
+  const idx = lineIconFor(t);
+  report(idx === 152, `武藏野线直通 ${tid} (${lines.join(',')}) 图标=${idx} 期望152(武蔵野線E231)`);
+}
+/* 7b) 京葉線+武蔵野線 组合(西船橋⇔海浜幕張方向) 也应取152 */
+{
+  let cnt = 0, ok = true;
+  for (const t of trips) {
+    if (t.lines.length === 2 && t.lines.includes('京葉線') && t.lines.includes('武蔵野線')) {
+      cnt++;
+      if (lineIconFor(t) !== 152) ok = false;
+    }
+  }
+  report(ok && cnt > 0, `京葉線+武蔵野線 组合 ${cnt} 班次全部=152(武蔵野線E231)`);
+}
+/* 7c) 纯武蔵野線 / 東北本線+武蔵野線 不受影响 */
+{
+  let cnt = 0, ok = true;
+  for (const t of trips) {
+    if (t.lines.length === 1 && t.lines[0] === '武蔵野線') { cnt++; if (lineIconFor(t) !== 152) ok = false; }
+    if (t.lines.length === 2 && t.lines.includes('東北本線') && t.lines.includes('武蔵野線')) { if (lineIconFor(t) !== 152) ok = false; }
+  }
+  report(ok, `纯武蔵野線 ${cnt} 班次及東北本線+武蔵野線全部=152`);
+}
+
+/* 8) 详情卡: 上野東京線在東海道線段 p[3]='東海道線' 必须走纯干道兜底(489) 而非西日本W223(143) */
+for (const tid of ['1055', '2155', '5343']) {
+  const t = trips.find(x => x.tid === tid);
+  const idx = trainIconIdx(t, '東海道線');
+  report(idx === ATLAS.fallback, `上野東京線 ${tid} 详情卡 trainIconIdx(p3=東海道線) = ${idx} 期望兜底(${ATLAS.fallback}) 非143`);
+}
 
 console.log(fail === 0 ? '\n✅ 全部通过' : `\n❌ ${fail} 项失败`);
 process.exit(fail === 0 ? 0 : 1);

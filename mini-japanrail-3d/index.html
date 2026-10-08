@@ -3112,6 +3112,9 @@ function showTrainDetail(t) {
  * 修复: JK列车优先命中'根岸線'条目(=300, E233系京滨东北线天蓝车头);
  * 多线路直通列车跳过共享干道(山手線/東海道本線/東北本線)取第一个有图集的具体线路。 */
 const ICON_SKIP_LINES = new Set(['山手線', '東海道本線', '東北本線']);
+/* 直通列车车体所属系统线路: 武藏野线直通(京葉線/中央本線/横須賀線方向)列车车体均为E231武藏野线涂装,
+ * 优先用武藏野線图标而非直通对方线路 */
+const ICON_PRIORITY_LINES = new Set(['武蔵野線']);
 /* JK 专属停站(上野東京線/宇都宮線/高崎線等直通列车不停靠, 京滨东北线普通列车停靠):
  * 用于识别线路仅标[東海道本線,東北本線]的 JK 列车(大宮→蒲田 等, 不经根岸線) */
 const JK_ONLY_STA = new Set(['与野', '北浦和', '南浦和', '蕨', '西川口', '川口', '東十条', '王子', '上中里', '大井町', '大森', '蒲田', '桜木町', '関内', '石川町', '山手', '根岸', '磯子', '新子安', '新杉田', '洋光台', '港南台', '本郷台']);
@@ -3130,6 +3133,8 @@ function lineIconFor(t) {
   if (!ATLAS || !t || !t.lines) return -1;
   if (isKeihinTohokuTrip(t)) { const v = ATLAS.line['根岸線']; if (v !== undefined) return v; }
   if (t.lines.length > 1) {
+    /* 直通系统线路优先(武藏野线直通车体归属) */
+    for (const ln of ICON_PRIORITY_LINES) { if (t.lines.includes(ln)) { const v = ATLAS.line[ln]; if (v !== undefined) return v; } }
     for (const ln of t.lines) { if (ICON_SKIP_LINES.has(ln)) continue; const v = ATLAS.line[ln]; if (v !== undefined) return v; }
     /* 多线路但全是共享干道(上野東京線/宇都宮線等直通, 如 [東海道本線,東北本線]):
        不再取'東海道本線'的西日本W223(143, 灰+黄绿带, 与山手线E235视觉混淆),
@@ -3147,6 +3152,8 @@ function trainIconIdx(t, lineName) {
   if (!ATLAS) return -1;
   if (t.nm && ATLAS.tokkyu[t.nm] !== undefined) return ATLAS.tokkyu[t.nm];
   if (isKeihinTohokuTrip(t)) { const v = ATLAS.line['根岸線']; if (v !== undefined) return v; }
+  /* 纯共享干道直通(上野東京線等): 优先E217湘南色兜底, 防止 p[3]='東海道線' 绕过兜底取到西日本W223(143) */
+  if (t.lines.length > 1 && t.lines.every(ln => ICON_SKIP_LINES.has(ln)) && ATLAS.fallback !== undefined) return ATLAS.fallback;
   if (lineName && ATLAS.line[lineName] !== undefined) return ATLAS.line[lineName];
   const li = lineIconFor(t);
   if (li >= 0) return li;

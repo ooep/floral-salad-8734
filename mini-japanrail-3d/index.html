@@ -419,7 +419,6 @@ button { font-family:inherit; }
   <div class="badge" id="badge"><div class="b-it"><span class="b-lb" id="bLiveLb">在途</span><b id="bLive">-</b></div><div class="b-it"><span class="b-lb" id="bCountLb">今日</span><b id="bCount">-</b></div></div>
   <div class="a-btns">
     <button class="btn icon" id="btnSearch" title="搜索"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg></button>
-    <button class="btn" id="btnLive"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16zm0 3.2a4.8 4.8 0 1 1 0 9.6 4.8 4.8 0 0 1 0-9.6z"/></svg> <span id="tLive">实时</span></button>
     <button class="btn icon" id="btnProj" title="3D / 2D"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><ellipse cx="12" cy="12" rx="3.6" ry="8.5"/><path d="M3.8 12h16.4M12 3.5c2.2 2.6 2.2 14.4 0 17M12 3.5c-2.2 2.6-2.2 14.4 0 17"/></svg></button>
     <button class="btn icon" id="btnSide" title="Panel"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg></button>
   </div>
@@ -2849,11 +2848,10 @@ sliderEl.addEventListener('input', () => {
 });
 $('cNow').addEventListener('click', () => { doNow(); toast(T().liveMode); if (window.innerWidth <= 640) { clockEl.classList.remove('expanded'); syncFold(); } });
 $('btnPlay').addEventListener('click', () => { if (paused) doResume(); else doPause(); });
-$('btnLive').addEventListener('click', () => setLive(!liveOn));
 function setLive(on) {
   if (on && !dataReady) { toast(T().loading); return; }
   liveOn = on;
-  $('btnLive').classList.toggle('on', on);
+  if ($('btnLive')) $('btnLive').classList.toggle('on', on);
   clockEl.style.display = on ? 'block' : 'none';
   setStatus(on ? '' : (dataReady ? T().goLive : ''));
   if (on) { doNow(); refreshClockUI(curMin()); }
@@ -3687,7 +3685,7 @@ function applyLang() {
   const t = T();
   document.documentElement.lang = lang === 'zh' ? 'zh-Hans' : lang;
   $('brandT').textContent = t.title;
-  $('tLive').textContent = t.live;
+  if ($('tLive')) $('tLive').textContent = t.live;
   $('tSearch').textContent = t.searchT; $('tRoute').textContent = t.routeT; $('tFilter').textContent = t.filterT;
   $('tLegend').textContent = t.legendT; $('tDay').textContent = t.dayT; $('tSet').textContent = t.setT;
   $('tData').textContent = t.dataT; $('tHelp').textContent = t.helpT;

@@ -298,7 +298,7 @@ button { font-family:inherit; }
   color:var(--txt); font-size:12px; padding:7px 16px; border-radius:8px; z-index:40; display:none; box-shadow:var(--shadow); max-width:80vw;
   opacity:0; transition:opacity .18s ease; }
 #toast.show { opacity:1; }
-.foot { position:absolute; bottom:8px; right:12px; font-size:9.5px; color:var(--dim); z-index:5; pointer-events:none; text-shadow:0 1px 3px rgba(0,0,0,.6); opacity:.85; }
+.foot { position:absolute; bottom:8px; right:12px; font-size:9.5px; color:var(--dim); z-index:5; pointer-events:none; text-shadow:0 1px 3px rgba(0,0,0,.6); opacity:.85; max-width:min(560px,calc(100vw - 24px)); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .maplibregl-ctrl-bottom-right { display:none; }
 .maplibregl-ctrl-attrib { background:rgba(0,0,0,.35)!important; color:var(--dim)!important; font-size:9px!important; }
 .maplibregl-ctrl-attrib a { color:var(--dim)!important; }
@@ -464,6 +464,13 @@ button { font-family:inherit; }
         <div class="sw on" id="swGlow"><span id="tSw2">轨道光晕</span><span class="trk"></span></div>
         <div class="sw on" id="swSta"><span id="tSw3">车站点</span><span class="trk"></span></div>
         <div class="sw on" id="swBase"><span id="tSw4">底图瓦片</span><span class="trk"></span></div>
+        <div class="sec-t" id="tBase" style="margin-top:12px">底图源</div>
+        <div class="frow" id="baseSrcRow">
+          <button class="chip on" data-base="pale"><span id="bPale">淡色</span></button>
+          <button class="chip" data-base="std"><span id="bStd">标准</span></button>
+          <button class="chip" data-base="dark"><span id="bDark">深色</span></button>
+          <button class="chip" data-base="sat"><span id="bSat">卫星</span></button>
+        </div>
         <div class="sw on" id="swTrail"><span id="tSw5">列车光晕</span><span class="trk"></span></div>
         <div class="sw" id="swCopyBad"><span id="tSw6">复制异常车辆</span><span class="trk"></span></div>
         <div class="sec-t" id="tMode" style="margin-top:12px">列车显示</div>
@@ -640,6 +647,7 @@ const I18N = {
     filterT:'线路类型', legendT:'图例', dayT:'运行日', dayAuto:'自动', setT:'设置', dataT:'数据', helpT:'帮助',
     sw1:'车站标签', sw2:'轨道光晕', sw3:'车站点', sw4:'底图瓦片', sw5:'列车光晕', sw6:'复制异常车辆',
     modeT:'列车显示', mode3d:'3D', modeIcon:'图标',
+    baseT:'底图源', bPale:'淡色', bStd:'标准', bDark:'深色', bSat:'卫星',
     d1:'在途列车', d2:'今日班次', d3:'运行日', d4:'线路 / 车站', d5:'时刻表构建', d6:'帧率',
     now:'回到现在', station:'车站', line:'线路', stops:'站', transfers:'换乘', routeMile:'里程', routeNone:'未找到连通路径(请检查站名)',
     routeSame:'起终点相同', badStation:'找不到车站', h1:'拖动平移 · 滚轮缩放 · 右键旋转/倾斜', h2:'点击列车 = 详情 + 相机跟随 · 点空白取消',
@@ -659,6 +667,7 @@ const I18N = {
     filterT:'路線種別', legendT:'凡例', dayT:'運行日', dayAuto:'自動', setT:'設定', dataT:'データ', helpT:'ヘルプ',
     sw1:'駅ラベル', sw2:'軌道グロー', sw3:'駅ドット', sw4:'背景タイル', sw5:'列車グロー', sw6:'異常列車コピー',
     modeT:'列車表示', mode3d:'3D', modeIcon:'アイコン',
+    baseT:'ベースマップ', bPale:'淡色', bStd:'標準', bDark:'ダーク', bSat:'衛星',
     d1:'運行中列車', d2:'本日列車', d3:'運行日', d4:'路線 / 駅', d5:'時刻表構築', d6:'フレーム率',
     now:'現在に戻る', station:'駅', line:'路線', stops:'駅', transfers:'乗換', routeMile:'距離', routeNone:'連絡経路なし(駅名確認)',
     routeSame:'同一点', badStation:'駅が見つかりません', h1:'ドラッグ移動 · ホイール拡縮 · 右回転/傾き', h2:'列車クリック = 詳細 + 追跡 · 空白で解除',
@@ -678,6 +687,7 @@ const I18N = {
     filterT:'Line types', legendT:'Legend', dayT:'Service day', dayAuto:'Auto', setT:'Settings', dataT:'Data', helpT:'Help',
     sw1:'Station labels', sw2:'Track glow', sw3:'Station dots', sw4:'Basemap tiles', sw5:'Train glow', sw6:'Copy off-rail trains',
     modeT:'Train display', mode3d:'3D', modeIcon:'Icon',
+    baseT:'Basemap', bPale:'Pale', bStd:'Standard', bDark:'Dark', bSat:'Satellite',
     d1:'Active trains', d2:'Trips today', d3:'Service day', d4:'Lines / Stations', d5:'Timetable built', d6:'FPS',
     now:'Now', station:'Station', line:'Line', stops:'stops', transfers:'transfers', routeMile:'Distance', routeNone:'No connected route (check names)',
     routeSame:'Same stations', badStation:'Station not found', h1:'Drag to pan · Scroll to zoom · Right-drag rotate/tilt', h2:'Click train = detail + follow · Blank = cancel',
@@ -2445,6 +2455,32 @@ function updateTrains(M) {
 }
 
 /* ---------------- 地图初始化 ---------------- */
+/* 底图源:dim=1 时应用压暗去饱和蒙版(突出轨道/列车);卫星(dim=0)保持原色高清 */
+const BASEMAPS = {
+  pale: { tiles: ['https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png'], attr: '国土地理院', dim: 1, sat: -0.85, bmax: 0.34, bmin: 0.02, ctr: 0.12, op: 0.96 },
+  std:  { tiles: ['https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png'], attr: '国土地理院', dim: 1, sat: -0.8,  bmax: 0.42, bmin: 0.05, ctr: 0.1,  op: 0.95 },
+  dark: { tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}'], attr: 'Esri / OpenStreetMap', dim: 1, sat: -0.3, bmax: 0.7, bmin: 0.15, ctr: 0.08, op: 0.94 },
+  sat:  { tiles: ['https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg'], attr: '国土地理院 空中写真', dim: 0 },
+};
+let baseKey = localStorage.getItem('mjr3d_base') || 'pale';
+if (!BASEMAPS[baseKey]) baseKey = 'pale';
+function setBasemap(key) {
+  const bm = BASEMAPS[key]; if (!bm) return;
+  baseKey = key;
+  localStorage.setItem('mjr3d_base', key);
+  const src = map.getSource('basemap');
+  if (src && src.setTiles) src.setTiles(bm.tiles); /* 只换瓦片源,不重建图层/自定义列车层 */
+  const paint = bm.dim
+    ? { 'raster-saturation': bm.sat, 'raster-brightness-max': bm.bmax, 'raster-brightness-min': bm.bmin, 'raster-contrast': bm.ctr, 'raster-opacity': bm.op }
+    : { 'raster-saturation': 0, 'raster-brightness-max': 1.0, 'raster-brightness-min': 0.0, 'raster-contrast': 0.12, 'raster-opacity': 1.0 };
+  for (const k in paint) { try { map.setPaintProperty('basemap', k, paint[k]); } catch (e) {} }
+  document.querySelectorAll('#baseSrcRow .chip').forEach(c => c.classList.toggle('on', c.dataset.base === key));
+  updateFootNote();
+  stateHash();
+}
+function updateFootNote() {
+  $('footNote').textContent = T().h6 + ' · ' + BASEMAPS[baseKey].attr + ' / OpenFreeMap · ' + T().sub;
+}
 function baseStyle() {
   return {
     version: 8,
@@ -2504,7 +2540,7 @@ function parseHashState() {
 function stateHash() {
   try {
     const c = map.getCenter();
-    const h = { c: [+c.lng.toFixed(4), +c.lat.toFixed(4)], z: +map.getZoom().toFixed(2), p: +map.getPitch().toFixed(1), b: +map.getBearing().toFixed(1), j: map.getProjection().type, l: lang, m: localStorage.getItem('mjr3d_theme') || 'auto', v: liveOn ? 1 : 0 };
+    const h = { c: [+c.lng.toFixed(4), +c.lat.toFixed(4)], z: +map.getZoom().toFixed(2), p: +map.getPitch().toFixed(1), b: +map.getBearing().toFixed(1), j: map.getProjection().type, l: lang, m: localStorage.getItem('mjr3d_theme') || 'auto', v: liveOn ? 1 : 0, s: baseKey };
     location.hash = 'mjr3d=' + btoa(unescape(encodeURIComponent(JSON.stringify(h))));
     lastWrittenHash = location.hash;
   } catch (e) {}
@@ -2515,6 +2551,7 @@ function applyUrlState() {
   if (h.m) { localStorage.setItem('mjr3d_theme', h.m); applyThemeMode(); }
   if (h.c && h.z && map) { try { map.jumpTo({ center: [h.c[0], h.c[1]], zoom: h.z, pitch: h.p || 0, bearing: h.b || 0 }); } catch (e) {} }
   if (h.j && map) { try { map.setProjection({ type: h.j }); } catch (e) {} }
+  if (h.b && BASEMAPS[h.b]) baseKey = h.b;
   if (h.v && dataReady) setLive(true);
 }
 async function boot() {
@@ -2580,6 +2617,7 @@ async function boot() {
     setLoadMsg('✓ ' + T().loaded);
     setTimeout(() => { $('loader').classList.add('hide'); }, 350);
     applyUrlState();
+    setBasemap(baseKey); /* 应用 URL / localStorage 记忆的底图源(含蒙版开关) */
     setStatus(T().goLive);
     if (!liveOn) setTimeout(() => { if (!liveOn) { setLive(true); } }, 600);
     loadTrainAtlas(); /* 图标模式图集:异步加载,不阻塞主流程 */
@@ -3511,6 +3549,8 @@ document.querySelectorAll('#themeRow .chip').forEach(c => c.addEventListener('cl
 }));
 mq.addEventListener('change', applyThemeMode);
 applyThemeMode();
+/* 底图源切换 */
+document.querySelectorAll('#baseSrcRow .chip').forEach(c => c.addEventListener('click', () => setBasemap(c.dataset.base)));
 $('brand').addEventListener('click', () => map.flyTo({ center: [137.2, 36.8], zoom: 3.4, pitch: 0, bearing: 0, duration: 1500 }));
 document.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT') { if (e.key === 'Escape') e.target.blur(); return; }
@@ -3535,9 +3575,11 @@ function applyLang() {
   $('dayAuto').textContent = t.dayAuto;
   $('tSw1').textContent = t.sw1; $('tSw2').textContent = t.sw2; $('tSw3').textContent = t.sw3; $('tSw4').textContent = t.sw4; $('tSw5').textContent = t.sw5; $('tSw6').textContent = t.sw6;
   $('tMode').textContent = t.modeT; $('tMode3d').textContent = t.mode3d; $('tModeIcon').textContent = t.modeIcon;
+  $('tBase').textContent = t.baseT;
+  $('bPale').textContent = t.bPale; $('bStd').textContent = t.bStd; $('bDark').textContent = t.bDark; $('bSat').textContent = t.bSat;
   $('tD4').textContent = t.d4; $('tD5').textContent = t.d5; $('tD6').textContent = t.d6;
   $('cNow').textContent = t.now;
-  $('footNote').textContent = t.h6 + ' · 国土地理院 / OpenFreeMap · ' + t.sub;
+  updateFootNote();
   $('lTitle').textContent = t.title;
   $('lRetry').innerHTML = ICO.retry + ' ' + t.retry;
   buildKindRow();

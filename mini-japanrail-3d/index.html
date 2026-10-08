@@ -175,6 +175,8 @@ button { font-family:inherit; }
 .stat:hover { border-color:var(--acc-border); }
 .stat .s-lb { font-size:10px; color:var(--dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .stat .s-v { font-size:15px; font-weight:700; font-variant-numeric:tabular-nums; color:var(--txt); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.stat .s-v.pulse, .badge b.pulse { animation:statpulse .8s ease-out; }
+@keyframes statpulse { 0% { color:var(--acc); } 100% { color:var(--txt); } }
 
 /* 搜索图标前缀 */
 .search-wrap { position:relative; }
@@ -209,6 +211,7 @@ button { font-family:inherit; }
   border-radius:6px; padding:2px 8px; font-size:11px; font-weight:600; font-variant-numeric:tabular-nums; color:var(--txt);
   pointer-events:none; opacity:0; transition:opacity .12s; white-space:nowrap; z-index:1; }
 #cBub.show { opacity:1; }
+#clock .tk { display:flex; justify-content:space-between; font-size:9px; color:var(--dim); opacity:.65; margin-top:2px; font-variant-numeric:tabular-nums; pointer-events:none; }
 #clock input[type=range] { flex:1; -webkit-appearance:none; appearance:none; height:3px; border-radius:2px; background:rgba(120,140,180,.28); outline:none; }
 #clock input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--acc); border:2px solid var(--panel); cursor:pointer; }
 #clock .now { font-size:11px; color:var(--acc); cursor:pointer; font-weight:600; white-space:nowrap; border-radius:5px; padding:3px 6px; }
@@ -482,6 +485,7 @@ button { font-family:inherit; }
     <input type="range" id="cSlider" min="0" max="1439" value="0" step="1">
     <span class="now" id="cNow">回到现在</span>
   </div>
+  <div class="tk"><span>0:00</span><span>24:00</span></div>
 </div>
 
 <div id="detail"></div>
@@ -2627,7 +2631,7 @@ function startLoop() {
       return;
     }
     const n = updateTrains(M);
-    if (n !== lastActiveN) { $('dActive').textContent = n.toLocaleString(); lastActiveN = n; $('bLive').textContent = n.toLocaleString(); }
+    if (n !== lastActiveN) { $('dActive').textContent = n.toLocaleString(); lastActiveN = n; $('bLive').textContent = n.toLocaleString(); pulseStat($('dActive')); pulseStat($('bLive')); }
     if (Math.floor(now / 1000) !== lastFpsSec) { $('dFps').textContent = Math.round(fps); lastFpsSec = Math.floor(now / 1000); }
     if (followTrip) { tickFollow(M); updateDetailLive(followTrip, null, M); }
     else if (liveDetailTrip) {
@@ -2660,6 +2664,7 @@ function refreshClockUI(M) {
   const label = DAY_LABEL[effBit];
   const ds = (clockMode === 'live' ? '● ' : '⏵ ') + (label ? label[lang] : '') + ' ' + pad(p.m) + '/' + pad(p.d);
   if (ds !== lastDayStr) { cDayEl.textContent = ds; lastDayStr = ds; }
+  cDayEl.title = (label ? label[lang] : '') + ' · ' + T().dayT;
   const sv = Math.floor(M);
   if (!sliderDragging && clockMode === 'live' && sv !== lastSliderVal) { sliderEl.value = sv; lastSliderVal = sv; }
   const frac = Math.min(1, Math.max(0, parseFloat(sliderEl.value) / 1439));
@@ -2689,6 +2694,7 @@ function setLive(on) {
   stateHash();
 }
 function syncLiveDot() { const el = $('cDot'); if (el) el.classList.toggle('on', clockMode === 'live' && !paused); }
+function pulseStat(el) { el.classList.remove('pulse'); void el.offsetWidth; el.classList.add('pulse'); }
 document.querySelectorAll('.spb').forEach(b => b.addEventListener('click', () => {
   speed = parseFloat(b.dataset.sp);
   document.querySelectorAll('.spb').forEach(x => x.classList.toggle('on', x === b));
@@ -3164,6 +3170,7 @@ function runSearch(q) {
   sugEl.querySelectorAll('.sug-it').forEach((it, i) => it.addEventListener('click', () => {
     const nm = it.dataset.name;
     sugEl.style.display = 'none'; searchEl.value = ''; sugIdx = -1;
+    if (!sideEl.classList.contains('collapsed')) { sideEl.classList.add('collapsed'); $('btnSide').innerHTML = ICO.menu; }
     if (it.dataset.type === 'sta') {
       const c = stationCoord.get(normName(nm));
       if (!c) return;
@@ -3456,7 +3463,8 @@ function buildLegend() {
 function buildHelp() {
   const t = T();
   const extra = { zh: '部分郊区线路暂无精细轨道数据,列车沿直线插值', ja: '一部の郊外路線には軌道データがなく直線補間', en: 'Some rural lines have no track geometry — straight-line interpolation' }[lang];
-  $('helpBox').innerHTML = '<p>' + t.h1 + '</p><p>' + t.h2 + '</p><p>' + t.h3 + '</p><p>' + t.h4 + '</p><p>' + t.h5 + '</p><p>' + t.h6 + '</p><p>' + extra + '</p>';
+  const short = { zh: '快捷键：空格 播放/暂停 · ↑↓ + Enter 选择搜索项 · Esc 关闭', ja: 'ショートカット：Space 再生/一時停止 · ↑↓ + Enter 検索選択 · Esc 閉じる', en: 'Shortcuts: Space play/pause · ↑↓ + Enter pick result · Esc close' }[lang];
+  $('helpBox').innerHTML = '<p>' + t.h1 + '</p><p>' + t.h2 + '</p><p>' + t.h3 + '</p><p>' + t.h4 + '</p><p>' + t.h5 + '</p><p>' + t.h6 + '</p><p>' + short + '</p><p>' + extra + '</p>';
 }
 
 /* ---------------- 启动 ---------------- */

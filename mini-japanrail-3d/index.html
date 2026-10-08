@@ -694,6 +694,10 @@ function restoreIndexes(c) {
   segGrid = c.segGrid; weldInfo = c.weldInfo; seqCoordsCache = c.seqCoordsCache; seqIdx = c.seqIdx;
   routeNodes = c.routeNodes; routeGraph = c.routeGraph; stationLinesAt = c.stationLinesAt;
   searchIndex = c.searchIndex; lineIndex = c.lineIndex; lineColor = c.lineColor; lineKind = c.lineKind;
+  /* 缓存恢复路径也要刷新线路/车站统计(否则数据面板保持 '-') */
+  if (lineIndex && searchIndex && document.getElementById('dNet')) {
+    $('dNet').textContent = lineIndex.length.toLocaleString() + ' / ' + searchIndex.length.toLocaleString();
+  }
 }
 
 const TRANSFER_KM = 1.6;
@@ -1901,8 +1905,19 @@ function pairKm(t, i) {
   let v = pairLenCache.get(k);
   if (v === undefined) {
     const e = segIndex.get(k);
-    if (e) v = pickSeg(t, t.jasN[i], t.jasN[i+1]).len;
-    else {
+    if (e) {
+      /* pickSeg 对纯新干线车(无并行在来线段候选)返回 null → 不能直接取 .len,走官方 lid 几何或坐标兜底 */
+      const pe = pickSeg(t, t.jasN[i], t.jasN[i+1]);
+      if (pe) v = pe.len;
+      else {
+        const op = officialPath(t, i);
+        if (op) v = op.len;
+        else {
+          const ca = t.stopC[i], cb = t.stopC[i+1];
+          v = (ca && cb) ? Math.hypot((cb[0]-ca[0]) * Math.cos((ca[1]+cb[1])/2 * Math.PI/180) * 111.32, (cb[1]-ca[1]) * 110.57) : 3;
+        }
+      }
+    } else {
       const ca = t.stopC[i], cb = t.stopC[i+1];
       v = (ca && cb) ? Math.hypot((cb[0]-ca[0]) * Math.cos((ca[1]+cb[1])/2 * Math.PI/180) * 111.32, (cb[1]-ca[1]) * 110.57) : 3;
     }

@@ -24,6 +24,7 @@
   --glass-hi:rgba(255,255,255,.34);
   --glass-lo:rgba(0,0,0,.16);
   --glass-sh:0 6px 20px rgba(0,0,0,.30), 0 2px 6px rgba(0,0,0,.22);
+  --glass-solid:rgb(25,32,45);
   --dock:48px;
 }
 :root[data-theme="light"] {
@@ -42,6 +43,7 @@
   --glass-hi:rgba(255,255,255,.95);
   --glass-lo:rgba(15,23,42,.06);
   --glass-sh:0 6px 18px rgba(15,23,42,.14), 0 2px 5px rgba(15,23,42,.08);
+  --glass-solid:rgb(247,249,252);
 }
 :root[data-theme="light"] .tbox { background:var(--panel2); color:var(--txt); }
 :root[data-theme="light"] .btn { color:var(--txt); }
@@ -79,8 +81,9 @@ button { font-family:inherit; }
   backdrop-filter:blur(24px) saturate(1.8); -webkit-backdrop-filter:blur(24px) saturate(1.8);
   box-shadow:inset 0 1px 1px var(--glass-hi), inset 0 -1px 2px var(--glass-lo), var(--glass-sh);
   transition:background .18s,border-color .18s,transform .08s; white-space:nowrap; -webkit-tap-highlight-color:transparent; }
-#brand:hover { background:var(--glass-2); }
+@media (hover:hover) { #brand:hover { background:var(--glass-2); } }
 #brand:active { transform:scale(.97); }
+#brand:focus-visible { outline:2px solid var(--acc); outline-offset:2px; }
 #brand .lg { position:relative; width:26px; height:26px; border-radius:50%; background:var(--acc); color:#fff; display:flex; align-items:center; justify-content:center; flex:none;
   box-shadow:0 2px 8px var(--acc-soft), inset 0 1px 1px rgba(255,255,255,.45); overflow:hidden; }
 #brand .lg::after { content:''; position:absolute; inset:0; border-radius:50%; background:linear-gradient(160deg,rgba(255,255,255,.5),rgba(255,255,255,0) 52%); }
@@ -95,9 +98,7 @@ button { font-family:inherit; }
 
 /* ---------- 底部液态玻璃 Dock ---------- */
 #dock { position:absolute; left:0; right:0; bottom:12px; height:var(--dock); z-index:9; pointer-events:none; transition:opacity .22s ease, transform .22s ease; }
-#dockSide, #dockProj { position:absolute; bottom:0; pointer-events:auto; }
-#dockSide { left:12px; }
-#dockProj { right:12px; }
+#dockSide { position:absolute; bottom:0; left:12px; pointer-events:auto; }
 #dockCenter { position:absolute; left:50%; bottom:0; transform:translateX(-50%); display:flex; align-items:flex-end; gap:8px; pointer-events:none; max-width:calc(100vw - 132px); }
 #dockCenter > * { pointer-events:auto; }
 
@@ -111,8 +112,9 @@ button { font-family:inherit; }
 .gcircle::before { content:''; position:absolute; inset:0; border-radius:50%;
   background:linear-gradient(165deg, rgba(255,255,255,.38) 0%, rgba(255,255,255,.05) 24%, rgba(255,255,255,0) 48%);
   pointer-events:none; }
-.gcircle:hover { background:var(--glass-2); border-color:var(--glass-hi); }
+@media (hover:hover) { .gcircle:hover { background:var(--glass-2); border-color:var(--glass-hi); } }
 .gcircle:active { transform:scale(.92); }
+.gcircle:focus-visible { outline:2px solid var(--acc); outline-offset:2px; }
 .gcircle.on { background:var(--acc); border-color:var(--acc); color:#fff; box-shadow:0 6px 18px var(--acc-soft), inset 0 1px 1px rgba(255,255,255,.45); }
 .gcircle.on::before { background:linear-gradient(165deg, rgba(255,255,255,.35), rgba(255,255,255,0) 50%); }
 .gcircle svg { position:relative; z-index:1; }
@@ -233,18 +235,18 @@ button { font-family:inherit; }
 #dayRow { display:flex; gap:5px; }
 
 /* ---------- 底部时间胶囊(液态玻璃) ---------- */
-#clock { position:relative; width:min(470px,calc(100vw - 20px));
+#clock { position:relative; width:470px; max-width:100%; min-width:0;
   background:var(--glass); border:1px solid var(--glass-edge); border-radius:22px;
   backdrop-filter:blur(26px) saturate(1.8); -webkit-backdrop-filter:blur(26px) saturate(1.8);
   box-shadow:inset 0 1px 1.5px var(--glass-hi), inset 0 -2px 4px var(--glass-lo), var(--glass-sh);
   z-index:7; padding:7px 12px 8px; display:none; }
 #clock .r1 { display:flex; align-items:center; gap:8px; }
-#clock #btnPlay { position:relative; width:34px; aspect-ratio:1; flex:none; border-radius:50%; padding:0; background:var(--acc); border:0; color:#fff;
+#clock #btnPlay { position:relative; width:34px; aspect-ratio:1; flex:none; border-radius:50%; padding:0; background:var(--acc); border:0; color:#fff; cursor:pointer;
   box-shadow:0 3px 12px var(--acc-soft), inset 0 1px 1px rgba(255,255,255,.5); display:flex; align-items:center; justify-content:center; overflow:hidden; }
 #clock #btnPlay::after { content:''; position:absolute; inset:0; border-radius:50%; background:linear-gradient(160deg,rgba(255,255,255,.42),rgba(255,255,255,0) 55%); }
 #clock #btnPlay svg { position:relative; z-index:1; }
 #clock #btnPlay:hover { filter:brightness(1.12); }
-#clock #foldBtn { position:relative; width:32px; aspect-ratio:1; flex:none; border-radius:50%; padding:0; background:var(--glass-2); border:1px solid var(--glass-edge); color:var(--dim); display:flex; align-items:center; justify-content:center; box-sizing:border-box; overflow:hidden; }
+#clock #foldBtn { position:relative; width:32px; aspect-ratio:1; flex:none; border-radius:50%; padding:0; background:var(--glass-2); border:1px solid var(--glass-edge); color:var(--dim); cursor:pointer; display:flex; align-items:center; justify-content:center; box-sizing:border-box; overflow:hidden; }
 #clock #foldBtn::before { content:''; position:absolute; inset:0; border-radius:50%; background:linear-gradient(165deg,rgba(255,255,255,.3),rgba(255,255,255,0) 50%); }
 #clock #foldBtn svg { position:relative; z-index:1; }
 #clock #foldBtn:hover { color:var(--txt); border-color:var(--glass-hi); }
@@ -259,7 +261,7 @@ button { font-family:inherit; }
 .spb:hover { border-color:var(--glass-hi); color:var(--txt); }
 .spb.on { background:var(--acc); color:#fff; border-color:var(--acc); }
 .sp-main { margin-left:auto; }
-#clock .fold { display:none; }
+#clock #foldBtn.fold { display:none; }
 #clock .r2 { position:relative; display:flex; align-items:center; gap:8px; margin-top:6px; padding:0 2px; }
 .tk-l, .tk-r { font-size:9px; color:var(--dim); opacity:.6; font-variant-numeric:tabular-nums; pointer-events:none; flex:none; }
 #cBub { position:absolute; top:-25px; transform:translateX(-50%); background:var(--panel2); border:1px solid var(--glass-edge);
@@ -351,7 +353,6 @@ button { font-family:inherit; }
   opacity:0; transition:opacity .18s ease; }
 #toast.show { opacity:1; }
 .foot { position:absolute; bottom:68px; right:12px; font-size:9px; color:var(--dim); z-index:5; pointer-events:none; text-shadow:0 1px 3px rgba(0,0,0,.6); opacity:.75; max-width:min(260px,calc(100vw - 24px)); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:right; }
-.maplibregl-ctrl-bottom-right { display:none; }
 .maplibregl-ctrl-attrib { background:rgba(0,0,0,.35)!important; color:var(--dim)!important; font-size:8.5px!important; padding:1px 6px!important; border-radius:6px 0 0 0!important; }
 .maplibregl-ctrl-attrib a { color:var(--dim)!important; }
 
@@ -369,13 +370,12 @@ button { font-family:inherit; }
   /* 底部 Dock */
   #dock { bottom:10px; }
   #dockSide { left:10px; }
-  #dockProj { right:10px; }
   #dockCenter { gap:7px; max-width:calc(100vw - 124px); }
   /* 时间胶囊:折叠药丸 */
   #clock { width:max-content; max-width:100%; padding:7px 10px; border-radius:999px; }
   #clock .r2, #clock .sp-main, #clock .daychip { display:none; }
   #clock .ldot { display:none; }
-  #clock .fold { display:flex; }
+  #clock #foldBtn.fold { display:flex; }
   #clock .t { font-size:15px; min-width:0; }
   #clock.expanded .r2, #clock.expanded .sp-main, #clock.expanded .daychip { display:flex; }
   #clock #btnPlay, #clock #foldBtn { flex:none !important; width:32px !important; min-width:32px !important; aspect-ratio:1 !important; border-radius:50% !important; padding:0 !important; box-sizing:border-box !important; }
@@ -383,7 +383,7 @@ button { font-family:inherit; }
   #clock.expanded .r1 { gap:6px; }
   #clock.expanded #foldBtn { width:28px !important; min-width:28px !important; }
   /* 展开时间滑块时隐藏两侧圆按钮与搜索,让位全宽 */
-  #dock:has(#clock.expanded) #dockSide, #dock:has(#clock.expanded) #dockProj, #dock:has(#clock.expanded) #btnSearch { opacity:0; pointer-events:none; transform:scale(.85); }
+  #dock:has(#clock.expanded) #dockSide, #dock:has(#clock.expanded) #btnSearch { opacity:0; pointer-events:none; transform:scale(.85); }
   #dock:has(#clock.expanded) #dockCenter { max-width:calc(100vw - 16px); width:calc(100vw - 16px); }
   /* 详情卡打开时整体隐藏底部 Dock */
   #dock.hide { opacity:0; pointer-events:none; transform:translateY(14px); }
@@ -401,6 +401,29 @@ button { font-family:inherit; }
   .sw .trk::after { width:15px; height:15px; }
   .sw.on .trk::after { left:17px; }
 }
+
+/* 极窄屏(≤380px)进一步收紧,给时间胶囊留出呼吸空间 */
+@media (max-width:380px) {
+  :root { --dock:44px; }
+  #dockSide { left:8px; }
+  #dockCenter { gap:6px; max-width:calc(100vw - 108px); }
+  #clock { padding:6px 8px; }
+  #clock .t { font-size:14px; }
+  #clock #btnPlay, #clock #foldBtn { width:30px !important; min-width:30px !important; }
+}
+
+/* 可访问性:尊重系统"降低透明度",液态玻璃回退为不透明实底(:not(.on) 保留激活蓝) */
+@media (prefers-reduced-transparency: reduce) {
+  #brand, .gcircle:not(.on), #clock, #side, #detail, #sheet, #clock #foldBtn, .spb:not(.on), #clock .daychip {
+    background:var(--glass-solid) !important;
+    backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
+  }
+}
+/* 可访问性:尊重系统"减弱动态效果",关闭脉冲与过渡 */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; }
+}
+
 /* ============ 车站底部抽屉(时刻表) ============ */
 #sheetMask { position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:20; display:none; }
 #sheet { position:fixed; left:50%; bottom:0; transform:translate(-50%,102%); width:min(520px,100vw); height:76vh; background:linear-gradient(180deg,var(--panel),var(--panel2)); border:1px solid var(--line); border-bottom:0; border-radius:18px 18px 0 0; box-shadow:0 -8px 30px rgba(0,0,0,.35); z-index:21; display:flex; flex-direction:column; transition:transform .32s cubic-bezier(.2,.8,.2,1); }
@@ -461,7 +484,7 @@ button { font-family:inherit; }
 <div id="map"></div>
 
 <div id="topHud">
-  <div id="brand">
+  <div id="brand" role="button" tabindex="0" aria-label="回到全国视图">
     <span class="lg"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15h16M5 15l1.5-6A2 2 0 0 1 8.4 7.5h7.2a2 2 0 0 1 1.9 1.5L19 15M7 18.5h.01M17 18.5h.01"/><circle cx="8" cy="18.5" r="1"/><circle cx="16" cy="18.5" r="1"/></svg></span>
     <b id="brandT">Mini JapanRail 3D</b>
     <span class="hud-sep"></span>
@@ -582,14 +605,14 @@ button { font-family:inherit; }
 <div id="clock">
   <div class="r1">
     <span class="ldot" id="cDot"></span>
-    <button class="btn icon" id="btnPlay"><svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M7 5.5v13a.8.8 0 0 0 1.22.68l10.6-6.5a.8.8 0 0 0 0-1.36L8.22 4.82A.8.8 0 0 0 7 5.5z"/></svg></button>
+    <button id="btnPlay" type="button" aria-label="播放或暂停"><svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M7 5.5v13a.8.8 0 0 0 1.22.68l10.6-6.5a.8.8 0 0 0 0-1.36L8.22 4.82A.8.8 0 0 0 7 5.5z"/></svg></button>
     <div class="ct">
       <div class="t" id="cTime">--:--:--</div>
       <div class="tz" id="cTz">JST</div>
     </div>
     <div class="daychip" id="cDay">-</div>
     <button class="spb sp-main" id="spMain">1×</button>
-    <button class="btn icon fold" id="foldBtn"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
+    <button class="fold" id="foldBtn" type="button" aria-label="展开时间滑块"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
   </div>
   <div class="r2">
     <span class="tk-l" id="tkL">0:00</span>
@@ -600,9 +623,6 @@ button { font-family:inherit; }
   </div>
 </div>
     <button class="gcircle" id="btnSearch" type="button" title="搜索" aria-label="搜索"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg></button>
-  </div>
-  <div id="dockProj">
-    <button class="gcircle" id="btnProj" type="button" title="3D / 2D" aria-label="3D / 2D"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><ellipse cx="12" cy="12" rx="3.6" ry="8.5"/><path d="M3.8 12h16.4M12 3.5c2.2 2.6 2.2 14.4 0 17M12 3.5c-2.2 2.6-2.2 14.4 0 17"/></svg></button>
   </div>
 </div>
 
@@ -854,8 +874,6 @@ function throttle(fn, ms) { let last = 0, timer; return function(...a) { const n
 const ICO = {
   play: '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M7 5.5v13a.8.8 0 0 0 1.22.68l10.6-6.5a.8.8 0 0 0 0-1.36L8.22 4.82A.8.8 0 0 0 7 5.5z"/></svg>',
   pause: '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M7.5 5h3a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm6 0h3a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z"/></svg>',
-  globe: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><ellipse cx="12" cy="12" rx="3.6" ry="8.5"/><path d="M3.8 12h16.4M12 3.5c2.2 2.6 2.2 14.4 0 17M12 3.5c-2.2 2.6-2.2 14.4 0 17"/></svg>',
-  map2d: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="2"/><path d="M3.5 9h17M9 3.5v17"/></svg>',
   menu: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg>',
   close: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
   loc: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3"/></svg>',
@@ -2659,8 +2677,7 @@ function initMap() {
     canvasContextAttributes: { antialias: true, preserveDrawingBuffer: false },
     attributionControl: false,
   });
-  /* 液态玻璃改版:移除左下角缩放/指南针 NavigationControl,缩放改由滚轮/双指手势完成 */
-  map.addControl(new maplibregl.ScaleControl({ maxWidth: 110, unit: 'metric' }), 'bottom-right');
+  /* 液态玻璃改版:移除左下角缩放/指南针 NavigationControl 与比例尺(原比例尺容器被隐藏从未显示),缩放改由滚轮/双指手势完成,底部四角留给 Dock */
   let stateSaveT = 0;
   map.on('moveend', () => { clearTimeout(stateSaveT); stateSaveT = setTimeout(stateHash, 700); });
   map.on('style.load', () => { try { map.setProjection({ type: 'globe' }); } catch (e) { console.warn('globe unavailable', e); } });
@@ -3686,14 +3703,6 @@ $('swCopyBad').addEventListener('click', () => {
     navigator.clipboard.writeText(s).then(done).catch(() => { fallbackCopy(s); done(); });
   } else { fallbackCopy(s); done(); }
 });
-$('btnProj').addEventListener('click', () => {
-  const cur = map.getProjection().type;
-  const to = cur === 'globe' ? 'mercator' : 'globe';
-  try { map.setProjection({ type: to }); } catch (e) {}
-  $('btnProj').innerHTML = to === 'globe' ? ICO.globe : ICO.map2d;
-  map.easeTo({ pitch: to === 'globe' ? 45 : 0, duration: 900 });
-  stateHash();
-});
 /* 语言切换(设置面板chips) */
 document.querySelectorAll('#langRow .chip').forEach(c => c.addEventListener('click', () => {
   lang = c.dataset.lang; localStorage.setItem('mjr3d_lang', lang);
@@ -3736,7 +3745,8 @@ mq.addEventListener('change', applyThemeMode);
 applyThemeMode();
 /* 底图源切换 */
 document.querySelectorAll('#baseSrcRow .chip').forEach(c => c.addEventListener('click', () => setBasemap(c.dataset.base)));
-$('brand').addEventListener('click', () => map.flyTo({ center: [137.2, 36.8], zoom: 3.4, pitch: 0, bearing: 0, duration: 1500 }));
+$('brand').addEventListener('click', () => map.flyTo({ center: [137.2, 36.8], zoom: 3.4, pitch: 0, bearing:0, duration: 1500 }));
+$('brand').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('brand').click(); } });
 document.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT') { if (e.key === 'Escape') e.target.blur(); return; }
   if (e.code === 'Space' && dataReady) { e.preventDefault(); if (paused) doResume(); else doPause(); }

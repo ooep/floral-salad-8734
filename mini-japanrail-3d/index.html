@@ -190,6 +190,7 @@ button { font-family:inherit; }
 .sug-it:hover, .sug-it:focus-visible, .sug-it.hl-it { background:var(--acc-soft); outline:none; }
 .sug-it.hl-it { box-shadow:inset 2px 0 0 var(--acc); }
 .sug-it .k { color:var(--dim); font-size:10px; align-self:center; flex:none; }
+.sug-it .langk { font-size:8.5px; font-weight:700; letter-spacing:.4px; padding:1px 5px; border-radius:5px; background:var(--acc-soft); color:var(--acc); flex:none; }
 .sug-it .hl { color:var(--acc); font-weight:700; }
 .sug-grp { padding:6px 12px 3px; font-size:10px; font-weight:700; letter-spacing:.6px; color:var(--dim); text-transform:uppercase; }
 .sug-empty { padding:10px 12px; font-size:12px; color:var(--dim); }
@@ -861,7 +862,7 @@ const HOLIDAYS = (() => {
 const I18N = {
   zh: {
     title:'Mini JapanRail 3D', sub:'全日本铁路实时运行地图', loading:'准备中…', live:'实时', follow:'跟随中', followStop:'取消跟随',
-    searchT:'搜索', searchPh:'车站 / 线路(日文名)…', routeT:'路线搜索', routeFrom:'起点站', routeTo:'终点站',
+    searchT:'搜索', searchPh:'车站 / 线路(日·中·EN)…', routeT:'路线搜索', routeFrom:'起点站', routeTo:'终点站',
     tabRoute:'路线', aSearchPh:'搜索车站 / 线路…', badgeLive:'在途', badgeToday:'今日', noMatch:'无匹配结果',
     filterT:'线路类型', legendT:'图例', dayT:'运行日', dayAuto:'自动', setT:'设置', dataT:'数据', helpT:'帮助',
     sw1:'车站标签', sw2:'轨道光晕', sw3:'车站点', sw4:'底图瓦片', sw5:'列车光晕', sw6:'复制异常车辆',
@@ -870,7 +871,7 @@ const I18N = {
     d1:'在途列车', d2:'今日班次', d3:'运行日', d4:'线路 / 车站', d5:'时刻表构建', d6:'帧率',
     now:'回到现在', station:'车站', line:'线路', stops:'站', transfers:'换乘', routeMile:'里程', routeNone:'未找到连通路径(请检查站名)',
     routeSame:'起终点相同', badStation:'找不到车站', h1:'拖动平移 · 滚轮缩放 · 右键旋转/倾斜', h2:'点击列车 = 详情 + 相机跟随 · 点空白取消',
-    h3:'点击车站 = 途经线路', h4:'底部时钟:暂停 / 拖动时间 / 0.5–8× 倍速回放', h5:'搜索日文站名(新宿 / 大阪…),支持车站与线路',
+    h3:'点击车站 = 途经线路', h4:'底部时钟:暂停 / 拖动时间 / 0.5–8× 倍速回放', h5:'搜索站名:日文 / 中文(东京·涩谷)/ 英文(Tokyo, Shinjuku)',
     h6:'数据为计划时刻表,不含实际延误', next:'下一站', eta:'约', min:'分', dep:'发车', arr:'到达', status:'状态',
     stopsTitle:'停靠站', stopsCount:'站', colStop:'站', colArr:'到', colDep:'发',
     running:'运行中', dwelling:'停車中', speed:'速度', kmh:'km/h', firstLast:'全程', track:'轨道 = 官方线路色', legendNote:'列车颜色 = 所属线路色',
@@ -882,7 +883,7 @@ const I18N = {
   },
   ja: {
     title:'ミニ日本鉄道3D', sub:'全国鉄道リアルタイムマップ', loading:'準備中…', live:'リアルタイム', follow:'追跡中', followStop:'追跡解除',
-    searchT:'検索', searchPh:'駅 / 路線(日本語名)…', routeT:'経路検索', routeFrom:'出発駅', routeTo:'到着駅',
+    searchT:'検索', searchPh:'駅 / 路線(日·中·EN)…', routeT:'経路検索', routeFrom:'出発駅', routeTo:'到着駅',
     tabRoute:'路線', aSearchPh:'駅 / 路線を検索…', badgeLive:'走行中', badgeToday:'本日', noMatch:'該当なし',
     filterT:'路線種別', legendT:'凡例', dayT:'運行日', dayAuto:'自動', setT:'設定', dataT:'データ', helpT:'ヘルプ',
     sw1:'駅ラベル', sw2:'軌道グロー', sw3:'駅ドット', sw4:'背景タイル', sw5:'列車グロー', sw6:'異常列車コピー',
@@ -891,7 +892,7 @@ const I18N = {
     d1:'運行中列車', d2:'本日列車', d3:'運行日', d4:'路線 / 駅', d5:'時刻表構築', d6:'フレーム率',
     now:'現在に戻る', station:'駅', line:'路線', stops:'駅', transfers:'乗換', routeMile:'距離', routeNone:'連絡経路なし(駅名確認)',
     routeSame:'同一点', badStation:'駅が見つかりません', h1:'ドラッグ移動 · ホイール拡縮 · 右回転/傾き', h2:'列車クリック = 詳細 + 追跡 · 空白で解除',
-    h3:'駅クリック = 経由路線', h4:'下部時計:一時停止 / 時間操作 / 0.5–8× 再生', h5:'日本語駅名検索(新宿 / 大阪…)',
+    h3:'駅クリック = 経由路線', h4:'下部時計:一時停止 / 時間操作 / 0.5–8× 再生', h5:'駅名検索:日本語 / 中国語 / 英語(Tokyo, Shinjuku)',
     h6:'計画時刻表ベース・遅延は含まない', next:'次駅', eta:'約', min:'分', dep:'発', arr:'着', status:'状態',
     stopsTitle:'停車駅', stopsCount:'駅', colStop:'駅', colArr:'着', colDep:'発',
     running:'運行中', dwelling:'停車中', speed:'速度', kmh:'km/h', firstLast:'全区間', track:'路線 = 公式路線色', legendNote:'列車色 = 所属路線色',
@@ -903,7 +904,7 @@ const I18N = {
   },
   en: {
     title:'Mini JapanRail 3D', sub:'Japan Rail Live Map', loading:'Preparing…', live:'Live', follow:'Following', followStop:'Stop follow',
-    searchT:'Search', searchPh:'Station / Line (Japanese)…', routeT:'Route search', routeFrom:'From', routeTo:'To',
+    searchT:'Search', searchPh:'Station / Line (JA·ZH·EN)…', routeT:'Route search', routeFrom:'From', routeTo:'To',
     tabRoute:'Route', aSearchPh:'Search station / line…', badgeLive:'Live', badgeToday:'Today', noMatch:'No matches',
     filterT:'Line types', legendT:'Legend', dayT:'Service day', dayAuto:'Auto', setT:'Settings', dataT:'Data', helpT:'Help',
     sw1:'Station labels', sw2:'Track glow', sw3:'Station dots', sw4:'Basemap tiles', sw5:'Train glow', sw6:'Copy off-rail trains',
@@ -912,7 +913,7 @@ const I18N = {
     d1:'Active trains', d2:'Trips today', d3:'Service day', d4:'Lines / Stations', d5:'Timetable built', d6:'FPS',
     now:'Now', station:'Station', line:'Line', stops:'stops', transfers:'transfers', routeMile:'Distance', routeNone:'No connected route (check names)',
     routeSame:'Same stations', badStation:'Station not found', h1:'Drag to pan · Scroll to zoom · Right-drag rotate/tilt', h2:'Click train = detail + follow · Blank = cancel',
-    h3:'Click station = its lines', h4:'Bottom clock: pause / scrub / 0.5–8× replay', h5:'Search Japanese names (Shinjuku, Osaka…)',
+    h3:'Click station = its lines', h4:'Bottom clock: pause / scrub / 0.5–8× replay', h5:'Search stations: Japanese / Chinese / English (Tokyo, Shinjuku)',
     h6:'Scheduled timetable — no live delays', next:'Next', eta:'~', min:'min', dep:'dep', arr:'arr', status:'Status',
     stopsTitle:'Stops', stopsCount:'stops', colStop:'Station', colArr:'Arr', colDep:'Dep',
     running:'Running', dwelling:'At station', speed:'Speed', kmh:'km/h', firstLast:'Route', track:'Track = official line color', legendNote:'Train color = line color',
@@ -966,6 +967,7 @@ let lineColor = new Map(), lineKind = new Map(), stationLines = new Map();
 let tripList = [], activeList = [], visibleCount = 0, totalTripsToday = 0;
 let tripsByStation = new Map();
 let searchIndex = [], lineIndex = [];
+let NAME_I18N = null;
 let map = null, trainsLayer = null, dataReady = false, liveOn = false, booting = false;
 let clockMode = 'live', paused = false, speed = 1, simEpoch = 0, wallT0 = 0;
 let dayMode = 'auto', dayBit = 1, dayBitAuto = 1;
@@ -1003,9 +1005,9 @@ const loaderMsg = $('lMsg'), lbarF = $('lbarF'), lPctEl = $('lPct');
 const FILES_PCT = 55, IDX_PCT = 78, PRS_PCT = 97;
 /* 数据版本号:segments/stations/station_map 等静态数据每次变更时必须递增,
    否则 IndexedDB 缓存可能让旧数据(如已修的幽灵直线)继续生效 */
-const DATA_VERSION = '2026-10-06a';
-const loadSizes = { 'data/segments3d.geojson': 9054890, 'data/stations3d.geojson': 1422796, 'data/tmaps.json': 3158412, 'data/station_map.json': 11006682, 'data/tokkyu.json': 59100, 'data/trains_wd.json': 13494947, 'data/trains_sa.json': 12228166, 'data/trains_su.json': 12284312 };
-let _fileTotal = 7, _fileIdx = 0;
+const DATA_VERSION = '2026-10-08a';
+const loadSizes = { 'data/segments3d.geojson': 9054890, 'data/stations3d.geojson': 1422796, 'data/tmaps.json': 3158412, 'data/station_map.json': 11006682, 'data/tokkyu.json': 59100, 'data/names_i18n.json': 483000, 'data/trains_wd.json': 13494947, 'data/trains_sa.json': 12228166, 'data/trains_su.json': 12284312 };
+let _fileTotal = 8, _fileIdx = 0;
 function nextFileIdx() { return _fileIdx++; }
 function setPct(p) { const pc = Math.min(100, p); lbarF.style.width = pc + '%'; lPctEl.textContent = Math.round(pc) + '%'; lbarF.classList.toggle('done', pc >= 100); }
 function setLoadMsg(s) { loaderMsg.textContent = s; }
@@ -1117,6 +1119,20 @@ const TRANSFER_KM = 1.6;
 /* ---------------- 索引构建 ---------------- */
 /* 站名归一化:去掉括号注记(如「栄町(千葉県)」→「栄町」),tmaps 与几何数据的命名差异主要在此 */
 function normName(n) { return String(n).replace(/\([^)]*\)/g, '').replace(/[ケヶ]/g, 'ヶ').replace(/駅$/, '').trim(); }
+/* 日文新字体 → 简体中文 转换(搜索中英兼容: 东京/涩谷/横滨 等命中日文站名) */
+const JP2CN = { '東':'东','渋':'涩','浜':'滨','広':'广','岡':'冈','長':'长','島':'岛','駅':'站','鉄':'铁','線':'线','関':'关','豊':'丰','沢':'泽','辺':'边','経':'经','緑':'绿','気':'气','塩':'盐','県':'县','図':'图','団':'团','円':'圆','児':'儿','帯':'带','帰':'归','庁':'厅','当':'当','徳':'德','応':'应','戸':'户','実':'实','対':'对','専':'专','従':'从','暦':'历','伝':'传','価':'价','処':'处','勝':'胜','区':'区','協':'协','単':'单','双':'双','営':'营','場':'场','売':'卖','奥':'奥','婦':'妇','姫':'姬','学':'学','宮':'宫','将':'将','導':'导','崎':'崎','岩':'岩','巣':'巢','張':'张','強':'强','戦':'战','抜':'拔','拝':'拜','挙':'举','挿':'插','捨':'舍','掛':'挂','揚':'扬','摂':'摄','撃':'击','斎':'斋','斉':'齐','時':'时','晩':'晚','暁':'晓','曇':'昙','書':'书','曽':'曾','栄':'荣','桜':'樱','桟':'栈','検':'检','業':'业','極':'极','楽':'乐','様':'样','樅':'枞','標':'标','権':'权','橋':'桥','機':'机','櫛':'栉','櫟':'栎','歩':'步','歳':'岁','氷':'冰','沖':'冲','浄':'净','浅':'浅','涙':'泪','淵':'渊','渓':'溪','湯':'汤','湿':'湿','満':'满','溝':'沟','滝':'泷','漢':'汉','濃':'浓','瀬':'濑','灘':'滩','為':'为','無':'无','焼':'烧','熱':'热','爺':'爷','状':'状','狭':'狭','獨':'独','現':'现','環':'环','産':'产','療':'疗','発':'发','盤':'盘','砲':'炮','磯':'矶','禄':'禄','禅':'禅','稜':'棱','種':'种','稲':'稻','穂':'穗','積':'积','窪':'洼','竈':'灶','竜':'龙','競':'竞','節':'节','築':'筑','篭':'笼','籠':'笼','糸':'丝','紀':'纪','紋':'纹','納':'纳','純':'纯','紙':'纸','細':'细','終':'终','組':'组','結':'结','給':'给','絵':'绘','絹':'绢','続':'续','綱':'纲','網':'网','綾':'绫','綿':'绵','緋':'绯','総':'总','緒':'绪','練':'练','縄':'绳','縫':'缝','縮':'缩','繋':'系','織':'织','義':'义','習':'习','聖':'圣','聞':'闻','脇':'胁','臓':'脏','臨':'临','興':'兴','舎':'舍','華':'华','葉':'叶','蓮':'莲','蔵':'藏','薊':'蓟','薩':'萨','薬':'药','藍':'蓝','藪':'薮','蘇':'苏','蘭':'兰','蛍':'萤','螢':'萤','術':'术','衛':'卫','覇':'霸','見':'见','覚':'觉','親':'亲','観':'观','計':'计','討':'讨','記':'记','訪':'访','試':'试','詫':'诧','詰':'诘','誕':'诞','読':'读','調':'调','談':'谈','諏':'诹','諫':'谏','諸':'诸','謝':'谢','議':'议','護':'护','讃':'赞','貝':'贝','貞':'贞','財':'财','貫':'贯','貴':'贵','貿':'贸','賀':'贺','資':'资','賢':'贤','贄':'贽','跡':'迹','蹟':'迹','車':'车','軍':'军','軒':'轩','軽':'轻','輝':'辉','輪':'轮','轟':'轰','農':'农','迎':'迎','連':'连','進':'进','遊':'游','運':'运','過':'过','達':'达','遠':'远','邇':'迩','郷':'乡','郵':'邮','針':'针','釣':'钓','釧':'钏','鈴':'铃','鉢':'钵','銀':'银','銅':'铜','銚':'铫','銭':'钱','錦':'锦','鍋':'锅','鍼':'针','鎌':'镰','鎚':'锤','鎧':'铠','鏡':'镜','鐘':'钟','門':'门','開':'开','閑':'闲','間':'间','陣':'阵','陰':'阴','陸':'陆','陽':'阳','隊':'队','階':'阶','際':'际','雑':'杂','難':'难','雲':'云','電':'电','霊':'灵','霧':'雾','韓':'韩','頂':'顶','頃':'顷','須':'须','領':'领','頭':'头','頴':'颖','頸':'颈','額':'额','顔':'颜','願':'愿','風':'风','飛':'飞','飯':'饭','飼':'饲','飾':'饰','餅':'饼','餉':'饷','養':'养','餘':'余','館':'馆','馬':'马','馳':'驰','駄':'驮','駒':'驹','駿':'骏','騎':'骑','騒':'骚','験':'验','騨':'驒','騰':'腾','髪':'发','魚':'鱼','鮎':'鲇','鮫':'鲛','鯖':'鲭','鯰':'鲶','鰍':'鳅','鰐':'鳄','鰭':'鳍','鰺':'鲹','鱒':'鳟','鳥':'鸟','鳩':'鸠','鳳':'凤','鳴':'鸣','鴨':'鸭','鴬':'莺','鴻':'鸿','鵜':'鹈','鵠':'鹄','鵡':'鹉','鵯':'鹎','鶏':'鸡','鶯':'莺','鶴':'鹤','鷲':'鹫','鷹':'鹰','鷺':'鹭','麗':'丽','黒':'黑','龍':'龙','厳':'严','亀':'龟','両':'两','渕':'渊','潟':'潟','塚':'冢','嶋':'岛','嶽':'岳','巌':'岩','峠':'峠','辻':'辻','込':'込','桝':'桝','榎':'榎','榊':'榊','樋':'樋','籐':'藤','籏':'旗','畠':'畠','祢':'祢','祗':'祗','笹':'笹','蒔':'蒔','蓑':'蓑','蘂':'蕊','藁':'稿','衍':'衍','羨':'羡','腺':'腺','繰':'缲','繍':'绣','繖':'伞','藤':'藤','倉':'仓','後':'后','別':'别','呉':'吴','岳':'岳','嶋':'岛','嶽':'岳','巌':'岩','備':'备','幹':'干','ノ':'之' };
+/* 中文转写:日式汉字→简体;「ノ」按中文惯例转「之」(江ノ島→江之岛), 但外来语「モノレール」保留 */
+/* 假名站名整词特例(高频知名站): つくば→筑波 等 */
+const KANA2ZH = { 'さいたま新都心':'埼玉新都心', 'つくば':'筑波', 'さっぽろ':'札幌', 'すすきの':'薄野', 'みなとみらい':'港未来' };
+function toZh(s) {
+  s = String(s);
+  for (const k of Object.keys(KANA2ZH)) s = s.split(k).join(KANA2ZH[k]);
+  const mono = [];
+  s = s.replace(/モノレール/g, m => { mono.push(m); return '\uE000'; });
+  let out = s.split('').map(ch => JP2CN[ch] || ch).join('');
+  for (const m of mono) out = out.replace('\uE000', m);
+  return out;
+}
 let endCoord = null, nameOf = null;
 /* ================= 修复:同名站消歧(跨城错配根因) ================= */
 const stationCands = new Map();
@@ -1719,12 +1735,16 @@ async function buildStaticIndexAsync(onPhase) {
     await ck();
   }
   report(0.9); await yieldToUI();
-  // 搜索索引(显示名,Set 去重 O(n) 替代原 some 全扫)
+  // 搜索索引(显示名 + 多语别名: zh 简体中文 / en 罗马音 / kana 假名, Set 去重 O(n) 替代原 some 全扫)
   searchIndex = []; lineIndex = Array.from(lineColor.keys());
   const seenSt = new Set();
-  staFC.features.forEach(f => { const n = f.properties.station; if (!seenSt.has(n)) { seenSt.add(n); searchIndex.push({ n, c: f.geometry.coordinates }); } });
+  staFC.features.forEach(f => {
+    const n = f.properties.station; if (seenSt.has(n)) return; seenSt.add(n);
+    const alt = NAME_I18N && NAME_I18N.stations ? NAME_I18N.stations[n] : null;
+    searchIndex.push({ n, c: f.geometry.coordinates, zh: toZh(n), en: alt ? alt.en || '' : '', kana: alt ? alt.kana || '' : '' });
+  });
   searchIndex.sort((a, b) => a.n.length - b.n.length);
-  lineIndex.sort();
+  lineIndex = lineIndex.map(l => ({ n: l, zh: toZh(l), en: (NAME_I18N && NAME_I18N.lines ? NAME_I18N.lines[l] : '') || '' })).sort((a, b) => a.n.length - b.n.length);
   report(1);
   $('dNet').textContent = lineIndex.length.toLocaleString() + ' / ' + searchIndex.length.toLocaleString();
 }
@@ -2842,20 +2862,22 @@ async function boot() {
   const retryBtn = $('lRetry');
   if (retryBtn) retryBtn.style.display = 'none';
   try {
-    _fileTotal = 7; _fileIdx = 0;
-    /* 当日时刻表与 6 个静态数据文件并行下载(含 tokkyu 特急爱称表, 原实现串行) */
+    _fileTotal = 8; _fileIdx = 0;
+    /* 当日时刻表与 7 个静态数据文件并行下载(含 tokkyu 特急爱称表、names_i18n 多语站名表, 原实现串行) */
     dayBitAuto = bitOfDate(Date.now());
     dayBit = dayMode === 'auto' ? dayBitAuto : dayMode;
-    const [s, st, tm, lm, sm, tk, tj] = await Promise.all([
+    const [s, st, tm, lm, sm, tk, ni, tj] = await Promise.all([
       fetchJSONWithCache('data/segments3d.geojson', 'loadingSeg', 0),
       fetchJSONWithCache('data/stations3d.geojson', 'loadingSta', 1),
       fetchJSONWithCache('data/tmaps.json', 'loadingTm', 2),
       fetchJSONWithCache('data/lines_map.json', '', 3).catch(() => ({})),
       fetchJSONWithCache('data/station_map.json', 'loadingTm', 4).catch(() => null),
       fetchJSONWithCache('data/tokkyu.json', '', 5).catch(() => null),
-      fetchJSONWithCache(TRAIN_FILES[dayBit], 'loadingTr', 6),
+      fetchJSONWithCache('data/names_i18n.json', '', 6).catch(() => null),
+      fetchJSONWithCache(TRAIN_FILES[dayBit], 'loadingTr', 7),
     ]);
     segFC = s; staFC = st; tmaps = tm; LINES_MAP = lm || {}; stationMap = sm && sm.version === 2 ? sm : null; TOKKYU = tk;
+    NAME_I18N = ni;
     trainJSON = tj;
     /* 官方补缺轨道/车站(地图遗漏的新开线/私铁, 如西鉄甘木線/北大阪急行延伸/夢洲):
        合并进同一 GeoJSON, 渲染/索引/寻路自动一致; 不改任何既有几何 */
@@ -3654,17 +3676,58 @@ searchEl.addEventListener('keydown', e => {
 });
 document.addEventListener('click', e => { if (!sugEl.contains(e.target) && e.target !== searchEl) sugEl.style.display = 'none'; });
 function esc(s) { return s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
-function hlName(n, q) { const i = n.indexOf(q); return i < 0 ? esc(n) : esc(n.slice(0, i)) + '<span class="hl">' + esc(q) + '</span>' + esc(n.slice(i + q.length)); }
+function hlName(n, q) {
+  const i = n.indexOf(q);
+  if (i >= 0) return esc(n.slice(0, i)) + '<span class="hl">' + esc(q) + '</span>' + esc(n.slice(i + q.length));
+  /* 英文长音符场景(如 Tōkyō vs tokyo):按归一化文本定位高亮 */
+  const nn = normSearchText(n), qn = normSearchText(q);
+  if (!nn || !qn) return esc(n);
+  const j = nn.indexOf(qn);
+  if (j < 0) return esc(n);
+  let acc = 0, i0 = -1, i1 = n.length;
+  for (let k = 0; k < n.length; k++) {
+    const cl = normSearchText(n[k]) || '';
+    if (i0 < 0 && acc >= j) i0 = k;
+    if (acc >= j + qn.length) { i1 = k; break; }
+    acc += cl.length;
+  }
+  if (i0 < 0) i0 = 0;
+  if (i1 <= i0) i1 = n.length;
+  return esc(n.slice(0, i0)) + '<span class="hl">' + esc(n.slice(i0, i1)) + '</span>' + esc(n.slice(i1));
+}
+/* 多语搜索:命中 日文/中文/罗马音/假名 任一即入选; 返回 {obj, field} field 用于高亮与标签 */
+const ROMA_NORM = { 'ō':'o', 'ū':'u', 'ā':'a', 'ī':'i', 'ē':'e', 'Ō':'O', 'Ū':'U', 'Ā':'A', 'Ī':'I', 'Ē':'E', '-':'', ' ':'', '･':'', '・':'' };
+function normSearchText(s) { return String(s).toLowerCase().replace(/[ōūāīēŌŪĀĪĒ\s\-･・]/g, c => ROMA_NORM[c] !== undefined ? ROMA_NORM[c] : c); }
+function matchSearch(item, q) {
+  const qn = normSearchText(q);
+  if (item.n.includes(q)) return { item, field: 'n' };
+  if (item.zh && item.zh.includes(q)) return { item, field: 'zh' };
+  if (item.kana && item.kana.includes(q)) return { item, field: 'kana' };
+  if (item.en && qn && normSearchText(item.en).includes(qn)) return { item, field: 'en' };
+  return null;
+}
 function runSearch(q) {
   q = (q || '').trim();
   if (!q) { sugEl.style.display = 'none'; sugEl.innerHTML = ''; return; }
   const sts = [], lns = [];
-  for (const s of searchIndex) { if (s.n.includes(q)) { sts.push(s); if (sts.length >= 7) break; } }
-  for (const l of lineIndex) { if (l.includes(q)) { lns.push(l); if (lns.length >= 4) break; } }
+  for (const s of searchIndex) { const m = matchSearch(s, q); if (m) { sts.push(m); if (sts.length >= 7) break; } }
+  for (const l of lineIndex) { const m = matchSearch(l, q); if (m) { lns.push(m); if (lns.length >= 4) break; } }
   if (!sts.length && !lns.length) { sugEl.innerHTML = '<div class="sug-empty">' + esc(T().noMatch) + ' <span class="sug-q">' + esc(q) + '</span></div>'; sugEl.style.display = 'block'; return; }
+  const langTag = { n: '', zh: '中', kana: '仮', en: 'EN' };
+  const dispNameFor = (m) => { const f = m.field, v = m.item[f]; return (f === 'n') ? v : v; };
   const htmlParts = [];
-  if (sts.length) htmlParts.push('<div class="sug-grp">' + T().station + '</div>' + sts.map(s => '<div class="sug-it" data-type="sta" data-name="' + esc(s.n) + '"><span>' + hlName(s.n, q) + '</span><span class="k">' + T().station + '</span></div>').join(''));
-  if (lns.length) htmlParts.push('<div class="sug-grp">' + T().line + '</div>' + lns.map(l => '<div class="sug-it" data-type="ln" data-name="' + esc(l) + '"><span>' + ICO.train.replace('width="16"', 'width="12"').replace('height="16"', 'height="12"') + ' ' + hlName(l, q) + '</span><span class="k">' + T().line + '</span></div>').join(''));
+  if (sts.length) htmlParts.push('<div class="sug-grp">' + T().station + '</div>' + sts.map(m => {
+    const s = m.item, f = m.field, disp = dispNameFor(m);
+    const sub = (f !== 'n' && s.n !== disp) ? '<span class="k">' + esc(s.n) + '</span>' : '';
+    const tag = langTag[f] ? '<span class="k langk">' + langTag[f] + '</span>' : '';
+    return '<div class="sug-it" data-type="sta" data-name="' + esc(s.n) + '"><span>' + hlName(disp, q) + '</span>' + sub + tag + '</div>';
+  }).join(''));
+  if (lns.length) htmlParts.push('<div class="sug-grp">' + T().line + '</div>' + lns.map(m => {
+    const l = m.item, f = m.field, disp = dispNameFor(m);
+    const sub = (f !== 'n' && l.n !== disp) ? '<span class="k">' + esc(l.n) + '</span>' : '';
+    const tag = langTag[f] ? '<span class="k langk">' + langTag[f] + '</span>' : '';
+    return '<div class="sug-it" data-type="ln" data-name="' + esc(l.n) + '"><span>' + ICO.train.replace('width="16"', 'width="12"').replace('height="16"', 'height="12"') + ' ' + hlName(disp, q) + '</span>' + sub + tag + '</div>';
+  }).join(''));
   sugEl.innerHTML = htmlParts.join('');
   sugEl.style.display = 'block';
   sugIdx = -1;
@@ -3711,7 +3774,7 @@ function resolveStation(q) {
   if (!q) return null;
   const nk = normName(q);
   if (stationCoord.has(nk)) return nk;
-  for (const s of searchIndex) if (s.n.includes(q)) return normName(s.n);
+  for (const s of searchIndex) { const hit = matchSearch(s, q); if (hit) return normName(s.n); }
   return null;
 }
 const dispName = k => (nameOf && nameOf.get(k)) || k;

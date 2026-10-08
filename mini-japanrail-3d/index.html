@@ -774,6 +774,9 @@ const toastEl = $('toast');
 function toast(s, ms = 2400) { toastEl.textContent = s; toastEl.style.display = 'block'; requestAnimationFrame(() => toastEl.classList.add('show')); clearTimeout(toast._t); toast._t = setTimeout(() => { toastEl.classList.remove('show'); setTimeout(() => toastEl.style.display = 'none', 200); }, ms); }
 function setStatus(s) { statusEl.textContent = s; }
 const pad = n => String(n).padStart(2, '0');
+/* 防抖/节流工具 */
+function debounce(fn, ms) { let t; return function(...a) { clearTimeout(t); t = setTimeout(() => fn.apply(this, a), ms); }; }
+function throttle(fn, ms) { let last = 0, timer; return function(...a) { const now = performance.now(); if (now - last >= ms) { last = now; fn.apply(this, a); } else { clearTimeout(timer); timer = setTimeout(() => { last = performance.now(); fn.apply(this, a); }, ms - (now - last)); } }; }
 
 /* ---------------- SVG 图标常量（线性风格） ---------------- */
 const ICO = {
@@ -2794,6 +2797,12 @@ function startLoop() {
     map.triggerRepaint();
   };
   rafId = requestAnimationFrame(tick);
+  /* 页面隐藏时彻底停渲染循环省电,可见时恢复 */
+  let hiddenStop = false;
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { cancelAnimationFrame(rafId); hiddenStop = true; }
+    else if (hiddenStop) { hiddenStop = false; rafId = requestAnimationFrame(tick); }
+  });
 }
 
 /* ---------------- 时钟 UI ---------------- */
@@ -2809,9 +2818,11 @@ function refreshClockUI(M) {
   if (ds !== lastDayStr) { cDayEl.textContent = ds; lastDayStr = ds; }
   cDayEl.title = (label ? label[lang] : '') + ' · ' + T().dayT;
   const sv = Math.floor(M);
-  if (!sliderDragging && clockMode === 'live' && sv !== lastSliderVal) { sliderEl.value = sv; lastSliderVal = sv; }
-  const frac = Math.min(1, Math.max(0, parseFloat(sliderEl.value) / 1439));
-  sliderEl.style.background = 'linear-gradient(to right, var(--acc) ' + (frac * 100) + '%, rgba(120,140,180,.28) ' + (frac * 100) + '%)';
+  if (!sliderDragging && clockMode === 'live' && sv !== lastSliderVal) {
+    sliderEl.value = sv; lastSliderVal = sv;
+    const frac = Math.min(1, Math.max(0, sv / 1439));
+    sliderEl.style.background = 'linear-gradient(to right, var(--acc) ' + (frac * 100) + '%, rgba(120,140,180,.28) ' + (frac * 100) + '%)';
+  }
 }
 function bubSync() { const b = $('cBub'); b.textContent = fmtHMS(parseFloat(sliderEl.value)); b.style.left = Math.min(96, Math.max(4, sliderEl.value / 1439 * 100)) + '%'; const f = Math.min(1, Math.max(0, parseFloat(sliderEl.value) / 1439)); sliderEl.style.background = 'linear-gradient(to right, var(--acc) ' + (f * 100) + '%, rgba(120,140,180,.28) ' + (f * 100) + '%)'; }
 sliderEl.addEventListener('pointerdown', () => { sliderDragging = true; bubSync(); $('cBub').classList.add('show'); });

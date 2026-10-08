@@ -372,6 +372,25 @@ button { font-family:inherit; }
   box-shadow:inset 0 1px 0 rgba(255,255,255,.2), var(--glass-sh); max-width:80vw;
   opacity:0; transition:opacity .18s ease; }
 #toast.show { opacity:1; }
+
+/* ---------- 独立搜索浮层(iOS Spotlight) ---------- */
+#searchMask { position:fixed; inset:0; background:rgba(0,0,0,.32); z-index:24; opacity:0; pointer-events:none; transition:opacity .25s ease; }
+#searchMask.open { opacity:1; pointer-events:auto; }
+#searchPanel { position:fixed; top:max(10px,env(safe-area-inset-top)); left:50%; transform:translate(-50%,-10px) scale(.98); width:min(520px,calc(100vw - 24px)); z-index:25;
+  background:var(--panel); border:1px solid var(--glass-edge); border-radius:20px; overflow:hidden; opacity:0; pointer-events:none;
+  backdrop-filter:blur(26px) saturate(1.6); -webkit-backdrop-filter:blur(26px) saturate(1.6);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.2), var(--glass-sh);
+  transition:opacity .25s ease, transform .4s var(--ease-spring); }
+#searchPanel.open { opacity:1; pointer-events:auto; transform:translate(-50%,0) scale(1); }
+.sp-bar { display:flex; align-items:center; gap:9px; padding:12px 14px; }
+.sp-ic { color:var(--dim); display:flex; flex:none; }
+#searchPanel .tbox { flex:1; min-width:0; border:0; background:transparent; padding:0; font-size:16px; min-height:24px; }
+#searchPanel .tbox:focus { border:0; box-shadow:none; }
+#spClear { flex:none; width:20px; height:20px; border-radius:50%; border:0; background:rgba(120,140,180,.45); color:#fff; display:none; align-items:center; justify-content:center; cursor:pointer; padding:0; }
+#spClear.show { display:flex; }
+#searchPanel #sug { margin:0; max-height:min(52vh,420px); border:0; border-radius:0; background:transparent; box-shadow:none; border-top:1px solid var(--line); }
+#searchPanel #sug .sug-it { padding:9px 14px; font-size:13px; }
+#searchPanel #sug .sug-empty { padding:14px; font-size:13px; }
 .foot { position:absolute; bottom:68px; right:12px; font-size:9px; color:var(--dim); z-index:5; pointer-events:none; text-shadow:0 1px 3px rgba(0,0,0,.6); opacity:.75; max-width:min(260px,calc(100vw - 24px)); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:right; }
 .maplibregl-ctrl-attrib { background:rgba(0,0,0,.35)!important; color:var(--dim)!important; font-size:8.5px!important; padding:1px 6px!important; border-radius:6px 0 0 0!important; }
 .maplibregl-ctrl-attrib a { color:var(--dim)!important; }
@@ -518,7 +537,6 @@ button { font-family:inherit; }
 <div id="side">
   <div id="sideTabs">
     <button class="stab on" data-tab="route" id="tabRoute"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="17" r="2.2"/><circle cx="19" cy="5" r="2.2"/><path d="M5 19C5 11 11 5 19 5M5 14.5c5-1 8-2 9-4"/></svg><span class="st-lb" id="tabRouteLb">路线</span></button>
-    <button class="stab" data-tab="search" id="tabSearch"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg><span class="st-lb" id="tabSearchLb">搜索</span></button>
     <button class="stab" data-tab="legend" id="tabLegend"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="7" cy="6" r="1.2"/><circle cx="7" cy="12" r="1.2"/><circle cx="7" cy="18" r="1.2"/></svg><span class="st-lb" id="tabLegendLb">图例</span></button>
     <button class="stab" data-tab="set" id="tabSet"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10z"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"/></svg><span class="st-lb" id="tabSetLb">设置</span></button>
   </div>
@@ -549,16 +567,6 @@ button { font-family:inherit; }
           <button class="chip" data-day="2">周六</button>
           <button class="chip" data-day="4">周日・假</button>
         </div>
-      </div>
-    </div>
-    <div class="stab-sec" data-tab="search">
-      <div class="sec">
-        <div class="sec-t" id="tSearch">搜索</div>
-        <div class="search-wrap">
-          <span class="s-ic"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg></span>
-          <input id="search" class="tbox" type="text" autocomplete="off" spellcheck="false">
-        </div>
-        <div id="sug"></div>
       </div>
     </div>
     <div class="stab-sec" data-tab="legend">
@@ -641,6 +649,17 @@ button { font-family:inherit; }
 </div>
     <button class="gcircle" id="btnSearch" type="button" title="搜索" aria-label="搜索"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg></button>
   </div>
+</div>
+
+<!-- 独立搜索浮层(iOS Spotlight 风格) -->
+<div id="searchMask"></div>
+<div id="searchPanel">
+  <div class="sp-bar">
+    <span class="sp-ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg></span>
+    <input id="search" class="tbox" type="text" autocomplete="off" spellcheck="false" placeholder="搜索车站或线路">
+    <button id="spClear" type="button" aria-label="清除"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><circle cx="12" cy="12" r="10"/><path d="M8.5 8.5l7 7M15.5 8.5l-7 7" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+  </div>
+  <div id="sug"></div>
 </div>
 
 <div id="detail"></div>
@@ -3528,7 +3547,7 @@ searchEl.addEventListener('keydown', e => {
   } else if (e.key === 'Enter') {
     const it = its.length ? (sugIdx >= 0 ? its[sugIdx] : its[0]) : null;
     if (it) { e.preventDefault(); it.click(); }
-  } else if (e.key === 'Escape') { sugEl.style.display = 'none'; searchEl.blur(); }
+  } else if (e.key === 'Escape') { openSearchPanel(false); }
 });
 document.addEventListener('click', e => { if (!sugEl.contains(e.target) && e.target !== searchEl) sugEl.style.display = 'none'; });
 function esc(s) { return s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
@@ -3549,7 +3568,7 @@ function runSearch(q) {
   sugEl.querySelectorAll('.sug-it').forEach((it, i) => it.addEventListener('click', () => {
     const nm = it.dataset.name;
     sugEl.style.display = 'none'; searchEl.value = ''; sugIdx = -1;
-    if (!sideEl.classList.contains('collapsed')) { sideEl.classList.add('collapsed'); $('btnSide').innerHTML = ICO.menu; }
+    openSearchPanel(false);
     if (it.dataset.type === 'sta') {
       const c = stationCoord.get(normName(nm));
       if (!c) return;
@@ -3777,11 +3796,20 @@ document.querySelectorAll('#sideTabs .stab').forEach(b => b.addEventListener('cl
   if (sideEl.classList.contains('collapsed')) { sideEl.classList.remove('collapsed'); $('btnSide').innerHTML = ICO.close; }
   showTab(b.dataset.tab);
 }));
+function openSearchPanel(open) {
+  const mask = $('searchMask'), panel = $('searchPanel');
+  if (!mask || !panel) return;
+  mask.classList.toggle('open', open);
+  panel.classList.toggle('open', open);
+  if (open) { setTimeout(() => searchEl.focus(), 140); }
+  else { searchEl.value = ''; sugEl.style.display = 'none'; sugIdx = -1; const cl = $('spClear'); if (cl) cl.classList.remove('show'); searchEl.blur(); }
+}
 $('btnSearch').addEventListener('click', () => {
-  if (sideEl.classList.contains('collapsed')) { sideEl.classList.remove('collapsed'); $('btnSide').innerHTML = ICO.close; }
-  showTab('search', true);
-  setTimeout(() => { const si = document.getElementById('searchInput'); if (si) si.focus(); }, 200);
+  openSearchPanel(!$('searchPanel').classList.contains('open'));
 });
+$('searchMask').addEventListener('click', () => openSearchPanel(false));
+$('spClear').addEventListener('click', () => { searchEl.value = ''; searchEl.dispatchEvent(new Event('input')); searchEl.focus(); });
+searchEl.addEventListener('input', () => { const cl = $('spClear'); if (cl) cl.classList.toggle('show', !!searchEl.value); });
 showTab('route');
 // 主题：dark / light / auto(跟随系统)
 const mq = window.matchMedia('(prefers-color-scheme: light)');
@@ -3803,7 +3831,7 @@ $('brand').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key ===
 document.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT') { if (e.key === 'Escape') e.target.blur(); return; }
   if (e.code === 'Space' && dataReady) { e.preventDefault(); if (paused) doResume(); else doPause(); }
-  if (e.key === 'Escape') { stopFollow(); closeDetail(); sugEl.style.display = 'none'; clearHighlight(); $('routeRes').style.display = 'none'; }
+  if (e.key === 'Escape') { stopFollow(); closeDetail(); sugEl.style.display = 'none'; clearHighlight(); $('routeRes').style.display = 'none'; openSearchPanel(false); }
 });
 
 /* ---------------- i18n 应用 ---------------- */
@@ -3812,10 +3840,10 @@ function applyLang() {
   document.documentElement.lang = lang === 'zh' ? 'zh-Hans' : lang;
   $('brandT').textContent = t.title;
   if ($('tLive')) $('tLive').textContent = t.live;
-  $('tSearch').textContent = t.searchT; $('tRoute').textContent = t.routeT; $('tFilter').textContent = t.filterT;
+  $('tRoute').textContent = t.routeT; $('tFilter').textContent = t.filterT;
   $('tLegend').textContent = t.legendT; $('tDay').textContent = t.dayT; $('tSet').textContent = t.setT;
   $('tData').textContent = t.dataT; $('tHelp').textContent = t.helpT;
-  $('tabRouteLb').textContent = t.tabRoute; $('tabSearchLb').textContent = t.searchT; $('tabLegendLb').textContent = t.legendT; $('tabSetLb').textContent = t.setT;
+  $('tabRouteLb').textContent = t.tabRoute; $('tabLegendLb').textContent = t.legendT; $('tabSetLb').textContent = t.setT;
   $('bLiveLb').textContent = t.badgeLive; $('bCountLb').textContent = t.badgeToday;
   searchEl.placeholder = t.searchPh;
   $('rFrom').placeholder = t.routeFrom; $('rTo').placeholder = t.routeTo;

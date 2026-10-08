@@ -311,7 +311,13 @@ button { font-family:inherit; }
 #detail .d-sep { border-top:1px solid var(--line); margin:8px 0 0; }
 #detail .d-act { display:flex; gap:6px; margin-top:8px; }
 #detail .d-act .btn { min-height:32px; font-size:11.5px; flex:1; padding:0 8px; }
-#detail .d-x { margin-left:auto; flex:none; min-height:28px; min-width:28px; width:28px; }
+/* 统一:iOS 圆形磨砂关闭钮(详情卡 + 站点抽屉) */
+#detail .d-x, #sheet .sh-x { margin-left:auto; flex:none; width:30px; height:30px; min-width:30px; min-height:30px; padding:0;
+  border-radius:50%; border:0; background:rgba(120,140,180,.28); color:var(--dim);
+  display:flex; align-items:center; justify-content:center;
+  transition:background .15s,color .15s,transform .3s var(--ease-spring); }
+#detail .d-x:hover, #sheet .sh-x:hover { background:rgba(120,140,180,.45); color:var(--txt); }
+#detail .d-x:active, #sheet .sh-x:active { transform:scale(.86); transition:transform .1s ease-in; }
 /* 停靠站垂直线路图 */
 #detail .d-stops { margin-top:8px; border:1px solid var(--line); border-radius:var(--r-xs); overflow:hidden; background:var(--panel2); }
 #detail .d-stops .st-title { display:flex; align-items:center; justify-content:space-between; padding:5px 9px; font-size:10.5px; font-weight:700; color:var(--txt); letter-spacing:.4px; border-bottom:1px solid var(--line); background:var(--panel); }

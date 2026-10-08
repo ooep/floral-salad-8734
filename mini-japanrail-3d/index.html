@@ -2984,15 +2984,20 @@ function startLoop() {
     const p = trainPosition(followTrip, windowShift(followTrip, M));
     if (p) {
       followNullT = 0;
-      /* 相机缓动(MC):每帧按真实帧间隔做指数平滑逼近(时间常数 τ≈0.12s)——
-         目标=列车真实位置,相机平滑追近。消除原 jumpTo 硬跳 + float32 量化导致的镜头抖动;
-         列车位置有跳变(到站/数据刷新)时镜头也会平滑滑过而非瞬间突跳 */
-      const a = 1 - Math.exp(-dt / 0.12);
-      if (a < 0.999) {
+      /* 跟随相机(MC v2):「精确锁定 + 大跳变缓动」——
+         矩阵 float32 量化已修复(投影误差 0),正常行驶时列车每帧屏幕位移 ≤1.4px(z16 上限,
+         新干线 300km/h),直接 jumpTo 对准列车 → 列车锁死在屏幕中心,无缓动滞后漂移 = 无抖动;
+         仅当列车位置出现偶发大跳变(数据刷新/到站 snap,屏幕位移 >6px)时走指数缓动平滑过渡,
+         避免镜头突跳。 */
+      const sp = map.project([p[0], p[1]]);
+      const cwpx = map.getCanvas().clientWidth || 1, chpx = map.getCanvas().clientHeight || 1;
+      const ddx = sp.x - cwpx / 2, ddy = sp.y - chpx / 2;
+      if (ddx * ddx + ddy * ddy <= 36) { /* ≤6px 屏幕:正常行驶范围,直接对准 */
+        map.jumpTo({ center: [p[0], p[1]] });
+      } else { /* 偶发大跳变:指数缓动平滑过渡(时间常数 τ≈0.12s) */
+        const a = 1 - Math.exp(-dt / 0.12);
         const c = map.getCenter();
         map.jumpTo({ center: [c.lng + (p[0] - c.lng) * a, c.lat + (p[1] - c.lat) * a] });
-      } else {
-        map.jumpTo({ center: [p[0], p[1]] });
       }
     }
     else if (++followNullT > 180) stopFollow(true); /* 到终点约 3s 后自动停止跟随 */
@@ -3027,16 +3032,9 @@ function startLoop() {
       const p = trainPosition(liveDetailTrip, windowShift(liveDetailTrip, M));
       updateDetailLive(liveDetailTrip, p, M);
     }
-    /* 跟随列车名称标签:钉在列车屏幕位置 */
-    if (followTrip) {
-      const p = trainPosition(followTrip, windowShift(followTrip, M));
-      if (p && followTrip.nm) {
-        const pp = map.project([p[0], p[1]]);
-        trTagEl.style.left = pp.x + 'px'; trTagEl.style.top = pp.y + 'px';
-        trTagEl.textContent = followTrip.nm;
-        trTagEl.classList.add('show');
-      } else trTagEl.classList.remove('show');
-    } else trTagEl.classList.remove('show');
+    /* 跟随列车名称标签已按 MC 要求停用(名牌贴在图标上难看)——保持隐藏,不再显示 */
+    trTagEl.style.display = 'none';
+    map.triggerRepaint();
     map.triggerRepaint();
   };
   rafId = requestAnimationFrame(tick);

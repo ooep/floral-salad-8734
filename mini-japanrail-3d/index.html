@@ -608,6 +608,51 @@ function tripName(ic, N, jas, linesN) {
   const sig = tripSig(N, jas, linesN);
   return TOKKYU.nmI[sig + '|' + ic] || TOKKYU.nm[sig] || ICON_NAME[ic] || null;
 }
+/* ---- 併结/分割列车检测:同发车时刻 + 同起点同向 + 共享连续站序 ≥3 站 + 运行窗重叠
+       → 登记併结窗口 [t0,t1]、分割站、伙伴车次。併结区间内两车坐标重合,
+         渲染时沿车尾方向错开一个车长(一前一后紧贴),分割后各自运行 ---- */
+function buildCouplings(trips) {
+  const byDep = new Map();
+  for (let i = 0; i < trips.length; i++) {
+    const t = trips[i];
+    if (t.bad || t.N < 4) continue;
+    const k = t.dep[0];
+    let b = byDep.get(k); if (!b) byDep.set(k, b = []);
+    b.push(t);
+  }
+  let pairs = 0;
+  for (const bucket of byDep.values()) {
+    if (bucket.length < 2) continue;
+    for (let a = 0; a < bucket.length; a++) for (let b = a + 1; b < bucket.length; b++) {
+      const A = bucket[a], B = bucket[b];
+      if (A.jasN[0] !== B.jasN[0] || A.jasN[1] !== B.jasN[1]) continue; // 同起点且同向(第二站相同)
+      /* 最长公共连续站序(双向遍历,含起点) */
+      let best = 0, endA = 0, endB = 0;
+      for (let i = 0; i < A.N; i++) for (let j = 0; j < B.N; j++) {
+        if (A.jasN[i] !== B.jasN[j]) continue;
+        let k = 0;
+        while (i + k < A.N && j + k < B.N && A.jasN[i + k] === B.jasN[j + k]) k++;
+        if (k > best) { best = k; endA = i + k - 1; endB = j + k - 1; }
+      }
+      if (best < 3) continue;                                    // 至少 3 站(2+ 区间)才算併结
+      if (endA === A.N - 1 && endB === B.N - 1) continue;        // 公共段覆盖双方全程 = 重复记录/完全相同列车
+      const na = A.nm || '', nb = B.nm || '';
+      if (na && nb && na === nb) continue;                       // 同爱称非同向併结(如のぞみ×のぞみ)
+      const stA = endA - best + 1, stB = endB - best + 1;
+      const t0 = Math.max(A.dep[stA], B.dep[stB]);               // 进入併结段(发车)
+      const t1 = Math.min(A.dep[endA], B.dep[endB]);             // 离开分割站(发车)
+      const w0 = Math.max(A.w0, B.w0), w1 = Math.min(A.w1, B.w1);
+      if (t0 > w1 || t1 < w0) continue;                          // 运行窗无交集
+      const c0 = Math.max(t0, w0), c1 = Math.min(t1, w1);
+      const split = A.jasN[endA];
+      (A.cpl = A.cpl || []).push({ p: B, t0: c0, t1: c1, split, name: nb || B.i || '' });
+      (B.cpl = B.cpl || []).push({ p: A, t0: c0, t1: c1, split, name: na || A.i || '' });
+      pairs++;
+    }
+  }
+  if (window.__dbgOn) console.log('[couple] ' + pairs + ' pairs');
+  return trips;
+}
 /* 日本节假日 2024–2030(固定日 + 春分/秋分),振替休日与国民の休日按规则推导 */
 const HOLIDAY_BASE = {
   2024: [[1,1],[1,8],[2,12],[2,23],[3,20],[4,29],[5,3],[5,4],[5,5],[5,6],[7,15],[8,11],[9,16],[9,23],[10,14],[11,4],[11,23]],
@@ -656,6 +701,7 @@ const I18N = {
     stopsTitle:'停靠站', stopsCount:'站', colStop:'站', colArr:'到', colDep:'发',
     running:'运行中', dwelling:'停車中', speed:'速度', kmh:'km/h', firstLast:'全程', track:'轨道 = 官方线路色', legendNote:'列车颜色 = 所属线路色',
     followBtn:'跟随此列车', locateBtn:'定位', stopFollowBtn:'停止跟随', tripId:'班次', viaLines:'途经线路',
+    cplLabel:'併结', cplSplit:'与 {0} 併结，于 {1} 分割',
     loadingSeg:'轨道网络', loadingSta:'车站', loadingTm:'班次映射', loadingTr:'时刻表', loaded:'完成', goLive:'数据就绪 — 点击右上实时开始',
     dayFileNote:'时刻表', paused:'暂停', liveMode:'实时', playMode:'回放', fps:'FPS',
     retry:'重试', loadingIdx:'构建索引', loadingPr:'解析时刻表', adapt:'性能模式:帧率低,已自动关闭列车光晕', cacheOn:'离线缓存已启用', failMsg:'加载失败，请检查网络后重试',
@@ -676,6 +722,7 @@ const I18N = {
     stopsTitle:'停車駅', stopsCount:'駅', colStop:'駅', colArr:'着', colDep:'発',
     running:'運行中', dwelling:'停車中', speed:'速度', kmh:'km/h', firstLast:'全区間', track:'路線 = 公式路線色', legendNote:'列車色 = 所属路線色',
     followBtn:'列車を追跡', locateBtn:'位置', stopFollowBtn:'追跡停止', tripId:'列車', viaLines:'経由路線',
+    cplLabel:'併結', cplSplit:'{0}と併結、{1}で分割',
     loadingSeg:'軌道網', loadingSta:'駅', loadingTm:'列車マップ', loadingTr:'時刻表', loaded:'完了', goLive:'準備完了 — 右上 リアルタイム で開始',
     dayFileNote:'時刻表', paused:'一時停止', liveMode:'リアルタイム', playMode:'再生', fps:'FPS',
     retry:'再試行', loadingIdx:'索引構築', loadingPr:'時刻表解析', adapt:'省電力モード:低FPSのため列車グローをOFF', cacheOn:'オフラインキャッシュ有効', failMsg:'読み込みに失敗しました。ネットワークを確認してもう一度お試しください',
@@ -696,6 +743,7 @@ const I18N = {
     stopsTitle:'Stops', stopsCount:'stops', colStop:'Station', colArr:'Arr', colDep:'Dep',
     running:'Running', dwelling:'At station', speed:'Speed', kmh:'km/h', firstLast:'Route', track:'Track = official line color', legendNote:'Train color = line color',
     followBtn:'Follow train', locateBtn:'Locate', stopFollowBtn:'Stop follow', tripId:'Trip', viaLines:'Lines',
+    cplLabel:'Coupled', cplSplit:'Coupled w/ {0}, splits at {1}',
     loadingSeg:'Track network', loadingSta:'Stations', loadingTm:'Trip map', loadingTr:'Timetable', loaded:'done', goLive:'Ready — tap Live top-right',
     dayFileNote:'Timetable', paused:'Paused', liveMode:'Live', playMode:'Replay', fps:'FPS',
     retry:'Retry', loadingIdx:'Building index', loadingPr:'Parsing timetable', adapt:'Performance mode: low FPS, train glow off', cacheOn:'Offline cache enabled', failMsg:'Failed to load. Check your network and retry.',
@@ -2354,6 +2402,7 @@ function updateTrains(M) {
   const eps = Math.max(1.5e-6, Math.min(2.5e-3, 8 / (512 * Math.pow(2, z))));
   const drawGlow = glowOn && z < 9 && !iconMode;
   const glowPass = [];
+  const drawnCouple = new Set(); /* 已绘制 trip 集合,供併结车判断伙伴是否已画(先画者原位,后画者错开一个车长) */
   for (let idx = 0; idx < dayList.length; idx++) {
     const t = dayList[idx];
     if (t.bad) continue;
@@ -2380,7 +2429,19 @@ function updateTrains(M) {
         if (uvIdx < 0) uvIdx = ATLAS.fallback !== undefined ? ATLAS.fallback : -1;
       }
     }
-    const lng = p[0], lat = p[1];
+    let lng = p[0], lat = p[1];
+    /* 併结运行:伙伴已绘制且当前在併结窗口内 → 沿车尾方向错开一个车长,两图标一前一后紧贴(符合连挂实际) */
+    if (t.cpl) {
+      for (let ci = 0; ci < t.cpl.length; ci++) {
+        const c = t.cpl[ci];
+        if (M2 >= c.t0 && M2 <= c.t1 && drawnCouple.has(c.p)) {
+          const offD = eps * (L / 8);
+          lng -= Math.sin(p[2]) * offD;
+          lat -= Math.cos(p[2]) * offD;
+          break;
+        }
+      }
+    }
     const mx = (lng + 180) / 360;
     const my = (1 - Math.log(Math.tan(Math.PI/4 + lat * Math.PI/360)) / Math.PI) / 2;
     let dxm = Math.sin(p[2]) * eps, dym = -Math.cos(p[2]) * eps; // mercator y 向南为正,北上取负
@@ -2425,6 +2486,7 @@ function updateTrains(M) {
       }
     }
     visibleTrips.push(t); visibleXY[n * 2] = lng; visibleXY[n * 2 + 1] = lat;
+    drawnCouple.add(t); /* 已绘制,后续併结伙伴可据此错开 */
     n++;
     if (drawGlow) glowPass.push([mx, my, dxm, dym, r, g, b]);
   }
@@ -2609,6 +2671,7 @@ async function boot() {
     setPhase(IDX_PCT, PRS_PCT, 0);
     setLoadMsg(T().loading + ' ' + T().loadingPr + ' …');
     tripList = await parseTripsAsync(tj, f => setPhase(IDX_PCT, PRS_PCT, f));
+    buildCouplings(tripList); /* 併结/分割列车检测 */
     totalTripsToday = tj.n || tripList.length;
     dataReady = true;
     $('dBuild').textContent = tj.b || '-';
@@ -2799,6 +2862,7 @@ async function ensureDayFile() {
     const tj = await fetchJSONWithCache(TRAIN_FILES[want], 'loadingTr');
     trainJSON = tj;
     tripList = await parseTripsAsync(tj);
+    buildCouplings(tripList); /* 併结/分割列车检测(跨日重算) */
     totalTripsToday = tj.n || tripList.length;
     $('dBuild').textContent = tj.b || '-';
     $('bCount').textContent = totalTripsToday.toLocaleString();
@@ -2922,7 +2986,12 @@ function updateDetailLive(t, p, M, rebuild) {
       '<div><span class="lb">' + T().status + '</span><span class="st-badge ' + (running ? 'run' : 'dwell') + '"></span>' + (running ? T().running + ' · ' + Math.round(p[5]) + ' ' + T().kmh : '<b>' + T().dwelling + '</b> @ ' + jas[i]) + '</div>' +
       '<div><span class="lb">' + T().next + '</span>' + nextNm + ' ' + eta + '</div>' +
       (uniqLines.length ? '<div><span class="lb">' + T().viaLines + '</span>' + uniqLines.slice(0, 4).map(l => '<span class="lnchip" style="background:' + (lineColor.get(l) || '#888') + '">' + l + '</span>').join('') + (uniqLines.length > 4 ? ' +' + (uniqLines.length - 4) : '') + '</div>' : '') +
-      '<div><span class="lb">' + T().tripId + '</span>#' + t.t + ' · ' + (t.nm || t.i) + '</div></div>' +
+      '<div><span class="lb">' + T().tripId + '</span>#' + t.t + ' · ' + (t.nm || t.i) + '</div>' +
+      (t.cpl && t.cpl.length ? '<div><span class="lb">' + T().cplLabel + '</span>' + t.cpl.map(c => {
+        const si = t.jasN.indexOf(c.split);
+        return T().cplSplit.replace('{0}', c.name || '').replace('{1}', si >= 0 ? t.jas[si] : c.split);
+      }).join('；') + '</div>' : '') +
+      '</div>' +
       '<div class="d-sep"></div>' +
       '<div class="d-stops"><div class="st-title">' + T().stopsTitle + '<span class="cnt">' + N + ' ' + T().stopsCount + '</span></div>' +
       '<div class="st-list">' +

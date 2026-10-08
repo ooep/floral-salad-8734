@@ -230,6 +230,7 @@ button { font-family:inherit; }
 #detail.following { border-color:var(--acc-border); box-shadow:0 4px 16px var(--shadow), 0 0 0 1px var(--acc-soft) inset; }
 #detail .d-h { display:flex; align-items:center; gap:10px; }
 #detail .d-ic { width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800; flex:none; min-width:32px; max-width:72px; padding:0 6px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#detail .d-ic-img { width:30px; height:36px; min-width:30px; max-width:30px; padding:0; background-repeat:no-repeat; background-color:var(--panel2); border:1px solid var(--line); border-radius:6px; }
 #detail .d-t { flex:1; min-width:0; }
 #detail .d-nm { font-size:14px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 #detail .d-sb { font-size:11px; color:var(--dim); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -2844,6 +2845,21 @@ function showTrainDetail(t) {
     if (p) map.flyTo({ center: [p[0], p[1]], zoom: Math.max(map.getZoom(), 12), pitch: 55, duration: 1200 });
   };
 }
+/* 图集车头贴图:特急爱称 → 线路 → fallback */
+function trainIconIdx(t, lineName) {
+  if (!ATLAS) return -1;
+  if (t.nm && ATLAS.tokkyu[t.nm] !== undefined) return ATLAS.tokkyu[t.nm];
+  if (lineName && ATLAS.line[lineName] !== undefined) return ATLAS.line[lineName];
+  if (t.lines && t.lines[0] && ATLAS.line[t.lines[0]] !== undefined) return ATLAS.line[t.lines[0]];
+  return ATLAS.fallback;
+}
+function iconStyle(icIdx) {
+  if (icIdx < 0 || !ATLAS) return '';
+  const sc = 0.75; /* 30px 盒 / 40px 图 */
+  const col = icIdx % ATLAS.cols, row = Math.floor(icIdx / ATLAS.cols);
+  return 'background-image:url(data/train_icons_atlas.png);background-size:' + (ATLAS.size[0] * sc) + 'px ' + (ATLAS.size[1] * sc) + 'px;' +
+    'background-position:-' + ((col * ATLAS.cell[0] + 2) * sc) + 'px -' + ((row * ATLAS.cell[1] + 2) * sc) + 'px;';
+}
 function updateDetailLive(t, p, M, rebuild) {
   if (!p) { p = trainPosition(t, windowShift(t, M)); }
   if (!p) return;
@@ -2860,7 +2876,7 @@ function updateDetailLive(t, p, M, rebuild) {
     detailEl.dataset.tid = String(t.t) + t.w0;
     const uniqLines = t.lines || [];
     detailEl.innerHTML =
-      '<div class="d-h"><span class="d-ic" style="color:' + col + ';background:' + col + '22">' + ICO.train + '</span>' +
+      '<div class="d-h">' + (trainIconIdx(t, p && p[3]) >= 0 ? '<span class="d-ic d-ic-img" style="' + iconStyle(trainIconIdx(t, p && p[3])) + '"></span>' : '<span class="d-ic" style="color:' + col + ';background:' + col + '22">' + ICO.train + '</span>') +
       '<div class="d-t"><div class="d-nm">' + (t.nm || p[3] || uniqLines[0] || t.i) + '</div>' +
       '<div class="d-sb">' + t.jas[0] + ' → ' + t.jas[N-1] + ' · ' + fmtHm(t.dep[0]) + '–' + fmtHm(t.arr[N-1]) + '</div></div>' +
       '<button class="btn icon d-x" id="dClose">' + ICO.close + '</button></div>' +

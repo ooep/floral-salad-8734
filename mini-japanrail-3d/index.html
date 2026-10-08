@@ -59,22 +59,22 @@ html,body { width:100%; height:100%; overflow:hidden; background:var(--bg); colo
 button { font-family:inherit; }
 
 /* ---------- 顶部浮动栏 ---------- */
-#appbar { position:absolute; top:10px; left:10px; right:10px; height:46px; padding:0 8px 0 8px; display:flex; align-items:center; gap:10px;
+#appbar { position:absolute; top:8px; left:8px; right:8px; height:42px; padding:0 8px; display:flex; align-items:center; gap:8px;
   background:var(--panel); border:1px solid var(--line); border-radius:var(--r);
   backdrop-filter:blur(20px) saturate(1.4); -webkit-backdrop-filter:blur(20px) saturate(1.4);
   box-shadow:0 2px 12px rgba(0,0,0,.18); z-index:9; }
-#appbar .brand { font-size:12px; font-weight:700; letter-spacing:.2px; display:flex; align-items:center; gap:8px; cursor:pointer; flex:none; white-space:nowrap; padding:0 4px; }
-#appbar .brand .lg { width:28px; height:28px; border-radius:9px; background:var(--acc); color:#fff; display:flex; align-items:center; justify-content:center; flex:none; box-shadow:0 2px 10px var(--acc-soft); }
+#appbar .brand { font-size:12px; font-weight:700; letter-spacing:.2px; display:flex; align-items:center; gap:7px; cursor:pointer; flex:none; white-space:nowrap; padding:0 2px; }
+#appbar .brand .lg { width:26px; height:26px; border-radius:8px; background:var(--acc); color:#fff; display:flex; align-items:center; justify-content:center; flex:none; box-shadow:0 2px 10px var(--acc-soft); }
 #appbar .brand b { color:var(--dim); font-weight:600; }
-.a-search { flex:1; min-width:0; max-width:480px; height:36px; padding:0 14px; display:flex; align-items:center; gap:8px; border:1px solid transparent;
-  border-radius:var(--r-pill); background:var(--panel2); color:var(--dim); font-size:12.5px; cursor:pointer; transition:border-color .15s, background .15s, box-shadow .15s; }
-.a-search:hover, .a-search:focus-visible { border-color:var(--acc-border); background:var(--panel); outline:none; box-shadow:0 0 0 3px var(--acc-soft); }
+.a-search { flex:1; min-width:0; max-width:460px; height:32px; padding:0 13px; display:flex; align-items:center; gap:7px; border:1px solid transparent;
+  border-radius:var(--r-pill); background:var(--panel2); color:var(--dim); font-size:12px; cursor:pointer; transition:border-color .15s, background .15s, box-shadow .15s; }
+.a-search:hover, .a-search:focus-visible { border-color:var(--acc-border); background:var(--panel); outline:none; box-shadow:0 0 0 2.5px var(--acc-soft); }
 .a-search span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.badge { display:flex; gap:5px; flex:none; }
-.badge .b-it { display:flex; align-items:baseline; gap:5px; padding:5px 11px; border-radius:var(--r-pill); background:transparent; border:1px solid var(--line); }
-.badge .b-lb { font-size:10px; color:var(--dim); font-weight:600; }
-.badge b { font-size:13px; font-weight:700; font-variant-numeric:tabular-nums; color:var(--txt); }
-.a-btns { display:flex; gap:5px; flex:none; align-items:center; margin-left:auto; padding-left:10px; border-left:1px solid var(--line); }
+.badge { display:flex; gap:4px; flex:none; }
+.badge .b-it { display:flex; align-items:baseline; gap:4px; padding:3px 10px; border-radius:var(--r-pill); background:transparent; border:1px solid var(--line); }
+.badge .b-lb { font-size:9.5px; color:var(--dim); font-weight:600; }
+.badge b { font-size:12.5px; font-weight:700; font-variant-numeric:tabular-nums; color:var(--txt); }
+.a-btns { display:flex; gap:4px; flex:none; align-items:center; margin-left:auto; padding-left:8px; border-left:1px solid var(--line); }
 
 /* 状态横幅（应用栏下方居中） */
 #status { position:absolute; top:68px; left:50%; transform:translateX(-50%); font-size:11px; color:var(--dim); z-index:8;
@@ -100,7 +100,7 @@ button { font-family:inherit; }
 .btn:disabled { opacity:.45; cursor:default; }
 
 /* ---------- 左侧工具面板 ---------- */
-#side { position:absolute; top:68px; left:10px; width:260px; max-height:calc(100vh - 156px);
+#side { position:absolute; top:56px; left:8px; width:260px; max-height:calc(100vh - 130px);
   display:flex; flex-direction:column; background:var(--panel); border:1px solid var(--line); border-radius:var(--r);
   backdrop-filter:blur(20px) saturate(1.4); -webkit-backdrop-filter:blur(20px) saturate(1.4); box-shadow:var(--shadow); z-index:6; overflow:hidden;
   transition:width .2s ease, opacity .2s; }
@@ -114,6 +114,8 @@ button { font-family:inherit; }
 .stab-sec.on { display:block; }
 #side .sec { padding:9px 12px; border-top:1px solid var(--line); }
 #side .sec:first-child { border-top:0; }
+/* 空区块自动隐藏(无chips时不占高度) */
+#side .sec:has(.frow:empty) { display:none; }
 .sec-t { font-size:10px; font-weight:700; letter-spacing:.8px; color:var(--dim); margin-bottom:6px;
   display:flex; align-items:center; gap:6px; text-transform:uppercase; }
 .sec-t::before { content:''; width:3px; height:10px; border-radius:2px; background:var(--acc); opacity:.7; }
@@ -201,25 +203,25 @@ button { font-family:inherit; }
 #dayRow { display:flex; gap:5px; }
 
 /* ---------- 底部时钟条 ---------- */
-#clock { position:absolute; bottom:12px; left:50%; transform:translateX(-50%); width:min(560px,calc(100vw - 20px));
-  background:var(--panel); border:1px solid var(--line); border-radius:20px; backdrop-filter:blur(20px) saturate(1.4);
-  -webkit-backdrop-filter:blur(20px) saturate(1.4); box-shadow:var(--shadow); z-index:7; padding:8px 14px 10px; display:none; }
-#clock .r1 { display:flex; align-items:center; gap:10px; }
-#clock #btnPlay { width:36px; min-width:36px; height:36px; border-radius:50%; padding:0; background:var(--acc); border-color:var(--acc); color:#fff; box-shadow:0 2px 10px var(--acc-soft); }
+#clock { position:absolute; bottom:10px; left:50%; transform:translateX(-50%); width:min(540px,calc(100vw - 20px));
+  background:var(--panel); border:1px solid var(--line); border-radius:16px; backdrop-filter:blur(20px) saturate(1.4);
+  -webkit-backdrop-filter:blur(20px) saturate(1.4); box-shadow:var(--shadow); z-index:7; padding:7px 12px 8px; display:none; }
+#clock .r1 { display:flex; align-items:center; gap:8px; }
+#clock #btnPlay { width:32px; min-width:32px; height:32px; border-radius:50%; padding:0; background:var(--acc); border-color:var(--acc); color:#fff; box-shadow:0 2px 10px var(--acc-soft); }
 #clock #btnPlay:hover { background:var(--acc); border-color:var(--acc); filter:brightness(1.14); }
-#clock .ldot { width:8px; height:8px; border-radius:50%; background:#f87171; flex:none; animation:ldot 1.8s ease-in-out infinite; }
+#clock .ldot { width:7px; height:7px; border-radius:50%; background:#f87171; flex:none; animation:ldot 1.8s ease-in-out infinite; }
 #clock .ldot.on { background:#34d399; }
 @keyframes ldot { 0%,100%{opacity:1;} 50%{opacity:.35;} }
 #clock .ct { text-align:center; }
-#clock .t { font-size:19px; font-weight:700; font-variant-numeric:tabular-nums; letter-spacing:.3px; min-width:76px; line-height:1.1; font-variant-numeric:tabular-nums; }
-#clock .tz { font-size:9px; font-weight:700; letter-spacing:1px; color:var(--dim); margin-top:2px; }
-#clock .daychip { font-size:10.5px; padding:4px 10px; border-radius:var(--r-pill); border:1px solid var(--line); color:var(--dim); white-space:nowrap; font-weight:600; }
-.spb { padding:4px 10px; border-radius:var(--r-pill); border:1px solid var(--line); font-size:11px; font-weight:700; cursor:pointer; color:var(--dim); background:transparent; white-space:nowrap; flex:none; transition:background .12s,border-color .12s,color .12s; }
+#clock .t { font-size:17px; font-weight:700; font-variant-numeric:tabular-nums; letter-spacing:.3px; min-width:68px; line-height:1.1; }
+#clock .tz { font-size:8.5px; font-weight:700; letter-spacing:1px; color:var(--dim); margin-top:1px; }
+#clock .daychip { font-size:10px; padding:3px 9px; border-radius:var(--r-pill); border:1px solid var(--line); color:var(--dim); white-space:nowrap; font-weight:600; }
+.spb { padding:3px 9px; border-radius:var(--r-pill); border:1px solid var(--line); font-size:10.5px; font-weight:700; cursor:pointer; color:var(--dim); background:transparent; white-space:nowrap; flex:none; transition:background .12s,border-color .12s,color .12s; }
 .spb:hover { border-color:var(--acc-border); color:var(--txt); }
 .spb.on { background:var(--acc); color:#fff; border-color:var(--acc); }
 .sp-main { margin-left:auto; }
 #clock .fold { display:none; }
-#clock .r2 { position:relative; display:flex; align-items:center; gap:8px; margin-top:8px; padding:0 2px; }
+#clock .r2 { position:relative; display:flex; align-items:center; gap:8px; margin-top:6px; padding:0 2px; }
 .tk-l, .tk-r { font-size:9px; color:var(--dim); opacity:.6; font-variant-numeric:tabular-nums; pointer-events:none; flex:none; }
 #cBub { position:absolute; top:-25px; transform:translateX(-50%); background:var(--panel2); border:1px solid var(--line);
   border-radius:6px; padding:2px 8px; font-size:11px; font-weight:600; font-variant-numeric:tabular-nums; color:var(--txt);
@@ -319,35 +321,35 @@ button { font-family:inherit; }
 .maplibregl-ctrl-group button:hover { background:var(--panel2)!important; }
 
 @media (max-width:640px) {
-  #appbar { padding:0 8px; gap:6px; height:44px; }
+  #appbar { padding:0 8px; gap:6px; height:40px; top:6px; left:6px; right:6px; }
   #appbar .brand { font-size:12px; gap:6px; }
   #appbar .brand .lg { width:26px; height:26px; border-radius:8px; }
-  .a-search { max-width:none; height:34px; }
+  .a-search { max-width:none; height:32px; }
   #btnLive span { display:none; }
   #btnProj, #btnLang { display:none; }
   .badge { display:none; }
-  #side { top:60px; left:0; width:100vw; max-height:calc(100vh - 140px); border-radius:0 var(--r) var(--r) 0; }
-  #side.collapsed { width:40px; border-radius:0 var(--r) var(--r) 0; }
-  #side .sec { padding:8px 12px; }
-  #clock { width:max-content; max-width:calc(100vw - 16px); padding:6px 10px; border-radius:999px; }
+  #side { top:52px; left:6px; width:calc(100vw - 12px); max-height:calc(100vh - 120px); border-radius:var(--r); }
+  #side.collapsed { width:40px; border-radius:var(--r); }
+  #side .sec { padding:7px 10px; }
+  #clock { width:max-content; max-width:calc(100vw - 12px); padding:5px 9px; border-radius:999px; bottom:8px; }
   #clock .r2, #clock .sp-main { display:none; }
   #clock .fold { display:flex; }
   #clock.expanded .r2, #clock.expanded .sp-main { display:flex; }
-  #clock.expanded { width:calc(100vw - 16px); padding:7px 12px 8px; border-radius:16px; }
+  #clock.expanded { width:calc(100vw - 12px); padding:6px 10px 7px; border-radius:14px; }
   #clock.hide-on-detail { opacity:0; pointer-events:none; transform:translateX(-50%) translateY(14px); }
-  #detail { width:calc(100vw - 16px); left:8px; border-radius:16px; padding:12px 14px; }
-  #detail .d-x { min-width:36px; min-height:36px; width:36px; }
-  #detail .d-act .btn { min-height:38px; }
+  #detail { width:calc(100vw - 12px); left:6px; border-radius:14px; padding:11px 12px; }
+  #detail .d-x { min-width:34px; min-height:34px; width:34px; }
+  #detail .d-act .btn { min-height:36px; }
   #status { display:none; }
   /* 表单元素 ≥16px 防止 iOS 聚焦自动缩放 */
   .tbox, #rFrom, #rTo { font-size:16px; }
-  .btn { min-height:40px; min-width:40px; }
-  .btn.icon { width:40px; }
-  .chip { padding:5px 12px; font-size:11.5px; min-height:26px; }
-  .sw { padding:6px 2px; font-size:12px; }
-  .sw .trk { width:36px; height:20px; }
-  .sw .trk::after { width:16px; height:16px; }
-  .sw.on .trk::after { left:18px; }
+  .btn { min-height:38px; min-width:38px; }
+  .btn.icon { width:38px; }
+  .chip { padding:4px 11px; font-size:11px; min-height:24px; }
+  .sw { padding:5px 2px; font-size:11.5px; }
+  .sw .trk { width:34px; height:19px; }
+  .sw .trk::after { width:15px; height:15px; }
+  .sw.on .trk::after { left:17px; }
 }
 /* ============ 车站底部抽屉(时刻表) ============ */
 #sheetMask { position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:20; display:none; }

@@ -120,12 +120,8 @@ button { font-family:inherit; }
   display:flex; align-items:center; gap:5px; text-transform:uppercase; }
 .sec-t::before { content:''; width:3px; height:9px; border-radius:2px; background:var(--acc); opacity:.7; }
 
-/* 收起态：44px 图标条 */
-#side.collapsed { width:40px; opacity:1; pointer-events:auto; }
-#side.collapsed #sideBody, #side.collapsed .st-lb { display:none; }
-#side.collapsed #sideTabs { flex-direction:column; border-bottom:0; padding:4px 3px; background:transparent; gap:2px; }
-#side.collapsed .stab { height:36px; }
-#side.collapsed .stab.on { box-shadow:inset 3px 0 0 var(--acc); background:transparent; }
+/* 收起态：完全隐藏 */
+#side.collapsed { display:none; }
 
 /* 搜索 */
 .tbox { width:100%; min-height:36px; padding:0 12px; border:1px solid var(--line); border-radius:var(--r-sm); background:var(--panel2);
@@ -331,7 +327,6 @@ button { font-family:inherit; }
   #btnProj, #btnLang { display:none; }
   .badge { display:none; }
   #side { top:52px; left:6px; width:calc(100vw - 12px); max-height:calc(100vh - 120px); border-radius:var(--r); }
-  #side.collapsed { width:40px; border-radius:var(--r); }
   #side .sec { padding:6px 10px; }
   #clock { width:max-content; max-width:calc(100vw - 12px); padding:5px 9px; border-radius:999px; bottom:8px; }
   #clock .r2, #clock .sp-main, #clock .daychip { display:none; }

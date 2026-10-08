@@ -70,11 +70,11 @@ button { font-family:inherit; }
   border-radius:var(--r-pill); background:var(--panel2); color:var(--dim); font-size:12px; cursor:pointer; transition:border-color .15s, background .15s, box-shadow .15s; }
 .a-search:hover, .a-search:focus-visible { border-color:var(--acc-border); background:var(--panel); outline:none; box-shadow:0 0 0 2.5px var(--acc-soft); }
 .a-search span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.badge { display:flex; gap:4px; flex:none; }
-.badge .b-it { display:flex; align-items:baseline; gap:4px; padding:3px 10px; border-radius:var(--r-pill); background:transparent; border:1px solid var(--line); }
-.badge .b-lb { font-size:9.5px; color:var(--dim); font-weight:600; }
-.badge b { font-size:12.5px; font-weight:700; font-variant-numeric:tabular-nums; color:var(--txt); }
-.a-btns { display:flex; gap:4px; flex:none; align-items:center; margin-left:auto; padding-left:8px; border-left:1px solid var(--line); }
+.badge { display:flex; gap:3px; flex:none; }
+.badge .b-it { display:flex; align-items:baseline; gap:3px; padding:2px 8px; border-radius:var(--r-pill); background:transparent; }
+.badge .b-lb { font-size:9px; color:var(--dim); font-weight:600; }
+.badge b { font-size:12px; font-weight:700; font-variant-numeric:tabular-nums; color:var(--txt); }
+.a-btns { display:flex; gap:6px; flex:none; align-items:center; margin-left:auto; padding-left:10px; border-left:1px solid var(--line); }
 
 /* 状态横幅（应用栏下方居中） */
 #status { position:absolute; top:54px; left:50%; transform:translateX(-50%); font-size:10.5px; color:var(--dim); z-index:8;
@@ -100,7 +100,7 @@ button { font-family:inherit; }
 .btn:disabled { opacity:.45; cursor:default; }
 
 /* ---------- 左侧工具面板 ---------- */
-#side { position:absolute; top:56px; left:8px; width:260px; max-height:calc(100vh - 130px);
+#side { position:absolute; top:54px; left:8px; width:248px; max-height:calc(100vh - 126px);
   display:flex; flex-direction:column; background:var(--panel); border:1px solid var(--line); border-radius:var(--r);
   backdrop-filter:blur(20px) saturate(1.4); -webkit-backdrop-filter:blur(20px) saturate(1.4); box-shadow:var(--shadow); z-index:6; overflow:hidden;
   transition:width .2s ease, opacity .2s, transform .28s cubic-bezier(.2,.9,.3,1.1);
@@ -328,7 +328,7 @@ button { font-family:inherit; }
   #btnLive span { display:none; }
   #btnProj, #btnLang { display:none; }
   .badge { display:none; }
-  #side { top:52px; left:6px; width:calc(100vw - 12px); max-height:calc(100vh - 120px); border-radius:var(--r); }
+  #side { top:50px; left:6px; width:calc(100vw - 12px); max-height:calc(100vh - 116px); border-radius:var(--r); }
   #side .sec { padding:6px 10px; }
   #clock { width:max-content; max-width:calc(100vw - 12px); padding:5px 9px; border-radius:999px; bottom:8px; }
   #clock .r2, #clock .sp-main, #clock .daychip { display:none; }

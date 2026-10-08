@@ -145,7 +145,8 @@ button { font-family:inherit; }
 .chip.on { background:var(--acc); border-color:var(--acc); color:#fff; }
 
 /* 图例 */
-.legrow { display:flex; align-items:center; gap:8px; font-size:11.5px; padding:2.5px 0; }
+.legrow { display:flex; align-items:center; gap:8px; font-size:11.5px; padding:3px 8px; margin:1px -8px; border-radius:6px; transition:background .1s; }
+.legrow:hover { background:var(--acc-soft); }
 .legrow .dot { width:9px; height:9px; border-radius:50%; flex:none; }
 .legrow .nm { color:var(--txt); } .legrow .ds { color:var(--dim); font-size:10px; margin-left:auto; }
 
@@ -164,7 +165,8 @@ button { font-family:inherit; }
 
 /* 数据统计卡片 */
 .stats { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
-.stat { background:var(--panel2); border:1px solid var(--line); border-radius:7px; padding:7px 10px; min-width:0; }
+.stat { background:var(--panel2); border:1px solid var(--line); border-radius:7px; padding:7px 10px; min-width:0; transition:border-color .12s; }
+.stat:hover { border-color:var(--acc-border); }
 .stat .s-lb { font-size:10px; color:var(--dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .stat .s-v { font-size:15px; font-weight:700; font-variant-numeric:tabular-nums; color:var(--txt); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
@@ -214,12 +216,15 @@ button { font-family:inherit; }
 #detail.show { opacity:1; transform:none; }
 #detail.following { border-color:var(--acc-border); box-shadow:0 4px 16px var(--shadow), 0 0 0 1px var(--acc-soft) inset; }
 #detail .d-h { display:flex; align-items:center; gap:10px; }
-#detail .d-ic { width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:800; flex:none; }
+#detail .d-ic { width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800; flex:none; min-width:32px; max-width:72px; padding:0 6px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 #detail .d-t { flex:1; min-width:0; }
 #detail .d-nm { font-size:14px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-#detail .d-sb { font-size:11px; color:var(--dim); margin-top:2px; }
+#detail .d-sb { font-size:11px; color:var(--dim); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 #detail .d-meta { margin-top:9px; font-size:11.5px; line-height:1.8; color:var(--txt); }
 #detail .d-meta .lb { color:var(--dim); margin-right:6px; }
+.st-badge { display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:5px; vertical-align:1px; }
+.st-badge.run { background:#34d399; box-shadow:0 0 0 3px rgba(52,211,153,.16); }
+.st-badge.dwell { background:#fbbf24; box-shadow:0 0 0 3px rgba(251,191,36,.16); }
 #detail .d-sep { border-top:1px solid var(--line); margin:10px 0 0; }
 #detail .d-act { display:flex; gap:8px; margin-top:10px; }
 #detail .d-act .btn { min-height:34px; font-size:12px; flex:1; padding:0 10px; }
@@ -249,7 +254,8 @@ button { font-family:inherit; }
 #lRetry { display:none; min-height:38px; padding:0 20px; border:1px solid var(--acc-border); border-radius:8px; background:var(--acc-soft); color:var(--txt); font-size:12.5px; font-weight:600; cursor:pointer; align-items:center; gap:6px; }
 #lRetry:hover { background:var(--acc); color:#fff; }
 #lbar { width:min(320px,70vw); height:3px; border-radius:2px; background:rgba(120,140,180,.2); overflow:hidden; }
-#lbarF { height:100%; width:0%; border-radius:2px; background:var(--acc); transition:width .2s; }
+#lbarF { height:100%; width:0%; border-radius:2px; background:var(--acc); transition:width .25s ease, background .3s; }
+#lbarF.done { background:#34d399; }
 
 #toast { position:absolute; top:56px; left:50%; transform:translateX(-50%); background:var(--panel2); border:1px solid var(--line);
   color:var(--txt); font-size:12px; padding:7px 16px; border-radius:8px; z-index:40; display:none; box-shadow:var(--shadow); max-width:80vw;
@@ -268,6 +274,7 @@ button { font-family:inherit; }
   #appbar { padding:0 8px; gap:6px; }
   #appbar .brand { font-size:12.5px; }
   .a-search { max-width:none; }
+  #btnLive span { display:none; }
   .badge { display:none; }
   #btnLang { display:none; }
   #clock { width:calc(100vw - 16px); padding:8px 12px 10px; }
@@ -293,7 +300,8 @@ button { font-family:inherit; }
 #sheet .sh-sub { font-size:12.5px; color:var(--dim); margin-top:4px; }
 #sheet .sh-x { margin-left:auto; flex:none; }
 #sheet .sh-tabs { display:flex; border-bottom:1px solid var(--line); flex:none; margin-top:8px; }
-#sheet .sh-tabs button { flex:1; padding:11px 0; background:none; border:0; color:var(--dim); font-size:14px; font-weight:700; cursor:pointer; border-bottom:2px solid transparent; }
+#sheet .sh-tabs button { flex:1; padding:11px 0; background:none; border:0; color:var(--dim); font-size:14px; font-weight:700; cursor:pointer; border-bottom:2px solid transparent; transition:color .12s; }
+#sheet .sh-tabs button:hover { color:var(--txt); }
 #sheet .sh-tabs button.on { color:var(--txt); border-bottom-color:var(--acc); }
 #sheet .sh-body { flex:1; overflow-y:auto; padding:6px 12px 24px; -webkit-overflow-scrolling:touch; }
 #sheet .grp-op { display:flex; align-items:center; gap:8px; padding:14px 4px 6px; font-size:12px; font-weight:800; color:var(--txt); }
@@ -726,7 +734,7 @@ const DATA_VERSION = '2026-10-06a';
 const loadSizes = { 'data/segments3d.geojson': 9054890, 'data/stations3d.geojson': 1422796, 'data/tmaps.json': 3158412, 'data/station_map.json': 11006682, 'data/tokkyu.json': 59100, 'data/trains_wd.json': 13494947, 'data/trains_sa.json': 12228166, 'data/trains_su.json': 12284312 };
 let _fileTotal = 7, _fileIdx = 0;
 function nextFileIdx() { return _fileIdx++; }
-function setPct(p) { lbarF.style.width = Math.min(100, p) + '%'; lPctEl.textContent = Math.round(p) + '%'; }
+function setPct(p) { const pc = Math.min(100, p); lbarF.style.width = pc + '%'; lPctEl.textContent = Math.round(pc) + '%'; lbarF.classList.toggle('done', pc >= 100); }
 function setLoadMsg(s) { loaderMsg.textContent = s; }
 function setPhase(lo, hi, f) { setPct(lo + (hi - lo) * Math.max(0, Math.min(1, f))); }
 function updateBar(fileIdx, got, size) {
@@ -2798,7 +2806,7 @@ function updateDetailLive(t, p, M, rebuild) {
       '<div class="d-sb">' + t.jas[0] + ' → ' + t.jas[N-1] + ' · ' + fmtHm(t.dep[0]) + '–' + fmtHm(t.arr[N-1]) + '</div></div>' +
       '<button class="btn icon d-x" id="dClose">' + ICO.close + '</button></div>' +
       '<div class="d-meta">' +
-      '<div><span class="lb">' + T().status + '</span>' + (running ? T().running + ' · ' + Math.round(p[5]) + ' ' + T().kmh : '<b>' + T().dwelling + '</b> @ ' + jas[i]) + '</div>' +
+      '<div><span class="lb">' + T().status + '</span><span class="st-badge ' + (running ? 'run' : 'dwell') + '"></span>' + (running ? T().running + ' · ' + Math.round(p[5]) + ' ' + T().kmh : '<b>' + T().dwelling + '</b> @ ' + jas[i]) + '</div>' +
       '<div><span class="lb">' + T().next + '</span>' + nextNm + ' ' + eta + '</div>' +
       (uniqLines.length ? '<div><span class="lb">' + T().viaLines + '</span>' + uniqLines.slice(0, 4).map(l => '<span class="lnchip" style="background:' + (lineColor.get(l) || '#888') + '">' + l + '</span>').join('') + (uniqLines.length > 4 ? ' +' + (uniqLines.length - 4) : '') + '</div>' : '') +
       '<div><span class="lb">' + T().tripId + '</span>#' + t.t + ' · ' + (t.nm || t.i) + '</div></div>' +
@@ -2812,7 +2820,7 @@ function updateDetailLive(t, p, M, rebuild) {
     /* 每帧 innerHTML 重写有 GC/排版开销:内容不变时跳过,只写变化行 */
     const st = detailEl.querySelector('.d-meta');
     if (st) {
-      const s1 = '<span class="lb">' + T().status + '</span>' + (running ? T().running + ' · ' + Math.round(p[5]) + ' ' + T().kmh : '<b>' + T().dwelling + '</b> @ ' + jas[i]);
+      const s1 = '<span class="lb">' + T().status + '</span><span class="st-badge ' + (running ? 'run' : 'dwell') + '"></span>' + (running ? T().running + ' · ' + Math.round(p[5]) + ' ' + T().kmh : '<b>' + T().dwelling + '</b> @ ' + jas[i]);
       if (s1 !== t._dS1) { st.children[0].innerHTML = s1; t._dS1 = s1; }
       const s2 = '<span class="lb">' + T().next + '</span>' + nextNm + ' ' + eta;
       if (s2 !== t._dS2) { st.children[1].innerHTML = s2; t._dS2 = s2; }

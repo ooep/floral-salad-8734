@@ -3132,6 +3132,10 @@ function lineIconFor(t) {
   if (isKeihinTohokuTrip(t)) { const v = ATLAS.line['根岸線']; if (v !== undefined) return v; }
   if (t.lines.length > 1) {
     for (const ln of t.lines) { if (ICON_SKIP_LINES.has(ln)) continue; const v = ATLAS.line[ln]; if (v !== undefined) return v; }
+    /* 多线路但全是共享干道(上野東京線/宇都宮線等直通, 如 [東海道本線,東北本線]):
+       不再取'東海道本線'的西日本W223(143, 灰+黄绿带, 与山手线E235视觉混淆),
+       改用东日本E217湘南色通用通勤车兜底图 */
+    if (ATLAS.fallback !== undefined) return ATLAS.fallback;
   }
   for (let li = 0; li < t.lines.length; li++) {
     if (t.lines.length > 1 && t.lines[li] === '山手線') continue;

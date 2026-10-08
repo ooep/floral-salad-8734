@@ -36,6 +36,7 @@ function lineIconFor(t) {
   if (isKeihinTohokuTrip(t)) { const v = ATLAS.line['根岸線']; if (v !== undefined) return v; }
   if (t.lines.length > 1) {
     for (const ln of t.lines) { if (ICON_SKIP_LINES.has(ln)) continue; const v = ATLAS.line[ln]; if (v !== undefined) return v; }
+    if (ATLAS.fallback !== undefined) return ATLAS.fallback;
   }
   for (let li = 0; li < t.lines.length; li++) {
     if (t.lines.length > 1 && t.lines[li] === '山手線') continue;
@@ -77,14 +78,14 @@ for (const tid of expect300) {
   const idx = lineIconFor(t);
   report(!jk && idx !== 300, `上野東京線 5343 (古河→小田原) 非JK (jk=${jk}, 图标=${idx})`);
 }
-/* 2) 上野東京線不误判 */
-const notJK = ['1055', '2155'];
+/* 2) 上野東京線不误判 + 纯干道组合改E217湘南色(489) */
+const notJK = ['1055', '2155', '5343'];
 for (const tid of notJK) {
   const t = trips.find(x => x.tid === tid);
   const jk = isKeihinTohokuTrip(t);
   const idx = lineIconFor(t);
   report(!jk, `上野東京線 ${tid} 未被误判为JK (jk=${jk})`);
-  report(idx !== 300, `上野東京線 ${tid} 图标=${idx} 不应是300`);
+  report(idx === ATLAS.fallback, `上野東京線 ${tid} 图标=${idx} 期望E217湘南色兜底(${ATLAS.fallback}) 而非W223(143)`);
 }
 /* 3) 山手线单线路 */
 for (const tid of ['4331', '2507', '7250']) {

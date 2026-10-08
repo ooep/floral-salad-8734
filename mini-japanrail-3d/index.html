@@ -2322,6 +2322,26 @@ const QUAD = [[-1,-1],[1,-1],[1,1], [-1,-1],[1,1],[-1,1]];
 const MAXT = 9000, STRIDE = 13; /* 12 + a_uv(图集索引 float,-1=无纹理) */
 let vbo = null, vao = null, uni = new Map(), glRef = null, bufArr = new Float32Array(MAXT * 42 * STRIDE); /* 倾斜视角立体盒:每列车 底6+顶6+4侧24=36 + 光晕 6 最坏 42 顶点 */
 let __renderCount = 0, __glErr = 0, __lastDraw = 0, __lastArgs = null;
+/* 高 zoom 抖动修复(MC):mercator 变体下,世界→裁剪矩阵的平移列 ≈ ±5.96e4,
+   float32 舍入在相机跟随/平移时每帧 ±1-2px(≈ULP/帧)量化步进 → 列车与镜头肉眼抖动。
+   解法(三层全部高精度):
+   ① 顶点改为「相对参考中心 c 的墨卡托偏移」(小数值,float32 精度高);
+   ② 矩阵平移列清零(12,13,14),仅保留线性+透视部分 —— 大数项不再进入计算;
+   ③ 参考中心在屏幕上的位置由 map.project(双精度)求得,经 u_centerNdc 在 shader 加回:
+      clip = M_lin·(p−c) + centerNdc·w ≡ M·p 严格成立,且所有中间量均为小值/双精度。
+   globe 变体走球面坐标(O(1)量级)无此问题,保持绝对坐标原逻辑(u_centerNdc=(0,0))。 */
+let __frameMerc = true; /* 上帧 custom layer 变体是否为 mercator(渲染循环内每帧刷新,供 updateTrains 使用) */
+let __relCx = 0, __relCy = 0, __relLng = 0, __relLat = 0; /* 本帧顶点参考中心(updateTrains 写入,render 复用) */
+const __localM = new Float32Array(16); /* 复用的局部矩阵,避免每帧分配 */
+function mercYOf(lat) { return (1 - Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360)) / Math.PI) / 2; }
+/* 构建局部矩阵:拷贝当前相机矩阵 M,平移列(12,13,14)清零(中心位置由 u_centerNdc 双精度加回),
+   w 列(15)补为参考中心处的真实 w(列主序行3取 [3,7]) */
+function localMatrixFrom(mainM, cx, cy) {
+  for (let i = 0; i < 16; i++) __localM[i] = mainM[i];
+  __localM[12] = 0; __localM[13] = 0; __localM[14] = 0;
+  __localM[15] = mainM[15] + mainM[3] * cx + mainM[7] * cy;
+  return __localM;
+}
 const trainShaderLayer = {
   id: 'trains-gl', type: 'custom', renderingMode: '2d', shaderMap: new Map(),
   getShader(gl, sd) {
@@ -2331,10 +2351,14 @@ ${sd.vertexShaderPrelude}
 ${sd.define}
 in vec2 a_pos; in vec2 a_dir; in vec2 a_corner; in vec4 a_color; in float a_glow; in float a_h; in float a_uv;
 uniform vec2 u_ndcScale;
+uniform vec2 u_centerNdc; /* mercator 局部帧:参考中心在屏幕 NDC(双精度 map.project 求得);globe=(0,0) */
 out vec2 v_uv; flat out vec2 v_h; out vec4 v_color; out float v_glow; out float v_uvIdx;
 void main() {
   vec4 c = projectTile(a_pos);
   vec4 d = projectTile(a_pos + a_dir);
+  /* 加回参考中心的裁剪坐标(centerNdc×w):M_lin·(p−c) + centerNdc·w ≡ M·p,投影精确 */
+  c.xy += u_centerNdc * c.w;
+  d.xy += u_centerNdc * d.w;
   vec2 c2 = c.xy / c.w;
   vec2 ax = d.xy / d.w - c2;
   ax = length(ax) < 1e-10 ? vec2(1.0,0.0) : normalize(ax);
@@ -2394,6 +2418,7 @@ void main() {
     if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
     uni.set(p, {
       u_ndcScale: gl.getUniformLocation(p, 'u_ndcScale'),
+      u_centerNdc: gl.getUniformLocation(p, 'u_centerNdc'),
       u_fb: gl.getUniformLocation(p,'u_projection_fallback_matrix'),
       u_m: gl.getUniformLocation(p,'u_projection_matrix'),
       u_tmc: gl.getUniformLocation(p,'u_projection_tile_mercator_coords'),
@@ -2434,8 +2459,21 @@ void main() {
     gl.disable(gl.STENCIL_TEST);
     const D = args.defaultProjectionData;
     __lastArgs = { variant: args.shaderData && args.shaderData.variantName };
+    __frameMerc = args.shaderData && args.shaderData.variantName === 'mercator';
     gl.uniformMatrix4fv(U.u_fb, false, D.fallbackMatrix);
-    gl.uniformMatrix4fv(U.u_m, false, D.mainMatrix);
+    /* mercator:上传零平移列的局部矩阵(顶点为相对中心偏移)+ 参考中心 NDC(双精度 map.project);
+       中心位置与顶点同基准,相机在本帧内移动也投影精确;globe:原世界矩阵 + 中心(0,0) */
+    if (__frameMerc) {
+      gl.uniformMatrix4fv(U.u_m, false, localMatrixFrom(D.mainMatrix, __relCx, __relCy));
+      if (U.u_centerNdc) {
+        const sp = map.project([__relLng, __relLat]);
+        const cwpx = map.getCanvas().clientWidth || 1, chpx = map.getCanvas().clientHeight || 1;
+        gl.uniform2f(U.u_centerNdc, 2 * sp.x / cwpx - 1, 1 - 2 * sp.y / chpx);
+      }
+    } else {
+      gl.uniformMatrix4fv(U.u_m, false, D.mainMatrix);
+      if (U.u_centerNdc) gl.uniform2f(U.u_centerNdc, 0, 0);
+    }
     gl.uniform4f(U.u_tmc, D.tileMercatorCoords[0], D.tileMercatorCoords[1], D.tileMercatorCoords[2], D.tileMercatorCoords[3]);
     gl.uniform4f(U.u_cp, D.clippingPlane[0], D.clippingPlane[1], D.clippingPlane[2], D.clippingPlane[3]);
     gl.uniform1f(U.u_tr, D.projectionTransition);
@@ -2518,6 +2556,15 @@ function updateTrains(M) {
   let n = 0, vtx = 0; // vtx:总顶点数(俯视 6/列车,倾斜 36/列车 + 光晕 6/个)
   visibleTrips.length = 0;
   const z = map.getZoom();
+  /* 高 zoom 精度:mercator 变体顶点改为相对地图中心的偏移(render 同步上传零平移列局部矩阵);
+     globe 变体保持绝对坐标(球面 O(1) 精度足够) */
+  let cxo = 0, cyo = 0;
+  if (__frameMerc) {
+    const pc0 = map.getCenter();
+    cxo = __relCx = (pc0.lng + 180) / 360;
+    cyo = __relCy = mercYOf(pc0.lat);
+    __relLng = pc0.lng; __relLat = pc0.lat;
+  }
   /* 视口裁剪:z≥5 时跳过班次包围盒(mercator)与视野不相交的列车 ——
      城市级缩放(首都圈/大阪)时视野外列车占 90%+,裁剪后 CPU 计算与 GPU 上传大幅下降 */
   let vp = null;
@@ -2593,8 +2640,8 @@ function updateTrains(M) {
         }
       }
     }
-    const mx = (lng + 180) / 360;
-    const my = (1 - Math.log(Math.tan(Math.PI/4 + lat * Math.PI/360)) / Math.PI) / 2;
+    const mx = (lng + 180) / 360 - cxo;
+    const my = ((1 - Math.log(Math.tan(Math.PI/4 + lat * Math.PI/360)) / Math.PI) / 2) - cyo;
     let dxm = Math.sin(p[2]) * eps, dym = -Math.cos(p[2]) * eps; // mercator y 向南为正,北上取负
     if (p[5] === 0 && p[2] === 0) { dxm = eps; dym = 0; }
     // 底面(俯视/倾斜都画,平面矩形)
@@ -2883,16 +2930,29 @@ function addMapLayers() {
 /* ---------------- 渲染循环 ---------------- */
 let lastActiveN = -1, lastFpsSec = -1;
 function startLoop() {
-  function tickFollow(M) {
+  function tickFollow(M, dt) {
     if (performance.now() - followStartT <= 950) return;
     const p = trainPosition(followTrip, windowShift(followTrip, M));
-    if (p) { followNullT = 0; map.jumpTo({ center: [p[0], p[1]] }); }
+    if (p) {
+      followNullT = 0;
+      /* 相机缓动(MC):每帧按真实帧间隔做指数平滑逼近(时间常数 τ≈0.12s)——
+         目标=列车真实位置,相机平滑追近。消除原 jumpTo 硬跳 + float32 量化导致的镜头抖动;
+         列车位置有跳变(到站/数据刷新)时镜头也会平滑滑过而非瞬间突跳 */
+      const a = 1 - Math.exp(-dt / 0.12);
+      if (a < 0.999) {
+        const c = map.getCenter();
+        map.jumpTo({ center: [c.lng + (p[0] - c.lng) * a, c.lat + (p[1] - c.lat) * a] });
+      } else {
+        map.jumpTo({ center: [p[0], p[1]] });
+      }
+    }
     else if (++followNullT > 180) stopFollow(true); /* 到终点约 3s 后自动停止跟随 */
   }
   const tick = () => {
     rafId = requestAnimationFrame(tick);
     const now = performance.now();
     if (lastFrameT) { const f = 1000 / (now - lastFrameT); fps = fps ? fps * 0.9 + f * 0.1 : f; }
+    const dt = lastFrameT ? Math.min(0.25, Math.max(0.004, (now - lastFrameT) / 1000)) : 0.0167; /* 跟随相机缓动的真实帧间隔(秒) */
     lastFrameT = now;
     if (!dataReady) return;
     const M = curMin();
@@ -2907,13 +2967,13 @@ function startLoop() {
     /* 暂停且无跟随/详情、或页面隐藏:位置不变,跳过顶点重建与重绘(省 CPU/GPU/电量) */
     const staticFrame = (paused && !followTrip && !liveDetailTrip && !sliderDragging) || document.hidden;
     if (staticFrame || frameSkip) {
-      if (followTrip) tickFollow(M);
+      if (followTrip) tickFollow(M, dt);
       return;
     }
     const n = updateTrains(M);
     if (n !== lastActiveN) { lastActiveN = n; $('bLive').textContent = n.toLocaleString(); pulseStat($('bLive')); }
     if (Math.floor(now / 1000) !== lastFpsSec) { $('dFps').textContent = Math.round(fps); lastFpsSec = Math.floor(now / 1000); }
-    if (followTrip) { tickFollow(M); updateDetailLive(followTrip, null, M); }
+    if (followTrip) { tickFollow(M, dt); updateDetailLive(followTrip, null, M); }
     else if (liveDetailTrip) {
       const p = trainPosition(liveDetailTrip, windowShift(liveDetailTrip, M));
       updateDetailLive(liveDetailTrip, p, M);

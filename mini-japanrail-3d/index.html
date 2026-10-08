@@ -337,6 +337,8 @@ button { font-family:inherit; }
   /* 强制圆按钮不被flex压缩 */
   #clock #btnPlay, #clock #foldBtn { flex:none !important; width:32px !important; aspect-ratio:1 !important; border-radius:50% !important; padding:0 !important; box-sizing:border-box !important; }
   #clock.expanded { width:calc(100vw - 12px); padding:6px 10px 7px; border-radius:14px; }
+  #clock.expanded .r1 { gap:6px; }
+  #clock.expanded #foldBtn { width:28px !important; min-width:28px !important; }
   #clock.hide-on-detail { opacity:0; pointer-events:none; transform:translateX(-50%) translateY(14px); }
   #detail { width:calc(100vw - 12px); left:6px; border-radius:14px; padding:10px 11px; bottom:8px; }
   #detail .d-x { min-width:32px; min-height:32px; width:32px; }
@@ -2873,8 +2875,8 @@ const foldBtn = $('foldBtn');
 function syncFold() {
   const expanded = clockEl.classList.contains('expanded');
   foldBtn.innerHTML = expanded
-    ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg>'
-    : '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
+    ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>'
+    : '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg>';
 }
 foldBtn.addEventListener('click', e => { e.stopPropagation(); clockEl.classList.toggle('expanded'); syncFold(); });
 clockEl.addEventListener('click', e => { if (window.innerWidth <= 640 && !clockEl.classList.contains('expanded') && !e.target.closest('.fold') && !e.target.closest('.r2')) { clockEl.classList.add('expanded'); syncFold(); } });

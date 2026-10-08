@@ -98,7 +98,6 @@ button { font-family:inherit; }
 
 /* ---------- 底部液态玻璃 Dock ---------- */
 #dock { position:absolute; left:0; right:0; bottom:12px; height:var(--dock); z-index:9; pointer-events:none; transition:opacity .22s ease, transform .22s ease; }
-#dockSide { position:absolute; bottom:0; left:12px; pointer-events:auto; }
 #dockCenter { position:absolute; left:50%; bottom:0; transform:translateX(-50%); display:flex; align-items:flex-end; gap:8px; pointer-events:none; max-width:calc(100vw - 132px); }
 #dockCenter > * { pointer-events:auto; }
 
@@ -369,7 +368,6 @@ button { font-family:inherit; }
   #side .sec { padding:6px 10px; }
   /* 底部 Dock */
   #dock { bottom:10px; }
-  #dockSide { left:10px; }
   #dockCenter { gap:7px; max-width:calc(100vw - 124px); }
   /* 时间胶囊:折叠药丸 */
   #clock { width:max-content; max-width:100%; padding:7px 10px; border-radius:999px; }
@@ -383,7 +381,7 @@ button { font-family:inherit; }
   #clock.expanded .r1 { gap:6px; }
   #clock.expanded #foldBtn { width:28px !important; min-width:28px !important; }
   /* 展开时间滑块时隐藏两侧圆按钮与搜索,让位全宽 */
-  #dock:has(#clock.expanded) #dockSide, #dock:has(#clock.expanded) #btnSearch { opacity:0; pointer-events:none; transform:scale(.85); }
+  #dock:has(#clock.expanded) #btnSide, #dock:has(#clock.expanded) #btnSearch { opacity:0; pointer-events:none; transform:scale(.85); }
   #dock:has(#clock.expanded) #dockCenter { max-width:calc(100vw - 16px); width:calc(100vw - 16px); }
   /* 详情卡打开时整体隐藏底部 Dock */
   #dock.hide { opacity:0; pointer-events:none; transform:translateY(14px); }
@@ -405,7 +403,6 @@ button { font-family:inherit; }
 /* 极窄屏(≤380px)进一步收紧,给时间胶囊留出呼吸空间 */
 @media (max-width:380px) {
   :root { --dock:44px; }
-  #dockSide { left:8px; }
   #dockCenter { gap:6px; max-width:calc(100vw - 108px); }
   #clock { padding:6px 8px; }
   #clock .t { font-size:14px; }
@@ -598,10 +595,8 @@ button { font-family:inherit; }
 </div>
 
 <div id="dock">
-  <div id="dockSide">
-    <button class="gcircle" id="btnSide" type="button" title="Panel" aria-label="菜单"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg></button>
-  </div>
   <div id="dockCenter">
+    <button class="gcircle" id="btnSide" type="button" title="Panel" aria-label="菜单"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg></button>
 <div id="clock">
   <div class="r1">
     <span class="ldot" id="cDot"></span>

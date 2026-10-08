@@ -242,6 +242,24 @@ button { font-family:inherit; }
 #detail .d-act { display:flex; gap:8px; margin-top:10px; }
 #detail .d-act .btn { min-height:34px; font-size:12px; flex:1; padding:0 10px; }
 #detail .d-x { margin-left:auto; flex:none; min-height:30px; min-width:30px; width:30px; }
+/* 停靠站时刻表 */
+#detail .d-stops { margin-top:10px; border:1px solid var(--line); border-radius:8px; overflow:hidden; background:var(--panel2); }
+#detail .d-stops .st-title { display:flex; align-items:center; justify-content:space-between; padding:6px 10px; font-size:11px; font-weight:700; color:var(--txt); letter-spacing:.4px; border-bottom:1px solid var(--line); background:var(--panel); }
+#detail .d-stops .st-title .cnt { color:var(--dim); font-weight:600; font-size:10.5px; }
+#detail .st-list { max-height:min(228px,42vh); overflow-y:auto; overscroll-behavior:contain; }
+#detail .st-hd, #detail .dstop { display:grid; grid-template-columns:1fr 46px 46px; align-items:center; gap:6px; padding:0 10px; font-size:11.5px; }
+#detail .st-hd { position:sticky; top:0; z-index:1; background:var(--panel2); color:var(--dim); font-size:10px; font-weight:700; letter-spacing:.6px; padding:4px 10px; border-bottom:1px solid var(--line); }
+#detail .dstop { height:29px; border-top:1px solid var(--line); }
+#detail .dstop:first-child { border-top:0; }
+#detail .dstop .sn { display:flex; align-items:center; gap:7px; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--txt); }
+#detail .dstop .tm { text-align:right; font-variant-numeric:tabular-nums; color:var(--txt); font-weight:600; }
+#detail .dstop .tm.off { color:var(--dim); font-weight:400; }
+#detail .dstop.here { background:var(--acc-soft); }
+#detail .dstop.here .sn::before { content:''; width:7px; height:7px; border-radius:50%; background:var(--acc); box-shadow:0 0 0 3px var(--acc-soft); flex:none; }
+#detail .dstop.next .sn { color:var(--acc); font-weight:700; }
+#detail .dstop.next .sn::before { content:''; width:7px; height:7px; border-radius:50%; border:2px solid var(--acc); box-sizing:border-box; flex:none; }
+#detail .dstop.done { opacity:.42; }
+#detail .dstop.done .sn::before { content:none; }
 .lnchip { display:inline-block; padding:1px 8px; border-radius:6px; font-size:10.5px; font-weight:700; color:#fff; margin-right:4px; }
 
 /* ---------- 悬浮提示 ---------- */
@@ -621,6 +639,7 @@ const I18N = {
     routeSame:'起终点相同', badStation:'找不到车站', h1:'拖动平移 · 滚轮缩放 · 右键旋转/倾斜', h2:'点击列车 = 详情 + 相机跟随 · 点空白取消',
     h3:'点击车站 = 途经线路', h4:'底部时钟:暂停 / 拖动时间 / 0.5–8× 倍速回放', h5:'搜索日文站名(新宿 / 大阪…),支持车站与线路',
     h6:'数据为计划时刻表,不含实际延误', next:'下一站', eta:'约', min:'分', dep:'发车', arr:'到达', status:'状态',
+    stopsTitle:'停靠站', stopsCount:'站', colStop:'站', colArr:'到', colDep:'发',
     running:'运行中', dwelling:'停車中', speed:'速度', kmh:'km/h', firstLast:'全程', track:'轨道 = 官方线路色', legendNote:'列车颜色 = 所属线路色',
     followBtn:'跟随此列车', locateBtn:'定位', stopFollowBtn:'停止跟随', tripId:'班次', viaLines:'途经线路',
     loadingSeg:'轨道网络', loadingSta:'车站', loadingTm:'班次映射', loadingTr:'时刻表', loaded:'完成', goLive:'数据就绪 — 点击右上实时开始',
@@ -639,6 +658,7 @@ const I18N = {
     routeSame:'同一点', badStation:'駅が見つかりません', h1:'ドラッグ移動 · ホイール拡縮 · 右回転/傾き', h2:'列車クリック = 詳細 + 追跡 · 空白で解除',
     h3:'駅クリック = 経由路線', h4:'下部時計:一時停止 / 時間操作 / 0.5–8× 再生', h5:'日本語駅名検索(新宿 / 大阪…)',
     h6:'計画時刻表ベース・遅延は含まない', next:'次駅', eta:'約', min:'分', dep:'発', arr:'着', status:'状態',
+    stopsTitle:'停車駅', stopsCount:'駅', colStop:'駅', colArr:'着', colDep:'発',
     running:'運行中', dwelling:'停車中', speed:'速度', kmh:'km/h', firstLast:'全区間', track:'路線 = 公式路線色', legendNote:'列車色 = 所属路線色',
     followBtn:'列車を追跡', locateBtn:'位置', stopFollowBtn:'追跡停止', tripId:'列車', viaLines:'経由路線',
     loadingSeg:'軌道網', loadingSta:'駅', loadingTm:'列車マップ', loadingTr:'時刻表', loaded:'完了', goLive:'準備完了 — 右上 リアルタイム で開始',
@@ -657,6 +677,7 @@ const I18N = {
     routeSame:'Same stations', badStation:'Station not found', h1:'Drag to pan · Scroll to zoom · Right-drag rotate/tilt', h2:'Click train = detail + follow · Blank = cancel',
     h3:'Click station = its lines', h4:'Bottom clock: pause / scrub / 0.5–8× replay', h5:'Search Japanese names (Shinjuku, Osaka…)',
     h6:'Scheduled timetable — no live delays', next:'Next', eta:'~', min:'min', dep:'dep', arr:'arr', status:'Status',
+    stopsTitle:'Stops', stopsCount:'stops', colStop:'Station', colArr:'Arr', colDep:'Dep',
     running:'Running', dwelling:'At station', speed:'Speed', kmh:'km/h', firstLast:'Route', track:'Track = official line color', legendNote:'Train color = line color',
     followBtn:'Follow train', locateBtn:'Locate', stopFollowBtn:'Stop follow', tripId:'Trip', viaLines:'Lines',
     loadingSeg:'Track network', loadingSta:'Stations', loadingTm:'Trip map', loadingTr:'Timetable', loaded:'done', goLive:'Ready — tap Live top-right',
@@ -2844,6 +2865,18 @@ function updateDetailLive(t, p, M, rebuild) {
       (uniqLines.length ? '<div><span class="lb">' + T().viaLines + '</span>' + uniqLines.slice(0, 4).map(l => '<span class="lnchip" style="background:' + (lineColor.get(l) || '#888') + '">' + l + '</span>').join('') + (uniqLines.length > 4 ? ' +' + (uniqLines.length - 4) : '') + '</div>' : '') +
       '<div><span class="lb">' + T().tripId + '</span>#' + t.t + ' · ' + (t.nm || t.i) + '</div></div>' +
       '<div class="d-sep"></div>' +
+      '<div class="d-stops"><div class="st-title">' + T().stopsTitle + '<span class="cnt">' + N + ' ' + T().stopsCount + '</span></div>' +
+      '<div class="st-list"><div class="st-hd"><span class="sn">' + T().colStop + '</span><span class="tm">' + T().colArr + '</span><span class="tm">' + T().colDep + '</span></div>' +
+      (function () {
+        let s = '';
+        for (let k = 0; k < N; k++) {
+          const a = (k === 0) ? '—' : fmtHm(t.arr[k]);
+          const d = (k === N - 1) ? '—' : fmtHm(t.dep[k]);
+          s += '<div class="dstop" data-i="' + k + '"><span class="sn">' + esc(t.jas[k]) + '</span><span class="tm' + (k === 0 ? ' off' : '') + '">' + a + '</span><span class="tm' + (k === N - 1 ? ' off' : '') + '">' + d + '</span></div>';
+        }
+        return s;
+      })() +
+      '</div></div>' +
       '<div class="d-act"><button class="btn' + (followTrip === t ? ' on' : '') + '" id="dFollow">' + (followTrip === t ? ICO.stop : ICO.follow) + ' ' + (followTrip === t ? T().stopFollowBtn : T().followBtn) + '</button>' +
       '<button class="btn" id="dLoc">' + ICO.loc + ' ' + T().locateBtn + '</button></div>';
     $('dClose').onclick = () => { closeDetail(); liveDetailTrip = null; if (followTrip) stopFollow(); };
@@ -2857,6 +2890,19 @@ function updateDetailLive(t, p, M, rebuild) {
       if (s1 !== t._dS1) { st.children[0].innerHTML = s1; t._dS1 = s1; }
       const s2 = '<span class="lb">' + T().next + '</span>' + nextNm + ' ' + eta;
       if (s2 !== t._dS2) { st.children[1].innerHTML = s2; t._dS2 = s2; }
+      /* 停靠站动态高亮:当前停靠站/已过站/前方下一站 */
+      const stl = detailEl.querySelector('.d-stops');
+      if (stl && i !== t._dI) {
+        t._dI = i;
+        const ni2 = Math.min(i + 1, N - 1);
+        stl.querySelectorAll('.dstop').forEach(row => {
+          const k = parseInt(row.dataset.i, 10);
+          row.classList.remove('here', 'next', 'done');
+          if (k < i) row.classList.add('done');
+          else if (k === i) { if (!running && k < N - 1) row.classList.add('here'); else row.classList.add('done'); }
+          if (ni2 > i && k === ni2) row.classList.add('next');
+        });
+      }
     }
   }
 }

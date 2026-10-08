@@ -71,6 +71,9 @@ button { font-family:inherit; }
   background:var(--panel); border:1px solid var(--line); border-radius:7px; padding:4px 12px; box-shadow:var(--shadow);
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:70vw; pointer-events:none; transition:opacity .2s; }
 #status.err { color:#f87171; border-color:rgba(248,113,113,.4); }
+#status:empty { display:none; }
+#appbar .brand .lg { transition:transform .12s; }
+#appbar .brand:hover .lg { transform:scale(1.06); }
 .btn { min-width:44px; min-height:40px; padding:0 13px; border:1px solid var(--line); border-radius:8px; background:var(--panel);
   color:var(--txt); font-size:12px; font-weight:600; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;
   backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); box-shadow:var(--shadow); user-select:none; -webkit-user-select:none; transition:background .12s,border-color .12s,transform .06s; }
@@ -122,6 +125,7 @@ button { font-family:inherit; }
 .sug-it.hl-it { box-shadow:inset 2px 0 0 var(--acc); }
 .sug-it .k { color:var(--dim); font-size:10px; align-self:center; flex:none; }
 .sug-it .hl { color:var(--acc); font-weight:700; }
+.sug-grp { padding:6px 12px 3px; font-size:10px; font-weight:700; letter-spacing:.6px; color:var(--dim); text-transform:uppercase; }
 .sug-empty { padding:10px 12px; font-size:12px; color:var(--dim); }
 .sug-empty .sug-q { color:var(--txt); }
 
@@ -161,7 +165,9 @@ button { font-family:inherit; }
 /* 数据/帮助 */
 .data-row { display:flex; justify-content:space-between; font-size:11px; color:var(--dim); padding:2px 0; gap:8px; }
 .data-row b { color:var(--txt); font-weight:600; text-align:right; }
-.help p { font-size:11.5px; color:var(--dim); line-height:1.7; }
+.help p { font-size:11.5px; color:var(--dim); line-height:1.7; margin:0 0 7px; padding-left:11px; position:relative; }
+.help p::before { content:''; position:absolute; left:1px; top:7px; width:4px; height:4px; border-radius:50%; background:var(--dim); opacity:.5; }
+.help p:last-child { margin-bottom:0; }
 
 /* 数据统计卡片 */
 .stats { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
@@ -2656,9 +2662,11 @@ function refreshClockUI(M) {
   if (ds !== lastDayStr) { cDayEl.textContent = ds; lastDayStr = ds; }
   const sv = Math.floor(M);
   if (!sliderDragging && clockMode === 'live' && sv !== lastSliderVal) { sliderEl.value = sv; lastSliderVal = sv; }
+  const frac = Math.min(1, Math.max(0, parseFloat(sliderEl.value) / 1439));
+  sliderEl.style.background = 'linear-gradient(to right, var(--acc) ' + (frac * 100) + '%, rgba(120,140,180,.28) ' + (frac * 100) + '%)';
   $('dDay').textContent = (label ? label[lang] : '') + ' · ' + (clockMode === 'live' ? T().liveMode : (paused ? T().paused : speed + '× ' + T().playMode));
 }
-function bubSync() { const b = $('cBub'); b.textContent = fmtHMS(parseFloat(sliderEl.value)); b.style.left = Math.min(96, Math.max(4, sliderEl.value / 1439 * 100)) + '%'; }
+function bubSync() { const b = $('cBub'); b.textContent = fmtHMS(parseFloat(sliderEl.value)); b.style.left = Math.min(96, Math.max(4, sliderEl.value / 1439 * 100)) + '%'; const f = Math.min(1, Math.max(0, parseFloat(sliderEl.value) / 1439)); sliderEl.style.background = 'linear-gradient(to right, var(--acc) ' + (f * 100) + '%, rgba(120,140,180,.28) ' + (f * 100) + '%)'; }
 sliderEl.addEventListener('pointerdown', () => { sliderDragging = true; bubSync(); $('cBub').classList.add('show'); });
 sliderEl.addEventListener('pointerup', () => { sliderDragging = false; setTimeout(() => $('cBub').classList.remove('show'), 350); });
 sliderEl.addEventListener('input', () => {
@@ -2675,6 +2683,7 @@ function setLive(on) {
   liveOn = on;
   $('btnLive').classList.toggle('on', on);
   clockEl.style.display = on ? 'block' : 'none';
+  setStatus(on ? '' : (dataReady ? T().goLive : ''));
   if (on) { doNow(); refreshClockUI(curMin()); }
   else { stopFollow(); }
   stateHash();
@@ -3146,9 +3155,10 @@ function runSearch(q) {
   for (const s of searchIndex) { if (s.n.includes(q)) { sts.push(s); if (sts.length >= 7) break; } }
   for (const l of lineIndex) { if (l.includes(q)) { lns.push(l); if (lns.length >= 4) break; } }
   if (!sts.length && !lns.length) { sugEl.innerHTML = '<div class="sug-empty">' + esc(T().noMatch) + ' <span class="sug-q">' + esc(q) + '</span></div>'; sugEl.style.display = 'block'; return; }
-  sugEl.innerHTML =
-    sts.map(s => '<div class="sug-it" data-type="sta" data-name="' + esc(s.n) + '"><span>' + hlName(s.n, q) + '</span><span class="k">' + T().station + '</span></div>').join('') +
-    lns.map(l => '<div class="sug-it" data-type="ln" data-name="' + esc(l) + '"><span>' + ICO.train.replace('width="16"', 'width="12"').replace('height="16"', 'height="12"') + ' ' + hlName(l, q) + '</span><span class="k">' + T().line + '</span></div>').join('');
+  const htmlParts = [];
+  if (sts.length) htmlParts.push('<div class="sug-grp">' + T().station + '</div>' + sts.map(s => '<div class="sug-it" data-type="sta" data-name="' + esc(s.n) + '"><span>' + hlName(s.n, q) + '</span><span class="k">' + T().station + '</span></div>').join(''));
+  if (lns.length) htmlParts.push('<div class="sug-grp">' + T().line + '</div>' + lns.map(l => '<div class="sug-it" data-type="ln" data-name="' + esc(l) + '"><span>' + ICO.train.replace('width="16"', 'width="12"').replace('height="16"', 'height="12"') + ' ' + hlName(l, q) + '</span><span class="k">' + T().line + '</span></div>').join(''));
+  sugEl.innerHTML = htmlParts.join('');
   sugEl.style.display = 'block';
   sugIdx = -1;
   sugEl.querySelectorAll('.sug-it').forEach((it, i) => it.addEventListener('click', () => {

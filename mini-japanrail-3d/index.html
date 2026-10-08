@@ -103,16 +103,15 @@ button { font-family:inherit; }
 #side { position:absolute; top:56px; left:8px; width:260px; max-height:calc(100vh - 130px);
   display:flex; flex-direction:column; background:var(--panel); border:1px solid var(--line); border-radius:var(--r);
   backdrop-filter:blur(20px) saturate(1.4); -webkit-backdrop-filter:blur(20px) saturate(1.4); box-shadow:var(--shadow); z-index:6; overflow:hidden;
-  transition:width .2s ease, opacity .2s, transform .25s cubic-bezier(.2,.9,.3,1.2);
-  animation:sideIn .3s cubic-bezier(.2,.9,.3,1.15); }
-@keyframes sideIn { from { opacity:0; transform:translateX(-16px) scale(.97); } to { opacity:1; transform:translateX(0) scale(1); } }
-#side.collapsed { animation:none; }
+  transition:width .2s ease, opacity .2s; }
+#sideTabs { display:flex; gap:2px; padding:4px; background:var(--panel2); border-bottom:1px solid var(--line); flex:none; }
 .stab { flex:1; height:28px; display:flex; align-items:center; justify-content:center; gap:3px; background:transparent; border:0;
   border-radius:var(--r-xs); color:var(--dim); font-size:11px; font-weight:600; cursor:pointer; transition:background .12s,color .12s; }
 .stab:hover { color:var(--txt); background:var(--acc-soft); }
 .stab.on { color:var(--acc); background:var(--acc-soft); font-weight:700; }
 #sideBody { overflow-y:auto; }
-.stab-sec { display:block; }
+.stab-sec { display:none; }
+.stab-sec.on { display:block; }
 #side .sec { padding:7px 11px; border-top:1px solid var(--line); }
 #side .sec:first-child { border-top:0; }
 /* 空区块自动隐藏(无chips时不占高度) */
@@ -426,6 +425,12 @@ button { font-family:inherit; }
 </header>
 
 <div id="side">
+  <div id="sideTabs">
+    <button class="stab on" data-tab="route" id="tabRoute"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="17" r="2.2"/><circle cx="19" cy="5" r="2.2"/><path d="M5 19C5 11 11 5 19 5M5 14.5c5-1 8-2 9-4"/></svg><span class="st-lb" id="tabRouteLb">路线</span></button>
+    <button class="stab" data-tab="search" id="tabSearch"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg><span class="st-lb" id="tabSearchLb">搜索</span></button>
+    <button class="stab" data-tab="legend" id="tabLegend"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="7" cy="6" r="1.2"/><circle cx="7" cy="12" r="1.2"/><circle cx="7" cy="18" r="1.2"/></svg><span class="st-lb" id="tabLegendLb">图例</span></button>
+    <button class="stab" data-tab="set" id="tabSet"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10z"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"/></svg><span class="st-lb" id="tabSetLb">设置</span></button>
+  </div>
   <div id="sideBody">
     <div class="stab-sec" data-tab="route">
       <div class="sec">
@@ -3639,14 +3644,18 @@ document.querySelectorAll('#langRow .chip').forEach(c => c.addEventListener('cli
 $('btnSide').addEventListener('click', () => { sideEl.classList.toggle('collapsed'); $('btnSide').innerHTML = sideEl.classList.contains('collapsed') ? ICO.menu : ICO.close; });
 /* 工具面板 Tab */
 function showTab(tab, focusSearch) {
-  if (focusSearch && tab === 'search') setTimeout(() => { if (typeof searchEl !== 'undefined' && searchEl) searchEl.focus(); }, 60);
+  document.querySelectorAll('#sideTabs .stab').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
+  document.querySelectorAll('#sideBody .stab-sec').forEach(s => s.classList.toggle('on', s.dataset.tab === tab));
+  if (focusSearch && tab === 'search') setTimeout(() => { searchEl.focus(); }, 60);
 }
+document.querySelectorAll('#sideTabs .stab').forEach(b => b.addEventListener('click', () => {
+  if (sideEl.classList.contains('collapsed')) { sideEl.classList.remove('collapsed'); $('btnSide').innerHTML = ICO.close; }
+  showTab(b.dataset.tab);
+}));
 $('btnSearch').addEventListener('click', () => {
   if (sideEl.classList.contains('collapsed')) { sideEl.classList.remove('collapsed'); $('btnSide').innerHTML = ICO.close; }
   showTab('search', true);
-  const sec = document.querySelector('.stab-sec[data-tab="search"]');
-  if (sec) sec.scrollIntoView({ behavior:'smooth', block:'start' });
-  setTimeout(() => { const si = document.getElementById('searchInput'); if (si) si.focus(); }, 300);
+  setTimeout(() => { const si = document.getElementById('searchInput'); if (si) si.focus(); }, 200);
 });
 showTab('route');
 // 主题：dark / light / auto(跟随系统)

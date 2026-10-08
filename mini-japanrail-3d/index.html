@@ -89,7 +89,7 @@ button { font-family:inherit; }
 .tbox::placeholder { color:var(--dim); opacity:.7; }
 #sug { margin-top:6px; max-height:200px; overflow-y:auto; display:none; border:1px solid var(--line); border-radius:8px; background:var(--panel2); }
 .sug-it { padding:8px 11px; font-size:12px; cursor:pointer; display:flex; justify-content:space-between; gap:8px; align-items:center; }
-.sug-it:hover { background:var(--acc-soft); }
+.sug-it:hover, .sug-it:focus-visible { background:var(--acc-soft); outline:none; }
 .sug-it .k { color:var(--dim); font-size:10px; align-self:center; flex:none; }
 .sug-it .hl { color:var(--acc); font-weight:700; }
 
@@ -118,10 +118,12 @@ button { font-family:inherit; }
 .legrow .nm { color:var(--txt); } .legrow .ds { color:var(--dim); font-size:10px; margin-left:auto; }
 
 /* 开关 */
-.sw { display:flex; align-items:center; justify-content:space-between; padding:5px 0; font-size:12px; cursor:pointer; }
+.sw { display:flex; align-items:center; justify-content:space-between; padding:5px 0; font-size:12px; cursor:pointer; border-radius:6px; }
+.sw:hover { color:var(--txt); }
 .sw .trk { width:38px; height:22px; border-radius:11px; background:rgba(120,140,180,.25); position:relative; transition:background .2s; flex:none; }
 .sw .trk::after { content:''; position:absolute; top:2px; left:2px; width:18px; height:18px; border-radius:50%; background:#cfd6e4; transition:all .2s; }
 .sw.on .trk { background:var(--acc); } .sw.on .trk::after { left:18px; background:#fff; }
+.sw:focus-visible { outline:2px solid var(--acc); outline-offset:1px; }
 
 /* 数据/帮助 */
 .data-row { display:flex; justify-content:space-between; font-size:11px; color:var(--dim); padding:2px 0; gap:8px; }
@@ -162,7 +164,8 @@ button { font-family:inherit; }
 #clock .r2 { display:flex; align-items:center; gap:10px; margin-top:7px; }
 #clock input[type=range] { flex:1; -webkit-appearance:none; appearance:none; height:3px; border-radius:2px; background:rgba(120,140,180,.28); outline:none; }
 #clock input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--acc); border:2px solid var(--panel); cursor:pointer; }
-#clock .now { font-size:11px; color:var(--acc); cursor:pointer; font-weight:600; white-space:nowrap; }
+#clock .now { font-size:11px; color:var(--acc); cursor:pointer; font-weight:600; white-space:nowrap; border-radius:5px; padding:3px 6px; }
+#clock .now:hover { background:var(--acc-soft); }
 
 /* ---------- 详情卡 ---------- */
 #detail { position:absolute; left:10px; bottom:14px; width:min(320px,calc(100vw - 20px)); background:var(--panel);
@@ -207,7 +210,9 @@ button { font-family:inherit; }
 #lbarF { height:100%; width:0%; border-radius:2px; background:var(--acc); transition:width .2s; }
 
 #toast { position:absolute; top:52px; left:50%; transform:translateX(-50%); background:var(--panel2); border:1px solid var(--line);
-  color:var(--txt); font-size:12px; padding:7px 16px; border-radius:8px; z-index:40; display:none; box-shadow:var(--shadow); max-width:80vw; }
+  color:var(--txt); font-size:12px; padding:7px 16px; border-radius:8px; z-index:40; display:none; box-shadow:var(--shadow); max-width:80vw;
+  opacity:0; transition:opacity .18s ease; }
+#toast.show { opacity:1; }
 .foot { position:absolute; bottom:8px; right:12px; font-size:9.5px; color:var(--dim); z-index:5; pointer-events:none; text-shadow:0 1px 3px rgba(0,0,0,.6); opacity:.85; }
 .maplibregl-ctrl-bottom-right { display:none; }
 .maplibregl-ctrl-attrib { background:rgba(0,0,0,.35)!important; color:var(--dim)!important; font-size:9px!important; }
@@ -222,6 +227,13 @@ button { font-family:inherit; }
   #detail { width:calc(100vw - 20px); }
   #side { width:calc(100vw - 20px); }
   #status { display:none; }
+  /* 表单元素 ≥16px 防止 iOS 聚焦自动缩放 */
+  .tbox, #rFrom, #rTo { font-size:16px; }
+  .btn { min-height:44px; }
+  .btn.icon { width:44px; }
+  .chip { padding:6px 13px; font-size:12px; }
+  .spb { padding:5px 11px; font-size:12px; }
+  .sw { padding:7px 0; }
 }
 /* ============ 车站底部抽屉(时刻表) ============ */
 #sheetMask { position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:20; display:none; }
@@ -239,7 +251,8 @@ button { font-family:inherit; }
 #sheet .grp-op { display:flex; align-items:center; gap:8px; padding:14px 4px 6px; font-size:12px; font-weight:800; color:var(--txt); }
 #sheet .grp-op .op-logo { max-height:22px; max-width:72px; width:auto; height:auto; object-fit:contain; background:#fff; border-radius:4px; padding:2px 5px; flex:none; }
 #sheet .grp-op .op-ic { min-width:22px; height:22px; padding:0 4px; border-radius:6px; background:#22a447; color:#fff; font-size:10px; font-weight:900; display:flex; align-items:center; justify-content:center; }
-.lrow { display:flex; align-items:center; gap:11px; padding:11px 12px; margin:7px 0; border:1.5px solid var(--lc,#4f8ef7); border-radius:8px; background:var(--panel2); cursor:pointer; user-select:none; -webkit-user-select:none; }
+.lrow { display:flex; align-items:center; gap:11px; padding:11px 12px; margin:7px 0; border:1.5px solid var(--lc,#4f8ef7); border-radius:8px; background:var(--panel2); cursor:pointer; user-select:none; -webkit-user-select:none; transition:background .12s; }
+.lrow:hover { background:color-mix(in srgb,var(--lc,#4f8ef7) 14%, var(--panel2)); }
 .lrow .lb { width:34px; height:30px; border-radius:7px; background:#fff; color:#111; font-weight:900; font-size:14px; display:flex; align-items:center; justify-content:center; flex:none; }
 .lrow .lnm { font-size:17px; font-weight:800; color:var(--lc,#4f8ef7); flex:1; }
 .lrow .lgo { width:30px; height:30px; border-radius:7px; background:rgba(120,140,180,.18); display:flex; align-items:center; justify-content:center; font-size:12px; transition:transform .2s; flex:none; }
@@ -523,7 +536,7 @@ const I18N = {
     followBtn:'跟随此列车', locateBtn:'定位', stopFollowBtn:'停止跟随', tripId:'班次', viaLines:'途经线路',
     loadingSeg:'轨道网络', loadingSta:'车站', loadingTm:'班次映射', loadingTr:'时刻表', loaded:'完成', goLive:'数据就绪 — 点击右上实时开始',
     dayFileNote:'时刻表', paused:'暂停', liveMode:'实时', playMode:'回放', fps:'FPS',
-    retry:'重试', loadingIdx:'构建索引', loadingPr:'解析时刻表', adapt:'性能模式:帧率低,已自动关闭列车光晕', cacheOn:'离线缓存已启用',
+    retry:'重试', loadingIdx:'构建索引', loadingPr:'解析时刻表', adapt:'性能模式:帧率低,已自动关闭列车光晕', cacheOn:'离线缓存已启用', failMsg:'加载失败，请检查网络后重试',
   },
   ja: {
     title:'ミニ日本鉄道3D', sub:'全国鉄道リアルタイムマップ', loading:'準備中…', live:'リアルタイム', follow:'追跡中', followStop:'追跡解除',
@@ -540,7 +553,7 @@ const I18N = {
     followBtn:'列車を追跡', locateBtn:'位置', stopFollowBtn:'追跡停止', tripId:'列車', viaLines:'経由路線',
     loadingSeg:'軌道網', loadingSta:'駅', loadingTm:'列車マップ', loadingTr:'時刻表', loaded:'完了', goLive:'準備完了 — 右上 リアルタイム で開始',
     dayFileNote:'時刻表', paused:'一時停止', liveMode:'リアルタイム', playMode:'再生', fps:'FPS',
-    retry:'再試行', loadingIdx:'索引構築', loadingPr:'時刻表解析', adapt:'省電力モード:低FPSのため列車グローをOFF', cacheOn:'オフラインキャッシュ有効',
+    retry:'再試行', loadingIdx:'索引構築', loadingPr:'時刻表解析', adapt:'省電力モード:低FPSのため列車グローをOFF', cacheOn:'オフラインキャッシュ有効', failMsg:'読み込みに失敗しました。ネットワークを確認してもう一度お試しください',
   },
   en: {
     title:'Mini JapanRail 3D', sub:'Japan Rail Live Map', loading:'Preparing…', live:'Live', follow:'Following', followStop:'Stop follow',
@@ -557,7 +570,7 @@ const I18N = {
     followBtn:'Follow train', locateBtn:'Locate', stopFollowBtn:'Stop follow', tripId:'Trip', viaLines:'Lines',
     loadingSeg:'Track network', loadingSta:'Stations', loadingTm:'Trip map', loadingTr:'Timetable', loaded:'done', goLive:'Ready — tap Live top-right',
     dayFileNote:'Timetable', paused:'Paused', liveMode:'Live', playMode:'Replay', fps:'FPS',
-    retry:'Retry', loadingIdx:'Building index', loadingPr:'Parsing timetable', adapt:'Performance mode: low FPS, train glow off', cacheOn:'Offline cache enabled',
+    retry:'Retry', loadingIdx:'Building index', loadingPr:'Parsing timetable', adapt:'Performance mode: low FPS, train glow off', cacheOn:'Offline cache enabled', failMsg:'Failed to load. Check your network and retry.',
   },
 };
 let lang = localStorage.getItem('mjr3d_lang') || (['ja','en'].includes(navigator.language?.slice(0,2)) ? navigator.language.slice(0,2) : 'zh');
@@ -570,7 +583,7 @@ const statusEl = $('status'), tipEl = $('tip'), sideEl = $('side'), clockEl = $(
 const searchEl = $('search'), sugEl = $('sug'), sliderEl = $('cSlider'), cTimeEl = $('cTime'), cDayEl = $('cDay');
 const trTagEl = $('trTag');
 const toastEl = $('toast');
-function toast(s, ms = 2400) { toastEl.textContent = s; toastEl.style.display = 'block'; clearTimeout(toast._t); toast._t = setTimeout(() => toastEl.style.display = 'none', ms); }
+function toast(s, ms = 2400) { toastEl.textContent = s; toastEl.style.display = 'block'; requestAnimationFrame(() => toastEl.classList.add('show')); clearTimeout(toast._t); toast._t = setTimeout(() => { toastEl.classList.remove('show'); setTimeout(() => toastEl.style.display = 'none', 200); }, ms); }
 function setStatus(s) { statusEl.textContent = s; }
 const pad = n => String(n).padStart(2, '0');
 
@@ -2455,7 +2468,7 @@ async function boot() {
     startLoop();
   } catch (err) {
     console.error(err);
-    setLoadMsg('⚠ ' + (err.message || err));
+    setLoadMsg('⚠ ' + T().failMsg);
     setStatus('ERR ' + (err.message || err));
     if (retryBtn) retryBtn.style.display = 'flex';
   } finally { booting = false; }

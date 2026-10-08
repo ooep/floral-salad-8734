@@ -89,7 +89,7 @@ button { font-family:inherit; }
 .btn:disabled { opacity:.45; cursor:default; }
 
 /* ---------- 左侧工具面板 ---------- */
-#side { position:absolute; top:56px; left:10px; width:300px; max-height:calc(100vh - 150px);
+#side { position:absolute; top:56px; left:10px; width:280px; max-height:calc(100vh - 150px);
   display:flex; flex-direction:column; background:var(--panel); border:1px solid var(--line); border-radius:var(--r);
   backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); box-shadow:var(--shadow); z-index:6; overflow:hidden;
   transition:width .2s ease, opacity .2s; }
@@ -170,7 +170,7 @@ button { font-family:inherit; }
 .help p:last-child { margin-bottom:0; }
 
 /* 数据统计卡片 */
-.stats { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+.stats { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
 .stat { background:var(--panel2); border:1px solid var(--line); border-radius:7px; padding:7px 10px; min-width:0; transition:border-color .12s; }
 .stat:hover { border-color:var(--acc-border); }
 .stat .s-lb { font-size:10px; color:var(--dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -284,14 +284,17 @@ button { font-family:inherit; }
   #appbar .brand { font-size:12.5px; }
   .a-search { max-width:none; }
   #btnLive span { display:none; }
+  #btnProj, #btnLang { display:none; }
   .badge { display:none; }
-  #btnLang { display:none; }
   #clock { width:max-content; max-width:calc(100vw - 16px); padding:6px 10px 6px; }
   #clock .r2, #clock .sp-main { display:none; }
   #clock .fold { display:flex; }
   #clock.expanded .r2, #clock.expanded .sp-main { display:flex; }
   #clock.expanded { width:calc(100vw - 16px); padding:8px 12px 9px; }
+  #clock.hide-on-detail { opacity:0; pointer-events:none; transform:translateX(-50%) translateY(14px); }
   #detail { width:calc(100vw - 20px); }
+  #detail .d-x { min-width:40px; min-height:40px; width:40px; }
+  #detail .d-act .btn { min-height:40px; }
   #side { top:56px; left:0; width:100vw; max-height:calc(100vh - 150px); border-radius:0; }
   #side.collapsed { width:44px; border-radius:0 var(--r) var(--r) 0; }
   #status { display:none; }
@@ -450,9 +453,6 @@ button { font-family:inherit; }
       <div class="sec">
         <div class="sec-t" id="tData">数据</div>
         <div class="stats">
-          <div class="stat"><div class="s-lb" id="tD1">在途列车</div><div class="s-v" id="dActive">-</div></div>
-          <div class="stat"><div class="s-lb" id="tD2">今日班次</div><div class="s-v" id="dCount">-</div></div>
-          <div class="stat"><div class="s-lb" id="tD3">运行日</div><div class="s-v" id="dDay">-</div></div>
           <div class="stat"><div class="s-lb" id="tD4">线路 / 车站</div><div class="s-v" id="dNet">-</div></div>
           <div class="stat"><div class="s-lb" id="tD5">时刻表构建</div><div class="s-v" id="dBuild">-</div></div>
           <div class="stat"><div class="s-lb" id="tD6">帧率</div><div class="s-v" id="dFps">-</div></div>
@@ -2544,7 +2544,6 @@ async function boot() {
     totalTripsToday = tj.n || tripList.length;
     dataReady = true;
     $('dBuild').textContent = tj.b || '-';
-    $('dCount').textContent = totalTripsToday.toLocaleString();
     $('bCount').textContent = totalTripsToday.toLocaleString();
     setPct(100);
     setLoadMsg('✓ ' + T().loaded);
@@ -2630,7 +2629,7 @@ function startLoop() {
       return;
     }
     const n = updateTrains(M);
-    if (n !== lastActiveN) { $('dActive').textContent = n.toLocaleString(); lastActiveN = n; $('bLive').textContent = n.toLocaleString(); pulseStat($('dActive')); pulseStat($('bLive')); }
+    if (n !== lastActiveN) { lastActiveN = n; $('bLive').textContent = n.toLocaleString(); pulseStat($('bLive')); }
     if (Math.floor(now / 1000) !== lastFpsSec) { $('dFps').textContent = Math.round(fps); lastFpsSec = Math.floor(now / 1000); }
     if (followTrip) { tickFollow(M); updateDetailLive(followTrip, null, M); }
     else if (liveDetailTrip) {
@@ -2668,7 +2667,6 @@ function refreshClockUI(M) {
   if (!sliderDragging && clockMode === 'live' && sv !== lastSliderVal) { sliderEl.value = sv; lastSliderVal = sv; }
   const frac = Math.min(1, Math.max(0, parseFloat(sliderEl.value) / 1439));
   sliderEl.style.background = 'linear-gradient(to right, var(--acc) ' + (frac * 100) + '%, rgba(120,140,180,.28) ' + (frac * 100) + '%)';
-  $('dDay').textContent = (label ? label[lang] : '') + ' · ' + (clockMode === 'live' ? T().liveMode : (paused ? T().paused : speed + '× ' + T().playMode));
 }
 function bubSync() { const b = $('cBub'); b.textContent = fmtHMS(parseFloat(sliderEl.value)); b.style.left = Math.min(96, Math.max(4, sliderEl.value / 1439 * 100)) + '%'; const f = Math.min(1, Math.max(0, parseFloat(sliderEl.value) / 1439)); sliderEl.style.background = 'linear-gradient(to right, var(--acc) ' + (f * 100) + '%, rgba(120,140,180,.28) ' + (f * 100) + '%)'; }
 sliderEl.addEventListener('pointerdown', () => { sliderDragging = true; bubSync(); $('cBub').classList.add('show'); });
@@ -2734,7 +2732,6 @@ async function ensureDayFile() {
     tripList = await parseTripsAsync(tj);
     totalTripsToday = tj.n || tripList.length;
     $('dBuild').textContent = tj.b || '-';
-    $('dCount').textContent = totalTripsToday.toLocaleString();
     $('bCount').textContent = totalTripsToday.toLocaleString();
     followTrip = null; liveDetailTrip = null; closeDetail(); trTagEl.style.display = 'none';
     setStatus('✓ ' + T().loaded);
@@ -2796,11 +2793,13 @@ let detailTimer = 0;
 function openDetail() {
   clearTimeout(detailTimer);
   detailEl.style.display = 'block';
+  if (window.innerWidth <= 640) clockEl.classList.add('hide-on-detail');
   requestAnimationFrame(() => requestAnimationFrame(() => detailEl.classList.add('show')));
 }
 function closeDetail() {
   clearTimeout(detailTimer);
   detailEl.classList.remove('show');
+  if (window.innerWidth <= 640) clockEl.classList.remove('hide-on-detail');
   detailTimer = setTimeout(() => { detailEl.style.display = 'none'; }, 190);
 }
 function showTrainDetail(t) {
@@ -3455,7 +3454,7 @@ function applyLang() {
   $('dayAuto').textContent = t.dayAuto;
   $('tSw1').textContent = t.sw1; $('tSw2').textContent = t.sw2; $('tSw3').textContent = t.sw3; $('tSw4').textContent = t.sw4; $('tSw5').textContent = t.sw5; $('tSw6').textContent = t.sw6;
   $('tMode').textContent = t.modeT; $('tMode3d').textContent = t.mode3d; $('tModeIcon').textContent = t.modeIcon;
-  $('tD1').textContent = t.d1; $('tD2').textContent = t.d2; $('tD3').textContent = t.d3; $('tD4').textContent = t.d4; $('tD5').textContent = t.d5; $('tD6').textContent = t.d6;
+  $('tD4').textContent = t.d4; $('tD5').textContent = t.d5; $('tD6').textContent = t.d6;
   $('cNow').textContent = t.now;
   $('footNote').textContent = t.h6 + ' · 国土地理院 / OpenFreeMap · ' + t.sub;
   $('lTitle').textContent = t.title;

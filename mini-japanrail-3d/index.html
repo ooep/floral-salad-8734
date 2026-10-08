@@ -158,7 +158,8 @@ button { font-family:inherit; }
 #sideTabs { display:flex; gap:3px; padding:4px; margin:3px 2px 7px; background:rgba(120,140,180,.22);
   border:1px solid var(--glass-edge); border-radius:11px; flex:none;
   backdrop-filter:blur(14px) saturate(1.4); -webkit-backdrop-filter:blur(14px) saturate(1.4);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.18), 0 4px 14px rgba(0,0,0,.18); }
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.18), 0 4px 14px rgba(0,0,0,.18);
+  transition:backdrop-filter .34s var(--ease-smooth), -webkit-backdrop-filter .34s var(--ease-smooth); }
 .stab { flex:1; height:28px; display:flex; align-items:center; justify-content:center; gap:3px; background:transparent; border:0;
   border-radius:7px; color:var(--dim); font-size:11px; font-weight:600; cursor:pointer; transition:color .15s, background .28s var(--ease-spring), box-shadow .2s, transform .12s; }
 .stab:hover { color:var(--txt); }
@@ -169,7 +170,8 @@ button { font-family:inherit; }
 .stab-sec.on { display:block; }
 #side .sec { padding:4px 10px 8px; margin:10px 2px; border-radius:13px; background:var(--glass-2); border:1px solid var(--glass-edge);
   backdrop-filter:blur(14px) saturate(1.4); -webkit-backdrop-filter:blur(14px) saturate(1.4);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.18), 0 4px 14px rgba(0,0,0,.18); }
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.18), 0 4px 14px rgba(0,0,0,.18);
+  transition:backdrop-filter .34s var(--ease-smooth), -webkit-backdrop-filter .34s var(--ease-smooth); }
 #side .sec:first-child { margin-top:6px; }
 /* 空区块自动隐藏(无chips时不占高度) */
 #side .sec:has(.frow:empty) { display:none; }
@@ -179,6 +181,9 @@ button { font-family:inherit; }
 /* 收起态:玻璃整体淡出(不再 display 硬切) */
 #side.collapsed { opacity:0; visibility:hidden; pointer-events:none;
   transition:opacity .22s var(--ease-smooth), visibility 0s linear .22s; }
+/* 菜单收起时各卡片模糊同步归零(展开时模糊渐显,可见高斯痕迹) */
+#side.collapsed #sideTabs, #side.collapsed .sec {
+  backdrop-filter:blur(0) saturate(1); -webkit-backdrop-filter:blur(0) saturate(1); }
 
 /* 搜索 */
 .tbox { width:100%; min-height:36px; padding:0 12px; border:1px solid var(--line); border-radius:var(--r-sm); background:var(--panel2);
@@ -403,14 +408,13 @@ button { font-family:inherit; }
 /* ---------- 独立搜索浮层(iOS Spotlight) ---------- */
 #searchMask { position:fixed; inset:0; background:rgba(0,0,0,.32); z-index:24; opacity:0; visibility:hidden; pointer-events:none; transition:opacity .25s ease, visibility 0s linear .25s; }
 #searchMask.open { opacity:1; visibility:visible; pointer-events:auto; transition:opacity .25s ease, visibility 0s linear 0s; }
-#searchPanel { position:fixed; top:max(10px,env(safe-area-inset-top)); left:50%; transform:translate(-50%,-10px) scale(.98); width:min(520px,calc(100vw - 24px)); z-index:25;
+#searchPanel { position:fixed; top:max(10px,env(safe-area-inset-top)); left:50%; transform:translate(-50%,-14px) scale(.96); width:min(520px,calc(100vw - 24px)); z-index:25;
   background:var(--panel); border:1px solid var(--glass-edge); border-radius:20px; overflow:hidden; opacity:0; visibility:hidden; pointer-events:none;
-  backdrop-filter:blur(0) saturate(1); -webkit-backdrop-filter:blur(0) saturate(1);
+  backdrop-filter:blur(26px) saturate(1.6); -webkit-backdrop-filter:blur(26px) saturate(1.6);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.2), var(--glass-sh);
-  transition:opacity .26s var(--ease-smooth), backdrop-filter .26s var(--ease-smooth), -webkit-backdrop-filter .26s var(--ease-smooth), transform .4s var(--ease-spring), visibility 0s linear .26s; }
+  transition:opacity .26s var(--ease-smooth), transform .42s var(--ease-spring), visibility 0s linear .26s; }
 #searchPanel.open { opacity:1; visibility:visible; pointer-events:auto; transform:translate(-50%,0) scale(1);
-  backdrop-filter:blur(24px) saturate(1.6); -webkit-backdrop-filter:blur(24px) saturate(1.6);
-  transition:opacity .26s var(--ease-smooth), backdrop-filter .26s var(--ease-smooth), -webkit-backdrop-filter .26s var(--ease-smooth), transform .4s var(--ease-spring), visibility 0s linear 0s; }
+  transition:opacity .26s var(--ease-smooth), transform .42s var(--ease-spring), visibility 0s linear 0s; }
 .sp-bar { display:flex; align-items:center; gap:9px; padding:12px 14px; }
 .sp-ic { color:var(--dim); display:flex; flex:none; }
 #searchPanel .tbox { flex:1; min-width:0; border:0; background:transparent; padding:0; font-size:16px; min-height:24px; }

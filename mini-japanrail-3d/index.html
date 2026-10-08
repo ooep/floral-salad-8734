@@ -2860,7 +2860,7 @@ function updateDetailLive(t, p, M, rebuild) {
     detailEl.dataset.tid = String(t.t) + t.w0;
     const uniqLines = t.lines || [];
     detailEl.innerHTML =
-      '<div class="d-h"><span class="d-ic" style="color:' + col + ';background:' + col + '22">' + (t.i ? esc(t.i) : ICO.train) + '</span>' +
+      '<div class="d-h"><span class="d-ic" style="color:' + col + ';background:' + col + '22">' + ICO.train + '</span>' +
       '<div class="d-t"><div class="d-nm">' + (t.nm || p[3] || uniqLines[0] || t.i) + '</div>' +
       '<div class="d-sb">' + t.jas[0] + ' → ' + t.jas[N-1] + ' · ' + fmtHm(t.dep[0]) + '–' + fmtHm(t.arr[N-1]) + '</div></div>' +
       '<button class="btn icon d-x" id="dClose">' + ICO.close + '</button></div>' +

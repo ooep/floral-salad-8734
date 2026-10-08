@@ -190,30 +190,30 @@ button { font-family:inherit; }
 #dayRow { display:flex; gap:5px; }
 
 /* ---------- 底部时钟条 ---------- */
-#clock { position:absolute; bottom:12px; left:50%; transform:translateX(-50%); width:min(600px,calc(100vw - 20px));
+#clock { position:absolute; bottom:12px; left:50%; transform:translateX(-50%); width:min(560px,calc(100vw - 20px));
   background:var(--panel); border:1px solid var(--line); border-radius:var(--r); backdrop-filter:blur(14px);
-  -webkit-backdrop-filter:blur(14px); box-shadow:var(--shadow); z-index:7; padding:8px 14px 10px; display:none; }
-#clock .r1 { display:flex; align-items:center; gap:10px; }
+  -webkit-backdrop-filter:blur(14px); box-shadow:var(--shadow); z-index:7; padding:8px 13px 9px; display:none; }
+#clock .r1 { display:flex; align-items:center; gap:9px; }
 #clock .ldot { width:8px; height:8px; border-radius:50%; background:#f87171; flex:none; animation:ldot 1.8s ease-in-out infinite; }
 #clock .ldot.on { background:#34d399; }
 @keyframes ldot { 0%,100%{opacity:1;} 50%{opacity:.35;} }
 #clock .ct { text-align:center; }
-#clock .t { font-size:19px; font-weight:700; font-variant-numeric:tabular-nums; letter-spacing:.5px; min-width:74px; line-height:1.1; }
+#clock .t { font-size:18px; font-weight:700; font-variant-numeric:tabular-nums; letter-spacing:.5px; min-width:72px; line-height:1.1; }
 #clock .tz { font-size:9px; font-weight:600; letter-spacing:.8px; color:var(--dim); margin-top:1px; }
 #clock .daychip { font-size:10.5px; padding:3px 9px; border-radius:7px; border:1px solid var(--line); color:var(--dim); white-space:nowrap; }
-#clock .sp { margin-left:auto; display:flex; gap:4px; overflow-x:auto; max-width:46%; scrollbar-width:none; }
-#clock .sp::-webkit-scrollbar { display:none; }
 .spb { padding:3px 9px; border-radius:6px; border:1px solid var(--line); font-size:11px; cursor:pointer; color:var(--dim); background:transparent; white-space:nowrap; flex:none; transition:background .12s,border-color .12s,color .12s; }
 .spb:hover { border-color:var(--acc-border); color:var(--txt); }
 .spb.on { background:var(--acc); color:#fff; border-color:var(--acc); }
-#clock .r2 { position:relative; display:flex; align-items:center; gap:10px; margin-top:7px; }
-#cBub { position:absolute; top:-26px; transform:translateX(-50%); background:var(--panel2); border:1px solid var(--line);
+.sp-main { margin-left:auto; }
+#clock .fold { display:none; }
+#clock .r2 { position:relative; display:flex; align-items:center; gap:7px; margin-top:6px; }
+.tk-l, .tk-r { font-size:9px; color:var(--dim); opacity:.6; font-variant-numeric:tabular-nums; pointer-events:none; flex:none; }
+#cBub { position:absolute; top:-25px; transform:translateX(-50%); background:var(--panel2); border:1px solid var(--line);
   border-radius:6px; padding:2px 8px; font-size:11px; font-weight:600; font-variant-numeric:tabular-nums; color:var(--txt);
   pointer-events:none; opacity:0; transition:opacity .12s; white-space:nowrap; z-index:1; }
 #cBub.show { opacity:1; }
-#clock .tk { display:flex; justify-content:space-between; font-size:9px; color:var(--dim); opacity:.65; margin-top:2px; font-variant-numeric:tabular-nums; pointer-events:none; }
 #clock input[type=range] { flex:1; -webkit-appearance:none; appearance:none; height:3px; border-radius:2px; background:rgba(120,140,180,.28); outline:none; }
-#clock input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--acc); border:2px solid var(--panel); cursor:pointer; }
+#clock input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:13px; height:13px; border-radius:50%; background:var(--acc); border:2px solid var(--panel); cursor:pointer; }
 #clock .now { font-size:11px; color:var(--acc); cursor:pointer; font-weight:600; white-space:nowrap; border-radius:5px; padding:3px 6px; }
 #clock .now:hover { background:var(--acc-soft); }
 
@@ -286,7 +286,11 @@ button { font-family:inherit; }
   #btnLive span { display:none; }
   .badge { display:none; }
   #btnLang { display:none; }
-  #clock { width:calc(100vw - 16px); padding:8px 12px 10px; }
+  #clock { width:max-content; max-width:calc(100vw - 16px); padding:6px 10px 6px; }
+  #clock .r2, #clock .sp-main { display:none; }
+  #clock .fold { display:flex; }
+  #clock.expanded .r2, #clock.expanded .sp-main { display:flex; }
+  #clock.expanded { width:calc(100vw - 16px); padding:8px 12px 9px; }
   #detail { width:calc(100vw - 20px); }
   #side { top:56px; left:0; width:100vw; max-height:calc(100vh - 150px); border-radius:0; }
   #side.collapsed { width:44px; border-radius:0 var(--r) var(--r) 0; }
@@ -296,7 +300,6 @@ button { font-family:inherit; }
   .btn { min-height:44px; }
   .btn.icon { width:44px; }
   .chip { padding:6px 13px; font-size:12px; }
-  .spb { padding:5px 11px; font-size:12px; }
   .sw { padding:7px 0; }
 }
 /* ============ 车站底部抽屉(时刻表) ============ */
@@ -472,20 +475,16 @@ button { font-family:inherit; }
       <div class="tz" id="cTz">JST</div>
     </div>
     <div class="daychip" id="cDay">-</div>
-    <div class="sp">
-      <button class="spb" data-sp="0.5">0.5×</button>
-      <button class="spb on" data-sp="1">1×</button>
-      <button class="spb" data-sp="2">2×</button>
-      <button class="spb" data-sp="4">4×</button>
-      <button class="spb" data-sp="8">8×</button>
-    </div>
+    <button class="spb sp-main" id="spMain">1×</button>
+    <button class="btn icon fold" id="foldBtn"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
   </div>
   <div class="r2">
+    <span class="tk-l" id="tkL">0:00</span>
     <span class="c-bub" id="cBub"></span>
     <input type="range" id="cSlider" min="0" max="1439" value="0" step="1">
+    <span class="tk-r" id="tkR">24:00</span>
     <span class="now" id="cNow">回到现在</span>
   </div>
-  <div class="tk"><span>0:00</span><span>24:00</span></div>
 </div>
 
 <div id="detail"></div>
@@ -2680,7 +2679,7 @@ sliderEl.addEventListener('input', () => {
   cTimeEl.textContent = fmtHMS(parseFloat(sliderEl.value));
   bubSync();
 });
-$('cNow').addEventListener('click', () => { doNow(); toast(T().liveMode); });
+$('cNow').addEventListener('click', () => { doNow(); toast(T().liveMode); if (window.innerWidth <= 640) { clockEl.classList.remove('expanded'); syncFold(); } });
 $('btnPlay').addEventListener('click', () => { if (paused) doResume(); else doPause(); });
 $('btnLive').addEventListener('click', () => setLive(!liveOn));
 function setLive(on) {
@@ -2695,12 +2694,28 @@ function setLive(on) {
 }
 function syncLiveDot() { const el = $('cDot'); if (el) el.classList.toggle('on', clockMode === 'live' && !paused); }
 function pulseStat(el) { el.classList.remove('pulse'); void el.offsetWidth; el.classList.add('pulse'); }
-document.querySelectorAll('.spb').forEach(b => b.addEventListener('click', () => {
-  speed = parseFloat(b.dataset.sp);
-  document.querySelectorAll('.spb').forEach(x => x.classList.toggle('on', x === b));
+/* 倍速:单按钮循环 0.5→1→2→4→8 */
+const SPDS = [0.5, 1, 2, 4, 8];
+let spIdx = 1;
+function setSpeed(i) {
+  spIdx = ((i % SPDS.length) + SPDS.length) % SPDS.length;
+  speed = SPDS[spIdx];
+  const b = $('spMain'); if (b) b.textContent = speed + '×';
   if (clockMode === 'live') enterManual(curMin());
   if (!paused) { simEpoch = simNow(); wallT0 = Date.now(); }
-}));
+}
+$('spMain').addEventListener('click', () => setSpeed(spIdx + 1));
+/* 移动端折叠胶囊:默认收起,点击展开,chevron 切换 */
+const foldBtn = $('foldBtn');
+function syncFold() {
+  const expanded = clockEl.classList.contains('expanded');
+  foldBtn.innerHTML = expanded
+    ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg>'
+    : '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
+}
+foldBtn.addEventListener('click', e => { e.stopPropagation(); clockEl.classList.toggle('expanded'); syncFold(); });
+clockEl.addEventListener('click', e => { if (window.innerWidth <= 640 && !clockEl.classList.contains('expanded') && !e.target.closest('.fold') && !e.target.closest('.r2')) { clockEl.classList.add('expanded'); syncFold(); } });
+syncFold();
 document.querySelectorAll('#dayRow .chip').forEach(c => c.addEventListener('click', async () => {
   document.querySelectorAll('#dayRow .chip').forEach(x => x.classList.toggle('on', x === c));
   dayMode = c.dataset.day === 'auto' ? 'auto' : +c.dataset.day;

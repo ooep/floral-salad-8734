@@ -267,6 +267,8 @@ button { font-family:inherit; }
 #detail .dstop.done { opacity:.4; }
 #detail .dstop.done .dot { border-color:var(--dim); }
 .lnchip { display:inline-block; padding:1px 8px; border-radius:6px; font-size:10.5px; font-weight:700; color:#fff; margin-right:4px; }
+.cplbtn { display:inline-block; margin-left:8px; padding:1px 9px; border-radius:6px; font-size:10.5px; font-weight:600; color:var(--acc); background:transparent; border:1px solid var(--line); cursor:pointer; }
+.cplbtn:hover { background:var(--acc); color:#fff; border-color:var(--acc); }
 
 /* ---------- 悬浮提示 ---------- */
 #tip { position:absolute; display:none; pointer-events:none; z-index:9; max-width:230px; padding:8px 12px; border-radius:8px;
@@ -701,7 +703,7 @@ const I18N = {
     stopsTitle:'停靠站', stopsCount:'站', colStop:'站', colArr:'到', colDep:'发',
     running:'运行中', dwelling:'停車中', speed:'速度', kmh:'km/h', firstLast:'全程', track:'轨道 = 官方线路色', legendNote:'列车颜色 = 所属线路色',
     followBtn:'跟随此列车', locateBtn:'定位', stopFollowBtn:'停止跟随', tripId:'班次', viaLines:'途经线路',
-    cplLabel:'併结', cplSplit:'与 {0} 併结，于 {1} 分割',
+    cplLabel:'併结', cplSplit:'与 {0} 併结，于 {1} 分割', cplView:'查看 {0}',
     loadingSeg:'轨道网络', loadingSta:'车站', loadingTm:'班次映射', loadingTr:'时刻表', loaded:'完成', goLive:'数据就绪 — 点击右上实时开始',
     dayFileNote:'时刻表', paused:'暂停', liveMode:'实时', playMode:'回放', fps:'FPS',
     retry:'重试', loadingIdx:'构建索引', loadingPr:'解析时刻表', adapt:'性能模式:帧率低,已自动关闭列车光晕', cacheOn:'离线缓存已启用', failMsg:'加载失败，请检查网络后重试',
@@ -722,7 +724,7 @@ const I18N = {
     stopsTitle:'停車駅', stopsCount:'駅', colStop:'駅', colArr:'着', colDep:'発',
     running:'運行中', dwelling:'停車中', speed:'速度', kmh:'km/h', firstLast:'全区間', track:'路線 = 公式路線色', legendNote:'列車色 = 所属路線色',
     followBtn:'列車を追跡', locateBtn:'位置', stopFollowBtn:'追跡停止', tripId:'列車', viaLines:'経由路線',
-    cplLabel:'併結', cplSplit:'{0}と併結、{1}で分割',
+    cplLabel:'併結', cplSplit:'{0}と併結、{1}で分割', cplView:'{0}を表示',
     loadingSeg:'軌道網', loadingSta:'駅', loadingTm:'列車マップ', loadingTr:'時刻表', loaded:'完了', goLive:'準備完了 — 右上 リアルタイム で開始',
     dayFileNote:'時刻表', paused:'一時停止', liveMode:'リアルタイム', playMode:'再生', fps:'FPS',
     retry:'再試行', loadingIdx:'索引構築', loadingPr:'時刻表解析', adapt:'省電力モード:低FPSのため列車グローをOFF', cacheOn:'オフラインキャッシュ有効', failMsg:'読み込みに失敗しました。ネットワークを確認してもう一度お試しください',
@@ -743,7 +745,7 @@ const I18N = {
     stopsTitle:'Stops', stopsCount:'stops', colStop:'Station', colArr:'Arr', colDep:'Dep',
     running:'Running', dwelling:'At station', speed:'Speed', kmh:'km/h', firstLast:'Route', track:'Track = official line color', legendNote:'Train color = line color',
     followBtn:'Follow train', locateBtn:'Locate', stopFollowBtn:'Stop follow', tripId:'Trip', viaLines:'Lines',
-    cplLabel:'Coupled', cplSplit:'Coupled w/ {0}, splits at {1}',
+    cplLabel:'Coupled', cplSplit:'Coupled w/ {0}, splits at {1}', cplView:'View {0}',
     loadingSeg:'Track network', loadingSta:'Stations', loadingTm:'Trip map', loadingTr:'Timetable', loaded:'done', goLive:'Ready — tap Live top-right',
     dayFileNote:'Timetable', paused:'Paused', liveMode:'Live', playMode:'Replay', fps:'FPS',
     retry:'Retry', loadingIdx:'Building index', loadingPr:'Parsing timetable', adapt:'Performance mode: low FPS, train glow off', cacheOn:'Offline cache enabled', failMsg:'Failed to load. Check your network and retry.',
@@ -2435,7 +2437,8 @@ function updateTrains(M) {
       for (let ci = 0; ci < t.cpl.length; ci++) {
         const c = t.cpl[ci];
         if (M2 >= c.t0 && M2 <= c.t1 && drawnCouple.has(c.p)) {
-          const offD = eps * (L / 8);
+          /* 偏移一个车长,但保证 ≥16px 屏幕距离:低/中缩放也能分辨和点选(拾取半径14),高缩放保持紧贴 */
+          const offD = eps * (Math.max(L, 16) / 8);
           lng -= Math.sin(p[2]) * offD;
           lat -= Math.cos(p[2]) * offD;
           break;
@@ -2946,6 +2949,16 @@ function showTrainDetail(t) {
     const p = trainPosition(t, windowShift(t, curMin()));
     if (p) map.flyTo({ center: [p[0], p[1]], zoom: Math.max(map.getZoom(), 12), pitch: 55, duration: 1200 });
   };
+  /* 併结切换:点击按钮切到伙伴列车的详情/跟随视角 */
+  detailEl.querySelectorAll('.d-cpl .cplbtn').forEach(btn => {
+    const ci = parseInt(btn.dataset.ci, 10);
+    btn.onclick = () => {
+      const c = (t.cpl || [])[ci];
+      if (!c || !c.p) return;
+      if (followTrip === t) { stopFollow(true); startFollow(c.p); }
+      else showTrainDetail(c.p);
+    };
+  });
 }
 /* 图集车头贴图:特急爱称 → 线路 → fallback */
 function trainIconIdx(t, lineName) {
@@ -2987,10 +3000,12 @@ function updateDetailLive(t, p, M, rebuild) {
       '<div><span class="lb">' + T().next + '</span>' + nextNm + ' ' + eta + '</div>' +
       (uniqLines.length ? '<div><span class="lb">' + T().viaLines + '</span>' + uniqLines.slice(0, 4).map(l => '<span class="lnchip" style="background:' + (lineColor.get(l) || '#888') + '">' + l + '</span>').join('') + (uniqLines.length > 4 ? ' +' + (uniqLines.length - 4) : '') + '</div>' : '') +
       '<div><span class="lb">' + T().tripId + '</span>#' + t.t + ' · ' + (t.nm || t.i) + '</div>' +
-      (t.cpl && t.cpl.length ? '<div><span class="lb">' + T().cplLabel + '</span>' + t.cpl.map(c => {
+      (t.cpl && t.cpl.length ? '<div class="d-cpl"><span class="lb">' + T().cplLabel + '</span>' + t.cpl.map(c => {
         const si = t.jasN.indexOf(c.split);
-        return T().cplSplit.replace('{0}', c.name || '').replace('{1}', si >= 0 ? t.jas[si] : c.split);
-      }).join('；') + '</div>' : '') +
+        const nm = c.name || '';
+        return '<span>' + T().cplSplit.replace('{0}', nm).replace('{1}', si >= 0 ? t.jas[si] : c.split) + '</span>' +
+          (nm ? '<button class="cplbtn" data-ci="' + t.cpl.indexOf(c) + '">' + T().cplView.replace('{0}', nm) + '</button>' : '');
+      }).join('<i class="sep">；</i>') + '</div>' : '') +
       '</div>' +
       '<div class="d-sep"></div>' +
       '<div class="d-stops"><div class="st-title">' + T().stopsTitle + '<span class="cnt">' + N + ' ' + T().stopsCount + '</span></div>' +

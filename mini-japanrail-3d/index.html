@@ -209,7 +209,7 @@ button { font-family:inherit; }
 #clock .r1 { display:flex; align-items:center; gap:8px; }
 #clock #btnPlay { width:32px; min-width:32px; height:32px; flex:none; border-radius:50%; padding:0; background:var(--acc); border:0; color:#fff; box-shadow:0 2px 10px var(--acc-soft); display:flex; align-items:center; justify-content:center; }
 #clock #btnPlay:hover { background:var(--acc); border-color:var(--acc); filter:brightness(1.14); }
-#clock #foldBtn { width:30px; min-width:30px; height:30px; flex:none; border-radius:50%; padding:0; background:var(--panel2); border:1px solid var(--line); color:var(--dim); display:flex; align-items:center; justify-content:center; }
+#clock #foldBtn { width:32px; min-width:32px; height:32px; flex:none; border-radius:50%; padding:0; background:var(--panel2); border:1px solid var(--line); color:var(--dim); display:flex; align-items:center; justify-content:center; box-sizing:border-box; }
 #clock #foldBtn:hover { color:var(--txt); border-color:var(--acc-border); }
 #clock .ldot { width:7px; height:7px; border-radius:50%; background:#f87171; flex:none; animation:ldot 1.8s ease-in-out infinite; }
 #clock .ldot.on { background:#34d399; }
@@ -337,6 +337,8 @@ button { font-family:inherit; }
   #clock .r2, #clock .sp-main, #clock .daychip { display:none; }
   #clock .fold { display:flex; }
   #clock.expanded .r2, #clock.expanded .sp-main, #clock.expanded .daychip { display:flex; }
+  /* 强制圆按钮不被flex压缩 */
+  #clock #btnPlay, #clock #foldBtn { flex:none !important; width:32px !important; min-width:32px !important; height:32px !important; min-height:32px !important; border-radius:50% !important; padding:0 !important; box-sizing:border-box !important; }
   #clock.expanded { width:calc(100vw - 12px); padding:6px 10px 7px; border-radius:14px; }
   #clock.hide-on-detail { opacity:0; pointer-events:none; transform:translateX(-50%) translateY(14px); }
   #detail { width:calc(100vw - 12px); left:6px; border-radius:14px; padding:10px 11px; bottom:8px; }

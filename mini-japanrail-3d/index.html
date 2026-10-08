@@ -242,24 +242,29 @@ button { font-family:inherit; }
 #detail .d-act { display:flex; gap:8px; margin-top:10px; }
 #detail .d-act .btn { min-height:34px; font-size:12px; flex:1; padding:0 10px; }
 #detail .d-x { margin-left:auto; flex:none; min-height:30px; min-width:30px; width:30px; }
-/* 停靠站时刻表 */
+/* 停靠站垂直线路图 */
 #detail .d-stops { margin-top:10px; border:1px solid var(--line); border-radius:8px; overflow:hidden; background:var(--panel2); }
 #detail .d-stops .st-title { display:flex; align-items:center; justify-content:space-between; padding:6px 10px; font-size:11px; font-weight:700; color:var(--txt); letter-spacing:.4px; border-bottom:1px solid var(--line); background:var(--panel); }
 #detail .d-stops .st-title .cnt { color:var(--dim); font-weight:600; font-size:10.5px; }
-#detail .st-list { max-height:min(228px,42vh); overflow-y:auto; overscroll-behavior:contain; }
-#detail .st-hd, #detail .dstop { display:grid; grid-template-columns:1fr 46px 46px; align-items:center; gap:6px; padding:0 10px; font-size:11.5px; }
-#detail .st-hd { position:sticky; top:0; z-index:1; background:var(--panel2); color:var(--dim); font-size:10px; font-weight:700; letter-spacing:.6px; padding:4px 10px; border-bottom:1px solid var(--line); }
-#detail .dstop { height:29px; border-top:1px solid var(--line); }
-#detail .dstop:first-child { border-top:0; }
-#detail .dstop .sn { display:flex; align-items:center; gap:7px; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--txt); }
-#detail .dstop .tm { text-align:right; font-variant-numeric:tabular-nums; color:var(--txt); font-weight:600; }
-#detail .dstop .tm.off { color:var(--dim); font-weight:400; }
+#detail .st-list { max-height:min(268px,50vh); overflow-y:auto; overscroll-behavior:contain; padding:4px 0; }
+#detail .dstop { position:relative; display:flex; gap:10px; min-height:36px; align-items:stretch; padding:0 10px; }
+#detail .vn { position:relative; width:18px; flex:none; }
+#detail .vn .vln { position:absolute; left:50%; width:3px; transform:translateX(-50%); }
+#detail .vn .vln.up { top:0; height:50%; }
+#detail .vn .vln.dn { bottom:0; height:50%; }
+#detail .vn .dot { position:absolute; left:50%; top:50%; width:10px; height:10px; border-radius:50%; transform:translate(-50%,-50%); z-index:2; box-sizing:border-box; border:2px solid; background:var(--panel2); }
+#detail .vc { flex:1; min-width:0; display:flex; align-items:baseline; justify-content:space-between; gap:8px; padding:7px 0; }
+#detail .vnm { font-size:12px; font-weight:600; color:var(--txt); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#detail .vtm { font-size:10.5px; color:var(--dim); font-variant-numeric:tabular-nums; white-space:nowrap; font-weight:600; }
+#detail .vtm .sep { margin:0 5px; opacity:.5; }
 #detail .dstop.here { background:var(--acc-soft); }
-#detail .dstop.here .sn::before { content:''; width:7px; height:7px; border-radius:50%; background:var(--acc); box-shadow:0 0 0 3px var(--acc-soft); flex:none; }
-#detail .dstop.next .sn { color:var(--acc); font-weight:700; }
-#detail .dstop.next .sn::before { content:''; width:7px; height:7px; border-radius:50%; border:2px solid var(--acc); box-sizing:border-box; flex:none; }
-#detail .dstop.done { opacity:.42; }
-#detail .dstop.done .sn::before { content:none; }
+#detail .dstop.here .dot { background:var(--acc); border-color:var(--acc); box-shadow:0 0 0 3px var(--acc-soft); }
+#detail .dstop.here .vnm { font-weight:700; }
+#detail .dstop.next .dot { background:var(--panel2); border-color:var(--acc); }
+#detail .dstop.next .vnm { color:var(--acc); font-weight:700; }
+#detail .dstop.next .vtm { color:var(--acc); }
+#detail .dstop.done { opacity:.4; }
+#detail .dstop.done .dot { border-color:var(--dim); }
 .lnchip { display:inline-block; padding:1px 8px; border-radius:6px; font-size:10.5px; font-weight:700; color:#fff; margin-right:4px; }
 
 /* ---------- 悬浮提示 ---------- */
@@ -2866,13 +2871,23 @@ function updateDetailLive(t, p, M, rebuild) {
       '<div><span class="lb">' + T().tripId + '</span>#' + t.t + ' · ' + (t.nm || t.i) + '</div></div>' +
       '<div class="d-sep"></div>' +
       '<div class="d-stops"><div class="st-title">' + T().stopsTitle + '<span class="cnt">' + N + ' ' + T().stopsCount + '</span></div>' +
-      '<div class="st-list"><div class="st-hd"><span class="sn">' + T().colStop + '</span><span class="tm">' + T().colArr + '</span><span class="tm">' + T().colDep + '</span></div>' +
+      '<div class="st-list">' +
       (function () {
         let s = '';
         for (let k = 0; k < N; k++) {
-          const a = (k === 0) ? '—' : fmtHm(t.arr[k]);
-          const d = (k === N - 1) ? '—' : fmtHm(t.dep[k]);
-          s += '<div class="dstop" data-i="' + k + '"><span class="sn">' + esc(t.jas[k]) + '</span><span class="tm' + (k === 0 ? ' off' : '') + '">' + a + '</span><span class="tm' + (k === N - 1 ? ' off' : '') + '">' + d + '</span></div>';
+          const upCol = (k > 0) ? (lineColor.get(lineOfPair(t, k - 1)) || '#8899aa') : '';
+          const dnCol = (k < N - 1) ? (lineColor.get(lineOfPair(t, k)) || '#8899aa') : '';
+          const dotCol = upCol || dnCol;
+          const tm = [];
+          if (k > 0) tm.push('<span class="t-arr">' + T().colArr + fmtHm(t.arr[k]) + '</span>');
+          if (k < N - 1) tm.push('<span class="t-dep">' + T().colDep + fmtHm(t.dep[k]) + '</span>');
+          s += '<div class="dstop" data-i="' + k + '"><span class="vn">' +
+            (k > 0 ? '<span class="vln up" style="background:' + upCol + '"></span>' : '') +
+            '<span class="dot" style="border-color:' + dotCol + '"></span>' +
+            (k < N - 1 ? '<span class="vln dn" style="background:' + dnCol + '"></span>' : '') +
+            '</span><span class="vc"><span class="vnm">' + esc(t.jas[k]) + '</span>' +
+            (tm.length ? '<span class="vtm">' + tm.join('<i class="sep">·</i>') + '</span>' : '') +
+            '</span></div>';
         }
         return s;
       })() +

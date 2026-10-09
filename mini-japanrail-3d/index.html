@@ -429,6 +429,26 @@ button { font-family:inherit; }
 #tip.show { opacity:1; visibility:visible; backdrop-filter:blur(14px) saturate(1.4); -webkit-backdrop-filter:blur(14px) saturate(1.4);
   transition:opacity .22s var(--ease-smooth), backdrop-filter .22s var(--ease-smooth), -webkit-backdrop-filter .22s var(--ease-smooth), visibility 0s linear 0s; }
 #tip .ln { font-weight:700; font-size:12.5px; } #tip .sg { color:var(--dim); font-size:10.5px; }
+/* 列车叠加选择小窗（液态玻璃卡片，样式对齐车辆详情卡） */
+#trPick { position:absolute; z-index:12; min-width:240px; max-width:320px; padding:6px; border-radius:16px;
+  background:var(--panel); border:1px solid var(--glass-edge); box-shadow:inset 0 1px 0 rgba(255,255,255,.2), var(--glass-sh);
+  backdrop-filter:blur(16px) saturate(1.4); -webkit-backdrop-filter:blur(16px) saturate(1.4);
+  opacity:0; visibility:hidden; transform:scale(.96); transform-origin:top left;
+  transition:opacity .16s var(--ease-smooth), transform .16s var(--ease-smooth), visibility 0s linear .16s; }
+#trPick.show { opacity:1; visibility:visible; transform:scale(1);
+  transition:opacity .16s var(--ease-smooth), transform .16s var(--ease-smooth), visibility 0s linear 0s; }
+#trPick .tp-hd { display:flex; align-items:center; justify-content:space-between; padding:6px 10px 8px; }
+#trPick .tp-hd .tp-q { font-size:11px; font-weight:700; color:var(--dim); letter-spacing:.3px; }
+#trPick .tp-x { width:26px; height:26px; border-radius:50%; border:0; cursor:pointer; flex:none;
+  background:var(--acc-soft); color:var(--dim); display:flex; align-items:center; justify-content:center; font-size:13px; }
+#trPick .tp-x:hover { color:var(--txt); }
+#trPick .tp-it { display:flex; align-items:center; gap:11px; padding:9px 10px; min-height:56px; border-radius:11px; cursor:pointer; }
+#trPick .tp-it:hover { background:var(--acc-soft); }
+#trPick .tp-ic { width:34px; height:34px; flex:none; }
+#trPick .tp-ic-fb { display:flex; align-items:center; justify-content:center; border-radius:7px; }
+#trPick .tp-tx { min-width:0; }
+#trPick .tp-t { font-weight:700; font-size:14.5px; color:var(--txt); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#trPick .tp-s { color:var(--dim); font-size:11.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px; }
 #trTag { position:absolute; pointer-events:none; z-index:10; max-width:200px; padding:5px 11px; border-radius:10px;
   background:var(--panel); border:1px solid var(--glass-edge); color:var(--txt); font-size:11.5px; font-weight:600; white-space:nowrap;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.2), var(--glass-sh); transform:translate(-50%,-50%);
@@ -923,6 +943,7 @@ button { font-family:inherit; }
 <div id="detail"></div>
 <div id="trTag"></div>
 <div id="tip"></div>
+<div id="trPick"></div>
 <div id="sheetMask"></div>
 <div id="sheet">
   <div class="grab"></div>
@@ -1179,7 +1200,7 @@ const T = () => I18N[lang];
 
 /* ---------------- DOM ---------------- */
 const $ = id => document.getElementById(id);
-const tipEl = $('tip'), sideEl = $('side'), clockEl = $('clock'), detailEl = $('detail');
+const tipEl = $('tip'), sideEl = $('side'), clockEl = $('clock'), detailEl = $('detail'), trPickEl = $('trPick');
 const searchEl = $('search'), sugEl = $('sug'), sliderEl = $('cSlider'), cTimeEl = $('cTime'), cDayEl = $('cDay');
 const trTagEl = $('trTag');
 const toastEl = $('toast');
@@ -3180,6 +3201,7 @@ function initMap() {
   map.on('style.load', () => { try { map.setProjection({ type: 'globe' }); } catch (e) { console.warn('globe unavailable', e); } });
   map.on('error', e => { const m = e && e.error && (e.error.message || String(e.error)) || String(e || ''); window.__errs.push('MAP ' + m.slice(0, 200)); });
   map.on('dragstart', () => { if (followTrip) stopFollow(true); });
+  map.on('movestart', () => { if (trPickEl) trPickEl.classList.remove('show'); });
   map.getCanvas().addEventListener('mousemove', onMouseMove);
   map.getCanvas().addEventListener('click', onMapClick);
 }
@@ -3642,15 +3664,72 @@ function pickTrain(px, py, radius) {
   }
   return best;
 }
+// 收集点击半径内全部列车（按屏幕距离升序），用于叠加弹窗
+function collectTrains(px, py, radius) {
+  const out = [], bd = radius * radius;
+  for (let n = 0; n < visibleTrips.length; n++) {
+    const pr = map.project([visibleXY[n * 2], visibleXY[n * 2 + 1]]);
+    const dx = pr.x - px, dy = pr.y - py, d = dx * dx + dy * dy;
+    if (d <= bd) out.push({ trip: visibleTrips[n], d2: d });
+  }
+  out.sort((a, b) => a.d2 - b.d2);
+  return out;
+}
+// 多辆叠加：在点击处弹紧凑选择小窗（液态玻璃卡片，样式对齐车辆详情卡，自动贴边）
+function showTrPick(list, px, py) {
+  if (!list.length) { trPickEl.classList.remove('show'); return; }
+  const rows = list.map((o, i) => {
+    const t = o.trip;
+    const ln = (t.lines || [])[0];
+    const col = lineColor.get(ln) || t.color || '#4f8ef7';
+    const ic = trainIconIdx(t, ln);
+    const icHtml = ic >= 0
+      ? '<span class="tp-ic" style="' + iconStyle(ic) + '"></span>'
+      : '<span class="tp-ic tp-ic-fb" style="color:' + col + ';background:' + col + '22">' + ICO.train + '</span>';
+    const title = t.nm || ln || t.i || '#' + t.t;
+    const sub = (t.jas ? t.jas[0] + ' → ' + t.jas[t.jas.length - 1] : '') + ' · ' + fmtHm(t.dep[0]) + '–' + fmtHm(t.arr[t.arr.length - 1]);
+    return '<div class="tp-it" data-i="' + i + '">' + icHtml + '<span class="tp-tx"><div class="tp-t">' + esc(title) + '</div><div class="tp-s">' + esc(sub) + '</div></span></div>';
+  }).join('');
+  trPickEl.innerHTML = '<div class="tp-hd"><span class="tp-q">您想查看的是哪一辆？</span><button class="tp-x" title="关闭">×</button></div>' + rows;
+  trPickEl.classList.add('show');
+  trPickEl.style.left = px + 'px'; trPickEl.style.top = py + 'px';
+  const box = trPickEl.getBoundingClientRect(), mc = map.getContainer().getBoundingClientRect();
+  let l = px, tp = py;
+  if (l + box.width > mc.right - 6) l = px - box.width - 8;
+  if (tp + box.height > mc.bottom - 6) tp = py - box.height - 8;
+  trPickEl.style.left = Math.max(4, l) + 'px'; trPickEl.style.top = Math.max(4, tp) + 'px';
+  trPickEl.querySelector('.tp-x').onclick = (ev) => { ev.stopPropagation(); trPickEl.classList.remove('show'); };
+  trPickEl.querySelectorAll('.tp-it').forEach(it => it.onclick = (ev) => {
+    ev.stopPropagation();
+    trPickEl.classList.remove('show');
+    showTrainDetail(list[parseInt(it.dataset.i, 10)].trip);
+  });
+}
 function onMapClick(e) {
   if (!dataReady || !liveOn) return;
   const px = (e.offsetX !== undefined ? e.offsetX : e.point && e.point.x);
   const py = (e.offsetY !== undefined ? e.offsetY : e.point && e.point.y);
-  const t = pickTrain(px, py, 14);
-  if (t) { showTrainDetail(t); return; }
+  const hits = collectTrains(px, py, 14);
+  if (hits.length === 1) { showTrainDetail(hits[0].trip); return; }
+  if (hits.length > 1) { showTrPick(hits, px, py); return; }
+  trPickEl.classList.remove('show');
+  // 站点：查询圆点层 stas + 站名标签层 stas-label；加触控感知容差（bbox）；多命中取屏幕最近者
   const pt = (e.offsetX !== undefined) ? [px, py] : e.point;
-  const feats = map.queryRenderedFeatures(pt, { layers: ['stas'] });
-  if (feats.length) { showStationDetail(feats[0].properties.station, feats[0].geometry.coordinates); return; }
+  const oe = e.originalEvent || {};
+  const r = (oe.pointerType === 'touch' || oe.pointerType === 'pen') ? 22 : 12;
+  const box = [[pt[0] - r, pt[1] - r], [pt[0] + r, pt[1] + r]];
+  const feats = map.queryRenderedFeatures(box, { layers: ['stas', 'stas-label'] });
+  if (feats.length) {
+    let best = feats[0], bd = Infinity;
+    for (const f of feats) {
+      const c = f.geometry && f.geometry.coordinates; if (!c) continue;
+      const pr = map.project(c);
+      const dx = pr.x - pt[0], dy = pr.y - pt[1], d = dx * dx + dy * dy;
+      if (d < bd) { bd = d; best = f; }
+    }
+    showStationDetail(best.properties.station, best.geometry.coordinates);
+    return;
+  }
   // 空白
   stopFollow();
   liveDetailTrip = null;
@@ -4250,6 +4329,8 @@ $('tabGuide').addEventListener('click', function () { switchSheetTab('tabGuide')
 $('subDep').addEventListener('click', function () { sheetDepArr = 'dep'; $('subDep').classList.add('on'); $('subArr').classList.remove('on'); renderStationBody(); });
 $('subArr').addEventListener('click', function () { sheetDepArr = 'arr'; $('subArr').classList.add('on'); $('subDep').classList.remove('on'); renderStationBody(); });
 window.showStationDetail = showStationDetail;  // 调试/自动化钩子：供控制台与 E2E 直接打开车站抽屉
+// E2E 钩子：列车叠加弹窗（确定性验证，不依赖实时列车密度）
+window.__trPick = { n: () => visibleTrips.length, near: (x, y) => collectTrains(x, y, 14).length, open: (x, y) => showTrPick(collectTrains(x, y, 14), x, y) };
 
 /* ============ 信息 tab（eki-wiki 百科，惰性加载，全路径防御） ============ */
 let sheetTab = 'tabGrid';

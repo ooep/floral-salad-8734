@@ -4106,6 +4106,17 @@ function buildBoard(station, coord) {
       idx = jn.indexOf(nk);
       if (idx < 0) continue;
     }
+    // 到达记录：idx > 0 即列车从某站开来本站（含终着 idx == N-1）。时间用 arr[idx]，方向=起点 jas[0]
+    if (idx > 0) {
+      const arrT = t.arr[idx], from = t.jas[0];
+      let tripOpArr = '';
+      for (let li = 0; li < t.linesN.length; li++) { const o = opForLine(t.linesN[li]); if (o) { tripOpArr = o; break; } }
+      for (let li = 0; li < t.linesN.length; li++) {
+        const ln = t.linesN[li]; if (!ln) continue;
+        if (!byLine.has(ln)) byLine.set(ln, { name: ln, color: lineColor.get(ln) || '#6e6e6e', op: opForLine(ln) || tripOpArr || '', items: [], itemsArr: [] });
+        byLine.get(ln).itemsArr.push({ dep: arrT, term: from, type: t.i, entry: jn, idx });
+      }
+    }
     if (idx >= t.N - 1) continue;
     const dep = t.dep[idx], term = t.jas[t.N - 1];
     // 同趟车经过多线, 取第一个非空公司做兜底(石勝線这类op缺失的也归对公司)
@@ -4115,14 +4126,6 @@ function buildBoard(station, coord) {
       const ln = t.linesN[li]; if (!ln) continue;
       if (!byLine.has(ln)) byLine.set(ln, { name: ln, color: lineColor.get(ln) || '#6e6e6e', op: opForLine(ln) || tripOp || '', items: [], itemsArr: [] });
       byLine.get(ln).items.push({ dep, term, type: t.i, entry: jn, idx });
-    }
-    // 到达记录：从本站"到达"视角看 = 列车开过来的方向（起点站 jas[0]），时间用 arr[idx]
-    if (idx > 0) {
-      const arrT = t.arr[idx], from = t.jas[0];
-      for (let li = 0; li < t.linesN.length; li++) {
-        const ln = t.linesN[li]; if (!ln) continue;
-        byLine.get(ln).itemsArr.push({ dep: arrT, term: from, type: t.i, entry: jn, idx });
-      }
     }
   }
   const lines = [];

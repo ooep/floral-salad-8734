@@ -1105,6 +1105,11 @@ const I18N = {
     loadingSeg:'轨道网络', loadingSta:'车站', loadingTm:'班次映射', loadingTr:'时刻表', loaded:'完成', goLive:'数据就绪 — 点击右上实时开始',
     dayFileNote:'时刻表', paused:'暂停', liveMode:'实时', playMode:'回放', fps:'FPS',
     retry:'重试', loadingIdx:'构建索引', loadingPr:'解析时刻表', adapt:'性能模式:帧率低,已自动关闭列车光晕', cacheOn:'离线缓存已启用', failMsg:'加载失败，请检查网络后重试',
+    tabGuide:'指南', gdLoading:'指南数据加载中…', gdEmpty:'本站暂无设施信息',
+    gdBasic:'基本信息', gdWheelchair:'无障碍通行', gdToilets:'卫生间', gdPlatform:'站台与屏蔽门',
+    gdFloorPlan:'站内图', gdLinks:'相关链接', gdAddress:'地址', gdTel:'电话', gdOpened:'开业',
+    gdInside:'闸内', gdOutside:'闸外', gdSeeFp:'查看官方站内图 ↗', gdEcomo:'ecomo 车站信息',
+    gdOperator:'运营商官网', gdDataSrc:'数据：ecomo-rakuraku（交通生态·移动财团）',
   },
   ja: {
     title:'ミニ日本鉄道3D', sub:'全国鉄道リアルタイムマップ', loading:'準備中…', live:'リアルタイム', follow:'追跡中', followStop:'追跡解除',
@@ -1127,6 +1132,11 @@ const I18N = {
     loadingSeg:'軌道網', loadingSta:'駅', loadingTm:'列車マップ', loadingTr:'時刻表', loaded:'完了', goLive:'準備完了 — 右上 リアルタイム で開始',
     dayFileNote:'時刻表', paused:'一時停止', liveMode:'リアルタイム', playMode:'再生', fps:'FPS',
     retry:'再試行', loadingIdx:'索引構築', loadingPr:'時刻表解析', adapt:'省電力モード:低FPSのため列車グローをOFF', cacheOn:'オフラインキャッシュ有効', failMsg:'読み込みに失敗しました。ネットワークを確認してもう一度お試しください',
+    tabGuide:'ガイド', gdLoading:'ガイド読込中…', gdEmpty:'この駅の設備情報はまだありません',
+    gdBasic:'基本情報', gdWheelchair:'車椅子での移動', gdToilets:'トイレ', gdPlatform:'ホーム・ドア',
+    gdFloorPlan:'構内図', gdLinks:'リンク', gdAddress:'所在地', gdTel:'連絡先', gdOpened:'開業',
+    gdInside:'改札内', gdOutside:'改札外', gdSeeFp:'公式構内図を見る ↗', gdEcomo:'ecomo 駅情報',
+    gdOperator:'事業者サイト', gdDataSrc:'データ：ecomo-rakuraku（交通エコロジー・モビリティ財団）',
   },
   en: {
     title:'Mini JapanRail 3D', sub:'Japan Rail Live Map', loading:'Preparing…', live:'Live', follow:'Following', followStop:'Stop follow',
@@ -1149,6 +1159,11 @@ const I18N = {
     loadingSeg:'Track network', loadingSta:'Stations', loadingTm:'Trip map', loadingTr:'Timetable', loaded:'done', goLive:'Ready — tap Live top-right',
     dayFileNote:'Timetable', paused:'Paused', liveMode:'Live', playMode:'Replay', fps:'FPS',
     retry:'Retry', loadingIdx:'Building index', loadingPr:'Parsing timetable', adapt:'Performance mode: low FPS, train glow off', cacheOn:'Offline cache enabled', failMsg:'Failed to load. Check your network and retry.',
+    tabGuide:'Guide', gdLoading:'Loading guide…', gdEmpty:'No facility info for this station yet',
+    gdBasic:'Basic info', gdWheelchair:'Barrier-free access', gdToilets:'Toilets', gdPlatform:'Platform / doors',
+    gdFloorPlan:'Station map', gdLinks:'Links', gdAddress:'Address', gdTel:'Phone', gdOpened:'Opened',
+    gdInside:'Inside gates', gdOutside:'Outside gates', gdSeeFp:'Official station map ↗', gdEcomo:'ecomo station info',
+    gdOperator:'Operator site', gdDataSrc:'Data: ecomo-rakuraku (Japan Traffic Ecology & Mobility Foundation)',
   },
 };
 let lang = localStorage.getItem('mjr3d_lang') || (['ja','en'].includes(navigator.language?.slice(0,2)) ? navigator.language.slice(0,2) : 'zh');
@@ -4388,83 +4403,95 @@ async function _loadGuideData() {
 }
 
 function _gVal(v) {
-  if (v === true) return 'あり';
-  if (v === false) return 'なし';
+  if (v === true) return lang === 'zh' ? '有' : (lang === 'en' ? 'Yes' : 'あり');
+  if (v === false) return lang === 'zh' ? '无' : (lang === 'en' ? 'No' : 'なし');
   if (v == null || v === '') return '—';
   return _escTxt(v);
+}
+
+/* 日语数据字段名 → 中/英翻译（ja 保持原文） */
+const GD_LABELS = {
+  '所在地':{zh:'地址',en:'Address'},'連絡先':{zh:'电话',en:'Phone'},'開業':{zh:'开业',en:'Opened'},
+  '地上出入口～改札口':{zh:'地面出入口～闸机',en:'Street entrance → gates'},
+  '改札口〜各ホーム':{zh:'闸机～各站台',en:'Gates → platforms'},
+  '各ホーム間（自社線）':{zh:'各站台间（本线）',en:'Between platforms'},
+  '駅での利用':{zh:'站内使用',en:'On-station use'},
+  'トイレ':{zh:'卫生间',en:'Toilet'},'車椅子対応':{zh:'轮椅可用',en:'Wheelchair'},
+  'オストメイト':{zh:'多功能洗手台',en:'Ostomato'},'ベビーベッド':{zh:'婴儿护理台',en:'Baby cot'},
+  '路線名':{zh:'线路',en:'Line'},'ホーム形状':{zh:'站台形状',en:'Platform shape'},
+  '設置ホーム':{zh:'设置站台',en:'Platforms'},'ホームドア種別':{zh:'屏蔽门类型',en:'Platform doors'},
+  '縮小しているホーム':{zh:'缩小站台',en:'Narrowed platform'},'対応ホーム情報':{zh:'对应站台',en:'Platform info'},
+};
+function gdTr(ja) {
+  if (lang === 'ja') return ja;
+  const m = GD_LABELS[ja];
+  return (m && m[lang]) || ja;
 }
 
 async function renderGuideTab() {
   const box = $('panelGuide');
   if (_guideKey === sheetStation) return;
-  box.innerHTML = '<div class="gd-loading">指南データ読込中…</div>';
+  box.innerHTML = '<div class="gd-loading">' + _escTxt(T().gdLoading) + '</div>';
   const data = await _loadGuideData();
   const rec = data[normName(sheetStation)];
   _guideKey = sheetStation;
   if (!rec) {
-    box.innerHTML = '<div class="gd-empty">この駅の設備情報はまだありません。<br><small>データ提供：ecomo-rakuraku（交通エコロジー・モビリティ財団）</small></div>';
+    box.innerHTML = '<div class="gd-empty">' + _escTxt(T().gdEmpty) + '<br><small>' + _escTxt(T().gdDataSrc) + '</small></div>';
     return;
   }
+  const t = T();
   let h = '';
-  // header
   h += `<div class="gd-head"><div class="gd-title">${_escTxt(rec.name || sheetStation)}</div><div class="gd-sub">${_escTxt(rec.operator || '')}</div></div>`;
-  // basic
   const b = rec.basic || {};
-  if (b.address || b.tel) {
-    h += '<div class="gd-sec"><div class="gd-sec-t">基本情報</div>';
-    if (b.address) h += `<div class="gd-row"><span>所在地</span><b>${_escTxt(b.address)}</b></div>`;
-    if (b.tel) h += `<div class="gd-row"><span>連絡先</span><b>${_escTxt(b.tel)}</b></div>`;
-    if (b.opened) h += `<div class="gd-row"><span>開業</span><b>${_escTxt(b.opened)}</b></div>`;
+  if (b.address || b.tel || b.opened) {
+    h += '<div class="gd-sec"><div class="gd-sec-t">' + _escTxt(t.gdBasic) + '</div>';
+    if (b.address) h += `<div class="gd-row"><span>${_escTxt(t.gdAddress)}</span><b>${_escTxt(b.address)}</b></div>`;
+    if (b.tel) h += `<div class="gd-row"><span>${_escTxt(t.gdTel)}</span><b>${_escTxt(b.tel)}</b></div>`;
+    if (b.opened) h += `<div class="gd-row"><span>${_escTxt(t.gdOpened)}</span><b>${_escTxt(b.opened)}</b></div>`;
     h += '</div>';
   }
-  // wheelchair
   const w = rec.wheelchair || {};
   const wRows = Object.entries(w).filter(([k]) => k !== 'note');
   if (wRows.length) {
-    h += '<div class="gd-sec"><div class="gd-sec-t">車椅子での移動</div>';
-    wRows.forEach(([k, v]) => { h += `<div class="gd-row"><span>${_escTxt(k)}</span><b>${_gVal(v)}</b></div>`; });
+    h += '<div class="gd-sec"><div class="gd-sec-t">' + _escTxt(t.gdWheelchair) + '</div>';
+    wRows.forEach(([k, v]) => { h += `<div class="gd-row"><span>${_escTxt(gdTr(k))}</span><b>${_gVal(v)}</b></div>`; });
     h += '</div>';
   }
-  // toilets
-  const t = rec.toilets || {};
-  if (t.inside || t.outside) {
-    h += '<div class="gd-sec"><div class="gd-sec-t">トイレ</div>';
-    h += '<table class="gd-table"><thead><tr><th></th><th>改札内</th><th>改札外</th></tr></thead><tbody>';
-    const keys = new Set([...Object.keys(t.inside || {}), ...Object.keys(t.outside || {})]);
+  const tl = rec.toilets || {};
+  if (tl.inside || tl.outside) {
+    h += '<div class="gd-sec"><div class="gd-sec-t">' + _escTxt(t.gdToilets) + '</div>';
+    h += `<table class="gd-table"><thead><tr><th></th><th>${_escTxt(t.gdInside)}</th><th>${_escTxt(t.gdOutside)}</th></tr></thead><tbody>`;
+    const keys = new Set([...Object.keys(tl.inside || {}), ...Object.keys(tl.outside || {})]);
     keys.forEach(k => {
-      h += `<tr><td>${_escTxt(k)}</td><td>${_gVal(t.inside && t.inside[k])}</td><td>${_gVal(t.outside && t.outside[k])}</td></tr>`;
+      h += `<tr><td>${_escTxt(gdTr(k))}</td><td>${_gVal(tl.inside && tl.inside[k])}</td><td>${_gVal(tl.outside && tl.outside[k])}</td></tr>`;
     });
     h += '</tbody></table>';
-    if (t.note) h += `<div class="gd-note">${_escTxt(t.note)}</div>`;
+    if (tl.note) h += `<div class="gd-note">${_escTxt(tl.note)}</div>`;
     h += '</div>';
   }
-  // platform
   const p = rec.platform || {};
   const pRows = Object.entries(p).filter(([, v]) => v != null && v !== '');
   if (pRows.length) {
-    h += '<div class="gd-sec"><div class="gd-sec-t">ホーム・ドア</div>';
-    pRows.forEach(([k, v]) => { h += `<div class="gd-row"><span>${_escTxt(k)}</span><b>${_gVal(v)}</b></div>`; });
+    h += '<div class="gd-sec"><div class="gd-sec-t">' + _escTxt(t.gdPlatform) + '</div>';
+    pRows.forEach(([k, v]) => { h += `<div class="gd-row"><span>${_escTxt(gdTr(k))}</span><b>${_gVal(v)}</b></div>`; });
     h += '</div>';
   }
-  // floor plan
   const fp = rec.floorPlan;
   if (fp && fp.imageUrl) {
-    h += `<div class="gd-sec"><div class="gd-sec-t">構内図</div><img class="gd-img" src="${_escTxt(fp.imageUrl)}" alt="構内図" loading="lazy"></div>`;
+    h += `<div class="gd-sec"><div class="gd-sec-t">${_escTxt(t.gdFloorPlan)}</div><img class="gd-img" src="${_escTxt(fp.imageUrl)}" alt="${_escTxt(t.gdFloorPlan)}" loading="lazy"></div>`;
   } else if (fp && fp.pageUrl) {
-    h += `<div class="gd-sec"><div class="gd-sec-t">構内図</div><a class="gd-link" href="${_escTxt(fp.pageUrl)}" target="_blank" rel="noopener">公式構内図を見る ↗</a></div>`;
+    h += `<div class="gd-sec"><div class="gd-sec-t">${_escTxt(t.gdFloorPlan)}</div><a class="gd-link" href="${_escTxt(fp.pageUrl)}" target="_blank" rel="noopener">${_escTxt(t.gdSeeFp)}</a></div>`;
   }
-  // links
   const L = rec.links || {};
   const linkItems = [];
-  if (L.ecomo) linkItems.push(['ecomo 駅情報', L.ecomo]);
-  if (L.operator) linkItems.push(['事業者サイト', L.operator]);
-  if (fp && fp.pageUrl && !(fp && fp.imageUrl)) linkItems.push(['構内図', fp.pageUrl]);
+  if (L.ecomo) linkItems.push([t.gdEcomo, L.ecomo]);
+  if (L.operator) linkItems.push([t.gdOperator, L.operator]);
   if (linkItems.length) {
-    h += '<div class="gd-sec"><div class="gd-sec-t">リンク</div><div class="gd-links">';
+    h += '<div class="gd-sec"><div class="gd-sec-t">' + _escTxt(t.gdLinks) + '</div><div class="gd-links">';
     linkItems.forEach(([t2, u]) => { h += `<a class="gd-link" href="${_escTxt(u)}" target="_blank" rel="noopener">${_escTxt(t2)} ↗</a>`; });
     h += '</div></div>';
   }
-  h += '<div class="gd-src">データ：ecomo-rakuraku（公益財団法人交通エコロジー・モビリティ財団）</div>';
+  h += '<div class="gd-src">' + _escTxt(t.gdDataSrc) + '</div>';
   box.innerHTML = h;
 }
 
@@ -4957,6 +4984,7 @@ function applyLang() {
   $('tLegend').textContent = t.legendT; $('tDay').textContent = t.dayT; $('tSet').textContent = t.setT;
   $('tData').textContent = t.dataT; $('tHelp').textContent = t.helpT;
   $('tabRouteLb').textContent = t.tabRoute; $('tabLegendLb').textContent = t.legendT; $('tabSetLb').textContent = t.setT;
+  if ($('tabGuide')) $('tabGuide').textContent = t.tabGuide;
   $('bLiveLb').textContent = t.badgeLive; $('bCountLb').textContent = t.badgeToday;
   searchEl.placeholder = t.searchPh;
   $('rFrom').placeholder = t.routeFrom; $('rTo').placeholder = t.routeTo;
@@ -4979,6 +5007,7 @@ function applyLang() {
   document.querySelectorAll('#dayRow .chip').forEach(c => { if (c.dataset.day !== 'auto') c.textContent = DAY_LABEL[+c.dataset.day][lang]; });
   document.querySelectorAll('#langRow .chip').forEach(x => x.classList.toggle('on', x.dataset.lang === lang));
   if (dataReady) setStatus(liveOn ? '' : t.goLive);
+  if ($('panelGuide') && !$('panelGuide').hidden) { _guideKey = null; renderGuideTab(); }
 }
 function buildLegend() {
   $('legendBox').innerHTML =

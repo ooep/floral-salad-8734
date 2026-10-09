@@ -638,10 +638,11 @@ button { font-family:inherit; }
 #sheet .sh-nm { font-size:30px; font-weight:800; letter-spacing:-.5px; line-height:1.05; }
 #sheet .sh-sub { font-size:12.5px; color:var(--dim); margin-top:4px; }
 #sheet .sh-x { margin-left:auto; flex:none; }
-#sheet .sh-tabs { display:flex; border-bottom:1px solid var(--glass-lo); flex:none; margin-top:10px; padding:0 20px; }
-#sheet .sh-tabs button { flex:1; max-width:140px; padding:12.5px 0; background:none; border:0; color:var(--dim); font-size:14px; font-weight:700; cursor:pointer; border-bottom:2px solid transparent; transition:color .12s, border-color .12s; }
+#sheet .sh-tabs { display:flex; border-bottom:1px solid var(--glass-lo); flex:none; margin-top:10px; padding:0 12px; }
+#sheet .sh-tabs button { flex:1; max-width:120px; padding:12px 0; background:none; border:0; color:var(--dim); font-size:13.5px; font-weight:700; cursor:pointer; border-bottom:2px solid transparent; transition:color .12s, border-color .12s; white-space:nowrap; }
 #sheet .sh-tabs button:hover { color:var(--txt); }
 #sheet .sh-tabs button.on { color:var(--txt); border-bottom-color:var(--acc); }
+@media (max-width:420px){ #sheet .sh-tabs button { font-size:12.5px; padding:11px 0; } }
 #sheet .sh-body { flex:1; overflow-y:auto; padding:6px 20px 28px; -webkit-overflow-scrolling:touch; }
 #sheet .grp-op { display:flex; align-items:center; gap:8px; padding:14px 4px 6px; font-size:12px; font-weight:800; color:var(--txt); }
 #sheet .grp-op .op-logo { max-height:22px; max-width:72px; width:auto; height:auto; object-fit:contain; background:#fff; border-radius:4px; padding:2px 5px; flex:none; }
@@ -689,6 +690,43 @@ button { font-family:inherit; }
 .dg-cell .d { font-size:9.5px; color:var(--dim); margin-top:1px; white-space:nowrap; }
 .dg-cell .tag { display:block; font-size:9px; color:#ffd27a; }
 #sheet .empty { padding:30px 16px; text-align:center; color:var(--dim); font-size:13px; }
+
+/* ===== 信息 tab 面板（复用 .sh-body 滚动；玻璃拟态主题） ===== */
+.tab-panel[hidden]{ display:none; }
+.gd-loading, .gd-empty { padding:36px 16px; text-align:center; color:var(--dim); font-size:13px; line-height:1.7; }
+.gd-empty .gd-retry { margin-top:10px; display:inline-block; padding:6px 16px; border-radius:var(--r-pill); border:1px solid var(--glass-edge); background:var(--glass); color:var(--txt); font-size:12.5px; cursor:pointer; }
+
+/* --- 信息面板 --- */
+#panelInfo { color:var(--txt); }
+.info-station { padding:6px 2px 14px; border-bottom:1px solid var(--glass-edge); }
+.info-station .is-line { font-size:12px; color:var(--dim); letter-spacing:.05em; margin-bottom:8px; }
+.info-station .is-name { font-size:24px; font-weight:800; letter-spacing:-.3px; line-height:1.2; }
+.info-station .is-name small { font-size:13px; font-weight:500; color:var(--dim); margin-left:8px; }
+.info-station .is-reading { font-size:12.5px; color:var(--dim); margin-top:6px; }
+.info-station .is-loc { font-size:12px; color:var(--dim); margin-top:3px; }
+.info-list { margin-top:4px; }
+.info-row { display:flex; justify-content:space-between; align-items:baseline; gap:18px; padding:11px 2px; border-bottom:1px solid var(--glass-edge); }
+.info-row .k { font-size:12.5px; color:var(--dim); flex:none; }
+.info-row .v { font-size:13px; font-weight:600; color:var(--txt); text-align:right; word-break:break-word; }
+.info-row .v a { color:var(--acc-txt); text-decoration:none; word-break:break-all; }
+.sec { margin-top:20px; }
+.sec-t { font-size:13px; font-weight:800; color:var(--txt); letter-spacing:.02em; display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+.sec-t::after { content:""; flex:1; height:1px; background:var(--glass-edge); }
+.sec-p { font-size:13px; line-height:1.8; color:var(--dim); margin:0; }
+.nb { display:flex; align-items:baseline; gap:8px; font-size:13px; color:var(--dim); padding:7px 0; border-bottom:1px dashed var(--glass-edge); }
+.nb:last-child { border-bottom:none; }
+.nb .t { flex:none; font-size:11px; font-weight:800; color:var(--acc-txt); background:var(--acc-soft); border-radius:5px; padding:2px 7px; transform:translateY(-1px); }
+.nb .line { font-size:12px; color:var(--dim); }
+.tl { list-style:none; margin:0; }
+.tl li { display:flex; gap:12px; padding:6.5px 0; border-bottom:1px dashed var(--glass-edge); font-size:12.5px; color:var(--dim); line-height:1.5; }
+.tl li:last-child { border-bottom:none; }
+.tl .y { flex:none; font-weight:700; color:var(--txt); min-width:86px; }
+.dots { list-style:none; margin:0; }
+.dots li { font-size:12.5px; color:var(--dim); line-height:1.5; padding:5.5px 0 5.5px 14px; position:relative; }
+.dots li::before { content:""; position:absolute; left:2px; top:12px; width:5px; height:5px; border-radius:50%; background:var(--dim); opacity:.6; }
+.info-src { font-size:11px; color:var(--dim); text-align:center; margin-top:22px; padding-top:12px; border-top:1px solid var(--glass-edge); display:flex; align-items:center; justify-content:center; gap:6px; }
+.info-src .dot-live { width:6px; height:6px; border-radius:50%; background:#3ecf6e; }
+.info-src .dot-fallback { width:6px; height:6px; border-radius:50%; background:#d9a03a; }
 </style>
 </head>
 <body>
@@ -851,8 +889,9 @@ button { font-family:inherit; }
     <div><div class="sh-nm" id="shNm">駅名</div><div class="sh-sub" id="shSub"></div></div>
     <button class="btn icon sh-x" id="shX"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
   </div>
-  <div class="sh-tabs"><button id="tabList">列表</button><button id="tabGrid" class="on">一览</button></div>
+  <div class="sh-tabs"><button id="tabList">列表</button><button id="tabGrid" class="on">一览</button><button id="tabInfo">信息</button></div>
   <div class="sh-body" id="shBody"><div class="empty">時刻表を読込中…</div></div>
+  <div class="sh-body tab-panel" id="panelInfo" hidden></div>
 </div>
 <div id="toast"></div>
 <div class="foot" id="footNote"></div>
@@ -4047,8 +4086,13 @@ function showStationDetail(name, coord) {
   if (c) setHighlight([], c);
   sheetStation = name; sheetCoord = coord || null; sheetFlat = false;
   $('shNm').textContent = name;
-  document.getElementById('tabList').classList.remove('on');
-  document.getElementById('tabGrid').classList.add('on');
+  // 新站打开：默认切回「一览」，隐藏信息面板并使懒渲染缓存失效
+  sheetTab = 'tabGrid';
+  ['tabList','tabGrid','tabInfo'].forEach(id => $(id).classList.remove('on'));
+  $('tabGrid').classList.add('on');
+  $('shBody').hidden = false;
+  $('panelInfo').hidden = true;
+  _infoKey = null;
   $('sheet').classList.add('open');
   $('sheetMask').classList.add('open');
   closeDetail();
@@ -4057,8 +4101,202 @@ function showStationDetail(name, coord) {
 }
 document.getElementById('shX').addEventListener('click', closeSheet);
 document.getElementById('sheetMask').addEventListener('click', closeSheet);
-document.getElementById('tabGrid').addEventListener('click', function () { sheetFlat = false; this.classList.add('on'); document.getElementById('tabList').classList.remove('on'); renderStationBody(); });
-document.getElementById('tabList').addEventListener('click', function () { sheetFlat = true; this.classList.add('on'); document.getElementById('tabGrid').classList.remove('on'); renderStationBody(); });
+$('tabGrid').addEventListener('click', function () { switchSheetTab('tabGrid'); });
+$('tabList').addEventListener('click', function () { switchSheetTab('tabList'); });
+$('tabInfo').addEventListener('click', function () { switchSheetTab('tabInfo'); });
+window.showStationDetail = showStationDetail;  // 调试/自动化钩子：供控制台与 E2E 直接打开车站抽屉
+
+/* ============ 信息 tab（eki-wiki 百科，惰性加载，全路径防御） ============ */
+let sheetTab = 'tabGrid';
+let _keyIdx = null, _keyIdxP = null;        // station_key_index.json 会话缓存
+let _wikiLineMap = null, _wikiLineMapP = null;  // wiki_line_map.json：station_key -> eki-wiki 线路文件名
+const _ekiFiles = new Map();                // eki-wiki 线路文件会话缓存（按文件名）
+let _infoKey = null;                        // 当前信息面板已渲染的抽屉站名（换站即失效）
+const EKI_BASE = 'https://raw.githubusercontent.com/ooep/eki-wiki/main/data/';
+
+function _escTxt(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+/* 站名 -> station_key：查 station_key_index；多条取距 coord 最近；无表/无条目回退用 name */
+async function resolveStationKey(name, coord) {
+  try {
+    if (_keyIdx === null && !_keyIdxP) {
+      _keyIdxP = fetchJSONWithCache('data/station_key_index.json')
+        .then(j => { _keyIdx = j || {}; })
+        .catch(() => { _keyIdx = {}; });
+    }
+    if (_keyIdxP) await _keyIdxP;
+    const arr = _keyIdx && _keyIdx[normName(name)];
+    if (arr && arr.length) {
+      if (arr.length === 1) return arr[0].k;
+      if (coord) {
+        let best = arr[0], bd = Infinity;
+        arr.forEach(e => { const c = e.c || [0,0]; const d = (c[0]-coord[0])*(c[0]-coord[0]) + (c[1]-coord[1])*(c[1]-coord[1]); if (d < bd) { bd = d; best = e; } });
+        return best.k;
+      }
+      return arr[0].k;
+    }
+  } catch (e) {}
+  return name;
+}
+
+/* ---------- tab 统一切换 ---------- */
+function switchSheetTab(tab) {
+  sheetTab = tab;
+  $('tabList').classList.toggle('on', tab === 'tabList');
+  $('tabGrid').classList.toggle('on', tab === 'tabGrid');
+  $('tabInfo').classList.toggle('on', tab === 'tabInfo');
+  if (tab === 'tabList') sheetFlat = true;
+  else if (tab === 'tabGrid') sheetFlat = false;
+  const ttime = (tab === 'tabList' || tab === 'tabGrid');
+  $('shBody').hidden = !ttime;
+  $('panelInfo').hidden = (tab !== 'tabInfo');
+  if (ttime) renderStationBody();
+  else if (tab === 'tabInfo') renderInfoTab();
+}
+
+/* ---------- 信息 tab（eki-wiki） ---------- */
+function _firstLine(s) { if (!s) return ''; return String(s).split('\n')[0].trim(); }
+
+/* 线路名：优先线路文件顶层 线路.名称.日文，无则中文；兼容 线路 为纯字符串的旧形态 */
+function _lineNameOf(lineJson) {
+  const L = lineJson && lineJson['线路'];
+  if (!L) return '';
+  if (typeof L === 'string') return L;
+  const nm = L['名称'] || {};
+  return nm['日文'] || nm['中文'] || L['日文'] || L['中文'] || '';
+}
+
+/* 在线路文件 车站[] 里找站：先 normName 精确匹配，再 contains 兜底 */
+function _findStationInLine(lineJson, drawerName) {
+  if (!lineJson || !lineJson['车站'] || !lineJson['车站'].length) return null;
+  const target = normName(drawerName);
+  for (const s of lineJson['车站']) {
+    const nm = s['名称'] || {};
+    if (normName(nm['日文原名'] || '') === target) return s;
+  }
+  for (const s of lineJson['车站']) {
+    const nm = s['名称'] || {};
+    const ja = normName(nm['日文原名'] || '');
+    if (ja && target && (ja.indexOf(target) >= 0 || target.indexOf(ja) >= 0)) return s;
+  }
+  return null;
+}
+
+function _normalizeStation(s, lineName) {
+  const nm = s['名称'] || {};
+  const st = s['结构化信息'] || {};
+  const zh = (s['百科'] || {})['中文'] || {};
+  const ja = (s['百科'] || {})['日文'] || {};
+  const secJa = ja['章节'] || {};
+  const history = String(secJa['歴史'] || '').split('\n').map(x => x.trim()).filter(Boolean);
+  const around = String(secJa['駅周辺'] || '').split('\n').map(x => x.trim()).filter(Boolean);
+  const nbRaw = String(st['相邻车站'] || '');
+  const nb = [];
+  nbRaw.split('\n').forEach(line => {
+    const t = line.trim(); if (!t) return;
+    const m = t.match(/^(快速「[^」]+」|快速|普通|特急[^ ]*|臨時[^ ]*)\s*$/);
+    if (m) nb.push({ type: m[1], text: '' });
+    else if (nb.length) { const last = nb[nb.length - 1]; last.text = last.text ? last.text + '\n' + t : t; }
+    else nb.push({ type: '', text: t });
+  });
+  return {
+    nameJa: nm['日文原名'] || '',
+    nameZh: nm['中文'] || '',
+    reading: st['读音'] || '',
+    romaji: st['罗马字'] || '',
+    location: _firstLine(zh['首段']) || _firstLine(ja['首段']),
+    line: lineName || st['线路'] || '',
+    company: st['所属公司'] || st['运营者'] || '',
+    opened: st['开业年份'] || null,
+    platform: _firstLine(secJa['駅構造']),
+    summaryZh: zh['首段'] || ja['首段'] || '',
+    neighbors: nb.filter(n => n.text),
+    history: history,
+    around: around
+  };
+}
+
+function _renderInfoObject(box, o) {
+  let html = '';
+  html += '<div class="info-station">';
+  if (o.line || o.company) html += '<div class="is-line">' + _escTxt((o.line || '') + (o.line && o.company ? ' · ' : '') + (o.company || '')) + '</div>';
+  html += '<div class="is-name">' + _escTxt(o.nameJa || '—') + (o.nameZh ? '<small>中文：' + _escTxt(o.nameZh) + '</small>' : '') + '</div>';
+  if (o.reading || o.romaji) html += '<div class="is-reading">' + _escTxt((o.reading || '') + (o.romaji ? ' / ' + o.romaji : '')) + '</div>';
+  if (o.location) html += '<div class="is-loc">' + _escTxt(o.location) + '</div>';
+  html += '</div>';
+  const items = [['线路', o.line], ['运营', o.company], ['开业', o.opened ? o.opened + '年' : ''], ['站台', o.platform]];
+  html += '<div class="info-list">';
+  items.forEach(it => { if (it[1]) html += '<div class="info-row"><span class="k">' + _escTxt(it[0]) + '</span><span class="v">' + _escTxt(it[1]) + '</span></div>'; });
+  html += '</div>';
+  if (o.summaryZh) html += '<div class="sec"><div class="sec-t">简介</div><p class="sec-p">' + _escTxt(o.summaryZh) + '</p></div>';
+  if (o.neighbors && o.neighbors.length) {
+    html += '<div class="sec"><div class="sec-t">相邻车站</div>';
+    o.neighbors.forEach(n => {
+      if (n.type) html += '<div class="nb"><span class="t">' + _escTxt(n.type) + '</span><span>' + _escTxt(n.text) + '</span></div>';
+      else html += '<div class="nb"><span class="line">' + _escTxt(n.text.replace(/\n/g, ' · ')) + '</span></div>';
+    });
+    html += '</div>';
+  }
+  if (o.history && o.history.length) {
+    html += '<div class="sec"><div class="sec-t">历史</div><ul class="tl">';
+    o.history.forEach(h => {
+      const h0 = String(h).trim();
+      const m = h0.match(/^(\d{4}年)(?:.*?(\d{1,2})月(\d{1,2})日)?[：:]?\s*(.*)$/);
+      if (m && m[4]) { const y = m[1] + (m[2] ? m[2] + '月' + m[3] + '日' : ''); html += '<li><span class="y">' + _escTxt(y) + '</span><span>' + _escTxt(m[4]) + '</span></li>'; }
+      else html += '<li><span class="y"></span><span>' + _escTxt(h0) + '</span></li>';
+    });
+    html += '</ul></div>';
+  }
+  if (o.around && o.around.length) {
+    html += '<div class="sec"><div class="sec-t">车站周边</div><ul class="dots">';
+    o.around.forEach(a => { html += '<li>' + _escTxt(a) + '</li>'; });
+    html += '</ul></div>';
+  }
+  html += '<div class="info-src"><span class="dot-live"></span><span>数据来源：eki-wiki（ooep/eki-wiki）· 维基百科 · 实时拉取</span></div>';
+  box.innerHTML = html;
+}
+
+function _renderInfoEmpty(box) {
+  box.innerHTML = '<div class="gd-empty">该站暂无百科数据<br><button class="gd-retry" id="infoRetry">点击重试</button></div>';
+  const rb = $('infoRetry');
+  if (rb) rb.onclick = () => { _infoKey = null; renderInfoTab(); };
+}
+
+async function _fetchEkiFile(f) {
+  if (_ekiFiles.has(f)) return _ekiFiles.get(f);
+  try {
+    const r = await fetch(EKI_BASE + encodeURIComponent(f));
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const j = await r.json();
+    _ekiFiles.set(f, j);
+    return j;
+  } catch (e) { _ekiFiles.set(f, null); return null; }
+}
+
+async function renderInfoTab() {
+  const box = $('panelInfo');
+  if (_infoKey === sheetStation) return;
+  box.innerHTML = '<div class="gd-loading">百科数据加载中…</div>';
+  let st = null, matchedLine = null;
+  try {
+    const key = await resolveStationKey(sheetStation, sheetCoord);
+    if (_wikiLineMap === null && !_wikiLineMapP) {
+      _wikiLineMapP = fetchJSONWithCache('data/wiki_line_map.json')
+        .then(j => { _wikiLineMap = j || {}; })
+        .catch(() => { _wikiLineMap = {}; });
+    }
+    if (_wikiLineMapP) await _wikiLineMapP;
+    const file = _wikiLineMap ? _wikiLineMap[key] : null;   // station_key -> eki-wiki 线路文件名
+    if (file) {
+      const lineJson = await _fetchEkiFile(file);
+      matchedLine = lineJson;
+      st = _findStationInLine(lineJson, sheetStation);
+    }
+  } catch (e) { st = null; }
+  if (!st) { _renderInfoEmpty(box); _infoKey = sheetStation; return; }
+  _renderInfoObject(box, _normalizeStation(st, _lineNameOf(matchedLine)));
+  _infoKey = sheetStation;
+}
 
 /* ---------------- 搜索 ---------------- */
 let sugTimer = 0;

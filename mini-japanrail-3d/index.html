@@ -4741,6 +4741,7 @@ function syncSideBtn() { $('btnSide').innerHTML = sideEl.classList.contains('col
 
   function open() {
     cancelAll();
+    sideEl.style.opacity = ''; sideEl.style.visibility = '';  /* 清掉上次关闭锁死的inline style */
     sideEl.classList.add('morphing');      /* 必须先挂:关掉 visibility 的 .26s 延迟 */
     sideEl.classList.remove('leaving', 'collapsed');
     setOrigin(); syncSideBtn();
@@ -4769,7 +4770,11 @@ function syncSideBtn() { $('btnSide').innerHTML = sideEl.classList.contains('col
       { opacity:1, transform:'translateY(0) scale(1)' },
       { opacity:0, transform:'translateY(14px) scale(.955)' },
     ], { duration:DUR_OUT, delay:shellDelay, easing:easeOut(), fill:'both' }));
-    settle(() => { sideEl.classList.add('collapsed'); sideEl.classList.remove('leaving'); syncSideBtn(); });
+    settle(() => {
+      sideEl.classList.add('collapsed'); sideEl.classList.remove('leaving'); syncSideBtn();
+      /* Safari 上 WAAPI→CSS 交接会闪一帧,用 inline style 锁死终态彻底规避 */
+      sideEl.style.opacity = '0'; sideEl.style.visibility = 'hidden';
+    });
   }
   /* 唯一开关入口:按钮点击、打开详情卡自动收起、搜索面板关闭后恢复,都走这一条路径 */
   window.__sideSet = function (wantOpen) {

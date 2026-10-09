@@ -581,10 +581,12 @@ button { font-family:inherit; }
   #detail.fold { display:flex; align-items:center; }
   #detail.fold .d-h { width:100%; }
   #detail.fold .d-meta, #detail.fold .d-sep, #detail.fold .d-stops, #detail.fold .d-act { display:none; }
-  #detail.medium { height:62vh; height:min(62vh, calc(100dvh - 20px)); }
-  #detail.medium .st-list { max-height:calc(62vh - 335px); }
-  #detail.full { height:92vh; height:min(92vh, calc(100dvh - 20px)); }
-  #detail.full .st-list { max-height:min(264px, calc(92vh - 345px)); }
+  /* 高度用动态视口 + 顶部安全区留白:Android 上 vh 是大视口(地址栏收起),展开过猛会把头部顶出屏幕;
+     刘海屏 safe-area-inset-top 也会吞掉车头/标题/关闭按钮的可点击区域 */
+  #detail.medium { height:62vh; height:min(62vh, calc(100dvh - env(safe-area-inset-top, 0px) - 20px)); }
+  #detail.medium .st-list { max-height:calc(62vh - 335px); max-height:calc(62dvh - 335px); }
+  #detail.full { height:92vh; height:min(92vh, calc(100dvh - env(safe-area-inset-top, 0px) - 20px)); }
+  #detail.full .st-list { max-height:min(264px, calc(92vh - 345px)); max-height:min(264px, calc(92dvh - 345px)); }
   #detail.dragging { transition:none; }
   .foot { display:none; }
   /* 表单元素 ≥16px 防止 iOS 聚焦自动缩放 */
@@ -3551,7 +3553,8 @@ function closeDetail() {
   if (!el) return;
   const MQ = window.matchMedia ? matchMedia('(max-width:640px)') : null;
   const KEY = 'mjr3d_dh';
-  const vh = () => Math.max(320, window.innerHeight || 640);
+  /* 动态视口(跟随地址栏收展/刘海),与 CSS dvh 一致,防止拖拽上限按大视口算导致顶部顶出 */
+  const vh = () => Math.max(320, (window.visualViewport ? window.visualViewport.height : window.innerHeight) || 640);
   const hOf = m => m === 'fold' ? 68 : m === 'medium' ? Math.round(vh() * .62) : Math.round(vh() * .92);
   /* 默认中档:打开即有状态/按钮/时间线,又给地图留空间;fold 仅通过向下拖拽达成(最小化) */
   let mode = localStorage.getItem(KEY) === 'full' || localStorage.getItem(KEY) === 'medium' || localStorage.getItem(KEY) === 'fold' ? localStorage.getItem(KEY) : 'medium';

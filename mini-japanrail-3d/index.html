@@ -1200,7 +1200,7 @@ const ICO = {
 };
 
 /* ---------------- 全局状态 ---------------- */
-let segFC = null, staFC = null, footprintFC = null, entrancesFC = null, tmaps = null, trainJSON = null;
+let segFC = null, staFC = null, footprintFC = null, entrancesFC = null, platformsFC = null, tmaps = null, trainJSON = null;
 /* 官方权威站坐标/区间折线映射 (station_map.json v2, RailAround 官方几何构建):
    tmap_stops[t] = 每车次每站 [lng,lat](与 tmaps[t].s_jas 等长等序),
    tmap_lids[t] = 每区间官方线段 ID(符号=方向), segments[id] = 官方折线坐标 */
@@ -3220,11 +3220,11 @@ async function boot() {
   if (retryBtn) retryBtn.style.display = 'none';
   loadTrainAtlas(); /* 提前预载图标图集(默认/矢量/可爱 3 套,异步不阻塞主流程;加载遮罩马赛克拼图要用默认图集) */
   try {
-    _fileTotal = 10; _fileIdx = 0;
+    _fileTotal = 11; _fileIdx = 0;
     /* 当日时刻表与 7 个静态数据文件并行下载(含 tokkyu 特急爱称表、names_i18n 多语站名表, 原实现串行) */
     dayBitAuto = bitOfDate(Date.now());
     dayBit = dayMode === 'auto' ? dayBitAuto : dayMode;
-    const [s, st, tm, lm, sm, tk, ni, tj, fp, en] = await Promise.all([
+    const [s, st, tm, lm, sm, tk, ni, tj, fp, en, pl] = await Promise.all([
       fetchJSONWithCache('data/segments3d.geojson', 'loadingSeg', 0),
       fetchJSONWithCache('data/stations3d.geojson', 'loadingSta', 1),
       fetchJSONWithCache('data/tmaps.json', 'loadingTm', 2),
@@ -3235,8 +3235,9 @@ async function boot() {
       fetchJSONWithCache(TRAIN_FILES[dayBit], 'loadingTr', 7),
       fetchJSONWithCache('data/station_footprints_colored.geojson', 'loadingSta', 8).catch(() => null),
       fetchJSONWithCache('data/station_entrances.geojson', 'loadingSta', 9).catch(() => null),
+      fetchJSONWithCache('data/station_platforms.geojson', 'loadingSta', 10).catch(() => null),
     ]);
-    segFC = s; staFC = st; footprintFC = fp; entrancesFC = en; tmaps = tm; LINES_MAP = lm || {}; stationMap = sm && sm.version === 2 ? sm : null; TOKKYU = tk;
+    segFC = s; staFC = st; footprintFC = fp; entrancesFC = en; platformsFC = pl; tmaps = tm; LINES_MAP = lm || {}; stationMap = sm && sm.version === 2 ? sm : null; TOKKYU = tk;
     NAME_I18N = ni;
     trainJSON = tj;
     /* 官方补缺轨道/车站(地图遗漏的新开线/私铁, 如西鉄甘木線/北大阪急行延伸/夢洲):
@@ -3296,6 +3297,14 @@ async function boot() {
 }
 $('lRetry').addEventListener('click', () => { boot(); });
 function addMapLayers() {
+  /* ── 站台层(platform):OSM railway=platform 站台面/线,黄色;地铁站无地面站房时的范围表示 ── */
+  if (platformsFC && !map.getSource('pl')) {
+    map.addSource('pl', { type: 'geojson', data: platformsFC });
+    map.addLayer({ id: 'pl-fill', type: 'fill', source: 'pl', paint: {
+      'fill-color': '#f2c200', 'fill-opacity': 0.32 } });
+    map.addLayer({ id: 'pl-line', type: 'line', source: 'pl', paint: {
+      'line-color': '#f2c200', 'line-width': 0.9, 'line-opacity': 0.85 } });
+  }
   /* ── 站体轮廓层(footprint):OSM 站房多边形,按所属线路代表色渲染;无匹配时灰色 ── */
   if (footprintFC && !map.getSource('fp')) {
     map.addSource('fp', { type: 'geojson', data: footprintFC });

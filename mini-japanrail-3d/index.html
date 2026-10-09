@@ -455,22 +455,22 @@ button { font-family:inherit; }
   100% { transform:scale(1); opacity:1; filter:none; } }
 #loader .lt { font-size:14px; font-weight:700; letter-spacing:.5px; }
 #loader .lb { font-size:11px; color:var(--dim); }
-/* 加载轨道:虚线轨道 + 迷你列车沿进度行驶(与进度条联动) */
-#loader .ltrack { position:relative; width:min(280px,62vw); height:20px; display:flex; align-items:center; }
-#loader .ltrack-line { position:absolute; left:10px; right:10px; height:3px; border-radius:2px;
-  background:repeating-linear-gradient(90deg, rgba(120,140,180,.38) 0 7px, transparent 7px 13px);
-  box-shadow:0 1px 0 rgba(255,255,255,.06) inset; }
-#loader .ltrain { position:absolute; left:0; top:50%; margin-left:-9px; margin-top:-11px; color:var(--acc);
-  transform:translateX(0); transition:left .3s ease; filter:drop-shadow(0 2px 5px rgba(0,0,0,.35)); z-index:1;
-  animation:lBob 1.4s ease-in-out infinite; }
-@keyframes lBob { 0%,100%{ margin-top:-11px; } 50%{ margin-top:-13px; } }
+/* 加载轨道:线路色轨道 + 默认立体方盒列车沿进度行驶(跑到最右 = 加载完成) */
+#loader .ltrack { position:relative; width:min(300px,70vw); height:24px; }
+#loader .ltrack-line { position:absolute; left:18px; right:18px; top:50%; height:4px; margin-top:-2px; border-radius:3px;
+  background:color-mix(in srgb, var(--acc) 45%, transparent);
+  box-shadow:0 1px 2px rgba(0,0,0,.35), 0 0 0 1px rgba(0,0,0,.22); }
+#loader .ltrain { position:absolute; left:0; top:50%; margin-left:-18px; margin-top:-18px; z-index:1;
+  transition:left .28s ease; filter:drop-shadow(0 3px 6px rgba(0,0,0,.4)); }
+/* 默认立体方盒列车:顶面亮、正面主色、侧面暗 —— 与地图内 3D 盒一致的三面配色 */
+.ltrain-top   { fill:color-mix(in srgb, var(--acc) 55%, #fff); }
+.ltrain-f     { fill:var(--acc); }
+.ltrain-side  { fill:color-mix(in srgb, var(--acc) 45%, #000); }
+.ltrain-sheen { fill:rgba(255,255,255,.16); }
 #loader .lpd { display:flex; align-items:center; gap:10px; font-size:10.5px; color:var(--dim); }
 #loader .lpd b { color:var(--acc-txt,var(--acc)); font-variant-numeric:tabular-nums; }
 #lRetry { display:none; min-height:38px; padding:0 22px; border:1px solid var(--acc-border); border-radius:var(--r-pill); background:var(--acc-soft); color:var(--txt); font-size:12.5px; font-weight:600; cursor:pointer; align-items:center; gap:6px; transition:background .12s,color .12s; }
 #lRetry:hover { background:var(--acc); color:#fff; }
-#lbar { width:min(320px,70vw); height:3px; border-radius:2px; background:rgba(120,140,180,.2); overflow:hidden; }
-#lbarF { height:100%; width:0%; border-radius:2px; background:var(--acc); transition:width .25s ease, background .3s; }
-#lbarF.done { background:#34d399; }
 
 #toast { position:absolute; top:54px; left:50%; transform:translateX(-50%); background:var(--panel); border:1px solid var(--glass-edge);
   color:var(--txt); font-size:11.5px; font-weight:600; padding:7px 15px; border-radius:var(--r-pill); z-index:40;
@@ -902,8 +902,10 @@ button { font-family:inherit; }
     <div id="lmosaic"><div class="lmq"></div><div class="lmq"></div><div class="lmq"></div><div class="lmq"></div></div>
   </div>
   <div class="lt" id="lTitle">Mini JapanRail 3D</div>
-  <div class="ltrack" id="lTrack"><svg class="ltrain" id="ltrain" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15h16M5 15l1.5-6A2 2 0 0 1 8.4 7.5h7.2a2 2 0 0 1 1.9 1.5L19 15M7 18.5h.01M17 18.5h.01"/><circle cx="8" cy="18.5" r="1.3" fill="currentColor" stroke="none"/><circle cx="16" cy="18.5" r="1.3" fill="currentColor" stroke="none"/></svg><div class="ltrack-line"></div></div>
-  <div id="lbar"><div id="lbarF"></div></div>
+  <div class="ltrack" id="lTrack">
+    <div class="ltrack-line"></div>
+    <svg class="ltrain" id="ltrain" viewBox="0 0 44 24" width="36" height="20" aria-hidden="true"><path class="ltrain-side" d="M35 12 L42 5 L42 15 L35 22 Z"/><path class="ltrain-top" d="M3 12 L10 5 L42 5 L35 12 Z"/><rect class="ltrain-f" x="3" y="12" width="32" height="10" rx="1.5"/><rect class="ltrain-sheen" x="3" y="12" width="32" height="4" rx="1.5"/></svg>
+  </div>
   <div class="lpd"><span id="lMsg">准备中…</span><b id="lPct">0%</b></div>
   <button id="lRetry"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66M20 4v4h-4"/></svg> 重试</button>
 </div>
@@ -1190,7 +1192,7 @@ function doNow() { clockMode = 'live'; paused = false; $('btnPlay').innerHTML = 
 function syncSim() { if (clockMode === 'manual' && !paused) { simEpoch = simNow(); wallT0 = Date.now(); } }
 
 /* ---------------- 数据加载(带进度 + IndexedDB 缓存) ---------------- */
-const loaderMsg = $('lMsg'), lbarF = $('lbarF'), lPctEl = $('lPct');
+const loaderMsg = $('lMsg'), lPctEl = $('lPct');
 
 /* ---- 加载动画:2×2 列车车头马赛克拼图(随机轮换一格) ----
    4 格固定显示原图的四个角:0左上 1右上 2左下 3右下;
@@ -1252,8 +1254,8 @@ const DATA_VERSION = '2026-10-08a';
 const loadSizes = { 'data/segments3d.geojson': 9054890, 'data/stations3d.geojson': 1422796, 'data/tmaps.json': 3158412, 'data/station_map.json': 11006682, 'data/tokkyu.json': 59100, 'data/names_i18n.json': 483000, 'data/trains_wd.json': 13494947, 'data/trains_sa.json': 12228166, 'data/trains_su.json': 12284312 };
 let _fileTotal = 8, _fileIdx = 0;
 function nextFileIdx() { return _fileIdx++; }
-function setPct(p) { const pc = Math.min(100, p); lbarF.style.width = pc + '%'; lPctEl.textContent = Math.round(pc) + '%'; lbarF.classList.toggle('done', pc >= 100);
-  const tr = $('ltrain'); if (tr) tr.style.left = pc + '%'; } /* 加载轨道列车随进度行驶 */
+function setPct(p) { const pc = Math.min(100, p); lPctEl.textContent = Math.round(pc) + '%';
+  const tr = $('ltrain'); if (tr) tr.style.left = pc + '%'; } /* 方盒列车随进度行驶,到最右=加载完成 */
 function setLoadMsg(s) { loaderMsg.textContent = s; }
 function setPhase(lo, hi, f) { setPct(lo + (hi - lo) * Math.max(0, Math.min(1, f))); }
 function updateBar(fileIdx, got, size) {

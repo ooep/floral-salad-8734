@@ -504,7 +504,7 @@ button { font-family:inherit; }
 .maplibregl-ctrl-attrib { background:color-mix(in srgb,var(--panel) 65%,transparent)!important; backdrop-filter:blur(8px); color:var(--dim)!important; font-size:8.5px!important; padding:2px 7px!important; border-radius:8px 0 0 0!important; }
 .maplibregl-ctrl-attrib a { color:var(--dim)!important; }
 
-@media (max-width:2000px) {
+@media (max-width:640px) {
   :root { --dock:46px; }
   /* 顶部 HUD:隐藏标题文字,保留在途/今日统计 */
   #topHud { top:8px; }
@@ -3511,7 +3511,7 @@ function closeDetail() {
 (function () {
   const el = document.getElementById('detail');
   if (!el) return;
-  const MQ = window.matchMedia ? matchMedia('(max-width:2000px)') : null;
+  const MQ = window.matchMedia ? matchMedia('(max-width:640px)') : null;
   const KEY = 'mjr3d_dh';
   const vh = () => Math.max(320, window.innerHeight || 640);
   const hOf = m => m === 'fold' ? 68 : m === 'medium' ? Math.round(vh() * .62) : Math.round(vh() * .92);

@@ -1,0 +1,71 @@
+name: Build & deploy site
+
+# 纯本地数据部署：不访问任何外部接口。
+# 页面「⚡实时」图层读取仓库内 data/live/trains_*.json（本地时刻表，按今日运行日加载），
+# 客户端按当前 JST 时间过滤渲染。数据刷新走 refresh.yml（手动）。
+# GitHub Pages: Actions 方式部署（仓库 Settings→Pages→Source: GitHub Actions）。
+# Cloudflare Pages: 项目 floral-salad-8734，仓库需配置 Secret: CF_API_TOKEN（可选）。
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify data assets
+        run: |
+          python3 - <<'PY'
+          import json, os
+          for f in ['index.html','data/segments.geojson','data/stations.geojson',
+                    'data/live/tmaps.json','data/live/trains_wd.json',
+                    'data/live/trains_sa.json','data/live/trains_su.json']:
+              assert os.path.exists(f), 'missing: ' + f
+          print('数据资产完整: 页面 + 地图 + tmaps + 三份本地时刻表')
+          for n in ['wd','sa','su']:
+              d = json.load(open('data/live/trains_%s.json' % n, encoding='utf-8'))
+              print('trains_%s.json: %d 班次 @ %s' % (n, d['n'], d['b']))
+          PY
+
+      - name: Prepare deploy dir
+        run: |
+          rm -rf dist && mkdir -p dist/data
+          cp index.html favicon.png dist/
+          cp -r data/segments.geojson data/stations.geojson data/names_en.json dist/data/
+          cp -r data/live dist/data/
+          cp -r mini-japanrail-3d dist/   # Mini JapanRail 3D 子站 → /mini-japanrail-3d/
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Deploy to Cloudflare Pages
+        if: ${{ env.CF_API_TOKEN != '' }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+        run: |
+          npx wrangler@4 pages deploy dist --project-name floral-salad-8734 --branch main --commit-dirty=true

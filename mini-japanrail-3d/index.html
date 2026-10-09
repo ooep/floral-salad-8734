@@ -459,10 +459,10 @@ button { font-family:inherit; }
 #loader .ltrack { position:relative; width:min(300px,70vw); height:24px; }
 #loader .ltrack-line { position:absolute; left:18px; right:18px; top:50%; height:4px; margin-top:-2px; border-radius:3px;
   background:color-mix(in srgb, var(--lrail, var(--acc)) 45%, transparent);
-  box-shadow:0 1px 2px rgba(0,0,0,.35), 0 0 0 1px rgba(0,0,0,.22);
   transition:background .6s ease; }
-#loader .ltrain { position:absolute; left:0; top:50%; margin-left:-18px; margin-top:-18px; z-index:1;
-  transition:left .28s ease; filter:drop-shadow(0 3px 6px rgba(0,0,0,.4)); }
+/* 列车位置由 --p(0-100) 驱动:0% 列车左端对齐线路左端,100% 列车右端对齐线路右端(两端均无阴影) */
+#loader .ltrain { position:absolute; left:calc(18px + (100% - 72px) * var(--p,0) / 100); top:50%; margin-top:-18px; z-index:1;
+  transition:left .28s ease; }
 /* 默认立体方盒列车:顶面亮、正面主色、侧面暗 —— 与地图内 3D 盒一致的三面配色 */
 .ltrain-top   { fill:color-mix(in srgb, var(--lrail, var(--acc)) 55%, #fff); transition:fill .6s ease; }
 .ltrain-f     { fill:var(--lrail, var(--acc)); transition:fill .6s ease; }

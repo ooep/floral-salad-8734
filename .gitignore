@@ -1,0 +1,11 @@
+.DS_Store
+*.log
+.secrets/
+__MACOSX/
+__pycache__/
+data/timetables/
+scripts/geo/station_map_report.json
+scripts/geo/ra_official/_failed.json
+_backup/
+_shots/
+mini-japanrail-3d/data/icons_vec/

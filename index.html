@@ -1,0 +1,2186 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>japan rail map — railway lines of japan</title>
+<meta property="og:title" content="japan rail map" />
+<meta property="og:description" content="interactive map of japan's railway lines" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary_large_image" />
+<link rel="icon" type="image/png" href="favicon.png" />
+<style>* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #07090d; color: #eee; font-family: 'Nunito', system-ui, sans-serif; overflow: hidden; }
+#map { width: 100vw; height: 100vh; }
+
+#langtoggle {
+    position: absolute;
+    bottom: 16px; right: 52px;
+    z-index: 100;
+    display: flex;
+    gap: 2px;
+    background: rgba(7,9,13,0.84);
+    border: 1px solid #2a2f38;
+    border-radius: 6px;
+    padding: 3px 4px;
+    font-size: 11px;
+    white-space: nowrap;
+}
+#langtoggle span { cursor: pointer; color: #8b939e; padding: 2px 6px; border-radius: 4px; }
+#langtoggle span.on { color: #fff; background: #2a2f38; }
+
+#bottomleft {
+    position: absolute;
+    bottom: 16px; left: 14px;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+}
+#legend {
+    position: relative;
+    background: rgba(7,9,13,0.84);
+    border: 1px solid #2a2f38;
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 11.5px;
+    line-height: 1.7;
+}
+#legend.hidden { display: none; }
+@media (min-width: 701px) {
+    #legend { min-width: 190px; }
+}
+#legend .close {
+    position: absolute;
+    top: 2px; right: 4px;
+    color: #59616d;
+    cursor: pointer;
+    font-size: 20px;
+    line-height: 1;
+    padding: 4px 6px;
+    user-select: none;
+}
+#legend .close:hover { color: #d8dde3; }
+#ctrlbtn {
+    width: 40px; height: 40px;
+    background: rgba(7,9,13,0.84);
+    border: 1px solid #2a2f38;
+    border-radius: 50%;
+    color: #c0c5cc;
+    cursor: pointer;
+    user-select: none;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    transition: color .15s, border-color .15s;
+}
+#ctrlbtn svg { width: 22px; height: 22px; }
+#ctrlbtn:hover { color: #fff; border-color: #4a505c; }
+#ctrlbtn.show { display: flex; }
+#legend .hd { color: #8b939e; font-size: 10px; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 3px; }
+#legend .modetoggle { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
+#legend .modetoggle span { cursor: pointer; color: #8b939e; padding: 2px 7px; border-radius: 4px; border: 1px solid #2a2f38; }
+#legend .modetoggle span.on { color: #fff; background: #2a2f38; }
+#legend .stsec { margin-top: 7px; padding-top: 6px; border-top: 1px solid #2a2f38; }
+#legend .strow { display: flex; align-items: center; gap: 8px; }
+#legend .strow input[type=checkbox] { width: 13px; height: 13px; flex: none; margin: 0; accent-color: #5bb6ff; cursor: pointer; }
+#legend .thick { margin-top: 7px; padding-top: 6px; border-top: 1px solid #2a2f38; }
+#legend .thick input { width: 100%; margin-top: 0; accent-color: #5bb6ff; cursor: pointer; }
+#legend .thick .val { color: #d8dde3; }
+
+#aboutbtn {
+    position: absolute;
+    top: 96px; left: 14px;
+    z-index: 110;
+    width: 32px; height: 32px;
+    background: rgba(7,9,13,0.84);
+    border: 1px solid #2a2f38;
+    border-radius: 50%;
+    color: #c0c5cc;
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 30px;
+    text-align: center;
+    cursor: pointer;
+    user-select: none;
+    transition: color .15s, border-color .15s;
+}
+#aboutbtn:hover { color: #fff; border-color: #4a505c; }
+#aboutbtn.on { color: #fff; background: #2a2f38; border-color: #5bb6ff; }
+#livetoggle {
+    position: absolute;
+    top: 136px; left: 14px;
+    z-index: 110;
+    display: flex; align-items: center; gap: 5px;
+    padding: 6px 11px;
+    background: rgba(7,9,13,0.84);
+    border: 1px solid #2a2f38;
+    border-radius: 16px;
+    color: #8b939e;
+    font-size: 12.5px;
+    cursor: pointer;
+    user-select: none;
+    transition: color .15s, border-color .15s, background .15s;
+}
+#livetoggle:hover { color: #fff; border-color: #4a505c; }
+#livetoggle.on { color: #fff; background: #2a2f38; border-color: #5bb6ff; }
+#livestatus {
+    position: absolute;
+    top: 178px; left: 14px;
+    z-index: 110;
+    padding: 5px 9px;
+    background: rgba(7,9,13,0.84);
+    border: 1px solid #2a2f38;
+    border-radius: 6px;
+    color: #8b939e;
+    font-size: 11px;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    white-space: nowrap;
+    display: none;
+}
+#aboutpanel {
+    position: absolute;
+    bottom: 16px;
+    left: 215px;
+    width: 360px;
+    max-width: calc(100vw - 235px);
+    max-height: calc(80vh - 16px);
+    overflow-y: auto;
+    background: rgba(7,9,13,0.94);
+    border: 1px solid #3a414c;
+    border-radius: 8px;
+    padding: 14px 16px;
+    z-index: 105;
+    font-size: 11.5px;
+    line-height: 1.5;
+    color: #c0c5cc;
+    display: none;
+}
+#aboutpanel.open { display: block; }
+@media (max-width: 700px) {
+    #aboutpanel {
+        left: 14px; right: 14px;
+        width: auto; max-width: none;
+    }
+}
+#aboutpanel h2 { color: #fff; font-size: 13px; font-weight: 800; margin: 14px 0 5px; letter-spacing: .3px; }
+#aboutpanel h2:first-child { margin-top: 0; }
+#aboutpanel p { margin-top: 6px; }
+#aboutpanel p:first-of-type { margin-top: 0; }
+#aboutpanel b { color: #fff; }
+#aboutpanel a { color: #5bb6ff; text-decoration: none; }
+
+#info {
+    position: absolute;
+    bottom: 16px; right: 14px;
+    background: rgba(7,9,13,0.92);
+    border: 1px solid #3a414c;
+    border-radius: 8px;
+    padding: 10px 13px;
+    z-index: 100;
+    font-size: 12.5px;
+    line-height: 1.5;
+    max-width: 320px;
+    display: none;
+}
+#info .ipline { font-weight: 800; font-size: 13.5px; margin-bottom: 3px; }
+#info .ipseg { color: #fff; margin-bottom: 5px; }
+#info .iprow { display: flex; justify-content: space-between; gap: 20px; color: #8b939e; }
+#info .iprow b { color: #eee; font-weight: 700; }
+#info .iphint { margin-top: 7px; color: #59616d; font-size: 10.5px; }
+
+#tooltip {
+    position: absolute;
+    pointer-events: none;
+    background: rgba(7,9,13,0.96);
+    border: 1px solid #3a414c;
+    border-radius: 6px;
+    padding: 6px 9px;
+    font-size: 12px;
+    line-height: 1.45;
+    z-index: 200;
+    display: none;
+    white-space: nowrap;
+}
+#tooltip .line { font-weight: 800; }
+#tooltip .seg { color: #fff; }
+#tooltip .meta { color: #8b939e; font-size: 11px; }
+
+.maplibregl-ctrl-attrib { font-size: 10px !important; }
+
+/* ── search box ── */
+#searchbox {
+    position: absolute;
+    top: 12px; right: 56px;
+    z-index: 150;
+    width: 280px;
+    max-width: calc(100vw - 80px);
+}
+#search-input {
+    width: 100%;
+    background: rgba(7,9,13,0.84);
+    border: 1px solid #2a2f38;
+    border-radius: 8px;
+    padding: 8px 12px 8px 32px;
+    color: #eee;
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color .15s;
+}
+#search-input::placeholder { color: #59616d; }
+#search-input:focus { border-color: #5bb6ff; }
+#search-icon {
+    position: absolute;
+    top: 8px; left: 10px;
+    width: 16px; height: 16px;
+    color: #59616d;
+    pointer-events: none;
+}
+#search-results {
+    display: none;
+    margin-top: 4px;
+    background: rgba(7,9,13,0.96);
+    border: 1px solid #3a414c;
+    border-radius: 8px;
+    max-height: 320px;
+    overflow-y: auto;
+    font-size: 12.5px;
+}
+#search-results .sr-item {
+    padding: 7px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(58,65,76,0.4);
+    transition: background .1s;
+}
+#search-results .sr-item:last-child { border-bottom: none; }
+#search-results .sr-item:hover,
+#search-results .sr-item.active { background: rgba(91,182,255,0.12); }
+#search-results .sr-type {
+    display: inline-block;
+    font-size: 10px;
+    color: #59616d;
+    border: 1px solid #2a2f38;
+    border-radius: 3px;
+    padding: 0 4px;
+    margin-right: 6px;
+    vertical-align: middle;
+}
+#search-results .sr-name { color: #eee; }
+#search-results .sr-sub { color: #8b939e; font-size: 11px; margin-left: 4px; }
+#search-results .sr-empty { padding: 10px 12px; color: #59616d; text-align: center; }
+@media (max-width: 700px) {
+    #searchbox { right: 50px; width: 200px; }
+}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div id="langtoggle"><span id="lang-en">EN</span><span id="lang-ja">日本語</span><span id="lang-zh">中文</span></div>
+<div id="aboutbtn" title="about">?</div>
+<div id="livetoggle" title="实时列车位置（本地时刻表驱动：按今日运行日+当前时间过滤，无需外部抓取）">⚡<span>实时</span></div>
+<div id="livestatus"></div>
+<div id="bottomleft">
+    <div id="ctrlbtn" title="controls"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg></div>
+    <div id="legend"></div>
+</div>
+<div id="searchbox">
+    <svg id="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input id="search-input" type="text" placeholder="search stations / lines…" autocomplete="off" />
+    <div id="search-results"></div>
+</div>
+<div id="info"></div>
+<div id="tooltip"></div>
+<div id="aboutpanel"></div>
+
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script>
+// ─────────────────────────── interface strings ───────────────────────────
+const STR = {
+    en: {
+        h1: 'japan rail map',
+        sub1: 'railway lines of japan',
+        legLineColors: 'line colors',
+        modeOperator: 'by operator',
+        modeLine: 'by line',
+        modeDetailed: 'detailed',
+        toggleStations: 'station dots',
+        legLineWidth: 'line width',
+        lineWidthVal: '×',
+        aboutTitle: 'about',
+        aboutBody: `<h2>lines & segments</h2><p>A <b>line</b> is a named route run by one operator end to end. A <b>segment</b> is the shortest piece of a line in the dataset.</p><p><b>Left click</b> to highlight a line. <b>Right click</b> to highlight a segment.</p><h2>line colors</h2><p><b>by line</b>: official line colors (e.g. Yamanote = green, Ginza = orange).</p><p><b>detailed</b>: per-line colors for regional/local operators as well.</p><p><b>by operator</b>: JR companies each get a brand color; private railways are grey.</p><h2>data sources</h2><p>Geometry: MLIT N02.</p><p>Station locations: <a href="https://nlftp.mlit.go.jp/ksj/">MLIT S12</a>, 2021.</p>`,
+        panelLength: 'length',
+        panelSections: 'segments',
+        panelHint: 'left-click line · right-click segment · Esc clears',
+        km: 'km',
+        searchPlaceholder: 'search stations / lines…',
+        searchStation: 'station',
+        searchLine: 'line',
+        searchNoResults: 'no results',
+    },
+    ja: {
+        h1: '日本 鉄道路線図',
+        sub1: '日本の鉄道路線',
+        legLineColors: 'ラインカラー',
+        modeOperator: '事業者別',
+        modeLine: '路線別',
+        modeDetailed: '詳細路線別',
+        toggleStations: '駅・乗換駅ラベル',
+        legLineWidth: '線の太さ',
+        lineWidthVal: '×',
+        aboutTitle: 'このマップについて',
+        aboutBody: `<h2>路線と区間</h2><p><b>路線</b>は事業者が端から端まで運行する一本のルート。<b>区間</b>はその中でデータが取れる最小の単位。</p><p><b>左クリック</b>で路線を、<b>右クリック</b>で区間をハイライト。</p><h2>ラインカラー</h2><p><b>路線別</b>：各路線の公式カラー（例：山手線＝緑、銀座線＝オレンジ）。</p><p><b>詳細路線別</b>：地域交通事業者も含めた各路線の個別カラー。</p><p><b>事業者別</b>：JR各社はブランドカラー、私鉄はグレー。</p><h2>駅</h2><p>ズームアウト時は<b>乗換駅</b>（複数事業者が利用）のみ名称ラベル付きで表示。ズームインするとすべての駅ドットが表示されます。</p><h2>データソース</h2><p>線形：国土数値情報 N02。</p><p>駅位置：<a href="https://nlftp.mlit.go.jp/ksj/">国土数値情報 S12</a>、2021年。</p>`,
+        panelLength: '営業キロ',
+        panelSections: '区間数',
+        panelHint: '左クリックで路線 · 右クリックで区間 · Esc で解除',
+        km: 'km',
+        searchPlaceholder: '駅・路線を検索…',
+        searchStation: '駅',
+        searchLine: '路線',
+        searchNoResults: '見つかりません',
+    },
+    zh: {
+        h1: '日本铁路线路图',
+        sub1: '日本铁路线路',
+        legLineColors: '线路颜色',
+        modeOperator: '按运营商',
+        modeLine: '按线路',
+        modeDetailed: '详细线路',
+        toggleStations: '车站标记',
+        legLineWidth: '线宽',
+        lineWidthVal: '×',
+        aboutTitle: '关于',
+        aboutBody: `<h2>线路与区间</h2><p><b>线路</b>是运营商从头到尾运营的一条路线。<b>区间</b>是数据中最短的一段。</p><p><b>左键点击</b>高亮整条线路。<b>右键点击</b>高亮单个区间。</p><h2>线路颜色</h2><p><b>按线路</b>：各线路官方配色（例：山手线＝绿色，银座线＝橙色）。</p><p><b>详细线路</b>：包含地方交通运营商在内的各线路具体配色。</p><p><b>按运营商</b>：JR各公司品牌色；私营铁路为灰色。</p><h2>车站</h2><p>缩小地图时仅显示<b>换乘站</b>（多运营商共用）名称标签。放大后显示所有车站点。</p><h2>数据来源</h2><p>线路几何：国土数值信息 N02。</p><p>车站位置：<a href="https://nlftp.mlit.go.jp/ksj/">国土数值信息 S12</a>，2021年。</p>`,
+        panelLength: '营业里程',
+        panelSections: '区间数',
+        panelHint: '左键点击线路 · 右键点击区间 · Esc 取消',
+        km: 'km',
+        searchPlaceholder: '搜索车站 / 线路…',
+        searchStation: '车站',
+        searchLine: '线路',
+        searchNoResults: '未找到结果',
+    },
+};
+// device in Japan → Japanese, CN/TW/HK → Chinese, else English
+let lang = (() => {
+    try {
+        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        if (tz === 'Asia/Tokyo') return 'ja';
+        if (tz && (tz.startsWith('Asia/Shanghai') || tz.startsWith('Asia/Chongqing') || tz.startsWith('Asia/Harbin') || tz.startsWith('Asia/Taipei') || tz.startsWith('Asia/Hong_Kong'))) return 'zh';
+    } catch (e) {}
+    // Also check browser language
+    const bl = (navigator.language || '').toLowerCase();
+    if (bl.startsWith('zh')) return 'zh';
+    if (bl.startsWith('ja')) return 'ja';
+    return 'en';
+})();
+
+// ─────────────────────── operators: 6 JR companies ───────────────────────
+const JR = {
+    '北海道旅客鉄道': { color: '#7fd14f', en: 'JR Hokkaido', ja: 'JR北海道', zh: 'JR北海道' },
+    '東日本旅客鉄道': { color: '#2eb35a', en: 'JR East',     ja: 'JR東日本', zh: 'JR东日本' },
+    '東海旅客鉄道':   { color: '#f5821f', en: 'JR Central',  ja: 'JR東海',   zh: 'JR东海'   },
+    '西日本旅客鉄道': { color: '#2f86d6', en: 'JR West',     ja: 'JR西日本', zh: 'JR西日本' },
+    '四国旅客鉄道':   { color: '#22c3e6', en: 'JR Shikoku',  ja: 'JR四国',   zh: 'JR四国'   },
+    '九州旅客鉄道':   { color: '#e8443b', en: 'JR Kyushu',   ja: 'JR九州',   zh: 'JR九州'   },
+};
+const OTHER_COLOR = '#9aa0ab';
+
+// ───────────── canonical line colours ──────────────
+const LINE_COLORS = {
+  '東京地下鉄': {
+    '3号線銀座線':'#ff9500', '4号線丸ノ内線':'#f62e36', '2号線日比谷線':'#b5b5ac',
+    '5号線東西線':'#009bbf', '9号線千代田線':'#00bb85', '8号線有楽町線':'#c1a470',
+    '11号線半蔵門線':'#8f76d6', '7号線南北線':'#00ac9b', '13号線副都心線':'#9c5e31',
+  },
+  '東京都': {
+    '1号線浅草線':'#e85298', '6号線三田線':'#0079c2',
+    '10号線新宿線':'#6cbb5a', '12号線大江戸線':'#b6007a',
+  },
+  '横浜市': { '1号線・3号線':'#093f86', '4号線':'#00a15a' },
+  '大阪市高速電気軌道': {
+    '1号線(御堂筋線)':'#e5171f', '2号線(谷町線)':'#522886', '3号線(四つ橋線)':'#0078ba',
+    '4号線(中央線)':'#019a66', '5号線(千日前線)':'#e44d93', '6号線(堺筋線)':'#814721',
+    '7号線(長堀鶴見緑地線)':'#a9cc51', '8号線（今里筋線）':'#ee7b1a', '南港ポートタウン線':'#00a0de',
+  },
+  '名古屋市': {
+    '東山線':'#fab123', '名城線・名港線':'#b074d6', '鶴舞線':'#009bbf',
+    '桜通線':'#c92f44', '上飯田線':'#ec78b4',
+  },
+  '札幌市': { '南北線':'#35a16b', '東西線':'#ff9900', '東豊線':'#0041ff' },
+  '京都市': { '烏丸線':'#3cb371', '東西線':'#ff4500' },
+  '神戸市': { '西神線・山手線・北神線':'#00ae8e', '海岸線':'#267dce' },
+  '仙台市': { '南北線':'#008f4c', '東西線':'#0098a1' },
+  '福岡市': {
+    '空港線':'#FB7F09', '箱崎線':'#00A0E9', '七隈線':'#008B4F',
+  },
+  '東日本旅客鉄道': {
+    '山手線':'#9acd32', '赤羽線':'#00ac9a', '根岸線':'#00b2e5', '中央線':'#f15a22',
+    '青梅線':'#f15a22', '五日市線':'#f15a22', '総武線':'#ffd400', '京葉線':'#c9252f',
+    '武蔵野線':'#f15a22', '南武線':'#ffd400', '鶴見線':'#ffd400', '横浜線':'#80c342',
+    '相模線':'#009793', '八高線':'#a8a39d', '川越線':'#a8a39d', '東海道線':'#f68b1e',
+    '横須賀線':'#0067c0', '常磐線':'#00b261', '成田線':'#00b261', '内房線':'#00b2e5',
+    '外房線':'#db4028', '東金線':'#f15a22', '鹿島線':'#c56e2e', '日光線':'#880022',
+    '久留里線':'#00b5ad', '烏山線':'#339966', '両毛線':'#ffd400', '信越線':'#9acd32',
+    '上越線':'#00b3e6', '吾妻線':'#0f5474', '高崎線':'#f68b1e', '東北線':'#f68b1e',
+  },
+  '西日本旅客鉄道': {
+    '東海道線':'#0072bc', '山陽線':'#0072bc', '北陸線':'#0072bc', '赤穂線':'#0072bc',
+    '関西空港線':'#0072bc', '湖西線':'#00acd1', '草津線':'#5a9934', '奈良線':'#aa731c',
+    '山陰線':'#878ddc', 'おおさか東線':'#347293', '福知山線':'#ffba00', '片町線':'#ff1493',
+    'JR東西線':'#ff1493', '加古川線':'#00baa5', '播但線':'#a52f5d', '姫新線':'#ff593e',
+    '舞鶴線':'#ff8e1f', '大阪環状線':'#e80000', '桜島線':'#0a318e', '関西線':'#00b178',
+    '阪和線':'#ff8e1f', '和歌山線':'#f79fba', '桜井線':'#b31c31', '紀勢線':'#00a6b4',
+  },
+  '東武鉄道': {
+    '伊勢崎線':'#0067c0', '亀戸線':'#0067c0', '大師線':'#0067c0', '佐野線':'#ed1a3d',
+    '小泉線':'#ed1a3d', '桐生線':'#ed1a3d', '日光線':'#ff8a00', '宇都宮線':'#ff8a00',
+    '鬼怒川線':'#ff8a00', '野田線':'#00bfff', '東上本線':'#004098', '越生線':'#004098',
+  },
+  '西武鉄道': {
+    '池袋線・西武秩父線':'#ff6600', '新宿線・拝島線':'#0099cc', '多摩湖線':'#ffcc33',
+    '山口線':'#ff3333', '多摩川線':'#ff6600',
+  },
+  '京王電鉄': { '京王線・高尾線・相模原線':'#dd0077', '井の頭線':'#1414a8' },
+  '小田急電鉄': { '小田原線・江ノ島線':'#2288cc', '多摩線':'#2288cc' },
+  '東急電鉄': {
+    '東横線':'#da0442', '目黒線':'#009cd2', '東急新横浜線':'#8a1186', '田園都市線':'#20a288',
+    '大井町線':'#f18c43', '池上線':'#ee86a7', '東急多摩川線':'#ae0378',
+    'こどもの国線':'#0068b7', '世田谷線':'#fcc70d',
+  },
+  '京浜急行電鉄': {
+    '本線':'#33c2e4', '空港線':'#33c2e4', '大師線':'#33c2e4',
+    '逗子線':'#33c2e4', '久里浜線':'#33c2e4',
+  },
+  '京成電鉄': {
+    '本線':'#0060b0', '東成田線':'#0060b0', '押上線':'#cd66ff', '金町線':'#ff0000',
+    '千葉線':'#ff1e56', '千原線':'#ff1e56', '成田空港線':'#ff8620',
+  },
+  '相模鉄道': { '本線・いずみ野線':'#102e78' },
+  '横浜高速鉄道': { 'みなとみらい21線':'#09357f' },
+  '名古屋鉄道': {
+    '名古屋本線':'#ce1929', '豊川線':'#ce1929', '犬山線':'#ce1929',
+    '常滑線':'#ce1929', '空港線':'#ce1929', '河和線':'#ce1929',
+    '知多新線':'#ce1929', '三河線':'#ce1929', '西尾線':'#ce1929',
+    '蒲郡線':'#ce1929', '津島線':'#ce1929', '尾西線':'#ce1929',
+    '竹鼻線':'#ce1929', '各務原線':'#ce1929', '広見線':'#ce1929',
+    '小牧線':'#ce1929', '豊田線':'#ce1929',
+    '瀬戸線':'#802990',
+  },
+  '近畿日本鉄道': {
+    '名古屋・三重線':'#1B3DB0', '大阪・京都・奈良線':'#F39800',
+    '生駒鋼索線':'#B07030', '西信貴鋼索線':'#CD863F',
+    '難波線':'#F39800', '大阪線':'#F39800',
+    '橿原線':'#D4940A', '天理線':'#C07D06', '田原本線':'#E8A51E',
+    '御所線':'#007A3E', '生駒線':'#CC0000',
+    '信貴線':'#2E89D9', '道明寺線':'#005C2F', '長野線':'#009542',
+    '南大阪線':'#00843B', '吉野線':'#006830', 'けいはんな線':'#70C03A',
+    '山田線':'#FF6B00', '鳥羽線':'#FF6B00', '志摩線':'#FF6B00',
+    '鈴鹿線':'#2648B5', '湯の山線':'#0A2D7A',
+  },
+  '南海電気鉄道': { '南海本線':'#0077ce', '高野線':'#11823c', '鋼索線':'#11823c' },
+  '京阪電気鉄道': {
+    '京阪本線・鴨東線・中之島線':'#009a44', '京津線・石山坂本線':'#0099ff', '鋼索線':'#009a44',
+  },
+  '阪急電鉄': {
+    '京都線・千里線・嵐山線':'#2a9b50', '神戸線・宝塚線・伊丹線':'#007ac4', '神戸高速線':'#007ac4',
+    '今津線':'#007ac4', '甲陽線':'#007ac4', '箕面線':'#007ac4',
+  },
+  '阪神電気鉄道': { '本線・阪神なんば線':'#00366e', '神戸高速線':'#00366e' },
+  '山陽電気鉄道': { '本線・網干線':'#ed1b23' },
+  '西日本鉄道': { '天神大牟田線':'#c30d23', '貝塚線':'#c30d23' },
+  '神戸電鉄': {
+    '有馬線':'#b22d00', '三田線':'#b22d00', '公園都市線':'#b22d00',
+    '粟生線':'#b22d00', '神戸高速線':'#b22d00',
+  },
+  '富山地方鉄道': {
+    '本線':'#3b82c5', '立山線':'#7fbe26', '不二越線':'#ed6d34', '上滝線':'#ed6d34',
+  },
+  '北陸鉄道': { '浅野川線':'#005d92', '石川線':'#00914c' },
+  '高松琴平電気鉄道': { '琴平線・志度線・長尾線':'#ffd400' },
+  '伊予鉄道': { '高浜線・横河原線・郡中線':'#9acd32' },
+  '箱根登山鉄道': { '鉄道線':'#f15a22', '鋼索線':'#f15a22' },
+  '首都圏新都市鉄道': { '常磐新線':'#003b83' },
+  '東葉高速鉄道': { '東葉高速線':'#3fb036' },
+  '北総鉄道': { '北総線':'#00bdf2' },
+  '新京成電鉄': { '新京成線':'#ef59a1' },
+  '北大阪急行電鉄': { '南北線':'#d42c25' },
+  '泉北高速鉄道': { '泉北高速鉄道線':'#007fff' },
+  'えちごトキめき鉄道': { '妙高はねうまライン':'#35c98e', '日本海ひすいライン':'#3782bd' },
+  '北越急行': { 'ほくほく線':'#6633ff' },
+  'あいの風とやま鉄道': { 'あいの風とやま鉄道線':'#00a556' },
+  'IRいしかわ鉄道': { 'IRいしかわ鉄道線':'#00a7e3' },
+  '肥薩おれんじ鉄道': { '肥薩おれんじ鉄道線':'#E19324' },
+  '千葉都市モノレール': { '1号線・2号線':'#2843ba' },
+  '多摩都市モノレール': { '多摩都市モノレール線':'#ff6633' },
+  '湘南モノレール': { '江の島線':'#e60012' },
+  '沖縄都市モノレール': { '沖縄都市モノレール線':'#E60012' },
+  '埼玉新都市交通': { '伊奈線':'#f4d500' },
+  'ゆりかもめ': { '東京臨海新交通臨海線':'#27404e' },
+  '横浜シーサイドライン': { '金沢シーサイドライン':'#f68b1e' },
+  '愛知高速交通': { '東部丘陵線':'#164ca2' },
+  '神戸新交通': { 'ポートアイランド線・六甲アイランド線':'#07502b' },
+};
+
+// ─── detailed line colours (LINE_COLORS + 线路色.md regional lines) ───
+const LINE_COLORS_DETAILED = {};
+(function(){
+  for (const op in LINE_COLORS) {
+    LINE_COLORS_DETAILED[op] = Object.assign({}, LINE_COLORS[op]);
+  }
+  const extra = {
+    '水島臨海鉄道': { '水島本線':'#069BDC' },
+    '井原鉄道': { '井原線':'#2a75c3' },
+    '広島電鉄': { '広島市内軌道線':'#FF5901', '宮島線':'#ED1A35' },
+    '広島高速交通': { '広島新交通1号線':'#f19701' },
+    '錦川鉄道': { '錦川清流線':'#1e3799' },
+    '高松琴平電気鉄道': { '琴平線':'#F8B500', '志度線':'#F8759D', '長尾線':'#B3DD3D' },
+    '四国ケーブル': { '八栗ケーブル':'#28b3b6' },
+    '阿佐海岸鉄道': { '阿佐東線':'#000000' },
+    '伊予鉄道': { '松山市内軌道線':'#008F4D', '高浜線':'#8BC63E', '横河原線':'#00BAF1', '郡中線':'#F36E21' },
+    'とさでん交通': { '軌道線':'#00895d' },
+    '土佐くろしお鉄道': { '中村線・宿毛線・阿佐線':'#00a0e9', 'ごめん・なはり線':'#00a0e9' },
+    '福岡市': { '空港線':'#FB7F09', '箱崎線':'#00A0E9', '七隈線':'#008B4F' },
+    '筑豊電気鉄道': { '筑豊電気鉄道線':'#004aa0' },
+    '北九州高速鉄道': { '小倉線':'#005bac' },
+    '平成筑豊鉄道': { '伊田線':'#FF9900', '糸田線':'#99CC00', '田川線':'#4DBBFF', '門司港レトロ観光線':'#000066' },
+    '皿倉登山鉄道': { '帆柱ケーブル線':'#00A99D' },
+    '甘木鉄道': { '甘木線':'#009999' },
+    '松浦鉄道': { '西九州線':'#e70012' },
+    '島原鉄道': { '島原鉄道線':'#fff23c' },
+    '長崎電気軌道': { '長崎市内軌道線':'#0079C3' },
+    '熊本電気鉄道': { '菊池線・藤崎線':'#6C0920' },
+    '熊本市': { '熊本市内軌道線':'#E60013' },
+    '南阿蘇鉄道': { '高森線':'#00693e' },
+    'くま川鉄道': { '湯前線':'#ddbc89' },
+    '肥薩おれんじ鉄道': { '肥薩おれんじ鉄道線':'#E19324' },
+    'ラクテンチ': { '別府ラクテンチケーブル線':'#ED1C24' },
+    '鹿児島市': { '鹿児島市内軌道線':'#0096DB' },
+    '沖縄都市モノレール': { '沖縄都市モノレール線':'#E60012' },
+  };
+  for (const op in extra) {
+    if (!LINE_COLORS_DETAILED[op]) LINE_COLORS_DETAILED[op] = {};
+    for (const ln in extra[op]) {
+      LINE_COLORS_DETAILED[op][ln] = extra[op][ln];
+    }
+  }
+  // also split combined entries from LINE_COLORS where 线路色.md has per-line colours
+  const splits = {
+    '高松琴平電気鉄道': { '琴平線・志度線・長尾線': ['琴平線','志度線','長尾線'] },
+    '伊予鉄道': { '高浜線・横河原線・郡中線': ['高浜線','横河原線','郡中線'] },
+    '平成筑豊鉄道': { '伊田線・糸田線・田川線': ['伊田線','糸田線','田川線'] },
+  };
+  for (const op in splits) {
+    if (!LINE_COLORS_DETAILED[op]) continue;
+    for (const combined in splits[op]) {
+      const parts = splits[op][combined];
+      const baseColor = LINE_COLORS_DETAILED[op][combined];
+      if (baseColor) {
+        for (const part of parts) {
+          if (!LINE_COLORS_DETAILED[op][part]) {
+            LINE_COLORS_DETAILED[op][part] = baseColor;
+          }
+        }
+      }
+    }
+  }
+})();
+
+// ── Japanese kanji / Traditional Chinese → Simplified Chinese mapping ──
+const TO_SIMP = {
+    '鉄':'铁','鐵':'铁','電':'电','線':'线','駅':'站','車':'车','門':'门',
+    '島':'岛','橋':'桥','浜':'滨','園':'园','陸':'陆','広':'广','沢':'泽',
+    '場':'场','東':'东','長':'长','戸':'户','動':'动','軌':'轨','気':'气',
+    '鶴':'鹤','見':'见','宮':'宫','馬':'马','蔵':'藏','豊':'丰','両':'两',
+    '関':'关','発':'发','実':'实','渋':'涩','桜':'樱','竜':'龙','瀬':'濑',
+    '総':'总','営':'营','運':'运','輸':'输','倉':'仓','黒':'黑','塩':'盐',
+    '沖':'冲','縄':'绳','帯':'带','済':'济','鉱':'矿','検':'检','売':'卖',
+    '買':'买','図':'图','類':'类','帰':'归','雑':'杂','戦':'战','価':'价',
+    '億':'亿','専':'专','軽':'轻','議':'议','記':'记','繋':'系','舗':'铺',
+    '変':'变','勢':'势','築':'筑','込':'入','残':'残','穀':'谷','毎':'每',
+    '歳':'岁','称':'称','曽':'曾','辺':'边','竈':'灶','龍':'龙','穂':'穗',
+    '塚':'塚','峠':'岭','淵':'渊','渕':'渊','薮':'薮','俣':'俣',
+    '桟':'栈','滝':'泷','.Undef':'undef',
+    // Traditional Chinese common chars (for search from traditional input)
+    '號':'号','號':'号','學':'学','開':'开','間':'间','問':'问','區':'区',
+    '書':'书','會':'会','來':'来','機':'机','臺':'台','灣':'湾','國':'国',
+    '華':'华','鳳':'凤','齊':'齐','齋':'斋','與':'与','從':'从','東':'东',
+    '經':'经','過':'过','還':'还','這':'这','裡':'里','說':'说','對':'对',
+    '時':'时','點':'点','請':'请','進':'进','選':'选','達':'达','連':'连',
+    '遠':'远','近':'近','邊':'边','錢':'钱','銀':'银','陽':'阳','陰':'阴',
+    '萬':'万','億':'亿','號':'号','飛':'飞','馬':'马','魚':'鱼','鳥':'鸟',
+    '龍':'龙','鳳':'凤','齊':'齐','龜':'龟','龜':'龟',
+    '麵':'面','麼':'么','後':'后','幹':'干','幹':'干','幾':'几',
+    '裡':'里','麽':'么','乾':'干','隻':'只','鬥':'斗','豐':'丰',
+    '叢':'丛','絲':'丝','舉':'举','於':'于','亞':'亚','產':'产',
+    '親':'亲','億':'亿','儀':'仪','節':'节','華':'华','葉':'叶',
+    '處':'处','號':'号','衛':'卫','衝':'冲','裏':'里','複':'复',
+    '準':'准','齣':'出','劃':'划','剋':'克','匯':'汇','曆':'历',
+    '厲':'厉','嚮':'向','啓':'启','噸':'吨','團':'团','執':'执',
+    '報':'报','夢':'梦','壯':'壮','備':'备','寶':'宝','導':'导',
+    '島':'岛','嶺':'岭','幣':'币','彈':'弹','復':'复','懷':'怀',
+    '戰':'战','擁':'拥','撿':'捡','擔':'担','據':'据','擠':'挤',
+    '擬':'拟','擋':'挡','擺':'摆','擴':'扩','敗':'败','敵':'敌',
+    '數':'数','斷':'断','昇':'升','曬':'晒','條':'条','構':'构',
+    '槍':'枪','樂':'乐','歷':'历','歸':'归','殺':'杀','殼':'壳',
+    '氣':'气','決':'决','濟':'济','測':'测','漲':'涨','滿':'满',
+    '營':'营','燈':'灯','營':'营','爺':'爷','牆':'墙','獲':'获',
+    '環':'环','産':'产','異':'异','療':'疗','監':'监','確':'确',
+    '碼':'码','礎':'础','禮':'礼','禦':'御','積':'积','穫':'获',
+    '穀':'谷','窮':'穷','競':'竞','筆':'笔','籠':'笼','糧':'粮',
+    '約':'约','級':'级','紀':'纪','紋':'纹','純':'纯','納':'纳',
+    '紐':'纽','紛':'纷','紡':'纺','細':'细','終':'终','組':'组',
+    '經':'经','綠':'绿','維':'维','網':'网','緊':'紧','總':'总',
+    '織':'织','繩':'绳','繪':'绘','繼':'继','績':'绩','續':'续',
+    '罈':'坛','義':'义','習':'习','聯':'联','聲':'声','聽':'听',
+    '職':'职','聖':'圣','聞':'闻','聯':'联','聰':'聪','職':'职',
+    '膠':'胶','腦':'脑','臨':'临','與':'与','興':'兴','舊':'旧',
+    '藝':'艺','節':'节','範':'范','築':'筑','簡':'简','籃':'篮',
+    '糧':'粮','約':'约','紅':'红','級':'级','純':'纯','終':'终',
+    '練':'练','結':'结','給':'给','統':'统','絕':'绝','網':'网',
+    '緊':'紧','總':'总','織':'织','繪':'绘','繼':'续','續':'续',
+    '習':'习','聖':'圣','聞':'听','聯':'联','聲':'声','職':'职',
+    '華':'华','葉':'叶','處':'处','號':'号','衛':'卫','衝':'冲',
+    '裏':'里','複':'复','準':'准','劃':'划','剋':'克','匯':'汇',
+    '厲':'厉','嚮':'向','啓':'启','團':'团','執':'执','報':'报',
+    '夢':'梦','壯':'壮','備':'备','寶':'宝','導':'导','嶺':'岭',
+    '幣':'币','彈':'弹','復':'复','懷':'怀','戰':'战','擁':'拥',
+    '撿':'捡','擔':'担','據':'据','擠':'挤','擬':'拟','擋':'挡',
+    '擺':'摆','擴':'扩','敗':'败','敵':'敌','數':'数','斷':'断',
+    '昇':'升','條':'条','構':'构','槍':'枪','樂':'乐','歷':'历',
+    '歸':'归','殺':'杀','殼':'壳','決':'决','濟':'济','測':'测',
+    '漲':'涨','滿':'满','燈':'灯','爺':'爷','牆':'墙','獲':'获',
+    '環':'环','異':'异','療':'疗','監':'监','確':'确','碼':'码',
+    '礎':'础','禮':'礼','積':'积','穫':'获','窮':'穷','競':'竞',
+    '筆':'笔','籠':'笼','糧':'粮','級':'级','紀':'纪','紋':'纹',
+    '純':'纯','納':'纳','紐':'纽','紛':'纷','紡':'纺','細':'细',
+    '組':'组','綠':'绿','維':'维','網':'网','總':'总','繩':'绳',
+    '績':'绩','聯':'联','聲':'听','聽':'听','聖':'圣','臨':'临',
+    '與':'与','興':'兴','舊':'旧','藝':'艺','節':'范','範':'范',
+    '簡':'简','紅':'红','練':'练','結':'结','給':'给','統':'统',
+    '絕':'绝',
+};
+function toSimplified(str) {
+    return str.split('').map(ch => TO_SIMP[ch] || ch).join('');
+}
+
+// Helper: add simplified Chinese annotation if different from original
+function simpAnnot(text) {
+    const s = toSimplified(text);
+    return s !== text ? text + '<span style="color:#59616d;font-size:0.85em">(' + s + ')</span>' : text;
+}
+function simpOnly(text) {
+    const s = toSimplified(text);
+    return s !== text ? s : '';
+}
+
+let colorMode = 'detailed';
+
+function colorOpFor(op) { return JR[op] ? JR[op].color : OTHER_COLOR; }
+function colorLineFor(op, ln) {
+    const m = LINE_COLORS[op];
+    if (m) {
+        if (m[ln]) return m[ln];
+        for (const k in m) {
+            if (!k.includes('・')) continue;
+            for (const part of k.split('・')) {
+                if (part === ln || part + '線' === ln) return m[k];
+            }
+        }
+        if (!ln.endsWith('本線')) { const base = ln.replace(/線$/, ''); if (m[base + '本線']) return m[base + '本線']; }
+        if (ln.endsWith('本線')) { const short = ln.replace('本線', '線'); if (m[short]) return m[short]; }
+    }
+    return JR[op] ? JR[op].color : OTHER_COLOR;
+}
+function colorDetailedFor(op, ln) {
+    const m = LINE_COLORS_DETAILED[op];
+    if (m) {
+        if (m[ln]) return m[ln];
+        for (const k in m) {
+            if (!k.includes('・')) continue;
+            for (const part of k.split('・')) {
+                if (part === ln || part + '線' === ln) return m[k];
+            }
+        }
+        // try 本線 variant: 奥羽線 → 奥羽本線, 羽越線 → 羽越本線 etc.
+        if (!ln.endsWith('本線')) {
+            const base = ln.replace(/線$/, '');
+            if (m[base + '本線']) return m[base + '本線'];
+        }
+        // try without 本: 奥羽本線 → 奥羽線
+        if (ln.endsWith('本線')) {
+            const short = ln.replace('本線', '線');
+            if (m[short]) return m[short];
+        }
+        // try partial/substring match against combined keys
+        for (const k in m) {
+            if (k.includes(ln) || ln.includes(k)) return m[k];
+        }
+    }
+    // also try the line alias map
+    const alias = LINE_ALIASES[op + '||' + ln];
+    if (alias) return colorDetailedFor(op, alias);
+    return JR[op] ? JR[op].color : OTHER_COLOR;
+}
+const LINE_ALIASES = {
+    '阪急電鉄||今津線': '神戸線・宝塚線・伊丹線',
+    '阪急電鉄||甲陽線': '神戸線・宝塚線・伊丹線',
+    '阪急電鉄||箕面線': '神戸線・宝塚線・伊丹線',
+    '南海電気鉄道||空港線': '南海本線',
+    '南海電気鉄道||加太線': '南海本線',
+    '南海電気鉄道||多奈川線': '南海本線',
+    '南海電気鉄道||高師浜線': '南海本線',
+};
+
+// english names — loaded from data/names_en.json
+let NAMES = { operators: {}, lines: {}, stations: {}, remarks: {} };
+function opLabel(op) {
+    if (JR[op]) return JR[op][lang] || JR[op].ja;
+    if (lang === 'en') return NAMES.operators[op] || op;
+    if (lang === 'zh') return toSimplified(op);
+    return op;
+}
+function lineLabel(op, line) {
+    if (lang === 'en') return NAMES.lines[op + '||' + line] || line;
+    if (lang === 'zh') return toSimplified(line);
+    return line;
+}
+function stnLabel(op, name) {
+    if (lang === 'en') return NAMES.stations[op + '||' + name] || name;
+    if (lang === 'zh') return toSimplified(name);
+    return name;
+}
+
+// ───────────────────────────── line width ────────────────────────────────
+let lineScale = 1;   // user-controlled multiplier (×0.3 … ×3)
+
+// ─────────────────────────── station dots ─────────────────────────────
+let showStations = true;
+
+// ──────────────────────────────── map ────────────────────────────────────
+const map = new maplibregl.Map({
+    container: 'map',
+    style: {
+        version: 8,
+        sources: {
+            'carto-voyager': {
+                type: 'raster',
+                tiles: ['https://d.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}@2x.png'],
+                tileSize: 256,
+                attribution: '&copy; OSM &copy; CARTO',
+            },
+        },
+        layers: [{
+            id: 'carto-voyager-layer',
+            type: 'raster',
+            source: 'carto-voyager',
+            minzoom: 0, maxzoom: 18,
+            paint: { 'raster-brightness-max': 1.0, 'raster-brightness-min': 0.0, 'raster-saturation': -0.2 },
+        }],
+    },
+    center: [137.7, 37.6],
+    zoom: 4.8,
+    minZoom: 3.5,
+    attributionControl: true,
+});
+map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+
+let allFeats = [];
+let fcData = null;
+let selected = null;
+let lineStations = new Map();
+let sfcData = null;
+let selStationIds = new Set();
+function selLineKey() { return selected ? selected.op + '||' + selected.line : null; }
+function stationsOnSelectedLine() {
+    return selected ? (lineStations.get(selLineKey()) || new Set()) : new Set();
+}
+
+// ─────────────────── zoom-dependent line width ───────────────────
+const BASE_LINE_W = 1.8;  // base line width in px at zoom 7
+const ZOOM_BASE = 1.3;
+const ZF_LO = Math.pow(ZOOM_BASE, 3 - 7);
+const ZF_HI = Math.pow(ZOOM_BASE, 13 - 7);
+
+function coreWidth() {
+    return ['interpolate', ['exponential', ZOOM_BASE], ['zoom'],
+        3,  BASE_LINE_W * lineScale * ZF_LO,
+        13, BASE_LINE_W * lineScale * ZF_HI];
+}
+function casingWidth() {
+    return ['interpolate', ['exponential', ZOOM_BASE], ['zoom'],
+        3,  (BASE_LINE_W + 3) * lineScale * ZF_LO,
+        13, (BASE_LINE_W + 3) * lineScale * ZF_HI];
+}
+function applyWidths() {
+    if (!map.getLayer('segs-line')) return;
+    map.setPaintProperty('segs-casing', 'line-width', casingWidth());
+    map.setPaintProperty('segs-line', 'line-width', coreWidth());
+}
+
+const NO_MATCH = ['==', ['get', 'op'], ' '];
+
+map.on('load', async () => {
+    const [fc, names] = await Promise.all([
+        fetch('data/segments.geojson').then(r => r.json()),
+        fetch('data/names_en.json').then(r => r.json()),
+    ]);
+    NAMES = names;
+    for (const f of fc.features) {
+        const p = f.properties;
+        p.colorOp = colorOpFor(p.op);
+        p.colorLine = colorLineFor(p.op, p.line);
+        p.colorDetailed = p.color || colorDetailedFor(p.op, p.line);
+        p.color = colorMode === 'line' ? p.colorLine : colorMode === 'detailed' ? p.colorDetailed : p.colorOp;
+    }
+    allFeats = fc.features;
+    fcData = fc;
+
+    // index: line → station names
+    for (const f of allFeats) {
+        const p = f.properties;
+        const k = p.op + '||' + p.line;
+        let s = lineStations.get(k);
+        if (!s) { s = new Set(); lineStations.set(k, s); }
+        s.add(p.from); s.add(p.to);
+    }
+
+    map.addSource('segs', { type: 'geojson', data: fc });
+
+    // white casing — only the selected line
+    map.addLayer({
+        id: 'segs-casing', type: 'line', source: 'segs',
+        filter: NO_MATCH,
+        paint: { 'line-color': '#fbfdff', 'line-width': casingWidth(), 'line-opacity': 0.92 },
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+    });
+    // colored core
+    map.addLayer({
+        id: 'segs-line', type: 'line', source: 'segs',
+        paint: { 'line-color': ['get', 'color'], 'line-width': coreWidth(), 'line-opacity': 0.92 },
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+    });
+
+    // station dots — tag transfer stations & split into two layers
+    // Build spatial index: round coords to ~100m grid → map to line colors
+    const coordColorMap = new Map();
+    for (const f of allFeats) {
+        const color = f.properties.color;
+        for (const c of f.geometry.coordinates) {
+            const key = Math.round(c[0] * 1000) + ',' + Math.round(c[1] * 1000);
+            if (!coordColorMap.has(key)) coordColorMap.set(key, new Set());
+            coordColorMap.get(key).add(color);
+        }
+    }
+    const sfc = await (await fetch('data/stations.geojson')).json();
+    sfc.features.forEach((f, i) => {
+        const p = f.properties;
+        // Find colors of lines passing through this station's coordinates
+        const [sx, sy] = f.geometry.coordinates;
+        const nearbyColors = new Set();
+        for (let dx = -1; dx <= 1; dx++) {
+            for (let dy = -1; dy <= 1; dy++) {
+                const key = Math.round(sx * 1000 + dx) + ',' + Math.round(sy * 1000 + dy);
+                const colors = coordColorMap.get(key);
+                if (colors) colors.forEach(c => nearbyColors.add(c));
+            }
+        }
+        if (nearbyColors.size === 1) {
+            p.color = [...nearbyColors][0];
+        } else if (nearbyColors.size > 1) {
+            // Multiple lines — use the station's own line color for its mode
+            p.color = colorDetailedFor(p.op, p.line);
+        } else {
+            // No nearby segments found — fallback to mode-appropriate color
+            p.color = colorDetailedFor(p.op, p.line);
+        }
+        // transfer = station served by multiple operators
+        const ops = Array.isArray(p.ops) ? p.ops : JSON.parse(p.ops || '[]');
+        p.transfer = ops.length > 1 ? 1 : 0;
+        f.id = i + 1;
+    });
+    sfcData = sfc;
+    map.addSource('stations', { type: 'geojson', data: sfc });
+
+    // ── layer 1: transfer station dots (always visible) ──
+    map.addLayer({
+        id: 'transfer-dots', type: 'circle', source: 'stations',
+        filter: ['==', ['get', 'transfer'], 1],
+        layout: { visibility: showStations ? 'visible' : 'none' },
+        paint: {
+            'circle-radius': ['interpolate', ['exponential', ZOOM_BASE], ['zoom'],
+                3,  2.2 * ZF_LO,
+                9,  2.6 * ZF_HI,
+                13, 2.1 * ZF_HI],
+            'circle-color': ['get', 'color'],
+            'circle-opacity': 0.92,
+            'circle-stroke-color': '#ffffff',
+            'circle-stroke-width': 0.4,
+            'circle-opacity-transition': { duration: 0 },
+            'circle-stroke-width-transition': { duration: 0 },
+            'circle-stroke-color-transition': { duration: 0 },
+        },
+    });
+
+    // ── layer 2: transfer station text labels (low zoom only) ──
+    map.addLayer({
+        id: 'transfer-labels', type: 'symbol', source: 'stations',
+        filter: ['==', ['get', 'transfer'], 1],
+        maxzoom: 9,
+        layout: {
+            visibility: showStations ? 'visible' : 'none',
+            'text-field': ['get', 'station'],
+            'text-size': ['interpolate', ['linear'], ['zoom'],
+                4, 9,
+                8, 11],
+            'text-font': ['Noto Sans CJK JP Regular', 'Arial Unicode MS Regular'],
+            'text-offset': [0, -1.1],
+            'text-anchor': 'bottom',
+            'text-allow-overlap': false,
+            'text-ignore-placement': false,
+        },
+        paint: {
+            'text-color': '#d8dde3',
+            'text-halo-color': '#07090d',
+            'text-halo-width': 1.4,
+            'text-halo-blur': 0.5,
+        },
+    });
+
+    // ── layer 3: all station dots (only at high zoom) ──
+    map.addLayer({
+        id: 'station-dots', type: 'circle', source: 'stations',
+        minzoom: 9,
+        layout: { visibility: showStations ? 'visible' : 'none' },
+        paint: {
+            'circle-radius': ['interpolate', ['exponential', ZOOM_BASE], ['zoom'],
+                9,  1.8 * Math.pow(ZOOM_BASE, 9 - 7),
+                13, 1.9 * ZF_HI],
+            'circle-color': ['get', 'color'],
+            'circle-opacity': 0.92,
+            'circle-stroke-color': '#ffffff',
+            'circle-stroke-width': 0.3,
+            'circle-opacity-transition': { duration: 0 },
+            'circle-stroke-width-transition': { duration: 0 },
+            'circle-stroke-color-transition': { duration: 0 },
+        },
+    });
+
+    // ── layer 4: station name labels (only at high zoom) ──
+    map.addLayer({
+        id: 'station-labels', type: 'symbol', source: 'stations',
+        minzoom: 11,
+        layout: {
+            visibility: showStations ? 'visible' : 'none',
+            'text-field': ['get', 'station'],
+            'text-size': ['interpolate', ['linear'], ['zoom'],
+                11, 9.5,
+                14, 12.5],
+            'text-font': ['Noto Sans CJK JP Regular', 'Arial Unicode MS Regular'],
+            'text-offset': [0.7, 0],
+            'text-anchor': 'left',
+            'text-allow-overlap': false,
+            'text-ignore-placement': false,
+            'text-max-angle': 25,
+            'text-letter-spacing': 0.02,
+        },
+        paint: {
+            'text-color': '#d8dde3',
+            'text-halo-color': '#07090d',
+            'text-halo-width': 1.6,
+            'text-halo-blur': 0.4,
+        },
+    });
+
+    // ── line name labels along lines ──
+    const lineLabelFeatures = {};
+    for (const f of allFeats) {
+        const p = f.properties;
+        const key = p.op + '||' + p.line;
+        if (!lineLabelFeatures[key]) {
+            lineLabelFeatures[key] = { op: p.op, line: p.line, color: p.color, geom: null, maxLen: 0 };
+        }
+        const coords = f.geometry.coordinates;
+        let len = 0;
+        for (let i = 1; i < coords.length; i++) {
+            const dx = coords[i][0] - coords[i-1][0];
+            const dy = coords[i][1] - coords[i-1][1];
+            len += Math.sqrt(dx*dx + dy*dy);
+        }
+        if (len > lineLabelFeatures[key].maxLen) {
+            lineLabelFeatures[key].maxLen = len;
+            lineLabelFeatures[key].geom = coords;
+        }
+    }
+    const lineLabelFC = { type: 'FeatureCollection', features: [] };
+    for (const key in lineLabelFeatures) {
+        const lf = lineLabelFeatures[key];
+        if (!lf.geom) continue;
+        const label = lang === 'en' ? (NAMES.lines[key] || lf.line) : lf.line;
+        lineLabelFC.features.push({
+            type: 'Feature',
+            properties: { label, color: lf.color },
+            geometry: { type: 'LineString', coordinates: lf.geom },
+        });
+    }
+    map.addSource('line-labels', { type: 'geojson', data: lineLabelFC });
+    map.addLayer({
+        id: 'line-name-labels', type: 'symbol', source: 'line-labels',
+        minzoom: 7,
+        layout: {
+            'symbol-placement': 'line',
+            'text-field': ['get', 'label'],
+            'text-size': ['interpolate', ['linear'], ['zoom'],
+                7, 8.5,
+                10, 10.5,
+                13, 12],
+            'text-font': ['Noto Sans CJK JP Regular', 'Arial Unicode MS Regular'],
+            'text-rotation-alignment': 'map',
+            'text-pitch-alignment': 'viewport',
+            'text-allow-overlap': false,
+            'text-ignore-placement': false,
+            'symbol-spacing': 350,
+            'text-offset': [0, 0.7],
+            'text-letter-spacing': 0.04,
+        },
+        paint: {
+            'text-color': ['get', 'color'],
+            'text-halo-color': '#07090d',
+            'text-halo-width': 1.8,
+            'text-halo-blur': 0.3,
+            'text-opacity': ['interpolate', ['linear'], ['zoom'],
+                7, 0.5,
+                9, 0.8,
+                11, 0.92],
+        },
+    });
+
+    // hover tooltip
+    const tip = document.getElementById('tooltip');
+
+    function matchesSelection(p) {
+        if (!selected) return false;
+        if (selected.op !== p.op || selected.line !== p.line) return false;
+        if (selected.mode === 'segment') {
+            return selected.from === p.from && selected.to === p.to;
+        }
+        return true;
+    }
+    function showSegTip(p, pt) {
+        const S = STR[lang];
+        tip.style.display = 'block';
+        tip.style.left = (pt.x + 14) + 'px';
+        tip.style.top = (pt.y + 14) + 'px';
+        const simpFrom = simpOnly(p.from);
+        const simpTo = simpOnly(p.to);
+        const simpNote = (simpFrom || simpTo) ? `<div style="color:#59616d;font-size:10.5px">${simpFrom || p.from} → ${simpTo || p.to}</div>` : '';
+        tip.innerHTML =
+            `<div class="line" style="color:${p.color}">${simpAnnot(opLabel(p.op))} ${simpAnnot(lineLabel(p.op, p.line))}</div>` +
+            `<div class="seg">${p.from} → ${p.to}</div>` +
+            simpNote +
+            `<div class="meta">${Number(p.km).toFixed(1)} ${S.km}</div>`;
+    }
+
+    map.on('mousemove', 'segs-line', (e) => {
+        if (!e.features.length) return;
+        const f = e.features.find(x => matchesSelection(x.properties)) || e.features[0];
+        showSegTip(f.properties, e.point);
+        map.getCanvas().style.cursor = 'pointer';
+    });
+    map.on('mouseleave', 'segs-line', () => {
+        tip.style.display = 'none';
+        map.getCanvas().style.cursor = '';
+    });
+
+    // station hover — shared handler for both transfer-dots and station-dots
+    function showStationTip(e) {
+        if (!e.features.length) return;
+        const p = e.features[0].properties;
+        const onSelLine = selected && selStationIds.has(e.features[0].id);
+        if (selected && !onSelLine) {
+            const segHits = map.queryRenderedFeatures(e.point, { layers: ['segs-line'] });
+            const selHit = segHits.find(x => matchesSelection(x.properties));
+            if (selHit) { showSegTip(selHit.properties, e.point); map.getCanvas().style.cursor = 'pointer'; return; }
+        }
+        const S = STR[lang];
+        tip.style.display = 'block';
+        tip.style.left = (e.point.x + 14) + 'px';
+        tip.style.top = (e.point.y + 14) + 'px';
+        const ops = Array.isArray(p.ops) ? p.ops : JSON.parse(p.ops || '[]');
+        const opStr = ops.length > 1
+            ? ops.map(opLabel).join(' · ')
+            : opLabel(p.op) + ' · ' + lineLabel(p.op, p.line);
+        const simpStn = simpOnly(p.station);
+        const simpStnNote = simpStn ? `<div style="color:#59616d;font-size:10.5px">${simpStn}</div>` : '';
+        tip.innerHTML =
+            `<div class="line" style="color:${p.color}">${p.station}</div>` +
+            simpStnNote +
+            `<div class="seg">${opStr}</div>`;
+        map.getCanvas().style.cursor = 'pointer';
+    }
+    function hideStationTip() {
+        tip.style.display = 'none';
+        map.getCanvas().style.cursor = '';
+    }
+    map.on('mousemove', 'transfer-dots', showStationTip);
+    map.on('mouseleave', 'transfer-dots', hideStationTip);
+    map.on('mousemove', 'station-dots', showStationTip);
+    map.on('mouseleave', 'station-dots', hideStationTip);
+
+    map.on('movestart', () => { tip.style.display = 'none'; });
+
+    // click: highlight line; again → drill to segment
+    map.on('click', (e) => {
+        const hits = map.queryRenderedFeatures(e.point, { layers: ['segs-line'] });
+        if (!hits.length) { clearSelection(); return; }
+        let f = hits[0];
+        if (selected) {
+            const same = hits.find(h => h.properties.op === selected.op
+                                     && h.properties.line === selected.line);
+            if (same) f = same;
+        }
+        const p = f.properties;
+        if (selected && selected.op === p.op && selected.line === p.line) {
+            setSegmentSelection(p);
+        } else {
+            setLineSelection(p);
+        }
+    });
+    map.on('contextmenu', (e) => {
+        const hits = map.queryRenderedFeatures(e.point, { layers: ['segs-line'] });
+        if (hits.length) selectSegment(hits[0].properties);
+        else clearSelection();
+    });
+    map.getCanvasContainer().addEventListener('contextmenu', (ev) => ev.preventDefault());
+
+    applyWidths();
+
+    // ── URL parameter handling: ?station=, ?line=&op=, ?q=, ?lang= ──
+    const urlParams = new URLSearchParams(window.location.search);
+    // Language override via URL
+    const langParam = urlParams.get('lang');
+    if (langParam && ['en', 'ja', 'zh'].includes(langParam)) {
+        lang = langParam;
+        applyLang();
+    }
+
+    const stationParam = urlParams.get('station');
+    const lineParam = urlParams.get('line');
+    const opParam = urlParams.get('op');
+    const qParam = urlParams.get('q');
+
+    function flyToStation(name) {
+        const q = name.toLowerCase();
+        const qSimp = toSimplified(q);
+        // Exact match first
+        for (const f of sfcData.features) {
+            const p = f.properties;
+            const nl = p.station.toLowerCase();
+            if (nl === q || toSimplified(nl) === qSimp) {
+                map.flyTo({ center: f.geometry.coordinates, zoom: 12, duration: 1200 });
+                const feat = allFeats.find(ff => ff.properties.op === p.op && ff.properties.line === p.line);
+                if (feat) setLineSelection(feat.properties);
+                return true;
+            }
+        }
+        // Also check English name
+        for (const f of sfcData.features) {
+            const p = f.properties;
+            const enName = (NAMES.stations[p.op + '||' + p.station] || '').toLowerCase();
+            if (enName && enName === q) {
+                map.flyTo({ center: f.geometry.coordinates, zoom: 12, duration: 1200 });
+                const feat = allFeats.find(ff => ff.properties.op === p.op && ff.properties.line === p.line);
+                if (feat) setLineSelection(feat.properties);
+                return true;
+            }
+        }
+        // Fuzzy match
+        for (const f of sfcData.features) {
+            const p = f.properties;
+            const nl = p.station.toLowerCase();
+            if (nl.includes(q) || toSimplified(nl).includes(qSimp)) {
+                map.flyTo({ center: f.geometry.coordinates, zoom: 12, duration: 1200 });
+                const feat = allFeats.find(ff => ff.properties.op === p.op && ff.properties.line === p.line);
+                if (feat) setLineSelection(feat.properties);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function flyToLine(lineName, operatorName) {
+        const q = lineName.toLowerCase();
+        const qSimp = toSimplified(q);
+        const opQ = operatorName ? operatorName.toLowerCase() : '';
+        const opQSimp = operatorName ? toSimplified(opQ) : '';
+
+        function matchLine(f) {
+            const p = f.properties;
+            const ll = p.line.toLowerCase();
+            const ol = p.op.toLowerCase();
+            const lineOk = ll === q || toSimplified(ll) === qSimp;
+            const opOk = !operatorName || ol === opQ || toSimplified(ol) === opQSimp;
+            return lineOk && opOk;
+        }
+        function matchLineFuzzy(f) {
+            const p = f.properties;
+            const ll = p.line.toLowerCase();
+            const ol = p.op.toLowerCase();
+            const lineOk = ll.includes(q) || toSimplified(ll).includes(qSimp);
+            const opOk = !operatorName || ol.includes(opQ) || toSimplified(ol).includes(opQSimp);
+            return lineOk && opOk;
+        }
+
+        const feats = allFeats.filter(matchLine).length ? allFeats.filter(matchLine) : allFeats.filter(matchLineFuzzy);
+        if (feats.length) {
+            let minLng = Infinity, minLat = Infinity, maxLng = -Infinity, maxLat = -Infinity;
+            for (const f of feats) {
+                for (const c of f.geometry.coordinates) {
+                    if (c[0] < minLng) minLng = c[0];
+                    if (c[0] > maxLng) maxLng = c[0];
+                    if (c[1] < minLat) minLat = c[1];
+                    if (c[1] > maxLat) maxLat = c[1];
+                }
+            }
+            map.fitBounds([[minLng, minLat], [maxLng, maxLat]], { padding: 60, duration: 1200 });
+            setLineSelection(feats[0].properties);
+            return true;
+        }
+        return false;
+    }
+
+    if (stationParam) {
+        flyToStation(stationParam);
+    } else if (lineParam) {
+        flyToLine(lineParam, opParam);
+    } else if (qParam) {
+        if (!flyToStation(qParam)) flyToLine(qParam, null);
+    }
+    // Enable URL updates after initial load
+    skipUrlUpdate = false;
+});
+
+// ─────────────────────────── selection / info ────────────────────────────
+function selCond(s) {
+    const t = [['==', ['get', 'op'], s.op], ['==', ['get', 'line'], s.line]];
+    if (s.mode === 'segment') {
+        t.push(['==', ['get', 'from'], s.from], ['==', ['get', 'to'], s.to]);
+    }
+    return ['all', ...t];
+}
+
+const STN_NEAR_DEG2 = 0.004 * 0.004;
+function recomputeSelStationIds() {
+    selStationIds = new Set();
+    if (!selected || !sfcData) return;
+    if (selected.mode === 'segment') {
+        const segs = allFeats.filter(f =>
+            f.properties.op === selected.op && f.properties.line === selected.line
+            && f.properties.from === selected.from && f.properties.to === selected.to);
+        if (!segs.length) return;
+        for (const f of sfcData.features) {
+            if (f.properties.station !== selected.from && f.properties.station !== selected.to) continue;
+            const [sx, sy] = f.geometry.coordinates;
+            for (const sg of segs) {
+                let hit = false;
+                for (const c of sg.geometry.coordinates) {
+                    const dx = c[0] - sx, dy = c[1] - sy;
+                    if (dx * dx + dy * dy < STN_NEAR_DEG2) { hit = true; break; }
+                }
+                if (hit) { selStationIds.add(f.id); break; }
+            }
+        }
+        return;
+    }
+    const names = stationsOnSelectedLine();
+    const segs = allFeats.filter(f =>
+        f.properties.op === selected.op && f.properties.line === selected.line);
+    if (!names.size || !segs.length) return;
+    for (const sg of segs) {
+        if (sg._bbox) continue;
+        let minx = Infinity, miny = Infinity, maxx = -Infinity, maxy = -Infinity;
+        for (const c of sg.geometry.coordinates) {
+            if (c[0] < minx) minx = c[0]; if (c[0] > maxx) maxx = c[0];
+            if (c[1] < miny) miny = c[1]; if (c[1] > maxy) maxy = c[1];
+        }
+        sg._bbox = [minx, miny, maxx, maxy];
+    }
+    const PAD = 0.005;
+    for (const f of sfcData.features) {
+        if (!names.has(f.properties.station)) continue;
+        const [sx, sy] = f.geometry.coordinates;
+        let hit = false;
+        for (const sg of segs) {
+            const [minx, miny, maxx, maxy] = sg._bbox;
+            if (sx < minx - PAD || sx > maxx + PAD || sy < miny - PAD || sy > maxy + PAD) continue;
+            for (const c of sg.geometry.coordinates) {
+                const dx = c[0] - sx, dy = c[1] - sy;
+                if (dx * dx + dy * dy < STN_NEAR_DEG2) { hit = true; break; }
+            }
+            if (hit) break;
+        }
+        if (hit) selStationIds.add(f.id);
+    }
+}
+function pushStationFeatureState() {
+    if (!sfcData) return;
+    for (const f of sfcData.features) {
+        const on = selStationIds.has(f.id);
+        map.setFeatureState({ source: 'stations', id: f.id }, { onLine: on });
+    }
+}
+
+function applySelection() {
+    if (!selected) {
+        map.setFilter('segs-casing', NO_MATCH);
+        map.setPaintProperty('segs-line', 'line-opacity', 0.92);
+        if (map.getLayer('station-dots')) {
+            map.setPaintProperty('station-dots', 'circle-opacity', 0.92);
+            map.setPaintProperty('station-dots', 'circle-stroke-width', 0);
+        }
+        if (map.getLayer('station-labels')) {
+            map.setPaintProperty('station-labels', 'text-opacity', 1);
+        }
+        if (map.getLayer('transfer-dots')) {
+            map.setPaintProperty('transfer-dots', 'circle-opacity', 0.92);
+            map.setPaintProperty('transfer-dots', 'circle-stroke-width', 0);
+        }
+        selStationIds = new Set();
+        pushStationFeatureState();
+        return;
+    }
+    const cond = selCond(selected);
+    map.setFilter('segs-casing', cond);
+    map.setPaintProperty('segs-line', 'line-opacity', ['case', cond, 0.97, 0.13]);
+
+    recomputeSelStationIds();
+    pushStationFeatureState();
+
+    if (map.getLayer('station-dots')) {
+        const onLine = ['boolean', ['feature-state', 'onLine'], false];
+        map.setPaintProperty('station-dots', 'circle-opacity', ['case', onLine, 0.95, 0.08]);
+        map.setPaintProperty('station-dots', 'circle-stroke-color', selected.color);
+        map.setPaintProperty('station-dots', 'circle-stroke-width', ['case', onLine, 1.5, 0]);
+    }
+    if (map.getLayer('station-labels')) {
+        const onLine = ['boolean', ['feature-state', 'onLine'], false];
+        map.setPaintProperty('station-labels', 'text-opacity', ['case', onLine, 1, 0.1]);
+    }
+    if (map.getLayer('transfer-dots')) {
+        const onLine = ['boolean', ['feature-state', 'onLine'], false];
+        map.setPaintProperty('transfer-dots', 'circle-opacity', ['case', onLine, 0.95, 0.15]);
+        map.setPaintProperty('transfer-dots', 'circle-stroke-color', selected.color);
+        map.setPaintProperty('transfer-dots', 'circle-stroke-width', ['case', onLine, 1.5, 0]);
+    }
+}
+
+let skipUrlUpdate = true; // skip URL update on initial load from URL params
+
+function updateUrl(params) {
+    if (skipUrlUpdate) return;
+    const url = new URL(window.location);
+    // Clear existing selection params
+    url.searchParams.delete('station');
+    url.searchParams.delete('line');
+    url.searchParams.delete('op');
+    url.searchParams.delete('q');
+    // Set new params
+    for (const [k, v] of Object.entries(params)) {
+        if (v) url.searchParams.set(k, v);
+    }
+    // Preserve lang param
+    if (lang !== 'en') url.searchParams.set('lang', lang);
+    else url.searchParams.delete('lang');
+    history.replaceState(null, '', url);
+}
+
+function setLineSelection(p) {
+    selected = { mode: 'line', op: p.op, line: p.line, color: p.color };
+    applySelection();
+    renderInfo();
+    updateUrl({ line: p.line, op: p.op });
+}
+
+function setSegmentSelection(p) {
+    selected = { mode: 'segment', op: p.op, line: p.line,
+                 from: p.from, to: p.to, color: p.color, km: p.km };
+    applySelection();
+    renderInfo();
+    updateUrl({ line: p.line, op: p.op, from: p.from, to: p.to });
+}
+
+function selectSegment(p) {
+    if (selected && selected.mode === 'segment'
+        && selected.op === p.op && selected.line === p.line
+        && selected.from === p.from && selected.to === p.to) {
+        clearSelection(); return;
+    }
+    setSegmentSelection(p);
+}
+
+function clearSelection() {
+    if (!selected) return;
+    selected = null;
+    applySelection();
+    document.getElementById('info').style.display = 'none';
+    updateUrl({});
+}
+
+// ─────────────────────────── colour mode ─────────────────────────────────
+function setColorMode(mode) {
+    if (mode === colorMode) return;
+    colorMode = mode;
+    for (const f of allFeats) {
+        const p = f.properties;
+        p.color = colorMode === 'line' ? p.colorLine : colorMode === 'detailed' ? p.colorDetailed : p.colorOp;
+    }
+    if (fcData) map.getSource('segs').setData(fcData);
+    if (selected) {
+        const f = allFeats.find(x => x.properties.op === selected.op
+                                  && x.properties.line === selected.line);
+        if (f) selected.color = f.properties.color;
+        applySelection();
+    }
+    // Recalculate station colors with updated segment colors
+    if (sfcData) {
+        const coordColorMap2 = new Map();
+        for (const f of allFeats) {
+            const color = f.properties.color;
+            for (const c of f.geometry.coordinates) {
+                const key = Math.round(c[0] * 1000) + ',' + Math.round(c[1] * 1000);
+                if (!coordColorMap2.has(key)) coordColorMap2.set(key, new Set());
+                coordColorMap2.get(key).add(color);
+            }
+        }
+        for (const f of sfcData.features) {
+            const p = f.properties;
+            const [sx, sy] = f.geometry.coordinates;
+            const nearbyColors = new Set();
+            for (let dx = -1; dx <= 1; dx++) {
+                for (let dy = -1; dy <= 1; dy++) {
+                    const key = Math.round(sx * 1000 + dx) + ',' + Math.round(sy * 1000 + dy);
+                    const colors = coordColorMap2.get(key);
+                    if (colors) colors.forEach(c => nearbyColors.add(c));
+                }
+            }
+            if (nearbyColors.size === 1) {
+                p.color = [...nearbyColors][0];
+            } else {
+                p.color = colorMode === 'line' ? colorLineFor(p.op, p.line)
+                         : colorMode === 'detailed' ? colorDetailedFor(p.op, p.line)
+                         : colorOpFor(p.op);
+            }
+        }
+        map.getSource('stations').setData(sfcData);
+    }
+    // Update line name label colors
+    if (map.getSource('line-labels')) {
+        const lineLabelFeatures2 = {};
+        for (const f of allFeats) {
+            const p = f.properties;
+            const key = p.op + '||' + p.line;
+            if (!lineLabelFeatures2[key]) {
+                lineLabelFeatures2[key] = { color: p.color };
+            }
+        }
+        const src = map.getSource('line-labels');
+        if (src && src._data) {
+            for (const feat of src._data.features) {
+                const key = feat.properties.label;
+                for (const k in lineLabelFeatures2) {
+                    if (k.endsWith('||' + key) || key === k.split('||')[1]) {
+                        feat.properties.color = lineLabelFeatures2[k].color;
+                        break;
+                    }
+                }
+            }
+            src.setData(src._data);
+        }
+    }
+    buildLegend();
+    renderInfo();
+}
+
+function renderInfo() {
+    if (!selected) return;
+    const S = STR[lang];
+    const box = document.getElementById('info');
+    const head = `<div class="ipline" style="color:${selected.color}">` +
+                 `${opLabel(selected.op)} ${lineLabel(selected.op, selected.line)}</div>`;
+
+    const simpOpNote = simpOnly(selected.op);
+    const simpLineNote = simpOnly(selected.line);
+    const simpHead = (simpOpNote || simpLineNote) ? `<div style="color:#8b939e;font-size:11px">${simpOpNote || selected.op} ${simpLineNote || selected.line}</div>` : '';
+    if (selected.mode === 'segment') {
+        const simpFromN = simpOnly(selected.from);
+        const simpToN = simpOnly(selected.to);
+        const simpSegNote = (simpFromN || simpToN) ? `<div style="color:#8b939e;font-size:11px">${simpFromN || selected.from} → ${simpToN || selected.to}</div>` : '';
+        box.innerHTML = head + simpHead +
+            `<div class="ipseg">${selected.from} → ${selected.to}</div>` + simpSegNote +
+            `<div class="iprow"><span>${S.panelLength}</span>` +
+                `<b>${Number(selected.km).toFixed(1)} ${S.km}</b></div>`;
+    } else {
+        const parts = allFeats.filter(f =>
+            f.properties.op === selected.op && f.properties.line === selected.line);
+        let km = 0;
+        for (const f of parts) km += Number(f.properties.km) || 0;
+        box.innerHTML = head + simpHead +
+            `<div class="iprow"><span>${S.panelLength}</span><b>${km.toFixed(1)} ${S.km}</b></div>` +
+            `<div class="iprow"><span>${S.panelSections}</span><b>${parts.length}</b></div>`;
+    }
+    box.innerHTML += `<div class="iphint">${S.panelHint}</div>`;
+    box.style.display = 'block';
+}
+
+window.addEventListener('keydown', (e) => { if (e.key === 'Escape') clearSelection(); });
+
+// ───────────────────────────── interface ─────────────────────────────────
+function buildLegend() {
+    const S = STR[lang];
+    let html = `<span class="close" id="lg-close" title="hide">×</span>` +
+        `<div class="hd">${S.legLineColors}</div>` +
+        `<div class="modetoggle">` +
+        `<span id="cm-op" class="${colorMode === 'operator' ? 'on' : ''}">${S.modeOperator}</span>` +
+        `<span id="cm-line" class="${colorMode === 'line' ? 'on' : ''}">${S.modeLine}</span>` +
+        `<span id="cm-detail" class="${colorMode === 'detailed' ? 'on' : ''}">${S.modeDetailed}</span></div>`;
+
+    html += `<div class="stsec">` +
+            `<div class="hd">${S.toggleStations}</div>` +
+            `<div class="strow">` +
+            `<input type="checkbox" id="st-toggle"${showStations ? ' checked' : ''}>` +
+            `</div></div>`;
+
+    html += `<div class="thick"><div class="hd">${S.legLineWidth} ` +
+            `<span class="val" id="thickVal">${S.lineWidthVal}${lineScale.toFixed(1)}</span></div>` +
+            `<input id="lineScaleSlider" type="range" min="0.3" max="3" step="0.1" value="${lineScale}"></div>`;
+
+    document.getElementById('legend').innerHTML = html;
+
+    document.getElementById('lg-close').onclick = () => setLegendOpen(false);
+    document.getElementById('cm-op').onclick = () => setColorMode('operator');
+    document.getElementById('cm-line').onclick = () => setColorMode('line');
+    document.getElementById('cm-detail').onclick = () => setColorMode('detailed');
+    document.getElementById('st-toggle').onchange = (e) => {
+        showStations = e.target.checked;
+        const vis = showStations ? 'visible' : 'none';
+        if (map.getLayer('station-dots'))
+            map.setLayoutProperty('station-dots', 'visibility', vis);
+        if (map.getLayer('transfer-dots'))
+            map.setLayoutProperty('transfer-dots', 'visibility', vis);
+        if (map.getLayer('transfer-labels'))
+            map.setLayoutProperty('transfer-labels', 'visibility', vis);
+        if (map.getLayer('station-labels'))
+            map.setLayoutProperty('station-labels', 'visibility', vis);
+    };
+    const sl = document.getElementById('lineScaleSlider');
+    sl.oninput = () => {
+        lineScale = parseFloat(sl.value);
+        document.getElementById('thickVal').textContent = STR[lang].lineWidthVal + lineScale.toFixed(1);
+        applyWidths();
+    };
+}
+
+function applyLang() {
+    const S = STR[lang];
+    document.title = S.h1;
+    document.getElementById('lang-en').classList.toggle('on', lang === 'en');
+    document.getElementById('lang-ja').classList.toggle('on', lang === 'ja');
+    document.getElementById('lang-zh').classList.toggle('on', lang === 'zh');
+    document.getElementById('aboutbtn').title = S.aboutTitle;
+    document.getElementById('aboutpanel').innerHTML = S.aboutBody;
+    document.getElementById('search-input').placeholder = S.searchPlaceholder;
+    buildLegend();
+    renderInfo();
+}
+
+document.getElementById('lang-en').onclick = () => { lang = 'en'; applyLang(); };
+document.getElementById('lang-ja').onclick = () => { lang = 'ja'; applyLang(); };
+document.getElementById('lang-zh').onclick = () => { lang = 'zh'; applyLang(); };
+function setAboutOpen(v) {
+    if (aboutOpen === v) return;
+    aboutOpen = v;
+    document.getElementById('aboutbtn').classList.toggle('on', aboutOpen);
+    document.getElementById('aboutpanel').classList.toggle('open', aboutOpen);
+}
+let aboutOpen = false;
+let legendOpen = true;
+function setLegendOpen(v) {
+    if (legendOpen === v) return;
+    legendOpen = v;
+    document.getElementById('legend').classList.toggle('hidden', !legendOpen);
+    document.getElementById('ctrlbtn').classList.toggle('show', !legendOpen);
+}
+document.getElementById('ctrlbtn').onclick = () => setLegendOpen(true);
+document.getElementById('aboutbtn').onclick = (e) => {
+    e.stopPropagation();
+    setAboutOpen(!aboutOpen);
+};
+document.getElementById('aboutpanel').addEventListener('click', (e) => e.stopPropagation());
+document.addEventListener('click', () => { if (aboutOpen) setAboutOpen(false); });
+
+// ─────────────────────────── search ────────────────────────────────────
+(function() {
+    const searchInput = document.getElementById('search-input');
+    const resultsBox = document.getElementById('search-results');
+    let activeIdx = -1;
+    let currentResults = [];
+
+    // Build search index after data loads
+    function buildSearchIndex() {
+        // Unique stations: dedupe by station name + coordinates
+        const stationMap = new Map();
+        if (sfcData) {
+            for (const f of sfcData.features) {
+                const p = f.properties;
+                const key = p.station;
+                if (!stationMap.has(key)) {
+                    stationMap.set(key, {
+                        type: 'station',
+                        name: p.station,
+                        nameEn: NAMES.stations[p.op + '||' + p.station] || '',
+                        op: p.op,
+                        line: p.line,
+                        ops: Array.isArray(p.ops) ? p.ops : JSON.parse(p.ops || '[]'),
+                        coord: f.geometry.coordinates,
+                        riders: p.riders || 0,
+                    });
+                }
+            }
+        }
+        // Unique lines
+        const lineMap = new Map();
+        for (const f of allFeats) {
+            const p = f.properties;
+            const key = p.op + '||' + p.line;
+            if (!lineMap.has(key)) {
+                lineMap.set(key, {
+                    type: 'line',
+                    op: p.op,
+                    line: p.line,
+                    nameEn: NAMES.lines[p.op + '||' + p.line] || '',
+                    color: p.colorLine,
+                });
+            }
+        }
+        return { stations: [...stationMap.values()], lines: [...lineMap.values()] };
+    }
+
+    let searchIndex = null;
+
+    function ensureIndex() {
+        if (!searchIndex && allFeats.length && sfcData) {
+            searchIndex = buildSearchIndex();
+        }
+        return searchIndex;
+    }
+
+    function doSearch(query) {
+        const idx = ensureIndex();
+        if (!idx || !query) return [];
+        const q = query.toLowerCase();
+        const qSimp = toSimplified(q);
+        const S = STR[lang];
+
+        const results = [];
+
+        // Search stations
+        for (const s of idx.stations) {
+            const nameLower = s.name.toLowerCase();
+            const jaMatch = nameLower.includes(q);
+            const enMatch = s.nameEn.toLowerCase().includes(q);
+            const simpMatch = toSimplified(nameLower).includes(qSimp);
+            if (jaMatch || enMatch || simpMatch) {
+                const label = lang === 'en' && s.nameEn ? s.nameEn : s.name;
+                const simpName = toSimplified(s.name);
+                const sub = lang === 'en' ? s.name : (simpName !== s.name ? simpName : (s.nameEn || ''));
+                results.push({
+                    type: 'station',
+                    label,
+                    sub,
+                    opLabel: s.ops.map(op => opLabel(op)).join(' · '),
+                    data: s,
+                    score: (jaMatch || simpMatch === jaMatch) ? 0 : 1,
+                });
+            }
+        }
+
+        // Search lines
+        for (const l of idx.lines) {
+            const lineLower = l.line.toLowerCase();
+            const opLower = l.op.toLowerCase();
+            const jaMatch = lineLower.includes(q);
+            const opJaMatch = opLower.includes(q);
+            const enMatch = l.nameEn.toLowerCase().includes(q);
+            const simpLineMatch = toSimplified(lineLower).includes(qSimp);
+            const simpOpMatch = toSimplified(opLower).includes(qSimp);
+            if (jaMatch || opJaMatch || enMatch || simpLineMatch || simpOpMatch) {
+                const lbl = lang === 'en' && l.nameEn ? l.nameEn : l.line;
+                const simpLine = toSimplified(l.line);
+                const sub = lang === 'en' ? l.line : (simpLine !== l.line ? simpLine : (l.nameEn || ''));
+                results.push({
+                    type: 'line',
+                    label: lbl,
+                    sub,
+                    opLabel: opLabel(l.op),
+                    color: l.color,
+                    data: l,
+                    score: (jaMatch || simpLineMatch || simpOpMatch) ? 0 : 1,
+                });
+            }
+        }
+
+        // Sort: exact starts-with first, then alphabetical
+        results.sort((a, b) => {
+            const aStarts = a.label.toLowerCase().startsWith(q) || toSimplified(a.label).startsWith(qSimp) || a.sub.toLowerCase().startsWith(q) ? 0 : 1;
+            const bStarts = b.label.toLowerCase().startsWith(q) || toSimplified(b.label).startsWith(qSimp) || b.sub.toLowerCase().startsWith(q) ? 0 : 1;
+            if (aStarts !== bStarts) return aStarts - bStarts;
+            if (a.score !== b.score) return a.score - b.score;
+            if (a.type !== b.type) return a.type === 'station' ? -1 : 1;
+            return a.label.localeCompare(b.label, lang === 'ja' ? 'ja' : 'en');
+        });
+
+        return results.slice(0, 30);
+    }
+
+    function renderResults(results) {
+        const S = STR[lang];
+        if (!results.length) {
+            resultsBox.innerHTML = `<div class="sr-empty">${S.searchNoResults}</div>`;
+            resultsBox.style.display = 'block';
+            currentResults = results;
+            activeIdx = -1;
+            return;
+        }
+        currentResults = results;
+        activeIdx = -1;
+        resultsBox.innerHTML = results.map((r, i) => {
+            const typeLabel = r.type === 'station' ? S.searchStation : S.searchLine;
+            const dot = r.color ? `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${r.color};margin-right:4px;vertical-align:middle;"></span>` : '';
+            return `<div class="sr-item" data-idx="${i}">` +
+                `<span class="sr-type">${typeLabel}</span>` +
+                dot +
+                `<span class="sr-name">${escHtml(r.label)}</span>` +
+                (r.sub && r.sub !== r.label ? `<span class="sr-sub">${escHtml(r.sub)}</span>` : '') +
+                `<span class="sr-sub"> — ${escHtml(r.opLabel)}</span>` +
+            `</div>`;
+        }).join('');
+        resultsBox.style.display = 'block';
+    }
+
+    function escHtml(s) {
+        const d = document.createElement('div');
+        d.textContent = s;
+        return d.innerHTML;
+    }
+
+    function clearResults() {
+        resultsBox.style.display = 'none';
+        resultsBox.innerHTML = '';
+        currentResults = [];
+        activeIdx = -1;
+    }
+
+    function selectResult(idx) {
+        const r = currentResults[idx];
+        if (!r) return;
+        clearResults();
+        searchInput.value = '';
+        searchInput.blur();
+
+        if (r.type === 'station') {
+            const s = r.data;
+            map.flyTo({ center: s.coord, zoom: 12, duration: 1200 });
+            // Select the station's line
+            const feat = allFeats.find(f =>
+                f.properties.op === s.op && f.properties.line === s.line);
+            if (feat) {
+                setLineSelection(feat.properties);
+            }
+        } else if (r.type === 'line') {
+            const l = r.data;
+            // Find all features for this line to compute bounds
+            const feats = allFeats.filter(f =>
+                f.properties.op === l.op && f.properties.line === l.line);
+            if (feats.length) {
+                let minLng = Infinity, minLat = Infinity, maxLng = -Infinity, maxLat = -Infinity;
+                for (const f of feats) {
+                    for (const c of f.geometry.coordinates) {
+                        if (c[0] < minLng) minLng = c[0];
+                        if (c[0] > maxLng) maxLng = c[0];
+                        if (c[1] < minLat) minLat = c[1];
+                        if (c[1] > maxLat) maxLat = c[1];
+                    }
+                }
+                map.fitBounds([[minLng, minLat], [maxLng, maxLat]], { padding: 60, duration: 1200 });
+                setLineSelection(feats[0].properties);
+            }
+        }
+    }
+
+    function updateActiveItem() {
+        const items = resultsBox.querySelectorAll('.sr-item');
+        items.forEach((el, i) => el.classList.toggle('active', i === activeIdx));
+        if (activeIdx >= 0 && items[activeIdx]) {
+            items[activeIdx].scrollIntoView({ block: 'nearest' });
+        }
+    }
+
+    searchInput.addEventListener('input', () => {
+        const q = searchInput.value.trim();
+        if (!q) { clearResults(); return; }
+        const results = doSearch(q);
+        renderResults(results);
+    });
+
+    searchInput.addEventListener('keydown', (e) => {
+        if (!currentResults.length) return;
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            activeIdx = Math.min(activeIdx + 1, currentResults.length - 1);
+            updateActiveItem();
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            activeIdx = Math.max(activeIdx - 1, 0);
+            updateActiveItem();
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (activeIdx >= 0) selectResult(activeIdx);
+            else if (currentResults.length) selectResult(0);
+        } else if (e.key === 'Escape') {
+            clearResults();
+            searchInput.blur();
+        }
+    });
+
+    resultsBox.addEventListener('click', (e) => {
+        const item = e.target.closest('.sr-item');
+        if (item) {
+            const idx = parseInt(item.dataset.idx, 10);
+            selectResult(idx);
+        }
+    });
+
+    // Close results when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!document.getElementById('searchbox').contains(e.target)) {
+            clearResults();
+        }
+    });
+
+    // Prevent map clicks when clicking inside searchbox
+    document.getElementById('searchbox').addEventListener('click', (e) => e.stopPropagation());
+
+    // Keyboard shortcut: Ctrl/Cmd+K to focus search
+    document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            searchInput.focus();
+            searchInput.select();
+        }
+    });
+    window.__jrReady = true;
+})();
+
+// ─────────────────── 实时列车位置图层（RailAround live snapshot） ───────────────────
+(function () {
+    const LIVECTRL = document.getElementById('livetoggle');
+    const LIVESTATUS = document.getElementById('livestatus');
+    const tipEl = document.getElementById('tooltip');
+    let liveOn = false, tmaps = null, trains = null, trainsBit = 0;
+    let stationCoord = null, segIndex = null, trainFC = null;
+    let adj = null, edgeCoords = null, edgeLine = null, pathMemo = null;
+    let timer = null;
+    const SHINK = ['Hayabusa', 'Komachi', 'Yamabiko', 'Tsubasa', 'Kagayaki', 'Toki', 'Hakutaka', 'Asama', 'Nasuno', 'Tanigawa'];
+    function iconColor(ic) {
+        if (SHINK.includes(ic)) return '#2e9e44';
+        if (ic === '特') return '#e03e3e';
+        if (ic === '急' || ic === '快') return '#f59a23';
+        if (ic === '準' || ic === '区' || ic === '通' || ic === '回') return '#8a8f98';
+        if (ic === '各' || ic === '普') return '#5aa7e8';
+        return '#9aa0ab';
+    }
+    // rday 位掩码: 1=平日 2=周六 4=周日·假日（JST 当日）
+    // 日本国民の祝日・振替休日（2026-2027）。以后年份请按官方公告更新：
+    // https://www8.cao.go.jp/chosei/shukujitsu/gaiyou.html
+    const HOLIDAYS = new Set([
+        '2026-01-01','2026-01-12','2026-02-11','2026-02-23','2026-03-20','2026-04-29',
+        '2026-05-03','2026-05-04','2026-05-05','2026-05-06','2026-07-20','2026-08-11',
+        '2026-09-21','2026-09-23','2026-10-12','2026-11-03','2026-11-23',
+        '2027-01-01','2027-01-11','2027-02-11','2027-02-23','2027-03-21','2027-03-22','2027-04-29',
+        '2027-05-03','2027-05-04','2027-05-05','2027-07-19','2027-08-11',
+        '2027-09-20','2027-09-23','2027-10-11','2027-11-03','2027-11-23',
+    ]);
+    function todayBit() {
+        const now = new Date(Date.now() + 9 * 3600 * 1000);
+        const y = now.getUTCFullYear();
+        const md = String(now.getUTCMonth() + 1).padStart(2, '0') + '-' + String(now.getUTCDate()).padStart(2, '0');
+        if (HOLIDAYS.has(y + '-' + md)) return 4;
+        const d = now.getUTCDay();
+        return (d >= 1 && d <= 5) ? 1 : (d === 6 ? 2 : 4);
+    }
+    function minOfDayJST() { return ((Date.now() / 1000 + 9 * 3600) % 86400) / 60; }
+    // 本地时刻表文件：按运行日分组，页面只加载今日对应的一份（无外部抓取）
+    const TRAIN_FILES = { 1: 'data/live/trains_wd.json', 2: 'data/live/trains_sa.json', 4: 'data/live/trains_su.json' };
+    function inWindow(t, M) {
+        const w = t.w;
+        if (!w) return false;
+        const comma = w.indexOf(',');
+        if (comma < 0) return false;
+        let lo = +w.slice(0, comma), hi = +w.slice(comma + 1), MM = M;
+        if (hi < 300 && M > 1400) MM = M - 1440;
+        else if (lo > 1400 && M < 300) MM = M + 1440;
+        return MM >= lo && MM <= hi;
+    }
+    function schsOf(t) { if (!t.__s) t.__s = t.s.split(',').map(Number); return t.__s; }
+
+    function buildIndices() {
+        stationCoord = new Map();
+        sfcData.features.forEach(f => stationCoord.set(f.properties.station, f.geometry.coordinates));
+        segIndex = new Map();
+        adj = new Map(); edgeCoords = new Map(); edgeLine = new Map(); pathMemo = new Map();
+        allFeats.forEach(f => {
+            const p = f.properties;
+            // MultiLineString 归一化为单条线（约 32/4729 段为分片几何）
+            const coords = f.geometry.type === 'MultiLineString'
+                ? f.geometry.coordinates.reduce((a, l) => a.concat(l), [])
+                : f.geometry.coordinates;
+            const k1 = p.from + '|' + p.to, k2 = p.to + '|' + p.from;
+            if (!segIndex.has(k1)) segIndex.set(k1, []);
+            if (!segIndex.has(k2)) segIndex.set(k2, []);
+            segIndex.get(k1).push(coords);
+            segIndex.get(k2).push(coords.slice().reverse());
+            edgeCoords.set(k1, coords);
+            edgeCoords.set(k2, coords.slice().reverse());
+            edgeLine.set(k1, p.line || ''); edgeLine.set(k2, p.line || '');
+            if (!adj.has(p.from)) adj.set(p.from, new Set());
+            if (!adj.has(p.to)) adj.set(p.to, new Set());
+            adj.get(p.from).add(p.to); adj.get(p.to).add(p.from);
+        });
+    }
+    // BFS 沿轨道寻路（处理快车跳站：相邻站无直接段时沿同网路径走真实轨道）
+    function pathAlong(A, B) {
+        const key = A + '|' + B;
+        if (pathMemo.has(key)) { const m = pathMemo.get(key); return m ? { coords: m.coords, lineAt: m.lineAt } : null; }
+        if (!adj.has(A) || !adj.has(B)) { pathMemo.set(key, null); return null; }
+        const prev = new Map([[A, null]]), q = [A];
+        while (q.length && !prev.has(B)) {
+            const cur = q.shift();
+            const nbs = adj.get(cur);
+            if (!nbs) continue;
+            for (const nb of nbs) {
+                if (!prev.has(nb)) { prev.set(nb, cur); q.push(nb); }
+            }
+        }
+        if (!prev.has(B)) { pathMemo.set(key, null); return null; }
+        const stops = [B]; let cur = B;
+        while (cur !== A) { cur = prev.get(cur); stops.push(cur); }
+        stops.reverse();
+        const coords = [], segLines = [], segLens = [];
+        for (let i = 0; i < stops.length - 1; i++) {
+            const k = stops[i] + '|' + stops[i + 1];
+            const c = edgeCoords.get(k);
+            const ln = edgeLine.get(k) || '';
+            if (i === 0) coords.push(...(c || [[0, 0], [0, 0]]));
+            else coords.push(...(c || [[0, 0], [0, 0]]).slice(1));
+            segLines.push(ln);
+            let len = 0;
+            const cc = c || [];
+            for (let j = 1; j < cc.length; j++) {
+                const dx = cc[j][0] - cc[j - 1][0], dy = cc[j][1] - cc[j - 1][1];
+                len += Math.sqrt(dx * dx + dy * dy);
+            }
+            segLens.push(len);
+        }
+        const total = segLens.reduce((a, b) => a + b, 0);
+        const lineAt = (frac) => {
+            if (total <= 0) return segLines[0] || '';
+            let target = frac * total, acc = 0;
+            for (let i = 0; i < segLens.length; i++) {
+                if (acc + segLens[i] >= target) return segLines[i] || '';
+                acc += segLens[i];
+            }
+            return segLines[segLines.length - 1] || '';
+        };
+        const m = { coords, lineAt };
+        pathMemo.set(key, m);
+        return { coords, lineAt };
+    }
+    function pointAlong(coords, frac) {
+        if (!coords || coords.length < 2) return null;
+        if (frac <= 0) return coords[0];
+        if (frac >= 1) return coords[coords.length - 1];
+        let total = 0;
+        for (let i = 1; i < coords.length; i++) {
+            const dx = coords[i][0] - coords[i - 1][0], dy = coords[i][1] - coords[i - 1][1];
+            total += Math.sqrt(dx * dx + dy * dy);
+        }
+        if (total <= 0) return coords[0];
+        let target = frac * total, acc = 0;
+        for (let i = 1; i < coords.length; i++) {
+            const dx = coords[i][0] - coords[i - 1][0], dy = coords[i][1] - coords[i - 1][1];
+            const seg = Math.sqrt(dx * dx + dy * dy);
+            if (acc + seg >= target) {
+                const f = seg === 0 ? 0 : (target - acc) / seg;
+                return [coords[i - 1][0] + dx * f, coords[i - 1][1] + dy * f];
+            }
+            acc += seg;
+        }
+        return coords[coords.length - 1];
+    }
+    // schs 解码 + 定位：返回 {pt, A, B, color, icon, line} 或 null
+    function trainPosition(t, M) {
+        const tm = tmaps ? tmaps[t.t] : null;
+        if (!tm || !tm.s_jas || tm.s_jas.length < 2) return null;
+        const st = tm.s_jas, schs = schsOf(t), N = st.length;
+        if (!schs || schs.length < 2 * N - 2) return null;
+        const dep = [], arr = [];
+        dep[0] = schs[0];
+        for (let i = 1; i < N; i++) {
+            arr[i] = dep[i - 1] + schs[2 * i - 1];
+            dep[i] = (i < N - 1) ? arr[i] + schs[2 * i] : arr[i];
+        }
+        let MM = M;
+        if (dep[N - 1] < 300 && M > 1400) MM = M - 1440;
+        if (dep[0] > 1400 && M < 300) MM = M + 1440;
+        if (MM < dep[0] - 1e-6 || MM > arr[N - 1] + 1e-6) return null;
+        const meta = { color: iconColor(t.i), icon: t.i, line: (tm.lines && tm.lines.length === 1) ? tm.lines[0] : '' };
+        const placeAt = (S) => {
+            const c = stationCoord.get(S);
+            if (c) return { pt: c, A: S, B: S, color: meta.color, icon: meta.icon, line: meta.line };
+            return null;
+        };
+        const placeBetween = (A, B, frac) => {
+            const segs = segIndex.get(A + '|' + B);
+            if (segs && segs.length) {
+                const pt = pointAlong(segs[0], frac);
+                if (pt) return { pt, A, B, color: meta.color, icon: meta.icon, line: edgeLine.get(A + '|' + B) || meta.line };
+            }
+            const path = pathAlong(A, B);
+            if (path) {
+                const pt = pointAlong(path.coords, frac);
+                if (pt) return { pt, A, B, color: meta.color, icon: meta.icon, line: path.lineAt(frac) || meta.line };
+            }
+            const ca = stationCoord.get(A), cb = stationCoord.get(B);
+            if (ca && cb) return { pt: [ca[0] + (cb[0] - ca[0]) * frac, ca[1] + (cb[1] - ca[1]) * frac], A, B, color: meta.color, icon: meta.icon, line: meta.line };
+            if (ca) return { pt: ca, A, B, color: meta.color, icon: meta.icon, line: meta.line };
+            if (cb) return { pt: cb, A, B, color: meta.color, icon: meta.icon, line: meta.line };
+            return null;
+        };
+        for (let i = 0; i < N - 1; i++) {
+            // 区间运行中
+            if (MM >= dep[i] - 1e-6 && MM <= arr[i + 1] + 1e-6) {
+                const run = arr[i + 1] - dep[i];
+                const frac = run <= 0 ? 0 : (MM - dep[i]) / run;
+                const r = placeBetween(st[i], st[i + 1], frac);
+                if (r) return r;
+            }
+            // 到站后停站中（含终点站的停留窗口由上方 MM>arr 过滤处理）
+            if (i + 1 < N - 1 && MM > arr[i + 1] + 1e-6 && MM <= dep[i + 1] + 1e-6) {
+                const r = placeAt(st[i + 1]);
+                if (r) return r;
+            }
+        }
+        return null;
+    }
+    function refreshPositions() {
+        if (!liveOn || !trains || !tmaps || !trainFC) return;
+        const bit = todayBit();
+        const M = minOfDayJST();
+        const feats = [];
+        const list = trains.T;
+        for (let k = 0; k < list.length; k++) {
+            const t = list[k];
+            if (!(t.r & bit)) continue;
+            if (!inWindow(t, M)) continue;
+            const pos = trainPosition(t, M);
+            if (!pos) continue;
+            feats.push({
+                type: 'Feature',
+                properties: { icon: pos.icon, color: pos.color, from: pos.A, to: pos.B, line: pos.line || '' },
+                geometry: { type: 'Point', coordinates: pos.pt },
+            });
+        }
+        trainFC.features = feats;
+        map.getSource('live-trains').setData(trainFC);
+        if (LIVESTATUS) {
+            const d = new Date();
+            const pad = n => String(n).padStart(2, '0');
+            LIVESTATUS.textContent = '⚡ ' + feats.length + '/' + (trains.n || list.length) + ' 列运行 · 本地时刻表 @ ' + (trains.b || '') + ' · ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds()) + ' JST';
+        }
+    }
+    async function loadTrains(bit) {
+        const f = TRAIN_FILES[bit];
+        if (!f) return;
+        try {
+            const r = await fetch(f);
+            trains = await r.json();
+            trainsBit = bit;
+            refreshPositions();
+        } catch (e) {
+            if (LIVESTATUS) LIVESTATUS.textContent = '⚡ 本地时刻表加载失败（' + f + '）';
+        }
+    }
+    function ensureReady(cb) {
+        if (sfcData && allFeats && allFeats.length && map.getSource('segs')) cb();
+        else setTimeout(() => ensureReady(cb), 400);
+    }
+    function toggle() {
+        liveOn = !liveOn;
+        LIVECTRL.classList.toggle('on', liveOn);
+        LIVESTATUS.style.display = liveOn ? 'block' : 'none';
+        if (liveOn) {
+            ensureReady(async () => {
+                if (!stationCoord) buildIndices();
+                if (!tmaps) {
+                    try { tmaps = await (await fetch('data/live/tmaps.json?t=' + Date.now())).json(); } catch (e) { tmaps = {}; }
+                }
+                if (!map.getSource('live-trains')) {
+                    map.addSource('live-trains', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+                    map.addLayer({
+                        id: 'live-trains', type: 'circle', source: 'live-trains',
+                        paint: {
+                            'circle-radius': ['interpolate', ['exponential', ZOOM_BASE], ['zoom'], 3, 2.6 * ZF_LO, 9, 3.4 * ZF_HI, 13, 4.0 * ZF_HI],
+                            'circle-color': ['get', 'color'],
+                            'circle-opacity': 0.95,
+                            'circle-stroke-color': '#ffffff',
+                            'circle-stroke-width': 0.7,
+                        },
+                    });
+                    map.on('mousemove', 'live-trains', (e) => {
+                        if (!e.features.length) return;
+                        const p = e.features[0].properties;
+                        tipEl.style.display = 'block';
+                        tipEl.style.left = (e.point.x + 14) + 'px';
+                        tipEl.style.top = (e.point.y + 14) + 'px';
+                        tipEl.innerHTML = '<div class="line" style="color:' + p.color + '">' + (p.icon ? p.icon + ' ' : '') + (p.line ? p.line : '') + '</div><div class="seg">' + (p.from === p.to ? p.from : p.from + ' → ' + p.to) + '</div>';
+                        map.getCanvas().style.cursor = 'pointer';
+                    });
+                    map.on('mouseleave', 'live-trains', () => { tipEl.style.display = 'none'; map.getCanvas().style.cursor = ''; });
+                }
+                trainFC = { type: 'FeatureCollection', features: [] };
+                const bit = todayBit();
+                if (!trains || trainsBit !== bit) await loadTrains(bit);
+                else refreshPositions();
+                if (!timer) {
+                    timer = setInterval(() => {
+                        const b = todayBit();
+                        if (b !== trainsBit) { loadTrains(b); return; }
+                        refreshPositions();
+                    }, 1000);
+                }
+            });
+        } else {
+            if (timer) { clearInterval(timer); timer = null; }
+            if (map.getSource('live-trains')) map.getSource('live-trains').setData({ type: 'FeatureCollection', features: [] });
+        }
+    }
+    LIVECTRL.addEventListener('click', toggle);
+})();
+
+applyLang();
+</script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v833ccba57c9e4d2798f2e76cebdd09a11778172276447" data-cf-beacon='{"version":"2024.11.0","token":"b56c304306e54e23833a60b279eb36b3","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}'></script>
+</body>
+</html>

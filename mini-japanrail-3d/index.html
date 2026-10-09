@@ -3516,6 +3516,23 @@ function closeDetail() {
     el.style.height = '';
     localStorage.setItem(KEY, m);
   }
+  /* 档位切换动画:用 Web Animations API 驱动高度平滑过渡(带轻微弹簧 overshoot),
+     比 CSS transition 更可靠(部分环境 backdrop-filter 组合下 CSS transition 不触发) */
+  let anim = null;
+  function snapTo(m) {
+    if (anim) { anim.cancel(); anim = null; }
+    const from = el.offsetHeight;
+    el.classList.remove('dragging');
+    apply(m);
+    const to = el.offsetHeight;
+    if (Math.abs(from - to) < 2) return;
+    el.style.height = from + 'px';
+    anim = el.animate(
+      [{ height: from + 'px' }, { height: to + 'px' }],
+      { duration: 380, easing: 'cubic-bezier(.34,1.45,.44,1)', fill: 'both' }
+    );
+    anim.onfinish = () => { anim.cancel(); anim = null; el.style.height = ''; };
+  }
   apply(mode);
   /* 保险:真实触摸在 pointerup 后浏览器会合成 click 并向上冒泡,
      隔离窗口内的 click,防止任何地图/全局空白点击逻辑误关闭窗口 */
@@ -3526,6 +3543,7 @@ function closeDetail() {
     if (!el.classList.contains('show')) return;
     if (e.target.closest('button')) return;
     if (!e.target.closest('.d-h')) return;
+    if (anim) { anim.cancel(); anim = null; el.style.height = ''; }
     drag = { y: e.clientY, h: el.offsetHeight, moved: false };
     try { el.setPointerCapture(e.pointerId); } catch (_) {}
   });
@@ -3549,14 +3567,14 @@ function closeDetail() {
     /* 点击头部:只向更展开的档位递进(fold→medium→full),绝不收起、绝不关闭——
        收起只靠向下拖拽;杜绝"点一下窗口缩成胶囊,再点同一位置落在窗口外误触地图关闭" */
     if (!wasDrag) {
-      if (mode === 'fold') apply('medium');
-      else if (mode === 'medium') apply('full');
+      if (mode === 'fold') snapTo('medium');
+      else if (mode === 'medium') snapTo('full');
       return;
     }
     const targets = [['fold', 68], ['medium', Math.round(vh() * .62)], ['full', Math.round(vh() * .92)]];
     let best = targets[0];
     for (const t of targets) if (Math.abs(h - t[1]) < Math.abs(h - best[1])) best = t;
-    apply(best[0]);
+    snapTo(best[0]);
   }
   el.addEventListener('pointerup', endDrag);
   el.addEventListener('pointercancel', endDrag);

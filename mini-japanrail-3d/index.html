@@ -431,25 +431,29 @@ button { font-family:inherit; }
   transition:opacity .22s var(--ease-smooth), backdrop-filter .22s var(--ease-smooth), -webkit-backdrop-filter .22s var(--ease-smooth), visibility 0s linear 0s; }
 #tip .ln { font-weight:700; font-size:12.5px; } #tip .sg { color:var(--dim); font-size:10.5px; }
 /* 列车叠加选择小窗（液态玻璃卡片，样式对齐车辆详情卡） */
-#trPick { position:absolute; z-index:12; min-width:240px; max-width:320px; padding:6px; border-radius:16px;
-  background:var(--panel); border:1px solid var(--glass-edge); box-shadow:inset 0 1px 0 rgba(255,255,255,.2), var(--glass-sh);
-  backdrop-filter:blur(16px) saturate(1.4); -webkit-backdrop-filter:blur(16px) saturate(1.4);
-  opacity:0; visibility:hidden; transform:scale(.96); transform-origin:top left;
-  transition:opacity .16s var(--ease-smooth), transform .16s var(--ease-smooth), visibility 0s linear .16s; }
+#trPick { position:absolute; z-index:12; min-width:250px; max-width:330px; padding:8px; border-radius:19px;
+  background:linear-gradient(160deg, rgba(255,255,255,.16), rgba(255,255,255,.05) 55%, rgba(255,255,255,.02));
+  border:1px solid rgba(255,255,255,.22); border-top-width:1px; border-top-color:rgba(255,255,255,.4);
+  box-shadow:0 10px 30px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.28), inset 0 0 0 1px rgba(255,255,255,.06);
+  backdrop-filter:blur(22px) saturate(1.6); -webkit-backdrop-filter:blur(22px) saturate(1.6);
+  opacity:0; visibility:hidden; transform:scale(.85); transform-origin:top left;
+  transition:opacity .2s var(--ease-smooth), transform .24s var(--ease-spring, var(--ease-smooth)), visibility 0s linear .22s; }
 #trPick.show { opacity:1; visibility:visible; transform:scale(1);
-  transition:opacity .16s var(--ease-smooth), transform .16s var(--ease-smooth), visibility 0s linear 0s; }
-#trPick .tp-hd { display:flex; align-items:center; justify-content:space-between; padding:6px 10px 8px; }
-#trPick .tp-hd .tp-q { font-size:11px; font-weight:700; color:var(--dim); letter-spacing:.3px; }
-#trPick .tp-x { width:26px; height:26px; border-radius:50%; border:0; cursor:pointer; flex:none;
-  background:var(--acc-soft); color:var(--dim); display:flex; align-items:center; justify-content:center; font-size:13px; }
-#trPick .tp-x:hover { color:var(--txt); }
-#trPick .tp-it { display:flex; align-items:center; gap:11px; padding:9px 10px; min-height:56px; border-radius:11px; cursor:pointer; }
+  transition:opacity .2s var(--ease-smooth), transform .26s var(--ease-spring, var(--ease-smooth)), visibility 0s linear 0s; }
+#trPick .tp-hd { display:flex; align-items:center; justify-content:space-between; padding:6px 10px 9px; }
+#trPick .tp-hd .tp-q { font-size:11px; font-weight:700; color:var(--dim); letter-spacing:.4px; }
+#trPick .tp-x { width:28px; height:28px; border-radius:50%; border:0; cursor:pointer; flex:none;
+  background:rgba(127,140,160,.16); color:var(--dim); display:flex; align-items:center; justify-content:center; font-size:15px; line-height:1;
+  transition:background .15s, color .15s; }
+#trPick .tp-x:hover { background:rgba(127,140,160,.28); color:var(--txt); }
+#trPick .tp-it { display:flex; align-items:center; gap:12px; padding:10px 11px; min-height:60px; border-radius:13px; cursor:pointer;
+  transition:background .13s; }
 #trPick .tp-it:hover { background:var(--acc-soft); }
-#trPick .tp-ic { width:34px; height:34px; flex:none; }
-#trPick .tp-ic-fb { display:flex; align-items:center; justify-content:center; border-radius:7px; }
+#trPick .tp-ic { width:36px; height:36px; flex:none; }
+#trPick .tp-ic-fb { display:flex; align-items:center; justify-content:center; border-radius:8px; }
 #trPick .tp-tx { min-width:0; }
-#trPick .tp-t { font-weight:700; font-size:14.5px; color:var(--txt); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-#trPick .tp-s { color:var(--dim); font-size:11.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px; }
+#trPick .tp-t { font-weight:800; font-size:15.5px; color:var(--txt); letter-spacing:.2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#trPick .tp-s { color:var(--dim); font-size:11.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:3px; }
 #trTag { position:absolute; pointer-events:none; z-index:10; max-width:200px; padding:5px 11px; border-radius:10px;
   background:var(--panel); border:1px solid var(--glass-edge); color:var(--txt); font-size:11.5px; font-weight:600; white-space:nowrap;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.2), var(--glass-sh); transform:translate(-50%,-50%);
@@ -3699,6 +3703,10 @@ function showTrPick(list, px, py) {
   if (l + box.width > mc.right - 6) l = px - box.width - 8;
   if (tp + box.height > mc.bottom - 6) tp = py - box.height - 8;
   trPickEl.style.left = Math.max(4, l) + 'px'; trPickEl.style.top = Math.max(4, tp) + 'px';
+  // 以点击点为锚绽开：按贴边后浮窗相对点击点的位置，把 transform-origin 落到靠近点击点的一角
+  const ox = (l < px - box.width / 2) ? 'right' : 'left';
+  const oy = (tp < py - box.height / 2) ? 'bottom' : 'top';
+  trPickEl.style.transformOrigin = ox + ' ' + oy;
   trPickEl.querySelector('.tp-x').onclick = (ev) => { ev.stopPropagation(); trPickEl.classList.remove('show'); };
   trPickEl.querySelectorAll('.tp-it').forEach(it => it.onclick = (ev) => {
     ev.stopPropagation();

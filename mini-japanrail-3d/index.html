@@ -3180,7 +3180,7 @@ async function boot() {
   booting = true;
   const retryBtn = $('lRetry');
   if (retryBtn) retryBtn.style.display = 'none';
-   /* 提前预载图标图集 */
+  loadTrainAtlas(); /* 提前预载图标图集(默认/矢量/可爱 3 套,异步不阻塞主流程;加载遮罩马赛克拼图要用默认图集) */
   try {
     _fileTotal = 8; _fileIdx = 0;
     /* 当日时刻表与 7 个静态数据文件并行下载(含 tokkyu 特急爱称表、names_i18n 多语站名表, 原实现串行) */

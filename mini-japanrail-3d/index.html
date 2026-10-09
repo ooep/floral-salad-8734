@@ -3039,6 +3039,13 @@ function initMap() {
     minZoom: 1.2, maxZoom: 16, maxPitch: 70,
     canvasContextAttributes: { antialias: true, preserveDrawingBuffer: false },
     attributionControl: false,
+    /* 瓦片请求治理(修复底图同 URL 反复请求):
+       1) refreshExpiredTiles:false → 栅格瓦片改走 <img> 加载(默认 true 走 fetch 读取缓存头,
+          但 GSI 不返回 Cache-Control/Expires,反而让同 URL 的重复请求每次都真实走网络);
+       2) transformRequest 对 GSI 瓦片强制 cache:'force-cache' → 同 URL 的重复请求命中浏览器缓存,不再重复下载 */
+    refreshExpiredTiles: false,
+    transformRequest: (url, resourceType) =>
+      (resourceType === 'Tile' && url.includes('gsi.go.jp')) ? { url, cache: 'force-cache' } : { url },
   });
   /* 液态玻璃改版:移除左下角缩放/指南针 NavigationControl 与比例尺(原比例尺容器被隐藏从未显示),缩放改由滚轮/双指手势完成,底部四角留给 Dock */
   let stateSaveT = 0;
@@ -3216,6 +3223,8 @@ function startLoop() {
       const sp = map.project([p[0], p[1]]);
       const cwpx = map.getCanvas().clientWidth || 1, chpx = map.getCanvas().clientHeight || 1;
       const ddx = sp.x - cwpx / 2, ddy = sp.y - chpx / 2;
+      if (ddx * ddx + ddy * ddy <= 4) return; /* 已锁定在中心 ±2px:跳过 jumpTo —— 避免每帧 move 事件驱动瓦片管线空转,
+                                                 视口边缘瓦片反复进出覆盖集合并被 abort/重下(同 URL 刷请求的根源) */
       if (ddx * ddx + ddy * ddy <= 36) { /* ≤6px 屏幕:正常行驶范围,直接对准 */
         map.jumpTo({ center: [p[0], p[1]] });
       } else { /* 偶发大跳变:指数缓动平滑过渡(时间常数 τ≈0.12s) */

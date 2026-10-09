@@ -455,6 +455,15 @@ button { font-family:inherit; }
   100% { transform:scale(1); opacity:1; filter:none; } }
 #loader .lt { font-size:14px; font-weight:700; letter-spacing:.5px; }
 #loader .lb { font-size:11px; color:var(--dim); }
+/* 加载轨道:虚线轨道 + 迷你列车沿进度行驶(与进度条联动) */
+#loader .ltrack { position:relative; width:min(280px,62vw); height:20px; display:flex; align-items:center; }
+#loader .ltrack-line { position:absolute; left:10px; right:10px; height:3px; border-radius:2px;
+  background:repeating-linear-gradient(90deg, rgba(120,140,180,.38) 0 7px, transparent 7px 13px);
+  box-shadow:0 1px 0 rgba(255,255,255,.06) inset; }
+#loader .ltrain { position:absolute; left:0; top:50%; margin-left:-9px; margin-top:-11px; color:var(--acc);
+  transform:translateX(0); transition:left .3s ease; filter:drop-shadow(0 2px 5px rgba(0,0,0,.35)); z-index:1;
+  animation:lBob 1.4s ease-in-out infinite; }
+@keyframes lBob { 0%,100%{ margin-top:-11px; } 50%{ margin-top:-13px; } }
 #loader .lpd { display:flex; align-items:center; gap:10px; font-size:10.5px; color:var(--dim); }
 #loader .lpd b { color:var(--acc-txt,var(--acc)); font-variant-numeric:tabular-nums; }
 #lRetry { display:none; min-height:38px; padding:0 22px; border:1px solid var(--acc-border); border-radius:var(--r-pill); background:var(--acc-soft); color:var(--txt); font-size:12.5px; font-weight:600; cursor:pointer; align-items:center; gap:6px; transition:background .12s,color .12s; }
@@ -854,6 +863,7 @@ button { font-family:inherit; }
     <div id="lmosaic"><div class="lmq"></div><div class="lmq"></div><div class="lmq"></div><div class="lmq"></div></div>
   </div>
   <div class="lt" id="lTitle">Mini JapanRail 3D</div>
+  <div class="ltrack" id="lTrack"><svg class="ltrain" id="ltrain" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15h16M5 15l1.5-6A2 2 0 0 1 8.4 7.5h7.2a2 2 0 0 1 1.9 1.5L19 15M7 18.5h.01M17 18.5h.01"/><circle cx="8" cy="18.5" r="1.3" fill="currentColor" stroke="none"/><circle cx="16" cy="18.5" r="1.3" fill="currentColor" stroke="none"/></svg><div class="ltrack-line"></div></div>
   <div id="lbar"><div id="lbarF"></div></div>
   <div class="lpd"><span id="lMsg">准备中…</span><b id="lPct">0%</b></div>
   <button id="lRetry"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66M20 4v4h-4"/></svg> 重试</button>
@@ -1151,7 +1161,9 @@ const lgi = $('lgi'), lmos = $('lmosaic');
 const LMQ = lmos ? [0, 1, 2, 3].map(i => lmos.children[i]) : [];
 let lmTim = null, lmCur = [-1, -1, -1, -1], lmPool = null;
 function lmQuadrant(cellIdx, corner, S) {
-  const cw = ATLAS.cell[0], ch = ATLAS.cell[1], cols = ATLAS.cols;
+  const D = ATLAS_SETS.default.json; /* 加载拼图固定用默认图集(马赛克视觉统一) */
+  if (!D) return '';
+  const cw = D.cell[0], ch = D.cell[1], cols = D.cols;
   const sx = (cellIdx % cols) * cw + (corner & 1) * (cw / 2);
   const sy = ((cellIdx / cols) | 0) * ch + ((corner >> 1) & 1) * (ch / 2);
   const size = S || 64, cv = document.createElement('canvas');
@@ -1160,14 +1172,16 @@ function lmQuadrant(cellIdx, corner, S) {
   g.imageSmoothingEnabled = false;                       /* 像素风保持锐利 */
   const k = size / (cw / 2);                             /* 按宽 cover:高度方向居中裁掉多余 */
   const dw = (cw / 2) * k, dh = (ch / 2) * k;
-  g.drawImage(ATLAS_IMG, sx, sy, cw / 2, ch / 2, (size - dw) / 2, (size - dh) / 2, dw, dh);
+  g.drawImage(ATLAS_SETS.default.img, sx, sy, cw / 2, ch / 2, (size - dw) / 2, (size - dh) / 2, dw, dh);
   return cv.toDataURL();
 }
 function lmPick() {
   if (!lmPool) {
+    const D = ATLAS_SETS.default.json;
+    if (!D) return 0;
     const s = new Set();
-    for (const k in ATLAS.line) s.add(ATLAS.line[k]);
-    for (const k in ATLAS.tokkyu) s.add(ATLAS.tokkyu[k]);
+    for (const k in D.line) s.add(D.line[k]);
+    for (const k in D.tokkyu) s.add(D.tokkyu[k]);
     lmPool = [...s];
   }
   return lmPool[(Math.random() * lmPool.length) | 0];
@@ -1178,8 +1192,10 @@ function lmSet(i, cellIdx) {
   LMQ[i].classList.remove('swap'); void LMQ[i].offsetWidth; LMQ[i].classList.add('swap');
 }
 function lmStart() {
-  if (!(ATLAS && ATLAS_IMG) || !lgi) return;
+  const D = ATLAS_SETS.default;
+  if (!(D.json && D.img) || !lgi) return;
   lgi.classList.add('atlas');
+  lmStarted = true;
   if (lmTim) return;
   for (let i = 0; i < 4; i++) lmSet(i, lmPick());
   lmTim = setInterval(() => {
@@ -1197,7 +1213,8 @@ const DATA_VERSION = '2026-10-08a';
 const loadSizes = { 'data/segments3d.geojson': 9054890, 'data/stations3d.geojson': 1422796, 'data/tmaps.json': 3158412, 'data/station_map.json': 11006682, 'data/tokkyu.json': 59100, 'data/names_i18n.json': 483000, 'data/trains_wd.json': 13494947, 'data/trains_sa.json': 12228166, 'data/trains_su.json': 12284312 };
 let _fileTotal = 8, _fileIdx = 0;
 function nextFileIdx() { return _fileIdx++; }
-function setPct(p) { const pc = Math.min(100, p); lbarF.style.width = pc + '%'; lPctEl.textContent = Math.round(pc) + '%'; lbarF.classList.toggle('done', pc >= 100); }
+function setPct(p) { const pc = Math.min(100, p); lbarF.style.width = pc + '%'; lPctEl.textContent = Math.round(pc) + '%'; lbarF.classList.toggle('done', pc >= 100);
+  const tr = $('ltrain'); if (tr) tr.style.left = pc + '%'; } /* 加载轨道列车随进度行驶 */
 function setLoadMsg(s) { loaderMsg.textContent = s; }
 function setPhase(lo, hi, f) { setPct(lo + (hi - lo) * Math.max(0, Math.min(1, f))); }
 function updateBar(fileIdx, got, size) {
@@ -2726,10 +2743,10 @@ void main() {
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     gl.disable(gl.DEPTH_TEST);
     gl.depthMask(false);
-    // 图标模式:首次就绪时上传图集纹理;每帧绑定 + 设置 atlas uniforms
-    if (ATLAS_READY && !atlasTex && ATLAS_IMG) {
-      atlasTex = gl.createTexture();
-      gl.bindTexture(gl.TEXTURE_2D, atlasTex);
+    // 图标模式:首次就绪时上传当前图集纹理;每帧绑定 + 设置 atlas uniforms
+    if (ATLAS_READY && !ATLAS.tex && ATLAS_IMG) {
+      ATLAS.tex = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, ATLAS.tex);
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, ATLAS_IMG);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
@@ -2737,9 +2754,9 @@ void main() {
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
       gl.bindTexture(gl.TEXTURE_2D, null);
     }
-    if (ATLAS && atlasTex) {
+    if (ATLAS && ATLAS.tex) {
       gl.activeTexture(gl.TEXTURE0);
-      gl.bindTexture(gl.TEXTURE_2D, atlasTex);
+      gl.bindTexture(gl.TEXTURE_2D, ATLAS.tex);
       gl.uniform1i(U.u_atlas, 0);
       gl.uniform2f(U.u_atlasSize, ATLAS.size[0], ATLAS.size[1]);
       gl.uniform2f(U.u_cell, ATLAS.cell[0], ATLAS.cell[1]);
@@ -2763,16 +2780,39 @@ function hexToRgb(hex) {
 }
 let trainSizeMul = 1;
 /* ---- 列车显示模式(3D 立体盒 / 图标贴图) ---- */
-let trainMode = localStorage.getItem('mjr3d_trainmode') || '3d';
-let ATLAS = null, ATLAS_IMG = null, ATLAS_READY = false, atlasTex = null;
+let trainMode = localStorage.getItem('mjr3d_trainmode') || '3d'; /* '3d' | 'icon' | 'cute' */
+let iconSet = localStorage.getItem('mjr3d_iconset') || 'default'; /* 图标模式图集: 'default' | 'vector' */
+/* 图集表: default=现有多用途图集 / vector=AI矢量重绘(黑描边) / cute=可爱风(kasu,未覆盖键回退默认图) */
+const ATLAS_SETS = {
+  default: { file: 'data/train_icons_atlas.json', png: 'data/train_icons_atlas.png', json: null, img: null, ready: false },
+  vector:  { file: 'data/train_icons_atlas_vec.json', png: 'data/train_icons_atlas_vec.png', json: null, img: null, ready: false },
+  cute:    { file: 'data/train_icons_atlas_cute.json', png: 'data/train_icons_atlas_cute.png', json: null, img: null, ready: false },
+};
+let ATLAS = null, ATLAS_IMG = null, ATLAS_READY = false; /* 当前生效图集(引用 ATLAS_SETS 内 json 对象) */
+let ATLAS_KEY = 'default'; /* 当前图集 key(iconStyle 详情图标取对应 png) */
+function activeAtlasKey() { return trainMode === 'cute' ? 'cute' : (trainMode === 'icon' ? (ATLAS_SETS[iconSet] ? iconSet : 'default') : 'default'); }
+function switchAtlas(key) {
+  const s = ATLAS_SETS[key] || ATLAS_SETS.default;
+  ATLAS_KEY = key; ATLAS = s.json; ATLAS_IMG = s.img; ATLAS_READY = s.ready;
+}
+let lmStarted = false;
 function loadTrainAtlas() {
-  fetch('data/train_icons_atlas.json').then(r => r.ok ? r.json() : null).then(j => {
-    if (!j) return;
-    ATLAS = j;
-    const im = new Image();
-    im.onload = () => { ATLAS_IMG = im; ATLAS_READY = true; lmStart(); };  /* 图集就绪即启动加载拼图 */
-    im.src = 'data/train_icons_atlas.png';
-  }).catch(() => {});
+  /* 并行预载 3 套图集(异步不阻塞主流程);默认图集就绪即启动加载拼图 */
+  for (const key in ATLAS_SETS) {
+    (key => {
+      const s = ATLAS_SETS[key];
+      fetch(s.file).then(r => r.ok ? r.json() : null).then(j => {
+        if (!j) return;
+        const im = new Image();
+        im.onload = () => {
+          s.json = j; s.img = im; s.ready = true;
+          if (key === activeAtlasKey()) switchAtlas(key);
+          if (key === 'default' && !lmStarted) lmStart(); /* 加载拼图用默认图集 */
+        };
+        im.src = s.png;
+      }).catch(() => {});
+    })(key);
+  }
 }
 const visibleTrips = [], visibleXY = new Float32Array(MAXT * 2);
 let lastQuad = [1, 1]; /* 图标模式方块屏幕尺寸(L,W),shader UV 归一化用 */
@@ -2820,7 +2860,7 @@ function updateTrains(M) {
   else if (z < 12) { const f = (z - 8) / 4; L = 11.6 + f * 9; W = 4.8 + f * 3; }
   else { const f = Math.min(1, (z - 12) / 3); L = 20.6 + f * 22; W = 7.8 + f * 7; }
   L *= trainSizeMul; W *= trainSizeMul;
-  const iconMode = trainMode === 'icon' && ATLAS_READY && !!ATLAS;
+  const iconMode = trainMode !== '3d' && ATLAS_READY && !!ATLAS; /* 'icon' / 'cute' 均为贴图模式 */
   if (iconMode) W = L * (ATLAS.img[0] / ATLAS.img[1]); // 图标模式:贴图纵横比 40:48(行驶方向=L 对应图高向),不做立体盒
   lastQuad[0] = L; lastQuad[1] = W; /* 供 shader 把带尺寸的 a_corner 除回归一化 UV */
   const glowOn = $('swTrail').classList.contains('on') && !glowAutoOff;
@@ -3603,7 +3643,8 @@ function iconStyle(icIdx) {
   if (icIdx < 0 || !ATLAS) return '';
   const sc = 0.75; /* 30px 盒 / 40px 图 */
   const col = icIdx % ATLAS.cols, row = Math.floor(icIdx / ATLAS.cols);
-  return 'background-image:url(data/train_icons_atlas.png);background-size:' + (ATLAS.size[0] * sc) + 'px ' + (ATLAS.size[1] * sc) + 'px;' +
+  const png = ATLAS_KEY === 'cute' ? 'data/train_icons_atlas_cute.png' : (ATLAS_KEY === 'vector' ? 'data/train_icons_atlas_vec.png' : 'data/train_icons_atlas.png');
+  return 'background-image:url(' + png + ');background-size:' + (ATLAS.size[0] * sc) + 'px ' + (ATLAS.size[1] * sc) + 'px;' +
     'background-position:-' + ((col * ATLAS.cell[0] + 2) * sc) + 'px -' + ((row * ATLAS.cell[1] + 2) * sc) + 'px;';
 }
 function updateDetailLive(t, p, M, rebuild) {
@@ -4242,15 +4283,34 @@ $('swTip').addEventListener('click', function () {
   localStorage.setItem('mjr3d_tip', tipEnabled ? '1' : '0');
   if (!tipEnabled) tipEl.classList.remove('show');
 });
-/* 列车显示模式(3D/图标)切换 */
+/* 列车显示模式(3D/图标/可爱)切换 + 图标集选择 */
+function syncIconSetRow() {
+  /* 图标集选择仅对"图标"模式生效;3D/可爱模式隐藏该行 */
+  const row = $('iconSetRow');
+  if (row) row.style.display = trainMode === 'icon' ? '' : 'none';
+  const h = $('tIconSet');
+  if (h) h.style.display = trainMode === 'icon' ? '' : 'none';
+}
 document.querySelectorAll('#trainModeRow .chip').forEach(c => {
   c.classList.toggle('on', c.dataset.mode === trainMode);
   c.addEventListener('click', () => {
     trainMode = c.dataset.mode;
     localStorage.setItem('mjr3d_trainmode', trainMode);
     document.querySelectorAll('#trainModeRow .chip').forEach(x => x.classList.toggle('on', x === c));
+    switchAtlas(activeAtlasKey()); /* 切换生效图集(可爱=可爱图集;图标=所选图标集;3D=默认) */
+    syncIconSetRow();
   });
-});/* 异常(游离)车辆检测 + 一键复制 */
+});
+document.querySelectorAll('#iconSetRow .chip').forEach(c => {
+  c.classList.toggle('on', c.dataset.set === iconSet);
+  c.addEventListener('click', () => {
+    iconSet = c.dataset.set;
+    localStorage.setItem('mjr3d_iconset', iconSet);
+    document.querySelectorAll('#iconSetRow .chip').forEach(x => x.classList.toggle('on', x === c));
+    switchAtlas(activeAtlasKey());
+  });
+});
+syncIconSetRow();/* 异常(游离)车辆检测 + 一键复制 */
 const OFF_RAIL_KM = 3;
 function distToRail(c) {
   const gx = Math.floor(c[0] / GRID), gy = Math.floor(c[1] / GRID);

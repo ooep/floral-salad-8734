@@ -238,6 +238,7 @@ button { font-family:inherit; }
 .sug-it .k { color:var(--dim); font-size:10px; align-self:center; flex:none; }
 .sug-it .langk { font-size:8.5px; font-weight:700; letter-spacing:.4px; padding:1px 5px; border-radius:5px; background:var(--acc-soft); color:var(--acc-txt,var(--acc)); flex:none; }
 .sug-it .hl { color:var(--acc-txt,var(--acc)); font-weight:700; }
+.sug-it .sug-dot { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:7px; vertical-align:middle; flex:none; }
 .sug-grp { padding:6px 12px 3px; font-size:10px; font-weight:700; letter-spacing:.6px; color:var(--dim); text-transform:uppercase; }
 .sug-empty { padding:10px 12px; font-size:12px; color:var(--dim); }
 .sug-empty .sug-q { color:var(--txt); }
@@ -4713,7 +4714,8 @@ function runSearch(q) {
     const l = m.item, f = m.field, disp = dispNameFor(m);
     const sub = (f !== 'n' && l.n !== disp) ? '<span class="k">' + esc(l.n) + '</span>' : '';
     const tag = langTag[f] ? '<span class="k langk">' + langTag[f] + '</span>' : '';
-    return '<div class="sug-it" data-type="ln" data-name="' + esc(l.n) + '"><span>' + ICO.train.replace('width="16"', 'width="12"').replace('height="16"', 'height="12"') + ' ' + hlName(disp, q) + '</span>' + sub + tag + '</div>';
+    const lcol = lineColor.get(l.n) || '#4f8ef7';
+    return '<div class="sug-it" data-type="ln" data-name="' + esc(l.n) + '"><span><i class="sug-dot" style="background:' + esc(lcol) + '"></i>' + hlName(disp, q) + '</span>' + sub + tag + '</div>';
   }).join(''));
   sugEl.innerHTML = htmlParts.join('');
   sugEl.style.display = 'block';

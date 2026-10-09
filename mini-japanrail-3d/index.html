@@ -1267,7 +1267,7 @@ const loadSizes = { 'data/segments3d.geojson': 9054890, 'data/stations3d.geojson
 let _fileTotal = 8, _fileIdx = 0;
 function nextFileIdx() { return _fileIdx++; }
 function setPct(p) { const pc = Math.min(100, p); lPctEl.textContent = Math.round(pc) + '%';
-  const tr = $('ltrain'); if (tr) tr.style.left = pc + '%'; } /* 方盒列车随进度行驶,到最右=加载完成 */
+  const tr = $('ltrain'); if (tr) tr.style.setProperty('--p', pc); } /* 方盒列车随进度行驶:0%左端并线路左端,100%右端并线路右端 */
 function setLoadMsg(s) { loaderMsg.textContent = s; }
 function setPhase(lo, hi, f) { setPct(lo + (hi - lo) * Math.max(0, Math.min(1, f))); }
 function updateBar(fileIdx, got, size) {

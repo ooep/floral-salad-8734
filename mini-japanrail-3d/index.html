@@ -357,7 +357,7 @@ button { font-family:inherit; }
   backdrop-filter:var(--glass-panel-blur); -webkit-backdrop-filter:var(--glass-panel-blur);
   transition:opacity .26s var(--ease-smooth), backdrop-filter .26s var(--ease-smooth), -webkit-backdrop-filter .26s var(--ease-smooth), transform .34s var(--ease-spring), visibility 0s linear 0s; }
 #detail.following { border-color:var(--acc-border); box-shadow:inset 0 1px 0 var(--glass-hi), inset 0 -1px 1px var(--glass-lo), 0 0 0 1px var(--acc-soft) inset, 0 4px 16px var(--shadow); }
-#detail .d-h { display:flex; align-items:center; gap:10px; }
+#detail .d-h { display:flex; align-items:center; gap:10px; touch-action:none; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
 #detail .d-ic { width:36px; height:36px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; flex:none; min-width:36px; max-width:68px; padding:0 5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.2), 0 1px 4px var(--glass-lo); }
 #detail .d-ic-img { width:30px; height:36px; min-width:30px; max-width:30px; padding:0; background-repeat:no-repeat; }
@@ -574,10 +574,9 @@ button { font-family:inherit; }
   #detail.fold .d-h { width:100%; }
   #detail.fold .d-meta, #detail.fold .d-sep, #detail.fold .d-stops, #detail.fold .d-act { display:none; }
   #detail.medium { height:62vh; }
-  #detail.medium .d-act { display:none; }
-  #detail.medium .st-list { max-height:calc(62vh - 300px); }
-  #detail.full { height:92vh; }
-  #detail.full .st-list { max-height:min(264px, calc(92vh - 330px)); }
+  #detail.medium .st-list { max-height:calc(62vh - 335px); }
+  #detail.full { height:92vh; height:min(92vh, calc(100dvh - 20px)); }
+  #detail.full .st-list { max-height:min(264px, calc(92vh - 345px)); }
   #detail.dragging { transition:none; }
   .foot { display:none; }
   /* 表单元素 ≥16px 防止 iOS 聚焦自动缩放 */
@@ -760,6 +759,12 @@ button { font-family:inherit; }
         <div class="frow" id="trainModeRow">
           <button class="chip on" data-mode="3d" id="tMode3d">3D</button>
           <button class="chip" data-mode="icon" id="tModeIcon">图标</button>
+          <button class="chip" data-mode="cute" id="tModeCute">可爱</button>
+        </div>
+        <div class="sec-t" id="tIconSet" style="margin-top:12px">图标集</div>
+        <div class="frow" id="iconSetRow">
+          <button class="chip on" data-set="default"><span id="iSetDefault">默认</span></button>
+          <button class="chip" data-set="vector"><span id="iSetVector">矢量</span></button>
         </div>
         <div class="sec-t" id="tTheme" style="margin-top:10px">主题</div>
         <div class="frow" id="themeRow">
@@ -999,7 +1004,8 @@ const I18N = {
     tabRoute:'路线', aSearchPh:'搜索车站 / 线路…', badgeLive:'在途', badgeToday:'今日', noMatch:'无匹配结果',
     filterT:'线路类型', legendT:'图例', dayT:'运行日', dayAuto:'自动', setT:'设置', dataT:'数据', helpT:'帮助',
     sw1:'车站标签', sw2:'轨道光晕', sw3:'车站点', sw4:'底图瓦片', sw5:'列车光晕', sw6:'复制异常车辆', sw7:'列车悬浮提示',
-    modeT:'列车显示', mode3d:'3D', modeIcon:'图标',
+    modeT:'列车显示', mode3d:'3D', modeIcon:'图标', modeCute:'可爱',
+    iconSetT:'图标集', iSetDefault:'默认', iSetVector:'矢量', iconSetNote:'仅"图标"模式生效',
     baseT:'底图源', bPale:'淡色', bStd:'标准', bDark:'深色', bSat:'卫星',
     d1:'在途列车', d2:'今日班次', d3:'运行日', d4:'线路 / 车站', d5:'时刻表构建', d6:'帧率',
     now:'回到现在', station:'车站', line:'线路', stops:'站', transfers:'换乘', routeMile:'里程', routeNone:'未找到连通路径(请检查站名)',
@@ -1020,7 +1026,8 @@ const I18N = {
     tabRoute:'路線', aSearchPh:'駅 / 路線を検索…', badgeLive:'走行中', badgeToday:'本日', noMatch:'該当なし',
     filterT:'路線種別', legendT:'凡例', dayT:'運行日', dayAuto:'自動', setT:'設定', dataT:'データ', helpT:'ヘルプ',
     sw1:'駅ラベル', sw2:'軌道グロー', sw3:'駅ドット', sw4:'背景タイル', sw5:'列車グロー', sw6:'異常列車コピー', sw7:'列車ホバーチップ',
-    modeT:'列車表示', mode3d:'3D', modeIcon:'アイコン',
+    modeT:'列車表示', mode3d:'3D', modeIcon:'アイコン', modeCute:'かわいい',
+    iconSetT:'アイコンセット', iSetDefault:'標準', iSetVector:'ベクター', iconSetNote:'「アイコン」モードのみ有効',
     baseT:'ベースマップ', bPale:'淡色', bStd:'標準', bDark:'ダーク', bSat:'衛星',
     d1:'運行中列車', d2:'本日列車', d3:'運行日', d4:'路線 / 駅', d5:'時刻表構築', d6:'フレーム率',
     now:'現在に戻る', station:'駅', line:'路線', stops:'駅', transfers:'乗換', routeMile:'距離', routeNone:'連絡経路なし(駅名確認)',
@@ -1041,7 +1048,8 @@ const I18N = {
     tabRoute:'Route', aSearchPh:'Search station / line…', badgeLive:'Live', badgeToday:'Today', noMatch:'No matches',
     filterT:'Line types', legendT:'Legend', dayT:'Service day', dayAuto:'Auto', setT:'Settings', dataT:'Data', helpT:'Help',
     sw1:'Station labels', sw2:'Track glow', sw3:'Station dots', sw4:'Basemap tiles', sw5:'Train glow', sw6:'Copy off-rail trains', sw7:'Train hover tooltip',
-    modeT:'Train display', mode3d:'3D', modeIcon:'Icon',
+    modeT:'Train display', mode3d:'3D', modeIcon:'Icon', modeCute:'Cute',
+    iconSetT:'Icon set', iSetDefault:'Default', iSetVector:'Vector', iconSetNote:'Applies to "Icon" mode only',
     baseT:'Basemap', bPale:'Pale', bStd:'Standard', bDark:'Dark', bSat:'Satellite',
     d1:'Active trains', d2:'Trips today', d3:'Service day', d4:'Lines / Stations', d5:'Timetable built', d6:'FPS',
     now:'Now', station:'Station', line:'Line', stops:'stops', transfers:'transfers', routeMile:'Distance', routeNone:'No connected route (check names)',
@@ -3479,6 +3487,7 @@ function closeDetail() {
   });
   el.addEventListener('pointermove', e => {
     if (!drag) return;
+    if (e.cancelable) e.preventDefault();   /* 配合 touch-action:none,拖拽期间禁止页面随手指滚动 */
     const dy = e.clientY - drag.y;
     if (Math.abs(dy) > 8) drag.moved = true;
     if (!drag.moved) return;
@@ -3491,7 +3500,13 @@ function closeDetail() {
     const h = el.offsetHeight;
     drag = null;
     el.classList.remove('dragging');
-    if (!wasDrag) { apply(mode === 'fold' ? 'medium' : 'fold'); return; }
+    /* 点击头部:只向更展开的档位递进(fold→medium→full),绝不收起、绝不关闭——
+       收起只靠向下拖拽;杜绝"点一下窗口缩成胶囊,再点同一位置落在窗口外误触地图关闭" */
+    if (!wasDrag) {
+      if (mode === 'fold') apply('medium');
+      else if (mode === 'medium') apply('full');
+      return;
+    }
     const targets = [['fold', 68], ['medium', Math.round(vh() * .62)], ['full', Math.round(vh() * .92)]];
     let best = targets[0];
     for (const t of targets) if (Math.abs(h - t[1]) < Math.abs(h - best[1])) best = t;
@@ -4437,7 +4452,10 @@ function applyLang() {
   $('rFrom').placeholder = t.routeFrom; $('rTo').placeholder = t.routeTo;
   $('dayAuto').textContent = t.dayAuto;
   $('tSw1').textContent = t.sw1; $('tSw2').textContent = t.sw2; $('tSw3').textContent = t.sw3; $('tSw4').textContent = t.sw4; $('tSw5').textContent = t.sw5; $('tSw6').textContent = t.sw6; $('tSw7').textContent = t.sw7;
-  $('tMode').textContent = t.modeT; $('tMode3d').textContent = t.mode3d; $('tModeIcon').textContent = t.modeIcon;
+  $('tMode').textContent = t.modeT; $('tMode3d').textContent = t.mode3d; $('tModeIcon').textContent = t.modeIcon; if ($('tModeCute')) $('tModeCute').textContent = t.modeCute;
+  if ($('tIconSet')) $('tIconSet').textContent = t.iconSetT;
+  if ($('iSetDefault')) $('iSetDefault').textContent = t.iSetDefault;
+  if ($('iSetVector')) $('iSetVector').textContent = t.iSetVector;
   $('tBase').textContent = t.baseT;
   $('bPale').textContent = t.bPale; $('bStd').textContent = t.bStd; $('bDark').textContent = t.bDark; $('bSat').textContent = t.bSat;
   $('tD4').textContent = t.d4; $('tD5').textContent = t.d5; $('tD6').textContent = t.d6;

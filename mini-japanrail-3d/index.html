@@ -3304,12 +3304,12 @@ function addMapLayers() {
       'line-color': ['get', 'color'], 'line-width': 1.1, 'line-opacity': 0.85 } });
     if (typeof fpVisible === 'function') fpVisible(fpEnabled);
   }
-  /* ── 出入口层:重绘的橙色方框箭头图标(原创), zoom>=13 才显示,避免低缩放密集 ── */
+  /* ── 出入口层:重绘的橙色方框箭头图标(原创), zoom>=16(画面只剩车站)才显示 ── */
   if (entrancesFC && !map.getSource('ent')) {
     map.addSource('ent', { type: 'geojson', data: entrancesFC });
     const addEntLayer = function () {
       if (map.getLayer('ent')) return;
-      map.addLayer({ id: 'ent', type: 'symbol', source: 'ent', minzoom: 13, layout: {
+      map.addLayer({ id: 'ent', type: 'symbol', source: 'ent', minzoom: 16, layout: {
         'icon-image': 'exit-sign', 'icon-size': 0.32, 'icon-allow-overlap': false, 'icon-anchor': 'center' } });
     };
     if (map.hasImage('exit-sign')) { addEntLayer(); }

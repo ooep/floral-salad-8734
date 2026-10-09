@@ -504,7 +504,7 @@ button { font-family:inherit; }
 .maplibregl-ctrl-attrib { background:color-mix(in srgb,var(--panel) 65%,transparent)!important; backdrop-filter:blur(8px); color:var(--dim)!important; font-size:8.5px!important; padding:2px 7px!important; border-radius:8px 0 0 0!important; }
 .maplibregl-ctrl-attrib a { color:var(--dim)!important; }
 
-@media (max-width:640px) {
+@media (max-width:2000px) {
   :root { --dock:46px; }
   /* 顶部 HUD:隐藏标题文字,保留在途/今日统计 */
   #topHud { top:8px; }
@@ -3511,7 +3511,7 @@ function closeDetail() {
 (function () {
   const el = document.getElementById('detail');
   if (!el) return;
-  const MQ = window.matchMedia ? matchMedia('(max-width:640px)') : null;
+  const MQ = window.matchMedia ? matchMedia('(max-width:2000px)') : null;
   const KEY = 'mjr3d_dh';
   const vh = () => Math.max(320, window.innerHeight || 640);
   const hOf = m => m === 'fold' ? 68 : m === 'medium' ? Math.round(vh() * .62) : Math.round(vh() * .92);
@@ -3544,8 +3544,9 @@ function closeDetail() {
   }
   apply(mode);
   /* 保险:真实触摸在 pointerup 后浏览器会合成 click 并向上冒泡,
-     隔离窗口内的 click,防止任何地图/全局空白点击逻辑误关闭窗口 */
-  el.addEventListener('click', e => { e.stopPropagation(); }, true);
+     在冒泡阶段拦截窗口内的 click(按钮等目标监听器已先触发),
+     防止冒泡到地图/全局空白点击逻辑误关闭窗口 */
+  el.addEventListener('click', e => { e.stopPropagation(); });
   let drag = null;
   el.addEventListener('pointerdown', e => {
     if (MQ && !MQ.matches) return;
@@ -4414,8 +4415,8 @@ function syncSideBtn() { $('btnSide').innerHTML = sideEl.classList.contains('col
   /* 所有动画自然落定后摘掉 morphing,让纯 CSS 接管终态(关键帧末值与 CSS 终值一致,无跳变) */
   function settle(after) {
     Promise.all(anims.map(a => a.finished.catch(() => {}))).then(() => {
-      cancelAll(); sideEl.classList.remove('morphing');
       if (after) after();
+      cancelAll(); sideEl.classList.remove('morphing');
     });
   }
   /* 锚点:水平方向对准菜单按钮中心,垂直方向取面板底边 —— 面板从按钮那一侧长出来。

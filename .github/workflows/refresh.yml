@@ -100,10 +100,15 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-      - name: Deploy to Cloudflare Pages
+      - name: Deploy Mini JapanRail 3D frontend to Cloudflare Pages
         if: ${{ env.CF_API_TOKEN != '' }}
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
         run: |
-          npx wrangler@4 pages deploy dist --project-name floral-salad-8734 --branch main --commit-dirty=true
+          # 只部署前端(index.html + data + logos),不含 .github 与 scripts(Python 构建脚本)
+          rm -rf cf-mj3d && mkdir -p cf-mj3d
+          cp mini-japanrail-3d/index.html cf-mj3d/
+          cp -r mini-japanrail-3d/data cf-mj3d/
+          cp -r mini-japanrail-3d/logos cf-mj3d/
+          npx wrangler@4 pages deploy cf-mj3d --project-name mini-japanrail-3d --branch main --commit-dirty=true

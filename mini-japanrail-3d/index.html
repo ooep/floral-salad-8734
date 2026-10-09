@@ -2880,8 +2880,10 @@ function updateTrains(M) {
      城市级缩放(首都圈/大阪)时视野外列车占 90%+,裁剪后 CPU 计算与 GPU 上传大幅下降 */
   let vp = null;
   if (z >= 5) {
-    /* 视口缓冲随缩放递减:z=7 时 ±0.03(≈1000km),z=10 ±0.0038(≈130km),z=13 ±0.0005(≈16km) */
-    const vm = Math.min(0.03, 0.03 * Math.pow(2, 7 - z));
+    /* 视口缓冲随缩放递减:z=7 时 ±0.03(≈1000km),z=10 ±0.0038(≈130km),z=13 ±0.0005(≈16km);
+       下限 0.0007(≈78km) 与班次包围盒固定缓冲同量级:高 zoom(z≥14)时缓冲若过小,
+       列车实际几何相对停站包络的偏差会把整班次"裁"出视野(放大到具体位置线路上没车) */
+    const vm = Math.max(0.0007, Math.min(0.03, 0.03 * Math.pow(2, 7 - z)));
     const b = map.getBounds();
     const w = b.getWest(), e = b.getEast(), s = b.getSouth(), n = b.getNorth();
     /* 注意 mercator Y 随纬度增大而减小:北边界 my 更小,南边界 my 更大 */

@@ -725,9 +725,16 @@ button { font-family:inherit; }
 .dots { list-style:none; margin:0; }
 .dots li { font-size:12.5px; color:var(--dim); line-height:1.5; padding:5.5px 0 5.5px 14px; position:relative; }
 .dots li::before { content:""; position:absolute; left:2px; top:12px; width:5px; height:5px; border-radius:50%; background:var(--dim); opacity:.6; }
-.info-src { font-size:11px; color:var(--dim); text-align:center; margin-top:22px; padding-top:12px; border-top:1px solid var(--glass-edge); display:flex; align-items:center; justify-content:center; gap:6px; }
-.info-src .dot-live { width:6px; height:6px; border-radius:50%; background:#3ecf6e; }
-.info-src .dot-fallback { width:6px; height:6px; border-radius:50%; background:#d9a03a; }
+.info-src { font-size:11px; color:var(--dim); text-align:center; margin-top:22px; padding-top:12px; border-top:1px solid var(--glass-edge); }
+
+/* ===== 信息 tab 显示健壮性加固：flex 子项 min-width:0 + 长文本断行，杜绝横向溢出/错位 ===== */
+#panelInfo { overflow-x:hidden; }
+#panelInfo .info-row, #panelInfo .tl li, #panelInfo .nb { min-width:0; }
+#panelInfo .nb { flex-wrap:wrap; }
+#panelInfo .info-row .v, #panelInfo .tl li > span:last-child, #panelInfo .nb > span:not(.t) { min-width:0; }
+#panelInfo .sec-p, #panelInfo .info-row .v, #panelInfo .tl li > span, #panelInfo .nb > span, #panelInfo .dots li { overflow-wrap:anywhere; word-break:break-word; }
+#panelInfo .nb .t { flex:0 1 auto; min-width:0; max-width:100%; overflow-wrap:anywhere; word-break:break-word; }
+#panelInfo .tl li .y { flex:none; }
 </style>
 </head>
 <body>
@@ -4256,7 +4263,7 @@ function _renderInfoObject(box, o) {
     o.around.forEach(a => { html += '<li>' + _escTxt(a) + '</li>'; });
     html += '</ul></div>';
   }
-  html += '<div class="info-src"><span class="dot-live"></span><span>数据来源：eki-wiki（ooep/eki-wiki）· 维基百科 · 实时拉取</span></div>';
+  html += '<div class="info-src">数据来源：eki-wiki</div>';
   box.innerHTML = html;
 }
 

@@ -573,7 +573,7 @@ button { font-family:inherit; }
   #detail.fold { display:flex; align-items:center; }
   #detail.fold .d-h { width:100%; }
   #detail.fold .d-meta, #detail.fold .d-sep, #detail.fold .d-stops, #detail.fold .d-act { display:none; }
-  #detail.medium { height:62vh; }
+  #detail.medium { height:62vh; height:min(62vh, calc(100dvh - 20px)); }
   #detail.medium .st-list { max-height:calc(62vh - 335px); }
   #detail.full { height:92vh; height:min(92vh, calc(100dvh - 20px)); }
   #detail.full .st-list { max-height:min(264px, calc(92vh - 345px)); }
@@ -3466,7 +3466,8 @@ function closeDetail() {
   const KEY = 'mjr3d_dh';
   const vh = () => Math.max(320, window.innerHeight || 640);
   const hOf = m => m === 'fold' ? 68 : m === 'medium' ? Math.round(vh() * .62) : Math.round(vh() * .92);
-  let mode = localStorage.getItem(KEY) === 'full' || localStorage.getItem(KEY) === 'medium' ? localStorage.getItem(KEY) : 'fold';
+  /* 默认中档:打开即有状态/按钮/时间线,又给地图留空间;fold 仅通过向下拖拽达成(最小化) */
+  let mode = localStorage.getItem(KEY) === 'full' || localStorage.getItem(KEY) === 'medium' || localStorage.getItem(KEY) === 'fold' ? localStorage.getItem(KEY) : 'medium';
   function apply(m) {
     mode = m;
     el.classList.toggle('fold', m === 'fold');
@@ -3476,6 +3477,9 @@ function closeDetail() {
     localStorage.setItem(KEY, m);
   }
   apply(mode);
+  /* 保险:真实触摸在 pointerup 后浏览器会合成 click 并向上冒泡,
+     隔离窗口内的 click,防止任何地图/全局空白点击逻辑误关闭窗口 */
+  el.addEventListener('click', e => { e.stopPropagation(); }, true);
   let drag = null;
   el.addEventListener('pointerdown', e => {
     if (MQ && !MQ.matches) return;
@@ -3492,6 +3496,7 @@ function closeDetail() {
     if (Math.abs(dy) > 8) drag.moved = true;
     if (!drag.moved) return;
     el.classList.add('dragging');
+    document.body.style.overflow = 'hidden';
     el.style.height = Math.max(68, Math.min(Math.round(vh() * .92), drag.h - dy)) + 'px';
   });
   function endDrag() {
@@ -3500,6 +3505,7 @@ function closeDetail() {
     const h = el.offsetHeight;
     drag = null;
     el.classList.remove('dragging');
+    document.body.style.overflow = '';
     /* 点击头部:只向更展开的档位递进(fold→medium→full),绝不收起、绝不关闭——
        收起只靠向下拖拽;杜绝"点一下窗口缩成胶囊,再点同一位置落在窗口外误触地图关闭" */
     if (!wasDrag) {

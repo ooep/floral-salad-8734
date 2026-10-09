@@ -212,13 +212,15 @@ button { font-family:inherit; }
 /* ---------- 左侧面板 morph(与时间胶囊同一套弹簧语言) ----------
    原先 #side 的开关只有 opacity .22~.26s 的原地淡入:sideIn 那段位移动画只在页面
    加载时跑一次,点菜单按钮切换时完全不参与 —— 面板是"闪出来"而不是"长出来"。
-   现在:壳以菜单按钮为水平锚点做 scale+位移+透明度(真弹簧,复用 --spring-out/in),
-   内部卡片(分段控件 + 各分组卡)错峰浮现并带模糊消解;收起走两阶段。 */
+   现在:壳以菜单按钮为水平锚点做 scale+位移+透明度(真弹簧,复用 --spring-out),
+   内部卡片(分段控件 + 各分组卡)错峰浮现并带模糊消解;
+   收起 = 展开的时间反向:卡片按倒序错峰退场,壳延迟到与最后一张卡片同时收拢回按钮,
+   进出共用同一条弹簧曲线 —— 从哪来回哪去,来去动效互为镜像。 */
 #side { transform-origin:var(--side-ox,12px) 100%; }
 /* morph 期间必须关掉 CSS 过渡与 visibility 延迟:基础规则里 visibility 有 .26s 延迟,
    不关掉的话展开动画的前 260ms 面板根本不可见。will-change 仅动画期挂载,结束即摘。 */
 #side.morphing { transition:none !important; visibility:visible !important; will-change:transform,opacity; }
-/* 收起第一阶段:卡片已退场,由 CSS 兜住 opacity —— 否则 WAAPI cancel 后卡片会闪回不透明 */
+/* 收起时卡片由 CSS 兜住 opacity:0(倒序退场动画进行中或动画被取消后都不会闪回不透明) */
 #side.leaving #sideTabs, #side.leaving .sec { opacity:0; }
 /* 菜单↔关闭 图标切换:与播放键同款 iconPop,让按钮自己也参与这套动效语言 */
 #btnSide svg { animation:iconPop .3s var(--ease-spring); }
@@ -4216,31 +4218,31 @@ function syncSideBtn() { $('btnSide').innerHTML = sideEl.classList.contains('col
 /* 菜单面板 morph —— 与时间胶囊同一套弹簧语言:
    壳(整叠玻璃卡)以菜单按钮为水平锚点做 scale+位移+透明度;
    内部分段控件与各分组卡错峰浮现(capIn 同款:透明度 + 位移 + 2px 模糊消解);
-   收起两阶段:卡片先退场(130ms),壳再以近临界弹簧收拢(340ms)。
-   展开 460ms / 收起 340ms —— 退出永远比进入利落,与胶囊完全一致。 */
+   收起 = 展开的时间反向:卡片按倒序错峰退场,壳延迟到与最后一张卡片同时收拢回按钮,
+   进出共用同一条弹簧曲线 —— 从哪来回哪去,来去动效互为镜像。 */
 (function () {
   if (!sideEl) return;
   const btn = $('btnSide');
   const RM = window.matchMedia('(prefers-reduced-motion: reduce)');
   const SPRING_OUT = 'linear(0,.0598,.1976,.3654,.5321,.68,.8007,.8924,.9573,.9996,1.0241,1.0356,1.0384,1.0358,1.0304,1.0239,1.0175,1.0119,1.0074,1.0039,1.0015,.9999,.999,.9986,.9985,.9986,.9989,.9991,.9993,.9996,1)';
-  const SPRING_IN  = 'linear(0,.0368,.1232,.2323,.3473,.458,.5586,.6466,.7215,.7836,.8341,.8746,.9065,.9313,.9503,.9646,.9753,.9831,.9888,.9929,.9957,.9976,.9989,.9997,1.0002,1.0005,1.0006,1.0006,1.0006,1.0005,1)';
-  const BEZ_OUT = 'cubic-bezier(.22,1.12,.36,1)', BEZ_IN = 'cubic-bezier(.32,.94,.44,1)';
+  const BEZ_OUT = 'cubic-bezier(.22,1.12,.36,1)';
   const SMOOTH = 'cubic-bezier(.16,1,.3,1)';
-  const DUR_OUT = 460, DUR_IN = 340, LEAVE_MS = 130, CARD_STEP = 45;
+  const DUR_OUT = 460, CARD_DUR = 340, CARD_STEP = 45;
   const supportsLinear = !!(window.CSS && CSS.supports && CSS.supports('transition-timing-function', 'linear(0,1)'));
   const easeOut = () => supportsLinear ? SPRING_OUT : BEZ_OUT;
-  const easeIn  = () => supportsLinear ? SPRING_IN  : BEZ_IN;
   const CARD_IN  = [{ opacity:0, transform:'translateY(9px) scale(.985)', filter:'blur(2.5px)' },
                     { opacity:1, transform:'none', filter:'blur(0)' }];
-  const CARD_OUT = [{ opacity:1, transform:'none' },
-                    { opacity:0, transform:'translateY(-6px) scale(.99)' }];
-  let anims = [], leaveT = 0;
+  /* 卡片退场 = 进场帧的精确反向(同一弹簧语言、同一方向、同一模糊),实现"从哪来回哪去" */
+  const CARD_OUT = [{ opacity:1, transform:'none', filter:'blur(0)' },
+                    { opacity:0, transform:'translateY(9px) scale(.985)', filter:'blur(2.5px)' }];
+  let anims = [];
 
   function cancelAll() { anims.forEach(a => { try { a.cancel(); } catch (e) {} }); anims = []; }
   /* 所有动画自然落定后摘掉 morphing,让纯 CSS 接管终态(关键帧末值与 CSS 终值一致,无跳变) */
-  function settle() {
+  function settle(after) {
     Promise.all(anims.map(a => a.finished.catch(() => {}))).then(() => {
       cancelAll(); sideEl.classList.remove('morphing');
+      if (after) after();
     });
   }
   /* 锚点:水平方向对准菜单按钮中心,垂直方向取面板底边 —— 面板从按钮那一侧长出来。
@@ -4263,7 +4265,7 @@ function syncSideBtn() { $('btnSide').innerHTML = sideEl.classList.contains('col
   }
 
   function open() {
-    clearTimeout(leaveT); cancelAll();
+    cancelAll();
     sideEl.classList.add('morphing');      /* 必须先挂:关掉 visibility 的 .26s 延迟 */
     sideEl.classList.remove('leaving', 'collapsed');
     setOrigin(); syncSideBtn();
@@ -4273,30 +4275,26 @@ function syncSideBtn() { $('btnSide').innerHTML = sideEl.classList.contains('col
       { opacity:1, transform:'translateY(0) scale(1)' },
     ], { duration:DUR_OUT, easing:easeOut(), fill:'both' }));
     cards().forEach((c, i) => anims.push(c.animate(CARD_IN,
-      { duration:340, delay:i * CARD_STEP, easing:SMOOTH, fill:'both' })));
+      { duration:CARD_DUR, delay:i * CARD_STEP, easing:SMOOTH, fill:'both' })));
     settle();
   }
+  /* 关闭 = 打开的时间反向:卡片按倒序错峰退场(最后出现的先消失,方向和模糊与进场互为镜像),
+     壳用同一条弹簧曲线收拢回菜单按钮锚点,并延迟到与最后一张卡片同时落定 —— 从哪来回哪去。 */
   function close() {
-    clearTimeout(leaveT); cancelAll();
+    cancelAll();
     if (RM.matches || !sideEl.animate) {
       sideEl.classList.remove('leaving'); sideEl.classList.add('collapsed'); syncSideBtn(); return;
     }
-    /* 第一阶段:卡片退场。壳保持不动,内容由 CSS .leaving 兜住,cancel 也不会闪回 */
-    sideEl.classList.add('leaving'); syncSideBtn();
-    cards().forEach(c => anims.push(c.animate(CARD_OUT,
-      { duration:LEAVE_MS, easing:'ease-in', fill:'both' })));
-    leaveT = setTimeout(() => {
-      cancelAll();
-      sideEl.classList.add('morphing');
-      setOrigin();
-      sideEl.classList.add('collapsed');
-      syncSideBtn();
-      anims.push(sideEl.animate([
-        { opacity:1, transform:'translateY(0) scale(1)' },
-        { opacity:0, transform:'translateY(14px) scale(.955)' },
-      ], { duration:DUR_IN, easing:easeIn(), fill:'both' }));
-      settle();
-    }, LEAVE_MS);
+    const cs = cards();
+    const shellDelay = Math.max(0, (cs.length - 1) * CARD_STEP + CARD_DUR - DUR_OUT);
+    sideEl.classList.add('morphing', 'leaving'); setOrigin(); syncSideBtn();
+    cs.forEach((c, i) => anims.push(c.animate(CARD_OUT,
+      { duration:CARD_DUR, delay:(cs.length - 1 - i) * CARD_STEP, easing:SMOOTH, fill:'both' })));
+    anims.push(sideEl.animate([
+      { opacity:1, transform:'translateY(0) scale(1)' },
+      { opacity:0, transform:'translateY(14px) scale(.955)' },
+    ], { duration:DUR_OUT, delay:shellDelay, easing:easeOut(), fill:'both' }));
+    settle(() => { sideEl.classList.add('collapsed'); sideEl.classList.remove('leaving'); syncSideBtn(); });
   }
   /* 唯一开关入口:按钮点击、打开详情卡自动收起、搜索面板关闭后恢复,都走这一条路径 */
   window.__sideSet = function (wantOpen) {

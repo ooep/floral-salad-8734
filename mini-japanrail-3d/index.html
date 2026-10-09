@@ -4714,7 +4714,10 @@ function syncSideBtn() { $('btnSide').innerHTML = sideEl.classList.contains('col
   function settle(after) {
     Promise.all(anims.map(a => a.finished.catch(() => {}))).then(() => {
       if (after) after();
-      cancelAll(); sideEl.classList.remove('morphing');
+      cancelAll();
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        sideEl.classList.remove('morphing');
+      }));
     });
   }
   /* 锚点:水平方向对准菜单按钮中心,垂直方向取面板底边 —— 面板从按钮那一侧长出来。

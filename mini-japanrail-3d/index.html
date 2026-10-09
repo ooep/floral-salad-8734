@@ -495,7 +495,7 @@ button { font-family:inherit; }
 .maplibregl-ctrl-attrib { background:color-mix(in srgb,var(--panel) 65%,transparent)!important; backdrop-filter:blur(8px); color:var(--dim)!important; font-size:8.5px!important; padding:2px 7px!important; border-radius:8px 0 0 0!important; }
 .maplibregl-ctrl-attrib a { color:var(--dim)!important; }
 
-@media (max-width:2000px) {
+@media (max-width:640px) {
   :root { --dock:46px; }
   /* 顶部 HUD:隐藏标题文字,保留在途/今日统计 */
   #topHud { top:8px; }
@@ -3252,7 +3252,7 @@ sliderEl.addEventListener('input', () => {
 });
 $('cNow').addEventListener('click', () => { doNow(); toast(T().liveMode);
   /* 收起胶囊要走同一套弹簧收壳,不能硬摘 class(会瞬间跳回药丸) */
-  if (window.innerWidth <= 2000 && clockEl.classList.contains('expanded')) {
+  if (window.innerWidth <= 640 && clockEl.classList.contains('expanded')) {
     if (window.__capCollapse) window.__capCollapse(); else clockEl.classList.remove('expanded');
   } });
 $('btnPlay').addEventListener('click', () => { if (paused) doResume(); else doPause(); });
@@ -3441,20 +3441,20 @@ function onMapClick(e) {
 let detailTimer = 0;
 function openDetail() {
   clearTimeout(detailTimer);
-  if (window.innerWidth <= 2000) $('dock').classList.add('hide');
+  if (window.innerWidth <= 640) $('dock').classList.add('hide');
   detailEl.classList.add('show');
 }
 function closeDetail() {
   clearTimeout(detailTimer);
   detailEl.classList.remove('show');
-  if (window.innerWidth <= 2000) $('dock').classList.remove('hide');
+  if (window.innerWidth <= 640) $('dock').classList.remove('hide');
 }
 /* ---- 移动端详情卡:头部行即把手,上下拖拽三档吸附(折叠/中/全),轻点头部在折叠↔展开间切换,档位记忆 ----
    桌面端(>640px)不启用:空间充足,卡片保持内容自适应高度 */
 (function () {
   const el = document.getElementById('detail');
   if (!el) return;
-  const MQ = window.matchMedia ? matchMedia('(max-width:2000px)') : null;
+  const MQ = window.matchMedia ? matchMedia('(max-width:640px)') : null;
   const KEY = 'mjr3d_dh';
   const vh = () => Math.max(320, window.innerHeight || 640);
   const hOf = m => m === 'fold' ? 68 : m === 'medium' ? Math.round(vh() * .62) : Math.round(vh() * .92);
@@ -3483,7 +3483,7 @@ function closeDetail() {
     if (Math.abs(dy) > 8) drag.moved = true;
     if (!drag.moved) return;
     el.classList.add('dragging');
-    el.style.height = Math.max(68, Math.min(Math.round(vh() * .92), drag.h + dy)) + 'px';
+    el.style.height = Math.max(68, Math.min(Math.round(vh() * .92), drag.h - dy)) + 'px';
   });
   function endDrag() {
     if (!drag) return;
@@ -4370,7 +4370,7 @@ function syncSideBtn() { $('btnSide').innerHTML = sideEl.classList.contains('col
   if (btn) btn.addEventListener('click', () => window.__sideSet(sideEl.classList.contains('collapsed')));
 })();
 /* 液态玻璃改版:移动端首屏默认收起侧栏,呈现全屏沉浸地图;桌面端保持展开 */
-if (window.innerWidth <= 2000) sideEl.classList.add('collapsed');
+if (window.innerWidth <= 640) sideEl.classList.add('collapsed');
 syncSideBtn();
 /* 工具面板 Tab */
 function showTab(tab, focusSearch) {

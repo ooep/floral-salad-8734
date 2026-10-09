@@ -11,7 +11,7 @@
 <link rel="icon" type="image/png" href="favicon.png" />
 <style>* { margin: 0; padding: 0; box-sizing: border-box; }
 body { background: #07090d; color: #eee; font-family: 'Nunito', system-ui, sans-serif; overflow: hidden; }
-#map { width: 100vw; height: 100vh; }
+#map { width: 100vw; height: 100vh; /* 强制 GPU 合成层，减少主线程渲染压力 */ transform: translateZ(0); will-change: transform; /* 移动端：禁止浏览器默认手势，拖拽更丝滑 */ touch-action: none; }
 
 #langtoggle {
     position: absolute;
@@ -762,12 +762,17 @@ let showStations = true;
 // ──────────────────────────────── map ────────────────────────────────────
 const map = new maplibregl.Map({
     container: 'map',
+    // 老设备/移动端性能优化：动态限制像素比
+    // 手机屏幕小，1.25x 足够清晰；桌面端 1.5x
+    pixelRatio: Math.min(window.devicePixelRatio || 1, 
+        /Mobi|Android|iPhone|iPad/.test(navigator.userAgent) ? 1.25 : 1.5),
     style: {
         version: 8,
         sources: {
             'carto-voyager': {
                 type: 'raster',
-                tiles: ['https://d.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}@2x.png'],
+                // 用 @1x 瓦片代替 @2x，网络流量和 GPU 纹理内存减半
+                tiles: ['https://d.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}.png'],
                 tileSize: 256,
                 attribution: '&copy; OSM &copy; CARTO',
             },
@@ -784,8 +789,21 @@ const map = new maplibregl.Map({
     zoom: 4.8,
     minZoom: 3.5,
     attributionControl: true,
+    // 禁用不必要的动画效果，减少 GPU 负载
+    fadeDuration: 0,
+    crossSourceCollisions: false,
+    // 限制画布最大尺寸，避免超大屏幕/高 DPI 时显存爆炸
+    maxCanvasSize: [2048, 2048],
+    // 缩放流畅度优化：
+    // 1. 禁用缩放动画——直接跳到目标级别，消除中间帧的重绘压力
+    // 2. 预加载相邻 2 级的瓦片，缩放时不用等网络加载
+    zoomAnimation: false,
+    prefetchZoomDelta: 2,
 });
-map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+// 移动端隐藏导航控件（小屏幕上占用空间且不常用）
+if (!/Mobi|Android|iPhone|iPad/.test(navigator.userAgent)) {
+    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+}
 
 let allFeats = [];
 let fcData = null;
@@ -854,13 +872,14 @@ map.on('load', async () => {
         id: 'segs-casing', type: 'line', source: 'segs',
         filter: NO_MATCH,
         paint: { 'line-color': '#fbfdff', 'line-width': casingWidth(), 'line-opacity': 0.92 },
-        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        // 性能优化：用 butt 端点 + miter 连接代替 round，减少 GPU 填充计算
+        layout: { 'line-cap': 'butt', 'line-join': 'miter' },
     });
     // colored core
     map.addLayer({
         id: 'segs-line', type: 'line', source: 'segs',
         paint: { 'line-color': ['get', 'color'], 'line-width': coreWidth(), 'line-opacity': 0.92 },
-        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        layout: { 'line-cap': 'butt', 'line-join': 'miter' },
     });
 
     // station dots — tag transfer stations & split into two layers
@@ -945,7 +964,8 @@ map.on('load', async () => {
             'text-color': '#d8dde3',
             'text-halo-color': '#07090d',
             'text-halo-width': 1.4,
-            'text-halo-blur': 0.5,
+            // 性能优化：halo-blur 设为 0，模糊效果在老 GPU 上非常耗性能
+            'text-halo-blur': 0,
         },
     });
 
@@ -990,7 +1010,7 @@ map.on('load', async () => {
             'text-color': '#d8dde3',
             'text-halo-color': '#07090d',
             'text-halo-width': 1.6,
-            'text-halo-blur': 0.4,
+            'text-halo-blur': 0,
         },
     });
 
@@ -1049,7 +1069,7 @@ map.on('load', async () => {
             'text-color': ['get', 'color'],
             'text-halo-color': '#07090d',
             'text-halo-width': 1.8,
-            'text-halo-blur': 0.3,
+            'text-halo-blur': 0,
             'text-opacity': ['interpolate', ['linear'], ['zoom'],
                 7, 0.5,
                 9, 0.8,
@@ -1130,6 +1150,28 @@ map.on('load', async () => {
     map.on('mouseleave', 'station-dots', hideStationTip);
 
     map.on('movestart', () => { tip.style.display = 'none'; });
+
+    // 缩放流畅度优化：缩放过程中临时隐藏所有文字标签图层
+    // 文字碰撞检测是缩放时最耗 GPU 的操作，隐藏后缩放帧率大幅提升
+    const SYMBOL_LAYERS = ['transfer-labels', 'station-labels', 'line-name-labels'];
+    let _savedVisibility = {};
+    map.on('zoomstart', () => {
+        tip.style.display = 'none';
+        for (const id of SYMBOL_LAYERS) {
+            if (map.getLayer(id)) {
+                _savedVisibility[id] = map.getLayoutProperty(id, 'visibility');
+                map.setLayoutProperty(id, 'visibility', 'none');
+            }
+        }
+    });
+    map.on('zoomend', () => {
+        for (const id of SYMBOL_LAYERS) {
+            if (map.getLayer(id) && _savedVisibility[id]) {
+                map.setLayoutProperty(id, 'visibility', _savedVisibility[id]);
+            }
+        }
+        _savedVisibility = {};
+    });
 
     // click: highlight line; again → drill to segment
     map.on('click', (e) => {
@@ -1827,11 +1869,16 @@ document.addEventListener('click', () => { if (aboutOpen) setAboutOpen(false); }
         }
     }
 
+    // 性能优化：搜索输入防抖，避免每次按键都执行全量搜索
+    let searchDebounce = null;
     searchInput.addEventListener('input', () => {
         const q = searchInput.value.trim();
         if (!q) { clearResults(); return; }
-        const results = doSearch(q);
-        renderResults(results);
+        if (searchDebounce) clearTimeout(searchDebounce);
+        searchDebounce = setTimeout(() => {
+            const results = doSearch(q);
+            renderResults(results);
+        }, 120);
     });
 
     searchInput.addEventListener('keydown', (e) => {
@@ -2164,11 +2211,13 @@ document.addEventListener('click', () => { if (aboutOpen) setAboutOpen(false); }
                 if (!trains || trainsBit !== bit) await loadTrains(bit);
                 else refreshPositions();
                 if (!timer) {
+                    // 性能优化：从 1000ms 降到 5000ms，列车移动慢，5秒刷新足够
+                    // 每秒全量 setData 会触发完整地图重绘，老设备压力大
                     timer = setInterval(() => {
                         const b = todayBit();
                         if (b !== trainsBit) { loadTrains(b); return; }
                         refreshPositions();
-                    }, 1000);
+                    }, 5000);
                 }
             });
         } else {
@@ -2181,6 +2230,5 @@ document.addEventListener('click', () => { if (aboutOpen) setAboutOpen(false); }
 
 applyLang();
 </script>
-<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v833ccba57c9e4d2798f2e76cebdd09a11778172276447" data-cf-beacon='{"version":"2024.11.0","token":"b56c304306e54e23833a60b279eb36b3","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}'></script>
 </body>
 </html>

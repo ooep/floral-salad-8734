@@ -454,17 +454,19 @@ button { font-family:inherit; }
   100% { transform:scale(1); opacity:1; filter:none; } }
 #loader .lt { font-size:14px; font-weight:700; letter-spacing:.5px; }
 #loader .lb { font-size:11px; color:var(--dim); }
-/* 加载轨道:线路色轨道 + 默认立体方盒列车沿进度行驶(跑到最右 = 加载完成) */
+/* 加载轨道:线路色轨道 + 默认立体方盒列车沿进度行驶(跑到最右 = 加载完成)
+   --lrail 由 JS 每次加载从所有线路色中随机挑选;未设置时回退站点强调色 */
 #loader .ltrack { position:relative; width:min(300px,70vw); height:24px; }
 #loader .ltrack-line { position:absolute; left:18px; right:18px; top:50%; height:4px; margin-top:-2px; border-radius:3px;
-  background:color-mix(in srgb, var(--acc) 45%, transparent);
-  box-shadow:0 1px 2px rgba(0,0,0,.35), 0 0 0 1px rgba(0,0,0,.22); }
-#loader .ltrain { position:absolute; left:0; top:50%; margin-left:-18px; margin-top:-18px; z-index:1;
-  transition:left .28s ease; filter:drop-shadow(0 3px 6px rgba(0,0,0,.4)); }
+  background:color-mix(in srgb, var(--lrail, var(--acc)) 45%, transparent);
+  transition:background .6s ease; }
+/* 列车位置由 --p(0-100) 驱动:0% 列车左端对齐线路左端,100% 列车右端对齐线路右端(两端均无阴影) */
+#loader .ltrain { position:absolute; left:calc(18px + (100% - 72px) * var(--p,0) / 100); top:50%; margin-top:-18px; z-index:1;
+  transition:left .28s ease; }
 /* 默认立体方盒列车:顶面亮、正面主色、侧面暗 —— 与地图内 3D 盒一致的三面配色 */
-.ltrain-top   { fill:color-mix(in srgb, var(--acc) 55%, #fff); }
-.ltrain-f     { fill:var(--acc); }
-.ltrain-side  { fill:color-mix(in srgb, var(--acc) 45%, #000); }
+.ltrain-top   { fill:color-mix(in srgb, var(--lrail, var(--acc)) 55%, #fff); transition:fill .6s ease; }
+.ltrain-f     { fill:var(--lrail, var(--acc)); transition:fill .6s ease; }
+.ltrain-side  { fill:color-mix(in srgb, var(--lrail, var(--acc)) 45%, #000); transition:fill .6s ease; }
 .ltrain-sheen { fill:rgba(255,255,255,.16); }
 #loader .lpd { display:flex; align-items:center; gap:10px; font-size:10.5px; color:var(--dim); }
 #loader .lpd b { color:var(--acc-txt,var(--acc)); font-variant-numeric:tabular-nums; }
@@ -576,17 +578,21 @@ button { font-family:inherit; }
   #detail .d-act .btn { min-height:40px; }
   /* ---- 移动端详情卡:默认折叠为头部胶囊,拖拽头部行三档吸附(折叠/中/全),点击头部切换 ----
      折叠态 z-index:12 高于 Dock(9),重叠区点击归窗口所有,杜绝穿透 */
-  #detail { height:68px;
+  #detail { height:68px; display:flex; flex-direction:column;
     transition:opacity .26s var(--ease-smooth), backdrop-filter .26s var(--ease-smooth), -webkit-backdrop-filter .26s var(--ease-smooth), transform .34s var(--ease-spring), height .32s var(--ease-spring), visibility 0s linear .26s; }
+  /* 弹性布局:头部/meta/标题/按钮固定,列表区占剩余空间滚动——併结行再多也不会把操作按钮挤出窗口 */
+  #detail .d-h, #detail .d-meta, #detail .d-sep, #detail .d-act { flex:none; }
+  #detail .d-stops { flex:1 1 auto; min-height:0; display:flex; flex-direction:column; }
+  #detail .st-title { flex:none; }
   #detail.fold { display:flex; align-items:center; }
   #detail.fold .d-h { width:100%; }
   #detail.fold .d-meta, #detail.fold .d-sep, #detail.fold .d-stops, #detail.fold .d-act { display:none; }
   /* 高度用动态视口 + 顶部安全区留白:Android 上 vh 是大视口(地址栏收起),展开过猛会把头部顶出屏幕;
      刘海屏 safe-area-inset-top 也会吞掉车头/标题/关闭按钮的可点击区域 */
   #detail.medium { height:62vh; height:min(62vh, calc(100dvh - env(safe-area-inset-top, 0px) - 20px)); }
-  #detail.medium .st-list { max-height:calc(62vh - 335px); max-height:calc(62dvh - 335px); }
+  #detail.medium .st-list { flex:1 1 auto; min-height:0; overflow-y:auto; }
   #detail.full { height:92vh; height:min(92vh, calc(100dvh - env(safe-area-inset-top, 0px) - 20px)); }
-  #detail.full .st-list { max-height:min(264px, calc(92vh - 345px)); max-height:min(264px, calc(92dvh - 345px)); }
+  #detail.full .st-list { flex:1 1 auto; min-height:0; overflow-y:auto; }
   #detail.dragging { transition:none; }
   .foot { display:none; }
   /* 表单元素 ≥16px 防止 iOS 聚焦自动缩放 */
@@ -696,6 +702,27 @@ button { font-family:inherit; }
 .tab-panel[hidden]{ display:none; }
 .gd-loading, .gd-empty { padding:36px 16px; text-align:center; color:var(--dim); font-size:13px; line-height:1.7; }
 .gd-empty .gd-retry { margin-top:10px; display:inline-block; padding:6px 16px; border-radius:var(--r-pill); border:1px solid var(--glass-edge); background:var(--glass); color:var(--txt); font-size:12.5px; cursor:pointer; }
+
+/* --- 指南面板（eki-info） --- */
+#panelGuide { color:var(--txt); }
+.gd-head { padding:6px 2px 14px; border-bottom:1px solid var(--glass-edge); }
+.gd-title { font-size:22px; font-weight:800; letter-spacing:-.3px; }
+.gd-sub { font-size:12px; color:var(--dim); margin-top:5px; }
+.gd-sec { margin-top:18px; }
+.gd-sec-t { font-size:13px; font-weight:800; color:var(--txt); display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+.gd-sec-t::after { content:""; flex:1; height:1px; background:var(--glass-edge); }
+.gd-row { display:flex; justify-content:space-between; gap:16px; padding:9px 2px; border-bottom:1px dashed var(--glass-edge); font-size:12.5px; }
+.gd-row span { color:var(--dim); flex:none; }
+.gd-row b { font-weight:600; text-align:right; word-break:break-word; }
+.gd-table { width:100%; border-collapse:collapse; font-size:12px; margin-top:4px; }
+.gd-table th, .gd-table td { padding:7px 6px; border-bottom:1px solid var(--glass-edge); text-align:center; }
+.gd-table th { color:var(--dim); font-weight:600; }
+.gd-table td:first-child { text-align:left; color:var(--dim); }
+.gd-note { font-size:11.5px; color:var(--dim); margin-top:8px; line-height:1.6; }
+.gd-img { width:100%; border-radius:10px; border:1px solid var(--glass-edge); margin-top:6px; background:#fff; }
+.gd-links { display:flex; flex-wrap:wrap; gap:8px; }
+.gd-link { display:inline-block; font-size:12.5px; color:var(--acc-txt); background:var(--acc-soft); border:1px solid var(--acc-border); border-radius:8px; padding:6px 12px; text-decoration:none; }
+.gd-src { margin-top:24px; font-size:10.5px; color:var(--dim); text-align:center; opacity:.8; }
 
 /* --- 信息面板 --- */
 #panelInfo { color:var(--txt); }
@@ -897,9 +924,10 @@ button { font-family:inherit; }
     <div><div class="sh-nm" id="shNm">駅名</div><div class="sh-sub" id="shSub"></div></div>
     <button class="btn icon sh-x" id="shX"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
   </div>
-  <div class="sh-tabs"><button id="tabList">列表</button><button id="tabGrid" class="on">一览</button><button id="tabInfo">信息</button></div>
+  <div class="sh-tabs"><button id="tabList">列表</button><button id="tabGrid" class="on">一览</button><button id="tabInfo">信息</button><button id="tabGuide">指南</button></div>
   <div class="sh-body" id="shBody"><div class="empty">時刻表を読込中…</div></div>
   <div class="sh-body tab-panel" id="panelInfo" hidden></div>
+  <div class="sh-body tab-panel" id="panelGuide" hidden></div>
 </div>
 <div id="toast"></div>
 <div class="foot" id="footNote"></div>
@@ -1261,7 +1289,7 @@ const loadSizes = { 'data/segments3d.geojson': 9054890, 'data/stations3d.geojson
 let _fileTotal = 8, _fileIdx = 0;
 function nextFileIdx() { return _fileIdx++; }
 function setPct(p) { const pc = Math.min(100, p); lPctEl.textContent = Math.round(pc) + '%';
-  const tr = $('ltrain'); if (tr) tr.style.left = pc + '%'; } /* 方盒列车随进度行驶,到最右=加载完成 */
+  const tr = $('ltrain'); if (tr) tr.style.setProperty('--p', pc); } /* 方盒列车随进度行驶:0%左端并线路左端,100%右端并线路右端 */
 function setLoadMsg(s) { loaderMsg.textContent = s; }
 function setPhase(lo, hi, f) { setPct(lo + (hi - lo) * Math.max(0, Math.min(1, f))); }
 function updateBar(fileIdx, got, size) {
@@ -1365,6 +1393,27 @@ function restoreIndexes(c) {
   if (lineIndex && searchIndex && document.getElementById('dNet')) {
     $('dNet').textContent = lineIndex.length.toLocaleString() + ' / ' + searchIndex.length.toLocaleString();
   }
+  applyLoaderLineColor();
+}
+
+/* ---- 加载页线路色:每次加载从所有线路色中随机挑一条 ----
+   轨道与方盒列车都取该色(顶面亮/侧面暗由 color-mix 派生,层次不变);
+   亮度适配双向:太浅(黄/白)加深、太暗(黑/深蓝)提亮,亮度钳制到 [70,190],
+   保证深色背景上清晰可辨。只设一次。 */
+let __lrailSet = false;
+function applyLoaderLineColor() {
+  if (__lrailSet || !lineColor || lineColor.size === 0) return;
+  __lrailSet = true;
+  const colors = [...new Set(lineColor.values())].filter(c => typeof c === 'string' && /^#[0-9a-fA-F]{6}$/.test(c));
+  if (!colors.length) { __lrailSet = false; return; }
+  const c = colors[(Math.random() * colors.length) | 0];
+  const n = parseInt(c.slice(1), 16);
+  const r = n >> 16 & 255, g = n >> 8 & 255, b = n & 255;
+  const luma = 0.299 * r + 0.587 * g + 0.114 * b;
+  const target = luma > 190 ? 190 : (luma < 70 ? 70 : luma);
+  const out = target === luma ? c
+    : '#' + [r, g, b].map(v => Math.round(Math.min(255, v * (target / luma))).toString(16).padStart(2, '0')).join('');
+  document.documentElement.style.setProperty('--lrail', out);
 }
 
 const TRANSFER_KM = 1.6;
@@ -2756,19 +2805,10 @@ void main() {
     __lastArgs = { variant: args.shaderData && args.shaderData.variantName };
     __frameMerc = args.shaderData && args.shaderData.variantName === 'mercator';
     gl.uniformMatrix4fv(U.u_fb, false, D.fallbackMatrix);
-    /* mercator:上传零平移列的局部矩阵(顶点为相对中心偏移)+ 参考中心 NDC(双精度 map.project);
-       中心位置与顶点同基准,相机在本帧内移动也投影精确;globe:原世界矩阵 + 中心(0,0) */
-    if (__frameMerc) {
-      gl.uniformMatrix4fv(U.u_m, false, localMatrixFrom(D.mainMatrix, __relCx, __relCy));
-      if (U.u_centerNdc) {
-        const sp = map.project([__relLng, __relLat]);
-        const cwpx = map.getCanvas().clientWidth || 1, chpx = map.getCanvas().clientHeight || 1;
-        gl.uniform2f(U.u_centerNdc, 2 * sp.x / cwpx - 1, 1 - 2 * sp.y / chpx);
-      }
-    } else {
-      gl.uniformMatrix4fv(U.u_m, false, D.mainMatrix);
-      if (U.u_centerNdc) gl.uniform2f(U.u_centerNdc, 0, 0);
-    }
+    /* ★ 2026-10 混合路径停用:mercator 变体统一绝对坐标+完整矩阵(与 globe 同路径)——
+       相对中心+局部矩阵+centerNdc 混合路径在部分设备上高 zoom 整层消失(见 updateTrains) */
+    gl.uniformMatrix4fv(U.u_m, false, D.mainMatrix);
+    if (U.u_centerNdc) gl.uniform2f(U.u_centerNdc, 0, 0);
     gl.uniform4f(U.u_tmc, D.tileMercatorCoords[0], D.tileMercatorCoords[1], D.tileMercatorCoords[2], D.tileMercatorCoords[3]);
     gl.uniform4f(U.u_cp, D.clippingPlane[0], D.clippingPlane[1], D.clippingPlane[2], D.clippingPlane[3]);
     gl.uniform1f(U.u_tr, D.projectionTransition);
@@ -2791,7 +2831,7 @@ void main() {
     gl.disable(gl.DEPTH_TEST);
     gl.depthMask(false);
     // 图标模式:首次就绪时上传当前图集纹理;每帧绑定 + 设置 atlas uniforms
-    if (ATLAS_READY && !ATLAS.tex && ATLAS_IMG) {
+    if (!ATLAS.tex && ATLAS_IMG) {
       ATLAS.tex = gl.createTexture();
       gl.bindTexture(gl.TEXTURE_2D, ATLAS.tex);
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, ATLAS_IMG);
@@ -2840,24 +2880,36 @@ let ATLAS_KEY = 'default'; /* 当前图集 key(iconStyle 详情图标取对应 p
 function activeAtlasKey() { return trainMode === 'cute' ? 'cute' : (trainMode === 'icon' ? (ATLAS_SETS[iconSet] ? iconSet : 'default') : 'default'); }
 function switchAtlas(key) {
   const s = ATLAS_SETS[key] || ATLAS_SETS.default;
+  /* 目标图集未就绪时降级到默认图集(至少能贴图标,不闪 3D 盒);就绪后由加载回调自动切回 */
+  if (!s.json) { ATLAS_KEY = key; ATLAS = ATLAS_SETS.default.json; ATLAS_IMG = ATLAS_SETS.default.img; ATLAS_READY = false; return; }
   ATLAS_KEY = key; ATLAS = s.json; ATLAS_IMG = s.img; ATLAS_READY = s.ready;
 }
 let lmStarted = false;
 function loadTrainAtlas() {
-  /* 并行预载 3 套图集(异步不阻塞主流程);默认图集就绪即启动加载拼图 */
+  /* 并行预载 3 套图集(异步不阻塞主流程);fetch/图片失败自动重试(最多 3 次,间隔 1.5s 起),
+     规避首发未部署时浏览器缓存 404 导致图集永不就绪;默认图集就绪即启动加载拼图 */
   for (const key in ATLAS_SETS) {
     (key => {
       const s = ATLAS_SETS[key];
-      fetch(s.file).then(r => r.ok ? r.json() : null).then(j => {
-        if (!j) return;
-        const im = new Image();
-        im.onload = () => {
-          s.json = j; s.img = im; s.ready = true;
-          if (key === activeAtlasKey()) switchAtlas(key);
-          if (key === 'default' && !lmStarted) lmStart(); /* 加载拼图用默认图集 */
-        };
-        im.src = s.png;
-      }).catch(() => {});
+      let tryN = 0;
+      const attempt = () => {
+        fetch(s.file + '?v=3').then(r => r.ok ? r.json() : null).then(j => {
+          if (!j) { retry(); return; }
+          const im = new Image();
+          im.onload = () => {
+            s.json = j; s.img = im; s.ready = true;
+            if (key === activeAtlasKey()) switchAtlas(key);
+            if (key === 'default' && !lmStarted) lmStart(); /* 加载拼图用默认图集 */
+          };
+          im.onerror = retry;
+          im.src = s.png + '?v=3';
+        }).catch(retry);
+      };
+      const retry = () => {
+        if (tryN < 3) { tryN++; setTimeout(attempt, 1500 * tryN); }
+        else if (key === 'default' && !lmStarted) lmStart(); /* 默认图集最终失败也启动拼图(纯 SVG 兜底) */
+      };
+      attempt();
     })(key);
   }
 }
@@ -2875,9 +2927,13 @@ function updateTrains(M) {
   visibleTrips.length = 0;
   const z = map.getZoom();
   /* 高 zoom 精度:mercator 变体顶点改为相对地图中心的偏移(render 同步上传零平移列局部矩阵);
-     globe 变体保持绝对坐标(球面 O(1) 精度足够) */
+     globe 变体保持绝对坐标(球面 O(1) 精度足够)。
+     ★ 2026-10 停用相对中心优化:该「相对顶点+局部矩阵+centerNdc」混合路径在部分设备
+       (手机 WebGL/驱动)上高 zoom 整层消失 —— 统一回退绝对坐标+完整矩阵(与 globe 同路径,
+       低 zoom 已被验证正常)。绝对坐标在 z≤16 float32 精度足够(±0.5px),更高 zoom 偶发
+       亚像素漂移,远优于整层不可见 */
   let cxo = 0, cyo = 0;
-  if (__frameMerc) {
+  if (false && __frameMerc) {
     const pc0 = map.getCenter();
     cxo = __relCx = (pc0.lng + 180) / 360;
     cyo = __relCy = mercYOf(pc0.lat);
@@ -2909,7 +2965,7 @@ function updateTrains(M) {
   else if (z < 12) { const f = (z - 8) / 4; L = 11.6 + f * 9; W = 4.8 + f * 3; }
   else { const f = Math.min(1, (z - 12) / 3); L = 20.6 + f * 22; W = 7.8 + f * 7; }
   L *= trainSizeMul; W *= trainSizeMul;
-  const iconMode = trainMode !== '3d' && ATLAS_READY && !!ATLAS; /* 'icon' / 'cute' 均为贴图模式 */
+  const iconMode = trainMode !== '3d' && !!ATLAS && !!ATLAS_IMG; /* 'icon'/'cute' 贴图模式;目标图集未就绪时 ATLAS 降级默认图集,保证始终有图可贴 */
   if (iconMode) W = L * (ATLAS.img[0] / ATLAS.img[1]); // 图标模式:贴图纵横比 40:48(行驶方向=L 对应图高向),不做立体盒
   lastQuad[0] = L; lastQuad[1] = W; /* 供 shader 把带尺寸的 a_corner 除回归一化 UV */
   const glowOn = $('swTrail').classList.contains('on') && !glowAutoOff;
@@ -3145,7 +3201,7 @@ async function boot() {
   booting = true;
   const retryBtn = $('lRetry');
   if (retryBtn) retryBtn.style.display = 'none';
-  loadTrainAtlas(); /* 提前预载图标图集:加载遮罩的马赛克拼图要用;异步不阻塞主流程 */
+  loadTrainAtlas(); /* 提前预载图标图集(默认/矢量/可爱 3 套,异步不阻塞主流程;加载遮罩马赛克拼图要用默认图集) */
   try {
     _fileTotal = 8; _fileIdx = 0;
     /* 当日时刻表与 7 个静态数据文件并行下载(含 tokkyu 特急爱称表、names_i18n 多语站名表, 原实现串行) */
@@ -3193,6 +3249,7 @@ async function boot() {
       setLoadMsg(T().loading + ' ' + T().loadingIdx + ' …');
       await buildStaticIndexAsync(f => setPhase(FILES_PCT, IDX_PCT, f));
       saveIndexes();
+      applyLoaderLineColor();
     }
     /* 时刻表解析:分片让出主线程,进度 78→97% */
     setPhase(IDX_PCT, PRS_PCT, 0);
@@ -3780,8 +3837,8 @@ function updateDetailLive(t, p, M, rebuild) {
         return s;
       })() +
       '</div></div>' +
-      '<div class="d-act"><button class="btn' + (followTrip === t ? ' on' : '') + '" id="dFollow">' + (followTrip === t ? ICO.stop : ICO.follow) + ' ' + (followTrip === t ? T().stopFollowBtn : T().followBtn) + '</button>' +
-      '<button class="btn" id="dLoc">' + ICO.loc + ' ' + T().locateBtn + '</button></div>';
+      '<div class="d-act"><button class="btn' + (followTrip === t ? ' on' : '') + '" id="dFollow">' + (followTrip === t ? T().stopFollowBtn : T().followBtn) + '</button>' +
+      '<button class="btn" id="dLoc">' + T().locateBtn + '</button></div>';
     /* 立即标记停靠站状态(已过/停靠中/下一站),并滚动时间线到当前站——不依赖下一帧差异检测 */
     t._dI = i;
     const stl0 = detailEl.querySelector('.d-stops');
@@ -4099,10 +4156,11 @@ function showStationDetail(name, coord) {
   $('shNm').textContent = name;
   // 新站打开：默认切回「一览」，隐藏信息面板并使懒渲染缓存失效
   sheetTab = 'tabGrid';
-  ['tabList','tabGrid','tabInfo'].forEach(id => $(id).classList.remove('on'));
+  ['tabList','tabGrid','tabInfo','tabGuide'].forEach(id => $(id).classList.remove('on'));
   $('tabGrid').classList.add('on');
   $('shBody').hidden = false;
   $('panelInfo').hidden = true;
+  $('panelGuide').hidden = true;
   _infoKey = null;
   $('sheet').classList.add('open');
   $('sheetMask').classList.add('open');
@@ -4115,6 +4173,7 @@ document.getElementById('sheetMask').addEventListener('click', closeSheet);
 $('tabGrid').addEventListener('click', function () { switchSheetTab('tabGrid'); });
 $('tabList').addEventListener('click', function () { switchSheetTab('tabList'); });
 $('tabInfo').addEventListener('click', function () { switchSheetTab('tabInfo'); });
+$('tabGuide').addEventListener('click', function () { switchSheetTab('tabGuide'); });
 window.showStationDetail = showStationDetail;  // 调试/自动化钩子：供控制台与 E2E 直接打开车站抽屉
 
 /* ============ 信息 tab（eki-wiki 百科，惰性加载，全路径防御） ============ */
@@ -4156,13 +4215,16 @@ function switchSheetTab(tab) {
   $('tabList').classList.toggle('on', tab === 'tabList');
   $('tabGrid').classList.toggle('on', tab === 'tabGrid');
   $('tabInfo').classList.toggle('on', tab === 'tabInfo');
+  $('tabGuide').classList.toggle('on', tab === 'tabGuide');
   if (tab === 'tabList') sheetFlat = true;
   else if (tab === 'tabGrid') sheetFlat = false;
   const ttime = (tab === 'tabList' || tab === 'tabGrid');
   $('shBody').hidden = !ttime;
   $('panelInfo').hidden = (tab !== 'tabInfo');
+  $('panelGuide').hidden = (tab !== 'tabGuide');
   if (ttime) renderStationBody();
   else if (tab === 'tabInfo') renderInfoTab();
+  else if (tab === 'tabGuide') renderGuideTab();
 }
 
 /* ---------- 信息 tab（eki-wiki） ---------- */
@@ -4307,6 +4369,103 @@ async function renderInfoTab() {
   if (!st) { _renderInfoEmpty(box); _infoKey = sheetStation; return; }
   _renderInfoObject(box, _normalizeStation(st, _lineNameOf(matchedLine)));
   _infoKey = sheetStation;
+}
+
+/* ============ 指南 tab（eki-info：改札口/窓口/トイレ/バリアフリー/構内図） ============ */
+const EKI_INFO_BASE = 'https://raw.githubusercontent.com/ooep/eki-info/main/data/';
+let _guideData = null, _guideP = null;
+let _guideKey = null;
+
+async function _loadGuideData() {
+  if (_guideData) return _guideData;
+  if (!_guideP) {
+    _guideP = fetchJSONWithCache(EKI_INFO_BASE + 'station-guide.full.json')
+      .then(j => { _guideData = (j && j.stations) || {}; })
+      .catch(() => { _guideData = {}; });
+  }
+  await _guideP;
+  return _guideData;
+}
+
+function _gVal(v) {
+  if (v === true) return 'あり';
+  if (v === false) return 'なし';
+  if (v == null || v === '') return '—';
+  return _escTxt(v);
+}
+
+async function renderGuideTab() {
+  const box = $('panelGuide');
+  if (_guideKey === sheetStation) return;
+  box.innerHTML = '<div class="gd-loading">指南データ読込中…</div>';
+  const data = await _loadGuideData();
+  const rec = data[normName(sheetStation)];
+  _guideKey = sheetStation;
+  if (!rec) {
+    box.innerHTML = '<div class="gd-empty">この駅の設備情報はまだありません。<br><small>データ提供：ecomo-rakuraku（交通エコロジー・モビリティ財団）</small></div>';
+    return;
+  }
+  let h = '';
+  // header
+  h += `<div class="gd-head"><div class="gd-title">${_escTxt(rec.name || sheetStation)}</div><div class="gd-sub">${_escTxt(rec.operator || '')}</div></div>`;
+  // basic
+  const b = rec.basic || {};
+  if (b.address || b.tel) {
+    h += '<div class="gd-sec"><div class="gd-sec-t">基本情報</div>';
+    if (b.address) h += `<div class="gd-row"><span>所在地</span><b>${_escTxt(b.address)}</b></div>`;
+    if (b.tel) h += `<div class="gd-row"><span>連絡先</span><b>${_escTxt(b.tel)}</b></div>`;
+    if (b.opened) h += `<div class="gd-row"><span>開業</span><b>${_escTxt(b.opened)}</b></div>`;
+    h += '</div>';
+  }
+  // wheelchair
+  const w = rec.wheelchair || {};
+  const wRows = Object.entries(w).filter(([k]) => k !== 'note');
+  if (wRows.length) {
+    h += '<div class="gd-sec"><div class="gd-sec-t">車椅子での移動</div>';
+    wRows.forEach(([k, v]) => { h += `<div class="gd-row"><span>${_escTxt(k)}</span><b>${_gVal(v)}</b></div>`; });
+    h += '</div>';
+  }
+  // toilets
+  const t = rec.toilets || {};
+  if (t.inside || t.outside) {
+    h += '<div class="gd-sec"><div class="gd-sec-t">トイレ</div>';
+    h += '<table class="gd-table"><thead><tr><th></th><th>改札内</th><th>改札外</th></tr></thead><tbody>';
+    const keys = new Set([...Object.keys(t.inside || {}), ...Object.keys(t.outside || {})]);
+    keys.forEach(k => {
+      h += `<tr><td>${_escTxt(k)}</td><td>${_gVal(t.inside && t.inside[k])}</td><td>${_gVal(t.outside && t.outside[k])}</td></tr>`;
+    });
+    h += '</tbody></table>';
+    if (t.note) h += `<div class="gd-note">${_escTxt(t.note)}</div>`;
+    h += '</div>';
+  }
+  // platform
+  const p = rec.platform || {};
+  const pRows = Object.entries(p).filter(([, v]) => v != null && v !== '');
+  if (pRows.length) {
+    h += '<div class="gd-sec"><div class="gd-sec-t">ホーム・ドア</div>';
+    pRows.forEach(([k, v]) => { h += `<div class="gd-row"><span>${_escTxt(k)}</span><b>${_gVal(v)}</b></div>`; });
+    h += '</div>';
+  }
+  // floor plan
+  const fp = rec.floorPlan;
+  if (fp && fp.imageUrl) {
+    h += `<div class="gd-sec"><div class="gd-sec-t">構内図</div><img class="gd-img" src="${_escTxt(fp.imageUrl)}" alt="構内図" loading="lazy"></div>`;
+  } else if (fp && fp.pageUrl) {
+    h += `<div class="gd-sec"><div class="gd-sec-t">構内図</div><a class="gd-link" href="${_escTxt(fp.pageUrl)}" target="_blank" rel="noopener">公式構内図を見る ↗</a></div>`;
+  }
+  // links
+  const L = rec.links || {};
+  const linkItems = [];
+  if (L.ecomo) linkItems.push(['ecomo 駅情報', L.ecomo]);
+  if (L.operator) linkItems.push(['事業者サイト', L.operator]);
+  if (fp && fp.pageUrl && !(fp && fp.imageUrl)) linkItems.push(['構内図', fp.pageUrl]);
+  if (linkItems.length) {
+    h += '<div class="gd-sec"><div class="gd-sec-t">リンク</div><div class="gd-links">';
+    linkItems.forEach(([t2, u]) => { h += `<a class="gd-link" href="${_escTxt(u)}" target="_blank" rel="noopener">${_escTxt(t2)} ↗</a>`; });
+    h += '</div></div>';
+  }
+  h += '<div class="gd-src">データ：ecomo-rakuraku（公益財団法人交通エコロジー・モビリティ財団）</div>';
+  box.innerHTML = h;
 }
 
 /* ---------------- 搜索 ---------------- */
@@ -4665,7 +4824,10 @@ function syncSideBtn() { $('btnSide').innerHTML = sideEl.classList.contains('col
   function settle(after) {
     Promise.all(anims.map(a => a.finished.catch(() => {}))).then(() => {
       if (after) after();
-      cancelAll(); sideEl.classList.remove('morphing');
+      cancelAll();
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        sideEl.classList.remove('morphing');
+      }));
     });
   }
   /* 锚点:水平方向对准菜单按钮中心,垂直方向取面板底边 —— 面板从按钮那一侧长出来。
@@ -4689,6 +4851,7 @@ function syncSideBtn() { $('btnSide').innerHTML = sideEl.classList.contains('col
 
   function open() {
     cancelAll();
+    sideEl.style.opacity = ''; sideEl.style.visibility = '';  /* 清掉上次关闭锁死的inline style */
     sideEl.classList.add('morphing');      /* 必须先挂:关掉 visibility 的 .26s 延迟 */
     sideEl.classList.remove('leaving', 'collapsed');
     setOrigin(); syncSideBtn();
@@ -4717,7 +4880,11 @@ function syncSideBtn() { $('btnSide').innerHTML = sideEl.classList.contains('col
       { opacity:1, transform:'translateY(0) scale(1)' },
       { opacity:0, transform:'translateY(14px) scale(.955)' },
     ], { duration:DUR_OUT, delay:shellDelay, easing:easeOut(), fill:'both' }));
-    settle(() => { sideEl.classList.add('collapsed'); sideEl.classList.remove('leaving'); syncSideBtn(); });
+    settle(() => {
+      sideEl.classList.add('collapsed'); sideEl.classList.remove('leaving'); syncSideBtn();
+      /* Safari 上 WAAPI→CSS 交接会闪一帧,用 inline style 锁死终态彻底规避 */
+      sideEl.style.opacity = '0'; sideEl.style.visibility = 'hidden';
+    });
   }
   /* 唯一开关入口:按钮点击、打开详情卡自动收起、搜索面板关闭后恢复,都走这一条路径 */
   window.__sideSet = function (wantOpen) {
@@ -4835,6 +5002,7 @@ if (urlState) {
   if (urlState.l && I18N[urlState.l]) { lang = urlState.l; localStorage.setItem('mjr3d_lang', lang); }
   if (urlState.m) { localStorage.setItem('mjr3d_theme', urlState.m); applyThemeMode(); }
 }
+
 initMap();
 applyLang();
 boot();
@@ -4929,6 +5097,7 @@ window.__probe = (lineFilter, limit) => {
   return out;
 };
 if (!hasWebgl2) { loaderMsg.textContent = '⚠ WebGL2 unavailable'; }
+
 </script>
 </body>
 </html>

@@ -3815,8 +3815,8 @@ function updateDetailLive(t, p, M, rebuild) {
         return s;
       })() +
       '</div></div>' +
-      '<div class="d-act"><button class="btn' + (followTrip === t ? ' on' : '') + '" id="dFollow">' + (followTrip === t ? ICO.stop : ICO.follow) + ' ' + (followTrip === t ? T().stopFollowBtn : T().followBtn) + '</button>' +
-      '<button class="btn" id="dLoc">' + ICO.loc + ' ' + T().locateBtn + '</button></div>';
+      '<div class="d-act"><button class="btn' + (followTrip === t ? ' on' : '') + '" id="dFollow">' + (followTrip === t ? T().stopFollowBtn : T().followBtn) + '</button>' +
+      '<button class="btn" id="dLoc">' + T().locateBtn + '</button></div>';
     /* 立即标记停靠站状态(已过/停靠中/下一站),并滚动时间线到当前站——不依赖下一帧差异检测 */
     t._dI = i;
     const stl0 = detailEl.querySelector('.d-stops');

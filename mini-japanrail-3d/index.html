@@ -3715,9 +3715,12 @@ function onMapClick(e) {
   if (hits.length > 1) { showTrPick(hits, px, py); return; }
   trPickEl.classList.remove('show');
   // 站点：查询圆点层 stas + 站名标签层 stas-label；加触控感知容差（bbox）；多命中取屏幕最近者
+  // 容差随 zoom 自适应：低 zoom（国家/城市级、站密）收窄，避免误触乱飞；高 zoom（区内）保持「一点就到」
   const pt = (e.offsetX !== undefined) ? [px, py] : e.point;
   const oe = e.originalEvent || {};
-  const r = (oe.pointerType === 'touch' || oe.pointerType === 'pen') ? 22 : 12;
+  const touch = (oe.pointerType === 'touch' || oe.pointerType === 'pen');
+  const lowZ = map.getZoom() < 10;
+  const r = touch ? (lowZ ? 12 : 22) : (lowZ ? 6 : 12);
   const box = [[pt[0] - r, pt[1] - r], [pt[0] + r, pt[1] + r]];
   const feats = map.queryRenderedFeatures(box, { layers: ['stas', 'stas-label'] });
   if (feats.length) {

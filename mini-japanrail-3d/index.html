@@ -196,6 +196,20 @@ button { font-family:inherit; }
 #side.collapsed #sideTabs, #side.collapsed .sec {
   backdrop-filter:blur(0) saturate(1); -webkit-backdrop-filter:blur(0) saturate(1); }
 
+/* ---------- 左侧面板 morph(与时间胶囊同一套弹簧语言) ----------
+   原先 #side 的开关只有 opacity .22~.26s 的原地淡入:sideIn 那段位移动画只在页面
+   加载时跑一次,点菜单按钮切换时完全不参与 —— 面板是"闪出来"而不是"长出来"。
+   现在:壳以菜单按钮为水平锚点做 scale+位移+透明度(真弹簧,复用 --spring-out/in),
+   内部卡片(分段控件 + 各分组卡)错峰浮现并带模糊消解;收起走两阶段。 */
+#side { transform-origin:var(--side-ox,12px) 100%; }
+/* morph 期间必须关掉 CSS 过渡与 visibility 延迟:基础规则里 visibility 有 .26s 延迟,
+   不关掉的话展开动画的前 260ms 面板根本不可见。will-change 仅动画期挂载,结束即摘。 */
+#side.morphing { transition:none !important; visibility:visible !important; will-change:transform,opacity; }
+/* 收起第一阶段:卡片已退场,由 CSS 兜住 opacity —— 否则 WAAPI cancel 后卡片会闪回不透明 */
+#side.leaving #sideTabs, #side.leaving .sec { opacity:0; }
+/* 菜单↔关闭 图标切换:与播放键同款 iconPop,让按钮自己也参与这套动效语言 */
+#btnSide svg { animation:iconPop .3s var(--ease-spring); }
+
 /* 搜索 */
 .tbox { width:100%; min-height:36px; padding:0 12px; border:1px solid var(--line); border-radius:var(--r-sm); background:var(--panel2);
   color:var(--txt); font-size:12.5px; outline:none; transition:border-color .15s, box-shadow .15s; }
@@ -3163,7 +3177,7 @@ $('spMain').addEventListener('click', () => setSpeed(spIdx + 1));
    ── 现在的做法 ──
    一条弹簧时间轴同时驱动 width+height+borderRadius+padding;
    内容分层 stagger 入场,收起时先淡出内容(130ms)再收壳;
-   圆按钮在布局内连续收缩;形变期间叠加一道液面高光扫过。 */
+   圆按钮在布局内连续收缩。 */
 (function () {
   const ct = document.querySelector('#clock .ct');
   if (!ct) return;
@@ -3324,7 +3338,9 @@ function closeDetail() {
 }
 function showTrainDetail(t) {
   liveDetailTrip = t;
-  if (!sideEl.classList.contains('collapsed')) { sideEl.classList.add('collapsed'); $('btnSide').innerHTML = ICO.menu; }
+  /* 打开详情卡时自动收起菜单:走 __sideSet 才有两阶段收拢动画,硬摘 class 会瞬间消失 */
+  if (window.__sideSet) window.__sideSet(false);
+  else if (!sideEl.classList.contains('collapsed')) { sideEl.classList.add('collapsed'); syncSideBtn(); }
   openDetail();
   updateDetailLive(t, null, curMin(), true);
   $('dClose').onclick = () => { closeDetail(); liveDetailTrip = null; if (followTrip) stopFollow(); };
@@ -4072,7 +4088,98 @@ document.querySelectorAll('#langRow .chip').forEach(c => c.addEventListener('cli
   applyLang(); stateHash();
 }));
 function syncSideBtn() { $('btnSide').innerHTML = sideEl.classList.contains('collapsed') ? ICO.menu : ICO.close; }
-$('btnSide').addEventListener('click', () => { sideEl.classList.toggle('collapsed'); syncSideBtn(); });
+/* 菜单面板 morph —— 与时间胶囊同一套弹簧语言:
+   壳(整叠玻璃卡)以菜单按钮为水平锚点做 scale+位移+透明度;
+   内部分段控件与各分组卡错峰浮现(capIn 同款:透明度 + 位移 + 2px 模糊消解);
+   收起两阶段:卡片先退场(130ms),壳再以近临界弹簧收拢(340ms)。
+   展开 460ms / 收起 340ms —— 退出永远比进入利落,与胶囊完全一致。 */
+(function () {
+  if (!sideEl) return;
+  const btn = $('btnSide');
+  const RM = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const SPRING_OUT = 'linear(0,.0598,.1976,.3654,.5321,.68,.8007,.8924,.9573,.9996,1.0241,1.0356,1.0384,1.0358,1.0304,1.0239,1.0175,1.0119,1.0074,1.0039,1.0015,.9999,.999,.9986,.9985,.9986,.9989,.9991,.9993,.9996,1)';
+  const SPRING_IN  = 'linear(0,.0368,.1232,.2323,.3473,.458,.5586,.6466,.7215,.7836,.8341,.8746,.9065,.9313,.9503,.9646,.9753,.9831,.9888,.9929,.9957,.9976,.9989,.9997,1.0002,1.0005,1.0006,1.0006,1.0006,1.0005,1)';
+  const BEZ_OUT = 'cubic-bezier(.22,1.12,.36,1)', BEZ_IN = 'cubic-bezier(.32,.94,.44,1)';
+  const SMOOTH = 'cubic-bezier(.16,1,.3,1)';
+  const DUR_OUT = 460, DUR_IN = 340, LEAVE_MS = 130, CARD_STEP = 45;
+  const supportsLinear = !!(window.CSS && CSS.supports && CSS.supports('transition-timing-function', 'linear(0,1)'));
+  const easeOut = () => supportsLinear ? SPRING_OUT : BEZ_OUT;
+  const easeIn  = () => supportsLinear ? SPRING_IN  : BEZ_IN;
+  const CARD_IN  = [{ opacity:0, transform:'translateY(9px) scale(.985)', filter:'blur(2.5px)' },
+                    { opacity:1, transform:'none', filter:'blur(0)' }];
+  const CARD_OUT = [{ opacity:1, transform:'none' },
+                    { opacity:0, transform:'translateY(-6px) scale(.99)' }];
+  let anims = [], leaveT = 0;
+
+  function cancelAll() { anims.forEach(a => { try { a.cancel(); } catch (e) {} }); anims = []; }
+  /* 所有动画自然落定后摘掉 morphing,让纯 CSS 接管终态(关键帧末值与 CSS 终值一致,无跳变) */
+  function settle() {
+    Promise.all(anims.map(a => a.finished.catch(() => {}))).then(() => {
+      cancelAll(); sideEl.classList.remove('morphing');
+    });
+  }
+  /* 锚点:水平方向对准菜单按钮中心,垂直方向取面板底边 —— 面板从按钮那一侧长出来。
+     只算水平是因为按钮在屏幕底部、面板在顶部,若垂直锚点也取按钮中心(距面板顶 ~700px),
+     0.045 的缩放会让顶边位移 30px+,变成"甩上来"而不是"长出来"。 */
+  function setOrigin() {
+    if (!btn) return;
+    const p = sideEl.getBoundingClientRect(), b = btn.getBoundingClientRect();
+    if (b.width < 1) return;      /* 按钮被时间胶囊挤成 0 宽时不更新,沿用上次锚点 */
+    sideEl.style.setProperty('--side-ox', Math.round(b.left + b.width / 2 - p.left) + 'px');
+  }
+  /* 参与错峰的卡片:分段控件 + 各分组卡(跳过 display:none 的空区块,否则白占 stagger 序号) */
+  function cards() {
+    const out = [], t = document.getElementById('sideTabs');
+    if (t) out.push(t);
+    sideEl.querySelectorAll('.sec').forEach(el => {
+      if (getComputedStyle(el).display !== 'none') out.push(el);
+    });
+    return out;
+  }
+
+  function open() {
+    clearTimeout(leaveT); cancelAll();
+    sideEl.classList.add('morphing');      /* 必须先挂:关掉 visibility 的 .26s 延迟 */
+    sideEl.classList.remove('leaving', 'collapsed');
+    setOrigin(); syncSideBtn();
+    if (RM.matches || !sideEl.animate) { sideEl.classList.remove('morphing'); return; }
+    anims.push(sideEl.animate([
+      { opacity:0, transform:'translateY(14px) scale(.955)' },
+      { opacity:1, transform:'translateY(0) scale(1)' },
+    ], { duration:DUR_OUT, easing:easeOut(), fill:'both' }));
+    cards().forEach((c, i) => anims.push(c.animate(CARD_IN,
+      { duration:340, delay:i * CARD_STEP, easing:SMOOTH, fill:'both' })));
+    settle();
+  }
+  function close() {
+    clearTimeout(leaveT); cancelAll();
+    if (RM.matches || !sideEl.animate) {
+      sideEl.classList.remove('leaving'); sideEl.classList.add('collapsed'); syncSideBtn(); return;
+    }
+    /* 第一阶段:卡片退场。壳保持不动,内容由 CSS .leaving 兜住,cancel 也不会闪回 */
+    sideEl.classList.add('leaving'); syncSideBtn();
+    cards().forEach(c => anims.push(c.animate(CARD_OUT,
+      { duration:LEAVE_MS, easing:'ease-in', fill:'both' })));
+    leaveT = setTimeout(() => {
+      cancelAll();
+      sideEl.classList.add('morphing');
+      setOrigin();
+      sideEl.classList.add('collapsed');
+      anims.push(sideEl.animate([
+        { opacity:1, transform:'translateY(0) scale(1)' },
+        { opacity:0, transform:'translateY(14px) scale(.955)' },
+      ], { duration:DUR_IN, easing:easeIn(), fill:'both' }));
+      settle();
+    }, LEAVE_MS);
+  }
+  /* 唯一开关入口:按钮点击、打开详情卡自动收起、搜索面板关闭后恢复,都走这一条路径 */
+  window.__sideSet = function (wantOpen) {
+    const isOpen = !sideEl.classList.contains('collapsed');
+    if (wantOpen === isOpen) return;
+    if (wantOpen) open(); else close();
+  };
+  if (btn) btn.addEventListener('click', () => window.__sideSet(sideEl.classList.contains('collapsed')));
+})();
 /* 液态玻璃改版:移动端首屏默认收起侧栏,呈现全屏沉浸地图;桌面端保持展开 */
 if (window.innerWidth <= 640) sideEl.classList.add('collapsed');
 syncSideBtn();
@@ -4083,7 +4190,9 @@ function showTab(tab, focusSearch) {
   if (focusSearch && tab === 'search') setTimeout(() => { searchEl.focus(); }, 60);
 }
 document.querySelectorAll('#sideTabs .stab').forEach(b => b.addEventListener('click', () => {
-  if (sideEl.classList.contains('collapsed')) { sideEl.classList.remove('collapsed'); $('btnSide').innerHTML = ICO.close; }
+  /* 恢复菜单:同样走 __sideSet,与按钮点击共用一条锚点弹簧路径 */
+  if (window.__sideSet) window.__sideSet(true);
+  else if (sideEl.classList.contains('collapsed')) { sideEl.classList.remove('collapsed'); syncSideBtn(); }
   showTab(b.dataset.tab);
 }));
 function openSearchPanel(open) {

@@ -703,6 +703,27 @@ button { font-family:inherit; }
 .gd-loading, .gd-empty { padding:36px 16px; text-align:center; color:var(--dim); font-size:13px; line-height:1.7; }
 .gd-empty .gd-retry { margin-top:10px; display:inline-block; padding:6px 16px; border-radius:var(--r-pill); border:1px solid var(--glass-edge); background:var(--glass); color:var(--txt); font-size:12.5px; cursor:pointer; }
 
+/* --- 指南面板（eki-info） --- */
+#panelGuide { color:var(--txt); }
+.gd-head { padding:6px 2px 14px; border-bottom:1px solid var(--glass-edge); }
+.gd-title { font-size:22px; font-weight:800; letter-spacing:-.3px; }
+.gd-sub { font-size:12px; color:var(--dim); margin-top:5px; }
+.gd-sec { margin-top:18px; }
+.gd-sec-t { font-size:13px; font-weight:800; color:var(--txt); display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+.gd-sec-t::after { content:""; flex:1; height:1px; background:var(--glass-edge); }
+.gd-row { display:flex; justify-content:space-between; gap:16px; padding:9px 2px; border-bottom:1px dashed var(--glass-edge); font-size:12.5px; }
+.gd-row span { color:var(--dim); flex:none; }
+.gd-row b { font-weight:600; text-align:right; word-break:break-word; }
+.gd-table { width:100%; border-collapse:collapse; font-size:12px; margin-top:4px; }
+.gd-table th, .gd-table td { padding:7px 6px; border-bottom:1px solid var(--glass-edge); text-align:center; }
+.gd-table th { color:var(--dim); font-weight:600; }
+.gd-table td:first-child { text-align:left; color:var(--dim); }
+.gd-note { font-size:11.5px; color:var(--dim); margin-top:8px; line-height:1.6; }
+.gd-img { width:100%; border-radius:10px; border:1px solid var(--glass-edge); margin-top:6px; background:#fff; }
+.gd-links { display:flex; flex-wrap:wrap; gap:8px; }
+.gd-link { display:inline-block; font-size:12.5px; color:var(--acc-txt); background:var(--acc-soft); border:1px solid var(--acc-border); border-radius:8px; padding:6px 12px; text-decoration:none; }
+.gd-src { margin-top:24px; font-size:10.5px; color:var(--dim); text-align:center; opacity:.8; }
+
 /* --- 信息面板 --- */
 #panelInfo { color:var(--txt); }
 .info-station { padding:6px 2px 14px; border-bottom:1px solid var(--glass-edge); }
@@ -903,9 +924,10 @@ button { font-family:inherit; }
     <div><div class="sh-nm" id="shNm">駅名</div><div class="sh-sub" id="shSub"></div></div>
     <button class="btn icon sh-x" id="shX"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
   </div>
-  <div class="sh-tabs"><button id="tabList">列表</button><button id="tabGrid" class="on">一览</button><button id="tabInfo">信息</button></div>
+  <div class="sh-tabs"><button id="tabList">列表</button><button id="tabGrid" class="on">一览</button><button id="tabInfo">信息</button><button id="tabGuide">指南</button></div>
   <div class="sh-body" id="shBody"><div class="empty">時刻表を読込中…</div></div>
   <div class="sh-body tab-panel" id="panelInfo" hidden></div>
+  <div class="sh-body tab-panel" id="panelGuide" hidden></div>
 </div>
 <div id="toast"></div>
 <div class="foot" id="footNote"></div>
@@ -4134,10 +4156,11 @@ function showStationDetail(name, coord) {
   $('shNm').textContent = name;
   // 新站打开：默认切回「一览」，隐藏信息面板并使懒渲染缓存失效
   sheetTab = 'tabGrid';
-  ['tabList','tabGrid','tabInfo'].forEach(id => $(id).classList.remove('on'));
+  ['tabList','tabGrid','tabInfo','tabGuide'].forEach(id => $(id).classList.remove('on'));
   $('tabGrid').classList.add('on');
   $('shBody').hidden = false;
   $('panelInfo').hidden = true;
+  $('panelGuide').hidden = true;
   _infoKey = null;
   $('sheet').classList.add('open');
   $('sheetMask').classList.add('open');
@@ -4150,6 +4173,7 @@ document.getElementById('sheetMask').addEventListener('click', closeSheet);
 $('tabGrid').addEventListener('click', function () { switchSheetTab('tabGrid'); });
 $('tabList').addEventListener('click', function () { switchSheetTab('tabList'); });
 $('tabInfo').addEventListener('click', function () { switchSheetTab('tabInfo'); });
+$('tabGuide').addEventListener('click', function () { switchSheetTab('tabGuide'); });
 window.showStationDetail = showStationDetail;  // 调试/自动化钩子：供控制台与 E2E 直接打开车站抽屉
 
 /* ============ 信息 tab（eki-wiki 百科，惰性加载，全路径防御） ============ */
@@ -4191,13 +4215,16 @@ function switchSheetTab(tab) {
   $('tabList').classList.toggle('on', tab === 'tabList');
   $('tabGrid').classList.toggle('on', tab === 'tabGrid');
   $('tabInfo').classList.toggle('on', tab === 'tabInfo');
+  $('tabGuide').classList.toggle('on', tab === 'tabGuide');
   if (tab === 'tabList') sheetFlat = true;
   else if (tab === 'tabGrid') sheetFlat = false;
   const ttime = (tab === 'tabList' || tab === 'tabGrid');
   $('shBody').hidden = !ttime;
   $('panelInfo').hidden = (tab !== 'tabInfo');
+  $('panelGuide').hidden = (tab !== 'tabGuide');
   if (ttime) renderStationBody();
   else if (tab === 'tabInfo') renderInfoTab();
+  else if (tab === 'tabGuide') renderGuideTab();
 }
 
 /* ---------- 信息 tab（eki-wiki） ---------- */
@@ -4342,6 +4369,103 @@ async function renderInfoTab() {
   if (!st) { _renderInfoEmpty(box); _infoKey = sheetStation; return; }
   _renderInfoObject(box, _normalizeStation(st, _lineNameOf(matchedLine)));
   _infoKey = sheetStation;
+}
+
+/* ============ 指南 tab（eki-info：改札口/窓口/トイレ/バリアフリー/構内図） ============ */
+const EKI_INFO_BASE = 'https://raw.githubusercontent.com/ooep/eki-info/main/data/';
+let _guideData = null, _guideP = null;
+let _guideKey = null;
+
+async function _loadGuideData() {
+  if (_guideData) return _guideData;
+  if (!_guideP) {
+    _guideP = fetchJSONWithCache(EKI_INFO_BASE + 'station-guide.full.json')
+      .then(j => { _guideData = (j && j.stations) || {}; })
+      .catch(() => { _guideData = {}; });
+  }
+  await _guideP;
+  return _guideData;
+}
+
+function _gVal(v) {
+  if (v === true) return 'あり';
+  if (v === false) return 'なし';
+  if (v == null || v === '') return '—';
+  return _escTxt(v);
+}
+
+async function renderGuideTab() {
+  const box = $('panelGuide');
+  if (_guideKey === sheetStation) return;
+  box.innerHTML = '<div class="gd-loading">指南データ読込中…</div>';
+  const data = await _loadGuideData();
+  const rec = data[normName(sheetStation)];
+  _guideKey = sheetStation;
+  if (!rec) {
+    box.innerHTML = '<div class="gd-empty">この駅の設備情報はまだありません。<br><small>データ提供：ecomo-rakuraku（交通エコロジー・モビリティ財団）</small></div>';
+    return;
+  }
+  let h = '';
+  // header
+  h += `<div class="gd-head"><div class="gd-title">${_escTxt(rec.name || sheetStation)}</div><div class="gd-sub">${_escTxt(rec.operator || '')}</div></div>`;
+  // basic
+  const b = rec.basic || {};
+  if (b.address || b.tel) {
+    h += '<div class="gd-sec"><div class="gd-sec-t">基本情報</div>';
+    if (b.address) h += `<div class="gd-row"><span>所在地</span><b>${_escTxt(b.address)}</b></div>`;
+    if (b.tel) h += `<div class="gd-row"><span>連絡先</span><b>${_escTxt(b.tel)}</b></div>`;
+    if (b.opened) h += `<div class="gd-row"><span>開業</span><b>${_escTxt(b.opened)}</b></div>`;
+    h += '</div>';
+  }
+  // wheelchair
+  const w = rec.wheelchair || {};
+  const wRows = Object.entries(w).filter(([k]) => k !== 'note');
+  if (wRows.length) {
+    h += '<div class="gd-sec"><div class="gd-sec-t">車椅子での移動</div>';
+    wRows.forEach(([k, v]) => { h += `<div class="gd-row"><span>${_escTxt(k)}</span><b>${_gVal(v)}</b></div>`; });
+    h += '</div>';
+  }
+  // toilets
+  const t = rec.toilets || {};
+  if (t.inside || t.outside) {
+    h += '<div class="gd-sec"><div class="gd-sec-t">トイレ</div>';
+    h += '<table class="gd-table"><thead><tr><th></th><th>改札内</th><th>改札外</th></tr></thead><tbody>';
+    const keys = new Set([...Object.keys(t.inside || {}), ...Object.keys(t.outside || {})]);
+    keys.forEach(k => {
+      h += `<tr><td>${_escTxt(k)}</td><td>${_gVal(t.inside && t.inside[k])}</td><td>${_gVal(t.outside && t.outside[k])}</td></tr>`;
+    });
+    h += '</tbody></table>';
+    if (t.note) h += `<div class="gd-note">${_escTxt(t.note)}</div>`;
+    h += '</div>';
+  }
+  // platform
+  const p = rec.platform || {};
+  const pRows = Object.entries(p).filter(([, v]) => v != null && v !== '');
+  if (pRows.length) {
+    h += '<div class="gd-sec"><div class="gd-sec-t">ホーム・ドア</div>';
+    pRows.forEach(([k, v]) => { h += `<div class="gd-row"><span>${_escTxt(k)}</span><b>${_gVal(v)}</b></div>`; });
+    h += '</div>';
+  }
+  // floor plan
+  const fp = rec.floorPlan;
+  if (fp && fp.imageUrl) {
+    h += `<div class="gd-sec"><div class="gd-sec-t">構内図</div><img class="gd-img" src="${_escTxt(fp.imageUrl)}" alt="構内図" loading="lazy"></div>`;
+  } else if (fp && fp.pageUrl) {
+    h += `<div class="gd-sec"><div class="gd-sec-t">構内図</div><a class="gd-link" href="${_escTxt(fp.pageUrl)}" target="_blank" rel="noopener">公式構内図を見る ↗</a></div>`;
+  }
+  // links
+  const L = rec.links || {};
+  const linkItems = [];
+  if (L.ecomo) linkItems.push(['ecomo 駅情報', L.ecomo]);
+  if (L.operator) linkItems.push(['事業者サイト', L.operator]);
+  if (fp && fp.pageUrl && !(fp && fp.imageUrl)) linkItems.push(['構内図', fp.pageUrl]);
+  if (linkItems.length) {
+    h += '<div class="gd-sec"><div class="gd-sec-t">リンク</div><div class="gd-links">';
+    linkItems.forEach(([t2, u]) => { h += `<a class="gd-link" href="${_escTxt(u)}" target="_blank" rel="noopener">${_escTxt(t2)} ↗</a>`; });
+    h += '</div></div>';
+  }
+  h += '<div class="gd-src">データ：ecomo-rakuraku（公益財団法人交通エコロジー・モビリティ財団）</div>';
+  box.innerHTML = h;
 }
 
 /* ---------------- 搜索 ---------------- */

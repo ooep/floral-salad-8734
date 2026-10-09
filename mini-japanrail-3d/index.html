@@ -1199,7 +1199,7 @@ const ICO = {
 };
 
 /* ---------------- 全局状态 ---------------- */
-let segFC = null, staFC = null, footprintFC = null, tmaps = null, trainJSON = null;
+let segFC = null, staFC = null, footprintFC = null, entrancesFC = null, tmaps = null, trainJSON = null;
 /* 官方权威站坐标/区间折线映射 (station_map.json v2, RailAround 官方几何构建):
    tmap_stops[t] = 每车次每站 [lng,lat](与 tmaps[t].s_jas 等长等序),
    tmap_lids[t] = 每区间官方线段 ID(符号=方向), segments[id] = 官方折线坐标 */
@@ -3219,11 +3219,11 @@ async function boot() {
   if (retryBtn) retryBtn.style.display = 'none';
   loadTrainAtlas(); /* 提前预载图标图集(默认/矢量/可爱 3 套,异步不阻塞主流程;加载遮罩马赛克拼图要用默认图集) */
   try {
-    _fileTotal = 9; _fileIdx = 0;
+    _fileTotal = 10; _fileIdx = 0;
     /* 当日时刻表与 7 个静态数据文件并行下载(含 tokkyu 特急爱称表、names_i18n 多语站名表, 原实现串行) */
     dayBitAuto = bitOfDate(Date.now());
     dayBit = dayMode === 'auto' ? dayBitAuto : dayMode;
-    const [s, st, tm, lm, sm, tk, ni, tj, fp] = await Promise.all([
+    const [s, st, tm, lm, sm, tk, ni, tj, fp, en] = await Promise.all([
       fetchJSONWithCache('data/segments3d.geojson', 'loadingSeg', 0),
       fetchJSONWithCache('data/stations3d.geojson', 'loadingSta', 1),
       fetchJSONWithCache('data/tmaps.json', 'loadingTm', 2),
@@ -3233,8 +3233,9 @@ async function boot() {
       fetchJSONWithCache('data/names_i18n.json', '', 6).catch(() => null),
       fetchJSONWithCache(TRAIN_FILES[dayBit], 'loadingTr', 7),
       fetchJSONWithCache('data/station_footprints_colored.geojson', 'loadingSta', 8).catch(() => null),
+      fetchJSONWithCache('data/station_entrances.geojson', 'loadingSta', 9).catch(() => null),
     ]);
-    segFC = s; staFC = st; footprintFC = fp; tmaps = tm; LINES_MAP = lm || {}; stationMap = sm && sm.version === 2 ? sm : null; TOKKYU = tk;
+    segFC = s; staFC = st; footprintFC = fp; entrancesFC = en; tmaps = tm; LINES_MAP = lm || {}; stationMap = sm && sm.version === 2 ? sm : null; TOKKYU = tk;
     NAME_I18N = ni;
     trainJSON = tj;
     /* 官方补缺轨道/车站(地图遗漏的新开线/私铁, 如西鉄甘木線/北大阪急行延伸/夢洲):
@@ -3302,6 +3303,22 @@ function addMapLayers() {
     map.addLayer({ id: 'fp-line', type: 'line', source: 'fp', paint: {
       'line-color': ['get', 'color'], 'line-width': 1.1, 'line-opacity': 0.85 } });
     if (typeof fpVisible === 'function') fpVisible(fpEnabled);
+  }
+  /* ── 出入口层:重绘的橙色方框箭头图标(原创), zoom>=13 才显示,避免低缩放密集 ── */
+  if (entrancesFC && !map.getSource('ent')) {
+    map.addSource('ent', { type: 'geojson', data: entrancesFC });
+    const addEntLayer = function () {
+      if (map.getLayer('ent')) return;
+      map.addLayer({ id: 'ent', type: 'symbol', source: 'ent', minzoom: 13, layout: {
+        'icon-image': 'exit-sign', 'icon-size': 0.32, 'icon-allow-overlap': false, 'icon-anchor': 'center' } });
+    };
+    if (map.hasImage('exit-sign')) { addEntLayer(); }
+    else {
+      const im = new Image();
+      im.onload = function () { if (!map.hasImage('exit-sign')) map.addImage('exit-sign', im); addEntLayer(); };
+      im.onerror = function () {};
+      im.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHc4AAAFLUlEQVR4nO2dz08bRxTH3yLXpsovRaHtJYf20N+pUlW2E0iiGLdV/4f0EAwhiXrJL6LkAm3JhSSQH01/kKYh7aGVqv5W7wapCQS85Neh5/4BaQOEYFCB6aH2MjOeWXbt2Z018z7SSOwufm/8fftmnndXOxb5/T1A9BEjhOjug9HEQHEAkkf+6FVqMILYl/f0qLJlLf/2bs1GTBBdRq3BsJZ/faeqDyaP3jRWdBn2pd2+g1FVANzEty/t7vZtsM5IHr15RnbMbxCs5V/e9u742C2h8PbFXWtedBnJY7eEwbAv7vIUCGvJYwBSAvELBgvPkxIEouAhCNbSz9nVjR8fZcQvXGhB4SWkjo8ygShcaHENQoMHgyi+D3h9eP14rKWfWqUHUyfGWPEHmlF8j6ROjLGZMNAszARr6ceM2EDXbVb8/p0ovk9SXbfZIPTvrAjCqkNQ6YMofhV40c1a/GFvxc70yXHn7J84vwPFr5H0yXEnEybO72CyoCIDaPER9fD6NgAhwDSKiXPp7orj2Hy3iXNpdhShjnmaA5DgsBa/3+NspE8VVsb+sykc+xWTPlVYmQvOpnoAPFZBSHDIb8jgnbJgKenbQACAAED6tO0MP+N9ye7yfmzq2nhf0hnW06ftXgKyDMCzPxwIwQBoBctQ/WjLgNi+Uefvxe9aAvcXSXRlAC2+aNskhA9mBfmw1lPvj4k7sm8U/v22OTC/UYTgHKCfaFVBplVfmAH6wQzQCWaAfkKvgtww7VF5ErlLEYYFwOghKL6/oLsLAEDfE6YJ8h6pG2Heq4VSEMK+R8x9X2MzoEy8zdbq3+gMKBNvszEDdBPPTUI8Nxm6XyxDOeK5SVgYeisUX3gxTkKi/U5ovnAOkJBov4NzgG4SHXcD91GXv4QTB+4F2w/aV8ddWPjqzWCMkzq7FJHovB9SRzi/B+7BwrXt6g0TAjHRV9ZVi+ivgeSUgz+vMBAE6mgSbtR09vM0dt7HSVg3jQcfKLNVNxkQNRoPPsAM0Mn81TeU2KmrKigqzA9uU2OIkJXH05n9ATbX/ri0oqovXSPFwW3Kvj8BzADPFL94Xb3RevshVvz8NQAAePqDP8PoTYVf5RACsWAsB4sKQbwGMTDxS9RVBoRN8bNXg3WAZaicwMUvgRkgoPjpK+E4wotxlcyFJT5gGcowd+Xl8J3iHPA/WsQvYXwGzH3yUug+HUzPAK3ilzA2A+YuvxiaLymE4INZOsEHsyKAsUNQJMAM0A9mgE4wA/SDVZBGtFRBswMv+Nq/1tEyB8z2Pw/ru/5ito1E5y1JY0XniFYVZBqReyrCNLAM1Y8107fV2cgMPnRe3jpyuAnfHa2YzOBD593RI4eb8N3RUQDfHa2Lkr5MBowc2uIsr5G5+rd0uT7EP7SetM7uy9liFgQDpavrHJD58h/MAgW46dhACAG6DXduZlb54Y9j899ohjs399DHhBlAB6H12iPMghqg9eNPbgDRKkrlxhuR/R82aas4eQX/Y02feU4evevTzJpXwx2b8MeZR1qvTzPiD3dsEq4l6ToJ8x/ijSJivIoPAGBN9z67usGhGTYT2jdiJkhoHZphxW/f6LqesDXlIQAAAFkuCAAAeQyEQ5YTHgAgv4r4AADW1MfPeHdy47Fwncl8boOxgcjeeCwclvO5Dd7WlPcTAMqpdMFPE4IhEx3Au/BlrKmPmqrrxNezuOoqR75tvS/xAWoIAI3JwahGdBpr6sMtqvoCAADZb56s+WDk96+rSXQa5QFA/PEfOjCukRTL4vIAAAAASUVORK5CYII=';
+    }
   }
   map.addSource('segs', { type: 'geojson', data: segFC });
   map.addLayer({ id: 'segs-glow', type: 'line', source: 'segs', paint: {

@@ -3233,7 +3233,7 @@ async function boot() {
       fetchJSONWithCache('data/tokkyu.json', '', 5).catch(() => null),
       fetchJSONWithCache('data/names_i18n.json', '', 6).catch(() => null),
       fetchJSONWithCache(TRAIN_FILES[dayBit], 'loadingTr', 7),
-      fetchJSONWithCache('data/station_footprints_colored.geojson', 'loadingSta', 8).catch(() => null),
+      fetchJSONWithCache('data/station_overall_footprints.geojson', 'loadingSta', 8).catch(() => null),
       fetchJSONWithCache('data/station_entrances.geojson', 'loadingSta', 9).catch(() => null),
       fetchJSONWithCache('data/station_platforms.geojson', 'loadingSta', 10).catch(() => null),
     ]);
@@ -3305,7 +3305,7 @@ function addMapLayers() {
     map.addLayer({ id: 'pl-line', type: 'line', source: 'pl', paint: {
       'line-color': '#f2c200', 'line-width': 0.9, 'line-opacity': 0.85 } });
   }
-  /* ── 站体轮廓层(footprint):OSM 站房多边形,按所属线路代表色渲染;无匹配时灰色 ── */
+  /* ── 车站整体轮廓层(footprint):站房轮廓+站台面按站合并(unary_union),按线路代表色渲染 ── */
   if (footprintFC && !map.getSource('fp')) {
     map.addSource('fp', { type: 'geojson', data: footprintFC });
     map.addLayer({ id: 'fp-fill', type: 'fill', source: 'fp', paint: {

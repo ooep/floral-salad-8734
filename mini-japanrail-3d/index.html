@@ -445,10 +445,9 @@ button { font-family:inherit; }
 #loader .lgi { color:var(--acc); animation:pulse 1.6s ease-in-out infinite; }
 @keyframes pulse { 0%,100%{transform:scale(1);opacity:.85;} 50%{transform:scale(1.06);opacity:1;} }
 /* 2×2 列车车头马赛克拼图:4 格分别显示 4 张不同列车图的四个角,加载中随机轮换一格 */
-#lmosaic { display:none; grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr; width:48px; height:48px;
+#lmosaic { display:grid; grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr; width:48px; height:48px;
   padding:2px; gap:2px; border-radius:13px;
   background:rgba(120,140,180,.16); box-shadow:inset 0 0 0 1px rgba(120,140,180,.32), 0 5px 18px rgba(0,0,0,.2); }
-#lgi.atlas .lm-svg { display:none; }#lgi.atlas #lmosaic { display:grid; }
 .lmq { overflow:hidden; border-radius:3px; background:var(--bg); background-size:cover; background-position:center; }
 .lmq.swap { animation:lmPop .32s var(--ease-smooth); }
 @keyframes lmPop { 0% { transform:scale(1.45); opacity:.15; filter:brightness(1.6); }
@@ -898,7 +897,6 @@ button { font-family:inherit; }
 
 <div id="loader">
   <div class="lgi" id="lgi">
-    <svg class="lm-svg" viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15h16M5 15l1.5-6A2 2 0 0 1 8.4 7.5h7.2a2 2 0 0 1 1.9 1.5L19 15M7 18.5h.01M17 18.5h.01"/><circle cx="8" cy="18.5" r="1.4"/><circle cx="16" cy="18.5" r="1.4"/></svg>
     <div id="lmosaic"><div class="lmq"></div><div class="lmq"></div><div class="lmq"></div><div class="lmq"></div></div>
   </div>
   <div class="lt" id="lTitle">Mini JapanRail 3D</div>
@@ -1194,9 +1192,9 @@ function syncSim() { if (clockMode === 'manual' && !paused) { simEpoch = simNow(
 /* ---------------- 数据加载(带进度 + IndexedDB 缓存) ---------------- */
 const loaderMsg = $('lMsg'), lPctEl = $('lPct');
 
-/* ---- 加载动画:2×2 列车车头马赛克拼图(随机轮换一格) ----
+/* ---- 加载动画:2×2 列车车头马赛克拼图(启动即显示) ----
    4 格固定显示原图的四个角:0左上 1右上 2左下 3右下;
-   素材用 train_icons_atlas 里的像素列车车头,图集就绪后替换原 SVG 图标,
+   素材用 train_icons_atlas 里的像素列车车头,图集就绪后填充,
    加载期间每隔 700ms 随机把 4 格中的一格换成另一列车的同一角。 */
 const lgi = $('lgi'), lmos = $('lmosaic');
 const LMQ = lmos ? [0, 1, 2, 3].map(i => lmos.children[i]) : [];
@@ -1235,7 +1233,6 @@ function lmSet(i, cellIdx) {
 function lmStart() {
   const D = ATLAS_SETS.default;
   if (!(D.json && D.img) || !lgi) return;
-  lgi.classList.add('atlas');
   lmStarted = true;
   if (lmTim) return;
   for (let i = 0; i < 4; i++) lmSet(i, lmPick());

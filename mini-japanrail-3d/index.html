@@ -693,6 +693,7 @@ button { font-family:inherit; }
         </div>
         <div class="sw on" id="swTrail"><span id="tSw5">列车光晕</span><span class="trk"></span></div>
         <div class="sw" id="swCopyBad"><span id="tSw6">复制异常车辆</span><span class="trk"></span></div>
+        <div class="sw on" id="swTip"><span id="tSw7">列车悬浮提示</span><span class="trk"></span></div>
         <div class="sec-t" id="tMode" style="margin-top:12px">列车显示</div>
         <div class="frow" id="trainModeRow">
           <button class="chip on" data-mode="3d" id="tMode3d">3D</button>
@@ -932,7 +933,7 @@ const I18N = {
     searchT:'搜索', searchPh:'车站 / 线路(日·中·EN)…', routeT:'路线搜索', routeFrom:'起点站', routeTo:'终点站',
     tabRoute:'路线', aSearchPh:'搜索车站 / 线路…', badgeLive:'在途', badgeToday:'今日', noMatch:'无匹配结果',
     filterT:'线路类型', legendT:'图例', dayT:'运行日', dayAuto:'自动', setT:'设置', dataT:'数据', helpT:'帮助',
-    sw1:'车站标签', sw2:'轨道光晕', sw3:'车站点', sw4:'底图瓦片', sw5:'列车光晕', sw6:'复制异常车辆',
+    sw1:'车站标签', sw2:'轨道光晕', sw3:'车站点', sw4:'底图瓦片', sw5:'列车光晕', sw6:'复制异常车辆', sw7:'列车悬浮提示',
     modeT:'列车显示', mode3d:'3D', modeIcon:'图标',
     baseT:'底图源', bPale:'淡色', bStd:'标准', bDark:'深色', bSat:'卫星',
     d1:'在途列车', d2:'今日班次', d3:'运行日', d4:'线路 / 车站', d5:'时刻表构建', d6:'帧率',
@@ -953,7 +954,7 @@ const I18N = {
     searchT:'検索', searchPh:'駅 / 路線(日·中·EN)…', routeT:'経路検索', routeFrom:'出発駅', routeTo:'到着駅',
     tabRoute:'路線', aSearchPh:'駅 / 路線を検索…', badgeLive:'走行中', badgeToday:'本日', noMatch:'該当なし',
     filterT:'路線種別', legendT:'凡例', dayT:'運行日', dayAuto:'自動', setT:'設定', dataT:'データ', helpT:'ヘルプ',
-    sw1:'駅ラベル', sw2:'軌道グロー', sw3:'駅ドット', sw4:'背景タイル', sw5:'列車グロー', sw6:'異常列車コピー',
+    sw1:'駅ラベル', sw2:'軌道グロー', sw3:'駅ドット', sw4:'背景タイル', sw5:'列車グロー', sw6:'異常列車コピー', sw7:'列車ホバーチップ',
     modeT:'列車表示', mode3d:'3D', modeIcon:'アイコン',
     baseT:'ベースマップ', bPale:'淡色', bStd:'標準', bDark:'ダーク', bSat:'衛星',
     d1:'運行中列車', d2:'本日列車', d3:'運行日', d4:'路線 / 駅', d5:'時刻表構築', d6:'フレーム率',
@@ -974,7 +975,7 @@ const I18N = {
     searchT:'Search', searchPh:'Station / Line (JA·ZH·EN)…', routeT:'Route search', routeFrom:'From', routeTo:'To',
     tabRoute:'Route', aSearchPh:'Search station / line…', badgeLive:'Live', badgeToday:'Today', noMatch:'No matches',
     filterT:'Line types', legendT:'Legend', dayT:'Service day', dayAuto:'Auto', setT:'Settings', dataT:'Data', helpT:'Help',
-    sw1:'Station labels', sw2:'Track glow', sw3:'Station dots', sw4:'Basemap tiles', sw5:'Train glow', sw6:'Copy off-rail trains',
+    sw1:'Station labels', sw2:'Track glow', sw3:'Station dots', sw4:'Basemap tiles', sw5:'Train glow', sw6:'Copy off-rail trains', sw7:'Train hover tooltip',
     modeT:'Train display', mode3d:'3D', modeIcon:'Icon',
     baseT:'Basemap', bPale:'Pale', bStd:'Standard', bDark:'Dark', bSat:'Satellite',
     d1:'Active trains', d2:'Trips today', d3:'Service day', d4:'Lines / Stations', d5:'Timetable built', d6:'FPS',
@@ -3289,7 +3290,7 @@ function onMouseMove(e) {
   lastPickT = now;
   const hit = pickTrain(e.offsetX, e.offsetY, 10);
   map.getCanvas().style.cursor = hit ? 'pointer' : '';
-  if (hit) {
+  if (hit && tipEnabled) {
     const M = curMin(), p = trainPosition(hit, windowShift(hit, M));
     const col = p && p[3] ? (lineColor.get(p[3]) || hit.color) : hit.color;
     tipEl.style.left = (e.offsetX + 14) + 'px'; tipEl.style.top = (e.offsetY + 14) + 'px';
@@ -4029,6 +4030,19 @@ $('swGlow').addEventListener('click', function () { this.classList.toggle('on');
 $('swSta').addEventListener('click', function () { this.classList.toggle('on'); map.setLayoutProperty('stas', 'visibility', this.classList.contains('on') ? 'visible' : 'none'); });
 $('swBase').addEventListener('click', function () { this.classList.toggle('on'); map.setLayoutProperty('basemap', 'visibility', this.classList.contains('on') ? 'visible' : 'none'); });
 $('swTrail').addEventListener('click', function () { this.classList.toggle('on'); });
+/* 列车悬浮提示:桌面端默认开,移动端默认关 */
+let tipEnabled = (() => {
+  const saved = localStorage.getItem('mjr3d_tip');
+  if (saved !== null) return saved === '1';
+  return window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+})();
+$('swTip').classList.toggle('on', tipEnabled);
+$('swTip').addEventListener('click', function () {
+  tipEnabled = !tipEnabled;
+  this.classList.toggle('on', tipEnabled);
+  localStorage.setItem('mjr3d_tip', tipEnabled ? '1' : '0');
+  if (!tipEnabled) tipEl.classList.remove('show');
+});
 /* 列车显示模式(3D/图标)切换 */
 document.querySelectorAll('#trainModeRow .chip').forEach(c => {
   c.classList.toggle('on', c.dataset.mode === trainMode);
@@ -4247,7 +4261,7 @@ function applyLang() {
   searchEl.placeholder = t.searchPh;
   $('rFrom').placeholder = t.routeFrom; $('rTo').placeholder = t.routeTo;
   $('dayAuto').textContent = t.dayAuto;
-  $('tSw1').textContent = t.sw1; $('tSw2').textContent = t.sw2; $('tSw3').textContent = t.sw3; $('tSw4').textContent = t.sw4; $('tSw5').textContent = t.sw5; $('tSw6').textContent = t.sw6;
+  $('tSw1').textContent = t.sw1; $('tSw2').textContent = t.sw2; $('tSw3').textContent = t.sw3; $('tSw4').textContent = t.sw4; $('tSw5').textContent = t.sw5; $('tSw6').textContent = t.sw6; $('tSw7').textContent = t.sw7;
   $('tMode').textContent = t.modeT; $('tMode3d').textContent = t.mode3d; $('tModeIcon').textContent = t.modeIcon;
   $('tBase').textContent = t.baseT;
   $('bPale').textContent = t.bPale; $('bStd').textContent = t.bStd; $('bDark').textContent = t.bDark; $('bSat').textContent = t.bSat;

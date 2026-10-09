@@ -2895,7 +2895,6 @@ const visibleTrips = [], visibleXY = new Float32Array(MAXT * 2);
 let lastQuad = [1, 1]; /* 图标模式方块屏幕尺寸(L,W),shader UV 归一化用 */
 /* 按日预过滤:r 掩码不随帧变化,一次过滤后每帧只遍历当日班次(省 57049×N 次 & 分支) */
 let dayList = null, dayListBit = -1, dayListSrc = null;
-let diagTick = 0; /* 诊断探针帧计数 */
 function updateTrains(M) {
   if (dayList === null || dayListSrc !== tripList || dayListBit !== dayBit) {
     dayList = [];
@@ -2957,18 +2956,16 @@ function updateTrains(M) {
   const drawGlow = glowOn && z < 9 && !iconMode;
   const glowPass = [];
   const drawnCouple = new Set(); /* 已绘制 trip 集合,供併结车判断伙伴是否已画(先画者原位,后画者错开一个车长) */
-  /* 诊断探针(真机定位"高 zoom 无车"):统计各过滤环节命中的班次数,右下角小字显示 */
-  let dBad = 0, dCull = 0, dTime = 0, dNull = 0, dKind = 0;
   for (let idx = 0; idx < dayList.length; idx++) {
     const t = dayList[idx];
-    if (t.bad) { dBad++; continue; }
+    if (t.bad) continue;
     /* 视口裁剪:班次包围盒(含缓冲)与视野不相交 → 跳过(位置计算 + 顶点构建全省) */
-    if (vp && (t.mx1 < vp.mx0 || t.mx0 > vp.mx1 || t.my1 < vp.my0 || t.my0 > vp.my1)) { dCull++; continue; }
+    if (vp && (t.mx1 < vp.mx0 || t.mx0 > vp.mx1 || t.my1 < vp.my0 || t.my0 > vp.my1)) continue;
     const M2 = windowShift(t, M);
-    if (M2 < t.w0 || M2 > t.w1) { dTime++; continue; }
+    if (M2 < t.w0 || M2 > t.w1) continue;
     const p = trainPosition(t, M2);
-    if (!p) { dNull++; continue; }
-    if (!selKind[p[4]]) { dKind++; continue; }
+    if (!p) continue;
+    if (!selKind[p[4]]) continue;
     if (n >= MAXT - 1 || vtx * STRIDE + 36 * STRIDE > bufArr.length) break;
     let color = t.color;
     if (p[3]) { const lc = lineColor.get(p[3]); if (lc) color = lc; }
@@ -3063,17 +3060,6 @@ function updateTrains(M) {
     }
   }
   visibleCount = vtx; // 顶点总数(俯视 6/列车,倾斜 36/列车 + 光晕 6/个)
-  /* 诊断探针:每秒刷新一次(叠加窗口/图标/俯视过滤后的最终绘制数) */
-  if ((++diagTick & 31) === 0) {
-    let dEl = document.getElementById('dDiag');
-    if (!dEl) {
-      dEl = document.createElement('div');
-      dEl.id = 'dDiag';
-      dEl.style.cssText = 'position:fixed;right:8px;bottom:2px;z-index:14;font:10px/1.4 ui-monospace,monospace;color:rgba(128,128,128,.75);background:rgba(0,0,0,.18);padding:2px 6px;border-radius:6px;pointer-events:none;white-space:pre;backdrop-filter:blur(6px);';
-      (document.body || document.documentElement).appendChild(dEl);
-    }
-    dEl.textContent = `绘${n} 裁${dCull} 空${dNull} 时${dTime} 类${dKind} 坏${dBad} z${z.toFixed(1)}`;
-  }
   // 上传
   if (glRef && visibleCount > 0) {
     glRef.bindBuffer(glRef.ARRAY_BUFFER, vbo);

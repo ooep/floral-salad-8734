@@ -286,6 +286,9 @@ def clean_svg(raw):
     body = ET.tostring(root, encoding='unicode')
     body = re.sub(r'<!--.*?-->', '', body, flags=re.S)
     body = re.sub(r'>\s+<', '><', body)
+    body = re.sub(r'xmlns:ns\d+="[^"]*"\s*', '', body)
+    body = re.sub(r'</ns\d+:', '</', body)
+    body = re.sub(r'<ns\d+:', '<', body)
     return body
 
 

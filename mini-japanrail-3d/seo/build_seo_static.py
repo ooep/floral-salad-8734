@@ -1106,6 +1106,10 @@ def station_page(rec, lines, neighbors, cfg, tozh):
             clean_path = os.path.join(DATA_DIR, 'wiki_trackdiagrams', name + '.svg.clean')
         if os.path.exists(clean_path):
             svg_body = open(clean_path, encoding='utf-8').read()
+            # 剥 XML 命名空间前缀（ns0:/ns1:），使内联 SVG 可被浏览器渲染
+            svg_body = re.sub(r'xmlns:ns\d+="[^"]*"\s*', '', svg_body)
+            svg_body = re.sub(r'</ns\d+:', '</', svg_body)
+            svg_body = re.sub(r'<ns\d+:', '<', svg_body)
             credit = '配線図：Wikimedia Commons'
             if wt.get('artist'):
                 credit += ' · 作者：' + wt['artist']

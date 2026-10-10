@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ORM 线位体验 — 全日本铁路线位图</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%230b0f16'/%3E%3Cpath d='M3 8h18M3 16h18M7 8v8M12 8v8M17 8v8' stroke='%234f8ef7' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@6.12.0/dist/maplibre-gl.css">
+<style>
+:root{
+  --bg:#0b0f16; --panel:#10151f; --panel2:#141b29; --line:#1f2a3a; --line2:#2a3850;
+  --text:#e8edf4; --muted:#9aa5b5; --accent:#4f8ef7; --ok:#34d399; --warn:#ffb340;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
+  font-family:-apple-system,"PingFang SC","Noto Sans SC","Microsoft YaHei",system-ui,sans-serif}
+#map{position:absolute;inset:0}
+
+/* ===== 顶部条 ===== */
+header{position:absolute;top:12px;left:12px;right:12px;z-index:5;display:flex;align-items:center;gap:10px;
+  pointer-events:none}
+header .ttl{pointer-events:auto;display:flex;align-items:center;gap:10px;background:rgba(16,21,31,.92);
+  border:1px solid var(--line);border-radius:12px;padding:8px 14px;backdrop-filter:none}
+header .ttl svg{flex:none}
+header .ttl h1{font-size:15px;font-weight:700;letter-spacing:.02em;line-height:1.25}
+header .ttl p{font-size:11px;color:var(--muted);margin-top:2px;font-variant-numeric:tabular-nums}
+#stats{pointer-events:auto;margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.stat{background:rgba(16,21,31,.92);border:1px solid var(--line);border-radius:10px;padding:6px 10px;
+  font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;text-align:center;min-width:62px}
+.stat b{display:block;font-size:14px;color:var(--text);font-weight:700}
+#btnFold{pointer-events:auto;display:none;flex:none;width:40px;height:40px;border-radius:10px;
+  background:var(--panel);border:1px solid var(--line);color:var(--text);cursor:pointer;align-items:center;justify-content:center}
+
+/* ===== 左侧控制面板 ===== */
+aside{position:absolute;top:76px;left:12px;z-index:5;width:236px;background:rgba(16,21,31,.95);
+  border:1px solid var(--line);border-radius:12px;padding:12px;overflow:auto;max-height:calc(100% - 96px)}
+aside.hidden{display:none}
+.sec{margin-bottom:12px}
+.sec:last-child{margin-bottom:0}
+.sec h2{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.08em;margin-bottom:7px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:11.5px;color:var(--text);background:var(--panel2);border:1px solid var(--line2);
+  border-radius:999px;padding:5px 11px;cursor:pointer;user-select:none;transition:background .15s,border-color .15s}
+.chip small{color:var(--muted);font-variant-numeric:tabular-nums}
+.chip:hover{border-color:var(--accent)}
+.chip.on{background:rgba(79,142,247,.16);border-color:var(--accent);color:#cfe3ff}
+.swrow{display:flex;align-items:center;justify-content:space-between;padding:7px 2px;border-bottom:1px dashed var(--line);font-size:12.5px}
+.swrow:last-child{border-bottom:none}
+.swrow .nm{display:flex;align-items:center;gap:7px}
+.sw{position:relative;width:34px;height:19px;border-radius:999px;background:var(--line2);border:none;
+  cursor:pointer;transition:background .15s;flex:none}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;
+  background:#c6d2e0;transition:left .15s,background .15s}
+.sw.on{background:var(--accent)}
+.sw.on::after{left:17px;background:#fff}
+.sw[aria-disabled="true"]{opacity:.4;cursor:not-allowed}
+.attr{font-size:10px;color:var(--muted);margin-top:10px;line-height:1.5}
+.attr a{color:var(--accent);text-decoration:none}
+
+/* ===== 底部信息卡 ===== */
+#info{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);z-index:5;display:none;
+  background:rgba(16,21,31,.96);border:1px solid var(--line);border-radius:12px;padding:12px 16px;
+  width:min(420px,calc(100vw - 24px));box-shadow:0 8px 30px rgba(0,0,0,.35)}
+#info.show{display:block}
+#info .bar{height:5px;border-radius:3px;margin-bottom:9px}
+#info .nm{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+#info .nm .tag{font-size:10.5px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--panel2);
+  border:1px solid var(--line2);color:var(--muted)}
+#info .meta{display:flex;gap:14px;margin-top:7px;font-size:12px;color:var(--muted);flex-wrap:wrap;font-variant-numeric:tabular-nums}
+#info .hex{font-family:ui-monospace,"SF Mono",Consolas,monospace;font-size:11px}
+#info .tip{font-size:10.5px;color:var(--muted);margin-top:8px}
+#info .close{position:absolute;top:8px;right:10px;background:none;border:none;color:var(--muted);
+  cursor:pointer;font-size:15px;line-height:1;padding:4px}
+
+/* ===== 加载遮罩 ===== */
+#loading{position:absolute;inset:0;z-index:20;background:var(--bg);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:14px;transition:opacity .4s}
+#loading.done{opacity:0;pointer-events:none}
+.spinner{width:34px;height:34px;border-radius:50%;border:3px solid var(--line2);border-top-color:var(--accent);
+  animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#loading .t{font-size:14px;font-weight:600}
+#loading .s{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+#loading .bar{width:220px;height:4px;border-radius:2px;background:var(--line);overflow:hidden}
+#loading .bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
+
+@media (max-width:720px){
+  header{top:8px;left:8px;right:8px}
+  header .ttl{padding:6px 10px;border-radius:10px}
+  header .ttl h1{font-size:13.5px}
+  #stats .stat{display:none}
+  #stats .stat:nth-child(-n+2){display:block;min-width:56px}
+  #btnFold{display:flex}
+  aside{top:60px;left:8px;right:8px;width:auto;max-height:calc(100% - 70px)}
+  #info{bottom:10px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+  .spinner{border-top-color:var(--accent)}
+}
+</style>
+</head>
+<body>
+<div id="map"></div>
+
+<header>
+  <div class="ttl">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect width="24" height="24" rx="6" fill="#10151f"/>
+      <path d="M3.5 9h17M3.5 15h17M7 9v6M12 9v6M17 9v6" stroke="#4f8ef7" stroke-width="2" stroke-linecap="round"/>
+      <path d="M3.5 7.5v3M3.5 13.5v3M20.5 7.5v3M20.5 13.5v3" stroke="#2a3850" stroke-width="1.4" stroke-linecap="round"/>
+    </svg>
+    <div>
+      <h1>ORM 线位</h1>
+      <p>OpenRailwayMap 全量轨道 · 全日本</p>
+    </div>
+  </div>
+  <div id="stats">
+    <div class="stat"><b id="stTotal">–</b>线位</div>
+    <div class="stat"><b id="stColored">–</b>已着色</div>
+    <div class="stat"><b id="stColors">–</b>颜色</div>
+    <button id="btnFold" aria-label="开关控制面板">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
+    </button>
+  </div>
+</header>
+
+<aside id="panel">
+  <div class="sec">
+    <h2>视图</h2>
+    <div class="chips" id="views"></div>
+  </div>
+  <div class="sec">
+    <h2>轨道类型</h2>
+    <div class="chips" id="kinds"></div>
+  </div>
+  <div class="sec">
+    <h2>图层</h2>
+    <div class="swrow"><span class="nm">ORM 线位</span><button class="sw on" id="swOrm" role="switch" aria-checked="true"></button></div>
+    <div class="swrow"><span class="nm">OSM 底图（外部瓦片）</span><button class="sw" id="swOsm" role="switch" aria-checked="false"></button></div>
+  </div>
+  <div class="attr">线位数据：<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap</a> 贡献者（railway=* 活跃线位，138,748 条）<br>配色：OSM 线路关系色 ∪ 应用官方色表 ∪ 类型兜底</div>
+</aside>
+
+<div id="info">
+  <button class="close" id="infoClose" aria-label="关闭">✕</button>
+  <div class="bar" id="iBar"></div>
+  <div class="nm"><span id="iName">–</span><span class="tag" id="iKind">–</span></div>
+  <div class="meta"><span id="iOp"></span><span class="hex" id="iHex"></span></div>
+  <div class="tip">点击线位查看详情 · 滚轮缩放 · 拖拽平移</div>
+</div>
+
+<div id="loading">
+  <div class="spinner"></div>
+  <div class="t">正在加载 ORM 全日本线位数据</div>
+  <div class="s" id="loadMsg">连接数据文件…</div>
+  <div class="bar"><i id="loadBar"></i></div>
+</div>
+
+<script type="module">
+import * as maplibregl from 'https://cdn.jsdelivr.net/npm/maplibre-gl@6.12.0/dist/maplibre-gl.mjs';
+
+const $ = id => document.getElementById(id);
+const KIND_ZH = {rail:'铁路', light_rail:'新交通', subway:'地下铁', tram:'路面电车',
+  monorail:'单轨', funicular:'缆索', narrow_gauge:'窄轨'};
+const VIEWS = [
+  ['全国', 137.3, 37.2, 5], ['东京', 139.75, 35.68, 10.5], ['大阪', 135.5, 34.68, 10.5],
+  ['名古屋', 136.9, 35.17, 10.5], ['札幌', 141.35, 43.06, 9.5], ['福冈', 130.42, 33.6, 10.5]
+];
+
+let map, curKind = 'all', hlId = null;
+
+const DARK_STYLE = {
+  version: 8,
+  sources: {
+    osm: { type: 'raster', tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+      tileSize: 256, attribution: '© OpenStreetMap contributors' }
+  },
+  layers: [
+    { id: 'bg', type: 'background', paint: { 'background-color': '#0b0f16' } },
+    { id: 'osm', type: 'raster', source: 'osm', layout: { visibility: 'none' },
+      paint: { 'raster-opacity': 0.38 } }
+  ]
+};
+
+function initMap(){
+  map = new maplibregl.Map({
+    container: 'map', style: DARK_STYLE,
+    center: [137.3, 37.2], zoom: 5, minZoom: 4, maxZoom: 16,
+    attributionControl: false
+  });
+  map.addControl(new maplibregl.AttributionControl({ compact: true }));
+  window.__map = map; /* 调试/自动化验证入口 */
+  map.on('error', e => { if (!/tile\.openstreetmap/.test(e.error && e.error.message || '')) console.warn('[map]', e.error); });
+}
+
+function buildChips(){
+  const vw = $('views');
+  VIEWS.forEach(([name, lon, lat, z]) => {
+    const b = document.createElement('button');
+    b.className = 'chip'; b.textContent = name;
+    b.addEventListener('click', () => map.flyTo({ center: [lon, lat], zoom: z, duration: 1200 }));
+    vw.appendChild(b);
+  });
+  const kw = $('kinds');
+  const items = [['all', '全部', null]];
+  const order = ['rail', 'subway', 'tram', 'monorail', 'light_rail', 'funicular', 'narrow_gauge'];
+  order.forEach(k => items.push([k, KIND_ZH[k] || k, k]));
+  items.forEach(([key, label, kind]) => {
+    const b = document.createElement('button');
+    b.className = 'chip' + (key === 'all' ? ' on' : '');
+    b.innerHTML = label + (key === 'all' ? '' : ' <small id="cnt-' + key + '">–</small>');
+    b.addEventListener('click', () => {
+      document.querySelectorAll('#kinds .chip').forEach(c => c.classList.remove('on'));
+      b.classList.add('on');
+      curKind = key;
+      map.setFilter('orm', key === 'all' ? null : ['==', ['get', 'kind'], kind]);
+    });
+    kw.appendChild(b);
+  });
+}
+
+function setLoading(msg, pct){
+  if (msg) $('loadMsg').textContent = msg;
+  if (pct != null) $('loadBar').style.width = pct + '%';
+}
+
+async function loadData(){
+  setLoading('下载 data/orm_tracks.geojson（约 42MB）…');
+  const t0 = performance.now();
+  let j;
+  try {
+    const res = await fetch('data/orm_tracks.geojson');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    j = await res.json();
+  } catch (e) {
+    $('loading').classList.add('done');
+    $('loadMsg').textContent = '数据加载失败：' + e.message + '（请经 HTTP 访问本页，如 python3 -m http.server）';
+    $('loading').querySelector('.spinner').style.display = 'none';
+    $('loading').querySelector('.t').textContent = '无法加载线位数据';
+    return;
+  }
+  setLoading('解析 138,748 条线位几何…', 45);
+  await new Promise(r => setTimeout(r, 30)); /* 让遮罩先绘制 */
+  const feats = j.features;
+  const kindCnt = {}, colSet = new Set(), colored = [];
+  for (let i = 0; i < feats.length; i++){
+    const p = feats[i].properties;
+    kindCnt[p.kind] = (kindCnt[p.kind] || 0) + 1;
+    if (p.color && p.color !== '#8a919e'){ colSet.add(p.color); colored.push(i); }
+  }
+  setLoading('写入地图图层…', 80);
+  map.addSource('orm', { type: 'geojson', data: j });
+  map.addLayer({
+    id: 'orm', type: 'line', source: 'orm',
+    layout: { 'line-cap': 'round', 'line-join': 'round' },
+    paint: {
+      'line-color': ['get', 'color'],
+      'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 2, 0.35, 9, 0.9, 14, 2],
+      'line-opacity': 0.85
+    }
+  });
+  map.addSource('orm-hl', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+  map.addLayer({
+    id: 'orm-hl', type: 'line', source: 'orm-hl',
+    layout: { 'line-cap': 'round', 'line-join': 'round' },
+    paint: {
+      'line-color': '#ffffff',
+      'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 2, 1.6, 9, 3.2, 14, 5.5],
+      'line-opacity': 0.95
+    }
+  });
+
+  $('stTotal').textContent = feats.length.toLocaleString();
+  $('stColored').textContent = Math.round(100 * colored.length / feats.length) + '%';
+  $('stColors').textContent = colSet.size;
+  Object.keys(kindCnt).forEach(k => { const el = $('cnt-' + k); if (el) el.textContent = kindCnt[k].toLocaleString(); });
+
+  setLoading('完成', 100);
+  setTimeout(() => $('loading').classList.add('done'), 250);
+  window.__orm = { total: feats.length, colored: colored.length, colors: colSet.size, parseMs: Math.round(performance.now() - t0), kinds: kindCnt };
+  console.log('ORM_READY', JSON.stringify(window.__orm));
+}
+
+/* 点击线位 → 信息卡 + 高亮 */
+function bindPick(){
+  map.on('click', 'orm', e => {
+    if (!e.features || !e.features.length) return;
+    const p = e.features[0].properties;
+    const col = p.color || '#8a919e';
+    $('iBar').style.background = col;
+    $('iName').textContent = p.line || (KIND_ZH[p.kind] || p.kind) + '线位';
+    $('iKind').textContent = (KIND_ZH[p.kind] || p.kind) + ' · ' + (p.op || '运营者未知');
+    $('iOp').textContent = 'color ' + col;
+    $('iHex').textContent = col;
+    $('info').classList.add('show');
+    const f = e.features[0];
+    if (hlId === f.id){ hlId = null; map.getSource('orm-hl').setData({ type: 'FeatureCollection', features: [] }); return; }
+    hlId = f.id;
+    map.getSource('orm-hl').setData({ type: 'FeatureCollection', features: [{ type: 'Feature', geometry: f.geometry, properties: {} }] });
+  });
+  map.on('click', e => {
+    if (e.defaultPrevented) return;
+    if (!map.queryRenderedFeatures(e.point, { layers: ['orm'] }).length){
+      $('info').classList.remove('show');
+      hlId = null;
+      map.getSource('orm-hl').setData({ type: 'FeatureCollection', features: [] });
+    }
+  });
+  map.on('mouseenter', 'orm', () => map.getCanvas().style.cursor = 'pointer');
+  map.on('mouseleave', 'orm', () => map.getCanvas().style.cursor = '');
+  $('infoClose').addEventListener('click', () => { $('info').classList.remove('show'); });
+}
+
+function bindControls(){
+  $('swOrm').addEventListener('click', function (){
+    this.classList.toggle('on');
+    this.setAttribute('aria-checked', this.classList.contains('on'));
+    map.setLayoutProperty('orm', 'visibility', this.classList.contains('on') ? 'visible' : 'none');
+  });
+  $('swOsm').addEventListener('click', function (){
+    this.classList.toggle('on');
+    this.setAttribute('aria-checked', this.classList.contains('on'));
+    map.setLayoutProperty('osm', 'visibility', this.classList.contains('on') ? 'visible' : 'none');
+  });
+  $('btnFold').addEventListener('click', () => $('panel').classList.toggle('hidden'));
+}
+
+initMap();
+if (window.matchMedia('(max-width:720px)').matches) $('panel').classList.add('hidden'); /* 移动端首屏优先地图，点按钮展开面板 */
+buildChips();
+bindControls();
+map.on('load', () => { bindPick(); loadData(); });
+</script>
+</body>
+</html>

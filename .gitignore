@@ -28,3 +28,5 @@ mini-japanrail-3d/data/wiki_trackdiagrams
 mini-japanrail-3d/data/wiki_trackdiagrams.json
 mini-japanrail-3d/data/line_bsdiagrams
 mini-japanrail-3d/data/line_bsdiagrams.json
+# OSM 工作目录(原始 PBF/提取脚本/中间产物,不入库)
+.osm_work/

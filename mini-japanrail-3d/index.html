@@ -944,6 +944,7 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
         <div class="sw on" id="swSta"><span id="tSw3">车站点</span><span class="trk"></span></div>
         <div class="sw on" id="swFp"><span id="tSw8">车站轮廓</span><span class="trk"></span></div>
         <div class="sw on" id="swEnt"><span id="tSw9">出入口</span><span class="trk"></span></div>
+        <div class="sw on" id="swOrm"><span id="tSw10">ORM 线位</span><span class="trk"></span></div>
         <div class="sw on" id="swBase"><span id="tSw4">底图瓦片</span><span class="trk"></span></div>
         <div class="sec-t" id="tBase" style="margin-top:12px">底图源</div>
         <div class="frow" id="baseSrcRow">
@@ -1214,7 +1215,7 @@ const I18N = {
     tabRoute:'路线', aSearchPh:'搜索车站 / 线路…', badgeLive:'在途', badgeToday:'今日', noMatch:'无匹配结果',
     filterT:'线路类型', legendT:'图例', dayT:'运行日', dayAuto:'自动', setT:'设置', dataT:'数据', helpT:'帮助', aboutT:'关于',
     about1:'Mini JapanRail — 本地时刻表驱动的全日本铁路 3D 实时运行地图', about2:'数据源:日本全国铁路计划时刻表,每周自动刷新;页面运行时零外部请求', about3:'本站为个人爱好项目,数据仅供学习参考', about4:'隐私政策',
-    sw1:'车站标签', sw2:'轨道光晕', sw3:'车站点', sw4:'底图瓦片', sw5:'列车光晕', sw6:'复制异常车辆', sw7:'列车悬浮提示', sw8:'车站轮廓', sw9:'出入口',
+    sw1:'车站标签', sw2:'轨道光晕', sw3:'车站点', sw4:'底图瓦片', sw5:'列车光晕', sw6:'复制异常车辆', sw7:'列车悬浮提示', sw8:'车站轮廓', sw9:'出入口', sw10:'ORM 线位',
     modeT:'列车显示', mode3d:'3D', modeIcon:'图标', modeCute:'可爱',
     iconSetT:'图标集', iSetDefault:'默认', iSetVector:'矢量', iconSetNote:'仅"图标"模式生效',
     baseT:'底图源', bPale:'淡色', bStd:'标准', bDark:'深色', bSat:'卫星',
@@ -1242,7 +1243,7 @@ const I18N = {
     tabRoute:'路線', aSearchPh:'駅 / 路線を検索…', badgeLive:'走行中', badgeToday:'本日', noMatch:'該当なし',
     filterT:'路線種別', legendT:'凡例', dayT:'運行日', dayAuto:'自動', setT:'設定', dataT:'データ', helpT:'ヘルプ', aboutT:'このサイトについて',
     about1:'ミニ日本鉄道 — ローカル時刻表駆動の全国鉄道リアルタイム3Dマップ', about2:'データソース:全国鉄道の計画時刻表、毎週自動更新。ページ実行時は外部リクエストなし', about3:'個人の趣味プロジェクトです。データは学習・参考用です', about4:'プライバシーポリシー',
-    sw1:'駅ラベル', sw2:'軌道グロー', sw3:'駅ドット', sw4:'背景タイル', sw5:'列車グロー', sw6:'異常列車コピー', sw7:'列車ホバーチップ', sw8:'駅舎ポリゴン', sw9:'出入口',
+    sw1:'駅ラベル', sw2:'軌道グロー', sw3:'駅ドット', sw4:'背景タイル', sw5:'列車グロー', sw6:'異常列車コピー', sw7:'列車ホバーチップ', sw8:'駅舎ポリゴン', sw9:'出入口', sw10:'ORM 線位',
     modeT:'列車表示', mode3d:'3D', modeIcon:'アイコン', modeCute:'かわいい',
     iconSetT:'アイコンセット', iSetDefault:'標準', iSetVector:'ベクター', iconSetNote:'「アイコン」モードのみ有効',
     baseT:'ベースマップ', bPale:'淡色', bStd:'標準', bDark:'ダーク', bSat:'衛星',
@@ -1270,7 +1271,7 @@ const I18N = {
     tabRoute:'Route', aSearchPh:'Search station / line…', badgeLive:'Live', badgeToday:'Today', noMatch:'No matches',
     filterT:'Line types', legendT:'Legend', dayT:'Service day', dayAuto:'Auto', setT:'Settings', dataT:'Data', helpT:'Help', aboutT:'About',
     about1:'Mini JapanRail — a live 3D map of all Japan railways, driven by local timetables', about2:'Data: scheduled timetables for all Japan railways, auto-refreshed weekly; zero external requests at runtime', about3:'A personal hobby project — data provided for reference only', about4:'Privacy Policy',
-    sw1:'Station labels', sw2:'Track glow', sw3:'Station dots', sw4:'Basemap tiles', sw5:'Train glow', sw6:'Copy off-rail trains', sw7:'Train hover tooltip', sw8:'Station footprint', sw9:'Station exits',
+    sw1:'Station labels', sw2:'Track glow', sw3:'Station dots', sw4:'Basemap tiles', sw5:'Train glow', sw6:'Copy off-rail trains', sw7:'Train hover tooltip', sw8:'Station footprint', sw9:'Station exits', sw10:'ORM tracks',
     modeT:'Train display', mode3d:'3D', modeIcon:'Icon', modeCute:'Cute',
     iconSetT:'Icon set', iSetDefault:'Default', iSetVector:'Vector', iconSetNote:'Applies to "Icon" mode only',
     baseT:'Basemap', bPale:'Pale', bStd:'Standard', bDark:'Dark', bSat:'Satellite',
@@ -1428,7 +1429,7 @@ function lmStart() {
 const FILES_PCT = 55, IDX_PCT = 78, PRS_PCT = 97;
 /* 数据版本号:segments/stations/station_map 等静态数据每次变更时必须递增,
    否则 IndexedDB 缓存可能让旧数据(如已修的幽灵直线)继续生效 */
-const DATA_VERSION = '2026-10-08a';
+const DATA_VERSION = '2026-10-10a';
 const loadSizes = { 'data/segments3d.geojson': 11347006, 'data/stations3d.geojson': 1881446, 'data/tmaps.json': 3158412, 'data/station_map.json': 11006682, 'data/tokkyu.json': 59100, 'data/names_i18n.json': 482556, 'data/trains_wd.json': 13494947, 'data/trains_sa.json': 12228166, 'data/trains_su.json': 12284312, 'data/station_overall_footprints.geojson': 6902234, 'data/station_entrances.geojson': 2787587, 'data/station_platforms.geojson': 4254264 };
 let _fileTotal = 8, _fileIdx = 0;
 function nextFileIdx() { return _fileIdx++; }
@@ -1479,7 +1480,7 @@ function idbPut(key, val) {
 }
 /* 带缓存读取:首次下载解析并写入 IDB;之后若服务端 Last-Modified 未变(304)直接用缓存(秒开),
    变化则下载新数据并回写;服务端无 Last-Modified 时以 DATA_VERSION 为准 */
-async function fetchJSONWithCache(url, phaseKey, fileIdx) {
+async function fetchJSONWithCache(url, phaseKey, fileIdx, silent) {
   const key = DATA_VERSION + '|' + url;
   const fIdx = fileIdx != null ? fileIdx : nextFileIdx();
   try {
@@ -1489,14 +1490,14 @@ async function fetchJSONWithCache(url, phaseKey, fileIdx) {
       const lm = cached.lm;
       if (lm) {
         const res = await fetch(url, { headers: { 'If-Modified-Since': lm } });
-        if (res.status === 304) { updateBar(fIdx, 1, 1); return cached.j; }
+        if (res.status === 304) { if (!silent) updateBar(fIdx, 1, 1); return cached.j; }
         if (res.ok) {
           const j = await res.json();
-          updateBar(fIdx, 1, 1);
+          if (!silent) updateBar(fIdx, 1, 1);
           await idbPut(key, { v: DATA_VERSION, j, lm: res.headers.get('Last-Modified') || lm });
           return j;
         }
-      } else { updateBar(fIdx, 1, 1); return cached.j; }
+      } else { if (!silent) updateBar(fIdx, 1, 1); return cached.j; }
     }
   } catch (e) { console.warn('[cache]', e); }
   const res = await fetch(url);
@@ -1504,7 +1505,7 @@ async function fetchJSONWithCache(url, phaseKey, fileIdx) {
   const est = loadSizes[url] || 0;
   const total = +res.headers.get('content-length') || est;
   let j;
-  if (!res.body) { j = await res.json(); updateBar(fIdx, 1, 1); }
+  if (!res.body) { j = await res.json(); if (!silent) updateBar(fIdx, 1, 1); }
   else {
     const reader = res.body.getReader(), chunks = [];
     let got = 0;
@@ -1512,12 +1513,12 @@ async function fetchJSONWithCache(url, phaseKey, fileIdx) {
       const { done, value } = await reader.read();
       if (done) break;
       chunks.push(value); got += value.length;
-      updateBar(fIdx, got, total);
+      if (!silent) updateBar(fIdx, got, total);
       if (phaseKey && T()[phaseKey]) setLoadMsg(T().loading + ' ' + T()[phaseKey] + ' — ' + (got / 1048576).toFixed(1) + ' MB');
     }
     const buf = new TextDecoder().decode(await new Blob(chunks).arrayBuffer());
     j = JSON.parse(buf);
-    updateBar(fIdx, 1, 1);
+    if (!silent) updateBar(fIdx, 1, 1);
   }
   try { if (idb) await idbPut(key, { v: DATA_VERSION, j, lm: res.headers.get('Last-Modified') || '' }); } catch (e) {}
   return j;
@@ -3428,6 +3429,7 @@ async function boot() {
     /* 地图先行:轨道/车站网络先渲染(仅需原始 GeoJSON),索引与时刻表随后分片构建 */
     await mapReadyPromise();
     addMapLayers();
+    if (!PERF_LOW) fetchOrmTracks(); /* ORM 线位图层数据:异步拉取(与索引构建并行),不阻塞 dataReady;低配设备按需加载 */
     /* 索引构建/恢复:进度 55→78% */
     setPhase(FILES_PCT, IDX_PCT, 0);
     const idxCache = await idbGet(IDX_CACHE_KEY);
@@ -3544,6 +3546,32 @@ function addMapLayers() {
       'circle-radius': ['interpolate', ['exponential', 1.5], ['zoom'], 3, 7, 10, 10, 14, 14],
       'circle-color': '#ffffff', 'circle-opacity': 0.25, 'circle-stroke-color': '#6ee7f7', 'circle-stroke-width': 2 } });
   }
+}
+
+/* ---------------- ORM 线位图层(OpenRailwayMap 风格全量轨道线位) ----------------
+   数据: data/orm_tracks.geojson — OSM railway=* 轨道折线(干线/支线/侧线/货运/私铁/路面电车/单轨/缆索等),
+   properties={color, line, kind, op}; 颜色 = OSM 线路关系色 ∪ 官方线路色表 ∪ 轨道类型兜底。
+   异步加载(启动后与索引构建并行),不参与进度条、不阻塞 dataReady;图层插在官方轨道层(segs)之下,
+   提供完整轨道骨架,官方层保持精细观感;开关 swOrm 控制显隐。 */
+let ormFC = null, ormLoaded = false, ormFetching = false;
+function addOrmLayer() {
+  if (!map || !ormFC || !ormFC.features || map.getLayer('orm')) return;
+  if (!map.getSource('orm')) {
+    map.addSource('orm', { type: 'geojson', data: ormFC });
+    map.addLayer({ id: 'orm', type: 'line', source: 'orm', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: {
+      'line-color': ['get', 'color'],
+      'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 2, 0.32, 9, 0.85, 14, 1.9],
+      'line-opacity': 0.8 } }, 'segs-glow');
+  }
+  ormLoaded = true;
+  ormVisible(ormEnabled);
+}
+function fetchOrmTracks() {
+  if (ormLoaded || ormFetching) return;
+  ormFetching = true;
+  fetchJSONWithCache('data/orm_tracks.geojson', '', 11, true)
+    .then(d => { ormFC = d; addOrmLayer(); })
+    .catch(e => { console.warn('[orm]', e); });
 }
 
 /* ---------------- 渲染循环 ---------------- */
@@ -5089,6 +5117,20 @@ $('swSta').addEventListener('click', function () { this.classList.toggle('on'); 
     entVisible(entEnabled);
   });
 $('swBase').addEventListener('click', function () { this.classList.toggle('on'); map.setLayoutProperty('basemap', 'visibility', this.classList.contains('on') ? 'visible' : 'none'); });
+/* ORM 线位图层开关:默认开(低配设备默认关,按需加载),选择持久化(mjr3d_showorm) */
+let ormEnabled = PERF_LOW ? false : (localStorage.getItem('mjr3d_showorm') !== '0');
+$('swOrm').classList.toggle('on', ormEnabled);
+function ormVisible(on) {
+  if (!map) return;
+  if (map.getLayer('orm')) map.setLayoutProperty('orm', 'visibility', on ? 'visible' : 'none');
+}
+$('swOrm').addEventListener('click', function () {
+  ormEnabled = !ormEnabled;
+  this.classList.toggle('on', ormEnabled);
+  localStorage.setItem('mjr3d_showorm', ormEnabled ? '1' : '0');
+  ormVisible(ormEnabled);
+  if (ormEnabled && !ormLoaded) fetchOrmTracks(); /* 低配设备首次开启时按需拉取 */
+});
 $('swTrail').addEventListener('click', function () { this.classList.toggle('on'); });
 /* 列车悬浮提示:桌面端默认开,移动端默认关 */
 let tipEnabled = (() => {
@@ -5374,6 +5416,7 @@ function buildLegend() {
     '<div class="legrow"><span class="dot" style="color:#ffb340"></span><span class="nm">' + ({zh:'急行 / 快速', ja:'急行 / 快速', en:'Express / Rapid'}[lang]) + '</span><span class="ds">急 / 快</span></div>' +
     '<div class="legrow"><span class="dot" style="color:#9aa5b5"></span><span class="nm">' + ({zh:'通勤 / 区間 / 準急', ja:'通勤 / 区間 / 準急', en:'Commuter / Section'}[lang]) + '</span><span class="ds">区 / 準</span></div>' +
     '<div class="legrow"><span class="dot" style="color:#4f8ef7"></span><span class="nm">' + ({zh:'各停 / 普通', ja:'各停 / 普通', en:'Local'}[lang]) + '</span><span class="ds">各 / 普</span></div>' +
+    '<div class="legrow"><span class="dot" style="color:#9aa5b5"></span><span class="nm">' + ({zh:'ORM 线位(OSM 全量轨道)', ja:'ORM 線位(OSM 全軌道)', en:'ORM tracks (OSM)'}[lang]) + '</span><span class="ds">' + ({zh:'按线路色', ja:'路線色', en:'line color'}[lang]) + '</span></div>' +
     '<div class="legrow"><span class="dot" style="color:#6ee7f7"></span><span class="nm">' + T().legendNote + '</span><span class="ds"></span></div>';
 }
 function buildHelp() {

@@ -104,7 +104,7 @@ def strip_wiki(s):
     return s.strip()
 
 
-_ICON_RE = re.compile(r'^[OP]\d+=|^[A-Za-z][A-Za-z0-9]*\d*$')
+_ICON_RE = re.compile(r'^[OP]\d+=|^[A-Za-z][A-Za-z0-9+.\-]*\d*$')
 
 
 def parse_bs_rows(text):

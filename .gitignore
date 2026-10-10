@@ -9,3 +9,16 @@ scripts/geo/ra_official/_failed.json
 _backup/
 _shots/
 mini-japanrail-3d/data/icons_vec/
+
+# ===== Mini JapanRail 3D SEO 静态化生成产物（部署时由 CI 重新生成，不入库） =====
+mini-japanrail-3d/lines/
+mini-japanrail-3d/stations/
+mini-japanrail-3d/sitemap.xml
+mini-japanrail-3d/sitemap-lines.xml
+mini-japanrail-3d/sitemap-stations.xml
+mini-japanrail-3d/sitemap-pages.xml
+mini-japanrail-3d/robots.txt
+mini-japanrail-3d/404.html
+
+# SEO 抓取临时脚本/日志（不入库；line_wiki.json 摘要如需入库请单独添加）
+mini-japanrail-3d/.seo-logs/

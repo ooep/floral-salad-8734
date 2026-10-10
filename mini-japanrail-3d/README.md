@@ -1,4 +1,4 @@
-# Mini JapanRail 3D — 全日本铁路实时运行地图（3D）
+# Mini JapanRail — 全日本铁路实时运行地图（3D）
 
 对标 [Mini Tokyo 3D](https://minitokyo3d.com) 的**纯前端**全日本列车 3D 实时运行地图。单文件实现（`index.html` 内联 CSS/JS），MapLibre GL JS v6 经 CDN 引入，运行时零数据请求。
 
@@ -63,3 +63,13 @@ python3 -m http.server 8931
 
 - 时刻表与路网:RailAround 系数据(577 线几何 + 全日本班次表,构建脚本见 `scripts/build_3d_data.py`)
 - 底图:国土地理院 淡色地図(可选);字体字形:OpenFreeMap
+
+## SEO（每线路 / 每车站静态页）
+
+本站为纯静态 SPA，为保证「每一条线路、每一个车站」都能被各语言搜索引擎收录，
+部署时会由 `seo/build_seo_static.py` 额外生成 **662 个线路页 + 8,928 个车站页**
+（纯 HTML、无 JS 依赖、内置日/中/英三语站名、JSON-LD、canonical、OG 标签），
+以及 sitemap / robots / 404 / og-image。详见 [seo/README.md](seo/README.md)：
+- 本地生成：`cd mini-japanrail-3d && python3 seo/build_seo_static.py`
+- 域名配置：`seo/seo_config.json` 的 `site_base`（与 `index.html` head 中 3 处域名保持一致）
+- CI 已在部署前自动重新生成，产物不入库（见仓库根 `.gitignore`）

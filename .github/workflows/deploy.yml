@@ -30,6 +30,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # SEO：每次部署前重新生成「每线路 / 每车站」静态页、sitemap、robots、404、OG 图。
+      # 生成失败不阻断部署（沿用仓库内已有文件），保证现有发布流程不受影响。
+      - name: Build SEO static pages
+        run: |
+          cd mini-japanrail-3d && python3 seo/build_seo_static.py || echo '::warning::SEO 静态页生成失败，沿用已有文件部署'
+
       - name: Verify data assets
         run: |
           python3 - <<'PY'
@@ -69,9 +75,12 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
         run: |
-          # 只部署前端(index.html + data + logos),不含 .github 与 scripts(Python 构建脚本)
+          # 只部署前端(index.html + data + logos + SEO 静态页),不含 .github 与 scripts(Python 构建脚本)
           rm -rf cf-mj3d && mkdir -p cf-mj3d
           cp mini-japanrail-3d/index.html cf-mj3d/
           cp -r mini-japanrail-3d/data cf-mj3d/
           cp -r mini-japanrail-3d/logos cf-mj3d/
+          # SEO 静态页与搜索引擎基础设施（若上一步已生成；缺文件时不阻塞部署）
+          cp -r mini-japanrail-3d/lines mini-japanrail-3d/stations cf-mj3d/ || true
+          cp mini-japanrail-3d/robots.txt mini-japanrail-3d/404.html mini-japanrail-3d/og-image.png mini-japanrail-3d/sitemap.xml mini-japanrail-3d/sitemap-lines.xml mini-japanrail-3d/sitemap-stations.xml mini-japanrail-3d/sitemap-pages.xml cf-mj3d/ || true
           npx wrangler@4 pages deploy cf-mj3d --project-name mini-japanrail-3d --branch main --commit-dirty=true

@@ -142,6 +142,10 @@ def build_records(cfg):
     except Exception:
         eki_cache = {}
     try:
+        floorplan = load_json('eki_floorplan.json')   # 站 key → 构内図（配线图）直链索引
+    except Exception:
+        floorplan = {}
+    try:
         wlm = load_json('wiki_line_map.json')         # 站key → 词条线路文件（与主站信息 tab 同源）
     except Exception:
         wlm = {}
@@ -324,7 +328,7 @@ def build_records(cfg):
         'stations': st, 'lines': lines, 'neighbors': neighbors,
         'name_groups': dict(name_groups), 'line_orders': line_orders,
         'nearby': nearby, 'line_wiki': wiki,
-        'eki_cache': eki_cache, 'wlm': wlm,
+        'eki_cache': eki_cache, 'wlm': wlm, 'floorplan': floorplan,
         'station_map_meta': {k: sm[k] for k in ('generated_at',) if k in sm},
     }
 
@@ -559,8 +563,146 @@ def eki_station_for(key, name, wlm, cache):
     return None
 
 
+def station_line_diagram(rec, stations, line_orders, lines, max_lines=5):
+    """基于站内真实轨道数据（沿轨道站序 + 坐标）自绘「站线配置示意」SVG。
+
+    取该站每条途经线路在站序中的前后邻站窗口，投影到以本站为中心的局部平面，
+    绘制轨道走向折线（线路色）、本站站台条、行车方向箭头与线路图例。
+    返回内联 SVG 字符串；无轨道数据时返回空串。示意性质，非股道级真实配线图。
+    """
+    key = rec['key']
+    me = stations.get(key)
+    if not me:
+        return ''
+    paths = []
+    for l in rec.get('lines') or []:
+        if len(paths) >= max_lines:
+            break
+        seq = line_orders.get(l)
+        if not seq or key not in seq:
+            continue
+        i = seq.index(key)
+        win = seq[max(0, i - 2):i + 3]
+        pts = []
+        for k2 in win:
+            c = stations.get(k2)
+            if c and c.get('coord'):
+                pts.append((k2, c['coord']))
+        if len(pts) >= 2:
+            paths.append((l, pts))
+    if not paths:
+        return ''
+    cx, cy = me['coord']
+    k = math.cos(math.radians(cy))
+    W, H, pad = 300, 220, 30
+    def proj(c):
+        return ((c[0] - cx) * k, c[1] - cy)
+    flat = [proj(c) for _, ps in paths for _, c in ps]
+    xs = [p[0] for p in flat]
+    ys = [p[1] for p in flat]
+    span_x = max(xs) - min(xs)
+    span_y = max(ys) - min(ys)
+    s = 1.0
+    if span_x > 1e-9 or span_y > 1e-9:
+        s = min((W - 2 * pad) / span_x if span_x > 1e-9 else 1e9,
+                (H - 2 * pad) / span_y if span_y > 1e-9 else 1e9)
+    s = min(s, 60.0)  # 防极端放大（邻站极近时）
+    def X(c):
+        return W / 2 + (proj(c)[0] - proj(me['coord'])[0]) * s
+    def Y(c):
+        return H / 2 + (proj(c)[1] - proj(me['coord'])[1]) * s
+    # 图例（最多 4 条，其余合计）
+    legend = []
+    for l, ps in paths[:4]:
+        col = (lines.get(l) or {}).get('color') or FALLBACK_COLOR
+        legend.append('<span class="lg"><i style="background:' + esc(col) + '"></i>' + esc(l) + '</span>')
+    more_n = len(paths) - 4
+    if more_n > 0:
+        legend.append('<span class="lg"><i style="background:#aab"></i>等 %d 条线路</span>' % more_n)
+    # 绘制：先画轨道线（邻站→本站→邻站），再本站站台条，再箭头
+    svg_parts = []
+    for l, ps in paths:
+        col = (lines.get(l) or {}).get('color') or FALLBACK_COLOR
+        d = ''
+        first = True
+        for k2, c in ps:
+            d += ('M' if first else 'L') + '%.1f %.1f' % (X(c), Y(c))
+            first = False
+        svg_parts.append('<path d="' + d + '" fill="none" stroke="' + esc(col) + '" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" opacity=".92"/>')
+    # 站台条：本站点，垂直于主线走向
+    main_pts = []
+    for l, ps in paths[:1]:
+        for k2, c in ps:
+            main_pts.append((X(c), Y(c)))
+    if len(main_pts) >= 2:
+        mx, my = main_pts[0]
+        nx, ny = main_pts[-1]
+        dx, dy = nx - mx, ny - my
+        ln = math.hypot(dx, dy) or 1
+        px, py = -dy / ln, dx / ln
+        hx, hy = X(me['coord']), Y(me['coord'])
+        svg_parts.append('<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" stroke="rgba(255,255,255,.55)" stroke-width="4"/>' % (hx - px * 9, hy - py * 9, hx + px * 9, hy + py * 9))
+    # 方向箭头（沿各线末段指向行进方向：站序 = 上行→下行）
+    for l, ps in paths:
+        if len(ps) < 2:
+            continue
+        p1 = proj(ps[-2][1]); p2 = proj(ps[-1][1])
+        ax1, ay1 = X(ps[-2][1]), Y(ps[-2][1])
+        ax2, ay2 = X(ps[-1][1]), Y(ps[-1][1])
+        vx, vy = ax2 - ax1, ay2 - ay1
+        vln = math.hypot(vx, vy) or 1
+        ux, uy = vx / vln, vy / vln
+        bx, by = ax1 + ux * (vln * 0.55), ay1 + uy * (vln * 0.55)
+        tip_x, tip_y = bx + ux * 8, by + uy * 8
+        nx_, ny_ = -uy, ux
+        svg_parts.append('<polygon points="%.1f,%.1f %.1f,%.1f %.1f,%.1f" fill="rgba(255,255,255,.85)"/>' % (
+            bx - nx_ * 4, by - ny_ * 4, bx + nx_ * 4, by + ny_ * 4, tip_x, tip_y))
+    # 邻站名（每线路仅标与本站轨道直接相连、最近的一个邻站；去重、加底防叠字）
+    labels = []
+    for l, ps in paths:
+        a, z = ps[0][0], ps[-1][0]
+        ca_, cz_ = stations[a]['coord'], stations[z]['coord']
+        da_ = (ca_[0] - cx) ** 2 + (ca_[1] - cy) ** 2
+        dz_ = (cz_[0] - cx) ** 2 + (cz_[1] - cy) ** 2
+        pick = a if da_ <= dz_ else z
+        if pick == key or any(o == pick for o, _, _, _ in labels):
+            continue
+        nm = stations.get(pick, {}).get('name') or pick
+        labels.append((pick, nm, X(stations[pick]['coord']), Y(stations[pick]['coord'])))
+    for k2, nm, lx_, ly_ in labels[:5]:
+        svg_parts.append('<circle cx="%.1f" cy="%.1f" r="2.4" fill="rgba(255,255,255,.7)"/>' % (lx_, ly_))
+        anchor = 'middle'
+        if lx_ < 44:
+            anchor = 'start'; tx = 4
+        elif lx_ > W - 44:
+            anchor = 'end'; tx = W - 4
+        else:
+            tx = lx_
+        # 默认放站点上方；视图上半部可放下方，避免与本站名区重叠
+        ty = ly_ + 15 if ly_ < 66 else ly_ - 9
+        if ty > H - 12:
+            ty = ly_ - 9
+        wdt = len(nm) * 5.6 + 8
+        bx = tx - wdt / 2 if anchor == 'middle' else tx
+        if anchor == 'end':
+            bx = tx - wdt
+        svg_parts.append('<rect x="%.1f" y="%.1f" width="%.1f" height="12" rx="3" fill="rgba(6,10,18,.72)"/>' % (bx, ty - 9.5, wdt))
+        svg_parts.append('<text x="%.1f" y="%.1f" text-anchor="%s" font-size="9.5" fill="rgba(230,238,250,.95)">%s</text>' % (tx, ty, anchor, esc(nm)))
+    # 本站名（左下角固定，避免中心堆叠）
+    nm_me = rec.get('name') or key
+    wdt = len(nm_me) * 6.6 + 14
+    svg_parts.append('<rect x="8" y="%d" width="%.1f" height="16" rx="5" fill="rgba(47,109,232,.55)"/>' % (H - 26, wdt))
+    svg_parts.append('<text x="15" y="%d" font-size="11" font-weight="700" fill="rgba(255,255,255,.98)">%s</text>' % (H - 14, esc(nm_me)))
+    lg_html = '<div class="lgrow">' + ''.join(legend) + '</div>'
+    return ('<figure class="mapfig diag">'
+            '<svg viewBox="0 0 %d %d" role="img" aria-label="%s 站线配置示意" xmlns="http://www.w3.org/2000/svg">'
+            '%s</svg>'
+            '<figcaption>站线配置示意（基于站内轨道数据绘制，含本站与邻近车站的线路走向）</figcaption>%s</figure>'
+            % (W, H, esc(rec.get('name') or key), ''.join(svg_parts), lg_html))
+
+
 def eki_brief_html(sec_id, title, entry, lang, more_url=''):
-    """本地化词条 → 「百科简介」玻璃卡（清洗后首段 + 跳转主站实时地图的链接）。"""
+    """本地化词条 → 「百科简介」玻璃卡（清洗后首段 + 延伸章节 + 跳转主站实时地图的链接）。"""
     if not entry:
         return ''
     lead = _clean_lead(entry.get('lead'))
@@ -569,8 +711,14 @@ def eki_brief_html(sec_id, title, entry, lang, more_url=''):
     if len(lead) > 300:
         lead = lead[:297] + '…'
     more = (' <a class="mini" href="' + esc(more_url) + '">在主站查看 ↗</a>') if more_url else ''
+    ch_html = ''
+    for ch in (entry.get('chapters') or [])[:2]:
+        t = _clean_lead(ch.get('t'))
+        if t:
+            ch_html += ('<span class="wiki-ch"><b>' + esc(ch.get('h') or '') + '</b>：'
+                        + esc(t) + '</span>')
     return ('<h2 id="' + sec_id + '" style="--lc:#5fd4f4">' + esc(title) + '</h2>\n'
-            '<p class="wiki-x"><span lang="' + lang + '">' + esc(lead) + '</span>' + more + '</p>\n')
+            '<p class="wiki-x"><span lang="' + lang + '">' + esc(lead) + '</span>' + more + ch_html + '</p>\n')
 
 
 # ---------------- 模板 ----------------
@@ -674,6 +822,15 @@ CSS = """
     box-shadow:inset 0 1px 1px var(--glass-hi), inset 0 -1px 2px var(--glass-lo);
     backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);margin-bottom:22px}
   .wiki-x .mini{margin-left:4px}
+  .wiki-ch{display:block;margin-top:7px;color:var(--dim);font-size:13px;line-height:1.75;border-top:1px dashed rgba(255,255,255,.14);padding-top:7px}
+  .wiki-ch b{color:var(--txt);font-weight:600;margin-right:2px}
+  .mapfig{margin:10px 0 4px;background:var(--glass);border:1px solid var(--glass-edge);border-radius:var(--r-sm);padding:10px;overflow:hidden}
+  .mapfig img{display:block;width:100%;height:auto;border-radius:6px;background:#fff}
+  .mapfig figcaption{color:var(--dim);font-size:12px;margin-top:8px;line-height:1.6}
+  .mapfig.diag svg{background:rgba(6,10,18,.55);border-radius:6px;display:block;width:100%;height:auto}
+  .lgrow{display:flex;flex-wrap:wrap;gap:8px 14px;margin-top:9px}
+  .lg{display:inline-flex;align-items:center;gap:5px;color:var(--dim);font-size:12px;white-space:nowrap}
+  .lg i{width:10px;height:10px;border-radius:3px;display:inline-block}
   .wiki-links{font-size:12.5px;color:var(--dim);margin-top:6px}
   .wiki-links a{color:var(--acc-txt);margin-right:2px}
   .mini{font-size:12px;color:var(--acc2);text-decoration:none;margin-left:7px;white-space:nowrap}
@@ -821,6 +978,21 @@ def station_page(rec, lines, neighbors, cfg, tozh):
     map_ja = map_url(cfg, coord[0], coord[1], 14, 'ja', extra=sta_extra)
     map_en = map_url(cfg, coord[0], coord[1], 14, 'en', extra=sta_extra)
 
+    # 站线配置示意（自绘 SVG，基于站内真实轨道数据）+ 站内构内図（ecomo 同源实图）
+    map_img_html = ''
+    diag = station_line_diagram(rec, stations, line_orders, lines)
+    fp = floorplan.get(key) or floorplan.get(name)
+    if diag or fp:
+        block = '<h2 id="sec-map" style="--lc:#5fd4f4">站线配置图</h2>\n'
+        if diag:
+            block += diag
+        if fp:
+            img_src = abs_url(cfg, 'seo/img/stations/' + urllib.parse.quote(key) + '.png')
+            block += ('<figure class="mapfig"><img src="' + esc(img_src) + '" '
+                      'alt="' + esc(name + ' 站内构内図') + '" loading="lazy" decoding="async">'
+                      '<figcaption>站内构内図（实拍站内平面）· 与主站「指南」tab 同源</figcaption></figure>\n')
+        map_img_html = block
+
     # 百科简介（站内本地化词条 eki-wiki 同源，中文→日文首段；「在主站查看」跳站深链）
     eki_html = ''
     se = eki_station_for(key, name, wlm, eki_cache)
@@ -836,6 +1008,8 @@ def station_page(rec, lines, neighbors, cfg, tozh):
     ]
     if eki_html:
         toc_items.insert(0, ('#sec-eki', '百科'))
+    if map_img_html:
+        toc_items.insert(1, ('#sec-map', '配线图'))
     if same_html:
         toc_items.append(('#sec-same', '同名车站'))
     toc_html = '<nav class="toc" aria-label="本页目录">' + ''.join(
@@ -892,6 +1066,7 @@ def station_page(rec, lines, neighbors, cfg, tozh):
         + '<tr><th>途经线路数</th><td>' + str(len(line_names)) + '</td></tr>\n'
         + '<tr><th>经度 / 纬度</th><td>' + str(coord[0]) + ' / ' + str(coord[1]) + '</td></tr>\n'
         + '</table>\n'
+        + map_img_html
         + adj_html
         + near_html
         + same_html
@@ -1366,7 +1541,7 @@ def main():
 
     cfg = load_config(args.config)
     d = build_records(cfg)
-    global recs, line_orders, line_counts, name_groups, lines, nearby, wiki, eki_cache, wlm
+    global recs, line_orders, line_counts, name_groups, lines, nearby, wiki, eki_cache, wlm, stations, floorplan
     stations, lines, neighbors, tozh = d['stations'], d['lines'], d['neighbors'], d['tozh']
     recs = stations  # station_page 里引用相邻车站记录
     line_orders = d['line_orders']  # 线路车站沿轨道顺序（站页方向/位置用）
@@ -1375,6 +1550,7 @@ def main():
     wiki = d['line_wiki']           # Wikipedia 线路摘要缓存
     eki_cache = d['eki_cache']      # 本地化百科词条缓存（eki-wiki 同源）
     wlm = d['wlm']                  # 站key → 词条线路文件
+    floorplan = d['floorplan']      # 站 key → 构内図（配线图）索引
     line_counts = {lname: len(seq) for lname, seq in line_orders.items()}
 
     out_lines = os.path.join(ROOT, 'lines')

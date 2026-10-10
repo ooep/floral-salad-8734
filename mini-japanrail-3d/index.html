@@ -4593,7 +4593,7 @@ async function renderGuideTab() {
   const rec = data[normName(sheetStation)];
   _guideKey = sheetStation;
   if (!rec) {
-    box.innerHTML = '<div class="gd-empty">' + _escTxt(T().gdEmpty) + '<br><small>' + _escTxt(T().gdDataSrc) + '</small></div>';
+    box.innerHTML = '<div class="gd-empty">' + _escTxt(T().gdEmpty) + '</div>';
     return;
   }
   const t = T();
@@ -4648,7 +4648,6 @@ async function renderGuideTab() {
     linkItems.forEach(([t2, u]) => { h += `<a class="gd-link" href="${_escTxt(u)}" target="_blank" rel="noopener">${_escTxt(t2)} ↗</a>`; });
     h += '</div></div>';
   }
-  h += '<div class="gd-src">' + _escTxt(t.gdDataSrc) + '</div>';
   box.innerHTML = h;
 }
 

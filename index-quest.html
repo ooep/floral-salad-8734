@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>日本鉄道制霸 — Japan Railway Conquest</title>
-<meta property="og:title" content="日本鉄道制霸 — Japan Railway Conquest" />
+<title>Mini JapanRail · 日本鉄道制霸</title>
+<meta property="og:title" content="Mini JapanRail · 日本鉄道制霸" />
 <meta property="og:description" content="Track your railway journey across Japan" />
 <meta property="og:type" content="website" />
 <meta name="twitter:card" content="summary_large_image" />
@@ -703,7 +703,7 @@ body:not(.sidebar-collapsed) #sidebar-toggle { left: calc(var(--sidebar-w) + 10p
 
 <div id="sidebar">
     <div id="header">
-        <div class="title">鉄道制霸<span class="jp">Japan Railway Conquest</span></div>
+        <div class="title">Mini JapanRail · 鉄道制霸<span class="jp">Japan Railway Conquest</span></div>
         <div id="header-actions">
             <button id="btn-export" title="Export data">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -1332,7 +1332,7 @@ function applyLang() {
     document.getElementById('lang-toggle').querySelectorAll('span').forEach(s => {
         s.classList.toggle('on', s.dataset.lang === lang);
     });
-    document.title = lang === 'ja' ? '日本鉄道制霸' : lang === 'zh' ? '日本铁路制霸' : 'Japan Railway Conquest';
+    document.title = lang === 'ja' ? 'Mini JapanRail · 日本鉄道制霸' : lang === 'zh' ? 'Mini JapanRail · 日本铁路制霸' : 'Mini JapanRail · Japan Railway Conquest';
     renderLineList();
 }
 
@@ -1340,13 +1340,20 @@ function applyLang() {
 // QUEST DATA (localStorage)
 // ═══════════════════════════════════════════════════════════════
 
-const STORAGE_KEY = 'japanrail_quest_data';
+const STORAGE_KEY = 'minijapanrail_quest_data';
 
 let questData = { lines: {}, segments: {} };
 
 function loadQuestData() {
     try {
-        const raw = localStorage.getItem(STORAGE_KEY);
+        // 旧键迁移（japanrail_quest_data → minijapanrail_quest_data）：新键无数据且旧键有数据时搬移并删除旧键，保留既有进度
+        const OLD_KEY = 'japanrail_quest_data';
+        let raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw && localStorage.getItem(OLD_KEY)) {
+            raw = localStorage.getItem(OLD_KEY);
+            localStorage.setItem(STORAGE_KEY, raw);
+            localStorage.removeItem(OLD_KEY);
+        }
         if (raw) {
             const parsed = JSON.parse(raw);
             questData = {
@@ -2009,7 +2016,7 @@ document.getElementById('btn-export').addEventListener('click', () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'japanrail_quest_' + new Date().toISOString().slice(0, 10) + '.json';
+    a.download = 'minijapanrail_quest_' + new Date().toISOString().slice(0, 10) + '.json';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -2080,7 +2087,7 @@ document.getElementById('btn-share').addEventListener('click', () => {
     }
     const pct = totalKm ? (riddenKm / totalKm * 100).toFixed(1) : '0';
 
-    const title = lang === 'ja' ? '🇯🇵 日本鉄道制霸 進捗' : lang === 'zh' ? '🇯🇵 日本铁路制霸 进度' : '🇯🇵 Japan Railway Conquest Progress';
+    const title = lang === 'ja' ? '🇯🇵 Mini JapanRail · 日本鉄道制霸 進捗' : lang === 'zh' ? '🇯🇵 Mini JapanRail · 日本铁路制霸 进度' : '🇯🇵 Mini JapanRail · Japan Railway Conquest Progress';
     const text = `${title}\n` +
         `━━━━━━━━━━━━━━━━━━━━\n` +
         `${t('stats_lines')}: ${riddenLines}/${totalLines} (${totalLines ? Math.round(riddenLines/totalLines*100) : 0}%)\n` +
@@ -2234,7 +2241,7 @@ async function generatePoster(orient) {
             const nickname = document.getElementById('poster-nickname').value.trim();
             ctx.fillStyle = fg;
             ctx.font = `900 ${isL ? 26 : 20}px "Noto Sans CJK JP","Hiragino Sans",system-ui,sans-serif`;
-            const title = lang === 'ja' ? '日本鉄道制霸' : lang === 'zh' ? '日本铁路制霸' : 'Japan Railway Conquest';
+            const title = lang === 'ja' ? 'Mini JapanRail · 日本鉄道制霸' : lang === 'zh' ? 'Mini JapanRail · 日本铁路制霸' : 'Mini JapanRail · Japan Railway Conquest';
             ctx.fillText(title, cx, cy + (isL ? 24 : 18));
             ctx.fillStyle = fg2;
             ctx.font = `400 ${isL ? 11 : 9}px system-ui,sans-serif`;
@@ -2424,7 +2431,7 @@ async function generatePoster(orient) {
             ctx.fillStyle = dark ? '#2a3040' : '#ddd';
             ctx.font = `400 ${isL ? 9 : 7}px system-ui,sans-serif`;
             ctx.textAlign = 'right';
-            ctx.fillText('japanrail.quest', W - pad, H - (isL ? 20 : 16));
+            ctx.fillText('minijapanrail.quest', W - pad, H - (isL ? 20 : 16));
             ctx.textAlign = 'left';
 
             resolve(canvas);
@@ -2493,7 +2500,7 @@ document.getElementById('poster-download').addEventListener('click', async () =>
     try {
         const posterCanvas = await generatePoster(posterOrientation);
         const blob = await new Promise(r => posterCanvas.toBlob(r, 'image/png'));
-        const filename = `japanrail_quest_${posterOrientation}_${new Date().toISOString().slice(0, 10)}.png`;
+        const filename = `minijapanrail_quest_${posterOrientation}_${new Date().toISOString().slice(0, 10)}.png`;
 
         if (navigator.share && navigator.canShare) {
             const file = new File([blob], filename, { type: 'image/png' });

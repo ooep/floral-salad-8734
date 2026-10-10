@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>隐私政策 — Mini JapanRail</title>
+<meta name="description" content="Mini JapanRail 隐私政策:本地时刻表驱动的全日本铁路 3D 实时运行地图,数据与隐私说明。">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%234f8ef7'/%3E%3Cpath d='M14 40h36M16 40l3-13a5 5 0 0 1 4.9-4h16.2a5 5 0 0 1 4.9 4l3 13M19 48h.02M45 48h.02' stroke='white' stroke-width='4' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3Ccircle cx='21' cy='48' r='3.2' fill='white'/%3E%3Ccircle cx='43' cy='48' r='3.2' fill='white'/%3E%3C/svg%3E">
+<style>
+/* ── 与主站完全同一套 Liquid Glass 设计语言 ── */
+:root {
+  --bg:#0b0f16;
+  --panel:rgba(18,24,34,.68);
+  --panel2:rgba(30,38,52,.72);
+  --line:rgba(255,255,255,.08);
+  --txt:#e8edf4; --dim:#bccbdd; --acc:#2f6de8; --acc-txt:#6da9ff; --acc2:#5fd4f4;
+  --shadow:0 2px 10px rgba(0,0,0,.28), 0 8px 32px rgba(0,0,0,.2);
+  --r:14px; --r-sm:10px; --r-xs:7px; --r-pill:999px;
+  --acc-soft:rgba(79,142,247,.16); --acc-border:rgba(79,142,247,.5);
+  /* ── Liquid Glass 液态玻璃(深色) ── */
+  --glass:rgba(255,255,255,.10);
+  --glass-2:rgba(255,255,255,.16);
+  --glass-edge:rgba(255,255,255,.22);
+  --glass-hi:rgba(255,255,255,.34);
+  --glass-lo:rgba(0,0,0,.16);
+  --glass-sh:0 6px 20px rgba(0,0,0,.30), 0 2px 6px rgba(0,0,0,.22);
+  --glass-solid:rgb(25,32,45);
+  --glass-panel:linear-gradient(180deg, rgba(255,255,255,.18) 0%, rgba(255,255,255,.05) 34%, rgba(255,255,255,.09) 100%), rgba(255,255,255,.10);
+  --glass-panel-blur:blur(26px) saturate(1.9);
+  --dock:48px;
+  --ease-spring:cubic-bezier(.34,1.45,.44,1);
+  --ease-smooth:cubic-bezier(.16,1,.3,1);
+  --spring-out:linear(0,.0598,.1976,.3654,.5321,.68,.8007,.8924,.9573,.9996,1.0241,1.0356,1.0384,1.0358,1.0304,1.0239,1.0175,1.0119,1.0074,1.0039,1.0015,.9999,.999,.9986,.9985,.9986,.9989,.9991,.9993,.9996,1);
+  --morph-out:460ms;
+}
+@supports not (transition-timing-function:linear(0,1)) {
+  :root { --spring-out:cubic-bezier(.22,1.12,.36,1); }
+}
+:root[data-theme="light"] {
+  --bg:#dfe4ec;
+  --panel:rgba(255,255,255,.82);
+  --panel2:rgba(245,247,251,.88);
+  --line:rgba(15,23,42,.09);
+  --txt:#0f172a; --dim:#414e66; --acc:#1c51d6; --acc-txt:#1c51d6; --acc2:#0891b2;
+  --shadow:0 1px 3px rgba(15,23,42,.08), 0 8px 24px rgba(15,23,42,.1);
+  --acc-soft:rgba(37,99,235,.1); --acc-border:rgba(37,99,235,.4);
+  /* ── Liquid Glass 液态玻璃(浅色) ── */
+  --glass:rgba(255,255,255,.58);
+  --glass-2:rgba(255,255,255,.76);
+  --glass-edge:rgba(255,255,255,.92);
+  --glass-hi:rgba(255,255,255,.95);
+  --glass-lo:rgba(15,23,42,.06);
+  --glass-sh:0 6px 18px rgba(15,23,42,.14), 0 2px 5px rgba(15,23,42,.08);
+  --glass-solid:rgb(247,249,252);
+  --glass-panel:linear-gradient(180deg, rgba(255,255,255,.78) 0%, rgba(255,255,255,.52) 36%, rgba(255,255,255,.66) 100%), rgba(255,255,255,.58);
+  --glass-panel-blur:blur(26px) saturate(1.6);
+}
+html,body { width:100%; height:100%; margin:0; background:var(--bg); color:var(--txt);
+  font-family:-apple-system,"SF Pro SC","PingFang SC","Hiragino Sans GB","Noto Sans CJK SC","Yu Gothic UI","Noto Sans JP",sans-serif;
+  -webkit-font-smoothing:antialiased; }
+button { font-family:inherit; }
+* { box-sizing:border-box; }
+
+/* 背景:主站同款氛围光晕 */
+body::before { content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background:radial-gradient(1200px 700px at 78% -8%, rgba(47,109,232,.22), transparent 60%),
+             radial-gradient(900px 600px at -10% 108%, rgba(95,212,244,.13), transparent 55%); }
+body::after { content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background-image:linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+                   linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
+  background-size:44px 44px; }
+
+/* 顶部液态玻璃返回条 */
+.topbar { position:sticky; top:0; z-index:5; display:flex; align-items:center; gap:10px;
+  padding:10px 14px; background:color-mix(in srgb, var(--bg) 72%, transparent);
+  backdrop-filter:var(--glass-panel-blur); -webkit-backdrop-filter:var(--glass-panel-blur);
+  border-bottom:1px solid var(--glass-edge); }
+.topbar .btn-back { display:inline-flex; align-items:center; gap:6px; height:34px; padding:0 14px;
+  border:1px solid var(--glass-edge); border-radius:var(--r-pill); background:var(--glass);
+  color:var(--txt); font-size:12px; font-weight:600; cursor:pointer; text-decoration:none;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.5), inset 0 1px 1.5px var(--glass-hi), inset 0 -2px 4px var(--glass-lo), var(--glass-sh);
+  transition:transform .38s var(--ease-spring), background .2s var(--ease-smooth), border-color .2s var(--ease-smooth); }
+.topbar .btn-back:hover { background:var(--glass-2); border-color:var(--glass-hi); transform:translateY(-1px); }
+.topbar .btn-back:active { transform:scale(.93); transition:transform .12s ease-in; }
+.topbar .title { font-size:14px; font-weight:800; letter-spacing:.3px; color:var(--txt); }
+
+/* 主体液态玻璃卡 */
+.wrap { position:relative; z-index:1; max-width:760px; margin:0 auto; padding:18px 16px 56px; }
+.glass-card { position:relative; border:1px solid var(--glass-edge); border-radius:24px;
+  background:var(--glass-panel); backdrop-filter:var(--glass-panel-blur); -webkit-backdrop-filter:var(--glass-panel-blur);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.5), inset 0 -1px 2px var(--glass-lo), var(--glass-sh);
+  overflow:hidden; animation:cardIn .46s var(--spring-out) both; }
+@keyframes cardIn { from { opacity:0; transform:translateY(14px) scale(.98); } to { opacity:1; transform:none; } }
+.glass-card::before { content:''; position:absolute; left:8%; right:8%; top:0; height:1px;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,.6), transparent); }
+.g-card-inner { padding:24px 26px 30px; }
+.h1 { font-size:22px; font-weight:800; letter-spacing:.4px; margin:0 0 6px; }
+.h-sub { font-size:12px; color:var(--dim); margin:0 0 18px; }
+.sec-t { font-size:13px; font-weight:800; color:var(--txt); letter-spacing:.02em; display:flex; align-items:center; gap:10px; margin:20px 0 8px; }
+.sec-t::after { content:""; flex:1; height:1px; background:var(--glass-edge); }
+.sec-t:first-child { margin-top:0; }
+p.para { font-size:12.5px; line-height:1.85; color:var(--txt); margin:0 0 8px; }
+p.para.dim { color:var(--dim); }
+ul.list { margin:4px 0 10px; padding:0; list-style:none; }
+ul.list li { font-size:12.5px; line-height:1.75; color:var(--txt); padding-left:18px; position:relative; margin-bottom:4px; }
+ul.list li::before { content:''; position:absolute; left:3px; top:9px; width:5px; height:5px; border-radius:50%; background:var(--acc); opacity:.8; }
+.badge { display:inline-block; padding:1px 8px; border-radius:var(--r-pill); font-size:10px; font-weight:700;
+  background:var(--acc-soft); color:var(--acc-txt); border:1px solid var(--acc-border); margin-left:6px; vertical-align:1px; }
+a.link { color:var(--acc-txt); text-decoration:none; font-weight:600; border-bottom:1px dotted var(--acc-border); }
+a.link:hover { color:var(--acc); border-bottom-style:solid; }
+.foot { margin-top:22px; padding-top:14px; border-top:1px solid var(--glass-edge); font-size:11px; color:var(--dim); line-height:1.7; }
+.foot b { color:var(--txt); }
+@media (max-width:640px) {
+  .g-card-inner { padding:18px 16px 22px; }
+  .h1 { font-size:19px; }
+  .topbar .title { font-size:13px; }
+}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a class="btn-back" href="index.html" id="backBtn">← <span id="backLb">返回地图</span></a>
+  <div class="title" id="docT">隐私政策</div>
+</div>
+
+<div class="wrap">
+  <div class="glass-card">
+    <div class="g-card-inner">
+      <h1 class="h1" id="docH">隐私政策</h1>
+      <p class="h-sub" id="docSub">Mini JapanRail — 全日本铁路实时运行地图</p>
+
+      <div class="sec-t" id="s1">我们收集什么</div>
+      <p class="para" id="p1">本站不收集、不存储、不上传任何个人信息。您在使用过程中产生的偏好设置（语言、主题、显示开关、跟随状态等）仅保存在您自己的浏览器本地存储（localStorage）中，用于下次访问时恢复界面状态，不会发送到任何服务器。</p>
+
+      <div class="sec-t" id="s2">数据来源</div>
+      <p class="para" id="p2">列车运行数据基于日本全国铁路的<span class="badge" id="p2b">计划时刻表</span>构建：由每周定时任务从公开时刻表源抓取，打包为紧凑的静态数据文件随站点发布。页面运行时使用这些本地数据驱动渲染，不依赖实时外部请求。</p>
+
+      <div class="sec-t" id="s3">第三方服务</div>
+      <ul class="list">
+        <li id="l1">地图渲染使用开源库 MapLibre GL JS（通过公共 CDN 加载，您的浏览器会向该 CDN 发起请求）。</li>
+        <li id="l2">底图瓦片来自日本国土地理院 / OpenFreeMap / OpenStreetMap 等公开服务，加载时可能向相应服务器请求地图图片。</li>
+        <li id="l3">除上述必要资源外，本站不接入任何广告、统计或追踪脚本。</li>
+      </ul>
+
+      <div class="sec-t" id="s4">缓存说明</div>
+      <p class="para" id="p4">为加快重复访问速度，部分静态数据可能由浏览器缓存（含 IndexedDB / HTTP 缓存）。这些缓存仅存在于您的设备上，可随时通过浏览器设置清除。</p>
+
+      <div class="sec-t" id="s5">联系方式</div>
+      <p class="para" id="p5">如果您对本隐私政策有任何疑问，可通过 GitHub 仓库提交 Issue 与我们联系。</p>
+
+      <div class="foot" id="footT">© 2026 Mini JapanRail <span id="footS">· 本地时刻表驱动 · 运行时零外部数据请求</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* 主题:与主站联动 —— 读取同一 localStorage 键,auto 跟随系统 */
+const mq = window.matchMedia('(prefers-color-scheme: light)');
+function applyTheme() {
+  const mode = localStorage.getItem('mjr3d_theme') || 'auto';
+  const resolved = (mode === 'auto') ? (mq.matches ? 'light' : 'dark') : mode;
+  document.documentElement.setAttribute('data-theme', resolved);
+}
+mq.addEventListener('change', applyTheme);
+applyTheme();
+/* 语言:与主站联动 —— 读取同一语言键,缺省中文 */
+const lang = (localStorage.getItem('mjr3d_lang') || 'zh');
+document.documentElement.lang = lang === 'zh' ? 'zh-Hans' : lang;
+const I18N = {
+  zh: { backLb:'返回地图', docT:'隐私政策', docH:'隐私政策', docSub:'Mini JapanRail — 全日本铁路实时运行地图',
+    s1:'我们收集什么', p1:'本站不收集、不存储、不上传任何个人信息。您在使用过程中产生的偏好设置（语言、主题、显示开关、跟随状态等）仅保存在您自己的浏览器本地存储（localStorage）中，用于下次访问时恢复界面状态，不会发送到任何服务器。',
+    s2:'数据来源', p2:'列车运行数据基于日本全国铁路的计划时刻表构建：由每周定时任务从公开时刻表源抓取，打包为紧凑的静态数据文件随站点发布。页面运行时使用这些本地数据驱动渲染，不依赖实时外部请求。', p2b:'计划时刻表',
+    s3:'第三方服务', l1:'地图渲染使用开源库 MapLibre GL JS（通过公共 CDN 加载，您的浏览器会向该 CDN 发起请求）。',
+    l2:'底图瓦片来自日本国土地理院 / OpenFreeMap / OpenStreetMap 等公开服务，加载时可能向相应服务器请求地图图片。',
+    l3:'除上述必要资源外，本站不接入任何广告、统计或追踪脚本。',
+    s4:'缓存说明', p4:'为加快重复访问速度，部分静态数据可能由浏览器缓存（含 IndexedDB / HTTP 缓存）。这些缓存仅存在于您的设备上，可随时通过浏览器设置清除。',
+    s5:'联系方式', p5:'如果您对本隐私政策有任何疑问，可通过 GitHub 仓库提交 Issue 与我们联系。',
+    footT:'© 2026 Mini JapanRail', footS:'· 本地时刻表驱动 · 运行时零外部数据请求' },
+  ja: { backLb:'マップに戻る', docT:'プライバシーポリシー', docH:'プライバシーポリシー', docSub:'ミニ日本鉄道 — 全国鉄道リアルタイムマップ',
+    s1:'収集する情報', p1:'当サイトは個人情報を収集・保存・送信しません。利用中の設定（言語・テーマ・表示スイッチ・追跡状態など）はブラウザのローカルストレージにのみ保存され、次回アクセス時に復元されるだけで、サーバーへ送信されることはありません。',
+    s2:'データソース', p2:'列車運行データは日本全国の鉄道の計画時刻表に基づき、毎週の定期タスクで公開時刻表ソースから取得し、静的データファイルとして公開しています。ページ実行時はこのローカルデータで描画し、外部リクエストに依存しません。', p2b:'計画時刻表',
+    s3:'サードパーティサービス', l1:'地図描画はオープンソースの MapLibre GL JS（パブリックCDN経由で読み込み）を使用します。',
+    l2:'背景タイルは国土地理院 / OpenFreeMap / OpenStreetMap 等の公開サービスから取得します。',
+    l3:'上記の必要なリソース以外に、広告・統計・トラッキングスクリプトは一切組み込んでいません。',
+    s4:'キャッシュについて', p4:'再訪を高速化するため、一部の静的データはブラウザキャッシュ（IndexedDB / HTTPキャッシュ含む）に保存される場合があります。これらはお使いの端末にのみ存在し、ブラウザ設定からいつでも削除できます。',
+    s5:'お問い合わせ', p5:'本ポリシーについてご質問がある場合は、GitHubリポジトリのIssueにてご連絡ください。',
+    footT:'© 2026 ミニ日本鉄道', footS:'· ローカル時刻表駆動 · 実行時は外部データリクエストなし' },
+  en: { backLb:'Back to map', docT:'Privacy Policy', docH:'Privacy Policy', docSub:'Mini JapanRail — Japan Rail Live Map',
+    s1:'What we collect', p1:'This site does not collect, store, or upload any personal information. Preference settings (language, theme, display toggles, follow state, etc.) are saved only in your browser\'s localStorage to restore the interface on your next visit; nothing is sent to any server.',
+    s2:'Data source', p2:'Train operations are driven by scheduled timetables for all Japan railways: a weekly task fetches public timetable sources and packages them into compact static data files shipped with the site. Rendering at runtime uses only this local data and makes no live external requests.', p2b:'Scheduled timetables',
+    s3:'Third-party services', l1:'Map rendering uses the open-source MapLibre GL JS library (loaded from a public CDN, so your browser requests it from that CDN).',
+    l2:'Basemap tiles come from public services such as GSI Japan / OpenFreeMap / OpenStreetMap.',
+    l3:'Apart from the necessary resources above, this site embeds no ads, analytics, or tracking scripts.',
+    s4:'Caching', p4:'To speed up repeat visits, some static data may be cached by the browser (including IndexedDB / HTTP cache). These caches live only on your device and can be cleared anytime via browser settings.',
+    s5:'Contact', p5:'If you have any questions about this policy, please reach out via an Issue on the GitHub repository.',
+    footT:'© 2026 Mini JapanRail', footS:'· Local timetable driven · zero external data requests at runtime' },
+};
+const t = I18N[lang] || I18N.zh;
+['backLb','docT','docH','docSub','s1','p1','s2','p2','p2b','s3','l1','l2','l3','s4','p4','s5','p5','footT','footS'].forEach(k => {
+  const el = document.getElementById(k); if (el) el.textContent = t[k];
+});
+</script>
+</body>
+</html>

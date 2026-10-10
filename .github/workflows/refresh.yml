@@ -1,6 +1,6 @@
 name: Refresh timetables (weekly + manual)
 
-# 唯一会访问 RailAround 的工作流。每周自动抓一次全表维护总时刻表，
+# 唯一会访问时刻表源的工作流。每周自动抓一次全表维护总时刻表，
 # 也可手动触发（workflow_dispatch）。
 # 流程: 全量抓取时刻表(fetch_timetables.py, 2.2s/请求节流) → 构建页面本地列车文件
 # (build_trains.py) → 提交 → 部署 Pages。
@@ -45,11 +45,11 @@ jobs:
       - name: Build local train files
         run: python3 scripts/build_trains.py --src data/timetables --out data/live
 
-      - name: Sync Mini JapanRail 3D data + contract verify
+      - name: Sync Mini JapanRail data + contract verify
         # 契约校验不通过则 exit 1 → 后续 commit/部署中止,旧数据保持,页面不受影响
         run: python3 scripts/sync_mini_3d.py
 
-      - name: Refresh RailAround official geometry (incremental, throttled 2.2s)
+      - name: Refresh official geometry (incremental, throttled 2.2s)
         # resume: 已缓存 rw 跳过, 通常 0 个新请求; 仅新开线才抓取(失败不阻断, 下周重试)
         run: python3 scripts/fetch_ra_geometry.py --sleep 2.2
 
@@ -76,7 +76,7 @@ jobs:
           cp index.html favicon.png dist/
           cp -r data/segments.geojson data/stations.geojson data/names_en.json dist/data/
           cp -r data/live dist/data/
-          cp -r mini-japanrail-3d dist/   # Mini JapanRail 3D 子站 → /mini-japanrail-3d/
+          cp -r mini-japanrail-3d dist/   # Mini JapanRail 子站 → /mini-japanrail-3d/
           # 完整性闸门: dist 缺任何关键文件 → exit 1 → 部署中止, 线上保持旧版本继续运行(不 404)
           python3 - <<'PY'
           import os
@@ -100,15 +100,14 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-      - name: Deploy Mini JapanRail 3D frontend to Cloudflare Pages
+      - name: Deploy Mini JapanRail frontend to Cloudflare Pages
         if: ${{ env.CF_API_TOKEN != '' }}
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
         run: |
-          # 只部署前端(index.html + data + logos),不含 .github 与 scripts(Python 构建脚本)
+          # 只部署前端: 拷贝整个 mini-japanrail-3d 后剔除 scripts/(Python 构建脚本); .github 在仓库根,不在此目录
           rm -rf cf-mj3d && mkdir -p cf-mj3d
-          cp mini-japanrail-3d/index.html cf-mj3d/
-          cp -r mini-japanrail-3d/data cf-mj3d/
-          cp -r mini-japanrail-3d/logos cf-mj3d/
+          cp -r mini-japanrail-3d/. cf-mj3d/
+          rm -rf cf-mj3d/scripts
           npx wrangler@4 pages deploy cf-mj3d --project-name mini-japanrail-3d --branch main --commit-dirty=true

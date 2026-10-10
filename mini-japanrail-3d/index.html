@@ -285,6 +285,7 @@ button { font-family:inherit; }
 .sug-it .k { color:var(--dim); font-size:10px; align-self:center; flex:none; }
 .sug-it .langk { font-size:8.5px; font-weight:700; letter-spacing:.4px; padding:1px 5px; border-radius:5px; background:var(--acc-soft); color:var(--acc-txt,var(--acc)); flex:none; }
 .sug-it .hl { color:var(--acc-txt,var(--acc)); font-weight:700; }
+.sug-it .sug-dot { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:7px; vertical-align:middle; flex:none; }
 .sug-grp { padding:6px 12px 3px; font-size:10px; font-weight:700; letter-spacing:.6px; color:var(--dim); text-transform:uppercase; }
 .sug-empty { padding:10px 12px; font-size:12px; color:var(--dim); }
 .sug-empty .sug-q { color:var(--txt); }
@@ -330,6 +331,8 @@ button { font-family:inherit; }
 .help p { font-size:11px; color:var(--dim); line-height:1.6; margin:0 0 5px; padding-left:10px; position:relative; }
 .help p::before { content:''; position:absolute; left:1px; top:6px; width:4px; height:4px; border-radius:50%; background:var(--dim); opacity:.5; }
 .help p:last-child { margin-bottom:0; }
+.help a { color:var(--acc-txt); text-decoration:none; font-weight:600; border-bottom:1px dotted var(--acc-border); }
+.help a:hover { color:var(--acc); border-bottom-style:solid; }
 
 /* 数据统计卡片 */
 .stats { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
@@ -476,6 +479,30 @@ button { font-family:inherit; }
 #tip.show { opacity:1; visibility:visible; backdrop-filter:blur(14px) saturate(1.4); -webkit-backdrop-filter:blur(14px) saturate(1.4);
   transition:opacity .22s var(--ease-smooth), backdrop-filter .22s var(--ease-smooth), -webkit-backdrop-filter .22s var(--ease-smooth), visibility 0s linear 0s; }
 #tip .ln { font-weight:700; font-size:12.5px; } #tip .sg { color:var(--dim); font-size:10.5px; }
+/* 列车叠加选择小窗（液态玻璃卡片，样式对齐车辆详情卡） */
+#trPick { position:absolute; z-index:12; min-width:250px; max-width:330px; padding:8px; border-radius:19px;
+  background:linear-gradient(160deg, rgba(255,255,255,.16), rgba(255,255,255,.05) 55%, rgba(255,255,255,.02));
+  border:1px solid rgba(255,255,255,.22); border-top-width:1px; border-top-color:rgba(255,255,255,.4);
+  box-shadow:0 10px 30px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.28), inset 0 0 0 1px rgba(255,255,255,.06);
+  backdrop-filter:blur(22px) saturate(1.6); -webkit-backdrop-filter:blur(22px) saturate(1.6);
+  opacity:0; visibility:hidden; transform:scale(.85); transform-origin:top left;
+  transition:opacity .2s var(--ease-smooth), transform .24s var(--ease-spring, var(--ease-smooth)), visibility 0s linear .22s; }
+#trPick.show { opacity:1; visibility:visible; transform:scale(1);
+  transition:opacity .2s var(--ease-smooth), transform .26s var(--ease-spring, var(--ease-smooth)), visibility 0s linear 0s; }
+#trPick .tp-hd { display:flex; align-items:center; justify-content:space-between; padding:6px 10px 9px; }
+#trPick .tp-hd .tp-q { font-size:11.5px; font-weight:800; color:var(--txt); letter-spacing:.4px; text-shadow:0 1px 2px rgba(6,8,14,.35); }
+#trPick .tp-x { width:28px; height:28px; border-radius:50%; border:0; cursor:pointer; flex:none;
+  background:rgba(127,140,160,.16); color:var(--dim); display:flex; align-items:center; justify-content:center; font-size:15px; line-height:1;
+  transition:background .15s, color .15s; }
+#trPick .tp-x:hover { background:rgba(127,140,160,.28); color:var(--txt); }
+#trPick .tp-it { display:flex; align-items:center; gap:12px; padding:10px 11px; min-height:60px; border-radius:13px; cursor:pointer;
+  transition:background .13s; }
+#trPick .tp-it:hover { background:var(--acc-soft); }
+#trPick .tp-ic { width:30px; height:36px; flex:none; background-repeat:no-repeat; overflow:hidden; }
+#trPick .tp-ic-fb { display:flex; align-items:center; justify-content:center; border-radius:8px; width:36px; height:36px; }
+#trPick .tp-tx { min-width:0; }
+#trPick .tp-t { font-weight:800; font-size:15.5px; color:var(--txt); letter-spacing:.2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#trPick .tp-s { color:var(--dim); font-size:11.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:3px; }
 #trTag { position:absolute; pointer-events:none; z-index:10; max-width:200px; padding:5px 11px; border-radius:10px;
   background:var(--panel); border:1px solid var(--glass-edge); color:var(--txt); font-size:11.5px; font-weight:600; white-space:nowrap;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.2), var(--glass-sh); transform:translate(-50%,-50%);
@@ -964,6 +991,10 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
         <div class="sec-t" id="tHelp">帮助</div>
         <div class="help" id="helpBox"></div>
       </div>
+      <div class="sec">
+        <div class="sec-t" id="tAbout">关于</div>
+        <div class="help" id="aboutBox"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -1008,6 +1039,7 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
 <div id="detail"></div>
 <div id="trTag"></div>
 <div id="tip"></div>
+<div id="trPick"></div>
 <div id="sheetMask"></div>
 <div id="sheet">
   <div class="grab"></div>
@@ -1180,7 +1212,8 @@ const I18N = {
     title:'Mini JapanRail', sub:'全日本铁路实时运行地图', loading:'准备中…', live:'实时', follow:'跟随中', followStop:'取消跟随',
     searchT:'搜索', searchPh:'车站 / 线路(日·中·EN)…', routeT:'路线搜索', routeFrom:'起点站', routeTo:'终点站',
     tabRoute:'路线', aSearchPh:'搜索车站 / 线路…', badgeLive:'在途', badgeToday:'今日', noMatch:'无匹配结果',
-    filterT:'线路类型', legendT:'图例', dayT:'运行日', dayAuto:'自动', setT:'设置', dataT:'数据', helpT:'帮助',
+    filterT:'线路类型', legendT:'图例', dayT:'运行日', dayAuto:'自动', setT:'设置', dataT:'数据', helpT:'帮助', aboutT:'关于',
+    about1:'Mini JapanRail — 本地时刻表驱动的全日本铁路 3D 实时运行地图', about2:'数据源:日本全国铁路计划时刻表,每周自动刷新;页面运行时零外部请求', about3:'本站为个人爱好项目,数据仅供学习参考', about4:'隐私政策',
     sw1:'车站标签', sw2:'轨道光晕', sw3:'车站点', sw4:'底图瓦片', sw5:'列车光晕', sw6:'复制异常车辆', sw7:'列车悬浮提示', sw8:'车站轮廓', sw9:'出入口',
     modeT:'列车显示', mode3d:'3D', modeIcon:'图标', modeCute:'可爱',
     iconSetT:'图标集', iSetDefault:'默认', iSetVector:'矢量', iconSetNote:'仅"图标"模式生效',
@@ -1204,10 +1237,11 @@ const I18N = {
     gdOperator:'运营商官网', gdDataSrc:'数据：ecomo-rakuraku（交通生态·移动财团）',
   },
   ja: {
-    title:'ミニ日本鉄道3D', sub:'全国鉄道リアルタイムマップ', loading:'準備中…', live:'リアルタイム', follow:'追跡中', followStop:'追跡解除',
+    title:'ミニ日本鉄道', sub:'全国鉄道リアルタイムマップ', loading:'準備中…', live:'リアルタイム', follow:'追跡中', followStop:'追跡解除',
     searchT:'検索', searchPh:'駅 / 路線(日·中·EN)…', routeT:'経路検索', routeFrom:'出発駅', routeTo:'到着駅',
     tabRoute:'路線', aSearchPh:'駅 / 路線を検索…', badgeLive:'走行中', badgeToday:'本日', noMatch:'該当なし',
-    filterT:'路線種別', legendT:'凡例', dayT:'運行日', dayAuto:'自動', setT:'設定', dataT:'データ', helpT:'ヘルプ',
+    filterT:'路線種別', legendT:'凡例', dayT:'運行日', dayAuto:'自動', setT:'設定', dataT:'データ', helpT:'ヘルプ', aboutT:'このサイトについて',
+    about1:'ミニ日本鉄道 — ローカル時刻表駆動の全国鉄道リアルタイム3Dマップ', about2:'データソース:全国鉄道の計画時刻表、毎週自動更新。ページ実行時は外部リクエストなし', about3:'個人の趣味プロジェクトです。データは学習・参考用です', about4:'プライバシーポリシー',
     sw1:'駅ラベル', sw2:'軌道グロー', sw3:'駅ドット', sw4:'背景タイル', sw5:'列車グロー', sw6:'異常列車コピー', sw7:'列車ホバーチップ', sw8:'駅舎ポリゴン', sw9:'出入口',
     modeT:'列車表示', mode3d:'3D', modeIcon:'アイコン', modeCute:'かわいい',
     iconSetT:'アイコンセット', iSetDefault:'標準', iSetVector:'ベクター', iconSetNote:'「アイコン」モードのみ有効',
@@ -1234,7 +1268,8 @@ const I18N = {
     title:'Mini JapanRail', sub:'Japan Rail Live Map', loading:'Preparing…', live:'Live', follow:'Following', followStop:'Stop follow',
     searchT:'Search', searchPh:'Station / Line (JA·ZH·EN)…', routeT:'Route search', routeFrom:'From', routeTo:'To',
     tabRoute:'Route', aSearchPh:'Search station / line…', badgeLive:'Live', badgeToday:'Today', noMatch:'No matches',
-    filterT:'Line types', legendT:'Legend', dayT:'Service day', dayAuto:'Auto', setT:'Settings', dataT:'Data', helpT:'Help',
+    filterT:'Line types', legendT:'Legend', dayT:'Service day', dayAuto:'Auto', setT:'Settings', dataT:'Data', helpT:'Help', aboutT:'About',
+    about1:'Mini JapanRail — a live 3D map of all Japan railways, driven by local timetables', about2:'Data: scheduled timetables for all Japan railways, auto-refreshed weekly; zero external requests at runtime', about3:'A personal hobby project — data provided for reference only', about4:'Privacy Policy',
     sw1:'Station labels', sw2:'Track glow', sw3:'Station dots', sw4:'Basemap tiles', sw5:'Train glow', sw6:'Copy off-rail trains', sw7:'Train hover tooltip', sw8:'Station footprint', sw9:'Station exits',
     modeT:'Train display', mode3d:'3D', modeIcon:'Icon', modeCute:'Cute',
     iconSetT:'Icon set', iSetDefault:'Default', iSetVector:'Vector', iconSetNote:'Applies to "Icon" mode only',
@@ -1264,7 +1299,7 @@ const T = () => I18N[lang];
 
 /* ---------------- DOM ---------------- */
 const $ = id => document.getElementById(id);
-const tipEl = $('tip'), sideEl = $('side'), clockEl = $('clock'), detailEl = $('detail');
+const tipEl = $('tip'), sideEl = $('side'), clockEl = $('clock'), detailEl = $('detail'), trPickEl = $('trPick');
 const searchEl = $('search'), sugEl = $('sug'), sliderEl = $('cSlider'), cTimeEl = $('cTime'), cDayEl = $('cDay');
 const trTagEl = $('trTag');
 const toastEl = $('toast');
@@ -1293,7 +1328,7 @@ const ICO = {
 /* 老旧设备降载开关(由 <head> 内联脚本判定;false 时仅保留对全设备无害的全局优化,行为与旧版一致) */
 const PERF_LOW = !!window.__PERF_LOW;
 let segFC = null, staFC = null, footprintFC = null, entrancesFC = null, platformsFC = null, tmaps = null, trainJSON = null;
-/* 官方权威站坐标/区间折线映射 (station_map.json v2, RailAround 官方几何构建):
+/* 官方权威站坐标/区间折线映射 (station_map.json v2, 官方几何构建):
    tmap_stops[t] = 每车次每站 [lng,lat](与 tmaps[t].s_jas 等长等序),
    tmap_lids[t] = 每区间官方线段 ID(符号=方向), segments[id] = 官方折线坐标 */
 let stationMap = null;
@@ -3284,6 +3319,7 @@ function initMap() {
   map.on('style.load', () => { try { map.setProjection({ type: 'globe' }); } catch (e) { console.warn('globe unavailable', e); } });
   map.on('error', e => { const m = e && e.error && (e.error.message || String(e.error)) || String(e || ''); window.__errs.push('MAP ' + m.slice(0, 200)); });
   map.on('dragstart', () => { if (followTrip) stopFollow(true); });
+  map.on('movestart', () => { if (trPickEl) trPickEl.classList.remove('show'); });
   map.getCanvas().addEventListener('mousemove', onMouseMove);
   map.getCanvas().addEventListener('click', onMapClick);
   if (PERF_LOW) {
@@ -3778,15 +3814,81 @@ function pickTrain(px, py, radius) {
   }
   return best;
 }
+// 收集点击半径内全部列车（按屏幕距离升序），用于叠加弹窗
+function collectTrains(px, py, radius) {
+  const out = [], bd = radius * radius;
+  for (let n = 0; n < visibleTrips.length; n++) {
+    const pr = map.project([visibleXY[n * 2], visibleXY[n * 2 + 1]]);
+    const dx = pr.x - px, dy = pr.y - py, d = dx * dx + dy * dy;
+    if (d <= bd) out.push({ trip: visibleTrips[n], d2: d });
+  }
+  out.sort((a, b) => a.d2 - b.d2);
+  return out;
+}
+// 多辆叠加：在点击处弹紧凑选择小窗（液态玻璃卡片，样式对齐车辆详情卡，自动贴边）
+function showTrPick(list, px, py) {
+  if (!list.length) { trPickEl.classList.remove('show'); return; }
+  const rows = list.map((o, i) => {
+    const t = o.trip;
+    const ln = (t.lines || [])[0];
+    const col = lineColor.get(ln) || t.color || '#4f8ef7';
+    const ic = trainIconIdx(t, ln);
+    const icHtml = ic >= 0
+      ? '<span class="tp-ic" style="' + iconStyle(ic) + '"></span>'
+      : '<span class="tp-ic tp-ic-fb" style="color:' + col + ';background:' + col + '22">' + ICO.train + '</span>';
+    const title = t.nm || ln || t.i || '#' + t.t;
+    const sub = (t.jas ? t.jas[0] + ' → ' + t.jas[t.jas.length - 1] : '') + ' · ' + fmtHm(t.dep[0]) + '–' + fmtHm(t.arr[t.arr.length - 1]);
+    return '<div class="tp-it" data-i="' + i + '">' + icHtml + '<span class="tp-tx"><div class="tp-t">' + esc(title) + '</div><div class="tp-s">' + esc(sub) + '</div></span></div>';
+  }).join('');
+  trPickEl.innerHTML = '<div class="tp-hd"><span class="tp-q">您想查看的是哪一辆？</span><button class="tp-x" title="关闭">×</button></div>' + rows;
+  trPickEl.classList.add('show');
+  trPickEl.style.left = px + 'px'; trPickEl.style.top = py + 'px';
+  const box = trPickEl.getBoundingClientRect(), mc = map.getContainer().getBoundingClientRect();
+  let l = px, tp = py;
+  if (l + box.width > mc.right - 6) l = px - box.width - 8;
+  if (tp + box.height > mc.bottom - 6) tp = py - box.height - 8;
+  trPickEl.style.left = Math.max(4, l) + 'px'; trPickEl.style.top = Math.max(4, tp) + 'px';
+  // 以点击点为锚绽开：按贴边后浮窗相对点击点的位置，把 transform-origin 落到靠近点击点的一角
+  const ox = (l < px - box.width / 2) ? 'right' : 'left';
+  const oy = (tp < py - box.height / 2) ? 'bottom' : 'top';
+  trPickEl.style.transformOrigin = ox + ' ' + oy;
+  trPickEl.querySelector('.tp-x').onclick = (ev) => { ev.stopPropagation(); trPickEl.classList.remove('show'); };
+  trPickEl.querySelectorAll('.tp-it').forEach(it => it.onclick = (ev) => {
+    ev.stopPropagation();
+    trPickEl.classList.remove('show');
+    showTrainDetail(list[parseInt(it.dataset.i, 10)].trip);
+  });
+}
 function onMapClick(e) {
   if (!dataReady || !liveOn) return;
   const px = (e.offsetX !== undefined ? e.offsetX : e.point && e.point.x);
   const py = (e.offsetY !== undefined ? e.offsetY : e.point && e.point.y);
-  const t = pickTrain(px, py, 14);
-  if (t) { showTrainDetail(t); return; }
+  const hits = collectTrains(px, py, 14);
+  const lowZ = map.getZoom() < 10; // 低 zoom（国家/城市级）抑制列车点击，避免密集区误触弹窗/详情
+  if (!lowZ) {
+    if (hits.length === 1) { showTrainDetail(hits[0].trip); return; }
+    if (hits.length > 1) { showTrPick(hits, px, py); return; }
+  }
+  trPickEl.classList.remove('show');
+  // 站点：查询圆点层 stas + 站名标签层 stas-label；加触控感知容差（bbox）；多命中取屏幕最近者
+  // 容差随 zoom 自适应：低 zoom（国家/城市级、站密）收窄，避免误触乱飞；高 zoom（区内）保持「一点就到」
   const pt = (e.offsetX !== undefined) ? [px, py] : e.point;
-  const feats = map.queryRenderedFeatures(pt, { layers: ['stas'] });
-  if (feats.length) { showStationDetail(feats[0].properties.station, feats[0].geometry.coordinates); return; }
+  const oe = e.originalEvent || {};
+  const touch = (oe.pointerType === 'touch' || oe.pointerType === 'pen');
+  const r = touch ? (lowZ ? 12 : 22) : (lowZ ? 6 : 12);
+  const box = [[pt[0] - r, pt[1] - r], [pt[0] + r, pt[1] + r]];
+  const feats = map.queryRenderedFeatures(box, { layers: ['stas', 'stas-label'] });
+  if (feats.length) {
+    let best = feats[0], bd = Infinity;
+    for (const f of feats) {
+      const c = f.geometry && f.geometry.coordinates; if (!c) continue;
+      const pr = map.project(c);
+      const dx = pr.x - pt[0], dy = pr.y - pt[1], d = dx * dx + dy * dy;
+      if (d < bd) { bd = d; best = f; }
+    }
+    showStationDetail(best.properties.station, best.geometry.coordinates);
+    return;
+  }
   // 空白
   stopFollow();
   liveDetailTrip = null;
@@ -4386,6 +4488,8 @@ $('tabGuide').addEventListener('click', function () { switchSheetTab('tabGuide')
 $('subDep').addEventListener('click', function () { sheetDepArr = 'dep'; $('subDep').classList.add('on'); $('subArr').classList.remove('on'); renderStationBody(); });
 $('subArr').addEventListener('click', function () { sheetDepArr = 'arr'; $('subArr').classList.add('on'); $('subDep').classList.remove('on'); renderStationBody(); });
 window.showStationDetail = showStationDetail;  // 调试/自动化钩子：供控制台与 E2E 直接打开车站抽屉
+// E2E 钩子：列车叠加弹窗（确定性验证，不依赖实时列车密度）
+window.__trPick = { n: () => visibleTrips.length, near: (x, y) => collectTrains(x, y, 14).length, open: (x, y) => showTrPick(collectTrains(x, y, 14), x, y) };
 
 /* ============ 信息 tab（eki-wiki 百科，惰性加载，全路径防御） ============ */
 let sheetTab = 'tabGrid';
@@ -4634,7 +4738,7 @@ async function renderGuideTab() {
   const rec = data[normName(sheetStation)];
   _guideKey = sheetStation;
   if (!rec) {
-    box.innerHTML = '<div class="gd-empty">' + _escTxt(T().gdEmpty) + '<br><small>' + _escTxt(T().gdDataSrc) + '</small></div>';
+    box.innerHTML = '<div class="gd-empty">' + _escTxt(T().gdEmpty) + '</div>';
     return;
   }
   const t = T();
@@ -4689,7 +4793,6 @@ async function renderGuideTab() {
     linkItems.forEach(([t2, u]) => { h += `<a class="gd-link" href="${_escTxt(u)}" target="_blank" rel="noopener">${_escTxt(t2)} ↗</a>`; });
     h += '</div></div>';
   }
-  h += '<div class="gd-src">' + _escTxt(t.gdDataSrc) + '</div>';
   box.innerHTML = h;
 }
 
@@ -4768,7 +4871,8 @@ function runSearch(q) {
     const l = m.item, f = m.field, disp = dispNameFor(m);
     const sub = (f !== 'n' && l.n !== disp) ? '<span class="k">' + esc(l.n) + '</span>' : '';
     const tag = langTag[f] ? '<span class="k langk">' + langTag[f] + '</span>' : '';
-    return '<div class="sug-it" data-type="ln" data-name="' + esc(l.n) + '"><span>' + ICO.train.replace('width="16"', 'width="12"').replace('height="16"', 'height="12"') + ' ' + hlName(disp, q) + '</span>' + sub + tag + '</div>';
+    const lcol = lineColor.get(l.n) || '#4f8ef7';
+    return '<div class="sug-it" data-type="ln" data-name="' + esc(l.n) + '"><span><i class="sug-dot" style="background:' + esc(lcol) + '"></i>' + hlName(disp, q) + '</span>' + sub + tag + '</div>';
   }).join(''));
   sugEl.innerHTML = htmlParts.join('');
   sugEl.style.display = 'block';
@@ -5227,7 +5331,7 @@ function applyLang() {
   if ($('tLive')) $('tLive').textContent = t.live;
   $('tRoute').textContent = t.routeT; $('tFilter').textContent = t.filterT;
   $('tLegend').textContent = t.legendT; $('tDay').textContent = t.dayT; $('tSet').textContent = t.setT;
-  $('tData').textContent = t.dataT; $('tHelp').textContent = t.helpT;
+  $('tData').textContent = t.dataT; $('tHelp').textContent = t.helpT; if ($('tAbout')) $('tAbout').textContent = t.aboutT;
   $('tabRouteLb').textContent = t.tabRoute; $('tabLegendLb').textContent = t.legendT; $('tabSetLb').textContent = t.setT;
   if ($('tabGuide')) $('tabGuide').textContent = t.tabGuide;
   $('bLiveLb').textContent = t.badgeLive; $('bCountLb').textContent = t.badgeToday;
@@ -5249,6 +5353,7 @@ function applyLang() {
   buildKindRow();
   buildLegend();
   buildHelp();
+  buildAbout();
   document.querySelectorAll('#dayRow .chip').forEach(c => { if (c.dataset.day !== 'auto') c.textContent = DAY_LABEL[+c.dataset.day][lang]; });
   document.querySelectorAll('#langRow .chip').forEach(x => x.classList.toggle('on', x.dataset.lang === lang));
   if (dataReady) setStatus(liveOn ? '' : t.goLive);
@@ -5268,6 +5373,14 @@ function buildHelp() {
   const extra = { zh: '部分郊区线路暂无精细轨道数据,列车沿直线插值', ja: '一部の郊外路線には軌道データがなく直線補間', en: 'Some rural lines have no track geometry — straight-line interpolation' }[lang];
   const short = { zh: '快捷键：空格 播放/暂停 · ↑↓ + Enter 选择搜索项 · Esc 关闭', ja: 'ショートカット：Space 再生/一時停止 · ↑↓ + Enter 検索選択 · Esc 閉じる', en: 'Shortcuts: Space play/pause · ↑↓ + Enter pick result · Esc close' }[lang];
   $('helpBox').innerHTML = '<p>' + t.h1 + '</p><p>' + t.h2 + '</p><p>' + t.h3 + '</p><p>' + t.h4 + '</p><p>' + t.h5 + '</p><p>' + t.h6 + '</p><p>' + short + '</p><p>' + extra + '</p>';
+}
+function buildAbout() {
+  const t = T();
+  $('aboutBox').innerHTML =
+    '<p>' + t.about1 + '</p>' +
+    '<p>' + t.about2 + '</p>' +
+    '<p>' + t.about3 + '</p>' +
+    '<p><a href="privacy.html" rel="noopener">' + t.about4 + ' ↗</a></p>';
 }
 
 /* ---------------- 启动 ---------------- */

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-fetch_ra_geometry.py — 一次性拉取 RailAround 官方线路几何(含每区间坐标串)
+fetch_ra_geometry.py — 一次性拉取官方线路几何(含每区间坐标串)
 
 对 lines_index.json 中每个 rw_id 请求 /api/animation/initial, 原始响应存到
 scripts/geo/ra_official/<rw_id>.json (resume 友好)。

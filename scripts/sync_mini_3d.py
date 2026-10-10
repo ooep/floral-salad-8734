@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-sync_mini_3d.py — 把每周刷新产出的实时列车数据同步到 Mini JapanRail 3D 子站，
+sync_mini_3d.py — 把每周刷新产出的实时列车数据同步到 Mini JapanRail 子站，
 并在提交前做契约校验（防坏数据上线：任一项不过 → exit 1 → Action 不提交/不部署，
 GitHub 上旧数据保持原样，不会引起页面乱飞/空白）。
 
@@ -125,7 +125,7 @@ def main():
             print("  tokkyu.json 特急爱称表已更新 ✓")
     else:
         print("  [WARN] build_tokkyu.py 不存在，跳过爱称表生成")
-    print("Mini JapanRail 3D 数据同步完成 ✓")
+    print("Mini JapanRail 数据同步完成 ✓")
 
 if __name__ == "__main__":
     main()

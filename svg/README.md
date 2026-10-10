@@ -1,4 +1,4 @@
-# Japan Rail · Tube Map（网页版日本全国轨道交通拓扑示意图）
+# Mini JapanRail · Tube Map（网页版日本全国轨道交通拓扑示意图）
 
 基于**真实经纬度** → 等距圆柱投影 → **贝克式（Beck）拓扑变形**的
 Tube-Map 风格全国轨道交通网络图。纯原生 JS + SVG 实现，无地理底图，

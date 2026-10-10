@@ -106,9 +106,8 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
         run: |
-          # 只部署前端(index.html + data + logos),不含 .github 与 scripts(Python 构建脚本)
+          # 只部署前端: 拷贝整个 mini-japanrail-3d 后剔除 scripts/(Python 构建脚本); .github 在仓库根,不在此目录
           rm -rf cf-mj3d && mkdir -p cf-mj3d
-          cp mini-japanrail-3d/index.html cf-mj3d/
-          cp -r mini-japanrail-3d/data cf-mj3d/
-          cp -r mini-japanrail-3d/logos cf-mj3d/
+          cp -r mini-japanrail-3d/. cf-mj3d/
+          rm -rf cf-mj3d/scripts
           npx wrangler@4 pages deploy cf-mj3d --project-name mini-japanrail-3d --branch main --commit-dirty=true

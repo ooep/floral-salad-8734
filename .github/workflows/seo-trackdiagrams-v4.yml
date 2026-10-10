@@ -1,0 +1,77 @@
+name: Fetch station track diagrams V4 (articles images)
+
+# V4 正式全量抓取（手动触发）：词条 images 主路径 + 搜索/探测兜底。
+# 与 V1/V2 独立 concurrency 组；克隆基线增量抓取；合并式 pull --rebase + 非 force push。
+# 需要 Secret：TRACKDIAGRAM_REPO_TOKEN（未配置时跳过同步）。
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: seo-trackdiagrams-v4
+  cancel-in-progress: false
+
+jobs:
+  fetch-v4:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Fetch track diagrams (article images, V4)
+        run: |
+          cd mini-japanrail-3d
+          # 拉取已有产物作为基线（增量：脚本按 idx 跳过已下载）
+          git clone --depth 1 https://github.com/ooep/jr-trackdiagrams.git /tmp/td 2>/dev/null || true
+          if [ -d /tmp/td/wiki_trackdiagrams ]; then
+            cp -r /tmp/td/wiki_trackdiagrams data/ 2>/dev/null || true
+          fi
+          if [ -f /tmp/td/wiki_trackdiagrams.json ]; then
+            cp /tmp/td/wiki_trackdiagrams.json data/wiki_trackdiagrams.json
+          fi
+          python3 seo/fetch_wiki_trackdiagrams_v4.py --fallback-limit 1500 --checkpoint-every 50
+
+      - name: Sync diagrams to ooep/jr-trackdiagrams (merge-style)
+        env:
+          TD_TOKEN: ${{ secrets.TRACKDIAGRAM_REPO_TOKEN }}
+        run: |
+          cd mini-japanrail-3d/data
+          if [ ! -d wiki_trackdiagrams ] || [ ! -f wiki_trackdiagrams.json ]; then
+            echo "本次无抓取产物，跳过同步"
+            exit 0
+          fi
+          if [ -z "$TD_TOKEN" ]; then
+            echo "::warning::未配置 Secret TRACKDIAGRAM_REPO_TOKEN，跳过同步"
+            exit 0
+          fi
+          n=$(ls wiki_trackdiagrams/*.svg 2>/dev/null | wc -l) || n=0
+          echo "配线图 SVG 数: ${n:-0}"
+          TD=$(mktemp -d)
+          git clone --depth 1 "https://x-access-token:${TD_TOKEN}@github.com/ooep/jr-trackdiagrams.git" "$TD" 2>/dev/null || git init -q -b main "$TD"
+          cd "$TD"
+          cp -r "$GITHUB_WORKSPACE/mini-japanrail-3d/data/wiki_trackdiagrams" .
+          cp "$GITHUB_WORKSPACE/mini-japanrail-3d/data/wiki_trackdiagrams.json" .
+          git add -A
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+              commit -q -m "chore(v4): fetch station track diagrams $(date -u +%Y-%m-%d-%H%M)" || echo "无新变更"
+          git remote set-url origin "https://x-access-token:${TD_TOKEN}@github.com/ooep/jr-trackdiagrams.git"
+          git pull --rebase origin main 2>/dev/null || true
+          if git push origin HEAD:main 2>/dev/null; then
+            echo "已合并式同步到 ooep/jr-trackdiagrams"
+          else
+            echo "::warning::push 失败（可能与并发 run 冲突），重试一次"
+            sleep 5
+            git pull --rebase origin main 2>/dev/null || true
+            git push origin HEAD:main && echo "重试成功" || echo "::error::同步失败，需人工处理"
+          fi

@@ -705,6 +705,65 @@ def station_line_diagram(rec, stations, line_orders, lines, max_lines=5):
             % (W, H, esc(rec.get('name') or key), ''.join(svg_parts), lg_html))
 
 
+def line_diagram_svg(rec, ordered, stations):
+    """全线配线示意图（BS 风格竖条：主线 + 站节点 + 里程 + 换乘分支）。
+
+    基于站内真实数据（沿轨道站序 + 坐标 + 途经线路）绘制：左列为主线（线路色）+ 站节点
+    （普通站横杠 / 换乘站圆点+分支短线），右列为站名 + 累计里程；底部图例含站数与总里程。
+    标注「示意」，非官方股道级图纸。
+    """
+    if not ordered:
+        return ''
+    n = len(ordered)
+    col = rec.get('color') or FALLBACK_COLOR
+    step = min(16.0, 1480.0 / n) if n else 16.0
+    H = max(90, n * step + 40)
+    W = 340
+    LX = 44
+    # 累计里程（沿轨道站序，大圆距离近似）
+    dist = [0.0]
+    for a, b in zip(ordered[:-1], ordered[1:]):
+        ca = (stations.get(a) or {}).get('coord')
+        cb = (stations.get(b) or {}).get('coord')
+        if ca and cb:
+            dist.append(dist[-1] + haversine_km(ca, cb))
+        else:
+            dist.append(dist[-1])
+    parts = []
+    # 主线
+    parts.append('<line x1="%d" y1="14" x2="%d" y2="%.1f" stroke="%s" stroke-width="3.5" stroke-linecap="round"/>'
+                 % (LX, LX, H - 28, col))
+    # 两端方向箭头
+    parts.append('<polygon points="%d,3 %d,15 %d,15" fill="%s"/>' % (LX - 5, LX + 5, LX, col))
+    parts.append('<polygon points="%d,%.1f %d,%.1f %d,%.1f" fill="%s"/>'
+                 % (LX - 5, H - 26, LX + 5, H - 26, LX, H - 14, col))
+    for i, k in enumerate(ordered):
+        y = 18 + i * step
+        r = stations.get(k) or {}
+        nm = r.get('name') or k
+        nl = len(r.get('lines') or []) if r else 1
+        if nl > 1:
+            parts.append('<circle cx="%d" cy="%.1f" r="3.4" fill="%s"/>' % (LX, y, col))
+            parts.append('<path d="M%d %.1f l-9 -7" stroke="%s" stroke-width="1.7" opacity=".8"/>' % (LX, y, col))
+        else:
+            parts.append('<line x1="%d" y1="%.1f" x2="%d" y2="%.1f" stroke="%s" stroke-width="2.2"/>'
+                         % (LX - 7, y, LX + 7, y, col))
+        parts.append('<text x="62" y="%.1f" font-size="10" fill="rgba(235,242,252,.95)">%s</text>' % (y + 3.5, esc(nm)))
+        parts.append('<text x="%d" y="%.1f" text-anchor="end" font-size="8.5" fill="rgba(150,165,190,.85)">%.1f km</text>'
+                     % (W - 10, y + 3, dist[i]))
+    tot = dist[-1]
+    parts.append('<text x="12" y="%.1f" font-size="10.5" font-weight="700" fill="rgba(255,255,255,.96)">%s 全线配置示意</text>'
+                 % (H - 13, esc(rec.get('name') or '')))
+    e0 = (stations.get(ordered[0]) or {}).get('name') or ordered[0]
+    e1 = (stations.get(ordered[-1]) or {}).get('name') or ordered[-1]
+    parts.append('<text x="%d" y="%.1f" text-anchor="end" font-size="9" fill="rgba(150,165,190,.85)">%d 站 · 约 %.0f km · %s → %s</text>'
+                 % (W - 10, H - 13, n, tot, esc(e0), esc(e1)))
+    return ('<figure class="mapfig diag">'
+            '<svg viewBox="0 0 %d %d" role="img" aria-label="%s 全线配线示意" xmlns="http://www.w3.org/2000/svg">%s</svg>'
+            '<figcaption>全线配线示意图（基于站内沿轨道站序与里程数据绘制，站距等距排列）</figcaption></figure>'
+            % (W, int(H), esc(rec.get('name') or ''), ''.join(parts)))
+
+
 def eki_brief_html(sec_id, title, entry, lang, more_url=''):
     """本地化词条 → 「百科简介」玻璃卡（清洗后首段 + 延伸章节 + 跳转主站实时地图的链接）。"""
     if not entry:
@@ -1244,10 +1303,17 @@ def line_page(rec, stations, cfg, tozh, ordered=None):
         summary_parts.append('沿途可与 %d 条其他线路换乘' % n_tr)
     summary_html = '<p class="wiki-x">' + esc('，'.join(summary_parts) + '。') + '</p>\n'
 
+    # 全线配线示意图（BS 风格竖条，基于站内沿轨道站序绘制）
+    diag_html = line_diagram_svg(rec, keys, stations)
+    if diag_html:
+        diag_html = '<h2 id="sec-diagram" style="--lc:' + esc(rec['color']) + '">全线配线图</h2>\n' + diag_html
+
     # 顶部锚点目录
     toc_items = [('#sec-info', '线路信息'), ('#sec-stations', '途经车站')]
     if wiki_html:
         toc_items.insert(0, ('#sec-wiki', '百科'))
+    if diag_html:
+        toc_items.insert(1, ('#sec-diagram', '线路图'))
     if trns:
         toc_items.insert(1, ('#sec-trns', '换乘枢纽'))
     if same_kind_html:
@@ -1299,6 +1365,7 @@ def line_page(rec, stations, cfg, tozh, ordered=None):
         '<p class="lead">' + esc(desc) + '</p>\n'
         + summary_html
         + wiki_html
+        + diag_html
         + '<h2 id="sec-info" style="--lc:' + esc(rec['color']) + '">线路信息</h2>\n'
         '<table class="kv">\n'
         '<tr><th>线路色</th><td><span style="display:inline-block;width:16px;height:16px;border-radius:4px;background:' + esc(rec['color']) + ';vertical-align:-2px"></span> ' + esc(rec['color']) + '</td></tr>\n'

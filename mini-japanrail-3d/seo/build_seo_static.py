@@ -1101,9 +1101,9 @@ def station_page(rec, lines, neighbors, cfg, tozh):
     map_img_html = ''
     wt = wtd.get(key) or wtd.get(name) or {}
     if wt.get('found'):
-        clean_path = os.path.join(DATA, 'wiki_trackdiagrams', key + '.svg.clean')
+        clean_path = os.path.join(DATA_DIR, 'wiki_trackdiagrams', key + '.svg.clean')
         if not os.path.exists(clean_path) and name != key:
-            clean_path = os.path.join(DATA, 'wiki_trackdiagrams', name + '.svg.clean')
+            clean_path = os.path.join(DATA_DIR, 'wiki_trackdiagrams', name + '.svg.clean')
         if os.path.exists(clean_path):
             svg_body = open(clean_path, encoding='utf-8').read()
             credit = '配線図：Wikimedia Commons'

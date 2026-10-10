@@ -39,8 +39,11 @@ jobs:
             rm -rf /tmp/tdx && mkdir -p /tmp/tdx && tar xzf /tmp/td.tgz -C /tmp/tdx || true
             cp -r /tmp/tdx/jr-trackdiagrams-main/wiki_trackdiagrams data/ 2>/dev/null || true
             cp /tmp/tdx/jr-trackdiagrams-main/wiki_trackdiagrams.json data/ 2>/dev/null || true
+            cp -r /tmp/tdx/jr-trackdiagrams-main/line_bsdiagrams data/ 2>/dev/null || true
+            cp /tmp/tdx/jr-trackdiagrams-main/line_bsdiagrams.json data/ 2>/dev/null || true
             n=$(ls data/wiki_trackdiagrams/*.svg 2>/dev/null | wc -l) || n=0
-            echo "配线图 SVG 数: ${n:-0}"
+            nb=$(ls data/line_bsdiagrams/*.svg 2>/dev/null | wc -l) || nb=0
+            echo "配线图 SVG 数: ${n:-0}，线路 BS 全线图: ${nb:-0}"
           else
             echo '::warning::配线图仓库拉取失败，本次部署无配线图'
           fi
@@ -51,6 +54,7 @@ jobs:
         run: |
           cd mini-japanrail-3d && python3 seo/build_seo_static.py || echo '::warning::SEO 静态页生成失败，沿用已有文件部署'
           rm -rf mini-japanrail-3d/data/wiki_trackdiagrams mini-japanrail-3d/data/wiki_trackdiagrams.json
+          rm -rf mini-japanrail-3d/data/line_bsdiagrams mini-japanrail-3d/data/line_bsdiagrams.json
 
       - name: Verify data assets
         run: |

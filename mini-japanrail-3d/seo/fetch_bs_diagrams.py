@@ -104,7 +104,33 @@ def strip_wiki(s):
     return s.strip()
 
 
-_ICON_RE = re.compile(r'^[OP]\d+=|^[A-Za-z][A-Za-z0-9+.\-]*\d*$')
+_ICON_RE = re.compile(r'^[OP]\d+=|^[A-Za-z][A-Za-z0-9+.\-@]*\d*$')
+_ICONISH_RE = re.compile(r'^[A-Za-z][A-Za-z0-9+.\-@()]*\d*$')
+
+
+def _keepable(p):
+    """嵌套模板参数里值得保留的：含非 ASCII 的文字（日文/中文站名注释、Ü 等）或里程数字。"""
+    if not p:
+        return False
+    if re.search(r'[^\x00-\x7f]', p):
+        return True
+    return bool(re.match(r'^[\d,.\-]+(m|km|T)?$', p))
+
+
+def flatten_templates(s):
+    """把行内嵌套的 {{BSn|...}} 子模板展平：丢弃子模板的图标/修饰参数，
+    保留文字参数（站名/注释/里程），避免图标代码泄漏进文字列。迭代剥到无 {{ 为止。"""
+    def rep(m):
+        inner = m.group(0)[2:-2]
+        parts = inner.split('|')[1:]  # 跳过模板名
+        keep = [p for p in parts if _keepable(p)]
+        return '|'.join(keep) if keep else ''
+    for _ in range(6):
+        s2 = re.sub(r'\{\{[^{}]*\}\}', rep, s)
+        if s2 == s:
+            break
+        s = s2
+    return s
 
 
 def parse_bs_rows(text):
@@ -117,11 +143,11 @@ def parse_bs_rows(text):
     rows = []
     for m in re.finditer(r'^\{\{(BS\d+(?:-\d+)?)\|(.*?)\}\}\s*$', text, re.M):
         tpl, body = m.group(1), m.group(2)
-        # 预处理：[[A|B]]→B、ref/模板剔除（避免其内部 | 污染字段）
+        # 预处理：[[A|B]]→B、ref/嵌套模板剔除（避免其内部 | 污染字段）
         body2 = re.sub(r'\[\[([^|\]]*\|)?([^\]]*)\]\]', r'\2', body)
         body2 = re.sub(r'<ref[^>]*/>', '', body2)
         body2 = re.sub(r'<ref[^>]*>.*?</ref>', '', body2, flags=re.S)
-        body2 = re.sub(r'\{[^{}]*\}', '', body2)
+        body2 = flatten_templates(body2)
         parts = [x for x in body2.split('|') if not re.match(r'^\s*\d+px\s*$', x)]
         icons = []
         texts = []
@@ -130,6 +156,9 @@ def parse_bs_rows(text):
                 continue
             if _ICON_RE.match(p) and len(icons) < 8:
                 icons.append(p)
+            elif (len(p) <= 20 and not re.search(r'[\s\u3000-\u9fff]', p)
+                  and re.match(r'^[A-Za-zÜü]', p)):
+                continue   # 疑似图标代码（纯 ASCII/无全角、字母开头、无空格）：不渲染也不显示
             else:
                 texts.append(clean_txt(p))
         km = texts[0] if texts and re.match(r'^[\d,\.\-]+', texts[0]) else ''

@@ -26,3 +26,5 @@ mini-japanrail-3d/.seo-logs/
 # 配线图由独立仓库 ooep/jr-trackdiagrams 提供，不在主仓库维护
 mini-japanrail-3d/data/wiki_trackdiagrams
 mini-japanrail-3d/data/wiki_trackdiagrams.json
+mini-japanrail-3d/data/line_bsdiagrams
+mini-japanrail-3d/data/line_bsdiagrams.json

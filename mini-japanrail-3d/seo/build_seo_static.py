@@ -153,6 +153,14 @@ def build_records(cfg):
         wlm = load_json('wiki_line_map.json')         # 站key → 词条线路文件（与主站信息 tab 同源）
     except Exception:
         wlm = {}
+    try:
+        bsd = load_json('line_bsdiagrams.json')       # 线路词条 → 维基 BS 全线配线图索引
+    except Exception:
+        bsd = {}
+    try:
+        bsd_files = {f[:-4] for f in os.listdir(os.path.join(DATA_DIR, 'line_bsdiagrams')) if f.endswith('.svg')}
+    except Exception:
+        bsd_files = set()
     index_html = open(os.path.join(ROOT, 'index.html'), encoding='utf-8').read()
     tozh = build_tozh(index_html)
     canon_of = build_canon(lm)
@@ -333,6 +341,7 @@ def build_records(cfg):
         'name_groups': dict(name_groups), 'line_orders': line_orders,
         'nearby': nearby, 'line_wiki': wiki,
         'eki_cache': eki_cache, 'wlm': wlm, 'floorplan': floorplan, 'wtd': wtd,
+        'bsd': bsd, 'bsd_files': bsd_files,
         'station_map_meta': {k: sm[k] for k in ('generated_at',) if k in sm},
     }
 
@@ -762,6 +771,53 @@ def line_diagram_svg(rec, ordered, stations):
             '<svg viewBox="0 0 %d %d" role="img" aria-label="%s 全线配线示意" xmlns="http://www.w3.org/2000/svg">%s</svg>'
             '<figcaption>全线配线示意图（基于站内沿轨道站序与里程数据绘制，站距等距排列）</figcaption></figure>'
             % (W, int(H), esc(rec.get('name') or ''), ''.join(parts)))
+
+
+def bs_diagram_html(lname, cache, bsd, bsd_files):
+    """维基 BS 全线配线图（V6 产物）：按线路名匹配词条 SVG 内联。
+
+    匹配：词条标题规范化后与线路 canonical 名相等 / 公共后缀 ≥2 字（同 eki_line_for）。
+    无匹配时返回空串（调用方回退自绘）。
+    """
+    if not bsd or not bsd_files:
+        return ''
+    nl = _norm_line_title(lname)
+    m = re.search(r'[（(]([^（）()]*)[）)]$', nl)
+    if m and len(m.group(1)) >= 2:
+        nl = m.group(1).strip()   # 尾部括号注记取通称（1号線(御堂筋線)→御堂筋）
+    key = None
+    if nl:
+        for k in bsd:
+            nt = _norm_line_title(k)
+            if nt == nl:
+                key = k
+                break
+            # 整名后缀包含（如 1号線(御堂筋線) 词条名包含「御堂筋線」），杜绝公共小后缀误配
+            if len(nt) > len(nl) and nt.endswith(nl):
+                key = k
+                break
+            if len(nl) > len(nt) and nl.endswith(nt):
+                key = k
+                break
+    if not key:
+        # 兜底：词条文件 line.ja.title 规范化匹配
+        for f, ent in (cache or {}).items():
+            lj = (ent.get('line') or {}).get('ja') or {}
+            lz = (ent.get('line') or {}).get('zh') or {}
+            t = lj.get('title') or lz.get('title')
+            if not t:
+                continue
+            if _norm_line_title(t) == nl and t in bsd_files:
+                key = t
+                break
+    if not key or key not in bsd_files:
+        return ''
+    p = os.path.join(DATA_DIR, 'line_bsdiagrams', key + '.svg')
+    try:
+        with open(p, encoding='utf-8') as fh:
+            return fh.read()
+    except Exception:
+        return ''
 
 
 def eki_brief_html(sec_id, title, entry, lang, more_url=''):
@@ -1303,8 +1359,10 @@ def line_page(rec, stations, cfg, tozh, ordered=None):
         summary_parts.append('沿途可与 %d 条其他线路换乘' % n_tr)
     summary_html = '<p class="wiki-x">' + esc('，'.join(summary_parts) + '。') + '</p>\n'
 
-    # 全线配线示意图（BS 风格竖条，基于站内沿轨道站序绘制）
-    diag_html = line_diagram_svg(rec, keys, stations)
+    # 全线配线图：优先维基 BS 渲染（V6 产物，信息最丰富），无匹配时回退站内自绘
+    diag_html = bs_diagram_html(lname, eki_cache, bsd, bsd_files)
+    if not diag_html:
+        diag_html = line_diagram_svg(rec, keys, stations)
     if diag_html:
         diag_html = '<h2 id="sec-diagram" style="--lc:' + esc(rec['color']) + '">全线配线图</h2>\n' + diag_html
 
@@ -1615,7 +1673,7 @@ def main():
 
     cfg = load_config(args.config)
     d = build_records(cfg)
-    global recs, line_orders, line_counts, name_groups, lines, nearby, wiki, eki_cache, wlm, stations, floorplan, wtd
+    global recs, line_orders, line_counts, name_groups, lines, nearby, wiki, eki_cache, wlm, stations, floorplan, wtd, bsd, bsd_files
     stations, lines, neighbors, tozh = d['stations'], d['lines'], d['neighbors'], d['tozh']
     recs = stations  # station_page 里引用相邻车站记录
     line_orders = d['line_orders']  # 线路车站沿轨道顺序（站页方向/位置用）
@@ -1626,6 +1684,8 @@ def main():
     wlm = d['wlm']                  # 站key → 词条线路文件
     floorplan = d['floorplan']      # 站 key → 构内図（配线图）索引（已停用）
     wtd = d['wtd']                  # 站 key → Wikimedia Commons 配線図 索引
+    bsd = d['bsd']                  # 线路词条 → 维基 BS 全线配线图索引（V6）
+    bsd_files = d['bsd_files']      # data/line_bsdiagrams/ 实际 SVG 文件集合
     line_counts = {lname: len(seq) for lname, seq in line_orders.items()}
 
     out_lines = os.path.join(ROOT, 'lines')

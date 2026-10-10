@@ -63,7 +63,7 @@ jobs:
           git clone --depth 1 "https://x-access-token:${TD_TOKEN}@github.com/ooep/jr-trackdiagrams.git" "$TD" 2>/dev/null || git init -q -b main "$TD"
           cd "$TD"
           mkdir -p line_bsdiagrams
-          cp "$GITHUB_WORKSPACE/mini-japanrail-3d/data/line_bsdiagrams/." line_bsdiagrams/ 2>/dev/null || true
+          cp -r "$GITHUB_WORKSPACE/mini-japanrail-3d/data/line_bsdiagrams/." line_bsdiagrams/
           cp "$GITHUB_WORKSPACE/mini-japanrail-3d/data/line_bsdiagrams.json" . 2>/dev/null || true
           git add -A
           git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \

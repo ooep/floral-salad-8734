@@ -1,0 +1,34 @@
+name: Probe BS-map structure (manual)
+
+# 结构探测：抓词条 wikitext 确认 {{BS-map}}/{{BS-table}} 模板代码结构（BSicon 散件拼装），
+# 供本地开发 BS 渲染抓取脚本。手动触发，几分钟完成。
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: seo-probe-bs
+  cancel-in-progress: false
+
+jobs:
+  probe-bs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Probe BS-map wikitext structure
+        run: |
+          cd mini-japanrail-3d
+          python3 seo/probe_bs.py

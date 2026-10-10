@@ -100,7 +100,7 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-      - name: Deploy Mini JapanRail 3D frontend to Cloudflare Pages
+      - name: Deploy Mini JapanRail frontend to Cloudflare Pages
         if: ${{ env.CF_API_TOKEN != '' }}
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}

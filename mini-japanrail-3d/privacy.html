@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>隐私政策 — Mini JapanRail 3D</title>
-<meta name="description" content="Mini JapanRail 3D 隐私政策:本地时刻表驱动的全日本铁路 3D 实时运行地图,数据与隐私说明。">
+<title>隐私政策 — Mini JapanRail</title>
+<meta name="description" content="Mini JapanRail 隐私政策:本地时刻表驱动的全日本铁路 3D 实时运行地图,数据与隐私说明。">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%234f8ef7'/%3E%3Cpath d='M14 40h36M16 40l3-13a5 5 0 0 1 4.9-4h16.2a5 5 0 0 1 4.9 4l3 13M19 48h.02M45 48h.02' stroke='white' stroke-width='4' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3Ccircle cx='21' cy='48' r='3.2' fill='white'/%3E%3Ccircle cx='43' cy='48' r='3.2' fill='white'/%3E%3C/svg%3E">
 <style>
 /* ── 与主站完全同一套 Liquid Glass 设计语言 ── */
@@ -127,7 +127,7 @@ a.link:hover { color:var(--acc); border-bottom-style:solid; }
   <div class="glass-card">
     <div class="g-card-inner">
       <h1 class="h1" id="docH">隐私政策</h1>
-      <p class="h-sub" id="docSub">Mini JapanRail 3D — 全日本铁路实时运行地图</p>
+      <p class="h-sub" id="docSub">Mini JapanRail — 全日本铁路实时运行地图</p>
 
       <div class="sec-t" id="s1">我们收集什么</div>
       <p class="para" id="p1">本站不收集、不存储、不上传任何个人信息。您在使用过程中产生的偏好设置（语言、主题、显示开关、跟随状态等）仅保存在您自己的浏览器本地存储（localStorage）中，用于下次访问时恢复界面状态，不会发送到任何服务器。</p>
@@ -148,7 +148,7 @@ a.link:hover { color:var(--acc); border-bottom-style:solid; }
       <div class="sec-t" id="s5">联系方式</div>
       <p class="para" id="p5">如果您对本隐私政策有任何疑问，可通过 GitHub 仓库提交 Issue 与我们联系。</p>
 
-      <div class="foot" id="footT">© 2026 Mini JapanRail 3D <span id="footS">· 本地时刻表驱动 · 运行时零外部数据请求</span></div>
+      <div class="foot" id="footT">© 2026 Mini JapanRail <span id="footS">· 本地时刻表驱动 · 运行时零外部数据请求</span></div>
     </div>
   </div>
 </div>
@@ -167,7 +167,7 @@ applyTheme();
 const lang = (localStorage.getItem('mjr3d_lang') || 'zh');
 document.documentElement.lang = lang === 'zh' ? 'zh-Hans' : lang;
 const I18N = {
-  zh: { backLb:'返回地图', docT:'隐私政策', docH:'隐私政策', docSub:'Mini JapanRail 3D — 全日本铁路实时运行地图',
+  zh: { backLb:'返回地图', docT:'隐私政策', docH:'隐私政策', docSub:'Mini JapanRail — 全日本铁路实时运行地图',
     s1:'我们收集什么', p1:'本站不收集、不存储、不上传任何个人信息。您在使用过程中产生的偏好设置（语言、主题、显示开关、跟随状态等）仅保存在您自己的浏览器本地存储（localStorage）中，用于下次访问时恢复界面状态，不会发送到任何服务器。',
     s2:'数据来源', p2:'列车运行数据基于日本全国铁路的计划时刻表构建：由每周定时任务从公开时刻表源抓取，打包为紧凑的静态数据文件随站点发布。页面运行时使用这些本地数据驱动渲染，不依赖实时外部请求。', p2b:'计划时刻表',
     s3:'第三方服务', l1:'地图渲染使用开源库 MapLibre GL JS（通过公共 CDN 加载，您的浏览器会向该 CDN 发起请求）。',
@@ -175,8 +175,8 @@ const I18N = {
     l3:'除上述必要资源外，本站不接入任何广告、统计或追踪脚本。',
     s4:'缓存说明', p4:'为加快重复访问速度，部分静态数据可能由浏览器缓存（含 IndexedDB / HTTP 缓存）。这些缓存仅存在于您的设备上，可随时通过浏览器设置清除。',
     s5:'联系方式', p5:'如果您对本隐私政策有任何疑问，可通过 GitHub 仓库提交 Issue 与我们联系。',
-    footT:'© 2026 Mini JapanRail 3D', footS:'· 本地时刻表驱动 · 运行时零外部数据请求' },
-  ja: { backLb:'マップに戻る', docT:'プライバシーポリシー', docH:'プライバシーポリシー', docSub:'ミニ日本鉄道3D — 全国鉄道リアルタイムマップ',
+    footT:'© 2026 Mini JapanRail', footS:'· 本地时刻表驱动 · 运行时零外部数据请求' },
+  ja: { backLb:'マップに戻る', docT:'プライバシーポリシー', docH:'プライバシーポリシー', docSub:'ミニ日本鉄道 — 全国鉄道リアルタイムマップ',
     s1:'収集する情報', p1:'当サイトは個人情報を収集・保存・送信しません。利用中の設定（言語・テーマ・表示スイッチ・追跡状態など）はブラウザのローカルストレージにのみ保存され、次回アクセス時に復元されるだけで、サーバーへ送信されることはありません。',
     s2:'データソース', p2:'列車運行データは日本全国の鉄道の計画時刻表に基づき、毎週の定期タスクで公開時刻表ソースから取得し、静的データファイルとして公開しています。ページ実行時はこのローカルデータで描画し、外部リクエストに依存しません。', p2b:'計画時刻表',
     s3:'サードパーティサービス', l1:'地図描画はオープンソースの MapLibre GL JS（パブリックCDN経由で読み込み）を使用します。',
@@ -184,8 +184,8 @@ const I18N = {
     l3:'上記の必要なリソース以外に、広告・統計・トラッキングスクリプトは一切組み込んでいません。',
     s4:'キャッシュについて', p4:'再訪を高速化するため、一部の静的データはブラウザキャッシュ（IndexedDB / HTTPキャッシュ含む）に保存される場合があります。これらはお使いの端末にのみ存在し、ブラウザ設定からいつでも削除できます。',
     s5:'お問い合わせ', p5:'本ポリシーについてご質問がある場合は、GitHubリポジトリのIssueにてご連絡ください。',
-    footT:'© 2026 ミニ日本鉄道3D', footS:'· ローカル時刻表駆動 · 実行時は外部データリクエストなし' },
-  en: { backLb:'Back to map', docT:'Privacy Policy', docH:'Privacy Policy', docSub:'Mini JapanRail 3D — Japan Rail Live Map',
+    footT:'© 2026 ミニ日本鉄道', footS:'· ローカル時刻表駆動 · 実行時は外部データリクエストなし' },
+  en: { backLb:'Back to map', docT:'Privacy Policy', docH:'Privacy Policy', docSub:'Mini JapanRail — Japan Rail Live Map',
     s1:'What we collect', p1:'This site does not collect, store, or upload any personal information. Preference settings (language, theme, display toggles, follow state, etc.) are saved only in your browser\'s localStorage to restore the interface on your next visit; nothing is sent to any server.',
     s2:'Data source', p2:'Train operations are driven by scheduled timetables for all Japan railways: a weekly task fetches public timetable sources and packages them into compact static data files shipped with the site. Rendering at runtime uses only this local data and makes no live external requests.', p2b:'Scheduled timetables',
     s3:'Third-party services', l1:'Map rendering uses the open-source MapLibre GL JS library (loaded from a public CDN, so your browser requests it from that CDN).',
@@ -193,7 +193,7 @@ const I18N = {
     l3:'Apart from the necessary resources above, this site embeds no ads, analytics, or tracking scripts.',
     s4:'Caching', p4:'To speed up repeat visits, some static data may be cached by the browser (including IndexedDB / HTTP cache). These caches live only on your device and can be cleared anytime via browser settings.',
     s5:'Contact', p5:'If you have any questions about this policy, please reach out via an Issue on the GitHub repository.',
-    footT:'© 2026 Mini JapanRail 3D', footS:'· Local timetable driven · zero external data requests at runtime' },
+    footT:'© 2026 Mini JapanRail', footS:'· Local timetable driven · zero external data requests at runtime' },
 };
 const t = I18N[lang] || I18N.zh;
 ['backLb','docT','docH','docSub','s1','p1','s2','p2','p2b','s3','l1','l2','l3','s4','p4','s5','p5','footT','footS'].forEach(k => {

@@ -29,6 +29,14 @@ IMG_KEYWORDS = ('配線図', '配線圖', '線路配線', '配線略図', 'track
                 'track layout', 'station diagram', 'tracks map', 'rail track', '構内図')
 
 
+def iter_pages(d):
+    """formatversion=2 下 query.pages 为数组，兼容 dict/list 两种结构。"""
+    p = (d.get('query') or {}).get('pages') or []
+    if isinstance(p, dict):
+        return p.values()
+    return p
+
+
 def api_get(params, host=API_COMMONS, timeout=40):
     params = dict(params, format='json', formatversion='2')
     url = host + '?' + urllib.parse.urlencode(params)
@@ -134,8 +142,8 @@ def find_by_title_batch(candidates, host):
         except Exception as e:
             print('  !! 批量探测异常: %s' % str(e)[:80], flush=True)
             continue
-        pages = d.get('query', {}).get('pages', {})
-        for _, pg in pages.items():
+        pages = iter_pages(d)
+        for pg in pages:
             t = (pg.get('title') or '')[5:]
             key = candidates.get(t)
             if key and pg.get('imageinfo'):
@@ -167,7 +175,7 @@ def fetch_svg(title, host):
     """下载 SVG；下载前限速 1.2s，429 时重试。"""
     d = api_get({'action': 'query', 'titles': title, 'prop': 'imageinfo',
                  'iiprop': 'url|size|extmetadata'}, host=host)
-    for _, pg in (d.get('query', {}).get('pages') or {}).items():
+    for pg in iter_pages(d):
         ii = (pg.get('imageinfo') or [None])[0]
         if not ii:
             return None, None, None
@@ -283,8 +291,8 @@ def main():
                              'imlimit': '50'}, host=host)
             except Exception:
                 continue
-            pages = d.get('query', {}).get('pages', {})
-            for _, pg in pages.items():
+            pages = iter_pages(d)
+            for pg in pages:
                 t = pg.get('title')
                 key = next((k for k, tl2 in chunk if tl2 == t or t in tl2), None)
                 if key is None or key in matched:

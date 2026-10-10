@@ -36,10 +36,11 @@ jobs:
         run: |
           cd mini-japanrail-3d
           if curl -sfL -m 40 "https://github.com/ooep/jr-trackdiagrams/archive/refs/heads/main.tar.gz" -o /tmp/td.tgz; then
-            rm -rf /tmp/tdx && mkdir -p /tmp/tdx && tar xzf /tmp/td.tgz -C /tmp/tdx
+            rm -rf /tmp/tdx && mkdir -p /tmp/tdx && tar xzf /tmp/td.tgz -C /tmp/tdx || true
             cp -r /tmp/tdx/jr-trackdiagrams-main/wiki_trackdiagrams data/ 2>/dev/null || true
             cp /tmp/tdx/jr-trackdiagrams-main/wiki_trackdiagrams.json data/ 2>/dev/null || true
-            ls data/wiki_trackdiagrams/*.svg 2>/dev/null | wc -l | xargs echo '配线图 SVG 数:'
+            n=$(ls data/wiki_trackdiagrams/*.svg 2>/dev/null | wc -l) || n=0
+            echo "配线图 SVG 数: ${n:-0}"
           else
             echo '::warning::配线图仓库拉取失败，本次部署无配线图'
           fi

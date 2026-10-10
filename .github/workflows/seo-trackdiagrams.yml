@@ -57,8 +57,8 @@ jobs:
             echo "::warning::未配置 Secret TRACKDIAGRAM_REPO_TOKEN，跳过同步（抓取产物保留在工作目录）"
             exit 0
           fi
-          n=$(ls wiki_trackdiagrams/*.svg 2>/dev/null | wc -l)
-          echo "配线图 SVG 数: $n"
+          n=$(ls wiki_trackdiagrams/*.svg 2>/dev/null | wc -l) || n=0
+          echo "配线图 SVG 数: ${n:-0}"
           SRC="$GITHUB_WORKSPACE/mini-japanrail-3d/data"
           TD=$(mktemp -d)
           cd "$TD"

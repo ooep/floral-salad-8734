@@ -1,0 +1,73 @@
+name: Fetch line BS diagrams (V6)
+
+# V6 线路级 BS 全线配线图：抓 ja 维基线路词条 {{BS-table}}/{{BS-map}} 模板代码 → 本地渲染 SVG。
+# 手动触发；可用 --titles 指定词条小批验证，或 --limit-lines N。
+# 产物同步到 ooep/jr-trackdiagrams（line_bsdiagrams/）。
+
+on:
+  workflow_dispatch:
+    inputs:
+      titles:
+        description: '调试：指定词条（逗号分隔，如 海峡線,山手線）'
+        required: false
+        type: string
+      limit_lines:
+        description: '限制处理条数（留空=全量）'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: seo-trackdiagrams-v6
+  cancel-in-progress: false
+
+jobs:
+  fetch-bs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Fetch & render line BS diagrams
+        run: |
+          cd mini-japanrail-3d
+          ARGS=""
+          [ -n "${{ github.event.inputs.titles }}" ] && ARGS="$ARGS --titles ${{ github.event.inputs.titles }}"
+          [ -n "${{ github.event.inputs.limit_lines }}" ] && ARGS="$ARGS --limit-lines ${{ github.event.inputs.limit_lines }}"
+          python3 seo/fetch_bs_diagrams.py $ARGS
+
+      - name: Sync line_bsdiagrams to ooep/jr-trackdiagrams
+        env:
+          TD_TOKEN: ${{ secrets.TRACKDIAGRAM_REPO_TOKEN }}
+        run: |
+          cd mini-japanrail-3d/data
+          if [ ! -d line_bsdiagrams ] || [ -z "$(ls -A line_bsdiagrams 2>/dev/null)" ]; then
+            echo "无 BS 图产物，跳过同步"; exit 0
+          fi
+          if [ -z "$TD_TOKEN" ]; then
+            echo "::warning::未配置 Secret TRACKDIAGRAM_REPO_TOKEN，跳过同步"; exit 0
+          fi
+          n=$(ls line_bsdiagrams/*.svg 2>/dev/null | wc -l) || n=0
+          echo "BS 配线图 SVG 数: ${n:-0}"
+          TD=$(mktemp -d)
+          git clone --depth 1 "https://x-access-token:${TD_TOKEN}@github.com/ooep/jr-trackdiagrams.git" "$TD" 2>/dev/null || git init -q -b main "$TD"
+          cd "$TD"
+          mkdir -p line_bsdiagrams
+          cp "$GITHUB_WORKSPACE/mini-japanrail-3d/data/line_bsdiagrams/." line_bsdiagrams/ 2>/dev/null || true
+          cp "$GITHUB_WORKSPACE/mini-japanrail-3d/data/line_bsdiagrams.json" . 2>/dev/null || true
+          git add -A
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+              commit -q -m "chore(v6): line BS diagrams $(date -u +%Y-%m-%d-%H%M)" || echo "无新变更"
+          git remote set-url origin "https://x-access-token:${TD_TOKEN}@github.com/ooep/jr-trackdiagrams.git"
+          git pull --rebase origin main 2>/dev/null || true
+          git push origin HEAD:main && echo "已同步 line_bsdiagrams" || { echo "::warning::push 失败，重试一次"; sleep 5; git pull --rebase origin main 2>/dev/null || true; git push origin HEAD:main && echo "重试成功" || echo "::error::同步失败"; }

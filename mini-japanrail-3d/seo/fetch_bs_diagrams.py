@@ -1,0 +1,263 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""抓取 ja 维基线路词条的 {{BS-table}}/{{BS-map}} 模板代码，本地渲染 BS 风格全线配线图 SVG。
+
+用户指出维基配线图 = BSicon 散件 + 模板代码拼装（无单张整图文件）。
+V6 方案：直接抓词条 wikitext 中的 BS 模板行（数据源=维基，含里程/站名/隧道/方向注释），
+按 BS 版式本地渲染 SVG（主轨道列 + 右列里程/站名/注释），形态对齐维基「海峡線」BS-map。
+
+BS 行格式（ja 维基实测）：
+  {{BS2|STR||||↑JR東：津軽線（青森方面）|}}
+  {{BS2|BHF||0.0|中小国駅||}}
+  {{BS2|DST|O1=HUBa||2.3|新中小国信号場||}}
+  {{BS3-2|KBHFxe||eBHF|品川駅|目黒駅<ref>…</ref>|}}
+
+产出：
+  data/line_bsdiagrams/<lname>.svg            渲染 SVG（深色玻璃风格，可内联）
+  data/line_bsdiagrams.json                   索引 {lname: {rows, source, ...}}
+用法：python3 seo/fetch_bs_diagrams.py [--limit-lines N] [--out DIR]
+"""
+import json
+import os
+import re
+import sys
+import time
+import urllib.parse
+import urllib.request
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA = os.path.join(ROOT, 'data')
+API_JA = 'https://ja.wikipedia.org/w/api.php'
+UA = {'User-Agent': 'MiniJapanRail-SEO/1.0 (https://jr.suki.ing; contact: admin@jr.suki.ing)'}
+
+OUT_DIR = os.path.join(DATA, 'line_bsdiagrams')
+OUT_IDX = os.path.join(DATA, 'line_bsdiagrams.json')
+
+# ---- BSicon → SVG 图形（20x20 网格，右列文字另算）----
+def icon_svg(code):
+    """把 BSicon 代码渲染为单行轨道区 SVG 片段（宽 24 高 20）。支持 O1=/O2= 覆盖。"""
+    main = (code or 'STR').split('|')[0]
+    overlays = [x.split('=', 1)[1] for x in (code or '').split('|')[1:] if '=' in x]
+    t = main or 'STR'
+    dashed = False
+    if t.startswith('ex'):
+        dashed = True
+        t = t[2:]
+    tunnel = False
+    if t.startswith('t'):
+        tunnel = True
+        t = t[1:]
+    if t.startswith('x'):
+        t = t[1:]
+    if t.startswith('e'):
+        t = t[1:]
+    base = re.sub(r'[+lrqgfm1-9-]+$', '', t)
+    vert = '<line x1="10" y1="0" x2="10" y2="20" stroke="currentColor" stroke-width="2.4"' + (' stroke-dasharray="3 2"' if dashed else '') + '/>'
+    nodes = {
+        'STR': vert,
+        'STRq': '<line x1="0" y1="10" x2="20" y2="10" stroke="currentColor" stroke-width="2.4"/>',
+        'BHF': vert + '<circle cx="10" cy="10" r="2.6" fill="currentColor"/>',
+        'KBHF': vert + '<circle cx="10" cy="10" r="3.4" fill="currentColor"/>',
+        'HST': vert + '<line x1="6" y1="10" x2="14" y2="10" stroke="currentColor" stroke-width="2.6"/>',
+        'DST': vert + '<rect x="7" y="7" width="6" height="6" fill="currentColor"/>',
+        'KRZ': vert + '<line x1="0" y1="10" x2="20" y2="10" stroke="currentColor" stroke-width="2.4"/>',
+        'ABZgl': '<path d="M10 0 L10 10 M10 10 L0 20" fill="none" stroke="currentColor" stroke-width="2.4"/>',
+        'ABZg+r': '<path d="M10 0 L10 10 L20 20" fill="none" stroke="currentColor" stroke-width="2.4"/>',
+        'ABZgl+l': '<path d="M10 0 L10 20 M10 10 L0 10" fill="none" stroke="currentColor" stroke-width="2.4"/>',
+        'ABZg+r+r': '<path d="M10 0 L10 20 M10 10 L20 10" fill="none" stroke="currentColor" stroke-width="2.4"/>',
+        'STR+r': '<path d="M10 0 L10 20 M10 20 L0 20" fill="none" stroke="currentColor" stroke-width="2.4"/>',
+        'STR+l': '<path d="M10 0 L10 20 M10 0 L0 0" fill="none" stroke="currentColor" stroke-width="2.4"/>',
+        'STRr': '<path d="M10 0 L10 20 M10 0 L20 0" fill="none" stroke="currentColor" stroke-width="2.4"/>',
+        'STRl': '<path d="M10 0 L10 20 M10 20 L20 20" fill="none" stroke="currentColor" stroke-width="2.4"/>',
+        'TUNNEL1': '<line x1="10" y1="0" x2="10" y2="20" stroke="currentColor" stroke-width="2.4"/>' +
+                   '<path d="M4 3 h12 M4 8 h12 M4 13 h12 M4 18 h12" stroke="currentColor" stroke-width="1.1" opacity=".55"/>',
+        'TUNNEL2': '<path d="M10 0 L10 10 L2 20 M10 0 L10 10 L18 20" fill="none" stroke="currentColor" stroke-width="2.4"/>',
+        'tSTRa': '<path d="M10 0 L10 20" stroke="currentColor" stroke-width="2.4"/>' +
+                 '<path d="M6 0 h8 M4 3 h12" stroke="currentColor" stroke-width="1.1" opacity=".5"/>',
+        'tSTRe': '<path d="M10 0 L10 20" stroke="currentColor" stroke-width="2.4"/>' +
+                 '<path d="M4 17 h12 M6 20 h8" stroke="currentColor" stroke-width="1.1" opacity=".5"/>',
+        'HUB': '<circle cx="10" cy="10" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/>',
+        'HUBa': '<path d="M10 10 a3.2 3.2 0 0 1 3.2 -3.2 L10 10 Z" fill="currentColor"/>',
+        'HUBaq': '<path d="M10 10 a3.2 3.2 0 0 0 0 -6.4 L10 10 Z" fill="currentColor"/>',
+        'HUBe': '<path d="M10 10 a3.2 3.2 0 0 1 -3.2 3.2 L10 10 Z" fill="currentColor"/>',
+        'HUBeq': '<path d="M10 10 a3.2 3.2 0 0 0 0 6.4 L10 10 Z" fill="currentColor"/>',
+        'KHSTa': '<path d="M10 0 L10 20" stroke="currentColor" stroke-width="2.4"/>' +
+                 '<circle cx="10" cy="10" r="3" fill="none" stroke="currentColor" stroke-width="1.6"/>',
+    }
+    if tunnel:
+        nodes['STR'] = nodes['TUNNEL1']
+    body = nodes.get(base) or nodes.get(t) or vert
+    # 覆盖图标（如 O1=HUBa 叠加在 BHF 上）
+    for ov in overlays:
+        ob = nodes.get(re.sub(r'[+lrqgfm1-9-]+$', '', ov)) or ''
+        if ob and ('circle' in ob or 'path' in ob):
+            body += ob
+    return body
+
+
+def strip_wiki(s):
+    """去掉 [[链接]]、<ref>、{{}}、HTML 标签，保留可读文字。"""
+    s = re.sub(r'<ref[^>]*>.*?</ref>', '', s, flags=re.S)
+    s = re.sub(r'<[^>]+>', '', s)
+    s = re.sub(r'\[\[([^|\]]*\|)?([^\]]*)\]\]', r'\2', s)
+    s = re.sub(r'\{[^{}]*\}', '', s)
+    return s.strip()
+
+
+def parse_bs_rows(text):
+    """从 wikitext 提取 {{BSn|...}} / {{BSn-x|...}} 行 → [{icons, km, name, note}]"""
+    rows = []
+    for m in re.finditer(r'^\{\{(BS\d+(?:-\d+)?)\|(.*?)\}\}\s*$', text, re.M):
+        tpl, body = m.group(1), m.group(2)
+        n = int(re.match(r'BS(\d+)', tpl).group(1))
+        # 预处理后再拆参数：[[A|B]]→B、ref/模板剔除（避免其内部 | 污染字段）
+        body2 = re.sub(r'\[\[([^|\]]*\|)?([^\]]*)\]\]', r'\2', body)
+        body2 = re.sub(r'<ref[^>]*/>', '', body2)
+        body2 = re.sub(r'<ref[^>]*>.*?</ref>', '', body2, flags=re.S)
+        body2 = re.sub(r'\{[^{}]*\}', '', body2)
+        parts = body2.split('|')
+        icons = []
+        i = 0
+        while i < len(parts) and len(icons) < n:
+            p = parts[i]
+            if '=' in p and p.split('=', 1)[0].startswith('O'):
+                if icons:
+                    icons[-1] += '|' + p  # O1=/O2= 是前一个图标的覆盖
+            else:
+                icons.append(p)
+            i += 1
+        rest = parts[i:]
+        # 图标区末尾的 O1=/O2= 修饰（维基可能写在最后一个图标之后）归属前一个图标
+        while rest and '=' in rest[0] and rest[0].split('=', 1)[0].startswith('O'):
+            if icons:
+                icons[-1] += '|' + rest.pop(0)
+            else:
+                rest.pop(0)
+        km = rest[0] if rest else ''
+        name = rest[1] if len(rest) > 1 else ''
+        note = ' '.join(x for x in rest[2:] if x and not x.startswith('<'))
+        # BS3-2 等多列：文字列从第 n+1 参数起
+        if '-' in tpl:
+            txt = [x for x in rest if x]
+            km = txt[0] if txt else ''
+            name = txt[1] if len(txt) > 1 else ''
+            note = ' '.join(txt[2:])
+        rows.append({'icons': icons, 'km': km, 'name': name, 'note': note})
+    return rows
+
+
+def render_svg(lname, rows):
+    """rows → BS 风格深色 SVG。左=图标列，右=里程/站名/注释。"""
+    if not rows:
+        return ''
+    ROWH = 22
+    NW = 26 * max((len(r['icons']) for r in rows), default=1)
+    H = ROWH * len(rows) + 14
+    W = NW + 300
+    parts = []
+    for i, r in enumerate(rows):
+        y = 8 + i * ROWH
+        for c, ic in enumerate(r['icons']):
+            cx = 6 + c * 26
+            body = icon_svg(ic)
+            for ov in ic.split('|')[1:]:
+                body += icon_svg(ov)
+            parts.append('<g transform="translate(%d,%d)" color="#cfe0f5">%s</g>' % (cx, y - 10, body))
+        tx = NW + 6
+        txt = []
+        if r['km']:
+            txt.append('<text x="%d" y="%d" font-size="10" fill="rgba(150,165,190,.9)">%s</text>' % (tx, y + 4, esc(r['km'])))
+        if r['name']:
+            txt.append('<text x="%d" y="%d" font-size="10.5" font-weight="600" fill="rgba(235,242,252,.97)">%s</text>' % (tx + 46, y + 4, esc(r['name'])))
+        if r['note']:
+            txt.append('<text x="%d" y="%d" font-size="9.5" fill="rgba(160,175,200,.92)">%s</text>' % (tx + 130, y + 4, esc(r['note'])))
+        parts.append(''.join(txt))
+    return ('<figure class="mapfig diag"><svg viewBox="0 0 %d %d" role="img" aria-label="%s 全线配线图（维基 BS 版式）" xmlns="http://www.w3.org/2000/svg">%s</svg>'
+            '<figcaption>全线配线图（依据维基百科「%s」词条的铁路系统标示模板数据渲染）</figcaption></figure>'
+            % (W, H, esc(lname), ''.join(parts), esc(lname)))
+
+
+def esc(s):
+    return (s or '').replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
+
+
+def api_get(params, host=API_JA, timeout=30):
+    params = dict(params, format='json', formatversion='2')
+    url = host + '?' + urllib.parse.urlencode(params)
+    req = urllib.request.Request(url, headers=UA)
+    for attempt in range(3):
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                return json.load(r)
+        except Exception:
+            if attempt == 2:
+                raise
+            time.sleep(2 * (attempt + 1))
+
+
+def fetch_wikitexts(titles):
+    """批量拿 wikitext：{title: content}"""
+    out = {}
+    for i in range(0, len(titles), 50):
+        chunk = titles[i:i + 50]
+        d = api_get({'action': 'query', 'prop': 'revisions', 'rvprop': 'content',
+                     'rvslots': 'main', 'titles': '|'.join(chunk)})
+        for pg in d.get('query', {}).get('pages', []):
+            revs = pg.get('revisions') or []
+            if revs:
+                main = (revs[0].get('slots') or {}).get('main') or {}
+                out[pg['title']] = main.get('content', '')
+        time.sleep(0.2)
+    return out
+
+
+def main():
+    os.makedirs(OUT_DIR, exist_ok=True)
+    limit = None
+    if '--limit-lines' in sys.argv:
+        limit = int(sys.argv[sys.argv.index('--limit-lines') + 1])
+    titles_arg = None
+    if '--titles' in sys.argv:
+        titles_arg = [x.strip() for x in sys.argv[sys.argv.index('--titles') + 1].split(',') if x.strip()]
+    cache = json.load(open(os.path.join(DATA, 'eki_wiki_cache.json'), encoding='utf-8'))
+    idx = json.load(open(OUT_IDX, encoding='utf-8')) if os.path.exists(OUT_IDX) else {}
+    # 线路 ja 词条名：词条 line.ja.title 优先，否则 zh.title，否则线路名
+    lnames = {}
+    for f, ent in cache.items():
+        line = ent.get('line') or {}
+        lj = line.get('ja') or {}
+        lz = line.get('zh') or {}
+        t = lj.get('title') or lz.get('title')
+        if t:
+            lnames.setdefault(t, f)
+    names = list(lnames.keys())
+    if titles_arg:
+        names = [t for t in titles_arg if t in lnames]
+        print('按 --titles 取词条:', names, flush=True)
+    if limit:
+        names = names[:limit]
+    print('待抓线路词条:', len(names), flush=True)
+    wts = fetch_wikitexts(names)
+    print('已取得 wikitext:', len(wts), flush=True)
+    n_bs = 0
+    for title in names:
+        text = wts.get(title)
+        if not text:
+            print('  !! 无内容: %s' % title, flush=True)
+            continue
+        rows = parse_bs_rows(text)
+        if not rows:
+            continue
+        n_bs += 1
+        svg = render_svg(title, rows)
+        fn = os.path.join(OUT_DIR, title + '.svg')
+        open(fn, 'w', encoding='utf-8').write(svg)
+        idx[title] = {'rows': len(rows), 'source': 'https://ja.wikipedia.org/wiki/' + urllib.parse.quote(title),
+                      'bytes': len(svg)}
+        print('  [%d] %s: %d 行' % (n_bs, title, len(rows)), flush=True)
+    json.dump(idx, open(OUT_IDX, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
+    print('完成: %d/%d 线路含 BS 配线图' % (n_bs, len(names)), flush=True)
+
+
+if __name__ == '__main__':
+    main()

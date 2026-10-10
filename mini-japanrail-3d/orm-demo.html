@@ -226,13 +226,18 @@ function setLoading(msg, pct){
 }
 
 async function loadData(){
-  setLoading('下载 data/orm_tracks.geojson（约 42MB）…');
+  setLoading('下载 data/orm_tracks.0/1.geojson（共约 42MB）…');
   const t0 = performance.now();
   let j;
   try {
-    const res = await fetch('data/orm_tracks.geojson');
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    j = await res.json();
+    /* 数据按 2 分片存储(各 <25MB, 适配 Cloudflare Pages 单文件上限), 合并后渲染 */
+    const [r0, r1] = await Promise.all([
+      fetch('data/orm_tracks.0.geojson'),
+      fetch('data/orm_tracks.1.geojson'),
+    ]);
+    if (!r0.ok || !r1.ok) throw new Error('HTTP ' + r0.status + '/' + r1.status);
+    const [a, b] = await Promise.all([r0.json(), r1.json()]);
+    j = { type: 'FeatureCollection', features: (a.features || []).concat(b.features || []) };
   } catch (e) {
     $('loading').classList.add('done');
     $('loadMsg').textContent = '数据加载失败：' + e.message + '（请经 HTTP 访问本页，如 python3 -m http.server）';

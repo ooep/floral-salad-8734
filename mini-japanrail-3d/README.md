@@ -19,7 +19,7 @@
 | 📅 运行日 | 自动（JST 日期 + 节假日历 2024–2030，含振替/国民の休日推导）/ 平日 / 周六 / 周日·祝 |
 | 🧩 线路类型过滤 | 鉄道 / 路面電車 / モノレール / 案内軌条式 / 鋼索鉄道 / 浮上式 / 無軌条電車 |
 | 🌐 多语言 | 简体中文 / 日本語 / English（localStorage 记忆） |
-| 🛤️ ORM 线位图层 | OpenRailwayMap 风格全量轨道线位（OSM railway=*，含侧线/货运/私铁/路面电车/单轨/缆索），按线路色渲染（OSM 线路关系色 ∪ 官方线路色表 ∪ 类型兜底），设置内可开关 |
+| 🛤️ 详细股道 | OSM 全量轨道线位（railway=*，含侧线/货运/私铁/路面电车/单轨/缆索，13.9 万条），按线路色渲染（OSM 线路关系色 ∪ 官方线路色表 ∪ 类型兜底）；设置内开关，开启后与简易轨道层互斥切换（其余图层与交互不变） |
 | 📊 图例 + 数据面板 | 在途列车数 / 班次统计 / 运行日 / FPS |
 | ⚙️ 设置 | 车站标签 / 轨道光晕 / 车站点 / 底图瓦片 / 列车光晕 开关 |
 
@@ -30,7 +30,7 @@
 - `trains_wd/sa/su.json`(平日/周六/周日祝):`{n,b,T:[{t:班次id,r:运行日位掩码(1平日/2周六/4周日祝),w:"首站发车,末站到站",s:"紧凑串",i:车种}]}`
 - `s` 串解码:首项 = 首站发车分钟,**其后为相对前一站事件的差值**(到站、发车交替,终点只有到站),长度 = 2N-2
 - `tmaps.json`:`{班次id: {s_jas:[停站序列], lines:[途经线路]}}`,班次 id 可被多个 T 行复用(同径不同发车时刻)
-- `orm_tracks.geojson`:ORM 线位图层,`properties={color,line,kind,op}`,LineString;由 OSM 全日本数据构建(见下)
+- `orm_tracks.0.geojson` / `orm_tracks.1.geojson`:ORM 线位图层(2 分片,各 <25MB 适配 CF Pages 单文件上限,客户端合并),`properties={color,line,kind,op}`,LineString;由 OSM 全日本数据构建(见下)
 
 ## 技术要点
 
@@ -65,13 +65,22 @@ python3 -m http.server 8931
 
 - 时刻表与路网:公开时刻表源构建(577 线几何 + 全日本班次表,构建脚本见 `scripts/build_3d_data.py`)
 - 底图:国土地理院 淡色地図(可选);字体字形:OpenFreeMap
-- ORM 线位图层:OSM（OpenRailwayMap 同源数据）。构建：
+- ORM 线位图层:OSM（OpenRailwayMap 同源数据）。主站「详细股道」开关开启后互斥替换简易轨道层。构建：
   ```bash
   cd .osm_work   # 仓库根下（已 gitignore）
   python3 extract_orm_layer.py raw/*.osm.pbf \
-    -o ../mini-japanrail-3d/data/orm_tracks.geojson \
+    -o /tmp/orm_tracks.geojson \
     --curated ../mini-japanrail-3d/data/segments3d.geojson \
     --lines-map ../mini-japanrail-3d/data/lines_map.json
+  # 再切片为 2 个 <25MB 分片（CF Pages 单文件上限）
+  python3 - <<'PY'
+  import json
+  gj = json.load(open('/tmp/orm_tracks.geojson'))
+  n = len(gj['features']) // 2
+  for i, part in enumerate([gj['features'][:n], gj['features'][n:]]):
+      with open(f'../mini-japanrail-3d/data/orm_tracks.{i}.geojson', 'w', encoding='utf-8') as f:
+          json.dump({'type':'FeatureCollection','features':part}, f, ensure_ascii=False, separators=(',',':'))
+  PY
   ```
   区域 PBF 取自 openstreetmap.fr/geofabrik（japan 的 8 个区域分片）。重新生成后需递增 `index.html` 的 `DATA_VERSION`（ORM 文件走同一 IDB 缓存键）。
 

@@ -1439,7 +1439,10 @@ function setPhase(lo, hi, f) { setPct(lo + (hi - lo) * Math.max(0, Math.min(1, f
 function updateBar(fileIdx, got, size) {
   const per = FILES_PCT / _fileTotal;
   const frac = Math.min(1, size ? got / size : 0);
-  setPct(fileIdx * per + frac * per);
+  /* 切运行日等启动后的增量下载不带 fileIdx(沿用 _fileIdx 已达总数),会算出 >FILES_PCT 被 clamp 到 100,
+     造成"数据还在下进度条却已满格"的假象——钳制到文件下载阶段上限 */
+  const idx = Math.min(fileIdx, _fileTotal - 1);
+  setPct(idx * per + frac * per);
 }
 let idb = null;
 function openIDB() {
@@ -2779,30 +2782,28 @@ function kindOfPair(t, i) {
 }
 const pairLenCache = new Map();
 function pairKm(t, i) {
-  const k = t.jasN[i] + '|' + t.jasN[i+1];
-  let v = pairLenCache.get(k);
-  if (v === undefined) {
-    const e = segIndex.get(k);
-    if (e) {
-      /* pickSeg 对纯新干线车(无并行在来线段候选)返回 null → 不能直接取 .len,走官方 lid 几何或坐标兜底 */
-      const pe = pickSeg(t, t.jasN[i], t.jasN[i+1]);
-      if (pe) v = pe.len;
-      else {
-        const op = officialPath(t, i);
-        if (op) v = op.len;
-        else {
-          const ca = t.stopC[i], cb = t.stopC[i+1];
-          v = (ca && cb) ? Math.hypot((cb[0]-ca[0]) * Math.cos((ca[1]+cb[1])/2 * Math.PI/180) * 111.32, (cb[1]-ca[1]) * 110.57) : 3;
-        }
+  const A = t.jasN[i], B = t.jasN[i+1];
+  const e = segIndex.get(A + '|' + B);
+  if (e) {
+    /* pickSeg 对纯新干线车(无并行在来线段候选)返回 null → 不能直接取 .len,走官方 lid 几何或坐标兜底 */
+    const pe = pickSeg(t, A, B);
+    if (pe) {
+      /* 同站对可能存在多条并行线且长度不同(如 姪浜|福岡空港:箱崎線 5.0km vs 空港線 13.2km),
+         缓存键必须带线路名,否则后访问的线路会命中先到者缓存,时速显示错误 */
+      const k = A + '|' + B + '|' + (pe.line || '');
+      let v = pairLenCache.get(k);
+      if (v === undefined) {
+        v = pe.len;
+        if (pairLenCache.size > 60000) pairLenCache.clear();
+        pairLenCache.set(k, v);
       }
-    } else {
-      const ca = t.stopC[i], cb = t.stopC[i+1];
-      v = (ca && cb) ? Math.hypot((cb[0]-ca[0]) * Math.cos((ca[1]+cb[1])/2 * Math.PI/180) * 111.32, (cb[1]-ca[1]) * 110.57) : 3;
+      return v;
     }
-    if (pairLenCache.size > 60000) pairLenCache.clear();
-    pairLenCache.set(k, v);
+    const op = officialPath(t, i);
+    if (op) return op.len;
   }
-  return v;
+  const ca = t.stopC[i], cb = t.stopC[i+1];
+  return (ca && cb) ? Math.hypot((cb[0]-ca[0]) * Math.cos((ca[1]+cb[1])/2 * Math.PI/180) * 111.32, (cb[1]-ca[1]) * 110.57) : 3;
 }
 
 /* ---------------- 地图与自定义列车层 ---------------- */
@@ -4000,6 +4001,9 @@ function showTrainDetail(t) {
   else if (!sideEl.classList.contains('collapsed')) { sideEl.classList.add('collapsed'); syncSideBtn(); }
   openDetail();
   updateDetailLive(t, null, curMin(), true);
+  /* 列车恰好已终到/未进入运行窗时 updateDetailLive 提前返回,详情壳未重建(#dClose 等不存在),
+     直接绑定事件会抛 TypeError 中断点击链路——此时关闭详情卡并退出 */
+  if (!$('dClose')) { closeDetail(); liveDetailTrip = null; return; }
   $('dClose').onclick = () => { closeDetail(); liveDetailTrip = null; if (followTrip) stopFollow(); };
   $('dFollow').onclick = () => { if (followTrip === t) stopFollow(); else startFollow(t); };
   $('dLoc').onclick = () => {
@@ -4319,7 +4323,9 @@ function distKm(c1, c2) {
 }
 function buildBoard(station, coord) {
   const nk = normName(station);
-  const ck = coord ? (nk + '|' + coord[0].toFixed(3) + ',' + coord[1].toFixed(3)) : nk;
+  /* 缓存键必须带 dayBit:运行日切换(平日↔周六/周日)后若沿用旧键,会命中切换前构建的时刻表,
+     实测切换后重开同一车站仍返回旧日期数据 */
+  const ck = (coord ? (nk + '|' + coord[0].toFixed(3) + ',' + coord[1].toFixed(3)) : nk) + '#' + dayBit;
   if (boardCache.has(ck)) return boardCache.get(ck);
   buildLineOp();
   const byLine = new Map();
@@ -4660,7 +4666,7 @@ async function _fetchEkiFile(f) {
     const j = await r.json();
     _ekiFiles.set(f, j);
     return j;
-  } catch (e) { _ekiFiles.set(f, null); return null; }
+  } catch (e) { return null; /* 失败不写入会话缓存:否则「点击重试」会命中缓存的 null,永远拉不回 */ }
 }
 
 async function renderInfoTab() {
@@ -5037,7 +5043,9 @@ function renderRoute(rt, A, B) {
 
 /* ---------------- 类型过滤 / 设置 ---------------- */
 function buildKindRow() {
-  $('kindRow').innerHTML = KINDS.map(k => '<button class="chip on" data-kind="' + k + '">' + (KIND_I18N[k][lang]) + '</button>').join('');
+  /* chip 初始态必须跟随 selKind:切换语言重建时若一律写死 on,会与真实过滤状态脱钩
+     (用户已关掉的类型视觉上重新变亮,首次点击行为反向) */
+  $('kindRow').innerHTML = KINDS.map(k => '<button class="chip' + (selKind[k] ? ' on' : '') + '" data-kind="' + k + '">' + (KIND_I18N[k][lang]) + '</button>').join('');
   $('kindRow').querySelectorAll('.chip').forEach(c => c.addEventListener('click', () => {
     const k = c.dataset.kind;
     selKind[k] = !selKind[k];

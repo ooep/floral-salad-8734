@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-build_tokkyu.py — 特急爱称映射表生成器（Mini JapanRail 3D）
+build_tokkyu.py — 特急爱称映射表生成器（Mini JapanRail）
 
 原理：RailAround API 不含列车爱称/番号字段，时刻表随日变化，
 因此按「起点>终点|途经线路(归一化)」签名识别爱称，保证普适性。

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-train_atlas.py — 把 trainfrontview 车头小图打包成 WebGL 纹理图集（Mini JapanRail 3D）
+train_atlas.py — 把 trainfrontview 车头小图打包成 WebGL 纹理图集（Mini JapanRail）
 
 输入：train_icons/line_icons_new.json（线路→图）+ final_tokkyu_icons.json（爱称→图）
 输出：mini-japanrail-3d/data/train_icons_atlas.png + train_icons_atlas.json

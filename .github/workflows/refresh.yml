@@ -45,7 +45,7 @@ jobs:
       - name: Build local train files
         run: python3 scripts/build_trains.py --src data/timetables --out data/live
 
-      - name: Sync Mini JapanRail 3D data + contract verify
+      - name: Sync Mini JapanRail data + contract verify
         # 契约校验不通过则 exit 1 → 后续 commit/部署中止,旧数据保持,页面不受影响
         run: python3 scripts/sync_mini_3d.py
 
@@ -76,7 +76,7 @@ jobs:
           cp index.html favicon.png dist/
           cp -r data/segments.geojson data/stations.geojson data/names_en.json dist/data/
           cp -r data/live dist/data/
-          cp -r mini-japanrail-3d dist/   # Mini JapanRail 3D 子站 → /mini-japanrail-3d/
+          cp -r mini-japanrail-3d dist/   # Mini JapanRail 子站 → /mini-japanrail-3d/
           # 完整性闸门: dist 缺任何关键文件 → exit 1 → 部署中止, 线上保持旧版本继续运行(不 404)
           python3 - <<'PY'
           import os

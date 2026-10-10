@@ -1,4 +1,4 @@
-# Mini JapanRail 3D — 全日本铁路实时运行地图（3D）
+# Mini JapanRail — 全日本铁路实时运行地图（3D）
 
 对标 [Mini Tokyo 3D](https://minitokyo3d.com) 的**纯前端**全日本列车 3D 实时运行地图。单文件实现（`index.html` 内联 CSS/JS），MapLibre GL JS v6 经 CDN 引入，运行时零数据请求。
 

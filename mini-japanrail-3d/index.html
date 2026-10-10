@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Mini JapanRail 3D — 全日本铁路实时运行地图</title>
+<title>Mini JapanRail — 全日本铁路实时运行地图</title>
 <meta name="description" content="本地时刻表驱动的全日本铁路 3D 实时运行地图:Globe 投影、时钟回放、路线搜索,运行时零数据请求。">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%234f8ef7'/%3E%3Cpath d='M14 40h36M16 40l3-13a5 5 0 0 1 4.9-4h16.2a5 5 0 0 1 4.9 4l3 13M19 48h.02M45 48h.02' stroke='white' stroke-width='4' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3Ccircle cx='21' cy='48' r='3.2' fill='white'/%3E%3Ccircle cx='43' cy='48' r='3.2' fill='white'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@6.12.0/dist/maplibre-gl.css" crossorigin="anonymous">
@@ -801,7 +801,7 @@ button { font-family:inherit; }
 <div id="topHud">
   <div id="brand" role="button" tabindex="0" aria-label="回到全国视图">
     <span class="lg"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15h16M5 15l1.5-6A2 2 0 0 1 8.4 7.5h7.2a2 2 0 0 1 1.9 1.5L19 15M7 18.5h.01M17 18.5h.01"/><circle cx="8" cy="18.5" r="1"/><circle cx="16" cy="18.5" r="1"/></svg></span>
-    <b id="brandT">Mini JapanRail 3D</b>
+    <b id="brandT">Mini JapanRail</b>
     <span class="hud-sep"></span>
     <div class="badge" id="badge">
       <div class="b-it"><span class="b-live-dot"></span><b id="bLive">-</b><span class="b-lb" id="bLiveLb">在途</span></div>
@@ -975,7 +975,7 @@ button { font-family:inherit; }
   <div class="lgi" id="lgi">
     <div id="lmosaic"><div class="lmq"></div><div class="lmq"></div><div class="lmq"></div><div class="lmq"></div></div>
   </div>
-  <div class="lt" id="lTitle">Mini JapanRail 3D</div>
+  <div class="lt" id="lTitle">Mini JapanRail</div>
   <div class="ltrack" id="lTrack">
     <div class="ltrack-line"></div>
     <svg class="ltrain" id="ltrain" viewBox="0 0 44 24" width="36" height="20" aria-hidden="true"><path class="ltrain-side" d="M35 12 L42 5 L42 15 L35 22 Z"/><path class="ltrain-top" d="M3 12 L10 5 L42 5 L35 12 Z"/><rect class="ltrain-f" x="3" y="12" width="32" height="10" rx="1.5"/><rect class="ltrain-sheen" x="3" y="12" width="32" height="4" rx="1.5"/></svg>
@@ -994,7 +994,7 @@ window.addEventListener('unhandledrejection', e => { __pushErr('REJ ' + (e.reaso
 
 <script type="module">
 /* ================================================================== *
- *  Mini JapanRail 3D — 全日本铁路实时运行地图(单文件版)
+ *  Mini JapanRail — 全日本铁路实时运行地图(单文件版)
  *  数据:本地时刻表(trains_*.json + tmaps.json)+ 轨道几何(segments3d/stations3d)
  *  渲染:MapLibre GL JS v6(Globe 投影)+ projectTile 注入自定义 WebGL 列车层
  *  时钟:JST 每帧推算全部在途列车位置,运行时零数据请求
@@ -1124,7 +1124,7 @@ const HOLIDAYS = (() => {
 /* ---------------- i18n ---------------- */
 const I18N = {
   zh: {
-    title:'Mini JapanRail 3D', sub:'全日本铁路实时运行地图', loading:'准备中…', live:'实时', follow:'跟随中', followStop:'取消跟随',
+    title:'Mini JapanRail', sub:'全日本铁路实时运行地图', loading:'准备中…', live:'实时', follow:'跟随中', followStop:'取消跟随',
     searchT:'搜索', searchPh:'车站 / 线路(日·中·EN)…', routeT:'路线搜索', routeFrom:'起点站', routeTo:'终点站',
     tabRoute:'路线', aSearchPh:'搜索车站 / 线路…', badgeLive:'在途', badgeToday:'今日', noMatch:'无匹配结果',
     filterT:'线路类型', legendT:'图例', dayT:'运行日', dayAuto:'自动', setT:'设置', dataT:'数据', helpT:'帮助', aboutT:'关于',
@@ -1152,7 +1152,7 @@ const I18N = {
     gdOperator:'运营商官网', gdDataSrc:'数据：ecomo-rakuraku（交通生态·移动财团）',
   },
   ja: {
-    title:'ミニ日本鉄道3D', sub:'全国鉄道リアルタイムマップ', loading:'準備中…', live:'リアルタイム', follow:'追跡中', followStop:'追跡解除',
+    title:'ミニ日本鉄道', sub:'全国鉄道リアルタイムマップ', loading:'準備中…', live:'リアルタイム', follow:'追跡中', followStop:'追跡解除',
     searchT:'検索', searchPh:'駅 / 路線(日·中·EN)…', routeT:'経路検索', routeFrom:'出発駅', routeTo:'到着駅',
     tabRoute:'路線', aSearchPh:'駅 / 路線を検索…', badgeLive:'走行中', badgeToday:'本日', noMatch:'該当なし',
     filterT:'路線種別', legendT:'凡例', dayT:'運行日', dayAuto:'自動', setT:'設定', dataT:'データ', helpT:'ヘルプ', aboutT:'このサイトについて',
@@ -1180,7 +1180,7 @@ const I18N = {
     gdOperator:'事業者サイト', gdDataSrc:'データ：ecomo-rakuraku（交通エコロジー・モビリティ財団）',
   },
   en: {
-    title:'Mini JapanRail 3D', sub:'Japan Rail Live Map', loading:'Preparing…', live:'Live', follow:'Following', followStop:'Stop follow',
+    title:'Mini JapanRail', sub:'Japan Rail Live Map', loading:'Preparing…', live:'Live', follow:'Following', followStop:'Stop follow',
     searchT:'Search', searchPh:'Station / Line (JA·ZH·EN)…', routeT:'Route search', routeFrom:'From', routeTo:'To',
     tabRoute:'Route', aSearchPh:'Search station / line…', badgeLive:'Live', badgeToday:'Today', noMatch:'No matches',
     filterT:'Line types', legendT:'Legend', dayT:'Service day', dayAuto:'Auto', setT:'Settings', dataT:'Data', helpT:'Help', aboutT:'About',

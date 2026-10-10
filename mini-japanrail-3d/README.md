@@ -61,5 +61,5 @@ python3 -m http.server 8931
 
 ## 数据来源
 
-- 时刻表与路网:RailAround 系数据(577 线几何 + 全日本班次表,构建脚本见 `scripts/build_3d_data.py`)
+- 时刻表与路网:公开时刻表源构建(577 线几何 + 全日本班次表,构建脚本见 `scripts/build_3d_data.py`)
 - 底图:国土地理院 淡色地図(可选);字体字形:OpenFreeMap

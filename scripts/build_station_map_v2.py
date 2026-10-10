@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-build_station_map_v2.py — 用 RailAround 官方几何生成权威车站坐标映射
+build_station_map_v2.py — 用官方几何生成权威车站坐标映射
 
 输入:
   scripts/geo/ra_official/<rw_id>.json   (fetch_ra_geometry.py 产物)
@@ -311,7 +311,7 @@ extra_stations = list(_extra_sta.values())
 for c in stations.values(): c.pop('obs', None)
 out = {'version': 2,
        'generated_at': datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))).isoformat(timespec='seconds'),
-       'source': 'RailAround /api/animation/initial official geometry',
+       'source': 'official railway geometry',
        'geo_files': n_files,
        'tmap_lids': tmap_lids_out,
        'segments': seg_out,

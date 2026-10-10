@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-railaround_build_tmaps.py — 构建 RailAround tmap 归属缓存（一次性/周更）
+build_tmaps.py — 构建 tmap 归属缓存（一次性/周更）
 
 对每一条 rw_id 逐线请求 /api/animation/initial，收集:
   - tmaps.json : { tmap_id: {"s_jas": [...站名序列...], "lines": [线路ja名...]} }
@@ -10,7 +10,7 @@ railaround_build_tmaps.py — 构建 RailAround tmap 归属缓存（一次性/�
 以及列车提示框的线路名归属。
 
 合规：robots.txt Disallow:/api/ + Crawl-delay:2 → 单线程, 每次间隔 SLEEP 秒。
-用法: python3 scripts/railaround_build_tmaps.py [--out data/live] [--sleep 2.2]
+用法: python3 scripts/build_tmaps.py [--out data/live] [--sleep 2.2]
 支持 --resume：已存在的 tmaps.json 中出现的 tmap_id 不再重复请求（仅当 --incremental）。
 """
 import argparse, json, os, sys, time, urllib.request

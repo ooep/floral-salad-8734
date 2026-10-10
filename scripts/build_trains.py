@@ -76,7 +76,7 @@ def main():
     here = os.path.dirname(os.path.abspath(__file__))
     root = os.path.dirname(here)
     ap = argparse.ArgumentParser()
-    ap.add_argument("--src", default="", help="时刻表源目录（默认自动探测 railaround/output 或 data/timetables）")
+    ap.add_argument("--src", default="", help="时刻表源目录（默认自动探测全量抓取目录或 data/timetables）")
     ap.add_argument("--out", default=os.path.join(root, "data", "live"))
     args = ap.parse_args()
 

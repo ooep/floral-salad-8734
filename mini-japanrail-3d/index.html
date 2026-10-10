@@ -1128,7 +1128,7 @@ const I18N = {
     searchT:'搜索', searchPh:'车站 / 线路(日·中·EN)…', routeT:'路线搜索', routeFrom:'起点站', routeTo:'终点站',
     tabRoute:'路线', aSearchPh:'搜索车站 / 线路…', badgeLive:'在途', badgeToday:'今日', noMatch:'无匹配结果',
     filterT:'线路类型', legendT:'图例', dayT:'运行日', dayAuto:'自动', setT:'设置', dataT:'数据', helpT:'帮助', aboutT:'关于',
-    about1:'Mini JapanRail — 本地时刻表驱动的全日本铁路 3D 实时运行地图', about2:'数据源:日本全国铁路计划时刻表(RailAround),每周自动刷新;页面运行时零外部请求', about3:'本站为个人爱好项目,数据仅供学习参考', about4:'隐私政策',
+    about1:'Mini JapanRail — 本地时刻表驱动的全日本铁路 3D 实时运行地图', about2:'数据源:日本全国铁路计划时刻表,每周自动刷新;页面运行时零外部请求', about3:'本站为个人爱好项目,数据仅供学习参考', about4:'隐私政策',
     sw1:'车站标签', sw2:'轨道光晕', sw3:'车站点', sw4:'底图瓦片', sw5:'列车光晕', sw6:'复制异常车辆', sw7:'列车悬浮提示', sw8:'车站轮廓', sw9:'出入口',
     modeT:'列车显示', mode3d:'3D', modeIcon:'图标', modeCute:'可爱',
     iconSetT:'图标集', iSetDefault:'默认', iSetVector:'矢量', iconSetNote:'仅"图标"模式生效',
@@ -1156,7 +1156,7 @@ const I18N = {
     searchT:'検索', searchPh:'駅 / 路線(日·中·EN)…', routeT:'経路検索', routeFrom:'出発駅', routeTo:'到着駅',
     tabRoute:'路線', aSearchPh:'駅 / 路線を検索…', badgeLive:'走行中', badgeToday:'本日', noMatch:'該当なし',
     filterT:'路線種別', legendT:'凡例', dayT:'運行日', dayAuto:'自動', setT:'設定', dataT:'データ', helpT:'ヘルプ', aboutT:'このサイトについて',
-    about1:'ミニ日本鉄道 — ローカル時刻表駆動の全国鉄道リアルタイム3Dマップ', about2:'データソース:全国鉄道の計画時刻表(RailAround)、毎週自動更新。ページ実行時は外部リクエストなし', about3:'個人の趣味プロジェクトです。データは学習・参考用です', about4:'プライバシーポリシー',
+    about1:'ミニ日本鉄道 — ローカル時刻表駆動の全国鉄道リアルタイム3Dマップ', about2:'データソース:全国鉄道の計画時刻表、毎週自動更新。ページ実行時は外部リクエストなし', about3:'個人の趣味プロジェクトです。データは学習・参考用です', about4:'プライバシーポリシー',
     sw1:'駅ラベル', sw2:'軌道グロー', sw3:'駅ドット', sw4:'背景タイル', sw5:'列車グロー', sw6:'異常列車コピー', sw7:'列車ホバーチップ', sw8:'駅舎ポリゴン', sw9:'出入口',
     modeT:'列車表示', mode3d:'3D', modeIcon:'アイコン', modeCute:'かわいい',
     iconSetT:'アイコンセット', iSetDefault:'標準', iSetVector:'ベクター', iconSetNote:'「アイコン」モードのみ有効',
@@ -1184,7 +1184,7 @@ const I18N = {
     searchT:'Search', searchPh:'Station / Line (JA·ZH·EN)…', routeT:'Route search', routeFrom:'From', routeTo:'To',
     tabRoute:'Route', aSearchPh:'Search station / line…', badgeLive:'Live', badgeToday:'Today', noMatch:'No matches',
     filterT:'Line types', legendT:'Legend', dayT:'Service day', dayAuto:'Auto', setT:'Settings', dataT:'Data', helpT:'Help', aboutT:'About',
-    about1:'Mini JapanRail — a live 3D map of all Japan railways, driven by local timetables', about2:'Data: scheduled timetables for all Japan railways (RailAround), auto-refreshed weekly; zero external requests at runtime', about3:'A personal hobby project — data provided for reference only', about4:'Privacy Policy',
+    about1:'Mini JapanRail — a live 3D map of all Japan railways, driven by local timetables', about2:'Data: scheduled timetables for all Japan railways, auto-refreshed weekly; zero external requests at runtime', about3:'A personal hobby project — data provided for reference only', about4:'Privacy Policy',
     sw1:'Station labels', sw2:'Track glow', sw3:'Station dots', sw4:'Basemap tiles', sw5:'Train glow', sw6:'Copy off-rail trains', sw7:'Train hover tooltip', sw8:'Station footprint', sw9:'Station exits',
     modeT:'Train display', mode3d:'3D', modeIcon:'Icon', modeCute:'Cute',
     iconSetT:'Icon set', iSetDefault:'Default', iSetVector:'Vector', iconSetNote:'Applies to "Icon" mode only',
@@ -1241,7 +1241,7 @@ const ICO = {
 
 /* ---------------- 全局状态 ---------------- */
 let segFC = null, staFC = null, footprintFC = null, entrancesFC = null, platformsFC = null, tmaps = null, trainJSON = null;
-/* 官方权威站坐标/区间折线映射 (station_map.json v2, RailAround 官方几何构建):
+/* 官方权威站坐标/区间折线映射 (station_map.json v2, 官方几何构建):
    tmap_stops[t] = 每车次每站 [lng,lat](与 tmaps[t].s_jas 等长等序),
    tmap_lids[t] = 每区间官方线段 ID(符号=方向), segments[id] = 官方折线坐标 */
 let stationMap = null;

@@ -3,7 +3,7 @@
 """
 build_tokkyu.py — 特急爱称映射表生成器（Mini JapanRail）
 
-原理：RailAround API 不含列车爱称/番号字段，时刻表随日变化，
+原理：原始 API 不含列车爱称/番号字段，时刻表随日变化，
 因此按「起点>终点|途经线路(归一化)」签名识别爱称，保证普适性。
 输出 data/tokkyu.json：{"sh": {icon: 日语名}, "nm": {签名: 爱称}, "nmI": {签名|icon: 爱称}}，
 签名格式与页面 tripSig() 完全一致（normName + 线路排序）。

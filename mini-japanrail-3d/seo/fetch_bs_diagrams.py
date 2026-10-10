@@ -115,7 +115,7 @@ def parse_bs_rows(text):
         body2 = re.sub(r'<ref[^>]*/>', '', body2)
         body2 = re.sub(r'<ref[^>]*>.*?</ref>', '', body2, flags=re.S)
         body2 = re.sub(r'\{[^{}]*\}', '', body2)
-        parts = body2.split('|')
+        parts = [x for x in body2.split('|') if not re.match(r'^\s*\d+px\s*$', x)]
         icons = []
         i = 0
         while i < len(parts) and len(icons) < n:
@@ -127,23 +127,43 @@ def parse_bs_rows(text):
                 icons.append(p)
             i += 1
         rest = parts[i:]
-        # 图标区末尾的 O1=/O2= 修饰（维基可能写在最后一个图标之后）归属前一个图标
-        while rest and '=' in rest[0] and rest[0].split('=', 1)[0].startswith('O'):
+        # 图标区末尾的 O\d=/P\d= 修饰（维基可写在最后图标之后）归属前一个图标
+        while rest and re.match(r'^[OP]\d+=', rest[0]):
             if icons:
                 icons[-1] += '|' + rest.pop(0)
             else:
                 rest.pop(0)
+        # 兜底：rest 开头若是 BSicon 风格代码（如 STR4 / uSTRc4 / IRAq）→ 追加为扩展图标列
+        while rest and re.match(r'^([a-zex]{0,3}[A-Z][A-Za-z0-9]*\d*)$', rest[0]) and len(icons) < 6:
+            icons.append(rest.pop(0))
         km = rest[0] if rest else ''
         name = rest[1] if len(rest) > 1 else ''
         note = ' '.join(x for x in rest[2:] if x and not x.startswith('<'))
-        # BS3-2 等多列：文字列从第 n+1 参数起
         if '-' in tpl:
+            # BS-N 后缀：多信息列（BS3-2 = 双站名列：左站名 | 右站名）
             txt = [x for x in rest if x]
-            km = txt[0] if txt else ''
-            name = txt[1] if len(txt) > 1 else ''
-            note = ' '.join(txt[2:])
+            if txt:
+                km = ''
+                name = txt[0]
+                note = ' '.join(txt[1:])
+        # 清理残留标记
+        km = clean_txt(km)
+        name = clean_txt(name)
+        note = clean_txt(note)
         rows.append({'icons': icons, 'km': km, 'name': name, 'note': note})
     return rows
+
+
+_CLEAN_RE = re.compile(r"'''|\[|\]|{|}")
+def clean_txt(s):
+    """去掉模板残留：'''粗体'''、[0014px link=xxx 名称]、{} 等。"""
+    s = re.sub(r"'''", '', s)
+    s = re.sub(r'\[\s*\d+px\s+link=[^\s\]]+\s+([^\]]+)\]', r'\1', s)   # [14px link=xxx 名称] → 名称
+    s = re.sub(r'link=[^\s\]]+', '', s)
+    s = re.sub(r'\{\}', '', s)
+    s = re.sub(r'^\s*\d+px\s*', '', s)
+    s = re.sub(r'\s+', ' ', s)
+    return s.strip()
 
 
 def render_svg(lname, rows):
@@ -221,8 +241,14 @@ def main():
         titles_arg = [x.strip() for x in sys.argv[sys.argv.index('--titles') + 1].split(',') if x.strip()]
     cache = json.load(open(os.path.join(DATA, 'eki_wiki_cache.json'), encoding='utf-8'))
     idx = json.load(open(OUT_IDX, encoding='utf-8')) if os.path.exists(OUT_IDX) else {}
-    # 线路 ja 词条名：词条 line.ja.title 优先，否则 zh.title，否则线路名
+    # 词条名集合：① 全部线路名（station_map 轨道数据里的 line，自身即候选 ja 词条名）
+    #             ② cache 词条 line title 覆盖（更规范）
+    sm = json.load(open(os.path.join(DATA, 'station_map.json'), encoding='utf-8'))
     lnames = {}
+    for f in sm.get('features', []):
+        ln = f.get('properties', {}).get('line') or ''
+        if ln:
+            lnames.setdefault(ln, ln)
     for f, ent in cache.items():
         line = ent.get('line') or {}
         lj = line.get('ja') or {}

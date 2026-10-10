@@ -28,6 +28,32 @@
 </script>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%234f8ef7'/%3E%3Cpath d='M14 40h36M16 40l3-13a5 5 0 0 1 4.9-4h16.2a5 5 0 0 1 4.9 4l3 13M19 48h.02M45 48h.02' stroke='white' stroke-width='4' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3Ccircle cx='21' cy='48' r='3.2' fill='white'/%3E%3Ccircle cx='43' cy='48' r='3.2' fill='white'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@6.12.0/dist/maplibre-gl.css" crossorigin="anonymous">
+<script>
+/* 老旧设备自适应降载判定(内联、首帧前执行,避免闪烁)。
+   仅在判定为低端设备时给 <html> 挂 perf-low 类并置 window.__PERF_LOW;
+   新设备不触发任何降载,视觉与交互与旧版完全一致。
+   判定:① WebGL 软件渲染(SwiftShader/llvmpipe 等,典型于无独显老机/虚拟机);
+        ② 移动端且 CPU 核心≤4 或 内存≤3GB;
+        ③ 桌面端且 CPU 核心≤2 且 内存≤2GB。 */
+(function () {
+  try {
+    var ua = navigator.userAgent || '';
+    var mobile = /Mobi|Android|iPhone|iPad|iPod/i.test(ua);
+    var cores = navigator.hardwareConcurrency || (mobile ? 4 : 8);
+    var mem = navigator.deviceMemory || (mobile ? 4 : 8);
+    var soft = false;
+    try {
+      var c = document.createElement('canvas');
+      var gl = c.getContext('webgl') || c.getContext('experimental-webgl');
+      if (gl) { var r = String(gl.getParameter(gl.RENDERER) || ''); soft = /swiftshader|llvmpipe|softpipe|software/i.test(r); }
+    } catch (e) {}
+    if (soft || (mobile && (cores <= 4 || mem <= 3)) || (!mobile && cores <= 2 && mem <= 2)) {
+      document.documentElement.classList.add('perf-low');
+      window.__PERF_LOW = true;
+    }
+  } catch (e) {}
+})();
+</script>
 <style>
 :root {
   --bg:#0b0f16;
@@ -648,6 +674,25 @@ button { font-family:inherit; }
   *, *::before, *::after { animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; }
 }
 
+/* ── 老旧设备自适应降载(仅 html.perf-low 生效;新设备视觉/动效完全不变)──
+   低端 GPU/合成器对 backdrop-filter 多层模糊、高频动效与投影开销大,
+   降载后保留液态玻璃配色与布局,仅关闭模糊/投影与高频动效,换取流畅操作。 */
+html.perf-low #brand, html.perf-low .gcircle, html.perf-low #clock, html.perf-low #clock .daychip,
+html.perf-low #side .sec, html.perf-low #sideTabs, html.perf-low .spb, html.perf-low .btn,
+html.perf-low #detail, html.perf-low #sheet, html.perf-low .lrow, html.perf-low .type-chips .tc,
+html.perf-low .dir, html.perf-low #tip, html.perf-low #trTag, html.perf-low #toast,
+html.perf-low .maplibregl-ctrl-attrib {
+  backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
+}
+html.perf-low #brand, html.perf-low .gcircle, html.perf-low #clock, html.perf-low #side .sec,
+html.perf-low #sideTabs, html.perf-low #detail, html.perf-low #sheet, html.perf-low .lrow {
+  box-shadow:none !important;
+}
+html.perf-low *, html.perf-low *::before, html.perf-low *::after {
+  animation-duration:.001ms !important; animation-iteration-count:1 !important;
+  transition-duration:.001ms !important;
+}
+
 /* ============ 车站底部抽屉(时刻表 · Liquid Glass,保留抽屉形态) ============ */
 #sheetMask { position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:20; display:block; opacity:0; visibility:hidden; transition:opacity .3s ease, visibility 0s linear .3s; }
 #sheetMask.open { opacity:1; visibility:visible; transition:opacity .3s ease, visibility 0s linear 0s; }
@@ -1245,6 +1290,8 @@ const ICO = {
 };
 
 /* ---------------- 全局状态 ---------------- */
+/* 老旧设备降载开关(由 <head> 内联脚本判定;false 时仅保留对全设备无害的全局优化,行为与旧版一致) */
+const PERF_LOW = !!window.__PERF_LOW;
 let segFC = null, staFC = null, footprintFC = null, entrancesFC = null, platformsFC = null, tmaps = null, trainJSON = null;
 /* 官方权威站坐标/区间折线映射 (station_map.json v2, RailAround 官方几何构建):
    tmap_stops[t] = 每车次每站 [lng,lat](与 tmaps[t].s_jas 等长等序),
@@ -1347,7 +1394,7 @@ const FILES_PCT = 55, IDX_PCT = 78, PRS_PCT = 97;
 /* 数据版本号:segments/stations/station_map 等静态数据每次变更时必须递增,
    否则 IndexedDB 缓存可能让旧数据(如已修的幽灵直线)继续生效 */
 const DATA_VERSION = '2026-10-08a';
-const loadSizes = { 'data/segments3d.geojson': 9054890, 'data/stations3d.geojson': 1422796, 'data/tmaps.json': 3158412, 'data/station_map.json': 11006682, 'data/tokkyu.json': 59100, 'data/names_i18n.json': 483000, 'data/trains_wd.json': 13494947, 'data/trains_sa.json': 12228166, 'data/trains_su.json': 12284312 };
+const loadSizes = { 'data/segments3d.geojson': 11347006, 'data/stations3d.geojson': 1881446, 'data/tmaps.json': 3158412, 'data/station_map.json': 11006682, 'data/tokkyu.json': 59100, 'data/names_i18n.json': 482556, 'data/trains_wd.json': 13494947, 'data/trains_sa.json': 12228166, 'data/trains_su.json': 12284312, 'data/station_overall_footprints.geojson': 6902234, 'data/station_entrances.geojson': 2787587, 'data/station_platforms.geojson': 4254264 };
 let _fileTotal = 8, _fileIdx = 0;
 function nextFileIdx() { return _fileIdx++; }
 function setPct(p) { const pc = Math.min(100, p); lPctEl.textContent = Math.round(pc) + '%';
@@ -3204,8 +3251,25 @@ function initMap() {
     container: 'map', style: baseStyle(),
     center: [137.2, 36.8], zoom: 3.4, pitch: 0, bearing: 0,
     minZoom: 1.2, maxZoom: 16, maxPitch: 70,
-    canvasContextAttributes: { antialias: true, preserveDrawingBuffer: false },
+    /* 抗锯齿:新设备保留(线条更平滑);老旧设备关闭(减少 GPU 过绘制,明显提帧) */
+    canvasContextAttributes: { antialias: !PERF_LOW, preserveDrawingBuffer: false },
     attributionControl: false,
+    /* 全局优化(所有设备,不改变功能/体验):
+       1) fadeDuration:0 → 图层无淡入淡出,缩放/切换底图时画面更干脆(与主站根页一致);
+       2) 新设备 prefetchZoomDelta:2 → 预取相邻 2 级瓦片,缩放不空等灰块
+          (老旧设备网络/显存紧张不预取,保持默认 1 级) */
+    fadeDuration: 0,
+    ...(!PERF_LOW ? { prefetchZoomDelta: 2 } : {}),
+    /* 老旧设备降载(仅 PERF_LOW 生效;新设备不传这些项,行为与旧版完全一致):
+       1) pixelRatio 上限 1.25× → 高分屏渲染像素数降约 60%,GPU 压力大减;
+       2) crossSourceCollisions:false → 跳过跨源标签碰撞检测(缩放时最耗 CPU 之一),
+          站名/出入口在极高 zoom 下微观重叠可接受;
+       3) zoomAnimation:false → 缩放直跳目标级别,消除中间帧重绘压力 */
+    ...(PERF_LOW ? {
+      pixelRatio: Math.min(window.devicePixelRatio || 1, 1.25),
+      crossSourceCollisions: false,
+      zoomAnimation: false,
+    } : {}),
     /* 瓦片请求治理(修复底图同 URL 反复请求):
        1) refreshExpiredTiles:false → 栅格瓦片改走 <img> 加载(默认 true 走 fetch 读取缓存头,
           但 GSI 不返回 Cache-Control/Expires,反而让同 URL 的重复请求每次都真实走网络);
@@ -3222,6 +3286,26 @@ function initMap() {
   map.on('dragstart', () => { if (followTrip) stopFollow(true); });
   map.getCanvas().addEventListener('mousemove', onMouseMove);
   map.getCanvas().addEventListener('click', onMapClick);
+  if (PERF_LOW) {
+    /* 老旧设备降载:缩放期间临时隐藏文字/图标标签层 —— 符号碰撞检测是缩放时最耗
+       CPU 的操作,隐藏后缩放帧率大幅提升;zoomend 恢复,最终画面与旧版一致。
+       (标签层在 boot 的 addMapLayers 中创建,这里仅注册事件,层未建时自动跳过) */
+    const SYM = ['stas-label', 'ent'];
+    let savedVis = {};
+    map.on('zoomstart', () => {
+      for (const id of SYM) {
+        if (!map.getLayer(id)) continue;
+        try { savedVis[id] = map.getLayoutProperty(id, 'visibility'); map.setLayoutProperty(id, 'visibility', 'none'); } catch (e) {}
+      }
+    });
+    map.on('zoomend', () => {
+      for (const id of SYM) {
+        if (!map.getLayer(id) || savedVis[id] === undefined) continue;
+        try { map.setLayoutProperty(id, 'visibility', savedVis[id]); } catch (e) {}
+      }
+      savedVis = {};
+    });
+  }
 }
 function mapReadyPromise() {
   return new Promise(res => {
@@ -3352,6 +3436,10 @@ function addMapLayers() {
       'fill-color': '#f2c200', 'fill-opacity': 0.32 } });
     map.addLayer({ id: 'pl-line', type: 'line', source: 'pl', paint: {
       'line-color': '#f2c200', 'line-width': 0.9, 'line-opacity': 0.85 } });
+    if (PERF_LOW) { /* 老旧设备降载:站台面/线数千要素在低 zoom 无视觉意义(不足 1px),
+                     限定 z13 起渲染,减轻低缩放时 GPU 填充/顶点处理负担;高 zoom 行为不变 */
+      try { map.setLayerZoomRange('pl-fill', 13, 22); map.setLayerZoomRange('pl-line', 13, 22); } catch (e) {}
+    }
   }
   /* ── 车站整体轮廓层(footprint):站房轮廓+站台面按站合并(unary_union),按线路代表色渲染 ── */
   if (footprintFC && !map.getSource('fp')) {
@@ -3360,6 +3448,9 @@ function addMapLayers() {
       'fill-color': ['get', 'color'], 'fill-opacity': 0.4 } });
     map.addLayer({ id: 'fp-line', type: 'line', source: 'fp', paint: {
       'line-color': ['get', 'color'], 'line-width': 1.1, 'line-opacity': 0.85 } });
+    if (PERF_LOW) { /* 老旧设备降载:6795 个站房轮廓面在低 zoom 不可辨,限定 z12 起渲染 */
+      try { map.setLayerZoomRange('fp-fill', 12, 22); map.setLayerZoomRange('fp-line', 12, 22); } catch (e) {}
+    }
     if (typeof fpVisible === 'function') fpVisible(fpEnabled);
   }
   /* ── 出入口层:重绘的橙色方框箭头图标(原创), zoom>=16(画面只剩车站)才显示 ── */
@@ -3383,6 +3474,9 @@ function addMapLayers() {
   map.addLayer({ id: 'segs-glow', type: 'line', source: 'segs', paint: {
     'line-color': ['get', 'color'], 'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 2, 2.2, 9, 5, 14, 9],
     'line-opacity': 0.16, 'line-blur': 2.5 } });
+  if (PERF_LOW) { /* 老旧设备降载:轨道光晕高斯模糊收窄(4729 段的模糊是静态帧 GPU 填充大头),保留微光但成本大降 */
+    try { map.setPaintProperty('segs-glow', 'line-blur', 0.8); } catch (e) {}
+  }
   map.addLayer({ id: 'segs', type: 'line', source: 'segs', paint: {
     'line-color': ['get', 'color'], 'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 2, 0.7, 9, 1.7, 14, 3.6],
     'line-opacity': 0.92 } });
@@ -3475,8 +3569,7 @@ function startLoop() {
     }
     /* 跟随列车名称标签已按 MC 要求停用(名牌贴在图标上难看)——保持隐藏,不再显示 */
     trTagEl.style.display = 'none';
-    map.triggerRepaint();
-    map.triggerRepaint();
+    map.triggerRepaint(); /* 每帧调度一次渲染即可(原先重复调用无附加作用,徒增调度开销) */
   };
   rafId = requestAnimationFrame(tick);
   /* 页面隐藏时彻底停渲染循环省电,可见时恢复 */
@@ -3604,7 +3697,7 @@ $('spMain').addEventListener('click', () => setSpeed(spIdx + 1));
     if (window.innerWidth > 640) return;
     clearTimeout(leaveT);
     if (morph) { try { morph.cancel(); } catch (e) {} morph = null; }   /* 连点:打断而非排队 */
-    const reduce = RM.matches;
+    const reduce = RM.matches || PERF_LOW; /* 系统减动效 或 老旧设备:跳过弹簧 morph,直接切换(省合成开销) */
     const expanding = !clockEl.classList.contains('expanded');
 
     if (expanding) {

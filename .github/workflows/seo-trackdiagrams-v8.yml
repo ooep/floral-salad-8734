@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: seo-trackdiagrams-v7
+  group: seo-trackdiagrams-v8
   cancel-in-progress: false
 
 jobs:
@@ -39,7 +39,7 @@ jobs:
           if [ -f /tmp/td/wiki_trackdiagrams.json ]; then
             cp /tmp/td/wiki_trackdiagrams.json data/wiki_trackdiagrams.json
           fi
-          python3 seo/fetch_wiki_trackdiagrams_v7.py --checkpoint-every 50
+          python3 seo/fetch_wiki_trackdiagrams_v8.py --checkpoint-every 50
 
       - name: Sync diagrams to ooep/jr-trackdiagrams (merge-style)
         env:

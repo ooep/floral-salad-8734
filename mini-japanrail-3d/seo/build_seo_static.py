@@ -559,8 +559,8 @@ def eki_station_for(key, name, wlm, cache):
     return None
 
 
-def eki_brief_html(sec_id, title, entry, lang, url=''):
-    """本地化词条 → 「百科简介」玻璃卡（清洗后首段 + 阅读更多外链）。"""
+def eki_brief_html(sec_id, title, entry, lang, more_url=''):
+    """本地化词条 → 「百科简介」玻璃卡（清洗后首段 + 跳转主站实时地图的链接）。"""
     if not entry:
         return ''
     lead = _clean_lead(entry.get('lead'))
@@ -568,7 +568,7 @@ def eki_brief_html(sec_id, title, entry, lang, url=''):
         return ''
     if len(lead) > 300:
         lead = lead[:297] + '…'
-    more = (' <a class="mini" href="' + esc(url) + '" rel="noopener">阅读更多（Wikipedia）↗</a>') if url else ''
+    more = (' <a class="mini" href="' + esc(more_url) + '">在主站查看 ↗</a>') if more_url else ''
     return ('<h2 id="' + sec_id + '" style="--lc:#5fd4f4">' + esc(title) + '</h2>\n'
             '<p class="wiki-x"><span lang="' + lang + '">' + esc(lead) + '</span>' + more + '</p>\n')
 
@@ -814,13 +814,20 @@ def station_page(rec, lines, neighbors, cfg, tozh):
                 esc(abs_url(cfg, 'stations/' + quote_path(o) + '/')), esc(label), esc(str(km))))
         near_html = '<h2 id="sec-near" style="--lc:#5fd4f4">附近车站（同县最近 5 站）</h2>\n<ul class="near">\n' + '\n'.join(parts) + '\n</ul>\n'
 
-    # 百科简介（站内本地化词条 eki-wiki 同源，中文→日文首段 + 阅读更多）
+    coord = rec['coord']
+    # 同名站（name_groups 内多条）无法在 stationCoord 精确消歧，深链仅给唯一名站
+    sta_extra = {'t': 'station', 'q': key} if len(name_groups.get(name, [])) == 1 else None
+    map_zh = map_url(cfg, coord[0], coord[1], 14, 'zh', extra=sta_extra)
+    map_ja = map_url(cfg, coord[0], coord[1], 14, 'ja', extra=sta_extra)
+    map_en = map_url(cfg, coord[0], coord[1], 14, 'en', extra=sta_extra)
+
+    # 百科简介（站内本地化词条 eki-wiki 同源，中文→日文首段；「在主站查看」跳站深链）
     eki_html = ''
     se = eki_station_for(key, name, wlm, eki_cache)
     if se:
         src = se.get('zh') or se.get('ja')
         if src:
-            eki_html = eki_brief_html('sec-eki', '百科简介', src, 'zh-Hans' if se.get('zh') else 'ja', se.get('url'))
+            eki_html = eki_brief_html('sec-eki', '百科简介', src, 'zh-Hans' if se.get('zh') else 'ja', map_zh)
 
     # 顶部锚点目录
     toc_items = [
@@ -833,13 +840,6 @@ def station_page(rec, lines, neighbors, cfg, tozh):
         toc_items.append(('#sec-same', '同名车站'))
     toc_html = '<nav class="toc" aria-label="本页目录">' + ''.join(
         '<a href="%s">%s</a>' % (h, t) for h, t in toc_items) + '</nav>\n'
-
-    coord = rec['coord']
-    # 同名站（name_groups 内多条）无法在 stationCoord 精确消歧，深链仅给唯一名站
-    sta_extra = {'t': 'station', 'q': key} if len(name_groups.get(name, [])) == 1 else None
-    map_zh = map_url(cfg, coord[0], coord[1], 14, 'zh', extra=sta_extra)
-    map_ja = map_url(cfg, coord[0], coord[1], 14, 'ja', extra=sta_extra)
-    map_en = map_url(cfg, coord[0], coord[1], 14, 'en', extra=sta_extra)
 
     jsonld = [
         {
@@ -1018,6 +1018,12 @@ def line_page(rec, stations, cfg, tozh, ordered=None):
     # 同类型线路计数（信息表「类型」行用）
     kind_n = sum(1 for r2 in lines.values() if r2.get('kind') == rec['kind'])
 
+    # 线路元信息（提前：百科卡「在主站查看」链接也用）
+    c = rec['centroid']
+    map_zh = map_url(cfg, c[0], c[1], 6, 'zh', extra={'t': 'line', 'q': lname})
+    map_ja = map_url(cfg, c[0], c[1], 6, 'ja', extra={'t': 'line', 'q': lname})
+    map_en = map_url(cfg, c[0], c[1], 6, 'en', extra={'t': 'line', 'q': lname})
+
     # 百科简介：优先站内本地化词条（eki-wiki 同源，中文→日文）；line_wiki.json 维基摘要作兜底
     wiki_html = ''
     ef = eki_line_for(lname, keys, eki_cache, wlm, tozh)
@@ -1026,17 +1032,16 @@ def line_page(rec, stations, cfg, tozh, ordered=None):
         src = le.get('zh') or le.get('ja')
         if src:
             wiki_html = eki_brief_html('sec-wiki', '百科简介', src,
-                                       'zh-Hans' if le.get('zh') else 'ja', le.get('url'))
+                                       'zh-Hans' if le.get('zh') else 'ja', map_zh)
     if not wiki_html:
         w = wiki.get(lname)
         if w and w.get('extract'):
             ex = w['extract']
             if len(ex) > 280:
                 ex = ex[:277] + '…'
-            wurl = w.get('url') or 'https://ja.wikipedia.org/wiki/' + urllib.parse.quote(lname.replace(' ', '_'))
             wiki_html = ('<h2 id="sec-wiki" style="--lc:' + esc(rec['color']) + '">百科简介</h2>\n'
                          '<p class="wiki-x"><span lang="ja">' + esc(ex) + '</span> '
-                         '<a class="mini" href="' + esc(wurl) + '" rel="noopener">阅读更多（Wikipedia）↗</a></p>\n')
+                         '<a class="mini" href="' + esc(map_zh) + '">在主站查看 ↗</a></p>\n')
 
     # 线路速览（站内数据驱动的百科式概述：不依赖外网，维基摘要缺失时保证页面信息丰富）
     summary_parts = ['%s是一条%s' % (lname, kind_zh)]
@@ -1067,12 +1072,6 @@ def line_page(rec, stations, cfg, tozh, ordered=None):
         toc_items.append(('#sec-samekind', '同类线路'))
     toc_html = '<nav class="toc" aria-label="本页目录">' + ''.join(
         '<a href="%s">%s</a>' % (h, t) for h, t in toc_items) + '</nav>\n'
-
-    # 线路元信息
-    c = rec['centroid']
-    map_zh = map_url(cfg, c[0], c[1], 6, 'zh', extra={'t': 'line', 'q': lname})
-    map_ja = map_url(cfg, c[0], c[1], 6, 'ja', extra={'t': 'line', 'q': lname})
-    map_en = map_url(cfg, c[0], c[1], 6, 'en', extra={'t': 'line', 'q': lname})
 
     jsonld = [
         {

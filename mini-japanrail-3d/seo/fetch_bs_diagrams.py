@@ -241,13 +241,18 @@ def main():
         titles_arg = [x.strip() for x in sys.argv[sys.argv.index('--titles') + 1].split(',') if x.strip()]
     cache = json.load(open(os.path.join(DATA, 'eki_wiki_cache.json'), encoding='utf-8'))
     idx = json.load(open(OUT_IDX, encoding='utf-8')) if os.path.exists(OUT_IDX) else {}
-    # 词条名集合：① 全部线路名（station_map 轨道数据里的 line，自身即候选 ja 词条名）
+    # 词条名集合：① 全部线路名（segments3d 轨道数据的 line，自身即候选 ja 词条名）
     #             ② cache 词条 line title 覆盖（更规范）
-    sm = json.load(open(os.path.join(DATA, 'station_map.json'), encoding='utf-8'))
+    sm = json.load(open(os.path.join(DATA, 'segments3d.geojson'), encoding='utf-8'))
     lnames = {}
     for f in sm.get('features', []):
         ln = f.get('properties', {}).get('line') or ''
         if ln:
+            lnames.setdefault(ln, ln)
+    # 站 lines 兜底（轨道段缺失的线）
+    stmap = json.load(open(os.path.join(DATA, 'station_map.json'), encoding='utf-8'))
+    for v in stmap.get('stations', {}).values():
+        for ln in v.get('lines') or []:
             lnames.setdefault(ln, ln)
     for f, ent in cache.items():
         line = ent.get('line') or {}

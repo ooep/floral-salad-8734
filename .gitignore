@@ -22,3 +22,7 @@ mini-japanrail-3d/404.html
 
 # SEO 抓取临时脚本/日志（不入库；line_wiki.json 摘要如需入库请单独添加）
 mini-japanrail-3d/.seo-logs/
+
+# 配线图由独立仓库 ooep/jr-trackdiagrams 提供，不在主仓库维护
+mini-japanrail-3d/data/wiki_trackdiagrams
+mini-japanrail-3d/data/wiki_trackdiagrams.json

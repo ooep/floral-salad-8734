@@ -30,11 +30,26 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # 配线图：从临时仓库 ooep/jr-trackdiagrams（public）拉取到 mini-japanrail-3d/data/，
+      # 供 SEO 生成器内联（缺失时静默跳过，不影响部署）。
+      - name: Fetch track diagrams (jr-trackdiagrams)
+        run: |
+          cd mini-japanrail-3d
+          if curl -sfL -m 40 "https://github.com/ooep/jr-trackdiagrams/archive/refs/heads/main.tar.gz" -o /tmp/td.tgz; then
+            rm -rf /tmp/tdx && mkdir -p /tmp/tdx && tar xzf /tmp/td.tgz -C /tmp/tdx
+            cp -r /tmp/tdx/jr-trackdiagrams-main/wiki_trackdiagrams data/ 2>/dev/null || true
+            cp /tmp/tdx/jr-trackdiagrams-main/wiki_trackdiagrams.json data/ 2>/dev/null || true
+            ls data/wiki_trackdiagrams/*.svg 2>/dev/null | wc -l | xargs echo '配线图 SVG 数:'
+          else
+            echo '::warning::配线图仓库拉取失败，本次部署无配线图'
+          fi
+
       # SEO：每次部署前重新生成「每线路 / 每车站」静态页、sitemap、robots、404、OG 图。
       # 生成失败不阻断部署（沿用仓库内已有文件），保证现有发布流程不受影响。
       - name: Build SEO static pages
         run: |
           cd mini-japanrail-3d && python3 seo/build_seo_static.py || echo '::warning::SEO 静态页生成失败，沿用已有文件部署'
+          rm -rf mini-japanrail-3d/data/wiki_trackdiagrams mini-japanrail-3d/data/wiki_trackdiagrams.json
 
       - name: Verify data assets
         run: |

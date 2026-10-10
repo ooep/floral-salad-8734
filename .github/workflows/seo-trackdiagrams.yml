@@ -1,0 +1,73 @@
+name: Fetch station track diagrams (Commons, manual + weekly)
+
+# 从 Wikimedia Commons 抓取日本车站「配線図」SVG 并同步到独立仓库 ooep/jr-trackdiagrams
+# （不写入主仓库 / eki-wiki，避免污染既有仓库）。GitHub Actions 网络可达 Commons。
+# 流程: 枚举配线图分类 → 按站名本地匹配 → 下载 SVG + 清洗解析 → push 到临时仓库。
+# 主仓库 deploy.yml 部署时会从该临时仓库拉取配线图（public，无需 token）。
+# 需要 Secret：TRACKDIAGRAM_REPO_TOKEN（仓库 Settings→Secrets→Actions 添加；
+#   值为有 ooep/jr-trackdiagrams 写入权限的 PAT）。未配置时跳过同步（抓取仍完成并留产物日志）。
+
+on:
+  push:
+    paths:
+      - 'mini-japanrail-3d/seo/fetch_wiki_trackdiagrams.py'
+      - 'mini-japanrail-3d/data/station_map.json'
+      - 'mini-japanrail-3d/data/eki_wiki_cache.json'
+  workflow_dispatch: {}
+  schedule:
+    - cron: '20 5 * * 0'   # 每周日 05:20 UTC = 13:20 JST，避开 deploy/refresh 时段
+
+permissions:
+  contents: read
+
+concurrency:
+  group: seo-trackdiagrams
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Fetch track diagrams from Commons API
+        run: |
+          cd mini-japanrail-3d
+          python3 seo/fetch_wiki_trackdiagrams.py --fallback
+
+      - name: Sync diagrams to ooep/jr-trackdiagrams
+        env:
+          TD_TOKEN: ${{ secrets.TRACKDIAGRAM_REPO_TOKEN }}
+        run: |
+          cd mini-japanrail-3d/data
+          if [ ! -d wiki_trackdiagrams ] || [ ! -f wiki_trackdiagrams.json ]; then
+            echo "本次无抓取产物，跳过同步"
+            exit 0
+          fi
+          if [ -z "$TD_TOKEN" ]; then
+            echo "::warning::未配置 Secret TRACKDIAGRAM_REPO_TOKEN，跳过同步（抓取产物保留在工作目录）"
+            exit 0
+          fi
+          n=$(ls wiki_trackdiagrams/*.svg 2>/dev/null | wc -l)
+          echo "配线图 SVG 数: $n"
+          SRC="$GITHUB_WORKSPACE/mini-japanrail-3d/data"
+          TD=$(mktemp -d)
+          cd "$TD"
+          git init -q -b main
+          cp -r "$SRC/wiki_trackdiagrams" .
+          cp "$SRC/wiki_trackdiagrams.json" .
+          git add -A
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+              commit -q -m "chore: fetch station track diagrams $(date -u +%Y-%m-%d)"
+          git remote add origin "https://x-access-token:${TD_TOKEN}@github.com/ooep/jr-trackdiagrams.git"
+          git push -f origin main
+          echo "已同步到 ooep/jr-trackdiagrams"

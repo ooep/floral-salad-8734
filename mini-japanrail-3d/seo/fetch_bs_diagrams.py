@@ -104,57 +104,54 @@ def strip_wiki(s):
     return s.strip()
 
 
+_ICON_RE = re.compile(r'^[OP]\d+=|^[A-Za-z][A-Za-z0-9]*\d*$')
+
+
 def parse_bs_rows(text):
-    """从 wikitext 提取 {{BSn|...}} / {{BSn-x|...}} 行 → [{icons, km, name, note}]"""
+    """从 wikitext 提取 {{BSn|...}} / {{BSn-x|...}} 行。
+
+    按字段类型分流（不依赖 BS 模板参数位置——维基 O/P 修饰与图标位混排，位置启发式必然出错）：
+      icon 风格（STR/BHF/O1=HUBa/uSTRc4…）→ 图标列
+      数字 → 里程；其余 → 站名/注释
+    """
     rows = []
     for m in re.finditer(r'^\{\{(BS\d+(?:-\d+)?)\|(.*?)\}\}\s*$', text, re.M):
         tpl, body = m.group(1), m.group(2)
-        n = int(re.match(r'BS(\d+)', tpl).group(1))
-        # 预处理后再拆参数：[[A|B]]→B、ref/模板剔除（避免其内部 | 污染字段）
+        # 预处理：[[A|B]]→B、ref/模板剔除（避免其内部 | 污染字段）
         body2 = re.sub(r'\[\[([^|\]]*\|)?([^\]]*)\]\]', r'\2', body)
         body2 = re.sub(r'<ref[^>]*/>', '', body2)
         body2 = re.sub(r'<ref[^>]*>.*?</ref>', '', body2, flags=re.S)
         body2 = re.sub(r'\{[^{}]*\}', '', body2)
         parts = [x for x in body2.split('|') if not re.match(r'^\s*\d+px\s*$', x)]
         icons = []
-        i = 0
-        while i < len(parts) and len(icons) < n:
-            p = parts[i]
-            if '=' in p and p.split('=', 1)[0].startswith('O'):
-                if icons:
-                    icons[-1] += '|' + p  # O1=/O2= 是前一个图标的覆盖
-            else:
+        texts = []
+        for p in parts:
+            if not p:
+                continue
+            if _ICON_RE.match(p) and len(icons) < 8:
                 icons.append(p)
-            i += 1
-        rest = parts[i:]
-        # 图标区末尾的 O\d=/P\d= 修饰（维基可写在最后图标之后）归属前一个图标
-        while rest and re.match(r'^[OP]\d+=', rest[0]):
-            if icons:
-                icons[-1] += '|' + rest.pop(0)
             else:
-                rest.pop(0)
-        # 兜底：rest 开头若是 BSicon 风格代码（如 STR4 / uSTRc4 / IRAq）→ 追加为扩展图标列
-        while rest and re.match(r'^([a-zex]{0,3}[A-Z][A-Za-z0-9]*\d*)$', rest[0]) and len(icons) < 6:
-            icons.append(rest.pop(0))
-        km = rest[0] if rest else ''
-        name = rest[1] if len(rest) > 1 else ''
-        note = ' '.join(x for x in rest[2:] if x and not x.startswith('<'))
-        if '-' in tpl:
-            # BS-N 后缀：多信息列（BS3-2 = 双站名列：左站名 | 右站名）
-            txt = [x for x in rest if x]
-            if txt:
-                km = ''
-                name = txt[0]
-                note = ' '.join(txt[1:])
-        # 清理残留标记
-        km = clean_txt(km)
-        name = clean_txt(name)
-        note = clean_txt(note)
+                texts.append(clean_txt(p))
+        km = texts[0] if texts and re.match(r'^[\d,\.\-]+', texts[0]) else ''
+        if km and len(texts) > 1:
+            name = texts[1]
+            note = ' '.join(texts[2:])
+        else:
+            name = texts[0] if texts else ''
+            note = ' '.join(texts[1:])
         rows.append({'icons': icons, 'km': km, 'name': name, 'note': note})
     return rows
 
 
-_CLEAN_RE = re.compile(r"'''|\[|\]|{|}")
+def clean_txt(s):
+    """去掉模板残留：'''粗体'''、[0014px link=xxx 名称]、{} 等。"""
+    s = re.sub(r"'''", '', s)
+    s = re.sub(r'\[\s*\d+px\s+link=[^\s\]]+\s+([^\]]+)\]', r'\1', s)   # [14px link=xxx 名称] → 名称
+    s = re.sub(r'link=[^\s\]]+', '', s)
+    s = re.sub(r'\{\}', '', s)
+    s = re.sub(r'^\s*\d+px\s*', '', s)
+    s = re.sub(r'\s+', ' ', s)
+    return s.strip()
 def clean_txt(s):
     """去掉模板残留：'''粗体'''、[0014px link=xxx 名称]、{} 等。"""
     s = re.sub(r"'''", '', s)
@@ -187,8 +184,12 @@ def render_svg(lname, rows):
         txt = []
         if r['km']:
             txt.append('<text x="%d" y="%d" font-size="10" fill="rgba(150,165,190,.9)">%s</text>' % (tx, y + 4, esc(r['km'])))
-        if r['name']:
-            txt.append('<text x="%d" y="%d" font-size="10.5" font-weight="600" fill="rgba(235,242,252,.97)">%s</text>' % (tx + 46, y + 4, esc(r['name'])))
+        nm = r['name']
+        is_dir = bool(nm) and nm[0] in '↑↓←→'
+        if nm and not is_dir:
+            txt.append('<text x="%d" y="%d" font-size="10.5" font-weight="600" fill="rgba(235,242,252,.97)">%s</text>' % (tx + 46, y + 4, esc(nm)))
+        elif nm:
+            txt.append('<text x="%d" y="%d" font-size="9.5" fill="rgba(160,175,200,.92)">%s</text>' % (tx + 46, y + 4, esc(nm)))
         if r['note']:
             txt.append('<text x="%d" y="%d" font-size="9.5" fill="rgba(160,175,200,.92)">%s</text>' % (tx + 130, y + 4, esc(r['note'])))
         parts.append(''.join(txt))

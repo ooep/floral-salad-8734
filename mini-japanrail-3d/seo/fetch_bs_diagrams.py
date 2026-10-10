@@ -173,21 +173,12 @@ def parse_bs_rows(text):
 
 
 def clean_txt(s):
-    """去掉模板残留：'''粗体'''、[0014px link=xxx 名称]、{} 等。"""
+    """去掉模板残留：'''粗体'''、[0014px link=xxx 名称]、{}、行内 14px 样式后缀 等。"""
     s = re.sub(r"'''", '', s)
     s = re.sub(r'\[\s*\d+px\s+link=[^\s\]]+\s+([^\]]+)\]', r'\1', s)   # [14px link=xxx 名称] → 名称
     s = re.sub(r'link=[^\s\]]+', '', s)
     s = re.sub(r'\{\}', '', s)
-    s = re.sub(r'^\s*\d+px\s*', '', s)
-    s = re.sub(r'\s+', ' ', s)
-    return s.strip()
-def clean_txt(s):
-    """去掉模板残留：'''粗体'''、[0014px link=xxx 名称]、{} 等。"""
-    s = re.sub(r"'''", '', s)
-    s = re.sub(r'\[\s*\d+px\s+link=[^\s\]]+\s+([^\]]+)\]', r'\1', s)   # [14px link=xxx 名称] → 名称
-    s = re.sub(r'link=[^\s\]]+', '', s)
-    s = re.sub(r'\{\}', '', s)
-    s = re.sub(r'^\s*\d+px\s*', '', s)
+    s = re.sub(r'\d+px', '', s)     # 行内样式后缀（東急田園都市線14px → 東急田園都市線）
     s = re.sub(r'\s+', ' ', s)
     return s.strip()
 

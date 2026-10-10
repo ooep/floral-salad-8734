@@ -142,9 +142,13 @@ def build_records(cfg):
     except Exception:
         eki_cache = {}
     try:
-        floorplan = load_json('eki_floorplan.json')   # 站 key → 构内図（配线图）直链索引
+        floorplan = load_json('eki_floorplan.json')   # 站 key → 构内図（配线图）直链索引（已停用）
     except Exception:
         floorplan = {}
+    try:
+        wtd = load_json('wiki_trackdiagrams.json')    # 站 key → Wikimedia Commons 配線図 索引
+    except Exception:
+        wtd = {}
     try:
         wlm = load_json('wiki_line_map.json')         # 站key → 词条线路文件（与主站信息 tab 同源）
     except Exception:
@@ -328,7 +332,7 @@ def build_records(cfg):
         'stations': st, 'lines': lines, 'neighbors': neighbors,
         'name_groups': dict(name_groups), 'line_orders': line_orders,
         'nearby': nearby, 'line_wiki': wiki,
-        'eki_cache': eki_cache, 'wlm': wlm, 'floorplan': floorplan,
+        'eki_cache': eki_cache, 'wlm': wlm, 'floorplan': floorplan, 'wtd': wtd,
         'station_map_meta': {k: sm[k] for k in ('generated_at',) if k in sm},
     }
 
@@ -978,20 +982,23 @@ def station_page(rec, lines, neighbors, cfg, tozh):
     map_ja = map_url(cfg, coord[0], coord[1], 14, 'ja', extra=sta_extra)
     map_en = map_url(cfg, coord[0], coord[1], 14, 'en', extra=sta_extra)
 
-    # 站线配置示意（自绘 SVG，基于站内真实轨道数据）+ 站内构内図（ecomo 同源实图）
+    # 站线配置图（Wikimedia Commons 配線図；需先运行 .seo-logs/fetch_wiki_trackdiagrams.py）
     map_img_html = ''
-    diag = station_line_diagram(rec, stations, line_orders, lines)
-    fp = floorplan.get(key) or floorplan.get(name)
-    if diag or fp:
-        block = '<h2 id="sec-map" style="--lc:#5fd4f4">站线配置图</h2>\n'
-        if diag:
-            block += diag
-        if fp:
-            img_src = abs_url(cfg, 'seo/img/stations/' + urllib.parse.quote(key) + '.png')
-            block += ('<figure class="mapfig"><img src="' + esc(img_src) + '" '
-                      'alt="' + esc(name + ' 站内构内図') + '" loading="lazy" decoding="async">'
-                      '<figcaption>站内构内図（实拍站内平面）· 与主站「指南」tab 同源</figcaption></figure>\n')
-        map_img_html = block
+    wt = wtd.get(key) or wtd.get(name) or {}
+    if wt.get('found'):
+        clean_path = os.path.join(DATA, 'wiki_trackdiagrams', key + '.svg.clean')
+        if not os.path.exists(clean_path) and name != key:
+            clean_path = os.path.join(DATA, 'wiki_trackdiagrams', name + '.svg.clean')
+        if os.path.exists(clean_path):
+            svg_body = open(clean_path, encoding='utf-8').read()
+            credit = '配線図：Wikimedia Commons'
+            if wt.get('artist'):
+                credit += ' · 作者：' + wt['artist']
+            if wt.get('license'):
+                credit += ' · ' + wt['license']
+            map_img_html = ('<h2 id="sec-map" style="--lc:#5fd4f4">站线配置图</h2>\n'
+                            '<figure class="mapfig diag">' + svg_body
+                            + '<figcaption>' + esc(credit) + '</figcaption></figure>\n')
 
     # 百科简介（站内本地化词条 eki-wiki 同源，中文→日文首段；「在主站查看」跳站深链）
     eki_html = ''
@@ -1541,7 +1548,7 @@ def main():
 
     cfg = load_config(args.config)
     d = build_records(cfg)
-    global recs, line_orders, line_counts, name_groups, lines, nearby, wiki, eki_cache, wlm, stations, floorplan
+    global recs, line_orders, line_counts, name_groups, lines, nearby, wiki, eki_cache, wlm, stations, floorplan, wtd
     stations, lines, neighbors, tozh = d['stations'], d['lines'], d['neighbors'], d['tozh']
     recs = stations  # station_page 里引用相邻车站记录
     line_orders = d['line_orders']  # 线路车站沿轨道顺序（站页方向/位置用）
@@ -1550,7 +1557,8 @@ def main():
     wiki = d['line_wiki']           # Wikipedia 线路摘要缓存
     eki_cache = d['eki_cache']      # 本地化百科词条缓存（eki-wiki 同源）
     wlm = d['wlm']                  # 站key → 词条线路文件
-    floorplan = d['floorplan']      # 站 key → 构内図（配线图）索引
+    floorplan = d['floorplan']      # 站 key → 构内図（配线图）索引（已停用）
+    wtd = d['wtd']                  # 站 key → Wikimedia Commons 配線図 索引
     line_counts = {lname: len(seq) for lname, seq in line_orders.items()}
 
     out_lines = os.path.join(ROOT, 'lines')

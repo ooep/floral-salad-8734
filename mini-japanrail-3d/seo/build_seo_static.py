@@ -137,6 +137,14 @@ def build_records(cfg):
         wiki = load_json('line_wiki.json')    # Wikipedia 线路摘要缓存（可缺省）
     except Exception:
         wiki = {}
+    try:
+        eki_cache = load_json('eki_wiki_cache.json')  # 站内本地化百科词条（ooep/eki-wiki 同源精简缓存）
+    except Exception:
+        eki_cache = {}
+    try:
+        wlm = load_json('wiki_line_map.json')         # 站key → 词条线路文件（与主站信息 tab 同源）
+    except Exception:
+        wlm = {}
     index_html = open(os.path.join(ROOT, 'index.html'), encoding='utf-8').read()
     tozh = build_tozh(index_html)
     canon_of = build_canon(lm)
@@ -316,6 +324,7 @@ def build_records(cfg):
         'stations': st, 'lines': lines, 'neighbors': neighbors,
         'name_groups': dict(name_groups), 'line_orders': line_orders,
         'nearby': nearby, 'line_wiki': wiki,
+        'eki_cache': eki_cache, 'wlm': wlm,
         'station_map_meta': {k: sm[k] for k in ('generated_at',) if k in sm},
     }
 
@@ -464,6 +473,104 @@ def wiki_links_html(cfg, ja_name, zh_name, en_name):
             '<a href="%s" hreflang="zh-Hans" rel="noopener">中文维基百科</a> · '
             '<a href="%s" hreflang="en" rel="noopener">English Wikipedia</a></p>\n'
             % (esc(ja), esc(zh), esc(en)))
+
+
+# ---------------- 本地化百科词条（ooep/eki-wiki 同源，主站「信息 tab」用同一数据） ----------------
+_LINE_SUFFIX = re.compile(r'号線|線|本線|快速線|新線|支線')
+_ZH_CONV = re.compile(r'-\{-\}|（\s*）|\(\s*\)')
+
+
+def _norm_sta(s):
+    """站名归一：ケ/ヶ 统一，尾部「駅」转「站」（词条按中文站名组织）。"""
+    s = (s or '').strip().replace('ケ', 'ヶ')
+    if s.endswith('駅'):
+        s = s[:-1] + '站'
+    return s
+
+
+def _norm_line_title(t):
+    """线路词条标题归一（同主站 normLineName）：ケ/ヶ 统一 + 去 線/本線 等后缀。"""
+    return _LINE_SUFFIX.sub('', (t or '').replace('ケ', 'ヶ'))
+
+
+def _clean_lead(s):
+    """清洗词条首段：去 MediaWiki 变体转换标记 -{}- / {...}、空括号（音读过滤后残留）。"""
+    s = re.sub(r'-\{}-', '', s or '')
+    s = re.sub(r'\{[^{}]*\}', '', s)
+    s = _ZH_CONV.sub('', s)
+    return s.strip()
+
+
+def _common_suffix(a, b):
+    """最长公共后缀（用于 canonical 编号名 ↔ 词条通称 匹配，如 3号線銀座線 ↔ 東京メトロ銀座線）。"""
+    i = 0
+    la, lb = len(a), len(b)
+    while i < la and i < lb and a[-1 - i] == b[-1 - i]:
+        i += 1
+    return a[-i:] if i else ''
+
+
+def eki_line_for(lname, keys, cache, wlm, tozh):
+    """线路页取词条文件：词条标题（去运营前缀后）与 canonical 名相等或公共后缀≥2字。"""
+    if not cache:
+        return None
+    nl = _norm_line_title(lname)
+    m = re.search(r'[（(]([^（）()]*)[）)]$', nl)
+    if m and len(m.group(1)) >= 2:
+        nl = m.group(1).strip()   # 尾部括号注记取通称（1号線(御堂筋線)→御堂筋）
+    if nl:
+        for f in cache:
+            lj = cache[f]['line'].get('ja') or {}
+            lz = cache[f]['line'].get('zh') or {}
+            t = lj.get('title') or lz.get('title')
+            if not t:
+                continue
+            nt = _norm_line_title(t)
+            if nt == nl:
+                return f
+            if len(nt) >= 2 and len(_common_suffix(nl, nt)) >= 2:
+                return f
+    cnt = {}
+    for k in (keys or []):
+        f = wlm.get(k)
+        if f and f in cache:
+            cnt[f] = cnt.get(f, 0) + 1
+    if cnt:
+        best = max(cnt, key=cnt.get)
+        bj = cache[best]['line'].get('ja') or {}
+        bz = cache[best]['line'].get('zh') or {}
+        bt = bj.get('title') or bz.get('title')
+        if bt and _norm_line_title(bt) == nl:
+            return best
+    return None
+
+
+def eki_station_for(key, name, wlm, cache):
+    """站页取词条：wiki_line_map[key] → 文件内按归一站名找车站条目。"""
+    if not cache:
+        return None
+    f = wlm.get(key)
+    if not f or f not in cache:
+        return None
+    sts = cache[f]['stations']
+    for cand in (_norm_sta(key), _norm_sta(name), name):
+        if cand in sts:
+            return sts[cand]
+    return None
+
+
+def eki_brief_html(sec_id, title, entry, lang, url=''):
+    """本地化词条 → 「百科简介」玻璃卡（清洗后首段 + 阅读更多外链）。"""
+    if not entry:
+        return ''
+    lead = _clean_lead(entry.get('lead'))
+    if not lead:
+        return ''
+    if len(lead) > 300:
+        lead = lead[:297] + '…'
+    more = (' <a class="mini" href="' + esc(url) + '" rel="noopener">阅读更多（Wikipedia）↗</a>') if url else ''
+    return ('<h2 id="' + sec_id + '" style="--lc:#5fd4f4">' + esc(title) + '</h2>\n'
+            '<p class="wiki-x"><span lang="' + lang + '">' + esc(lead) + '</span>' + more + '</p>\n')
 
 
 # ---------------- 模板 ----------------
@@ -707,11 +814,21 @@ def station_page(rec, lines, neighbors, cfg, tozh):
                 esc(abs_url(cfg, 'stations/' + quote_path(o) + '/')), esc(label), esc(str(km))))
         near_html = '<h2 id="sec-near" style="--lc:#5fd4f4">附近车站（同县最近 5 站）</h2>\n<ul class="near">\n' + '\n'.join(parts) + '\n</ul>\n'
 
+    # 百科简介（站内本地化词条 eki-wiki 同源，中文→日文首段 + 阅读更多）
+    eki_html = ''
+    se = eki_station_for(key, name, wlm, eki_cache)
+    if se:
+        src = se.get('zh') or se.get('ja')
+        if src:
+            eki_html = eki_brief_html('sec-eki', '百科简介', src, 'zh-Hans' if se.get('zh') else 'ja', se.get('url'))
+
     # 顶部锚点目录
     toc_items = [
         ('#sec-lines', '途经线路'), ('#sec-basic', '基本信息'),
         ('#sec-adj', '相邻车站'), ('#sec-near', '附近车站'),
     ]
+    if eki_html:
+        toc_items.insert(0, ('#sec-eki', '百科'))
     if same_html:
         toc_items.append(('#sec-same', '同名车站'))
     toc_html = '<nav class="toc" aria-label="本页目录">' + ''.join(
@@ -759,7 +876,8 @@ def station_page(rec, lines, neighbors, cfg, tozh):
         + '<h1>' + esc(disp) + '<span class="alt">（<span lang="zh-Hans">' + esc(zh) + '站</span>'
         + (('<em> / </em><span lang="en">' + esc(en) + '</span>') if en else '') + '）</span></h1>\n'
         '<p class="lead">' + esc(desc) + '</p>\n'
-        '<h2 id="sec-lines" style="--lc:#5fd4f4">途经线路</h2>\n'
+        + eki_html
+        + '<h2 id="sec-lines" style="--lc:#5fd4f4">途经线路</h2>\n'
         '<table class="kv wide">\n'
         '<tr><th>线路</th><th>类型</th><th>运营方</th><th>本站位置</th></tr>\n' + lines_html + '</table>\n'
         '<h2 id="sec-basic" style="--lc:#5fd4f4">基本信息</h2>\n'
@@ -900,17 +1018,25 @@ def line_page(rec, stations, cfg, tozh, ordered=None):
     # 同类型线路计数（信息表「类型」行用）
     kind_n = sum(1 for r2 in lines.values() if r2.get('kind') == rec['kind'])
 
-    # 百科简介（Wikipedia 摘要缓存，data/line_wiki.json 可缺省）
+    # 百科简介：优先站内本地化词条（eki-wiki 同源，中文→日文）；line_wiki.json 维基摘要作兜底
     wiki_html = ''
-    w = wiki.get(lname)
-    if w and w.get('extract'):
-        ex = w['extract']
-        if len(ex) > 280:
-            ex = ex[:277] + '…'
-        wurl = w.get('url') or 'https://ja.wikipedia.org/wiki/' + urllib.parse.quote(lname.replace(' ', '_'))
-        wiki_html = ('<h2 id="sec-wiki" style="--lc:' + esc(rec['color']) + '">百科简介</h2>\n'
-                     '<p class="wiki-x"><span lang="ja">' + esc(ex) + '</span> '
-                     '<a class="mini" href="' + esc(wurl) + '" rel="noopener">阅读更多（Wikipedia）↗</a></p>\n')
+    ef = eki_line_for(lname, keys, eki_cache, wlm, tozh)
+    if ef and eki_cache[ef]['line']:
+        le = eki_cache[ef]['line']
+        src = le.get('zh') or le.get('ja')
+        if src:
+            wiki_html = eki_brief_html('sec-wiki', '百科简介', src,
+                                       'zh-Hans' if le.get('zh') else 'ja', le.get('url'))
+    if not wiki_html:
+        w = wiki.get(lname)
+        if w and w.get('extract'):
+            ex = w['extract']
+            if len(ex) > 280:
+                ex = ex[:277] + '…'
+            wurl = w.get('url') or 'https://ja.wikipedia.org/wiki/' + urllib.parse.quote(lname.replace(' ', '_'))
+            wiki_html = ('<h2 id="sec-wiki" style="--lc:' + esc(rec['color']) + '">百科简介</h2>\n'
+                         '<p class="wiki-x"><span lang="ja">' + esc(ex) + '</span> '
+                         '<a class="mini" href="' + esc(wurl) + '" rel="noopener">阅读更多（Wikipedia）↗</a></p>\n')
 
     # 线路速览（站内数据驱动的百科式概述：不依赖外网，维基摘要缺失时保证页面信息丰富）
     summary_parts = ['%s是一条%s' % (lname, kind_zh)]
@@ -1241,13 +1367,15 @@ def main():
 
     cfg = load_config(args.config)
     d = build_records(cfg)
-    global recs, line_orders, line_counts, name_groups, lines, nearby, wiki
+    global recs, line_orders, line_counts, name_groups, lines, nearby, wiki, eki_cache, wlm
     stations, lines, neighbors, tozh = d['stations'], d['lines'], d['neighbors'], d['tozh']
     recs = stations  # station_page 里引用相邻车站记录
     line_orders = d['line_orders']  # 线路车站沿轨道顺序（站页方向/位置用）
     name_groups = d['name_groups']  # 同名站消歧链接
     nearby = d['nearby']            # 附近车站（同县地理最近 5 站）
     wiki = d['line_wiki']           # Wikipedia 线路摘要缓存
+    eki_cache = d['eki_cache']      # 本地化百科词条缓存（eki-wiki 同源）
+    wlm = d['wlm']                  # 站key → 词条线路文件
     line_counts = {lname: len(seq) for lname, seq in line_orders.items()}
 
     out_lines = os.path.join(ROOT, 'lines')

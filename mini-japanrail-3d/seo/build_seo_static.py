@@ -985,6 +985,8 @@ def page_head(cfg, title, desc, url, og_img_url):
         '<meta name="twitter:description" content="' + esc(desc) + '">\n'
         '<meta name="twitter:image" content="' + esc(og_img_url) + '">\n'
         '<meta name="theme-color" content="#0b0f16">\n'
+        '<link rel="icon" type="image/png" sizes="64x64" href="' + esc(abs_url(cfg, 'favicon.png')) + '">\n'
+        '<link rel="apple-touch-icon" sizes="180x180" href="' + esc(abs_url(cfg, 'apple-touch-icon.png')) + '">\n'
         '<style>' + CSS + '</style>\n'
     )
 
@@ -1621,14 +1623,16 @@ def gen_og_image(cfg, station_count, line_count):
     # 卡片
     card = (60, 60, W - 60, H - 60)
     d.rounded_rectangle(card, radius=28, fill=(18, 26, 40, 255), outline=(255, 255, 255, 40), width=1)
-    # 列车图形
-    bx, by, bw, bh = 108, 138, 260, 150
-    d.rounded_rectangle((bx, by, bx + bw, by + bh), radius=26, fill=(47, 109, 232))
-    d.rounded_rectangle((bx + 22, by + 16, bx + bw - 22, by + 52), radius=14, fill=(255, 255, 255))
-    for i, (wx, wy) in enumerate([(bx + 36, by + 74), (bx + 116, by + 74), (bx + 196, by + 74)]):
-        d.rounded_rectangle((wx, wy, wx + 56, wy + 46), radius=8, fill=(157, 196, 255))
-    for i, (wx, wy) in enumerate([(bx + 26, by + 128), (bx + bw - 26 - 46, by + 128)]):
-        d.ellipse((wx, wy, wx + 46, wy + 46), fill=(9, 12, 18), outline=(255, 255, 255), width=6)
+    # 品牌 logo（正式版 icon.png，圆角卡片）
+    lx, ly, ls = 108, 138, 260
+    try:
+        lg = Image.open(os.path.join(ROOT, 'icon.png')).convert('RGB').resize((ls, ls), Image.LANCZOS)
+        lmask = Image.new('L', (ls, ls), 0)
+        ImageDraw.Draw(lmask).rounded_rectangle((0, 0, ls - 1, ls - 1), radius=26, fill=255)
+        img.paste(lg, (lx, ly), lmask)
+    except Exception as e:
+        print('[warn] og-image logo 读取失败（%s），改用占位方块。' % e)
+        d.rounded_rectangle((lx, ly, lx + ls, ly + ls), radius=26, fill=(47, 109, 232))
     # 文字
     def font(path, size, index=0):
         try:

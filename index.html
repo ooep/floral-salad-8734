@@ -8,7 +8,9 @@
 <meta property="og:description" content="interactive map of japan's railway lines" />
 <meta property="og:type" content="website" />
 <meta name="twitter:card" content="summary_large_image" />
-<link rel="icon" type="image/png" href="favicon.png" />
+<link rel="icon" type="image/png" sizes="64x64" href="favicon.png" />
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
 <style>* { margin: 0; padding: 0; box-sizing: border-box; }
 body { background: #07090d; color: #eee; font-family: 'Nunito', system-ui, sans-serif; overflow: hidden; }
 #map { width: 100vw; height: 100vh; /* 强制 GPU 合成层，减少主线程渲染压力 */ transform: translateZ(0); will-change: transform; /* 移动端：禁止浏览器默认手势，拖拽更丝滑 */ touch-action: none; }

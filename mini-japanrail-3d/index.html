@@ -26,7 +26,9 @@
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebSite","name":"Mini JapanRail","alternateName":["全日本铁路实时运行地图","日本鉄道ライブマップ","Japan Rail Live Map"],"url":"https://jr.suki.ing/","description":"全日本铁路 3D 实时运行地图：600+ 条线路、8,900+ 个车站，实时列车、时刻表回放、路线搜索。","inLanguage":["zh-Hans","ja","en"]}
 </script>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%234f8ef7'/%3E%3Cpath d='M14 40h36M16 40l3-13a5 5 0 0 1 4.9-4h16.2a5 5 0 0 1 4.9 4l3 13M19 48h.02M45 48h.02' stroke='white' stroke-width='4' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3Ccircle cx='21' cy='48' r='3.2' fill='white'/%3E%3Ccircle cx='43' cy='48' r='3.2' fill='white'/%3E%3C/svg%3E">
+<link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@6.12.0/dist/maplibre-gl.css" crossorigin="anonymous">
 <script>
 /* 老旧设备自适应降载判定(内联、首帧前执行,避免闪烁)。
@@ -159,10 +161,9 @@ button { font-family:inherit; }
 @media (hover:hover) { #brand:hover { background:var(--glass-2); transform:translateY(-1px); } }
 #brand:active { transform:scale(.95); transition:transform .12s ease-in; }
 #brand:focus-visible { outline:2px solid var(--acc); outline-offset:2px; }
-#brand .lg { position:relative; width:26px; height:26px; border-radius:50%; background:var(--acc); color:#fff; display:flex; align-items:center; justify-content:center; flex:none;
-  box-shadow:0 2px 8px var(--acc-soft), inset 0 1px 1px rgba(255,255,255,.45); overflow:hidden; }
-#brand .lg::after { content:''; position:absolute; inset:0; border-radius:50%; background:linear-gradient(160deg,rgba(255,255,255,.5),rgba(255,255,255,0) 52%); }
-#brand .lg svg { position:relative; z-index:1; }
+#brand .lg { position:relative; width:26px; height:26px; border-radius:7px; background:#fff; display:flex; align-items:center; justify-content:center; flex:none;
+  box-shadow:0 2px 8px var(--acc-soft), inset 0 0 0 1px rgba(255,255,255,.35); overflow:hidden; }
+#brand .lg img { width:100%; height:100%; object-fit:cover; display:block; }
 #brand b { font-size:11.5px; font-weight:700; letter-spacing:.2px; color:var(--txt); }
 .hud-sep { width:1px; height:15px; background:var(--glass-edge); flex:none; }
 .badge { display:flex; align-items:center; gap:11px; }
@@ -885,7 +886,7 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
 
 <div id="topHud">
   <div id="brand" role="button" tabindex="0" aria-label="回到全国视图">
-    <span class="lg"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15h16M5 15l1.5-6A2 2 0 0 1 8.4 7.5h7.2a2 2 0 0 1 1.9 1.5L19 15M7 18.5h.01M17 18.5h.01"/><circle cx="8" cy="18.5" r="1"/><circle cx="16" cy="18.5" r="1"/></svg></span>
+    <span class="lg"><img src="logo.png" alt="" width="26" height="26" decoding="async"></span>
     <b id="brandT">Mini JapanRail</b>
     <span class="hud-sep"></span>
     <div class="badge" id="badge">

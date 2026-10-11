@@ -3319,6 +3319,7 @@ function initMap() {
   /* 液态玻璃改版:移除左下角缩放/指南针 NavigationControl 与比例尺(原比例尺容器被隐藏从未显示),缩放改由滚轮/双指手势完成,底部四角留给 Dock */
   let stateSaveT = 0;
   map.on('moveend', () => { clearTimeout(stateSaveT); stateSaveT = setTimeout(stateHash, 700); });
+  map.on('move', () => { viewDirty = true; }); /* 相机变化标记:暂停时也要据此重建列车顶点(见 startLoop 的 tick) */
   map.on('style.load', () => { try { map.setProjection({ type: 'globe' }); } catch (e) { console.warn('globe unavailable', e); } });
   map.on('error', e => { const m = e && e.error && (e.error.message || String(e.error)) || String(e || ''); window.__errs.push('MAP ' + m.slice(0, 200)); });
   map.on('dragstart', () => { if (followTrip) stopFollow(true); });
@@ -3584,6 +3585,10 @@ function fetchOrmTracks() {
 
 /* ---------------- 渲染循环 ---------------- */
 let lastActiveN = -1, lastFpsSec = -1;
+/* 相机(缩放/平移/旋转)自上次顶点重建后是否变化过。暂停态下位置虽不变,但视野/zoom 会变,
+   必须据此重建列车顶点 —— 否则图元停留在旧视口与旧 zoom:缩小后只剩旧区域附近几辆车、
+   图标按旧 zoom 被放大,直到再次交互时间轴才恢复。 */
+let viewDirty = false;
 function startLoop() {
   function tickFollow(M, dt) {
     if (performance.now() - followStartT <= 950) return;
@@ -3626,12 +3631,16 @@ function startLoop() {
       if (!adaptToastDone) { adaptToastDone = true; toast(T().adapt, 3200); }
     }
     if (lowFpsN > 900) frameSkip = !frameSkip; else frameSkip = false;
-    /* 暂停且无跟随/详情、或页面隐藏:位置不变,跳过顶点重建与重绘(省 CPU/GPU/电量) */
+    /* 暂停且无跟随/详情、或页面隐藏:位置不变,跳过顶点重建与重绘(省 CPU/GPU/电量)。
+       但相机若仍变化(缩放/平移/旋转),列车顶点必须重建 —— 否则列车图元停留在旧视口与旧 zoom:
+       缩小到国家级后只剩旧城市附近几辆车、图标按旧 zoom 被放大,直到再次交互时间轴才恢复。 */
     const staticFrame = (paused && !followTrip && !liveDetailTrip && !sliderDragging) || document.hidden;
-    if (staticFrame || frameSkip) {
+    const viewChanged = viewDirty && !document.hidden;
+    if ((staticFrame && !viewChanged) || frameSkip) {
       if (followTrip) tickFollow(M, dt);
       return;
     }
+    viewDirty = false; /* 相机已稳定:本帧重建后清除,恢复暂停态省电 */
     const n = updateTrains(M);
     if (n !== lastActiveN) { lastActiveN = n; $('bLive').textContent = n.toLocaleString(); pulseStat($('bLive')); }
     if (Math.floor(now / 1000) !== lastFpsSec) { $('dFps').textContent = Math.round(fps); lastFpsSec = Math.floor(now / 1000); }

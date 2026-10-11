@@ -2340,9 +2340,10 @@ function parseTrip(t) {
   }
   if (mx0 > mx1) { mx0 = 0; mx1 = 1; my0 = 0; my1 = 1; }
   /* 班次包围盒 = 停站坐标包络(列车插值/骨架均在站间,边距仅防浮点与贴边,~16km) */
-  /* g: 列车等级(性能改善分层用,见 GRADE_SH/EX/RP);后 5 个字段为渲染期的 LOD/淡入淡出状态,
-     在此一并声明以固定对象形状(9.5 万个班次,避免运行时反复触发隐藏类迁移) */
-  return { t: t.t, r: t.r, i: t.i || '', g: gradeOf(t.i || ''), _f: 0, _M2: 0, _ok: 0, _fm: 0, nm: tripName(t.i || '', N, jas, linesN), w0, w1, dep, arr, N, jas, jasN, stopC, lines, linesN, lineSet, sStart, sRun, skX, skY, skStop, skCum, skLen, bad, skUp, skDn, color: typeColor(t.i), mx0: mx0 - 0.0005, mx1: mx1 + 0.0005, my0: my0 - 0.0007, my1: my1 + 0.0007 };
+  /* g: 列车等级(性能改善分层用,见 GRADE_SH/EX/RP);后 6 个字段为渲染期的 LOD/淡入淡出状态,
+     在此一并声明以固定对象形状(9.5 万个班次,避免运行时反复触发隐藏类迁移)。
+     _k: 上次成功解算得到的线路类型(KINDS 之一),用于让「类型过滤」也走淡入淡出 */
+  return { t: t.t, r: t.r, i: t.i || '', g: gradeOf(t.i || ''), _f: 0, _M2: 0, _ok: 0, _fm: 0, _k: null, nm: tripName(t.i || '', N, jas, linesN), w0, w1, dep, arr, N, jas, jasN, stopC, lines, linesN, lineSet, sStart, sRun, skX, skY, skStop, skCum, skLen, bad, skUp, skDn, color: typeColor(t.i), mx0: mx0 - 0.0005, mx1: mx1 + 0.0005, my0: my0 - 0.0007, my1: my1 + 0.0007 };
 }
 
 /* ---------------- 位置引擎 ---------------- */
@@ -3100,6 +3101,12 @@ let lastQuad = [1, 1]; /* 图标模式方块屏幕尺寸(L,W),shader UV 归一�
      ③ 淡入淡出:每个班次的显示状态是 0..1 的 alpha(而非布尔),按真实帧间隔向目标值
         逼近(FADE_MS≈260ms)。离开视野/等级关闭/班次结束 → 淡出后才真正移出,
         新进入 → 从 0 起淡入,所以缩放时列车是"浮出来/沉下去",不会啪一下闪现。
+     ④ 类型过滤(selKind:铁路/路面电车/单轨…)也并入目标 alpha —— 关闭某类型是渐隐、
+        重开是渐显,不再整批瞬移。用班次上缓存的 _k(上次解算得到的线路类型)判断,
+        避免为了判定类型而在阶段 1 就做位置解算(那会抵消分流的收益)。
+     ⑤ 跟随/详情中的列车强制通过等级门:否则缩到低倍率时相机会跟着一辆看不见的车。
+     ⑥ 换运行日 / 换数据档时清空 fadeList:tripList 已换成新对象,旧条目是孤儿,
+        不清会在随后 ~260ms 内用上一档数据继续解算并绘制。
    ★ 为什么不再叠一层空间网格:实测过 NG=256/512/1024/2048 的 mercator 均匀网格,
      由于「班次包围盒 = 全程路线」跨度大(中位 10km、p99 200km、最大 950km),
      且视口需按最大包围盒外扩缓冲,低倍率下网格反而比全桶扫描更慢(z6:0.20 vs 0.17ms),
@@ -3127,6 +3134,9 @@ let dayList = null, dayListBit = -1, dayListSrc = null, dayGrade = null;
 function buildDayIndex() {
   dayList = [];
   dayGrade = [[], [], [], []];
+  /* 换运行日 / 换数据档后 tripList 是全新对象,旧 fadeList 里全是「上一档」的孤儿班次,
+     不清空会在随后 ~260ms 内用旧数据继续解算并绘制(幽灵车)。直接清空,下一帧重建。 */
+  fadeList.length = 0;
   for (let k = 0; k < tripList.length; k++) {
     const t = tripList[k];
     if (!(t.r & dayBit)) continue;
@@ -3201,6 +3211,17 @@ function updateTrains(M, dtms) {
   if (perfLod) updateTierGate(z);
   const gate = perfLod ? tierOn : TIER_ALL;
   eligible.length = 0;
+  /* 跟随 / 详情中的列车强制通过等级门:否则缩到低倍率时相机仍跟着一辆「被 LOD 隐藏」的车,
+     画面里空无一物、详情面板位置却还在动。这两个至多各一辆,成本可忽略。 */
+  if (followTrip || liveDetailTrip) {
+    for (const ft of [followTrip, liveDetailTrip]) {
+      if (!ft || ft.bad || ft._ok === stamp) continue;
+      if (vp && (ft.mx1 < vp.mx0 || ft.mx0 > vp.mx1 || ft.my1 < vp.my0 || ft.my0 > vp.my1)) continue;
+      const M2 = windowShift(ft, M);
+      if (M2 < ft.w0 || M2 > ft.w1) continue;
+      ft._M2 = M2; ft._ok = stamp; eligible.push(ft);
+    }
+  }
   for (let g = 0; g < 4; g++) {
     if (!gate[g]) continue;
     const arr = dayGrade[g];
@@ -3225,7 +3246,10 @@ function updateTrains(M, dtms) {
   let w = 0;
   for (let i = 0; i < fadeList.length; i++) {
     const t = fadeList[i];
-    const tgt = (t._ok === stamp) ? 1 : 0;
+    /* 目标 alpha = 本帧应显示(_ok) 且 未被类型过滤(_k 为上次解算得到的线路类型)。
+       把 selKind 也纳入目标值,是为了让「切换铁路/路面电车/单轨等类型」同样渐隐渐显,
+       而不是整批瞬间消失 —— 阶段 3 仍照常绘制(alpha 递减),从而看得到淡出过程。 */
+    const tgt = (t._ok === stamp && (t._k === null || selKind[t._k])) ? 1 : 0;
     t._fm = stamp;
     if (t._f < tgt) t._f = Math.min(tgt, t._f + step);
     else if (t._f > tgt) t._f = Math.max(tgt, t._f - step);
@@ -3236,7 +3260,10 @@ function updateTrains(M, dtms) {
   for (let i = 0; i < eligible.length; i++) {
     const t = eligible[i];
     if (t._fm === stamp) continue;
-    t._fm = stamp; t._f = 0;                    /* 新进入:从全透明起淡入 */
+    t._fm = stamp;
+    /* 类型被过滤的班次不加入淡入集合(避免每帧反复进出);重新打开时会从 0 淡入 */
+    if (t._k !== null && !selKind[t._k]) continue;
+    t._f = 0;                                   /* 新进入:从全透明起淡入 */
     fadeList.push(t);
   }
 
@@ -3249,8 +3276,12 @@ function updateTrains(M, dtms) {
     if (n >= MAXT - 1 || vtx * STRIDE + 36 * STRIDE > bufArr.length) { stopped = i; break; }
     const M2 = (t._ok === stamp) ? t._M2 : windowShift(t, M);
     const p = trainPosition(t, M2);
-    /* 定位失败或线路类型被过滤:撤掉"应显示"标记 → 下一帧起淡出(而不是硬跳消失) */
-    if (!p || !selKind[p[4]]) { t._ok = 0; continue; }
+    /* 定位失败(罕见的数据/插值异常):本帧不画,并把 alpha 归零 —— 若只置 _ok=0,
+       阶段 1 下一帧会重新标记 _ok,阶段 2 的 alpha 反而继续涨到 1,等定位恢复就"啪"地冒出。
+       归零后定位恢复时会从 0 淡入。 */
+    if (!p) { t._ok = 0; t._f = 0; continue; }
+    /* 记录本帧线路类型,供下一帧阶段 2 判断是否被类型过滤(被过滤时目标 alpha=0,渐隐) */
+    t._k = p[4];
     let color = t.color;
     if (p[3]) { const lc = lineColor.get(p[3]); if (lc) color = lc; }
     const [r, g, b] = t._rgb && t._line === p[3] ? t._rgb : (t._rgb = hexToRgb(color), t._rgb);
@@ -3326,10 +3357,11 @@ function updateTrains(M, dtms) {
     n++;
     if (drawGlow) glowPass.push([mx, my, dxm, dym, r, g, b, al]);
   }
-  /* 触顶(MAXT/缓冲上限)时,未画出的班次回退 alpha:否则它们会在 fadeList 里悄悄涨到 1,
-     等上限一松动就整批以全不透明"啪"地冒出来 —— 回退后重新淡入,观感一致 */
+  /* 触顶(MAXT/缓冲上限)时,未画出的班次直接把 alpha 归零:否则阶段 2 每帧仍在 +step,
+     与本处相抵会让 alpha 冻结在 1,一旦上限松动就整批以全不透明"啪"地冒出来 ——
+     归零后重新淡入,观感一致。 */
   if (stopped >= 0) {
-    for (let j = stopped; j < fadeList.length; j++) { const t2 = fadeList[j]; if (t2._f > 0) t2._f = Math.max(0, t2._f - step); }
+    for (let j = stopped; j < fadeList.length; j++) fadeList[j]._f = 0;
   }
   // 光晕 pass(与车体同一缓冲,第二遍绘制,始终在地面层)
   if (drawGlow) {

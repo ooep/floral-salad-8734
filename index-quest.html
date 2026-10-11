@@ -735,12 +735,14 @@ body:not(.sidebar-collapsed) #sidebar-toggle { left: calc(var(--sidebar-w) + 10p
 .medal-chip:not(.earned) svg { color: var(--text-muted); opacity: .55; }
 .medal-chip:not(.earned)::before {
     content: ''; position: absolute; inset: 0; border-radius: inherit; padding: 1.5px;
-    background: conic-gradient(var(--accent) calc(var(--p, 0) * 1%), rgba(255,255,255,.10) 0);
+    background: conic-gradient(var(--m-mid) calc(var(--p, 0) * 1%), rgba(255,255,255,.10) 0);
     -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
     mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
     -webkit-mask-composite: xor; mask-composite: exclude;
     pointer-events: none; opacity: .92;
 }
+/* 未獲得：鍵かけの淡い内枠 */
+.medal-chip:not(.earned) { border-style: dashed; border-color: var(--border); }
 .medal-chip .mc-prog {
     position: absolute; z-index: 2; right: 3px; bottom: 1px;
     font-size: 8.5px; font-weight: 800; color: var(--text-dim);
@@ -758,6 +760,7 @@ body:not(.sidebar-collapsed) #sidebar-toggle { left: calc(var(--sidebar-w) + 10p
         0 3px 10px rgba(0,0,0,.32),
         inset 0 1px 0 rgba(255,255,255,.75),
         inset 0 -2px 5px rgba(0,0,0,.28),
+        0 0 0 1px rgba(255,255,255,.14),
         0 0 13px var(--m-glow);
 }
 .medal-chip.earned svg { color: var(--m-ink); filter: drop-shadow(0 1px 1px rgba(255,255,255,.4)); }
@@ -766,10 +769,21 @@ body:not(.sidebar-collapsed) #sidebar-toggle { left: calc(var(--sidebar-w) + 10p
     background: radial-gradient(58% 42% at 50% 0%, rgba(255,255,255,.6), transparent 72%);
     opacity: .85; pointer-events: none;
 }
-.medal-chip.earned.bronze   { --m-hi:#f4d3a6; --m-mid:#cd7f32; --m-lo:#7f4a1c; --m-glow:rgba(205,127,50,.5);  --m-ink:#402813; }
-.medal-chip.earned.silver   { --m-hi:#ffffff; --m-mid:#c3cdda; --m-lo:#79838f; --m-glow:rgba(185,196,212,.55); --m-ink:#2c3542; }
-.medal-chip.earned.gold     { --m-hi:#fff2bd; --m-mid:#e6be4d; --m-lo:#9c7a1c; --m-glow:rgba(224,184,74,.55); --m-ink:#3f3007; }
-.medal-chip.earned.platinum { --m-hi:#e2fbff; --m-mid:#7fe0ff; --m-lo:#2f7f9e; --m-glow:rgba(127,224,255,.6); --m-ink:#0a3b48; }
+.medal-chip.bronze   { --m-hi:#f4d3a6; --m-mid:#cd7f32; --m-lo:#7f4a1c; --m-glow:rgba(205,127,50,.5);  --m-ink:#402813; }
+.medal-chip.silver   { --m-hi:#ffffff; --m-mid:#c3cdda; --m-lo:#79838f; --m-glow:rgba(185,196,212,.55); --m-ink:#2c3542; }
+.medal-chip.gold     { --m-hi:#fff2bd; --m-mid:#e6be4d; --m-lo:#9c7a1c; --m-glow:rgba(224,184,74,.55); --m-ink:#3f3007; }
+.medal-chip.platinum { --m-hi:#e2fbff; --m-mid:#7fe0ff; --m-lo:#2f7f9e; --m-glow:rgba(127,224,255,.6); --m-ink:#0a3b48; }
+/* 等級ピップ（右下・1〜4個） */
+.medal-chip.earned::before {
+    content: ''; position: absolute; right: 5px; bottom: 6px; z-index: 2;
+    width: 3.5px; height: 3.5px; border-radius: 50%;
+    background: var(--m-ink); opacity: .78;
+    box-shadow: -6px 0 0 var(--m-ink);
+}
+.medal-chip.earned[data-rank="1"]::before { box-shadow: none; }
+.medal-chip.earned[data-rank="2"]::before { box-shadow: -6px 0 0 var(--m-ink); }
+.medal-chip.earned[data-rank="3"]::before { box-shadow: -6px 0 0 var(--m-ink), -12px 0 0 var(--m-ink); }
+.medal-chip.earned[data-rank="4"]::before { box-shadow: -6px 0 0 var(--m-ink), -12px 0 0 var(--m-ink), -18px 0 0 var(--m-ink); }
 .medal-chip:hover { transform: translateY(-3px) scale(1.06); }
 .medal-chip:active { transform: translateY(-1px) scale(.97); }
 .medal-chip.earned:hover { box-shadow: 0 6px 16px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.8), inset 0 -2px 5px rgba(0,0,0,.25), 0 0 20px var(--m-glow); }
@@ -782,6 +796,10 @@ body:not(.sidebar-collapsed) #sidebar-toggle { left: calc(var(--sidebar-w) + 10p
     transition: transform .75s var(--ease-smooth);
 }
 .medal-chip.earned:hover .mc-shine::before { transform: rotate(18deg) translateX(360%); }
+/* プラチナは常時オーロラ光沢 */
+@keyframes medalSheen { 0%, 62% { transform: rotate(18deg) translateX(-260%); } 100% { transform: rotate(18deg) translateX(360%); } }
+.medal-chip.earned.platinum .mc-shine::before { animation: medalSheen 5.2s ease-in-out infinite; }
+.medal-chip.earned.gold .mc-shine::before { animation: medalSheen 7.5s ease-in-out infinite; }
 /* 新規獲得ポップ */
 @keyframes medalPop { 0% { transform: scale(.4); opacity: 0; } 55% { transform: scale(1.22); opacity: 1; } 78% { transform: scale(.94); } 100% { transform: scale(1); } }
 @keyframes medalGlow { 0%,100% { filter: none; } 50% { filter: brightness(1.25) drop-shadow(0 0 10px var(--m-glow)); } }
@@ -904,6 +922,10 @@ body:not(.sidebar-collapsed) #sidebar-toggle { left: calc(var(--sidebar-w) + 10p
 .medal-ribbon.earned.silver   { background: rgba(185,196,212,.16); color: #dfe6f0; box-shadow: inset 0 0 0 1px rgba(185,196,212,.5); }
 .medal-ribbon.earned.gold     { background: rgba(224,184,74,.16); color: #f0cd68; box-shadow: inset 0 0 0 1px rgba(224,184,74,.5); }
 .medal-ribbon.earned.platinum { background: rgba(127,224,255,.16); color: #a6ecff; box-shadow: inset 0 0 0 1px rgba(127,224,255,.55); }
+:root[data-theme="light"] .medal-ribbon.earned.bronze   { color: #9a5717; background: rgba(205,127,50,.14); box-shadow: inset 0 0 0 1px rgba(205,127,50,.42); }
+:root[data-theme="light"] .medal-ribbon.earned.silver   { color: #55606d; background: rgba(120,131,143,.14); box-shadow: inset 0 0 0 1px rgba(120,131,143,.42); }
+:root[data-theme="light"] .medal-ribbon.earned.gold     { color: #8f6c06; background: rgba(224,184,74,.2);  box-shadow: inset 0 0 0 1px rgba(190,150,30,.45); }
+:root[data-theme="light"] .medal-ribbon.earned.platinum { color: #1c7c9b; background: rgba(47,127,158,.14); box-shadow: inset 0 0 0 1px rgba(47,127,158,.4); }
 
 .medal-stage {
     position: relative; width: 112px; height: 112px; margin: 0 auto 14px;
@@ -915,6 +937,16 @@ body:not(.sidebar-collapsed) #sidebar-toggle { left: calc(var(--sidebar-w) + 10p
     opacity: .55; animation: haloPulse 3.4s ease-in-out infinite;
 }
 @keyframes haloPulse { 0%,100% { opacity: .4; transform: scale(.94); } 50% { opacity: .68; transform: scale(1.05); } }
+/* 回転する放射光輪（獲得済のみ） */
+.medal-stage.earned::after {
+    content: ''; position: absolute; inset: -13px; border-radius: 50%;
+    background: repeating-conic-gradient(from 0deg, var(--m-glow) 0deg .7deg, transparent .7deg 11deg);
+    -webkit-mask: radial-gradient(circle, transparent 63%, #000 65%, #000 80%, transparent 82%);
+    mask: radial-gradient(circle, transparent 63%, #000 65%, #000 80%, transparent 82%);
+    opacity: .85; pointer-events: none;
+    animation: spinSlow 26s linear infinite;
+}
+@keyframes spinSlow { to { transform: rotate(360deg); } }
 .medal-big {
     position: absolute; inset: 0; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
@@ -946,9 +978,24 @@ body:not(.sidebar-collapsed) #sidebar-toggle { left: calc(var(--sidebar-w) + 10p
 }
 .medal-stage:not(.earned) .medal-lock { display: flex; }
 .medal-lock svg { width: 15px; height: 15px; color: var(--text-muted); }
-.medal-tier { font-size: 10px; font-weight: 800; letter-spacing: 1.4px; text-transform: uppercase; margin-bottom: 6px; color: var(--text-muted); }
+.medal-tier {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 10px; font-weight: 800; letter-spacing: 1.8px;
+    text-transform: uppercase; margin-bottom: 7px; color: var(--text-muted);
+}
+.medal-tier::before, .medal-tier::after {
+    content: ''; width: 5px; height: 5px; transform: rotate(45deg);
+    background: currentColor; opacity: .5;
+}
 .medal-tier.bronze { color: #cd7f32; } .medal-tier.silver { color: #b9c4d4; }
 .medal-tier.gold { color: #e0b84a; } .medal-tier.platinum { color: #7fe0ff; }
+:root[data-theme="light"] .medal-tier.bronze   { color: #a5622a; }
+:root[data-theme="light"] .medal-tier.silver   { color: #78828f; }
+:root[data-theme="light"] .medal-tier.gold     { color: #ab8613; }
+:root[data-theme="light"] .medal-tier.platinum { color: #2b89aa; }
+.medal-hint { font-size: 11px; font-weight: 600; margin-top: 2px; margin-bottom: 0; }
+.medal-hint.earned { color: var(--success); }
+.medal-hint.locked { color: var(--text-muted); }
 .medal-cat { font-size: 10px; color: var(--text-muted); font-weight: 600; margin-bottom: 4px; }
 .medal-prog-wrap { margin-top: 16px; }
 .medal-prog-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 11px; color: var(--text-muted); font-weight: 600; }
@@ -1352,6 +1399,7 @@ body:not(.sidebar-collapsed) #sidebar-toggle { left: calc(var(--sidebar-w) + 10p
         <h3 id="medal-name"></h3>
         <div class="medal-cat" id="medal-cat"></div>
         <p id="medal-desc"></p>
+        <p class="medal-hint" id="medal-hint"></p>
         <div class="medal-prog-wrap">
             <div class="medal-prog-head">
                 <span data-i18n="medal_progress">Progress</span>
@@ -1731,6 +1779,12 @@ const I18N = {
         medal_earned: 'Earned',
         medal_locked: 'Locked',
         medal_new: 'Medal earned',
+        tier_bronze: 'Bronze',
+        tier_silver: 'Silver',
+        tier_gold: 'Gold',
+        tier_platinum: 'Platinum',
+        medal_hint_earned: 'Added to your honours',
+        medal_hint_locked: 'Ride the required services to unlock',
         cat_shinkansen: 'Shinkansen',
         cat_limited: 'Limited Express',
         cat_route: 'Route Mastery',
@@ -1790,6 +1844,12 @@ const I18N = {
         medal_earned: '獲得済',
         medal_locked: '未獲得',
         medal_new: '勲章獲得',
+        tier_bronze: 'ブロンズ',
+        tier_silver: 'シルバー',
+        tier_gold: 'ゴールド',
+        tier_platinum: 'プラチナ',
+        medal_hint_earned: '名誉の殿堂に収蔵',
+        medal_hint_locked: '条件を満たすと獲得できます',
         cat_shinkansen: '新幹線',
         cat_limited: '特急',
         cat_route: '路線制覇',
@@ -1849,6 +1909,12 @@ const I18N = {
         medal_earned: '已获得',
         medal_locked: '未获得',
         medal_new: '获得勋章',
+        tier_bronze: '青铜',
+        tier_silver: '白银',
+        tier_gold: '黄金',
+        tier_platinum: '铂金',
+        medal_hint_earned: '已收入荣誉殿堂',
+        medal_hint_locked: '乘车达成条件即可解锁',
         cat_shinkansen: '新干线',
         cat_limited: '特急',
         cat_route: '路线制霸',
@@ -2695,11 +2761,12 @@ function renderMedals() {
         const cat = medalCategory(m.id);
         const sep = (prevCat !== null && cat !== prevCat) ? '<span class="medal-sep"></span>' : '';
         prevCat = cat;
-        const cls = m.res.got ? `earned ${m.tier}` : '';
+        const cls = (m.res.got ? 'earned ' : '') + m.tier;
         const just = (m.res.got && medalsInitialized && !seenMedals.has(m.id)) ? ' just-earned' : '';
         const pct = m.res.max ? Math.min(100, m.res.cur / m.res.max * 100) : 0;
         const prog = m.res.got ? '' : `<span class="mc-prog">${m.res.cur}</span>`;
-        return `${sep}<div class="medal-chip ${cls}${just}" data-medal="${m.id}" style="--p:${pct.toFixed(1)}" title="${escHtml(medalLabel(m, 'name'))}">${MEDAL_ICONS[m.icon] || ''}${prog}<span class="mc-shine"></span></div>`;
+        const rank = { bronze: 1, silver: 2, gold: 3, platinum: 4 }[m.tier] || 1;
+        return `${sep}<div class="medal-chip ${cls}${just}" data-medal="${m.id}" data-rank="${rank}" style="--p:${pct.toFixed(1)}" title="${escHtml(medalLabel(m, 'name'))}">${MEDAL_ICONS[m.icon] || ''}${prog}<span class="mc-shine"></span></div>`;
     }).join('');
     medals.forEach(m => { if (m.res.got) seenMedals.add(m.id); else seenMedals.delete(m.id); });
     medalsInitialized = true;
@@ -2733,13 +2800,18 @@ function openMedalDetail(id) {
     const ribbon = document.getElementById('medal-ribbon');
     ribbon.textContent = t(earned ? 'medal_earned' : 'medal_locked');
     ribbon.className = 'medal-ribbon' + (earned ? ` earned ${m.tier}` : '');
-    document.getElementById('medal-tier').textContent = m.tier;
+    document.getElementById('medal-tier').textContent = t('tier_' + m.tier);
     document.getElementById('medal-tier').className = 'medal-tier ' + m.tier;
     document.getElementById('medal-name').textContent = medalLabel(m, 'name');
     document.getElementById('medal-cat').textContent = t('cat_' + medalCategory(m.id));
     document.getElementById('medal-desc').textContent = medalLabel(m, 'desc');
+    const hint = document.getElementById('medal-hint');
+    if (hint) {
+        hint.textContent = t(earned ? 'medal_hint_earned' : 'medal_hint_locked');
+        hint.className = 'medal-hint ' + (earned ? 'earned' : 'locked');
+    }
     document.getElementById('medal-prog-txt').textContent = `${m.res.cur} / ${m.res.max}`;
-    const pct = m.res.max ? Math.round(m.res.cur / m.res.max * 100) : 0;
+    const pct = m.res.max ? Math.min(100, Math.round(m.res.cur / m.res.max * 100)) : 0;
     document.getElementById('medal-prog-pct').textContent = pct + '%';
     document.getElementById('medal-prog-fill').style.width = pct + '%';
     document.getElementById('modal-medal').classList.add('show');

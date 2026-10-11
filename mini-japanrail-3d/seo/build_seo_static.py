@@ -986,6 +986,7 @@ def page_head(cfg, title, desc, url, og_img_url):
         '<meta name="twitter:image" content="' + esc(og_img_url) + '">\n'
         '<meta name="theme-color" content="#0b0f16">\n'
         '<link rel="icon" type="image/png" sizes="64x64" href="' + esc(abs_url(cfg, 'favicon.png')) + '">\n'
+        '<link rel="icon" type="image/png" sizes="64x64" href="' + esc(abs_url(cfg, 'favicon-dark.png')) + '" media="(prefers-color-scheme: dark)">\n'
         '<link rel="apple-touch-icon" sizes="180x180" href="' + esc(abs_url(cfg, 'apple-touch-icon.png')) + '">\n'
         '<style>' + CSS + '</style>\n'
     )

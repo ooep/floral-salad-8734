@@ -26,9 +26,9 @@
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebSite","name":"Mini JapanRail","alternateName":["全日本铁路实时运行地图","日本鉄道ライブマップ","Japan Rail Live Map"],"url":"https://jr.suki.ing/","description":"全日本铁路 3D 实时运行地图：600+ 条线路、8,900+ 个车站，实时列车、时刻表回放、路线搜索。","inLanguage":["zh-Hans","ja","en"]}
 </script>
-<link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
-<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="64x64" href="favicon.png" id="fav64">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" id="fav192">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" id="appleIcon">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@6.12.0/dist/maplibre-gl.css" crossorigin="anonymous">
 <script>
 /* 老旧设备自适应降载判定(内联、首帧前执行,避免闪烁)。
@@ -5370,6 +5370,17 @@ function applyThemeMode() {
   const resolved = (mode === 'auto') ? (mq.matches ? 'light' : 'dark') : mode;
   document.documentElement.setAttribute('data-theme', resolved);
   document.querySelectorAll('#themeRow .chip').forEach(c => c.classList.toggle('on', c.dataset.theme === mode));
+  applyThemeBrand(resolved);
+}
+// 深色模式使用深色版 logo / 图标（浅色模式用浅色版）
+function applyThemeBrand(t) {
+  const d = t === 'dark';
+  const bi = document.querySelector('#brand .lg img');
+  if (bi) bi.src = d ? 'logo-dark.png' : 'logo.png';
+  const f64 = $('fav64'), f192 = $('fav192'), ap = $('appleIcon');
+  if (f64) f64.href = d ? 'favicon-dark.png' : 'favicon.png';
+  if (f192) f192.href = d ? 'icon-192-dark.png' : 'icon-192.png';
+  if (ap) ap.href = d ? 'apple-touch-icon-dark.png' : 'apple-touch-icon.png';
 }
 document.querySelectorAll('#themeRow .chip').forEach(c => c.addEventListener('click', () => {
   localStorage.setItem('mjr3d_theme', c.dataset.theme); applyThemeMode(); stateHash();

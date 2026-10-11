@@ -73,7 +73,7 @@ jobs:
       - name: Prepare deploy dir
         run: |
           rm -rf dist && mkdir -p dist/data
-          cp index.html favicon.png apple-touch-icon.png icon-192.png icon-512.png dist/
+          cp index.html favicon.png favicon-dark.png apple-touch-icon.png apple-touch-icon-dark.png icon-192.png icon-192-dark.png icon-512.png icon-512-dark.png dist/
           cp -r data/segments.geojson data/stations.geojson data/names_en.json dist/data/
           cp -r data/live dist/data/
           cp -r mini-japanrail-3d dist/   # Mini JapanRail 子站 → /mini-japanrail-3d/

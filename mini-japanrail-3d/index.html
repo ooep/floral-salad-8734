@@ -2340,10 +2340,11 @@ function parseTrip(t) {
   }
   if (mx0 > mx1) { mx0 = 0; mx1 = 1; my0 = 0; my1 = 1; }
   /* 班次包围盒 = 停站坐标包络(列车插值/骨架均在站间,边距仅防浮点与贴边,~16km) */
-  /* g: 列车等级(性能改善分层用,见 GRADE_SH/EX/RP);后 6 个字段为渲染期的 LOD/淡入淡出状态,
+  /* g: 列车等级(性能改善分层用,见 GRADE_SH/EX/RP);后 7 个字段为渲染期的 LOD/淡入淡出状态,
      在此一并声明以固定对象形状(9.5 万个班次,避免运行时反复触发隐藏类迁移)。
-     _k: 上次成功解算得到的线路类型(KINDS 之一),用于让「类型过滤」也走淡入淡出 */
-  return { t: t.t, r: t.r, i: t.i || '', g: gradeOf(t.i || ''), _f: 0, _M2: 0, _ok: 0, _fm: 0, _k: null, nm: tripName(t.i || '', N, jas, linesN), w0, w1, dep, arr, N, jas, jasN, stopC, lines, linesN, lineSet, sStart, sRun, skX, skY, skStop, skCum, skLen, bad, skUp, skDn, color: typeColor(t.i), mx0: mx0 - 0.0005, mx1: mx1 + 0.0005, my0: my0 - 0.0007, my1: my1 + 0.0007 };
+     _k: 上次成功解算得到的线路类型(KINDS 之一),用于让「类型过滤」也走淡入淡出
+     _seen: 空间网格查询的帧戳(班次跨多格时去重,避免重复入 eligible) */
+  return { t: t.t, r: t.r, i: t.i || '', g: gradeOf(t.i || ''), _f: 0, _M2: 0, _ok: 0, _fm: 0, _k: null, _seen: 0, nm: tripName(t.i || '', N, jas, linesN), w0, w1, dep, arr, N, jas, jasN, stopC, lines, linesN, lineSet, sStart, sRun, skX, skY, skStop, skCum, skLen, bad, skUp, skDn, color: typeColor(t.i), mx0: mx0 - 0.0005, mx1: mx1 + 0.0005, my0: my0 - 0.0007, my1: my1 + 0.0007 };
 }
 
 /* ---------------- 位置引擎 ---------------- */
@@ -2834,7 +2835,17 @@ function pairKm(t, i) {
 }
 
 /* ---------------- 地图与自定义列车层 ---------------- */
-const QUAD = [[-1,-1],[1,-1],[1,1], [-1,-1],[1,1],[-1,1]];
+/* 顶点模板全部用扁平 TypedArray(而非 [[x,y],…] 嵌套数组):
+   阶段 3 每帧要对数千列车 × 最多 42 顶点做下标访问,嵌套数组会触发大量属性查找与
+   边界检查;扁平化后是一次 float32 读取。四角顺序与 a_corner 语义一致(-1/1 单位方框)。 */
+const QUADX = new Float32Array([-1, 1, 1, -1, 1, -1]);
+const QUADY = new Float32Array([-1, -1, 1, -1, 1, 1]);
+/* 立体盒 4 个侧墙的端点(与底面四角同构):a→b 逆时针;WALL_QI=[0,1,2,0,2,3] 把每面拆成两个三角形 */
+const WALL_AX = new Float32Array([-1, -1, -1, 1]);
+const WALL_AY = new Float32Array([-1, 1, -1, -1]);
+const WALL_BX = new Float32Array([1, 1, -1, 1]);
+const WALL_BY = new Float32Array([-1, 1, 1, 1]);
+const WALL_QI = new Int8Array([0, 1, 2, 0, 2, 3]);
 const MAXT = 9000, STRIDE = 13; /* 12 + a_uv(图集索引 float,-1=无纹理) */
 let vbo = null, vao = null, uni = new Map(), glRef = null, bufArr = new Float32Array(MAXT * 42 * STRIDE); /* 倾斜视角立体盒:每列车 底6+顶6+4侧24=36 + 光晕 6 最坏 42 顶点 */
 let __renderCount = 0, __glErr = 0, __lastDraw = 0, __lastArgs = null;
@@ -3090,6 +3101,13 @@ function loadTrainAtlas() {
 }
 const visibleTrips = [], visibleXY = new Float32Array(MAXT * 2);
 let lastQuad = [1, 1]; /* 图标模式方块屏幕尺寸(L,W),shader UV 归一化用 */
+/* 光晕 pass 暂存:每列车 8 个 float(mx,my,dxm,dym,r,g,b,al)。原先用数组的数组 +
+   每帧 push 上千个小数组,是低倍率下又一 GC 源;改预分配扁平缓冲 + 计数,零分配。 */
+const glowBuf = new Float32Array(MAXT * 8);
+let glowN = 0;
+/* 併结车判定用的「已绘制」集合:每帧复用(clear)而非 new Set(),避免每帧一次 Set 分配 */
+const drawnCouple = new Set();
+let gridUsed = false; /* 本帧阶段 1 是否走了空间网格(诊断用,__lod() 暴露) */
 /* ══════════════ 性能改善(perfLod):分层显示 + 淡入淡出 ══════════════
    问题:平日全量 9.5 万班次,旧逻辑每帧都要整表扫描一遍(包围盒裁剪仍要遍历全部),
         全国视图(z<5,不做视口裁剪)更是 9.5 万次 windowShift + 位置解算,是主要负载来源。
@@ -3107,16 +3125,28 @@ let lastQuad = [1, 1]; /* 图标模式方块屏幕尺寸(L,W),shader UV 归一�
      ⑤ 跟随/详情中的列车强制通过等级门:否则缩到低倍率时相机会跟着一辆看不见的车。
      ⑥ 换运行日 / 换数据档时清空 fadeList:tripList 已换成新对象,旧条目是孤儿,
         不清会在随后 ~260ms 内用上一档数据继续解算并绘制。
-   ★ 为什么不再叠一层空间网格:实测过 NG=256/512/1024/2048 的 mercator 均匀网格,
-     由于「班次包围盒 = 全程路线」跨度大(中位 10km、p99 200km、最大 950km),
-     且视口需按最大包围盒外扩缓冲,低倍率下网格反而比全桶扫描更慢(z6:0.20 vs 0.17ms),
-     城市级也只快约 1ms/帧,却要多付 10~70ms 构建 + Map 内存 + 跨格去重。
-     净收益为负,故只保留收益最大的等级分桶。 */
+     ⑦ 自适应空间网格(仅高倍率启用):z≥9 时四个等级桶全开,阶段 1 每帧要扫 9.5 万条
+        (实测 ≈3ms/帧,是放大到城市级时的主要负载)。为此按 mercator 铺一层均匀网格
+        (dayGrid),视口只取覆盖的格子。★ 网格并非无脑启用 —— 低/中倍率下视口几乎覆盖
+        全国,要访问的格子数×格内班次数反而超过线性扫描(实测 z8.5 以下净亏),
+        因此每帧先估算「网格访问量 vs 线性扫描量」,只有网格明显更省(估算 < 线性的 60%)
+        才走网格,否则回退线性扫描。这样既拿到城市级的收益,又不在低倍率上倒亏。
+        (注:网格对「班次包围盒跨度大」不敏感 —— 跨度大的班次会跨多格,但视口只取少数格,
+         代价是构建时多写几次,查询时用 _seen 帧戳去重。实测 z9.5 扫描量 9.5 万 ⇒ 1.4 万。)
+   ★ 顶点构建同样做了减负(见 updateTrains 阶段 3):立体盒的 4 个侧墙原先每列车 new 出
+     约 25 个临时数组,倾斜模式下每秒十几万次分配触发 GC 停顿,已改为模块级扁平常量。 */
 let perfLod = localStorage.getItem('mjr3d_perflod') !== '0'; /* 默认开启 */
 const TIER_ENTER = [0, 0, 6.8, 9.0];  /* 各等级"开始显示"的缩放级;0 = 始终显示 */
 const TIER_EXIT  = [0, 0, 6.2, 8.4];  /* 各等级"停止显示"的缩放级(与 enter 构成迟滞带) */
 const TIER_ALL = [true, true, true, true];
 const tierOn = [true, true, false, false];
+/* 空间网格分辨率:GRID_N × GRID_N 覆盖整个 mercator 单位正方形 → 单格约 280km(GRID_N=128)。
+   ★ 分辨率是实测选出来的,不是越细越好:细网格(1024,单格 32km)会让长班次(新干线等
+     全程包围盒跨几十格)在网格里重复登记,条目数从 12 万膨胀到 91 万,查询时视口虽小、
+     但每格都被大量长班次穿透,反而比线性扫描更慢(z9.5:5.0ms vs 3.0ms)。
+     粗网格(128)条目少、城市级视口只落 1~2 格,实测 z≥10.5 阶段 1 由 3.0ms 降到 1.0~1.25ms。 */
+const GRID_N = 128;
+const GRID_USE_RATIO = 0.6;  /* 估算网格访问量低于线性扫描量的这个比例才启用网格 */
 function updateTierGate(z) {
   for (let g = 0; g < 4; g++) {
     if (!TIER_ENTER[g]) { tierOn[g] = true; continue; }
@@ -3131,6 +3161,7 @@ const eligible = [];      /* 本帧通过廉价筛选的班次(复用数组,不�
 /* 按日预过滤:r 掩码不随帧变化,一次过滤后每帧只遍历当日班次(省 57049×N 次 & 分支)。
    同时按等级分桶(dayGrade);等级是静态属性,故只在换日或换数据档时重建一次。 */
 let dayList = null, dayListBit = -1, dayListSrc = null, dayGrade = null, dayActiveMin = null;
+let dayGrid = null, dayGridOcc = null; /* [g]=Map<cellKey,trip[]>(仅高倍率启用) / [g]=占用的格数 */
 /* 把分钟区间 [a,b] 各 +1(裁剪到 [0,1439]);差分数组用 */
 function addMinInterval(diff, a, b) {
   if (b < 0 || a > 1439) return;
@@ -3153,6 +3184,8 @@ function activeCountAt(M) {
 function buildDayIndex() {
   dayList = [];
   dayGrade = [[], [], [], []];
+  dayGrid = [new Map(), new Map(), new Map(), new Map()];
+  dayGridOcc = [0, 0, 0, 0];
   /* 换运行日 / 换数据档后 tripList 是全新对象,旧 fadeList 里全是「上一档」的孤儿班次,
      不清空会在随后 ~260ms 内用旧数据继续解算并绘制(幽灵车)。直接清空,下一帧重建。 */
   fadeList.length = 0;
@@ -3164,11 +3197,27 @@ function buildDayIndex() {
     dayList.push(t);
     dayGrade[t.g].push(t);
     if (!t.bad) {
+      /* 铺空间网格:把班次包围盒覆盖的格子全部登记(长班次跨多格,查询时用 _seen 去重)。
+         只在高倍率查询时才会用到;低倍率由阶段 1 的估算条件自动回退线性扫描。
+         bad 班次(骨架退化,永远不会被绘制)不登记,省条目。 */
+      const gm = dayGrid[t.g];
+      const gc0 = Math.max(0, Math.floor(t.mx0 * GRID_N)), gc1 = Math.min(GRID_N - 1, Math.floor(t.mx1 * GRID_N));
+      const gr0 = Math.max(0, Math.floor(t.my0 * GRID_N)), gr1 = Math.min(GRID_N - 1, Math.floor(t.my1 * GRID_N));
+      for (let cx = gc0; cx <= gc1; cx++) {
+        const base = cx * GRID_N;
+        for (let cy = gr0; cy <= gr1; cy++) {
+          const key = base + cy;
+          let a = gm.get(key);
+          if (a === undefined) gm.set(key, a = []);
+          a.push(t);
+        }
+      }
       addMinInterval(diff, t.w0, t.w1);
       const lo = Math.max(0, t.w0 - 1440), hi = Math.min(t.w0 - 1, t.w1 - 1440);
       if (hi >= lo) addMinInterval(diff, lo, hi);
     }
   }
+  for (let g = 0; g < 4; g++) dayGridOcc[g] = dayGrid[g].size;
   let acc = 0;
   for (let m = 0; m < 1440; m++) { acc += diff[m]; diff[m] = acc; }
   dayActiveMin = diff;
@@ -3229,8 +3278,8 @@ function updateTrains(M, dtms) {
   // 高 zoom 若用大偏移则跨经度产生曲率误差 → 按 mercator 像素换算自适应(clamp 1.5e-6~2.5e-3)
   const eps = Math.max(1.5e-6, Math.min(2.5e-3, 8 / (512 * Math.pow(2, z))));
   const drawGlow = glowOn && z < 9 && !iconMode;
-  const glowPass = [];
-  const drawnCouple = new Set(); /* 已绘制 trip 集合,供併结车判断伙伴是否已画(先画者原位,后画者错开一个车长) */
+  glowN = 0;                 /* 光晕暂存计数归零(缓冲与 Set 均为模块级复用,不每帧分配) */
+  drawnCouple.clear();
 
   /* ── 阶段 1:廉价筛选(等级 → 视口包围盒 → 运行窗口),只做 O(1) 比较,不碰位置解算 ──
      结果写入 eligible,并用 _ok 帧戳标记"本帧应显示"(阶段 2 据此算 alpha 目标值)。
@@ -3248,9 +3297,51 @@ function updateTrains(M, dtms) {
       if (vp && (ft.mx1 < vp.mx0 || ft.mx0 > vp.mx1 || ft.my1 < vp.my0 || ft.my0 > vp.my1)) continue;
       const M2 = windowShift(ft, M);
       if (M2 < ft.w0 || M2 > ft.w1) continue;
-      ft._M2 = M2; ft._ok = stamp; eligible.push(ft);
+      ft._M2 = M2; ft._ok = stamp; ft._seen = stamp; eligible.push(ft);
     }
   }
+  /* 先估算「网格访问量 vs 线性扫描量」:网格访问量 ≈ 视口覆盖格数 × 每格平均班次数。
+     只有明显更省(估算 < 线性量 × GRID_USE_RATIO)才走网格 —— 低/中倍率视口覆盖全国,
+     要访问的格子数会爆炸,此时线性扫描更快,自动回退。 */
+  let gridPath = false;
+  if (vp) {
+    let lin = 0, occ = 0;
+    for (let g = 0; g < 4; g++) if (gate[g]) { lin += dayGrade[g].length; occ += dayGridOcc[g]; }
+    const gc0 = Math.max(0, Math.floor(vp.mx0 * GRID_N)), gc1 = Math.min(GRID_N - 1, Math.floor(vp.mx1 * GRID_N));
+    const gr0 = Math.max(0, Math.floor(vp.my0 * GRID_N)), gr1 = Math.min(GRID_N - 1, Math.floor(vp.my1 * GRID_N));
+    const ncells = (gc1 - gc0 + 1) * (gr1 - gr0 + 1);
+    gridPath = ncells > 0 && ncells * (occ > 0 ? lin / occ : 1) < lin * GRID_USE_RATIO;
+  }
+  gridUsed = gridPath;
+  if (gridPath) {
+    /* 网格路径:只取视口覆盖的格子;同一班次跨多格用 _seen 帧戳去重(不重复入 eligible) */
+    const gc0 = Math.max(0, Math.floor(vp.mx0 * GRID_N)), gc1 = Math.min(GRID_N - 1, Math.floor(vp.mx1 * GRID_N));
+    const gr0 = Math.max(0, Math.floor(vp.my0 * GRID_N)), gr1 = Math.min(GRID_N - 1, Math.floor(vp.my1 * GRID_N));
+    for (let g = 0; g < 4 && eligible.length < MAXT; g++) {
+      if (!gate[g]) continue;
+      const gm = dayGrid[g];
+      for (let cx = gc0; cx <= gc1 && eligible.length < MAXT; cx++) {
+        const base = cx * GRID_N;
+        for (let cy = gr0; cy <= gr1; cy++) {
+          const cell = gm.get(base + cy);
+          if (cell === undefined) continue;
+          for (let i = 0; i < cell.length; i++) {
+            const t = cell[i];
+            if (t._seen === stamp) continue;   /* 同一班次跨多格 → 只处理一次 */
+            t._seen = stamp;
+            if (t.bad) continue;
+            if (t.mx1 < vp.mx0 || t.mx0 > vp.mx1 || t.my1 < vp.my0 || t.my0 > vp.my1) continue;
+            const M2 = windowShift(t, M);
+            if (M2 < t.w0 || M2 > t.w1) continue;
+            t._M2 = M2; t._ok = stamp;
+            eligible.push(t);
+            if (eligible.length >= MAXT) break;
+          }
+        }
+      }
+    }
+  } else {
+  /* 线性路径(原逻辑):低/中倍率视口覆盖全国,或 z<5 不做视口裁剪时走这里 */
   for (let g = 0; g < 4; g++) {
     if (!gate[g]) continue;
     const arr = dayGrade[g];
@@ -3266,6 +3357,7 @@ function updateTrains(M, dtms) {
       if (eligible.length >= MAXT) break;   /* 顶点缓冲上限:先到先得(低等级在后,自然被截) */
     }
     if (eligible.length >= MAXT) break;
+  }
   }
 
   /* ── 阶段 2:与上一帧的显示集合求并,推进 alpha ──
@@ -3347,7 +3439,7 @@ function updateTrains(M, dtms) {
     for (let q = 0; q < 6; q++) {
       bufArr[o++] = mx; bufArr[o++] = my;
       bufArr[o++] = dxm; bufArr[o++] = dym;
-      bufArr[o++] = QUAD[q][0] * L; bufArr[o++] = QUAD[q][1] * W;
+      bufArr[o++] = QUADX[q] * L; bufArr[o++] = QUADY[q] * W;
       bufArr[o++] = r; bufArr[o++] = g; bufArr[o++] = b; bufArr[o++] = al; // a = 淡入淡出 alpha
       bufArr[o++] = 0; bufArr[o++] = 0; // glow + h
       bufArr[o++] = uvIdx; // 图标模式贴图索引;-1 = 颜色方盒
@@ -3359,23 +3451,28 @@ function updateTrains(M, dtms) {
       for (let q = 0; q < 6; q++) {
         bufArr[o++] = mx; bufArr[o++] = my;
         bufArr[o++] = dxm; bufArr[o++] = dym;
-        bufArr[o++] = QUAD[q][0] * L; bufArr[o++] = QUAD[q][1] * W;
+        bufArr[o++] = QUADX[q] * L; bufArr[o++] = QUADY[q] * W;
         bufArr[o++] = r; bufArr[o++] = g; bufArr[o++] = b; bufArr[o++] = al;
         bufArr[o++] = 0; bufArr[o++] = Hpx;
         bufArr[o++] = -1;
       }
       vtx += 6;
-      // 4 个侧面(墙):暗色 ×0.72,构成四角尖尖的立方盒
-      const WALLS = [[-1,-1,1,-1],[-1,1,1,1],[-1,-1,-1,1],[1,-1,1,1]];
-      for (const [ax, ay, bx, by] of WALLS) {
+      /* 4 个侧面(墙):暗色 ×0.72,构成四角尖尖的立方盒。
+         ★ 优化:原实现每列车 new 出 WALLS + 4×pts + 4×索引数组(≈25 个数组/车),
+           倾斜模式 2000+ 车/帧 → 每秒十几万次分配,GC 停顿正是「放大时卡顿」的来源之一。
+           现改为模块级扁平常量 + 展开,循环体内零分配。 */
+      const r72 = r * 0.72, g72 = g * 0.72, b72 = b * 0.72;
+      for (let wi = 0; wi < 4; wi++) {
+        const ax = WALL_AX[wi], ay = WALL_AY[wi], bx = WALL_BX[wi], by = WALL_BY[wi];
         o = vtx * STRIDE; vtx += 6;
-        const pts = [[ax, ay, 0], [ax, ay, Hpx], [bx, by, Hpx], [bx, by, 0]];
-        for (const qi of [0, 1, 2, 0, 2, 3]) {
-          const cx = pts[qi][0], cy = pts[qi][1], h = pts[qi][2];
+        for (let k = 0; k < 6; k++) {
+          const qi = WALL_QI[k];
+          const cx = qi >= 2 ? bx : ax, cy = qi >= 2 ? by : ay;
+          const h = (qi === 1 || qi === 2) ? Hpx : 0;
           bufArr[o++] = mx; bufArr[o++] = my;
           bufArr[o++] = dxm; bufArr[o++] = dym;
           bufArr[o++] = cx * L; bufArr[o++] = cy * W;
-          bufArr[o++] = r * 0.72; bufArr[o++] = g * 0.72; bufArr[o++] = b * 0.72; bufArr[o++] = al;
+          bufArr[o++] = r72; bufArr[o++] = g72; bufArr[o++] = b72; bufArr[o++] = al;
           bufArr[o++] = 2; bufArr[o++] = h; // glow=2 标记侧面(直出暗色)
           bufArr[o++] = -1;
         }
@@ -3384,7 +3481,7 @@ function updateTrains(M, dtms) {
     visibleTrips.push(t); visibleXY[n * 2] = lng; visibleXY[n * 2 + 1] = lat;
     drawnCouple.add(t); /* 已绘制,后续併结伙伴可据此错开 */
     n++;
-    if (drawGlow) glowPass.push([mx, my, dxm, dym, r, g, b, al]);
+    if (drawGlow) { let go = glowN * 8; glowBuf[go++] = mx; glowBuf[go++] = my; glowBuf[go++] = dxm; glowBuf[go++] = dym; glowBuf[go++] = r; glowBuf[go++] = g; glowBuf[go++] = b; glowBuf[go++] = al; glowN++; }
   }
   /* 触顶(MAXT/缓冲上限)时,未画出的班次直接把 alpha 归零:否则阶段 2 每帧仍在 +step,
      与本处相抵会让 alpha 冻结在 1,一旦上限松动就整批以全不透明"啪"地冒出来 ——
@@ -3394,14 +3491,17 @@ function updateTrains(M, dtms) {
   }
   // 光晕 pass(与车体同一缓冲,第二遍绘制,始终在地面层)
   if (drawGlow) {
-    for (const [mx, my, dxm, dym, r, g, b, al] of glowPass) {
+    const GL = L * 2.6, GW = W * 2.6;
+    for (let gi = 0; gi < glowN; gi++) {
       if (n >= MAXT - 1 || vtx * STRIDE + 6 * STRIDE > bufArr.length) break;
       let o = vtx * STRIDE;
-      const GL = L * 2.6, GW = W * 2.6;
+      const gb = gi * 8;
+      const mx = glowBuf[gb], my = glowBuf[gb + 1], dxm = glowBuf[gb + 2], dym = glowBuf[gb + 3];
+      const r = glowBuf[gb + 4], g = glowBuf[gb + 5], b = glowBuf[gb + 6], al = glowBuf[gb + 7];
       for (let q = 0; q < 6; q++) {
         bufArr[o++] = mx; bufArr[o++] = my;
         bufArr[o++] = dxm; bufArr[o++] = dym;
-        bufArr[o++] = QUAD[q][0] * GL; bufArr[o++] = QUAD[q][1] * GW;
+        bufArr[o++] = QUADX[q] * GL; bufArr[o++] = QUADY[q] * GW;
         bufArr[o++] = r; bufArr[o++] = g; bufArr[o++] = b; bufArr[o++] = al;
         bufArr[o++] = 1; bufArr[o++] = 0; // glow + h
         bufArr[o++] = -1;
@@ -5691,7 +5791,7 @@ window.__lod = () => {
   let mid = 0;
   for (let i = 0; i < fadeList.length; i++) { const a = fadeList[i]._f; if (a > 0.02 && a < 0.98) mid++; }
   return { on: perfLod, z: +map.getZoom().toFixed(2), tierOn: tierOn.slice(), drawn: visibleTrips.length, byG,
-           fadeList: fadeList.length, fading: mid, eligible: eligible.length,
+           fadeList: fadeList.length, fading: mid, eligible: eligible.length, grid: gridUsed,
            activeNow: activeCountAt(curMin()),
            buckets: dayGrade ? dayGrade.map(a => a.length) : null };
 };

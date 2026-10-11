@@ -325,6 +325,8 @@ button { font-family:inherit; }
 .sw .trk::after { content:''; position:absolute; top:2px; left:2px; width:22px; height:22px; border-radius:50%; background:#fff; transition:left .3s var(--ease-spring), background .2s; box-shadow:0 2px 5px rgba(0,0,0,.3); }
 .sw.on .trk { background:var(--acc); } .sw.on .trk::after { left:20px; }
 .sw:focus-visible { outline:2px solid var(--acc); outline-offset:1px; }
+/* 开关说明行(性能改善):补充该开关的实际行为,避免用户不知其影响 */
+.swnote { font-size:11px; line-height:1.55; color:var(--dim); opacity:.72; padding:1px 2px 9px; border-bottom:1px solid var(--line); }
 
 /* 数据/帮助 */
 .data-row { display:flex; justify-content:space-between; font-size:11px; color:var(--dim); padding:1px 0; gap:8px; }
@@ -940,6 +942,8 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
     <div class="stab-sec" data-tab="set">
       <div class="sec">
         <div class="sec-t" id="tSet">设置</div>
+        <div class="sw on" id="swPerf"><span id="tSw11">性能改善</span><span class="trk"></span></div>
+        <div class="swnote" id="tSw11Note">低倍率只显示新干线・特急，放大后逐级加入快速・普通列车（含地铁・路面电车），切换为淡入淡出</div>
         <div class="sw on" id="swLabel"><span id="tSw1">车站标签</span><span class="trk"></span></div>
         <div class="sw on" id="swGlow"><span id="tSw2">轨道光晕</span><span class="trk"></span></div>
         <div class="sw on" id="swSta"><span id="tSw3">车站点</span><span class="trk"></span></div>
@@ -1115,6 +1119,21 @@ function typeColor(ic) {
 /* ---- 特急爱称识别（tokkyu.json：按「起点>终点|途经线路」签名映射，普适于时刻表变化） ---- */
 let TOKKYU = null; // {sh: icon->日语名, nm: 签名->爱称, nmI: 签名|icon->爱称}
 const TOKKYU_ICONS = new Set(['特','関','紀','中','丹','寝','京','ミ','フ','富','九','川','Ｔ','Ｓ','Ｎ','ホ','拝','ラ','ア','エ','空']);
+/* ── 列车等级(供「性能改善」分层显示使用;仅由班次的 icon 字段决定,与线路/位置无关)──
+   G0 新干线(sh 图标带英文名:Nozomi/Hayabusa…)        平日约 1.6k 班次
+   G1 特急・ライナー(TOKKYU_ICONS + 臨)                平日约 5.1k 班次
+   G2 快速・急行(快/急/準/区/通/直/新快速/青梅特快…)   平日约 11.5k 班次
+   G3 普通・各停(普/各,含地下鉄・路面電車・モノレール) 平日约 76.7k 班次(占 81%)
+   低倍率下只渲染 G0+G1(≈6.7k),即把每帧遍历量从 9.5 万降到 1/14。 */
+const GRADE_SH = new Set(['Hayabusa','Komachi','Yamabiko','Tsubasa','Kagayaki','Toki','Hakutaka','Asama','Nasuno','Tanigawa','Nozomi','Hikari','Kodama','Hayate','Yamato','Sakura','Mizuho','Tsubame','Kamome','Sonic','Tsurugi']);
+const GRADE_EX = new Set(['特','関','紀','中','丹','寝','京','ミ','フ','富','九','川','Ｔ','Ｓ','Ｎ','ホ','拝','ラ','ア','エ','空','臨']);
+const GRADE_RP = new Set(['快','急','準','区','通','直','新','青','大','み']);
+function gradeOf(ic) {
+  if (GRADE_SH.has(ic)) return 0;
+  if (GRADE_EX.has(ic)) return 1;
+  if (GRADE_RP.has(ic)) return 2;
+  return 3;
+}
 /* 特殊 icon 的兜底名（签名表未命中时使用；签名命中优先） */
 const ICON_NAME = {
   '関':'はるか','紀':'くろしお','丹':'こうのとり','ミ':'ミュースカイ','フ':'フジサン特急','富':'フジサン特急',
@@ -1217,6 +1236,7 @@ const I18N = {
     filterT:'线路类型', legendT:'图例', dayT:'运行日', dayAuto:'自动', setT:'设置', dataT:'数据', helpT:'帮助', aboutT:'关于',
     about1:'Mini JapanRail — 本地时刻表驱动的全日本铁路 3D 实时运行地图', about2:'数据源:日本全国铁路计划时刻表,每周自动刷新;页面运行时零外部请求', about3:'本站为个人爱好项目,数据仅供学习参考', about4:'隐私政策',
     sw1:'车站标签', sw2:'轨道光晕', sw3:'车站点', sw4:'底图瓦片', sw5:'列车光晕', sw6:'复制异常车辆', sw7:'列车悬浮提示', sw8:'车站轮廓', sw9:'出入口', sw10:'详细股道',
+    sw11:'性能改善', sw11Note:'低倍率下只渲染新干线・特急，放大后逐级加入快速・普通列车（含地铁・路面电车）；等级切换与进出视野均为淡入淡出，避免列车突然出现或消失',
     modeT:'列车显示', mode3d:'3D', modeIcon:'图标', modeCute:'可爱',
     iconSetT:'图标集', iSetDefault:'默认', iSetVector:'矢量', iconSetNote:'仅"图标"模式生效',
     baseT:'底图源', bPale:'淡色', bStd:'标准', bDark:'深色', bSat:'卫星',
@@ -1245,6 +1265,7 @@ const I18N = {
     filterT:'路線種別', legendT:'凡例', dayT:'運行日', dayAuto:'自動', setT:'設定', dataT:'データ', helpT:'ヘルプ', aboutT:'このサイトについて',
     about1:'ミニ日本鉄道 — ローカル時刻表駆動の全国鉄道リアルタイム3Dマップ', about2:'データソース:全国鉄道の計画時刻表、毎週自動更新。ページ実行時は外部リクエストなし', about3:'個人の趣味プロジェクトです。データは学習・参考用です', about4:'プライバシーポリシー',
     sw1:'駅ラベル', sw2:'軌道グロー', sw3:'駅ドット', sw4:'背景タイル', sw5:'列車グロー', sw6:'異常列車コピー', sw7:'列車ホバーチップ', sw8:'駅舎ポリゴン', sw9:'出入口', sw10:'詳細軌道',
+    sw11:'パフォーマンス改善', sw11Note:'低ズームでは新幹線・特急のみ描画し、拡大すると快速・普通列車（地下鉄・路面電車を含む）を段階的に追加。種別の切替や画面への出入りはフェードイン／アウトで行われ、列車が突然現れたり消えたりしません',
     modeT:'列車表示', mode3d:'3D', modeIcon:'アイコン', modeCute:'かわいい',
     iconSetT:'アイコンセット', iSetDefault:'標準', iSetVector:'ベクター', iconSetNote:'「アイコン」モードのみ有効',
     baseT:'ベースマップ', bPale:'淡色', bStd:'標準', bDark:'ダーク', bSat:'衛星',
@@ -1273,6 +1294,7 @@ const I18N = {
     filterT:'Line types', legendT:'Legend', dayT:'Service day', dayAuto:'Auto', setT:'Settings', dataT:'Data', helpT:'Help', aboutT:'About',
     about1:'Mini JapanRail — a live 3D map of all Japan railways, driven by local timetables', about2:'Data: scheduled timetables for all Japan railways, auto-refreshed weekly; zero external requests at runtime', about3:'A personal hobby project — data provided for reference only', about4:'Privacy Policy',
     sw1:'Station labels', sw2:'Track glow', sw3:'Station dots', sw4:'Basemap tiles', sw5:'Train glow', sw6:'Copy off-rail trains', sw7:'Train hover tooltip', sw8:'Station footprint', sw9:'Station exits', sw10:'Detailed tracks',
+    sw11:'Performance boost', sw11Note:'At low zoom only Shinkansen and limited express are drawn; zooming in progressively adds rapid and local trains (incl. subway and tram). Grade switches and entering/leaving the view cross-fade, so trains never pop in or out',
     modeT:'Train display', mode3d:'3D', modeIcon:'Icon', modeCute:'Cute',
     iconSetT:'Icon set', iSetDefault:'Default', iSetVector:'Vector', iconSetNote:'Applies to "Icon" mode only',
     baseT:'Basemap', bPale:'Pale', bStd:'Standard', bDark:'Dark', bSat:'Satellite',
@@ -2318,7 +2340,9 @@ function parseTrip(t) {
   }
   if (mx0 > mx1) { mx0 = 0; mx1 = 1; my0 = 0; my1 = 1; }
   /* 班次包围盒 = 停站坐标包络(列车插值/骨架均在站间,边距仅防浮点与贴边,~16km) */
-  return { t: t.t, r: t.r, i: t.i || '', nm: tripName(t.i || '', N, jas, linesN), w0, w1, dep, arr, N, jas, jasN, stopC, lines, linesN, lineSet, sStart, sRun, skX, skY, skStop, skCum, skLen, bad, skUp, skDn, color: typeColor(t.i), mx0: mx0 - 0.0005, mx1: mx1 + 0.0005, my0: my0 - 0.0007, my1: my1 + 0.0007 };
+  /* g: 列车等级(性能改善分层用,见 GRADE_SH/EX/RP);后 5 个字段为渲染期的 LOD/淡入淡出状态,
+     在此一并声明以固定对象形状(9.5 万个班次,避免运行时反复触发隐藏类迁移) */
+  return { t: t.t, r: t.r, i: t.i || '', g: gradeOf(t.i || ''), _f: 0, _M2: 0, _ok: 0, _fm: 0, nm: tripName(t.i || '', N, jas, linesN), w0, w1, dep, arr, N, jas, jasN, stopC, lines, linesN, lineSet, sStart, sRun, skX, skY, skStop, skCum, skLen, bad, skUp, skDn, color: typeColor(t.i), mx0: mx0 - 0.0005, mx1: mx1 + 0.0005, my0: my0 - 0.0007, my1: my1 + 0.0007 };
 }
 
 /* ---------------- 位置引擎 ---------------- */
@@ -2880,20 +2904,23 @@ void main() {
     vec2 tc = (vec2(col, row) * u_cell + uv01 * u_img + 2.0) / u_atlasSize;
     vec4 tex = texture(u_atlas, tc);
     if (tex.a < 0.004) discard;
-    fragColor = vec4(tex.rgb * tex.a, tex.a);
+    /* v_color.a = 该列车的淡入淡出 alpha(性能改善:等级切换/进出视野时渐变,不硬跳) */
+    float ia = tex.a * v_color.a;
+    if (ia < 0.004) discard;
+    fragColor = vec4(tex.rgb * ia, ia);
     return;
   }
   float a;
   if (v_glow > 1.5) {
     // 侧面墙:四边形本身即墙面(sdBox 会把它判成盒轮廓边缘 → alpha 仅 0.1 近透明),
-    // 直出暗色,构成立体盒侧壁
-    a = 1.0;
+    // 直出暗色,构成立体盒侧壁(随车体一起淡入淡出)
+    a = v_color.a;
   } else {
     float d = sdBox(v_uv, v_h); // 尖角矩形(四角尖尖的长条盒)
     if (v_glow > 0.5) {
       // 光晕:只在车体轮廓外,向外淡出
       float outer = max(v_h.x, v_h.y) * 1.5;
-      a = 0.30 * smoothstep(0.0, 2.0, d) * (1.0 - smoothstep(outer * 0.55, outer, d));
+      a = 0.30 * v_color.a * smoothstep(0.0, 2.0, d) * (1.0 - smoothstep(outer * 0.55, outer, d));
     } else {
       a = v_color.a * (1.0 - smoothstep(-0.8, 0.2, d));
     }
@@ -3062,14 +3089,54 @@ function loadTrainAtlas() {
 }
 const visibleTrips = [], visibleXY = new Float32Array(MAXT * 2);
 let lastQuad = [1, 1]; /* 图标模式方块屏幕尺寸(L,W),shader UV 归一化用 */
-/* 按日预过滤:r 掩码不随帧变化,一次过滤后每帧只遍历当日班次(省 57049×N 次 & 分支) */
-let dayList = null, dayListBit = -1, dayListSrc = null;
-function updateTrains(M) {
-  if (dayList === null || dayListSrc !== tripList || dayListBit !== dayBit) {
-    dayList = [];
-    for (let k = 0; k < tripList.length; k++) { const t = tripList[k]; if (t.r & dayBit) dayList.push(t); }
-    dayListBit = dayBit; dayListSrc = tripList;
+/* ══════════════ 性能改善(perfLod):分层显示 + 淡入淡出 ══════════════
+   问题:平日全量 9.5 万班次,旧逻辑每帧都要整表扫描一遍(包围盒裁剪仍要遍历全部),
+        全国视图(z<5,不做视口裁剪)更是 9.5 万次 windowShift + 位置解算,是主要负载来源。
+   方案:按等级静态分桶(dayGrade[4])—— 等级是班次的静态属性(r/i/g 不变),
+        桶只在换运行日 / 换数据档时重建一次,帧内零分配:
+     ① 低倍率只开 G0+G1 → 每帧遍历量 9.5 万 ⇒ 6.7 千(1/14),直接绕开占 81% 的普通列车;
+        全国视图(z<5 不做视口裁剪)原本要对全部 9.5 万班次做位置解算,这一档收益最大。
+     ② 等级开关带 0.6 级迟滞(进入阈值 > 退出阈值),停在阈值附近不会来回抖动。
+     ③ 淡入淡出:每个班次的显示状态是 0..1 的 alpha(而非布尔),按真实帧间隔向目标值
+        逼近(FADE_MS≈260ms)。离开视野/等级关闭/班次结束 → 淡出后才真正移出,
+        新进入 → 从 0 起淡入,所以缩放时列车是"浮出来/沉下去",不会啪一下闪现。
+   ★ 为什么不再叠一层空间网格:实测过 NG=256/512/1024/2048 的 mercator 均匀网格,
+     由于「班次包围盒 = 全程路线」跨度大(中位 10km、p99 200km、最大 950km),
+     且视口需按最大包围盒外扩缓冲,低倍率下网格反而比全桶扫描更慢(z6:0.20 vs 0.17ms),
+     城市级也只快约 1ms/帧,却要多付 10~70ms 构建 + Map 内存 + 跨格去重。
+     净收益为负,故只保留收益最大的等级分桶。 */
+let perfLod = localStorage.getItem('mjr3d_perflod') !== '0'; /* 默认开启 */
+const TIER_ENTER = [0, 0, 6.8, 9.0];  /* 各等级"开始显示"的缩放级;0 = 始终显示 */
+const TIER_EXIT  = [0, 0, 6.2, 8.4];  /* 各等级"停止显示"的缩放级(与 enter 构成迟滞带) */
+const TIER_ALL = [true, true, true, true];
+const tierOn = [true, true, false, false];
+function updateTierGate(z) {
+  for (let g = 0; g < 4; g++) {
+    if (!TIER_ENTER[g]) { tierOn[g] = true; continue; }
+    tierOn[g] = tierOn[g] ? (z > TIER_EXIT[g]) : (z > TIER_ENTER[g]);
   }
+}
+const FADE_MS = 260;      /* 单程淡入/淡出时长 */
+let fadeStamp = 0;        /* 帧戳:避免每帧新建 Set 做存活判定 */
+const fadeList = [];      /* 正在显示或正在淡出的班次(携带 alpha) */
+const eligible = [];      /* 本帧通过廉价筛选的班次(复用数组,不重建) */
+
+/* 按日预过滤:r 掩码不随帧变化,一次过滤后每帧只遍历当日班次(省 57049×N 次 & 分支)。
+   同时按等级分桶(dayGrade);等级是静态属性,故只在换日或换数据档时重建一次。 */
+let dayList = null, dayListBit = -1, dayListSrc = null, dayGrade = null;
+function buildDayIndex() {
+  dayList = [];
+  dayGrade = [[], [], [], []];
+  for (let k = 0; k < tripList.length; k++) {
+    const t = tripList[k];
+    if (!(t.r & dayBit)) continue;
+    dayList.push(t);
+    dayGrade[t.g].push(t);
+  }
+  dayListBit = dayBit; dayListSrc = tripList;
+}
+function updateTrains(M, dtms) {
+  if (dayList === null || dayListSrc !== tripList || dayListBit !== dayBit) buildDayIndex();
   let n = 0, vtx = 0; // vtx:总顶点数(俯视 6/列车,倾斜 36/列车 + 光晕 6/个)
   visibleTrips.length = 0;
   const z = map.getZoom();
@@ -3125,17 +3192,65 @@ function updateTrains(M) {
   const drawGlow = glowOn && z < 9 && !iconMode;
   const glowPass = [];
   const drawnCouple = new Set(); /* 已绘制 trip 集合,供併结车判断伙伴是否已画(先画者原位,后画者错开一个车长) */
-  for (let idx = 0; idx < dayList.length; idx++) {
-    const t = dayList[idx];
-    if (t.bad) continue;
-    /* 视口裁剪:班次包围盒(含缓冲)与视野不相交 → 跳过(位置计算 + 顶点构建全省) */
-    if (vp && (t.mx1 < vp.mx0 || t.mx0 > vp.mx1 || t.my1 < vp.my0 || t.my0 > vp.my1)) continue;
-    const M2 = windowShift(t, M);
-    if (M2 < t.w0 || M2 > t.w1) continue;
+
+  /* ── 阶段 1:廉价筛选(等级 → 视口包围盒 → 运行窗口),只做 O(1) 比较,不碰位置解算 ──
+     结果写入 eligible,并用 _ok 帧戳标记"本帧应显示"(阶段 2 据此算 alpha 目标值)。
+     ★ 关键:只遍历「本帧开放的等级桶」,未开放的等级(低倍率下的普通/快速列车)
+       连包围盒比较都不做 —— 这才是负载下降的来源。 */
+  const stamp = ++fadeStamp;
+  if (perfLod) updateTierGate(z);
+  const gate = perfLod ? tierOn : TIER_ALL;
+  eligible.length = 0;
+  for (let g = 0; g < 4; g++) {
+    if (!gate[g]) continue;
+    const arr = dayGrade[g];
+    for (let i = 0; i < arr.length; i++) {
+      const t = arr[i];
+      if (t.bad) continue;
+      /* 视口裁剪:班次包围盒(含缓冲)与视野不相交 → 跳过(位置计算 + 顶点构建全省) */
+      if (vp && (t.mx1 < vp.mx0 || t.mx0 > vp.mx1 || t.my1 < vp.my0 || t.my0 > vp.my1)) continue;
+      const M2 = windowShift(t, M);
+      if (M2 < t.w0 || M2 > t.w1) continue;
+      t._M2 = M2; t._ok = stamp;
+      eligible.push(t);
+      if (eligible.length >= MAXT) break;   /* 顶点缓冲上限:先到先得(低等级在后,自然被截) */
+    }
+    if (eligible.length >= MAXT) break;
+  }
+
+  /* ── 阶段 2:与上一帧的显示集合求并,推进 alpha ──
+     新进入的班次从 0 起步(下一帧开始淡入),离开的班次衰减到 0 后才真正移出 fadeList,
+     因此缩放/平移时列车是渐显渐隐,不会突然出现或消失。 */
+  const step = (dtms > 0 ? dtms : 16.7) / FADE_MS;
+  let w = 0;
+  for (let i = 0; i < fadeList.length; i++) {
+    const t = fadeList[i];
+    const tgt = (t._ok === stamp) ? 1 : 0;
+    t._fm = stamp;
+    if (t._f < tgt) t._f = Math.min(tgt, t._f + step);
+    else if (t._f > tgt) t._f = Math.max(tgt, t._f - step);
+    if (tgt === 0 && t._f <= 0.005) continue;   /* 淡出完毕 → 移出集合 */
+    fadeList[w++] = t;
+  }
+  fadeList.length = w;
+  for (let i = 0; i < eligible.length; i++) {
+    const t = eligible[i];
+    if (t._fm === stamp) continue;
+    t._fm = stamp; t._f = 0;                    /* 新进入:从全透明起淡入 */
+    fadeList.push(t);
+  }
+
+  /* ── 阶段 3:位置解算 + 顶点构建(只对 alpha>0 的班次,即真正画到屏幕上的那一批) ── */
+  let stopped = -1;
+  for (let i = 0; i < fadeList.length; i++) {
+    const t = fadeList[i];
+    const al = t._f;
+    if (al < 0.02) continue;                    /* 尚未起步 / 已淡完:不占顶点、不上传 */
+    if (n >= MAXT - 1 || vtx * STRIDE + 36 * STRIDE > bufArr.length) { stopped = i; break; }
+    const M2 = (t._ok === stamp) ? t._M2 : windowShift(t, M);
     const p = trainPosition(t, M2);
-    if (!p) continue;
-    if (!selKind[p[4]]) continue;
-    if (n >= MAXT - 1 || vtx * STRIDE + 36 * STRIDE > bufArr.length) break;
+    /* 定位失败或线路类型被过滤:撤掉"应显示"标记 → 下一帧起淡出(而不是硬跳消失) */
+    if (!p || !selKind[p[4]]) { t._ok = 0; continue; }
     let color = t.color;
     if (p[3]) { const lc = lineColor.get(p[3]); if (lc) color = lc; }
     const [r, g, b] = t._rgb && t._line === p[3] ? t._rgb : (t._rgb = hexToRgb(color), t._rgb);
@@ -3173,7 +3288,7 @@ function updateTrains(M) {
       bufArr[o++] = mx; bufArr[o++] = my;
       bufArr[o++] = dxm; bufArr[o++] = dym;
       bufArr[o++] = QUAD[q][0] * L; bufArr[o++] = QUAD[q][1] * W;
-      bufArr[o++] = r; bufArr[o++] = g; bufArr[o++] = b; bufArr[o++] = 1;
+      bufArr[o++] = r; bufArr[o++] = g; bufArr[o++] = b; bufArr[o++] = al; // a = 淡入淡出 alpha
       bufArr[o++] = 0; bufArr[o++] = 0; // glow + h
       bufArr[o++] = uvIdx; // 图标模式贴图索引;-1 = 颜色方盒
     }
@@ -3185,7 +3300,7 @@ function updateTrains(M) {
         bufArr[o++] = mx; bufArr[o++] = my;
         bufArr[o++] = dxm; bufArr[o++] = dym;
         bufArr[o++] = QUAD[q][0] * L; bufArr[o++] = QUAD[q][1] * W;
-        bufArr[o++] = r; bufArr[o++] = g; bufArr[o++] = b; bufArr[o++] = 1;
+        bufArr[o++] = r; bufArr[o++] = g; bufArr[o++] = b; bufArr[o++] = al;
         bufArr[o++] = 0; bufArr[o++] = Hpx;
         bufArr[o++] = -1;
       }
@@ -3200,7 +3315,7 @@ function updateTrains(M) {
           bufArr[o++] = mx; bufArr[o++] = my;
           bufArr[o++] = dxm; bufArr[o++] = dym;
           bufArr[o++] = cx * L; bufArr[o++] = cy * W;
-          bufArr[o++] = r * 0.72; bufArr[o++] = g * 0.72; bufArr[o++] = b * 0.72; bufArr[o++] = 1;
+          bufArr[o++] = r * 0.72; bufArr[o++] = g * 0.72; bufArr[o++] = b * 0.72; bufArr[o++] = al;
           bufArr[o++] = 2; bufArr[o++] = h; // glow=2 标记侧面(直出暗色)
           bufArr[o++] = -1;
         }
@@ -3209,11 +3324,16 @@ function updateTrains(M) {
     visibleTrips.push(t); visibleXY[n * 2] = lng; visibleXY[n * 2 + 1] = lat;
     drawnCouple.add(t); /* 已绘制,后续併结伙伴可据此错开 */
     n++;
-    if (drawGlow) glowPass.push([mx, my, dxm, dym, r, g, b]);
+    if (drawGlow) glowPass.push([mx, my, dxm, dym, r, g, b, al]);
+  }
+  /* 触顶(MAXT/缓冲上限)时,未画出的班次回退 alpha:否则它们会在 fadeList 里悄悄涨到 1,
+     等上限一松动就整批以全不透明"啪"地冒出来 —— 回退后重新淡入,观感一致 */
+  if (stopped >= 0) {
+    for (let j = stopped; j < fadeList.length; j++) { const t2 = fadeList[j]; if (t2._f > 0) t2._f = Math.max(0, t2._f - step); }
   }
   // 光晕 pass(与车体同一缓冲,第二遍绘制,始终在地面层)
   if (drawGlow) {
-    for (const [mx, my, dxm, dym, r, g, b] of glowPass) {
+    for (const [mx, my, dxm, dym, r, g, b, al] of glowPass) {
       if (n >= MAXT - 1 || vtx * STRIDE + 6 * STRIDE > bufArr.length) break;
       let o = vtx * STRIDE;
       const GL = L * 2.6, GW = W * 2.6;
@@ -3221,7 +3341,7 @@ function updateTrains(M) {
         bufArr[o++] = mx; bufArr[o++] = my;
         bufArr[o++] = dxm; bufArr[o++] = dym;
         bufArr[o++] = QUAD[q][0] * GL; bufArr[o++] = QUAD[q][1] * GW;
-        bufArr[o++] = r; bufArr[o++] = g; bufArr[o++] = b; bufArr[o++] = 1;
+        bufArr[o++] = r; bufArr[o++] = g; bufArr[o++] = b; bufArr[o++] = al;
         bufArr[o++] = 1; bufArr[o++] = 0; // glow + h
         bufArr[o++] = -1;
       }
@@ -3410,6 +3530,8 @@ async function boot() {
       fetchJSONWithCache('data/station_platforms.geojson', 'loadingSta', 10).catch(() => null),
     ]);
     segFC = s; staFC = st; footprintFC = fp; entrancesFC = en; platformsFC = pl; tmaps = tm; LINES_MAP = lm || {}; stationMap = sm && sm.version === 2 ? sm : null; TOKKYU = tk;
+    /* 新干线图标表以数据为准(时刻表新增列车名时自动纳入 G0 等级) */
+    if (tk && tk.sh) for (const k in tk.sh) GRADE_SH.add(k);
     NAME_I18N = ni;
     trainJSON = tj;
     /* 官方补缺轨道/车站(地图遗漏的新开线/私铁, 如西鉄甘木線/北大阪急行延伸/夢洲):
@@ -3641,7 +3763,7 @@ function startLoop() {
       return;
     }
     viewDirty = false; /* 相机已稳定:本帧重建后清除,恢复暂停态省电 */
-    const n = updateTrains(M);
+    const n = updateTrains(M, dt * 1000); /* dt 传给淡入淡出:按真实帧间隔推进 alpha,掉帧时时长不变 */
     if (n !== lastActiveN) { lastActiveN = n; $('bLive').textContent = n.toLocaleString(); pulseStat($('bLive')); }
     if (Math.floor(now / 1000) !== lastFpsSec) { $('dFps').textContent = Math.round(fps); lastFpsSec = Math.floor(now / 1000); }
     if (followTrip) { tickFollow(M, dt); updateDetailLive(followTrip, null, M); }
@@ -5154,6 +5276,16 @@ $('swOrm').addEventListener('click', function () {
   if (ormEnabled && !ormLoaded) fetchOrmTracks(); /* 低配设备首次开启时按需拉取 */
 });
 $('swTrail').addEventListener('click', function () { this.classList.toggle('on'); });
+/* 性能改善(默认开):低倍率分层显示 + 淡入淡出。关闭 = 恢复旧行为(全等级全量渲染)。
+   开关切换后等级门重新求值,差额部分走已有的 alpha 过渡淡入/淡出,不会突兀。 */
+$('swPerf').classList.toggle('on', perfLod);
+$('swPerf').addEventListener('click', function () {
+  perfLod = !perfLod;
+  this.classList.toggle('on', perfLod);
+  localStorage.setItem('mjr3d_perflod', perfLod ? '1' : '0');
+  viewDirty = true;            /* 暂停态也要重建顶点,让等级变化立刻生效 */
+  if (map) map.triggerRepaint();
+});
 /* 列车悬浮提示:桌面端默认开,移动端默认关 */
 let tipEnabled = (() => {
   const saved = localStorage.getItem('mjr3d_tip');
@@ -5422,6 +5554,7 @@ function applyLang() {
   $('rFrom').placeholder = t.routeFrom; $('rTo').placeholder = t.routeTo;
   $('dayAuto').textContent = t.dayAuto;
   $('tSw1').textContent = t.sw1; $('tSw2').textContent = t.sw2; $('tSw3').textContent = t.sw3; $('tSw4').textContent = t.sw4; $('tSw5').textContent = t.sw5; $('tSw6').textContent = t.sw6; $('tSw7').textContent = t.sw7; $('tSw8').textContent = t.sw8; $('tSw9').textContent = t.sw9;
+  if ($('tSw11')) $('tSw11').textContent = t.sw11; if ($('tSw11Note')) $('tSw11Note').textContent = t.sw11Note;
   $('tMode').textContent = t.modeT; $('tMode3d').textContent = t.mode3d; $('tModeIcon').textContent = t.modeIcon; if ($('tModeCute')) $('tModeCute').textContent = t.modeCute;
   if ($('tIconSet')) $('tIconSet').textContent = t.iconSetT;
   if ($('iSetDefault')) $('iSetDefault').textContent = t.iSetDefault;
@@ -5487,6 +5620,16 @@ window.addEventListener('hashchange', () => {
   }
 });
 window.__dbg = () => ({ map: !!map, dataReady, tripList: tripList.length, dayBit, errs: window.__errs, msg: document.getElementById('lMsg').textContent, active: visibleCount, rc: __renderCount, glErr: __glErr, layer: !!map.getLayer('trains-gl'), variant: __lastArgs && __lastArgs.variant, cache: !!idb, glowAutoOff, stIdx: tripsByStation.size });
+/* 性能改善诊断:等级门状态 / 各等级实际绘制数 / 淡入淡出中的班次数 / 索引规模 */
+window.__lod = () => {
+  const byG = [0, 0, 0, 0];
+  for (let i = 0; i < visibleTrips.length; i++) byG[visibleTrips[i].g]++;
+  let mid = 0;
+  for (let i = 0; i < fadeList.length; i++) { const a = fadeList[i]._f; if (a > 0.02 && a < 0.98) mid++; }
+  return { on: perfLod, z: +map.getZoom().toFixed(2), tierOn: tierOn.slice(), drawn: visibleTrips.length, byG,
+           fadeList: fadeList.length, fading: mid, eligible: eligible.length,
+           buckets: dayGrade ? dayGrade.map(a => a.length) : null };
+};
 window.__bufSample = () => Array.from(bufArr.slice(0, 36).map(x => +x.toFixed(6)));
 window.__map = map;
 window.__uni = uni;

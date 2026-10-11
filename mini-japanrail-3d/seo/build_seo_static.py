@@ -875,11 +875,11 @@ CSS = """
   nav.breadcrumb a:first-child{display:inline-flex;align-items:center;gap:8px;font-weight:700;color:var(--txt);text-decoration:none}
   nav.breadcrumb a:first-child:hover{color:#fff;text-decoration:none}
   nav.breadcrumb a:first-child::before{content:'';width:24px;height:24px;border-radius:50%;flex:none;
-    background:
-      radial-gradient(circle at 32% 28%, rgba(255,255,255,.55), rgba(255,255,255,0) 52%),
-      linear-gradient(180deg, transparent 32%, #fff 32%, #fff 37%, transparent 37%, transparent 54%, #fff 54%, #fff 59%, transparent 59%),
-      linear-gradient(180deg,#2f6de8,#1c51d6);
+    background:url(__BRAND_LOGO__) center/cover no-repeat;
     box-shadow:0 2px 8px rgba(47,109,232,.4), inset 0 1px 1px rgba(255,255,255,.45)}
+  @media (prefers-color-scheme: dark){
+    nav.breadcrumb a:first-child::before{background-image:url(__BRAND_LOGO_DARK__)}
+  }
   .topnav{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 18px}
   .topnav a{font-size:12.5px;font-weight:600;color:var(--txt);background:var(--glass);
     border:1px solid var(--glass-edge);border-radius:var(--r-pill);padding:5px 14px;
@@ -964,6 +964,9 @@ CSS = """
 
 
 def page_head(cfg, title, desc, url, og_img_url):
+    # 品牌 logo 注入：CSS 里 ::before 占位符 → 站点根 logo 绝对 URL（随主题切换浅/深色）
+    css = (CSS.replace('__BRAND_LOGO__', abs_url(cfg, 'logo.png'))
+              .replace('__BRAND_LOGO_DARK__', abs_url(cfg, 'logo-dark.png')))
     return (
         '<!DOCTYPE html>\n<html lang="zh-Hans">\n<head>\n'
         '<meta charset="utf-8">\n'
@@ -988,7 +991,7 @@ def page_head(cfg, title, desc, url, og_img_url):
         '<link rel="icon" type="image/png" sizes="64x64" href="' + esc(abs_url(cfg, 'favicon.png')) + '">\n'
         '<link rel="icon" type="image/png" sizes="64x64" href="' + esc(abs_url(cfg, 'favicon-dark.png')) + '" media="(prefers-color-scheme: dark)">\n'
         '<link rel="apple-touch-icon" sizes="180x180" href="' + esc(abs_url(cfg, 'apple-touch-icon.png')) + '">\n'
-        '<style>' + CSS + '</style>\n'
+        '<style>' + css + '</style>\n'
     )
 
 

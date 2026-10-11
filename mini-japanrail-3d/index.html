@@ -3130,19 +3130,48 @@ const eligible = [];      /* 本帧通过廉价筛选的班次(复用数组,不�
 
 /* 按日预过滤:r 掩码不随帧变化,一次过滤后每帧只遍历当日班次(省 57049×N 次 & 分支)。
    同时按等级分桶(dayGrade);等级是静态属性,故只在换日或换数据档时重建一次。 */
-let dayList = null, dayListBit = -1, dayListSrc = null, dayGrade = null;
+let dayList = null, dayListBit = -1, dayListSrc = null, dayGrade = null, dayActiveMin = null;
+/* 把分钟区间 [a,b] 各 +1(裁剪到 [0,1439]);差分数组用 */
+function addMinInterval(diff, a, b) {
+  if (b < 0 || a > 1439) return;
+  if (a < 0) a = 0;
+  if (b > 1439) b = 1439;
+  diff[a]++; diff[b + 1]--;
+}
+/* 当前分钟「全国此时此刻在途列车数」。与 LOD/等级门/视口裁剪完全无关 —— 徽标要的是事实数量。
+   由 windowShift 的语义可推出活跃分钟集合(对 M ∈ [0,1440))=
+     [w0, w1] ∩ [0,1440)                        ← 当日运行时段
+     ∪ [max(0, w0-1440), min(w0-1, w1-1440)]    ← 跨零点:次日凌晨 M+1440 仍落在 [w0,w1] 内
+   第二段左端必须是 w0-1440(而非 0):例如 w0=1442 的班次(24:02 发车)在 00:00/00:01 尚未开始。
+   两段互不相交(第二段右端 ≤ w0-1),故不会重复计数。 */
+function activeCountAt(M) {
+  if (!dayActiveMin) return 0;
+  let m = M | 0;
+  if (m < 0) m = 0; else if (m > 1439) m = 1439;
+  return dayActiveMin[m];
+}
 function buildDayIndex() {
   dayList = [];
   dayGrade = [[], [], [], []];
   /* 换运行日 / 换数据档后 tripList 是全新对象,旧 fadeList 里全是「上一档」的孤儿班次,
      不清空会在随后 ~260ms 内用旧数据继续解算并绘制(幽灵车)。直接清空,下一帧重建。 */
   fadeList.length = 0;
+  /* 顺带用差分数组预计算每分钟的在途数:O(班次数) 建一次,O(1) 查询,帧内零成本 */
+  const diff = new Int32Array(1441);
   for (let k = 0; k < tripList.length; k++) {
     const t = tripList[k];
     if (!(t.r & dayBit)) continue;
     dayList.push(t);
     dayGrade[t.g].push(t);
+    if (!t.bad) {
+      addMinInterval(diff, t.w0, t.w1);
+      const lo = Math.max(0, t.w0 - 1440), hi = Math.min(t.w0 - 1, t.w1 - 1440);
+      if (hi >= lo) addMinInterval(diff, lo, hi);
+    }
   }
+  let acc = 0;
+  for (let m = 0; m < 1440; m++) { acc += diff[m]; diff[m] = acc; }
+  dayActiveMin = diff;
   dayListBit = dayBit; dayListSrc = tripList;
 }
 function updateTrains(M, dtms) {
@@ -3795,8 +3824,11 @@ function startLoop() {
       return;
     }
     viewDirty = false; /* 相机已稳定:本帧重建后清除,恢复暂停态省电 */
-    const n = updateTrains(M, dt * 1000); /* dt 传给淡入淡出:按真实帧间隔推进 alpha,掉帧时时长不变 */
-    if (n !== lastActiveN) { lastActiveN = n; $('bLive').textContent = n.toLocaleString(); pulseStat($('bLive')); }
+    updateTrains(M, dt * 1000); /* dt 传给淡入淡出:按真实帧间隔推进 alpha,掉帧时时长不变 */
+    /* 徽标「在途」= 全国此时此刻在途列车数:与 LOD/等级门/视口裁剪无关,
+       缩放、开关「性能改善」都不会改变这个数字(它描述事实,不是描述屏幕上画了多少) */
+    const act = activeCountAt(M);
+    if (act !== lastActiveN) { lastActiveN = act; $('bLive').textContent = act.toLocaleString(); pulseStat($('bLive')); }
     if (Math.floor(now / 1000) !== lastFpsSec) { $('dFps').textContent = Math.round(fps); lastFpsSec = Math.floor(now / 1000); }
     if (followTrip) { tickFollow(M, dt); updateDetailLive(followTrip, null, M); }
     else if (liveDetailTrip) {
@@ -5660,6 +5692,7 @@ window.__lod = () => {
   for (let i = 0; i < fadeList.length; i++) { const a = fadeList[i]._f; if (a > 0.02 && a < 0.98) mid++; }
   return { on: perfLod, z: +map.getZoom().toFixed(2), tierOn: tierOn.slice(), drawn: visibleTrips.length, byG,
            fadeList: fadeList.length, fading: mid, eligible: eligible.length,
+           activeNow: activeCountAt(curMin()),
            buckets: dayGrade ? dayGrade.map(a => a.length) : null };
 };
 window.__bufSample = () => Array.from(bufArr.slice(0, 36).map(x => +x.toFixed(6)));

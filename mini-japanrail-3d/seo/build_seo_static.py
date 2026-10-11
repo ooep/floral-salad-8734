@@ -964,9 +964,27 @@ CSS = """
 
 
 def page_head(cfg, title, desc, url, og_img_url):
-    # 品牌 logo 注入：CSS 里 ::before 占位符 → 站点根 logo 绝对 URL（随主题切换浅/深色）
-    css = (CSS.replace('__BRAND_LOGO__', abs_url(cfg, 'logo.png'))
-              .replace('__BRAND_LOGO_DARK__', abs_url(cfg, 'logo-dark.png')))
+    # 品牌 logo 注入：CSS 里 ::before 占位符 → 相对路径 logo（随主题切换浅/深色）
+    # 用相对路径而非 site_base 绝对 URL，保证各部署环境（GitHub Pages 子路径、
+    # Cloudflare 根路径、自定义域名）均能正确加载。
+    # 根据 url 相对 site_base 的深度计算前缀（如 /lines/x/ → ../../，/lines/ → ../）
+    base = cfg['site_base'].rstrip('/')
+    if url.startswith(base):
+        suffix = url[len(base):]  # 如 /lines/xxx/ 或 /404.html 或 /
+    else:
+        suffix = '/'
+    # 末尾斜杠的目录路径（如 /lines/xxx/）对应 /lines/xxx/index.html，
+    # 深度 = 路径段数；无斜杠的文件路径（如 /404.html）取所在目录深度。
+    if suffix.endswith('/'):
+        segs = [s for s in suffix.strip('/').split('/') if s]
+        rel = '../' * len(segs)
+    elif '/' in suffix:
+        segs = [s for s in suffix.rsplit('/', 1)[0].strip('/').split('/') if s]
+        rel = '../' * len(segs)
+    else:
+        rel = ''  # 根级文件如 /404.html
+    css = (CSS.replace('__BRAND_LOGO__', rel + 'logo.png')
+              .replace('__BRAND_LOGO_DARK__', rel + 'logo-dark.png'))
     return (
         '<!DOCTYPE html>\n<html lang="zh-Hans">\n<head>\n'
         '<meta charset="utf-8">\n'
@@ -988,9 +1006,9 @@ def page_head(cfg, title, desc, url, og_img_url):
         '<meta name="twitter:description" content="' + esc(desc) + '">\n'
         '<meta name="twitter:image" content="' + esc(og_img_url) + '">\n'
         '<meta name="theme-color" content="#0b0f16">\n'
-        '<link rel="icon" type="image/png" sizes="64x64" href="' + esc(abs_url(cfg, 'favicon.png')) + '">\n'
-        '<link rel="icon" type="image/png" sizes="64x64" href="' + esc(abs_url(cfg, 'favicon-dark.png')) + '" media="(prefers-color-scheme: dark)">\n'
-        '<link rel="apple-touch-icon" sizes="180x180" href="' + esc(abs_url(cfg, 'apple-touch-icon.png')) + '">\n'
+        '<link rel="icon" type="image/png" sizes="64x64" href="' + esc(rel + 'favicon.png') + '">\n'
+        '<link rel="icon" type="image/png" sizes="64x64" href="' + esc(rel + 'favicon-dark.png') + '" media="(prefers-color-scheme: dark)">\n'
+        '<link rel="apple-touch-icon" sizes="180x180" href="' + esc(rel + 'apple-touch-icon.png') + '">\n'
         '<style>' + css + '</style>\n'
     )
 

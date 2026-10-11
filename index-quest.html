@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="ja" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -16,58 +16,154 @@
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 :root {
-    --bg: #07090d;
-    --bg-panel: #0c1018;
-    --bg-card: #111820;
-    --bg-hover: #1a2230;
-    --bg-active: #1e2a3a;
-    --border: #1e2a38;
-    --border-light: #2a3a4a;
-    --text: #e8ecf1;
-    --text-dim: #8b939e;
-    --text-muted: #59616d;
-    --accent: #5bb6ff;
-    --accent-dim: rgba(91,182,255,0.15);
+    --bg: #0b0f16;
+    --bg-panel: rgba(18, 24, 34, .82);
+    --bg-card: rgba(255, 255, 255, .09);
+    --bg-hover: rgba(255, 255, 255, .14);
+    --bg-active: rgba(255, 255, 255, .18);
+    --border: rgba(255, 255, 255, .12);
+    --border-light: rgba(255, 255, 255, .24);
+    --text: #f0f4fa;
+    --text-dim: #c8d4e6;
+    --text-muted: #94a4bc;
+    --accent: #2f6de8;
+    --accent-dim: rgba(79, 142, 247, .16);
     --success: #2eb35a;
-    --success-dim: rgba(46,179,90,0.15);
+    --success-dim: rgba(46, 179, 90, .15);
     --warning: #f5821f;
     --danger: #e8443b;
-    --danger-dim: rgba(232,68,59,0.15);
+    --danger-dim: rgba(232, 68, 59, .15);
     --sidebar-w: 380px;
     --header-h: 48px;
+    /* ── Liquid Glass 液态玻璃(深色) ── */
+    --glass: rgba(255, 255, 255, .10);
+    --glass-2: rgba(255, 255, 255, .16);
+    --glass-edge: rgba(255, 255, 255, .22);
+    --glass-hi: rgba(255, 255, 255, .34);
+    --glass-lo: rgba(0, 0, 0, .16);
+    --glass-sh: 0 6px 20px rgba(0, 0, 0, .30), 0 2px 6px rgba(0, 0, 0, .22);
+    --glass-solid: rgb(25, 32, 45);
+    --glass-panel: linear-gradient(180deg, rgba(255,255,255,.18) 0%, rgba(255,255,255,.05) 34%, rgba(255,255,255,.09) 100%), rgba(18, 24, 34, .72);
+    --glass-panel-blur: blur(26px) saturate(1.9);
+    --dock: 48px;
+    /* ── 动效曲线 ── */
+    --ease-spring: cubic-bezier(.34, 1.45, .44, 1);
+    --ease-smooth: cubic-bezier(.16, 1, .3, 1);
+    --spring-out: linear(0,.0598,.1976,.3654,.5321,.68,.8007,.8924,.9573,.9996,1.0241,1.0356,1.0384,1.0358,1.0304,1.0239,1.0175,1.0119,1.0074,1.0039,1.0015,.9999,.999,.9986,.9985,.9986,.9989,.9991,.9993,.9996,1);
+    --spring-in: linear(0,.0368,.1232,.2323,.3473,.458,.5586,.6466,.7215,.7836,.8341,.8746,.9065,.9313,.9503,.9646,.9753,.9831,.9888,.9929,.9957,.9976,.9989,.9997,1.0002,1.0005,1.0006,1.0006,1.0006,1.0005,1);
+    --morph-out: 460ms;
+    --morph-in: 340ms;
+    --r: 14px; --r-sm: 10px; --r-xs: 7px; --r-pill: 999px;
 }
-body { background: var(--bg); color: var(--text); font-family: 'Nunito', system-ui, -apple-system, sans-serif; overflow: hidden; }
+@supports not (transition-timing-function: linear(0,1)) {
+    :root { --spring-out: cubic-bezier(.22, 1.12, .36, 1); --spring-in: cubic-bezier(.32, .94, .44, 1); }
+}
+:root[data-theme="light"] {
+    --bg: #dfe4ec;
+    --bg-panel: rgba(255, 255, 255, .86);
+    --bg-card: rgba(255, 255, 255, .62);
+    --bg-hover: rgba(255, 255, 255, .76);
+    --bg-active: rgba(255, 255, 255, .88);
+    --border: rgba(15, 23, 42, .12);
+    --border-light: rgba(15, 23, 42, .2);
+    --text: #0d1424;
+    --text-dim: #3a475c;
+    --text-muted: #62718b;
+    --accent: #1c51d6;
+    --accent-dim: rgba(37, 99, 235, .1);
+    --glass: rgba(255, 255, 255, .58);
+    --glass-2: rgba(255, 255, 255, .76);
+    --glass-edge: rgba(255, 255, 255, .92);
+    --glass-hi: rgba(255, 255, 255, .95);
+    --glass-lo: rgba(15, 23, 42, .06);
+    --glass-sh: 0 6px 18px rgba(15, 23, 42, .14), 0 2px 5px rgba(15, 23, 42, .08);
+    --glass-solid: rgb(247, 249, 252);
+    --glass-panel: linear-gradient(180deg, rgba(255,255,255,.78) 0%, rgba(255,255,255,.52) 36%, rgba(255,255,255,.66) 100%), rgba(255, 255, 255, .55);
+    --glass-panel-blur: blur(26px) saturate(1.6);
+}
+body {
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, "SF Pro SC", "PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC", "Yu Gothic UI", "Noto Sans JP", "Nunito", system-ui, sans-serif;
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+}
 button, input[type="checkbox"] { touch-action: manipulation; }
+::selection { background: var(--accent-dim); }
 
 #map { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; height: 100dvh; z-index: 1; }
 
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(120, 140, 180, .28); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(120, 140, 180, .45); }
+
+/* ─── MapLibre native controls (glass) ─── */
+.maplibregl-ctrl-group {
+    background: var(--glass-panel) !important;
+    backdrop-filter: blur(16px) saturate(1.5) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(1.5) !important;
+    border: 1px solid var(--glass-edge) !important;
+    border-radius: var(--r-sm) !important;
+    box-shadow: inset 0 1px 0 var(--glass-hi), var(--glass-sh) !important;
+    overflow: hidden;
+}
+.maplibregl-ctrl-group button {
+    background: transparent !important;
+    border: none !important;
+    width: 34px !important; height: 34px !important;
+}
+.maplibregl-ctrl-group button + button { border-top: 1px solid var(--border) !important; }
+.maplibregl-ctrl-group button:hover { background: var(--glass-2) !important; }
+.maplibregl-ctrl-group button:active { background: var(--glass-2) !important; transform: scale(.92); }
+:root[data-theme="dark"] .maplibregl-ctrl-group button .maplibregl-ctrl-icon { filter: invert(1) brightness(1.4); }
+.maplibregl-ctrl-attrib {
+    background: color-mix(in srgb, var(--glass-solid) 62%, transparent) !important;
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    color: var(--text-muted) !important;
+    font-size: 9px !important;
+    padding: 2px 8px !important;
+    border-radius: var(--r-xs) 0 0 0 !important;
+}
+.maplibregl-ctrl-attrib a { color: var(--text-dim) !important; }
+.maplibregl-ctrl-attrib-button { background-color: transparent !important; }
+
+/* ─── Sidebar (Liquid Glass Panel) ─── */
 #sidebar {
     position: fixed; top: 0; left: 0;
-    width: var(--sidebar-w); height: 100vh;
-    height: 100dvh;
-    background: var(--bg-panel);
-    border-right: 1px solid var(--border);
+    width: var(--sidebar-w); height: 100vh; height: 100dvh;
+    background: var(--glass-panel);
+    backdrop-filter: var(--glass-panel-blur);
+    -webkit-backdrop-filter: var(--glass-panel-blur);
+    border-right: 1px solid var(--glass-edge);
+    box-shadow: inset 1px 0 0 var(--glass-hi), var(--glass-sh);
     z-index: 50;
     display: flex; flex-direction: column;
-    transition: transform 0.3s ease;
+    transition: transform var(--morph-in) var(--spring-in);
     overflow: hidden;
 }
 #sidebar.collapsed { transform: translateX(calc(-1 * var(--sidebar-w))); }
 
+/* ─── Sidebar toggle (circular glass button) ─── */
 #sidebar-toggle {
     position: fixed; top: 10px; left: 10px;
     z-index: 60;
     width: 40px; height: 40px;
-    background: rgba(7,9,13,0.9);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--text-dim);
+    background: var(--glass);
+    border: 1px solid var(--glass-edge);
+    border-radius: 50%;
+    backdrop-filter: blur(14px) saturate(1.4);
+    -webkit-backdrop-filter: blur(14px) saturate(1.4);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.5), inset 0 1px 1.5px var(--glass-hi), inset 0 -2px 4px var(--glass-lo), var(--glass-sh);
+    color: var(--text);
     cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    transition: all 0.2s;
+    transition: transform .38s var(--ease-spring), background .2s var(--ease-smooth), border-color .2s var(--ease-smooth), box-shadow .25s var(--ease-smooth);
+    overflow: hidden;
 }
-#sidebar-toggle:hover { color: #fff; border-color: var(--border-light); background: rgba(20,28,40,0.95); }
-#sidebar-toggle svg { width: 20px; height: 20px; }
+#sidebar-toggle:hover { background: var(--glass-2); border-color: var(--glass-hi); transform: translateY(-1px); }
+#sidebar-toggle:active { transform: scale(.88); transition: transform .12s ease-in; }
+#sidebar-toggle svg { width: 20px; height: 20px; position: relative; z-index: 1; transition: transform .38s var(--ease-spring); }
 body:not(.sidebar-collapsed) #sidebar-toggle { left: calc(var(--sidebar-w) + 10px); }
 
 /* ─── Header ─── */
@@ -77,7 +173,7 @@ body:not(.sidebar-collapsed) #sidebar-toggle { left: calc(var(--sidebar-w) + 10p
     display: flex; align-items: center; justify-content: space-between;
     border-bottom: 1px solid var(--border);
     flex-shrink: 0;
-    background: var(--bg);
+    background: transparent;
 }
 #header .title {
     font-size: 15px; font-weight: 800;
@@ -87,34 +183,42 @@ body:not(.sidebar-collapsed) #sidebar-toggle { left: calc(var(--sidebar-w) + 10p
 #header .title .jp { font-size: 13px; color: var(--text-dim); margin-left: 6px; font-weight: 600; }
 #header-actions { display: flex; gap: 4px; }
 #header-actions button, .icon-btn {
-    background: transparent; border: 1px solid var(--border);
-    border-radius: 6px; color: var(--text-dim);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm); color: var(--text-dim);
     cursor: pointer; padding: 4px 8px;
     font-size: 11px; font-family: inherit;
-    transition: all 0.15s;
+    transition: background .12s, border-color .12s, color .15s, transform .3s var(--ease-spring);
     display: inline-flex; align-items: center; gap: 4px;
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
 }
-#header-actions button:hover, .icon-btn:hover { color: var(--text); border-color: var(--border-light); background: var(--bg-hover); }
-#header-actions button.danger:hover { color: var(--danger); border-color: var(--danger); }
+#header-actions button:hover, .icon-btn:hover { color: var(--text); border-color: var(--accent); background: var(--accent-dim); }
+#header-actions button:active, .icon-btn:active { transform: scale(.94); transition: transform .1s ease-in; }
+#header-actions button.danger:hover { color: var(--danger); border-color: var(--danger); background: var(--danger-dim); }
 
 /* ─── Stats bar ─── */
 #stats-bar {
     padding: 10px 16px;
     border-bottom: 1px solid var(--border);
     flex-shrink: 0;
-    background: var(--bg);
+    background: transparent;
 }
 #stats-bar .stats-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 6px;
+    gap: 8px;
 }
 .stat-item {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 8px 10px;
+    background: var(--glass);
+    border: 1px solid var(--glass-edge);
+    border-radius: var(--r-sm);
+    padding: 10px 12px;
+    backdrop-filter: blur(14px) saturate(1.4);
+    -webkit-backdrop-filter: blur(14px) saturate(1.4);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 2px 8px rgba(0,0,0,.12);
+    transition: transform .38s var(--ease-spring), background .2s var(--ease-smooth);
 }
+.stat-item:hover { background: var(--glass-2); transform: translateY(-1px); }
 .stat-item .stat-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
 .stat-item .stat-value { font-size: 18px; font-weight: 800; color: var(--accent); margin-top: 2px; }
 .stat-item .stat-pct { font-size: 11px; color: var(--text-dim); }
@@ -125,7 +229,7 @@ body:not(.sidebar-collapsed) #sidebar-toggle { left: calc(var(--sidebar-w) + 10p
     padding: 6px 16px 10px;
     border-bottom: 1px solid var(--border);
     flex-shrink: 0;
-    background: var(--bg);
+    background: transparent;
 }
 #progress-bar-wrap .prog-label {
     font-size: 10px; color: var(--text-muted);
@@ -134,93 +238,115 @@ body:not(.sidebar-collapsed) #sidebar-toggle { left: calc(var(--sidebar-w) + 10p
 }
 #progress-track {
     width: 100%; height: 6px;
-    background: var(--bg-card);
-    border-radius: 3px;
+    background: var(--glass-lo);
+    border-radius: var(--r-pill);
     overflow: hidden;
-    border: 1px solid var(--border);
 }
 #progress-fill {
     height: 100%;
     background: linear-gradient(90deg, var(--success), var(--accent));
-    border-radius: 3px;
-    transition: width 0.4s ease;
+    border-radius: var(--r-pill);
+    transition: width .5s var(--ease-spring);
     width: 0%;
+    box-shadow: 0 0 12px var(--accent-dim);
 }
 
-/* ─── Mode toggle ─── */
+/* ─── Mode toggle (segmented glass control) ─── */
 #mode-bar {
-    display: flex;
-    border-bottom: 1px solid var(--border);
+    display: flex; gap: 3px;
+    padding: 6px 10px;
+    margin: 8px 12px;
+    border-bottom: none;
     flex-shrink: 0;
-    background: var(--bg);
+    background: var(--glass);
+    border: 1px solid var(--glass-edge);
+    border-radius: 11px;
+    backdrop-filter: blur(14px) saturate(1.4);
+    -webkit-backdrop-filter: blur(14px) saturate(1.4);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 4px 14px rgba(0,0,0,.12);
 }
 .mode-btn {
     flex: 1;
-    padding: 8px 0;
+    padding: 7px 0;
     text-align: center;
     font-size: 12px;
-    font-weight: 700;
+    font-weight: 600;
     cursor: pointer;
     color: var(--text-muted);
-    border-bottom: 2px solid transparent;
-    transition: all 0.15s;
+    border-radius: 7px;
+    transition: color .15s, background .28s var(--ease-spring), box-shadow .2s, transform .12s;
     background: transparent;
-    border-top: none; border-left: none; border-right: none;
+    border: none;
     font-family: inherit;
 }
-.mode-btn:hover { color: var(--text-dim); background: var(--bg-hover); }
-.mode-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+.mode-btn:hover { color: var(--text-dim); }
+.mode-btn:active { transform: scale(.93); }
+.mode-btn.active {
+    color: #0b0f16;
+    background: rgba(255, 255, 255, .92);
+    font-weight: 700;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, .28);
+}
+:root[data-theme="light"] .mode-btn.active {
+    color: #0b0f16;
+    background: #fff;
+    box-shadow: 0 1px 5px rgba(15, 23, 42, .18), 0 0 0 1px rgba(15, 23, 42, .07);
+}
 
 /* ─── Map view toggle ─── */
 #map-view-bar {
     display: flex; gap: 6px;
-    padding: 8px 16px;
+    padding: 6px 16px;
     border-bottom: 1px solid var(--border);
     flex-shrink: 0;
-    background: var(--bg);
+    background: transparent;
 }
 .view-btn {
     flex: 1;
-    padding: 5px 0;
+    padding: 6px 0;
     text-align: center;
     font-size: 11px;
     font-weight: 600;
     cursor: pointer;
     color: var(--text-dim);
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 5px;
-    transition: all 0.15s;
+    background: var(--glass);
+    border: 1px solid var(--glass-edge);
+    border-radius: var(--r-sm);
+    transition: all .2s var(--ease-smooth);
     font-family: inherit;
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
 }
-.view-btn:hover { background: var(--bg-hover); border-color: var(--border-light); }
-.view-btn.active { color: var(--accent); border-color: var(--accent); background: var(--accent-dim); }
+.view-btn:hover { background: var(--glass-2); border-color: var(--glass-hi); }
+.view-btn.active { color: #fff; border-color: var(--accent); background: var(--accent); box-shadow: 0 2px 10px var(--accent-dim); }
 
 /* ─── Search ─── */
 #search-bar {
     padding: 8px 16px;
     border-bottom: 1px solid var(--border);
     flex-shrink: 0;
-    background: var(--bg);
+    background: transparent;
+    position: relative;
 }
 #search-bar input {
     width: 100%;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 7px 10px 7px 32px;
+    background: var(--glass);
+    border: 1px solid var(--glass-edge);
+    border-radius: var(--r-pill);
+    padding: 8px 12px 8px 34px;
     color: var(--text);
     font-size: 12.5px;
     font-family: inherit;
     outline: none;
-    transition: border-color 0.15s;
+    backdrop-filter: blur(14px) saturate(1.4);
+    -webkit-backdrop-filter: blur(14px) saturate(1.4);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.1);
+    transition: border-color .15s, background .2s var(--ease-smooth), box-shadow .2s;
 }
 #search-bar input::placeholder { color: var(--text-muted); }
-#search-bar input:focus { border-color: var(--accent); }
-#search-bar { position: relative; }
+#search-bar input:focus { border-color: var(--accent); box-shadow: inset 0 1px 0 rgba(255,255,255,.1), 0 0 0 3px var(--accent-dim); }
 #search-bar .search-icon {
     position: absolute;
-    top: 14px; left: 24px;
+    top: 16px; left: 26px;
     width: 14px; height: 14px;
     color: var(--text-muted);
     pointer-events: none;
@@ -234,30 +360,30 @@ body:not(.sidebar-collapsed) #sidebar-toggle { left: calc(var(--sidebar-w) + 10p
     padding: 4px 0;
     -webkit-overflow-scrolling: touch;
 }
-#line-list-wrap::-webkit-scrollbar { width: 6px; }
-#line-list-wrap::-webkit-scrollbar-track { background: transparent; }
-#line-list-wrap::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-#line-list-wrap::-webkit-scrollbar-thumb:hover { background: var(--border-light); }
 
 .operator-group { margin-bottom: 2px; }
 .operator-header {
     display: flex;
     align-items: center;
-    padding: 8px 16px;
+    padding: 9px 16px;
     cursor: pointer;
     user-select: none;
-    transition: background 0.1s;
+    transition: background .15s var(--ease-smooth);
     position: sticky;
     top: 0;
     z-index: 5;
-    background: var(--bg-panel);
-    border-bottom: 1px solid var(--border);
+    background: rgba(18, 24, 34, .88);
+    backdrop-filter: blur(18px) saturate(1.6);
+    -webkit-backdrop-filter: blur(18px) saturate(1.6);
+    border-bottom: 1px solid var(--border-light);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .16);
 }
+:root[data-theme="light"] .operator-header { background: rgba(255, 255, 255, .9); }
 .operator-header:hover { background: var(--bg-hover); }
 .operator-header .op-chevron {
     width: 16px; height: 16px;
     color: var(--text-muted);
-    transition: transform 0.2s;
+    transition: transform .25s var(--ease-spring);
     flex-shrink: 0;
     margin-right: 6px;
 }
@@ -267,6 +393,7 @@ body:not(.sidebar-collapsed) #sidebar-toggle { left: calc(var(--sidebar-w) + 10p
     border-radius: 3px;
     flex-shrink: 0;
     margin-right: 8px;
+    box-shadow: 0 0 6px currentColor;
 }
 .operator-header .op-name {
     font-size: 12px; font-weight: 700;
@@ -286,10 +413,11 @@ body:not(.sidebar-collapsed) #sidebar-toggle { left: calc(var(--sidebar-w) + 10p
     color: var(--text-muted);
     margin-left: 6px;
     flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
 }
 .operator-header .op-progress-wrap {
     width: 40px; height: 4px;
-    background: var(--bg-card);
+    background: var(--glass-lo);
     border-radius: 2px;
     overflow: hidden;
     margin-left: 8px;
@@ -299,41 +427,45 @@ body:not(.sidebar-collapsed) #sidebar-toggle { left: calc(var(--sidebar-w) + 10p
     height: 100%;
     background: var(--success);
     border-radius: 2px;
-    transition: width 0.3s;
+    transition: width .35s var(--ease-spring);
 }
 .operator-header .op-select-all {
     font-size: 9px;
     color: var(--accent);
     cursor: pointer;
-    padding: 2px 6px;
-    border: 1px solid var(--border);
-    border-radius: 3px;
-    margin-left: 6px;
+    padding: 3px 8px;
+    border: 1px solid var(--glass-edge);
+    border-radius: var(--r-pill);
+    margin-left: 8px;
     flex-shrink: 0;
-    background: transparent;
+    background: var(--glass);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
     font-family: inherit;
-    transition: all 0.15s;
+    transition: all .15s var(--ease-smooth);
 }
 .operator-header .op-select-all:hover { background: var(--accent-dim); border-color: var(--accent); }
 
-.operator-lines { overflow: hidden; transition: max-height 0.3s ease; }
+.operator-lines { overflow: hidden; transition: max-height var(--morph-out) var(--spring-out); }
 .operator-header.collapsed + .operator-lines { max-height: 0 !important; }
 
 .line-item {
     display: flex;
     align-items: flex-start;
-    padding: 6px 16px 6px 40px;
+    padding: 7px 16px 7px 40px;
     cursor: pointer;
-    transition: background 0.1s;
-    border-bottom: 1px solid rgba(30,42,56,0.3);
+    transition: background .12s var(--ease-smooth);
+    border-bottom: 1px solid rgba(255, 255, 255, .06);
 }
-.line-item:hover { background: var(--bg-hover); }
+.line-item:hover { background: rgba(255, 255, 255, .08); }
+:root[data-theme="light"] .line-item { border-bottom-color: rgba(15, 23, 42, .06); }
+:root[data-theme="light"] .line-item:hover { background: rgba(15, 23, 42, .05); }
 .line-item .line-color-dot {
     width: 8px; height: 8px;
     border-radius: 50%;
     flex-shrink: 0;
     margin-top: 5px;
     margin-right: 8px;
+    box-shadow: 0 0 6px currentColor;
 }
 .line-item .line-info { flex: 1; min-width: 0; }
 .line-item .line-name {
@@ -375,22 +507,24 @@ body:not(.sidebar-collapsed) #sidebar-toggle { left: calc(var(--sidebar-w) + 10p
     position: absolute;
     top: 0; left: 0;
     width: 18px; height: 18px;
-    background: var(--bg-card);
+    background: var(--glass);
     border: 1.5px solid var(--border-light);
-    border-radius: 4px;
-    transition: all 0.15s;
+    border-radius: 5px;
+    transition: all .2s var(--ease-spring);
     display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
 }
 .line-check input:checked + .checkmark {
     background: var(--success);
     border-color: var(--success);
+    box-shadow: 0 0 10px var(--success-dim);
 }
 .line-check .checkmark svg {
     width: 12px; height: 12px;
     color: #fff;
     opacity: 0;
     transform: scale(0.5);
-    transition: all 0.15s;
+    transition: all .2s var(--ease-spring);
 }
 .line-check input:checked + .checkmark svg {
     opacity: 1;
@@ -412,23 +546,25 @@ body:not(.sidebar-collapsed) #sidebar-toggle { left: calc(var(--sidebar-w) + 10p
 .segments-wrap {
     overflow: hidden;
     max-height: 0;
-    transition: max-height 0.3s ease;
-    background: rgba(0,0,0,0.15);
+    transition: max-height var(--morph-out) var(--spring-out);
+    background: rgba(0, 0, 0, 0.12);
 }
 .segments-wrap.open { max-height: 2000px; }
 .segment-item {
     display: flex;
     align-items: center;
-    padding: 4px 16px 4px 56px;
+    padding: 5px 16px 5px 56px;
     font-size: 11px;
     color: var(--text-dim);
     cursor: pointer;
-    transition: background 0.1s;
-    border-bottom: 1px solid rgba(30,42,56,0.2);
+    transition: background .12s var(--ease-smooth);
+    border-bottom: 1px solid rgba(255, 255, 255, .05);
 }
-.segment-item:hover { background: var(--bg-hover); }
+.segment-item:hover { background: rgba(255, 255, 255, .08); }
+:root[data-theme="light"] .segment-item { border-bottom-color: rgba(15, 23, 42, .05); }
+:root[data-theme="light"] .segment-item:hover { background: rgba(15, 23, 42, .05); }
 .segment-item .seg-arrow { color: var(--text-muted); margin: 0 4px; }
-.segment-item .seg-km { margin-left: auto; color: var(--text-muted); font-size: 10px; }
+.segment-item .seg-km { margin-left: auto; color: var(--text-muted); font-size: 10px; font-variant-numeric: tabular-nums; }
 .segment-item .seg-check {
     position: relative;
     width: 15px; height: 15px;
@@ -444,22 +580,23 @@ body:not(.sidebar-collapsed) #sidebar-toggle { left: calc(var(--sidebar-w) + 10p
     position: absolute;
     top: 0; left: 0;
     width: 15px; height: 15px;
-    background: var(--bg-card);
+    background: var(--glass);
     border: 1.5px solid var(--border-light);
-    border-radius: 3px;
-    transition: all 0.15s;
+    border-radius: 4px;
+    transition: all .2s var(--ease-spring);
     display: flex; align-items: center; justify-content: center;
 }
 .segment-item .seg-check input:checked + .checkmark {
     background: var(--success);
     border-color: var(--success);
+    box-shadow: 0 0 8px var(--success-dim);
 }
 .segment-item .seg-check .checkmark svg {
     width: 10px; height: 10px;
     color: #fff;
     opacity: 0;
     transform: scale(0.5);
-    transition: all 0.15s;
+    transition: all .2s var(--ease-spring);
 }
 .segment-item .seg-check input:checked + .checkmark svg {
     opacity: 1; transform: scale(1);
@@ -469,8 +606,8 @@ body:not(.sidebar-collapsed) #sidebar-toggle { left: calc(var(--sidebar-w) + 10p
 /* ─── Quick select range ─── */
 .quick-select-wrap {
     padding: 8px 12px 8px 40px;
-    background: rgba(91,182,255,0.04);
-    border-bottom: 1px solid rgba(30,42,56,0.3);
+    background: rgba(79, 142, 247, .04);
+    border-bottom: 1px solid rgba(255, 255, 255, .04);
 }
 .quick-select-header {
     display: flex; align-items: center; gap: 6px;
@@ -482,7 +619,7 @@ body:not(.sidebar-collapsed) #sidebar-toggle { left: calc(var(--sidebar-w) + 10p
 }
 .quick-select-header .qs-toggle {
     width: 16px; height: 16px; cursor: pointer;
-    color: var(--text-muted); transition: color 0.15s;
+    color: var(--text-muted); transition: color .15s;
 }
 .quick-select-header .qs-toggle:hover { color: var(--accent); }
 .quick-select-header .qs-toggle.on { color: var(--accent); }
@@ -497,147 +634,339 @@ body:not(.sidebar-collapsed) #sidebar-toggle { left: calc(var(--sidebar-w) + 10p
 }
 .quick-select-body .qs-field select {
     width: 100%; padding: 5px 6px;
-    background: var(--bg-card); border: 1px solid var(--border);
-    border-radius: 4px; color: var(--text); font-size: 11px;
+    background: var(--glass); border: 1px solid var(--glass-edge);
+    border-radius: var(--r-xs); color: var(--text); font-size: 11px;
     font-family: inherit; outline: none; cursor: pointer;
     -webkit-appearance: none; appearance: none;
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
 }
 .quick-select-body .qs-field select:focus { border-color: var(--accent); }
 .quick-select-body .qs-apply {
-    padding: 5px 10px; font-size: 10px; font-weight: 700;
+    padding: 6px 12px; font-size: 10px; font-weight: 700;
     background: var(--accent); color: #fff; border: none;
-    border-radius: 4px; cursor: pointer; white-space: nowrap;
-    font-family: inherit; transition: opacity 0.15s;
+    border-radius: var(--r-xs); cursor: pointer; white-space: nowrap;
+    font-family: inherit; transition: opacity .15s, transform .3s var(--ease-spring);
     flex-shrink: 0;
+    box-shadow: 0 2px 8px var(--accent-dim);
 }
 .quick-select-body .qs-apply:hover { opacity: 0.85; }
+.quick-select-body .qs-apply:active { transform: scale(.94); }
 .quick-select-body .qs-apply:disabled { opacity: 0.4; cursor: default; }
 
-/* ─── Language toggle ─── */
+/* ─── Language toggle (glass pill) ─── */
 #lang-toggle {
     position: fixed;
     bottom: 16px; right: 52px;
     z-index: 100;
     display: flex;
     gap: 2px;
-    background: rgba(7,9,13,0.88);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 3px 4px;
+    background: var(--glass);
+    border: 1px solid var(--glass-edge);
+    border-radius: var(--r-pill);
+    padding: 4px 6px;
     font-size: 11px;
     white-space: nowrap;
+    backdrop-filter: blur(14px) saturate(1.4);
+    -webkit-backdrop-filter: blur(14px) saturate(1.4);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.12), var(--glass-sh);
 }
 #lang-toggle span {
     cursor: pointer;
     color: var(--text-muted);
-    padding: 2px 6px;
-    border-radius: 4px;
-    transition: all 0.15s;
+    padding: 3px 8px;
+    border-radius: var(--r-pill);
+    transition: all .2s var(--ease-smooth);
 }
 #lang-toggle span:hover { color: var(--text-dim); }
-#lang-toggle span.on { color: #fff; background: var(--border); }
+#lang-toggle span.on { color: #fff; background: var(--accent); box-shadow: 0 2px 6px var(--accent-dim); }
 
-/* ─── Bottom controls on map ─── */
-#map-controls {
-    position: fixed;
-    bottom: 16px; left: 14px;
-    z-index: 40;
-    display: flex; flex-direction: column; gap: 8px;
+/* ─── Ride Mode (Liquid Glass) ─── */
+#ride-wrap { flex: 1; min-height: 0; display: none; flex-direction: column; }
+#ride-wrap.on { display: flex; }
+
+#medal-bar {
+    flex: none;
+    padding: 9px 12px 10px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(18, 24, 34, .55);
+    backdrop-filter: blur(14px) saturate(1.4);
+    -webkit-backdrop-filter: blur(14px) saturate(1.4);
 }
+:root[data-theme="light"] #medal-bar { background: rgba(255, 255, 255, .6); }
+.medal-bar-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 8px;
+}
+.medal-bar-head .mb-title {
+    font-size: 10px; font-weight: 700; letter-spacing: .6px;
+    text-transform: uppercase; color: var(--text-muted);
+}
+.medal-bar-head .mb-count {
+    font-size: 11px; font-weight: 800; color: var(--accent);
+    font-variant-numeric: tabular-nums;
+}
+#medal-strip {
+    display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px;
+    scrollbar-width: none;
+}
+#medal-strip::-webkit-scrollbar { height: 0; }
+.medal-chip {
+    flex: none; width: 42px; height: 42px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 19px; cursor: pointer; position: relative;
+    background: var(--glass); border: 1px solid var(--glass-edge);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    transition: transform .3s var(--ease-spring), background .2s, border-color .2s, box-shadow .2s;
+    filter: grayscale(1) opacity(.4);
+}
+.medal-chip:hover { transform: translateY(-2px); }
+.medal-chip.earned { filter: none; }
+.medal-chip.earned.bronze { border-color: #cd7f32; box-shadow: 0 0 10px rgba(205,127,50,.35), inset 0 1px 0 var(--glass-hi); }
+.medal-chip.earned.silver { border-color: #b9c4d4; box-shadow: 0 0 10px rgba(185,196,212,.4), inset 0 1px 0 var(--glass-hi); }
+.medal-chip.earned.gold { border-color: #e0b84a; box-shadow: 0 0 12px rgba(224,184,74,.45), inset 0 1px 0 var(--glass-hi); }
+.medal-chip.earned.platinum { border-color: #7fe0ff; box-shadow: 0 0 14px rgba(127,224,255,.5), inset 0 1px 0 var(--glass-hi); }
+.medal-chip .mc-prog {
+    position: absolute; right: 2px; bottom: 1px;
+    font-size: 8px; font-weight: 800; color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+.medal-chip.earned .mc-prog { display: none; }
+.medal-chip svg { width: 21px; height: 21px; display: block; }
+.medal-chip.earned.bronze svg { color: #e0a45c; }
+.medal-chip.earned.silver svg { color: #dfe6f0; }
+.medal-chip.earned.gold svg { color: #f0cd68; }
+.medal-chip.earned.platinum svg { color: #a6ecff; }
+.medal-big svg { width: 46px; height: 46px; display: block; }
 
-/* ─── Modal ─── */
+#ride-list {
+    flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden;
+    padding: 6px 10px 14px;
+    -webkit-overflow-scrolling: touch;
+}
+#ride-list::-webkit-scrollbar { width: 6px; }
+#ride-list::-webkit-scrollbar-track { background: transparent; }
+#ride-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+.svc-group-head {
+    display: flex; align-items: center; gap: 7px;
+    padding: 10px 4px 6px; position: sticky; top: 0; z-index: 4;
+    background: rgba(18, 24, 34, .86);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    font-size: 11px; font-weight: 800; letter-spacing: .5px;
+    text-transform: uppercase; color: var(--text-dim);
+}
+:root[data-theme="light"] .svc-group-head { background: rgba(255, 255, 255, .88); }
+.svc-group-head .sgh-count {
+    margin-left: auto; font-size: 10px; font-weight: 700; color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+.svc-group-head .sgh-bar {
+    width: 40px; height: 4px; border-radius: 2px; background: var(--glass-lo); overflow: hidden;
+}
+.svc-group-head .sgh-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width .4s var(--ease-spring); }
+
+.service-card {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 8px 10px; margin-bottom: 5px;
+    border-radius: var(--r-sm);
+    background: var(--glass); border: 1px solid var(--glass-edge);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+    transition: background .18s var(--ease-smooth), border-color .18s, transform .3s var(--ease-spring);
+}
+.service-card:hover { background: var(--glass-2); border-color: var(--glass-hi); }
+.service-card.ridden { border-color: rgba(46,179,90,.5); box-shadow: inset 0 1px 0 var(--glass-hi), 0 0 0 1px rgba(46,179,90,.18); }
+
+.svc-icon {
+    flex: none; width: 33px; height: 39px; margin-top: 1px;
+    background-image: url(data/train_icons_atlas.png);
+    background-size: 792px 819px;
+    background-repeat: no-repeat;
+    image-rendering: -webkit-optimize-contrast;
+    filter: drop-shadow(0 2px 3px rgba(0,0,0,.35));
+}
+.service-card:not(.ridden) .svc-icon { filter: drop-shadow(0 2px 3px rgba(0,0,0,.35)) grayscale(.35); opacity: .82; }
+
+.svc-body { flex: 1; min-width: 0; }
+.svc-top { display: flex; align-items: baseline; gap: 6px; }
+.svc-name { font-size: 13px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.svc-en { font-size: 10px; font-weight: 600; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0; }
+.svc-meta { font-size: 10px; color: var(--text-muted); margin-top: 2px; display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+.svc-tag {
+    font-size: 9px; font-weight: 700; padding: 1px 6px; border-radius: var(--r-pill);
+    background: var(--accent-dim); color: var(--accent-txt, var(--accent));
+}
+:root[data-theme="dark"] .svc-tag { color: #8fc0ff; }
+.svc-tag.sh { background: rgba(47,109,232,.2); }
+.svc-tag.ltd { background: rgba(245,130,31,.18); color: #ffb066; }
+:root[data-theme="light"] .svc-tag.ltd { color: #b35a00; }
+.svc-route { color: var(--text-dim); font-weight: 600; }
+.svc-stops-toggle {
+    margin-top: 5px; font-size: 10px; font-weight: 700; color: var(--accent);
+    cursor: pointer; display: inline-flex; align-items: center; gap: 3px;
+    background: none; border: none; font-family: inherit; padding: 0;
+}
+.svc-stops-toggle:hover { text-decoration: underline; }
+.svc-stops-toggle svg { width: 10px; height: 10px; transition: transform .25s var(--ease-spring); }
+.svc-stops-toggle.open svg { transform: rotate(180deg); }
+.svc-detail { display: none; margin-top: 6px; }
+.svc-detail.open { display: block; }
+.svc-route-item { margin-bottom: 6px; }
+.svc-route-head { font-size: 10.5px; font-weight: 700; color: var(--text-dim); margin-bottom: 2px; }
+.svc-stops-list { display: flex; flex-wrap: wrap; gap: 3px; }
+.svc-stop {
+    font-size: 9.5px; padding: 1px 5px; border-radius: 4px;
+    background: var(--glass-lo); color: var(--text-dim); white-space: nowrap;
+}
+.svc-stop.terminal { background: var(--accent-dim); color: var(--accent); font-weight: 700; }
+:root[data-theme="dark"] .svc-stop.terminal { color: #8fc0ff; }
+
+.svc-check {
+    position: relative; width: 20px; height: 20px; flex: none; margin-top: 2px;
+}
+.svc-check input { position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer; z-index: 2; margin: 0; }
+.svc-check .checkmark {
+    position: absolute; inset: 0;
+    background: var(--glass); border: 1.5px solid var(--border-light); border-radius: 6px;
+    transition: all .2s var(--ease-spring);
+    display: flex; align-items: center; justify-content: center;
+}
+.svc-check input:checked + .checkmark { background: var(--success); border-color: var(--success); box-shadow: 0 0 10px var(--success-dim); }
+.svc-check .checkmark svg { width: 13px; height: 13px; color: #fff; opacity: 0; transform: scale(.5); transition: all .2s var(--ease-spring); }
+.svc-check input:checked + .checkmark svg { opacity: 1; transform: scale(1); }
+
+.ride-empty { padding: 30px 16px; text-align: center; font-size: 12px; color: var(--text-muted); }
+
+/* Medal detail modal */
+#modal-medal .modal { max-width: 340px; text-align: center; }
+.medal-big {
+    width: 88px; height: 88px; margin: 4px auto 12px; border-radius: 24px;
+    display: flex; align-items: center; justify-content: center; font-size: 44px;
+    background: var(--glass); border: 1px solid var(--glass-edge);
+    box-shadow: inset 0 1px 0 var(--glass-hi), var(--glass-sh);
+}
+.medal-big.earned.bronze { border-color: #cd7f32; box-shadow: 0 0 22px rgba(205,127,50,.45), inset 0 1px 0 var(--glass-hi); }
+.medal-big.earned.silver { border-color: #b9c4d4; box-shadow: 0 0 22px rgba(185,196,212,.5), inset 0 1px 0 var(--glass-hi); }
+.medal-big.earned.gold { border-color: #e0b84a; box-shadow: 0 0 26px rgba(224,184,74,.55), inset 0 1px 0 var(--glass-hi); }
+.medal-big.earned.platinum { border-color: #7fe0ff; box-shadow: 0 0 30px rgba(127,224,255,.6), inset 0 1px 0 var(--glass-hi); }
+.medal-big:not(.earned) { filter: grayscale(1) opacity(.45); }
+.medal-tier { font-size: 10px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+.medal-tier.bronze { color: #cd7f32; } .medal-tier.silver { color: #b9c4d4; }
+.medal-tier.gold { color: #e0b84a; } .medal-tier.platinum { color: #7fe0ff; }
+.medal-prog-wrap { margin-top: 14px; }
+.medal-prog-track { height: 6px; border-radius: 3px; background: var(--glass-lo); overflow: hidden; margin-top: 6px; }
+.medal-prog-fill { height: 100%; background: linear-gradient(90deg, var(--success), var(--accent)); border-radius: 3px; transition: width .5s var(--ease-spring); }
+
+/* ─── Modal (Liquid Glass) ─── */
 .modal-overlay {
     position: fixed; top: 0; left: 0;
     width: 100vw; height: 100vh;
     height: 100dvh;
-    background: rgba(0,0,0,0.6);
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
     z-index: 200;
     display: none;
     align-items: center;
     justify-content: center;
 }
-.modal-overlay.show { display: flex; }
+.modal-overlay.show { display: flex; animation: overlayIn .25s var(--ease-smooth); }
+@keyframes overlayIn { from { opacity: 0; } to { opacity: 1; } }
 .modal {
-    background: var(--bg-panel);
-    border: 1px solid var(--border-light);
-    border-radius: 10px;
+    background: var(--glass-panel);
+    backdrop-filter: var(--glass-panel-blur);
+    -webkit-backdrop-filter: var(--glass-panel-blur);
+    border: 1px solid var(--glass-edge);
+    border-radius: var(--r);
     padding: 24px;
     max-width: 400px;
     width: 90%;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    box-shadow: inset 0 1px 0 var(--glass-hi), 0 20px 60px rgba(0, 0, 0, .4);
+    animation: modalIn var(--morph-out) var(--spring-out);
 }
+@keyframes modalIn { from { opacity: 0; transform: scale(.9) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
 .modal h3 { font-size: 15px; font-weight: 800; margin-bottom: 12px; }
 .modal p { font-size: 13px; color: var(--text-dim); margin-bottom: 16px; line-height: 1.5; }
 .modal-btns { display: flex; gap: 8px; justify-content: flex-end; }
 .modal-btns button {
-    padding: 7px 16px;
-    border-radius: 6px;
+    padding: 8px 18px;
+    border-radius: var(--r-sm);
     font-size: 12px;
     font-weight: 600;
     cursor: pointer;
     font-family: inherit;
-    transition: all 0.15s;
-    border: 1px solid var(--border);
-    background: var(--bg-card);
+    transition: all .2s var(--ease-smooth), transform .3s var(--ease-spring);
+    border: 1px solid var(--glass-edge);
+    background: var(--glass);
     color: var(--text-dim);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
 }
-.modal-btns button:hover { background: var(--bg-hover); color: var(--text); }
-.modal-btns button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
-.modal-btns button.primary:hover { background: #4aa3ec; }
-.modal-btns button.danger { background: var(--danger); color: #fff; border-color: var(--danger); }
-.modal-btns button.danger:hover { background: #d03a32; }
+.modal-btns button:hover { background: var(--glass-2); color: var(--text); }
+.modal-btns button:active { transform: scale(.94); }
+.modal-btns button.primary { background: var(--accent); color: #fff; border-color: var(--accent); box-shadow: 0 2px 10px var(--accent-dim); }
+.modal-btns button.primary:hover { filter: brightness(1.1); }
+.modal-btns button.danger { background: var(--danger); color: #fff; border-color: var(--danger); box-shadow: 0 2px 10px var(--danger-dim); }
+.modal-btns button.danger:hover { filter: brightness(1.1); }
 
-/* ─── Toast ─── */
+/* ─── Toast (glass pill) ─── */
 #toast {
     position: fixed;
     bottom: 60px; left: 50%;
     transform: translateX(-50%) translateY(20px);
-    background: rgba(7,9,13,0.95);
-    border: 1px solid var(--border-light);
-    border-radius: 8px;
-    padding: 8px 16px;
+    background: var(--glass-panel);
+    backdrop-filter: var(--glass-panel-blur);
+    -webkit-backdrop-filter: var(--glass-panel-blur);
+    border: 1px solid var(--glass-edge);
+    border-radius: var(--r-pill);
+    padding: 10px 20px;
     font-size: 12px;
     z-index: 300;
     opacity: 0;
-    transition: all 0.3s;
+    transition: opacity .3s var(--ease-smooth), transform .4s var(--ease-spring);
     pointer-events: none;
     white-space: nowrap;
+    box-shadow: inset 0 1px 0 var(--glass-hi), var(--glass-sh);
+    color: var(--text);
 }
 #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ─── Tooltip ─── */
+#tooltip {
+    background: var(--glass-panel) !important;
+    backdrop-filter: var(--glass-panel-blur) !important;
+    -webkit-backdrop-filter: var(--glass-panel-blur) !important;
+    border: 1px solid var(--glass-edge) !important;
+    box-shadow: inset 0 1px 0 var(--glass-hi), var(--glass-sh) !important;
+    border-radius: var(--r-sm) !important;
+}
 
 /* ─── Responsive ─── */
 @media (max-width: 768px) {
     :root { --sidebar-w: 100vw; }
     #sidebar {
         width: 100vw;
-        box-shadow: 4px 0 20px rgba(0,0,0,0.4);
+        box-shadow: var(--glass-sh);
     }
     body:not(.sidebar-collapsed) #sidebar-toggle { left: calc(100vw - 50px); top: 10px; }
     #lang-toggle { bottom: 8px; right: 8px; font-size: 10px; }
 
-    /* Header: allow wrapping */
     #header { padding: 0 10px; height: auto; min-height: var(--header-h); }
     #header .title { font-size: 13px; }
     #header .title .jp { display: none; }
     #header-actions { gap: 3px; flex-shrink: 0; }
     #header-actions button { padding: 6px; min-width: 28px; min-height: 28px; }
 
-    /* Stats: single column on very small */
     #stats-bar { padding: 8px 10px; }
     .stat-item .stat-value { font-size: 16px; }
 
-    /* Progress */
     #progress-bar-wrap { padding: 6px 10px 8px; }
 
-    /* Mode bar */
+    #mode-bar { margin: 6px 10px; }
     .mode-btn { font-size: 11px; padding: 10px 0; }
 
-    /* Search */
     #search-bar { padding: 6px 10px; }
-    #search-bar input { font-size: 14px; padding: 10px 10px 10px 32px; }
-    #search-bar .search-icon { top: 16px; left: 18px; }
+    #search-bar input { font-size: 14px; padding: 10px 12px 10px 34px; }
+    #search-bar .search-icon { top: 16px; left: 20px; }
 
-    /* Line list items: larger touch targets */
     .operator-header { padding: 10px 12px; min-height: 44px; }
     .line-item { padding: 8px 12px 8px 32px; min-height: 44px; }
     .line-check { width: 22px; height: 22px; }
@@ -648,14 +977,11 @@ body:not(.sidebar-collapsed) #sidebar-toggle { left: calc(var(--sidebar-w) + 10p
     .seg-check .checkmark { width: 20px; height: 20px; }
     .seg-check .checkmark svg { width: 12px; height: 12px; }
 
-    /* Modal: full width on mobile */
-    .modal-overlay {
-        align-items: flex-end;
-    }
+    .modal-overlay { align-items: flex-end; }
     .modal {
         max-width: 100%;
         width: 100%;
-        border-radius: 14px 14px 0 0;
+        border-radius: var(--r) var(--r) 0 0;
         max-height: 90vh;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
@@ -665,33 +991,59 @@ body:not(.sidebar-collapsed) #sidebar-toggle { left: calc(var(--sidebar-w) + 10p
     .modal-btns { padding-bottom: env(safe-area-inset-bottom, 0); }
     .modal-btns button { padding: 10px 16px; font-size: 13px; min-height: 44px; }
 
-    /* Poster modal specific */
-    #modal-poster .modal {
-        max-height: 85vh;
-    }
-    #poster-preview-wrap {
-        max-height: 35vh;
-        overflow: hidden;
-    }
-    #poster-preview {
-        max-height: 35vh;
-        object-fit: contain;
-    }
+    #modal-poster .modal { max-height: 85vh; }
+    #poster-preview-wrap { max-height: 35vh; overflow: hidden; }
+    #poster-preview { max-height: 35vh; object-fit: contain; }
 
-    /* Select all button: larger touch target */
     .op-select-all { padding: 4px 8px; font-size: 10px; min-height: 28px; }
-
-    /* View bar */
     .view-btn { padding: 8px 0; font-size: 12px; min-height: 36px; }
 }
 
-/* ─── Scrollbar for sidebar content ─── */
-#sidebar-content::-webkit-scrollbar { width: 4px; }
-#sidebar-content::-webkit-scrollbar-track { background: transparent; }
-#sidebar-content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+/* ─── Line list scrollbar ─── */
+#line-list-wrap::-webkit-scrollbar { width: 4px; }
+#line-list-wrap::-webkit-scrollbar-track { background: transparent; }
+#line-list-wrap::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+#line-list-wrap::-webkit-scrollbar-thumb:hover { background: var(--border-light); }
 
 .poster-orient-btn.active { color: var(--accent) !important; border-color: var(--accent) !important; }
 .poster-theme-btn.active { color: var(--accent) !important; border-color: var(--accent) !important; }
+
+/* ─── Poster modal controls (glass) ─── */
+.poster-field { margin-bottom: 10px; }
+.poster-label {
+    font-size: 12px; color: var(--text-dim);
+    display: block; margin-bottom: 4px; font-weight: 600;
+}
+.poster-input {
+    width: 100%; padding: 7px 11px; font-size: 13px;
+    background: var(--glass); border: 1px solid var(--glass-edge);
+    border-radius: var(--r-xs); color: var(--text);
+    font-family: inherit; outline: none;
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    transition: border-color .15s, box-shadow .2s;
+}
+.poster-input::placeholder { color: var(--text-muted); }
+.poster-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+.poster-row { display: flex; gap: 6px; }
+.poster-opt-btn {
+    flex: 1; padding: 7px; font-size: 11px; font-weight: 600;
+    background: var(--glass); border: 1px solid var(--glass-edge);
+    border-radius: var(--r-xs); color: var(--text-dim); cursor: pointer;
+    font-family: inherit;
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    transition: all .2s var(--ease-smooth), transform .3s var(--ease-spring);
+}
+.poster-opt-btn:hover { background: var(--glass-2); color: var(--text); }
+.poster-opt-btn:active { transform: scale(.95); }
+.poster-opt-btn.active {
+    color: #fff !important; border-color: var(--accent) !important;
+    background: var(--accent) !important; box-shadow: 0 2px 10px var(--accent-dim);
+}
+.poster-preview-wrap {
+    border-radius: var(--r-sm); overflow: hidden;
+    border: 1px solid var(--glass-edge); background: #000;
+    box-shadow: inset 0 1px 0 var(--glass-hi), var(--glass-sh);
+}
 </style>
 </head>
 <body>
@@ -708,6 +1060,9 @@ body:not(.sidebar-collapsed) #sidebar-toggle { left: calc(var(--sidebar-w) + 10p
     <div id="header">
         <div class="title">Mini JapanRail · 鉄道制霸<span class="jp">Japan Railway Conquest</span></div>
         <div id="header-actions">
+            <button id="btn-theme" title="Toggle theme">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M20 13.5A8.5 8.5 0 0 1 10.5 4a8.5 8.5 0 1 0 9.5 9.5z"/></svg>
+            </button>
             <button id="btn-export" title="Export data">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             </button>
@@ -757,6 +1112,7 @@ body:not(.sidebar-collapsed) #sidebar-toggle { left: calc(var(--sidebar-w) + 10p
     <div id="mode-bar">
         <button class="mode-btn active" data-mode="quick" data-i18n="mode_quick">Quick Mode</button>
         <button class="mode-btn" data-mode="detailed" data-i18n="mode_detailed">Detailed Mode</button>
+        <button class="mode-btn" data-mode="ride" data-i18n="mode_ride">Ride Mode</button>
     </div>
 
     <div id="map-view-bar">
@@ -771,6 +1127,17 @@ body:not(.sidebar-collapsed) #sidebar-toggle { left: calc(var(--sidebar-w) + 10p
 
     <div id="line-list-wrap">
         <div id="line-list"></div>
+    </div>
+
+    <div id="ride-wrap">
+        <div id="medal-bar">
+            <div class="medal-bar-head">
+                <span class="mb-title" data-i18n="medals">Honours</span>
+                <span id="medal-count" class="mb-count">0 / 0</span>
+            </div>
+            <div id="medal-strip"></div>
+        </div>
+        <div id="ride-list"></div>
     </div>
 </div>
 
@@ -806,25 +1173,25 @@ body:not(.sidebar-collapsed) #sidebar-toggle { left: calc(var(--sidebar-w) + 10p
     <div class="modal">
         <h3 data-i18n="poster_title">Export Poster</h3>
         <div style="margin-bottom:16px;">
-            <div style="margin-bottom:10px;">
-                <label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px;" data-i18n="poster_nickname">Nickname (optional)</label>
-                <input id="poster-nickname" type="text" maxlength="20" placeholder="Your name" data-i18n-placeholder="poster_nickname" style="width:100%;padding:6px 10px;font-size:13px;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:inherit;outline:none;" />
+            <div class="poster-field">
+                <label class="poster-label" data-i18n="poster_nickname">Nickname (optional)</label>
+                <input id="poster-nickname" class="poster-input" type="text" maxlength="20" placeholder="Your name" data-i18n-placeholder="poster_nickname" />
             </div>
-            <div style="margin-bottom:10px;">
-                <label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px;" data-i18n="poster_theme">Theme</label>
-                <div style="display:flex;gap:6px;">
-                    <button class="poster-theme-btn active" data-theme="light" style="flex:1;padding:6px;font-size:11px;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;color:var(--text-dim);cursor:pointer;">☀ Light</button>
-                    <button class="poster-theme-btn" data-theme="dark" style="flex:1;padding:6px;font-size:11px;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;color:var(--text-dim);cursor:pointer;">☾ Dark</button>
+            <div class="poster-field">
+                <label class="poster-label" data-i18n="poster_theme">Theme</label>
+                <div class="poster-row">
+                    <button class="poster-theme-btn poster-opt-btn active" data-theme="light">☀ Light</button>
+                    <button class="poster-theme-btn poster-opt-btn" data-theme="dark">☾ Dark</button>
                 </div>
             </div>
-            <div style="margin-bottom:10px;">
-                <label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px;" data-i18n="poster_orientation">Orientation</label>
-                <div style="display:flex;gap:6px;">
-                    <button class="poster-orient-btn active" data-orient="landscape" style="flex:1;padding:6px;font-size:11px;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;color:var(--text-dim);cursor:pointer;">Landscape 1920×1080</button>
-                    <button class="poster-orient-btn" data-orient="portrait" style="flex:1;padding:6px;font-size:11px;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;color:var(--text-dim);cursor:pointer;">Portrait 1080×1920</button>
+            <div class="poster-field">
+                <label class="poster-label" data-i18n="poster_orientation">Orientation</label>
+                <div class="poster-row">
+                    <button class="poster-orient-btn poster-opt-btn active" data-orient="landscape">Landscape 1920×1080</button>
+                    <button class="poster-orient-btn poster-opt-btn" data-orient="portrait">Portrait 1080×1920</button>
                 </div>
             </div>
-            <div id="poster-preview-wrap" style="border-radius:8px;overflow:hidden;border:1px solid var(--border);background:#000;">
+            <div id="poster-preview-wrap" class="poster-preview-wrap">
                 <canvas id="poster-preview" style="width:100%;display:block;"></canvas>
             </div>
             <div id="poster-generating" style="display:none;text-align:center;padding:20px;color:var(--text-dim);">
@@ -834,6 +1201,25 @@ body:not(.sidebar-collapsed) #sidebar-toggle { left: calc(var(--sidebar-w) + 10p
         <div class="modal-btns">
             <button id="poster-download" class="primary" data-i18n="poster_download">Download PNG</button>
             <button id="poster-close" data-i18n="close">Close</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modal-medal">
+    <div class="modal">
+        <div class="medal-big" id="medal-big">🏅</div>
+        <div class="medal-tier" id="medal-tier"></div>
+        <h3 id="medal-name"></h3>
+        <p id="medal-desc"></p>
+        <div class="medal-prog-wrap">
+            <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);font-weight:600;">
+                <span data-i18n="medal_progress">Progress</span>
+                <span id="medal-prog-txt">0 / 0</span>
+            </div>
+            <div class="medal-prog-track"><div class="medal-prog-fill" id="medal-prog-fill"></div></div>
+        </div>
+        <div class="modal-btns" style="margin-top:18px;">
+            <button id="medal-close" data-i18n="close">Close</button>
         </div>
     </div>
 </div>
@@ -1188,6 +1574,18 @@ const I18N = {
         progress: 'Overall Progress',
         mode_quick: 'Quick Mode',
         mode_detailed: 'Detailed Mode',
+        mode_ride: 'Ride Mode',
+        medals: 'Honours',
+        grp_shinkansen: 'Shinkansen',
+        grp_ltd: 'Limited Express',
+        type_sh: 'Shinkansen',
+        type_ltd: 'Ltd. Express',
+        stops: 'stops',
+        view_stops: 'Stops',
+        search_trains: 'Search trains...',
+        loading: 'Loading…',
+        no_result: 'No results',
+        medal_progress: 'Progress',
         view_all: 'Show All',
         view_ridden: 'Ridden Only',
         search_placeholder: 'Search lines, operators...',
@@ -1227,6 +1625,18 @@ const I18N = {
         progress: '全体の進捗',
         mode_quick: '快速モード',
         mode_detailed: '詳細モード',
+        mode_ride: '乗車モード',
+        medals: '勲章',
+        grp_shinkansen: '新幹線',
+        grp_ltd: '特急',
+        type_sh: '新幹線',
+        type_ltd: '特急',
+        stops: '駅',
+        view_stops: '経由駅',
+        search_trains: '列車を検索...',
+        loading: '読み込み中…',
+        no_result: '該当なし',
+        medal_progress: '進捗',
         view_all: '全て表示',
         view_ridden: '乗車済みのみ',
         search_placeholder: '路線・事業者を検索...',
@@ -1266,6 +1676,18 @@ const I18N = {
         progress: '总体进度',
         mode_quick: '快速模式',
         mode_detailed: '详细模式',
+        mode_ride: '乘车模式',
+        medals: '荣誉勋章',
+        grp_shinkansen: '新干线',
+        grp_ltd: '特急',
+        type_sh: '新干线',
+        type_ltd: '特急',
+        stops: '站',
+        view_stops: '途经车站',
+        search_trains: '搜索列车...',
+        loading: '加载中…',
+        no_result: '无结果',
+        medal_progress: '进度',
         view_all: '显示全部',
         view_ridden: '仅已乘车',
         search_placeholder: '搜索线路、运营商...',
@@ -1336,7 +1758,8 @@ function applyLang() {
         s.classList.toggle('on', s.dataset.lang === lang);
     });
     document.title = lang === 'ja' ? 'Mini JapanRail · 日本鉄道制霸' : lang === 'zh' ? 'Mini JapanRail · 日本铁路制霸' : 'Mini JapanRail · Japan Railway Conquest';
-    renderLineList();
+    if (typeof applyMode === 'function') applyMode();
+    else renderLineList();
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1345,7 +1768,7 @@ function applyLang() {
 
 const STORAGE_KEY = 'minijapanrail_quest_data';
 
-let questData = { lines: {}, segments: {} };
+let questData = { lines: {}, segments: {}, trains: {} };
 
 function loadQuestData() {
     try {
@@ -1362,10 +1785,11 @@ function loadQuestData() {
             questData = {
                 lines: parsed.lines || {},
                 segments: parsed.segments || {},
+                trains: parsed.trains || {},
             };
         }
     } catch (e) {
-        questData = { lines: {}, segments: {} };
+        questData = { lines: {}, segments: {}, trains: {} };
     }
 }
 
@@ -1421,6 +1845,146 @@ function updateLineRiddenState(op, line) {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// RIDE MODE — trains (特急/新幹線) + honours
+// ═══════════════════════════════════════════════════════════════
+
+let TRAINS = [];            // services list
+let trainsLoaded = false;
+const expandedSvcs = new Set();
+const expandedSvcDetail = new Set();
+
+function isTrainRidden(name) { return !!questData.trains[name]; }
+function setTrainRidden(name, val) {
+    if (val) questData.trains[name] = true;
+    else delete questData.trains[name];
+    saveQuestData();
+}
+function toggleTrainRidden(name) { setTrainRidden(name, !isTrainRidden(name)); }
+
+// ─── Honours (勲章) ───
+// check(ctx) => { got:bool, cur:int, max:int }
+const MEDAL_ICONS = {
+    train: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="13" rx="3"/><path d="M5 11h14"/><circle cx="9" cy="7.4" r="1.15" fill="currentColor" stroke="none"/><circle cx="15" cy="7.4" r="1.15" fill="currentColor" stroke="none"/><path d="M8.2 16l-1.4 4M15.8 16l1.4 4M9.5 16h5"/></svg>',
+    crown: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 8l4.2 3.8L12 5l4.8 6.8L21 8l-2 10.5H5L3 8z"/></svg>',
+    ticket: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M3 8.5A2.5 2.5 0 0 1 5.5 6h13A2.5 2.5 0 0 1 21 8.5v.5a2.5 2.5 0 0 0 0 5v.5a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 15.5V15a2.5 2.5 0 0 0 0-5v-.5z"/><path d="M14 6v12" stroke-dasharray="2 2.2"/></svg>',
+    rosette: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><circle cx="12" cy="8.5" r="5"/><path d="M9.2 12.6L7.5 21 12 18.4 16.5 21l-1.7-8.4" fill="currentColor" stroke="none"/></svg>',
+    fuji: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M2.5 19.5h19L14 5.5h-4L2.5 19.5z"/><path d="M9.6 9.5l2.4 2.8 2.4-2.8"/></svg>',
+    bridge: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M3 9c4.2 0 6.4 3.2 6.4 8M21 9c-4.2 0-6.4 3.2-6.4 8M3 17h18"/><path d="M12 5.5v11.5"/><path d="M8.4 9.8L12 6l3.6 3.8"/></svg>',
+    ski: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20.5L18 6.5M7.5 20.5L20 8"/><circle cx="16.8" cy="5.2" r="1.7"/><path d="M12.6 7.4l4.2 4.2"/></svg>',
+    mountain: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M2 20h20L14 7l-3.2 5.4L8.6 10 2 20z"/></svg>',
+    onsen: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M8 2.5c-1.1 2 1.1 3.2 0 5.2M12 2.5c-1.1 2 1.1 3.2 0 5.2M16 2.5c-1.1 2 1.1 3.2 0 5.2"/><path d="M3.5 11.5h17v3.2a5 5 0 0 1-5 5h-7a5 5 0 0 1-5-5v-3.2z"/></svg>',
+    paw: '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="7" cy="8.2" r="2.1"/><circle cx="12" cy="6.2" r="2.1"/><circle cx="17" cy="8.2" r="2.1"/><path d="M12 11c-3.1 0-5.2 2.2-5.2 5 0 2.1 2.1 3.1 5.2 3.1s5.2-1 5.2-3.1c0-2.8-2.1-5-5.2-5z"/></svg>',
+    torii: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M3 5.5h18M4.6 9h14.8M6 5.5V20M18 5.5V20M9 9v3.2h6V9"/></svg>',
+    moon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>',
+    wave: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M2 7.5c2-2 4-2 6 0s4 2 6 0 4-2 6 0M2 12.5c2-2 4-2 6 0s4 2 6 0 4-2 6 0M2 17.5c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/></svg>',
+    laurel: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M12 20.5V6"/><path d="M12 9c-2-1-3-3-3-5 2 0 3 1 3 3M12 9c2-1 3-3 3-5-2 0-3 1-3 3M12 14c-2-1-3-3-3-5 2 0 3 1 3 3M12 14c2-1 3-3 3-5-2 0-3 1-3 3M12 19c-2-1-3-3-3-5 2 0 3 1 3 3M12 19c2-1 3-3 3-5-2 0-3 1-3 3"/></svg>',
+    trophy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.5h10V9a5 5 0 0 1-10 0V3.5z"/><path d="M7 5H4.2v1.6A3.2 3.2 0 0 0 7 9.8M17 5h2.8v1.6A3.2 3.2 0 0 1 17 9.8M12 14v3.2M8.5 20.5h7M9.5 17.2h5"/></svg>',
+};
+const MEDALS = [
+    // 新幹線
+    { id:'sh_debut', icon:'train', tier:'bronze',
+      name:{ja:'新幹線デビュー', en:'Shinkansen Debut', zh:'新干线首乘'},
+      desc:{ja:'新幹線に1本以上乗車する', en:'Ride at least 1 Shinkansen', zh:'乘坐至少 1 条新干线'},
+      check:c => ({ got:c.sh>=1, cur:Math.min(c.sh,1), max:1 }) },
+    { id:'sh_5', icon:'train', tier:'silver',
+      name:{ja:'新幹線コレクター', en:'Shinkansen Collector', zh:'新干线收藏家'},
+      desc:{ja:'新幹線に5本以上乗車する', en:'Ride 5+ Shinkansen services', zh:'乘坐 5 条以上新干线'},
+      check:c => ({ got:c.sh>=5, cur:c.sh, max:5 }) },
+    { id:'sh_10', icon:'train', tier:'gold',
+      name:{ja:'新幹線マスター', en:'Shinkansen Master', zh:'新干线大师'},
+      desc:{ja:'新幹線に10本以上乗車する', en:'Ride 10+ Shinkansen services', zh:'乘坐 10 条以上新干线'},
+      check:c => ({ got:c.sh>=10, cur:c.sh, max:10 }) },
+    { id:'sh_all', icon:'crown', tier:'platinum',
+      name:{ja:'新幹線完全制覇', en:'Shinkansen Complete', zh:'新干线完全制霸'},
+      desc:{ja:'すべての新幹線に乗車する', en:'Ride every Shinkansen service', zh:'乘坐全部新干线'},
+      check:c => ({ got:c.sh>=c.shTotal, cur:c.sh, max:c.shTotal }) },
+    // 特急
+    { id:'ltd_debut', icon:'ticket', tier:'bronze',
+      name:{ja:'特急デビュー', en:'Limited Express Debut', zh:'特急首乘'},
+      desc:{ja:'特急に1本以上乗車する', en:'Ride at least 1 limited express', zh:'乘坐至少 1 条特急'},
+      check:c => ({ got:c.ltd>=1, cur:Math.min(c.ltd,1), max:1 }) },
+    { id:'ltd_10', icon:'ticket', tier:'silver',
+      name:{ja:'特急ファン', en:'Limited Express Fan', zh:'特急爱好者'},
+      desc:{ja:'特急に10本以上乗車する', en:'Ride 10+ limited express services', zh:'乘坐 10 条以上特急'},
+      check:c => ({ got:c.ltd>=10, cur:c.ltd, max:10 }) },
+    { id:'ltd_30', icon:'rosette', tier:'gold',
+      name:{ja:'特急マスター', en:'Limited Express Master', zh:'特急大师'},
+      desc:{ja:'特急に30本以上乗車する', en:'Ride 30+ limited express services', zh:'乘坐 30 条以上特急'},
+      check:c => ({ got:c.ltd>=30, cur:c.ltd, max:30 }) },
+    { id:'ltd_60', icon:'rosette', tier:'platinum',
+      name:{ja:'特急コンプリート', en:'Limited Express Pro', zh:'特急达人'},
+      desc:{ja:'特急に60本以上乗車する', en:'Ride 60+ limited express services', zh:'乘坐 60 条以上特急'},
+      check:c => ({ got:c.ltd>=60, cur:c.ltd, max:60 }) },
+    // 路線コンプ
+    { id:'tokaido', icon:'fuji', tier:'gold',
+      name:{ja:'東海道の主', en:'Lord of the Tōkaidō', zh:'东海道之主'},
+      desc:{ja:'のぞみ・ひかり・こだま に乗車', en:'Ride Nozomi, Hikari & Kodama', zh:'乘坐 のぞみ・ひかり・こだま'},
+      check:c => mk(c, ['のぞみ','ひかり','こだま']) },
+    { id:'sanyo', icon:'bridge', tier:'gold',
+      name:{ja:'山陽の主', en:'Lord of the Sanyō', zh:'山阳之主'},
+      desc:{ja:'みずほ・さくら に乗車', en:'Ride Mizuho & Sakura', zh:'乘坐 みずほ・さくら'},
+      check:c => mk(c, ['みずほ','さくら']) },
+    { id:'tohoku', icon:'ski', tier:'gold',
+      name:{ja:'東北の主', en:'Lord of Tōhoku', zh:'东北之主'},
+      desc:{ja:'はやぶさ・はやて・やまびこ・なすの に乗車', en:'Ride Hayabusa, Hayate, Yamabiko & Nasuno', zh:'乘坐 はやぶさ・はやて・やまびこ・なすの'},
+      check:c => mk(c, ['はやぶさ','はやて','やまびこ','なすの']) },
+    { id:'hokuriku', icon:'mountain', tier:'gold',
+      name:{ja:'北陸の主', en:'Lord of Hokuriku', zh:'北陆之主'},
+      desc:{ja:'かがやき・はくたか・あさま・つるぎ に乗車', en:'Ride Kagayaki, Hakutaka, Asama & Tsurugi', zh:'乘坐 かがやき・はくたか・あさま・つるぎ'},
+      check:c => mk(c, ['かがやき','はくたか','あさま','つるぎ']) },
+    { id:'kyushu', icon:'onsen', tier:'gold',
+      name:{ja:'九州の主', en:'Lord of Kyūshū', zh:'九州之主'},
+      desc:{ja:'みずほ・さくら・つばめ・かもめ に乗車', en:'Ride Mizuho, Sakura, Tsubame & Kamome', zh:'乘坐 みずほ・さくら・つばめ・かもめ'},
+      check:c => mk(c, ['みずほ','さくら','つばめ','かもめ']) },
+    { id:'hokkaido', icon:'paw', tier:'silver',
+      name:{ja:'北海道の鉄路', en:'Hokkaidō Rails', zh:'北海道铁道'},
+      desc:{ja:'北海道の特急（北斗・おおぞら 等）に乗車', en:'Ride a Hokkaidō limited express', zh:'乘坐北海道特急（北斗・おおぞら 等）'},
+      check:c => mko(c, ['北斗','スーパー北斗','おおぞら','宗谷','サロベツ','オホーツク','とかち','カムイ','エアポート']) },
+    { id:'kansai', icon:'torii', tier:'silver',
+      name:{ja:'関西の鉄路', en:'Kansai Rails', zh:'关西铁道'},
+      desc:{ja:'関西の特急（はるか・くろしお 等）に乗車', en:'Ride a Kansai limited express', zh:'乘坐关西特急（はるか・くろしお 等）'},
+      check:c => mko(c, ['はるか','くろしお','こうのとり','スーパーはくと','サンダーバード','らくラクはりま','らくラクびわこ','南紀','くろしお']) },
+    { id:'sleeper', icon:'moon', tier:'gold',
+      name:{ja:'寝台特急', en:'Sleeper Express', zh:'卧铺特急'},
+      desc:{ja:'サンライズ瀬戸 または サンライズ出雲 に乗車', en:'Ride Sunrise Seto or Sunrise Izumo', zh:'乘坐 サンライズ瀬戸 或 サンライズ出雲'},
+      check:c => mko(c, ['サンライズ瀬戸','サンライズ出雲']) },
+    { id:'nihonkai', icon:'wave', tier:'silver',
+      name:{ja:'日本海の鉄路', en:'Sea of Japan Rails', zh:'日本海铁道'},
+      desc:{ja:'いなほ・しらゆき・つがる のいずれかに乗車', en:'Ride Inaho, Shirayuki or Tsugaru', zh:'乘坐 いなほ・しらゆき・つがる 之一'},
+      check:c => mko(c, ['いなほ','しらゆき','つがる']) },
+    // 総合
+    { id:'all_50', icon:'laurel', tier:'gold',
+      name:{ja:'全国の旅人', en:'National Traveller', zh:'全国旅人'},
+      desc:{ja:'合計50本の列車に乗車する', en:'Ride 50 services in total', zh:'累计乘坐 50 条列车'},
+      check:c => ({ got:c.total>=50, cur:c.total, max:50 }) },
+    { id:'complete', icon:'trophy', tier:'platinum',
+      name:{ja:'鉄道完全制覇', en:'Railway Complete', zh:'铁道完全制霸'},
+      desc:{ja:'すべての列車に乗車する', en:'Ride every service', zh:'乘坐全部列车'},
+      check:c => ({ got:c.total>=c.totalAll, cur:c.total, max:c.totalAll }) },
+];
+// helpers for medal checks
+function mk(c, names) { const n = names.filter(x => c.set.has(x)).length; return { got:n>=names.length, cur:n, max:names.length }; }
+function mko(c, names) { const n = names.filter(x => c.set.has(x)).length; return { got:n>=1, cur:Math.min(n,1), max:1 }; }
+
+function medalCtx() {
+    const set = new Set(Object.keys(questData.trains));
+    let sh = 0, ltd = 0, shTotal = 0, ltdTotal = 0;
+    for (const s of TRAINS) {
+        if (s.type === 'shinkansen') { shTotal++; if (set.has(s.name)) sh++; }
+        else { ltdTotal++; if (set.has(s.name)) ltd++; }
+    }
+    return { set, sh, ltd, shTotal, ltdTotal, total: set.size, totalAll: TRAINS.length };
+}
+function computeMedals() {
+    const c = medalCtx();
+    return MEDALS.map(m => Object.assign({}, m, { res: m.check(c) }));
+}
+function medalLabel(m, field) {
+    const v = m[field];
+    return (v && (v[lang] || v.en)) || (v && v.ja) || '';
+}
+
+// ═══════════════════════════════════════════════════════════════
 // MAP SETUP
 // ═══════════════════════════════════════════════════════════════
 
@@ -1429,24 +1993,35 @@ const map = new maplibregl.Map({
     style: {
         version: 8,
         sources: {
-            'carto-voyager': {
+            'gsi-pale': {
                 type: 'raster',
-                tiles: ['https://d.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}@2x.png'],
+                tiles: ['https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png'],
                 tileSize: 256,
-                attribution: '&copy; OSM &copy; CARTO',
+                attribution: '国土地理院',
+                maxzoom: 18,
             },
         },
-        layers: [{
-            id: 'carto-voyager-layer',
+        layers: [
+            { id: 'bg', type: 'background', paint: { 'background-color': '#07090f' } },
+            {
+            id: 'gsi-pale-layer',
             type: 'raster',
-            source: 'carto-voyager',
-            minzoom: 0, maxzoom: 18,
-            paint: { 'raster-brightness-max': 1.0, 'raster-brightness-min': 0.0, 'raster-saturation': -0.2 },
+            source: 'gsi-pale',
+            minzoom: 0, maxzoom: 19,
+            paint: {
+                'raster-opacity': 0.96,
+                'raster-saturation': -0.85,
+                'raster-brightness-min': 0.02,
+                'raster-brightness-max': 0.34,
+                'raster-contrast': 0.12,
+            },
         }],
     },
     center: [137.7, 37.6],
     zoom: 4.8,
     minZoom: 3.5,
+    fadeDuration: 0,
+    prefetchZoomDelta: 2,
     attributionControl: true,
     preserveDrawingBuffer: true,
 });
@@ -1506,6 +2081,13 @@ map.on('load', async () => {
         fetch('data/names_en.json').then(r => r.json()).catch(() => ({ operators: {}, lines: {}, stations: {}, remarks: {} })),
     ]);
 
+    // Ride-mode dataset (特急/新幹線) — non-blocking
+    fetch('data/tokkyu_services.json').then(r => r.json()).then(d => {
+        TRAINS = (d && d.services) || [];
+        trainsLoaded = true;
+        if (mode === 'ride') { renderRideMode(); attachRideEvents(); }
+    }).catch(() => { trainsLoaded = true; });
+
     for (let i = 0; i < fc.features.length; i++) {
         const f = fc.features[i];
         f.id = i + 1;
@@ -1548,7 +2130,7 @@ map.on('load', async () => {
 
     const tooltip = document.createElement('div');
     tooltip.id = 'tooltip';
-    tooltip.style.cssText = 'position:absolute;pointer-events:none;background:rgba(7,9,13,0.96);border:1px solid #3a414c;border-radius:6px;padding:6px 9px;font-size:12px;line-height:1.45;z-index:200;display:none;white-space:nowrap;';
+    tooltip.style.cssText = 'position:absolute;pointer-events:none;border-radius:var(--r-sm);padding:6px 9px;font-size:12px;line-height:1.45;z-index:200;display:none;white-space:nowrap;';
     document.body.appendChild(tooltip);
 
     map.on('mousemove', 'segs-line', (e) => {
@@ -1561,8 +2143,8 @@ map.on('load', async () => {
         const badge = ridden ? '<span style="color:#2eb35a"> ✓</span>' : '';
         tooltip.innerHTML =
             `<div style="font-weight:800;color:${p.realColor}">${opLabel(p.op)} ${lineLabel(p.op, p.line)}</div>` +
-            `<div style="color:#fff">${p.from} → ${p.to}</div>` +
-            `<div style="color:#8b939e;font-size:11px">${Number(p.km).toFixed(1)} km${badge}</div>`;
+            `<div style="color:var(--text)">${p.from} → ${p.to}</div>` +
+            `<div style="color:var(--text-muted);font-size:11px">${Number(p.km).toFixed(1)} km${badge}</div>`;
         map.getCanvas().style.cursor = 'pointer';
     });
     map.on('mouseleave', 'segs-line', () => {
@@ -1858,6 +2440,146 @@ function renderLineList() {
     attachListEvents();
 }
 
+// ═══════════════════════════════════════════════════════════════
+// RIDE MODE — rendering
+// ═══════════════════════════════════════════════════════════════
+
+function svcIconStyle(icon) {
+    const cols = 24, cw = 44, ch = 52, s = 0.75;
+    const col = icon % cols, row = Math.floor(icon / cols);
+    return `background-position:${-(col * cw * s)}px ${-(row * ch * s)}px`;
+}
+
+function svcCardHTML(s) {
+    const ridden = isTrainRidden(s.name);
+    const open = expandedSvcDetail.has(s.name);
+    const r0 = s.routes[0];
+    const typeLabel = s.type === 'shinkansen' ? t('type_sh') : t('type_ltd');
+    let detail = '';
+    if (open) {
+        const routes = s.routes.slice(0, 8);
+        detail = '<div class="svc-detail open">' + routes.map(r => {
+            const stopsHtml = r.stops.map((st, i) =>
+                `<span class="svc-stop${(i === 0 || i === r.stops.length - 1) ? ' terminal' : ''}">${escHtml(st)}</span>`).join('');
+            const via = (r.via && r.via.length) ? ` <span style="color:var(--text-muted);font-weight:400">· ${escHtml(r.via.join(' / '))}</span>` : '';
+            return `<div class="svc-route-item"><div class="svc-route-head">${escHtml(r.from)} → ${escHtml(r.to)} <span style="color:var(--text-muted);font-weight:400">· ${r.stops.length} ${escHtml(t('stops'))}</span>${via}</div><div class="svc-stops-list">${stopsHtml}</div></div>`;
+        }).join('') + (s.routes.length > 8 ? `<div style="font-size:10px;color:var(--text-muted);padding:2px 0;">+${s.routes.length - 8} more</div>` : '') + '</div>';
+    }
+    const hasDetail = s.routes.length > 1 || r0.stops.length > 2;
+    return `<div class="service-card${ridden ? ' ridden' : ''}" data-svc="${escHtml(s.name)}" data-type="${s.type}">
+        <div class="svc-icon" style="${svcIconStyle(s.icon)}"></div>
+        <div class="svc-body">
+            <div class="svc-top"><span class="svc-name">${escHtml(s.name)}</span><span class="svc-en">${escHtml(s.nameEn || '')}</span></div>
+            <div class="svc-meta">
+                <span class="svc-tag ${s.type === 'shinkansen' ? 'sh' : 'ltd'}">${escHtml(typeLabel)}</span>
+                <span class="svc-route">${escHtml(r0.from)} → ${escHtml(r0.to)}</span>
+                <span>· ${r0.stops.length} ${escHtml(t('stops'))}</span>
+            </div>
+            ${hasDetail ? `<button class="svc-stops-toggle${open ? ' open' : ''}" data-toggle="${escHtml(s.name)}">${escHtml(t('view_stops'))} <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></button>` : ''}
+            ${detail}
+        </div>
+        <label class="svc-check"><input type="checkbox" ${ridden ? 'checked' : ''} data-name="${escHtml(s.name)}"><span class="checkmark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span></label>
+    </div>`;
+}
+
+function renderRideList() {
+    const el = document.getElementById('ride-list');
+    if (!trainsLoaded) { el.innerHTML = `<div class="ride-empty">${escHtml(t('loading'))}</div>`; return; }
+    const q = searchQuery;
+    const groups = [
+        { key: 'shinkansen', label: t('grp_shinkansen') },
+        { key: 'limited_express', label: t('grp_ltd') },
+    ];
+    let html = '';
+    for (const g of groups) {
+        let list = TRAINS.filter(s => s.type === g.key);
+        if (q) list = list.filter(s =>
+            matchesSearch(s.name, q) || matchesSearch(s.nameEn || '', q) ||
+            s.routes.some(r => matchesSearch(r.from, q) || matchesSearch(r.to, q) || r.via.some(v => matchesSearch(v, q))));
+        if (!list.length) continue;
+        const riddenN = list.filter(s => isTrainRidden(s.name)).length;
+        html += `<div class="svc-group-head" data-type="${g.key}">${escHtml(g.label)}
+            <span class="sgh-bar"><span class="sgh-fill" style="width:${list.length ? riddenN / list.length * 100 : 0}%"></span></span>
+            <span class="sgh-count">${riddenN} / ${list.length}</span></div>`;
+        list.sort((a, b) => a.name.localeCompare(b.name, 'ja'));
+        for (const s of list) html += svcCardHTML(s);
+    }
+    el.innerHTML = html || `<div class="ride-empty">${escHtml(t('no_result'))}</div>`;
+}
+
+function renderMedals() {
+    const medals = computeMedals();
+    const earned = medals.filter(m => m.res.got).length;
+    document.getElementById('medal-count').textContent = `${earned} / ${medals.length}`;
+    document.getElementById('medal-strip').innerHTML = medals.map(m => {
+        const cls = m.res.got ? `earned ${m.tier}` : '';
+        const prog = m.res.got ? '' : `<span class="mc-prog">${m.res.cur}</span>`;
+        return `<div class="medal-chip ${cls}" data-medal="${m.id}" title="${escHtml(medalLabel(m, 'name'))}">${MEDAL_ICONS[m.icon] || ''}${prog}</div>`;
+    }).join('');
+}
+
+function openMedalDetail(id) {
+    const m = computeMedals().find(x => x.id === id);
+    if (!m) return;
+    document.getElementById('medal-big').innerHTML = MEDAL_ICONS[m.icon] || '';
+    document.getElementById('medal-big').className = 'medal-big' + (m.res.got ? ` earned ${m.tier}` : '');
+    document.getElementById('medal-tier').textContent = m.tier;
+    document.getElementById('medal-tier').className = 'medal-tier ' + m.tier;
+    document.getElementById('medal-name').textContent = medalLabel(m, 'name');
+    document.getElementById('medal-desc').textContent = medalLabel(m, 'desc') + (m.res.got ? '  ✓' : '');
+    document.getElementById('medal-prog-txt').textContent = `${m.res.cur} / ${m.res.max}`;
+    document.getElementById('medal-prog-fill').style.width = (m.res.max ? m.res.cur / m.res.max * 100 : 0) + '%';
+    document.getElementById('modal-medal').classList.add('show');
+}
+
+function renderRideMode() {
+    renderMedals();
+    renderRideList();
+}
+
+function updateRideGroupHeads() {
+    document.querySelectorAll('#ride-list .svc-group-head').forEach(h => {
+        const type = h.dataset.type;
+        const cards = document.querySelectorAll(`#ride-list .service-card[data-type="${type}"]`);
+        let ridden = 0;
+        cards.forEach(c => { if (c.classList.contains('ridden')) ridden++; });
+        const cnt = h.querySelector('.sgh-count'), fill = h.querySelector('.sgh-fill');
+        if (cnt) cnt.textContent = `${ridden} / ${cards.length}`;
+        if (fill) fill.style.width = (cards.length ? ridden / cards.length * 100 : 0) + '%';
+    });
+}
+
+function attachMedalEvents() {
+    document.querySelectorAll('#medal-strip .medal-chip').forEach(chip => {
+        chip.addEventListener('click', () => openMedalDetail(chip.dataset.medal));
+    });
+}
+
+function attachRideEvents() {
+    const wrap = document.getElementById('ride-wrap');
+    wrap.querySelectorAll('.svc-check input').forEach(inp => {
+        inp.addEventListener('change', () => {
+            toggleTrainRidden(inp.dataset.name);
+            const card = inp.closest('.service-card');
+            if (card) card.classList.toggle('ridden', inp.checked);
+            updateRideGroupHeads();
+            renderMedals();
+            attachMedalEvents();
+        });
+    });
+    wrap.querySelectorAll('.svc-stops-toggle').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const name = btn.dataset.toggle;
+            if (expandedSvcDetail.has(name)) expandedSvcDetail.delete(name);
+            else expandedSvcDetail.add(name);
+            renderRideList();
+            attachRideEvents();
+        });
+    });
+    attachMedalEvents();
+}
+
 function attachListEvents() {
     document.querySelectorAll('.operator-header').forEach(el => {
         el.addEventListener('click', (e) => {
@@ -1971,9 +2693,20 @@ document.querySelectorAll('.mode-btn').forEach(btn => {
         mode = btn.dataset.mode;
         document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b === btn));
         expandedLines.clear();
-        renderLineList();
+        applyMode();
     });
 });
+
+function applyMode() {
+    const ride = mode === 'ride';
+    document.getElementById('ride-wrap').classList.toggle('on', ride);
+    document.getElementById('line-list-wrap').style.display = ride ? 'none' : '';
+    document.getElementById('map-view-bar').style.display = ride ? 'none' : '';
+    const si = document.getElementById('search-input');
+    si.placeholder = ride ? t('search_trains') : t('search_placeholder');
+    if (ride) { renderRideMode(); attachRideEvents(); }
+    else renderLineList();
+}
 
 // View toggle
 document.querySelectorAll('.view-btn').forEach(btn => {
@@ -1987,6 +2720,11 @@ document.querySelectorAll('.view-btn').forEach(btn => {
 // Search
 document.getElementById('search-input').addEventListener('input', (e) => {
     searchQuery = e.target.value.trim();
+    if (mode === 'ride') {
+        renderRideList();
+        attachRideEvents();
+        return;
+    }
     if (searchQuery) {
         expandedOps.clear();
         const opOrder = buildOperatorOrder();
@@ -2039,11 +2777,11 @@ document.getElementById('import-file').addEventListener('change', (e) => {
         try {
             const data = JSON.parse(reader.result);
             if (data && typeof data.lines === 'object' && typeof data.segments === 'object') {
-                questData = { lines: data.lines, segments: data.segments };
+                questData = { lines: data.lines, segments: data.segments, trains: data.trains || {} };
                 saveQuestData();
                 updateMapQuestState();
                 updateStats();
-                renderLineList();
+                if (mode === 'ride') { renderRideMode(); attachRideEvents(); } else renderLineList();
                 showToast(t('imported'));
             } else {
                 showToast(t('import_error'));
@@ -2064,11 +2802,11 @@ document.getElementById('clear-cancel').addEventListener('click', () => {
     document.getElementById('modal-clear').classList.remove('show');
 });
 document.getElementById('clear-confirm').addEventListener('click', () => {
-    questData = { lines: {}, segments: {} };
+    questData = { lines: {}, segments: {}, trains: {} };
     saveQuestData();
     updateMapQuestState();
     updateStats();
-    renderLineList();
+    if (mode === 'ride') { renderRideMode(); attachRideEvents(); } else renderLineList();
     document.getElementById('modal-clear').classList.remove('show');
     showToast(t('cleared'));
 });
@@ -2090,17 +2828,30 @@ document.getElementById('btn-share').addEventListener('click', () => {
     }
     const pct = totalKm ? (riddenKm / totalKm * 100).toFixed(1) : '0';
 
+    // ride-mode summary
+    let trainLine = '';
+    if (TRAINS.length) {
+        const c = medalCtx();
+        const medals = computeMedals();
+        const earned = medals.filter(m => m.res.got).length;
+        const trainLabel = lang === 'ja' ? '列車' : lang === 'zh' ? '列车' : 'Trains';
+        const medalLabelTxt = lang === 'ja' ? '勲章' : lang === 'zh' ? '勋章' : 'Honours';
+        trainLine = `${trainLabel}: ${c.total}/${c.totalAll} (${c.sh} ${t('grp_shinkansen')} · ${c.ltd} ${t('grp_ltd')})\n` +
+                    `${medalLabelTxt}: ${earned}/${medals.length}\n`;
+    }
+
     const title = lang === 'ja' ? '🇯🇵 Mini JapanRail · 日本鉄道制霸 進捗' : lang === 'zh' ? '🇯🇵 Mini JapanRail · 日本铁路制霸 进度' : '🇯🇵 Mini JapanRail · Japan Railway Conquest Progress';
     const text = `${title}\n` +
         `━━━━━━━━━━━━━━━━━━━━\n` +
         `${t('stats_lines')}: ${riddenLines}/${totalLines} (${totalLines ? Math.round(riddenLines/totalLines*100) : 0}%)\n` +
         `${t('stats_segments')}: ${riddenSegs}/${totalSegs} (${totalSegs ? Math.round(riddenSegs/totalSegs*100) : 0}%)\n` +
         `${t('stats_km')}: ${riddenKm.toFixed(1)}/${totalKm.toFixed(1)} km (${pct}%)\n` +
+        trainLine +
         `━━━━━━━━━━━━━━━━━━━━\n` +
         `Progress bar: [${'█'.repeat(Math.round(pct/5))}${'░'.repeat(20 - Math.round(pct/5))}] ${pct}%`;
 
     document.getElementById('share-content').innerHTML =
-        `<pre style="background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:12px;font-size:12px;line-height:1.5;white-space:pre-wrap;color:var(--text);font-family:monospace;">${escHtml(text)}</pre>`;
+        `<pre style="background:var(--glass);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--glass-edge);border-radius:var(--r-xs);padding:12px;font-size:12px;line-height:1.5;white-space:pre-wrap;color:var(--text);font-family:monospace;">${escHtml(text)}</pre>`;
     document.getElementById('modal-share').classList.add('show');
 
     document.getElementById('share-copy').onclick = () => {
@@ -2109,6 +2860,9 @@ document.getElementById('btn-share').addEventListener('click', () => {
 });
 document.getElementById('share-close').addEventListener('click', () => {
     document.getElementById('modal-share').classList.remove('show');
+});
+document.getElementById('medal-close').addEventListener('click', () => {
+    document.getElementById('modal-medal').classList.remove('show');
 });
 
 // ═══════════════════════════════════════════════════════════════
@@ -2453,8 +3207,6 @@ document.querySelectorAll('.poster-orient-btn').forEach(btn => {
         posterOrientation = btn.dataset.orient;
         document.querySelectorAll('.poster-orient-btn').forEach(b => {
             b.classList.toggle('active', b === btn);
-            b.style.borderColor = b === btn ? 'var(--accent)' : 'var(--border)';
-            b.style.color = b === btn ? 'var(--accent)' : 'var(--text-dim)';
         });
         renderPosterPreview();
     });
@@ -2465,8 +3217,6 @@ document.querySelectorAll('.poster-theme-btn').forEach(btn => {
         posterTheme = btn.dataset.theme;
         document.querySelectorAll('.poster-theme-btn').forEach(b => {
             b.classList.toggle('active', b === btn);
-            b.style.borderColor = b === btn ? 'var(--accent)' : 'var(--border)';
-            b.style.color = b === btn ? 'var(--accent)' : 'var(--text-dim)';
         });
         renderPosterPreview();
     });
@@ -2559,8 +3309,27 @@ window.addEventListener('keydown', (e) => {
     }
 });
 
+// ─── Theme toggle ───
+const THEME_KEY = 'mjr_quest_theme';
+const THEME_ICONS = {
+    dark: '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M20 13.5A8.5 8.5 0 0 1 10.5 4a8.5 8.5 0 1 0 9.5 9.5z"/></svg>',
+    light: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"/></svg>',
+};
+function applyTheme(t) {
+    if (t !== 'light') t = 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+    const btn = document.getElementById('btn-theme');
+    if (btn) btn.innerHTML = THEME_ICONS[t];
+    try { localStorage.setItem(THEME_KEY, t); } catch (e) {}
+}
+document.getElementById('btn-theme').addEventListener('click', () => {
+    const cur = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+    applyTheme(cur === 'light' ? 'dark' : 'light');
+});
+
 // Init
 applyLang();
+try { applyTheme(localStorage.getItem(THEME_KEY) || 'dark'); } catch (e) { applyTheme('dark'); }
 </script>
 </body>
 </html>

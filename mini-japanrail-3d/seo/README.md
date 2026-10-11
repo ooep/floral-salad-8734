@@ -73,13 +73,29 @@ CI（`.github/workflows/deploy.yml`）已在每次部署前自动运行生成器
 
 | 页面 | 格式 |
 | --- | --- |
-| 首页 | `Mini JapanRail — 全日本铁路实时运行地图 \| Japan Rail Live Map` |
+| 首页 | `Mini JapanRail｜全日本列车实时运行可视化地图・列車走行位置・運行情報 \| Japan Train Live Map` |
 | 线路页 | `山手線（山手线 / Yamanote Line）— 线路车站一览 \| Mini JapanRail` |
 | 车站页 | `東京（东京站 / Tōkyō）— 途经上越新幹線、上越線 等 \| Mini JapanRail` |
+| 线路一览 | `全日本铁路线路一览（新干线・JR・私铁・地下铁・路面电车）\| Mini JapanRail` |
+| 车站一览 | `全日本车站一览（新干线・JR・私铁・地下铁）\| Mini JapanRail` |
 | 同名站 | 自动带消歧后缀，如 `高田(奈良県)（高田站 / Kōda）…` |
 
 要点：日文名优先（利于 Yahoo! Japan / Naver），紧跟中文与英文名（利于百度 / Google），
 再放线路上下文与品牌名；控制在 70 字左右。
+
+**首页关键词策略**（对齐主要竞品与官方用词）：
+
+| 语言 | 关键词 | 说明 |
+| --- | --- | --- |
+| 日 | 列車走行位置 | JR 官方用词，本站最大的搜索流量入口 |
+| 日 | 運行情報 / リアルタイム列車位置 / 走行シミュレーション | 与 `tetsudou-map.com`、`RailAround` 同赛道 |
+| 中 | 全日本列车实时运行可视化地图 / 列车运行可视化系统 / 列车运行情报 | 对标 `trainvisual.top`、`高铁通` 等 |
+| 英 | Japan Train Live Map / Real-Time Train Tracker | 对标 `trainstracking.com`、`liverailmap.com` |
+
+标题把中 / 日 / 英三语的最高价值词按「品牌 ｜ 中文主词 ・ 日文主词 ｜ 英文主词」排布，
+Google 显示宽度约 600px，超出部分会在 SERP 截断但**仍参与索引**；因此把
+`列車走行位置` 等最高价值词前置。`運行情報`、`列车运行可视化`、`新幹線` 等
+其余词放在 `description` / `keywords` / JSON-LD `alternateName` 中兜底覆盖。
 
 ## 上线后的补充动作（建议）
 

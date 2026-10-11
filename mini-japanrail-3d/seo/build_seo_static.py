@@ -1038,7 +1038,7 @@ def station_page(rec, lines, neighbors, cfg, tozh):
     if rec['pref']:
         desc_tail = '位于%s。' % (pref_zh or rec['pref'])
     line_desc = '、'.join(line_names[:3]) + (' 等' if len(line_names) > 3 else '') if line_names else '多条线路'
-    desc = '%s（%s / %s）%s途经%s。在 Mini JapanRail 全日本铁路实时运行地图上查看车站位置、途经线路与实时列车。' % (
+    desc = '%s（%s / %s）%s途经%s。在 Mini JapanRail 全日本列车实时运行可视化地图上查看车站位置、途经线路与列车走行位置・運行情報。' % (
         zh, name, en or zh, desc_tail, line_desc)
     if len(desc) > 190:
         desc = desc[:187] + '…'
@@ -1262,7 +1262,7 @@ def line_page(rec, stations, cfg, tozh, ordered=None):
         desc += '，全长约 %d 公里' % rec['approx_km']
     if rec.get('prefs'):
         desc += '，途经 %d 个都道府县' % len(rec['prefs'])
-    desc += '。可在 Mini JapanRail 全日本铁路实时运行地图上查看线路走向与实时列车。'
+    desc += '。可在 Mini JapanRail 全日本列车实时运行可视化地图上查看线路走向、列车走行位置与運行情報。'
     if len(desc) > 190:
         desc = desc[:187] + '…'
     items_html = ''
@@ -1484,8 +1484,8 @@ def line_page(rec, stations, cfg, tozh, ordered=None):
 def index_lines_page(lines, stations, cfg, tozh, line_counts=None):
     url = abs_url(cfg, 'lines/')
     og_img_url = abs_url(cfg, cfg['og_image'])
-    title = '全部铁路线路一览 | %s' % cfg['site_name']
-    desc = 'Mini JapanRail 收录的全日本铁路线路一览（%d 条）：JR、私铁、地下铁、单轨、路面电车等，每条线路均有独立页面与途经车站。' % len(lines)
+    title = '全日本铁路线路一览（新干线・JR・私铁・地下铁・路面电车）| %s' % cfg['site_name']
+    desc = 'Mini JapanRail 收录的全日本铁路线路一览（%d 条）：新干线、JR、私铁、地下铁、单轨、路面电车等，每条线路均有独立页面、途经车站与列车走行位置（列車走行位置・運行情報）。' % len(lines)
     kinds_order = ['鉄道', '路面電車', 'モノレール', '案内軌条式', '鋼索鉄道', '無軌条電車', '浮上式']
     groups = defaultdict(list)
     for lname, rec in sorted(lines.items(), key=lambda kv: kv[0]):
@@ -1525,8 +1525,8 @@ def index_lines_page(lines, stations, cfg, tozh, line_counts=None):
 def index_stations_page(stations, cfg, tozh, lines=None):
     url = abs_url(cfg, 'stations/')
     og_img_url = abs_url(cfg, cfg['og_image'])
-    title = '全部车站一览 | %s' % cfg['site_name']
-    desc = 'Mini JapanRail 收录的全日本车站一览（%d 站，按都道府县分组），每个车站均有独立页面，包含途经线路、位置与相邻车站。' % len(stations)
+    title = '全日本车站一览（新干线・JR・私铁・地下铁）| %s' % cfg['site_name']
+    desc = 'Mini JapanRail 收录的全日本车站一览（%d 站，按都道府县分组），每个车站均有独立页面，包含途经线路、位置、相邻车站与列车走行位置。' % len(stations)
     groups = defaultdict(list)
     for key, rec in stations.items():
         groups[rec['pref'] or 'その他'].append(rec)
@@ -1611,7 +1611,7 @@ def write_robots(cfg):
 def write_404(cfg):
     og_img_url = abs_url(cfg, cfg['og_image'])
     title = '页面不存在（404）| %s' % cfg['site_name']
-    desc = '您访问的页面不存在。返回 Mini JapanRail 全日本铁路实时运行地图，或浏览全部线路 / 全部车站。'
+    desc = '您访问的页面不存在。返回 Mini JapanRail 全日本列车实时运行可视化地图，或浏览全部线路 / 全部车站。'
     body = (
         '<div class="wrap" style="text-align:center;padding-top:80px">\n'
         '<h1>404 — 页面不存在</h1>\n'
@@ -1682,9 +1682,9 @@ def gen_og_image(cfg, station_count, line_count):
     if f_title:
         d.text((tx, 150), 'Mini JapanRail', font=f_title, fill=(255, 255, 255))
     if f_sub:
-        d.text((tx, 250), '全日本铁路实时运行地图', font=f_sub, fill=(190, 205, 230))
+        d.text((tx, 250), '全日本列车实时运行可视化地图', font=f_sub, fill=(190, 205, 230))
         d.text((tx, 310), '%d 线路 · %d 车站' % (line_count, station_count), font=f_sub, fill=(95, 212, 244))
-        d.text((tx, 380), 'Japan Rail Live Map', font=f_sub, fill=(140, 160, 190))
+        d.text((tx, 380), 'Japan Train Live Map', font=f_sub, fill=(140, 160, 190))
     img.save(out, 'PNG', optimize=True)
     print('[og-image] 已生成 %s（%dx%d）' % (out, W, H))
     return True

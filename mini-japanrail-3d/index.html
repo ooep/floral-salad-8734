@@ -326,14 +326,14 @@ button { font-family:inherit; }
 #routeRow { display:flex; gap:5px; margin-top:4px; }
 #routeRow .tbox { flex:1; min-width:0; font-size:11.5px; min-height:30px; }
 #rGo { min-height:30px; min-width:38px; padding:0 7px; font-size:11.5px; }
-#routeRes { margin-top:6px; }
-.route-hint { font-size:11px; color:var(--dim); line-height:1.6; }
-.route-hint strong { color:var(--txt); font-weight:600; }
+#routeRes { margin-top:6px; display:none; }
 .leg { display:flex; align-items:center; gap:7px; font-size:11.5px; padding:5px 8px; border-radius:var(--r-xs); cursor:pointer; margin-bottom:3px; background:var(--panel2); }
 .leg:hover { background:var(--acc-soft); }
 .leg .bar { width:14px; height:4px; border-radius:2px; flex:none; }
 .leg .nm { font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .leg .ds { color:var(--dim); font-size:10px; margin-left:auto; flex:none; }
+#routeSum { font-size:11px; color:var(--dim); margin-bottom:6px; line-height:1.5; }
+#routeSum b { color:var(--txt); }
 
 /* 类型 chips */
 .frow { display:flex; flex-wrap:wrap; gap:3px; }
@@ -968,7 +968,8 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
           <button id="rGo" class="btn"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h14M13 6l6 6-6 6"/></svg></button>
         </div>
         <div id="routeRes">
-          <div class="route-hint" id="routeHint"></div>
+          <div id="routeSum"></div>
+          <div id="routeLegs"></div>
         </div>
       </div>
       <div class="sec">
@@ -1295,7 +1296,7 @@ const I18N = {
     baseT:'底图源', bPale:'淡色', bStd:'标准', bDark:'深色', bSat:'卫星',
     d1:'在途列车', d2:'今日班次', d3:'运行日', d4:'线路 / 车站', d5:'时刻表构建', d6:'帧率',
     now:'回到现在', station:'车站', line:'线路', stops:'站', transfers:'换乘', routeMile:'里程', routeNone:'未找到连通路径(请检查站名)',
-    routeSame:'起终点相同', badStation:'找不到车站', routeJump:'输入起终点后点 → 打开<strong>换乘案内</strong>页:班次时刻 · 换乘等待 · 营业km · 小地图', h1:'拖动平移 · 滚轮缩放 · 右键旋转/倾斜', h2:'点击列车 = 详情 + 相机跟随 · 点空白取消',
+    routeSame:'起终点相同', badStation:'找不到车站', h1:'拖动平移 · 滚轮缩放 · 右键旋转/倾斜', h2:'点击列车 = 详情 + 相机跟随 · 点空白取消',
     h3:'点击车站 = 途经线路', h4:'底部时钟:暂停 / 拖动时间 / 0.5–8× 倍速回放', h5:'搜索站名:日文 / 中文(东京·涩谷)/ 英文(Tokyo, Shinjuku)',
     h6:'数据为计划时刻表,不含实际延误', next:'下一站', eta:'约', min:'分', dep:'发车', arr:'到达', status:'状态',
     stopsTitle:'停靠站', stopsCount:'站', colStop:'站', colArr:'到', colDep:'发',
@@ -1325,7 +1326,7 @@ const I18N = {
     baseT:'ベースマップ', bPale:'淡色', bStd:'標準', bDark:'ダーク', bSat:'衛星',
     d1:'運行中列車', d2:'本日列車', d3:'運行日', d4:'路線 / 駅', d5:'時刻表構築', d6:'フレーム率',
     now:'現在に戻る', station:'駅', line:'路線', stops:'駅', transfers:'乗換', routeMile:'距離', routeNone:'連絡経路なし(駅名確認)',
-    routeSame:'同一点', badStation:'駅が見つかりません', routeJump:'出発地・到着地を入力して → <strong>乗換案内</strong>ページを開きます:発車時刻 · 乗換待ち · 営業km · 小地図', h1:'ドラッグ移動 · ホイール拡縮 · 右回転/傾き', h2:'列車クリック = 詳細 + 追跡 · 空白で解除',
+    routeSame:'同一点', badStation:'駅が見つかりません', h1:'ドラッグ移動 · ホイール拡縮 · 右回転/傾き', h2:'列車クリック = 詳細 + 追跡 · 空白で解除',
     h3:'駅クリック = 経由路線', h4:'下部時計:一時停止 / 時間操作 / 0.5–8× 再生', h5:'駅名検索:日本語 / 中国語 / 英語(Tokyo, Shinjuku)',
     h6:'計画時刻表ベース・遅延は含まない', next:'次駅', eta:'約', min:'分', dep:'発', arr:'着', status:'状態',
     stopsTitle:'停車駅', stopsCount:'駅', colStop:'駅', colArr:'着', colDep:'発',
@@ -1355,7 +1356,7 @@ const I18N = {
     baseT:'Basemap', bPale:'Pale', bStd:'Standard', bDark:'Dark', bSat:'Satellite',
     d1:'Active trains', d2:'Trips today', d3:'Service day', d4:'Lines / Stations', d5:'Timetable built', d6:'FPS',
     now:'Now', station:'Station', line:'Line', stops:'stops', transfers:'transfers', routeMile:'Distance', routeNone:'No connected route (check names)',
-    routeSame:'Same stations', badStation:'Station not found', routeJump:'Enter origin & destination, then → to open the <strong>Transfer Planner</strong>: departure times · transfer waits · service km · mini map', h1:'Drag to pan · Scroll to zoom · Right-drag rotate/tilt', h2:'Click train = detail + follow · Blank = cancel',
+    routeSame:'Same stations', badStation:'Station not found', h1:'Drag to pan · Scroll to zoom · Right-drag rotate/tilt', h2:'Click train = detail + follow · Blank = cancel',
     h3:'Click station = its lines', h4:'Bottom clock: pause / scrub / 0.5–8× replay', h5:'Search stations: Japanese / Chinese / English (Tokyo, Shinjuku)',
     h6:'Scheduled timetable — no live delays', next:'Next', eta:'~', min:'min', dep:'dep', arr:'arr', status:'Status',
     stopsTitle:'Stops', stopsCount:'stops', colStop:'Station', colArr:'Arr', colDep:'Dep',
@@ -1507,7 +1508,7 @@ function lmStart() {
 const FILES_PCT = 55, IDX_PCT = 78, PRS_PCT = 97;
 /* 数据版本号:segments/stations/station_map 等静态数据每次变更时必须递增,
    否则 IndexedDB 缓存可能让旧数据(如已修的幽灵直线)继续生效 */
-const DATA_VERSION = '2026-10-12a';
+const DATA_VERSION = '2026-10-12b';
 const loadSizes = { 'data/segments3d.geojson': 11347006, 'data/stations3d.geojson': 1881446, 'data/tmaps.json': 3158412, 'data/station_map.json': 11006682, 'data/tokkyu.json': 59100, 'data/names_i18n.json': 482556, 'data/trains_wd.json': 13494947, 'data/trains_sa.json': 12228166, 'data/trains_su.json': 12284312, 'data/station_overall_footprints.geojson': 6902234, 'data/station_entrances.geojson': 2787587, 'data/station_platforms.geojson': 4254264 };
 let _fileTotal = 8, _fileIdx = 0;
 function nextFileIdx() { return _fileIdx++; }
@@ -4281,7 +4282,7 @@ function onMapClick(e) {
   liveDetailTrip = null;
   closeDetail();
   clearHighlight();
-  if ($('routeHint')) $('routeHint').innerHTML = '';
+  $('routeRes').style.display = 'none';
 }
 
 /* ---------------- 详情卡 ---------------- */
@@ -4449,10 +4450,23 @@ function isOsakaMetroChuoTrip(t) {
   t._omc = omc;
   return omc;
 }
+/* 南阿蘇鉄道直通(MT-4000形 高森線↔JR豊肥本線 肥後大津)专用消歧:
+ * 2023-07-15 起南阿蘇鉄道 MT-4000形 1 日 2 往复直通 JR 豊肥本線至肥後大津,
+ * tmaps 中此类班次 lines = ['豊肥本線','高森線'],此前按行首命中豊肥本線
+ * (=318, JR九州 815系)显示 JR 车头;改为命中高森線(南阿蘇鉄道 MT-4000形)。
+ * 豊肥本線本线的 JR 班次(lines 不含高森線)不受影响。 */
+function isMinamiasoThroughTrip(t) {
+  if (!t || !t.lines || !t.lines.length) return false;
+  if (t._mas !== undefined) return t._mas;
+  const mas = t.lines.indexOf('豊肥本線') >= 0 && t.lines.indexOf('高森線') >= 0;
+  t._mas = mas;
+  return mas;
+}
 function lineIconFor(t) {
   if (!ATLAS || !t || !t.lines) return -1;
   if (isKeihinTohokuTrip(t)) { const v = ATLAS.line['根岸線']; if (v !== undefined) return v; }
   if (isOsakaMetroChuoTrip(t)) { const v = ATLAS.line['大阪メトロ中央線']; if (v !== undefined) return v; }
+  if (isMinamiasoThroughTrip(t)) { const v = ATLAS.line['高森線']; if (v !== undefined) return v; }
   if (t.lines.length > 1) {
     /* 直通系统线路优先(武藏野线直通车体归属) */
     for (const ln of ICON_PRIORITY_LINES) { if (t.lines.includes(ln)) { const v = ATLAS.line[ln]; if (v !== undefined) return v; } }
@@ -4476,6 +4490,7 @@ function trainIconIdx(t, lineName) {
   /* 大阪地铁中央线:必须在 lineName 查找之前 —— showTrPick 传入的 lineName 就是裸「中央線」,
      直接查会命中 JR 东日本 E233(22);此处强制改判大阪地铁中央线图标 */
   if (isOsakaMetroChuoTrip(t)) { const v = ATLAS.line['大阪メトロ中央線']; if (v !== undefined) return v; }
+  if (isMinamiasoThroughTrip(t)) { const v = ATLAS.line['高森線']; if (v !== undefined) return v; }
   /* 纯共享干道直通(上野東京線等): 优先E217湘南色兜底, 防止 p[3]='東海道線' 绕过兜底取到西日本W223(143) */
   if (t.lines.length > 1 && t.lines.every(ln => ICON_SKIP_LINES.has(ln)) && ATLAS.fallback !== undefined) return ATLAS.fallback;
   if (lineName && ATLAS.line[lineName] !== undefined) return ATLAS.line[lineName];
@@ -5358,20 +5373,96 @@ function resolveStation(q) {
   for (const s of searchIndex) { const hit = matchSearch(s, q); if (hit) return normName(s.n); }
   return null;
 }
-/* 路线搜索 → 跳转换乘案内页(班次级 RAPTOR 检索, 见 journey.html) */
-const DAY2J = { 1: 'wd', 2: 'sa', 3: 'su' };
+const dispName = k => (nameOf && nameOf.get(k)) || k;
+function pickRouteSeg(st1, st2, line) {
+  const arr = segIndex.get(st1 + '|' + st2);
+  if (!arr || !arr.length) return null;
+  const nl = normName(line);
+  for (const e of arr) if (normName(e.line) === nl) return e;
+  return arr[0];
+}
+/* 二叉最小堆 */
+class Heap {
+  constructor() { this.a = []; }
+  push(x) { const a = this.a; a.push(x); let i = a.length - 1;
+    while (i > 0) { const p = (i - 1) >> 1; if (a[p][0] <= a[i][0]) break; [a[p], a[i]] = [a[i], a[p]]; i = p; } }
+  pop() { const a = this.a, top = a[0], last = a.pop();
+    if (a.length) { a[0] = last; let i = 0;
+      for (;;) { const l = 2*i+1, r = l+1; let m = i;
+        if (l < a.length && a[l][0] < a[m][0]) m = l;
+        if (r < a.length && a[r][0] < a[m][0]) m = r;
+        if (m === i) break; [a[m], a[i]] = [a[i], a[m]]; i = m; } }
+    return top; }
+  get size() { return this.a.length; }
+}
+function findRoute(A, B) {
+  // Dijkstra:节点 = (站|线)。起点站的所有站台入队,到任一同名目标站台即达
+  const best = new Map(), prev = new Map();
+  const pq = new Heap();
+  for (const nk of (stationLinesAt.get(A) || [])) {
+    best.set(nk, 0); pq.push([0, nk, A, '']);
+  }
+  if (!pq.size) return null;
+  while (pq.size) {
+    const [cost, state, st] = pq.pop();
+    if (cost > (best.get(state) ?? 1e18)) continue;
+    if (st === B) {
+      const path = []; let c = state;
+      while (c) { path.unshift(c); c = prev.get(c); }
+      return { states: path, cost };
+    }
+    for (const e of (routeGraph.get(state) || [])) {
+      const nCost = cost + e.km;
+      if (nCost < (best.get(e.to) ?? 1e18)) {
+        best.set(e.to, nCost); prev.set(e.to, state);
+        pq.push([nCost, e.to, e.to.split('|')[0], '']);
+      }
+    }
+  }
+  return null;
+}
 $('rGo').addEventListener('click', () => {
   if (!dataReady) return;
   const A = resolveStation($('rFrom').value), B = resolveStation($('rTo').value);
-  if (!A || !B) { toast('\u274c ' + T().badStation); return; }
+  if (!A || !B) { toast('❌ ' + T().badStation); return; }
   if (A === B) { toast(T().routeSame); return; }
-  const p = new URLSearchParams();
-  p.set('f', A); p.set('t', B);
-  const dj = DAY2J[dayMode];
-  if (dj) p.set('d', dj);
-  location.href = 'journey.html#mjrj=' + p.toString();
+  const rt = findRoute(A, B);
+  if (!rt) { toast('❌ ' + T().routeNone); return; }
+  renderRoute(rt, A, B);
 });
 [$('rFrom'), $('rTo')].forEach(el => el.addEventListener('keydown', e => { if (e.key === 'Enter') $('rGo').click(); }));
+function renderRoute(rt, A, B) {
+  // states: ['站|线', ...];换乘 = 同站不同线的相邻状态
+  const legs = [];
+  const feats = [];
+  for (let i = 0; i < rt.states.length - 1; i++) {
+    const [st1, ln1] = rt.states[i].split('|');
+    const [st2, ln2] = rt.states[i + 1].split('|');
+    if (st1 === st2) continue; // 换乘
+    const line = ln2 || ln1;
+    const e = pickRouteSeg(st1, st2, line);
+    if (!e) continue;
+    const last = legs[legs.length - 1];
+    if (last && last.line === line) { last.km += e.len; last.stops++; last.to = st2; }
+    else legs.push({ line, from: st1, to: st2, km: e.len, stops: 2, color: lineColor.get(e.line) || lineColor.get(line) || '#4f8ef7' });
+    feats.push({ type: 'Feature', properties: { color: lineColor.get(e.line) || '#fff' }, geometry: { type: 'LineString', coordinates: e.coords } });
+  }
+  const totalKm = legs.reduce((a, l) => a + l.km, 0);
+  const xfr = Math.max(0, legs.length - 1);
+  setHighlight(feats, null);
+  map.fitBounds(featsToBounds(feats), { padding: 80, pitch: Math.min(map.getPitch(), 40), duration: 1400 });
+  $('routeSum').innerHTML = '<b>' + dispName(A) + '</b> → <b>' + dispName(B) + '</b><br>' + totalKm.toFixed(0) + ' km · ' + xfr + ' ' + T().transfers + ' · ' + legs.length + ' ' + T().line;
+  $('routeLegs').innerHTML = legs.map((l, i) =>
+    '<div class="leg" data-i="' + i + '"><span class="bar" style="color:' + l.color + ';background:' + l.color + '"></span>' +
+    '<span class="nm">' + l.line + '</span><span class="ds">' + dispName(l.from) + '→' + dispName(l.to) + ' · ' + l.stops + T().stops + '</span></div>').join('');
+  $('routeRes').style.display = 'block';
+  $('routeLegs').querySelectorAll('.leg').forEach(el => el.addEventListener('click', () => {
+    const l = legs[+el.dataset.i];
+    const fs = segFC.features.filter(f => f.properties.line === l.line);
+    if (fs.length) map.fitBounds(featsToBounds(fs), { padding: 80, duration: 1000 });
+  }));
+  closeDetail();
+}
 
 /* ---------------- 类型过滤 / 设置 ---------------- */
 function buildKindRow() {
@@ -5700,7 +5791,7 @@ $('brand').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key ===
 document.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT') { if (e.key === 'Escape') e.target.blur(); return; }
   if (e.code === 'Space' && dataReady) { e.preventDefault(); if (paused) doResume(); else doPause(); }
-  if (e.key === 'Escape') { stopFollow(); closeDetail(); sugEl.style.display = 'none'; clearHighlight(); if ($('routeHint')) $('routeHint').innerHTML = ''; openSearchPanel(false); }
+  if (e.key === 'Escape') { stopFollow(); closeDetail(); sugEl.style.display = 'none'; clearHighlight(); $('routeRes').style.display = 'none'; openSearchPanel(false); }
 });
 
 /* ---------------- i18n 应用 ---------------- */
@@ -5729,7 +5820,6 @@ function applyLang() {
   $('tD4').textContent = t.d4; $('tD5').textContent = t.d5; $('tD6').textContent = t.d6;
   $('cNow').textContent = t.now;
   updateFootNote();
-  if ($('routeHint')) $('routeHint').innerHTML = t.routeJump;
   $('lTitle').textContent = t.title;
   $('lRetry').innerHTML = ICO.retry + ' ' + t.retry;
   buildKindRow();
@@ -5808,6 +5898,7 @@ window.__map = map;
 window.__uni = uni;
 window.__shaderMap = trainShaderLayer.shaderMap;
 window.__glState = () => ({ glRef, vao, vbo, visibleCount, bufArr });
+window.__routeTest = (a, b) => { try { const rt = findRoute(a, b); return rt ? { legs: rt.states.length, km: Math.round(rt.cost) } : null; } catch (e) { return 'ERR ' + e.message; } };
 window.__graphStats = () => ({ nodes: routeNodes.size, edges: routeGraph.size, stations: stationLinesAt.size });
 window.__flyCheck = (minutesAhead) => {
   const M = curMin(), movers = [];

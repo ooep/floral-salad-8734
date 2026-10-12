@@ -5,30 +5,38 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0b0f16">
 <title>乗換案内 · Mini JapanRail</title>
+<meta name="description" content="全日本铁路换乘案内：班次时刻、换乘次数、列车爱称与目的地、营业里程。纯静态时刻表检索。">
+<link rel="icon" href="favicon.png">
 <link href="https://cdn.jsdelivr.net/npm/maplibre-gl@6.12.0/dist/maplibre-gl.css" rel="stylesheet" />
 <!-- MapLibre 6.x 仅 ESM 构建, 由 initMap() 动态 import(失败不影响检索功能) -->
 <style>
-/* ================= 液态玻璃 token(与主页一致) ================= */
+/* ══════════════ 液态玻璃 token(与主页 index.html 完全一致) ══════════════ */
 :root {
   --bg:#0b0f16; --panel:rgba(18,24,34,.68); --panel2:rgba(30,38,52,.72);
   --line:rgba(255,255,255,.08); --txt:#e8edf4; --dim:#bccbdd; --acc:#2f6de8; --acc-txt:#6da9ff; --acc2:#5fd4f4;
   --shadow:0 2px 10px rgba(0,0,0,.28), 0 8px 32px rgba(0,0,0,.2);
   --r:14px; --r-sm:10px; --r-xs:7px; --r-pill:999px;
   --acc-soft:rgba(79,142,247,.16); --acc-border:rgba(79,142,247,.5);
-  --glass:rgba(255,255,255,.10); --glass-2:rgba(255,255,255,.16);
-  --glass-edge:rgba(255,255,255,.22); --glass-hi:rgba(255,255,255,.34); --glass-lo:rgba(0,0,0,.16);
+  /* ── Liquid Glass ── */
+  --glass:rgba(255,255,255,.10);
+  --glass-2:rgba(255,255,255,.16);
+  --glass-edge:rgba(255,255,255,.22);
+  --glass-hi:rgba(255,255,255,.34);
+  --glass-lo:rgba(0,0,0,.16);
   --glass-sh:0 6px 20px rgba(0,0,0,.30), 0 2px 6px rgba(0,0,0,.22);
   --glass-solid:rgb(25,32,45);
-  --ease-spring:cubic-bezier(.34,1.45,.44,1);
-  --ease-smooth:cubic-bezier(.16,1,.3,1);
+  /* ── 大面板玻璃: 顶部镜面高光 → 中段通透 → 底部微反射 ── */
+  --glass-panel:linear-gradient(180deg, rgba(255,255,255,.18) 0%, rgba(255,255,255,.05) 34%, rgba(255,255,255,.09) 100%), rgba(255,255,255,.10);
+  --glass-panel-blur:blur(26px) saturate(1.9);
+  --ease-spring:cubic-bezier(.34,1.45,.44,1);            /* 按压松开: 轻回弹 */
+  --ease-smooth:cubic-bezier(.16,1,.3,1);                /* 出场/形变: 顺滑减速 */
+  --spring-out:linear(0,.0598,.1976,.3654,.5321,.68,.8007,.8924,.9573,.9996,1.0241,1.0356,1.0384,1.0358,1.0304,1.0239,1.0175,1.0119,1.0074,1.0039,1.0015,.9999,.999,.9986,.9985,.9986,.9989,.9991,.9993,.9996,1);
+  --spring-in:linear(0,.0368,.1232,.2323,.3473,.458,.5586,.6466,.7215,.7836,.8341,.8746,.9065,.9313,.9503,.9646,.9753,.9831,.9888,.9929,.9957,.9976,.9989,.9997,1.0002,1.0005,1.0006,1.0006,1.0005,1);
+  --morph-out:460ms; --morph-in:340ms;
 }
-@supports (background: linear-gradient(in oklab, red, blue)) {
-  :root {
-    --spring-out:linear(0,.0598,.1976,.3654,.5321,.68,.8007,.8924,.9573,.9996,1.0241,1.0356,1.0384,1.0358,1.0304,1.0239,1.0175,1.0119,1.0074,1.0039,1.0015,.9999,.999,.9986,.9985,.9986,.9989,.9991,.9993,.9996,1);
-    --spring-in:linear(0,.0368,.1232,.2323,.3473,.458,.5586,.6466,.7215,.7836,.8341,.8746,.9065,.9313,.9503,.9646,.9753,.9831,.9888,.9929,.9957,.9976,.9989,.9997,1.0002,1.0005,1.0006,1.0006,1.0005,1);
-  }
+@supports not (transition-timing-function:linear(0,1)) {
+  :root { --spring-out:cubic-bezier(.22,1.12,.36,1); --spring-in:cubic-bezier(.32,.94,.44,1); }
 }
-:root { --spring-out:cubic-bezier(.22,1.12,.36,1); --spring-in:cubic-bezier(.32,.94,.44,1); }
 :root[data-theme="light"] {
   --bg:#dfe4ec; --panel:rgba(255,255,255,.82); --panel2:rgba(245,247,251,.88);
   --line:rgba(15,23,42,.09); --txt:#0f172a; --dim:#414e66; --acc:#1c51d6; --acc-txt:#1c51d6; --acc2:#0891b2;
@@ -38,6 +46,8 @@
   --glass-edge:rgba(255,255,255,.92); --glass-hi:rgba(255,255,255,.95); --glass-lo:rgba(15,23,42,.06);
   --glass-sh:0 6px 18px rgba(15,23,42,.14), 0 2px 5px rgba(15,23,42,.08);
   --glass-solid:rgb(247,249,252);
+  --glass-panel:linear-gradient(180deg, rgba(255,255,255,.78) 0%, rgba(255,255,255,.52) 36%, rgba(255,255,255,.66) 100%), rgba(255,255,255,.58);
+  --glass-panel-blur:blur(26px) saturate(1.6);
 }
 * { margin:0; padding:0; box-sizing:border-box; }
 html,body { width:100%; height:100%; overflow:hidden; background:var(--bg); color:var(--txt);
@@ -52,94 +62,98 @@ html,body { width:100%; height:100%; overflow:hidden; background:var(--bg); colo
 ::-webkit-scrollbar-thumb { background:rgba(120,140,180,.28); border-radius:3px; }
 ::-webkit-scrollbar-thumb:hover { background:rgba(120,140,180,.45); }
 ::-webkit-scrollbar-track { background:transparent; }
-button { font-family:inherit; }
+button,input,select { font-family:inherit; }
 .maplibregl-ctrl-attrib { font-size:10px !important; }
 
-/* ================= 顶部 HUD ================= */
+/* ══════════════ 顶部 HUD ══════════════ */
 #topHud { position:absolute; top:10px; left:50%; transform:translateX(-50%); z-index:9;
   display:flex; align-items:center; gap:8px; pointer-events:none; max-width:calc(100vw - 16px); }
-#brand { pointer-events:auto; display:flex; align-items:center; gap:8px; height:36px; padding:0 13px 0 5px;
+#brand { pointer-events:auto; display:flex; align-items:center; gap:8px; height:var(--dock,44px); padding:0 13px 0 5px;
   cursor:pointer; border-radius:var(--r-pill); color:var(--txt); text-decoration:none;
   background:var(--glass); border:1px solid var(--glass-edge);
   backdrop-filter:blur(14px) saturate(1.4); -webkit-backdrop-filter:blur(14px) saturate(1.4);
-  box-shadow:inset 0 1px 1px var(--glass-hi), inset 0 -1px 2px var(--glass-lo), var(--glass-sh);
+  box-shadow:inset 0 1px 0 var(--glass-hi), inset 0 -1px 2px var(--glass-lo), var(--glass-sh);
   transition:background .2s var(--ease-smooth), transform .38s var(--ease-spring); white-space:nowrap; }
-#brand:hover { background:var(--glass-2); transform:translateY(-1px); }
+@media (hover:hover) { #brand:hover { background:var(--glass-2); transform:translateY(-1px); } }
 #brand:active { transform:scale(.95); transition:transform .12s ease-in; }
-#brand .lg { width:26px; height:26px; border-radius:50%; background:#fff; display:flex; align-items:center;
+#brand .lg { width:28px; height:28px; border-radius:50%; background:#fff; display:flex; align-items:center;
   justify-content:center; flex:none; box-shadow:0 2px 8px var(--acc-soft), inset 0 0 0 1px rgba(255,255,255,.35); overflow:hidden; }
 #brand .lg img { width:100%; height:100%; object-fit:cover; display:block; }
-#brand b { font-size:11.5px; font-weight:700; letter-spacing:.2px; }
+#brand b { font-size:12px; font-weight:800; letter-spacing:-.2px; }
 #brand .sub { font-size:9.5px; color:var(--dim); font-weight:600; }
-#hudRight { pointer-events:auto; display:flex; align-items:center; gap:6px; height:36px; padding:0 5px;
+#hudRight { pointer-events:auto; display:flex; align-items:center; gap:5px; height:var(--dock,44px); padding:0 6px;
   border-radius:var(--r-pill); background:var(--glass); border:1px solid var(--glass-edge);
   backdrop-filter:blur(14px) saturate(1.4); -webkit-backdrop-filter:blur(14px) saturate(1.4);
-  box-shadow:inset 0 1px 1px var(--glass-hi), inset 0 -1px 2px var(--glass-lo), var(--glass-sh); }
-.lchip { height:26px; padding:0 9px; border:0; border-radius:var(--r-pill); background:transparent;
-  color:var(--dim); font-size:10.5px; font-weight:700; cursor:pointer; transition:color .15s, background .28s var(--ease-spring); }
-.lchip:hover { color:var(--txt); }
-.lchip.on { color:var(--txt); background:rgba(255,255,255,.92); font-weight:800; box-shadow:0 1px 5px rgba(0,0,0,.28); }
-:root[data-theme="light"] .lchip.on { background:#fff; }
-:root[data-theme="light"] .lchip.on { color:#0b0f16; }
-#themeBtn { width:26px; height:26px; padding:0; border:0; border-radius:50%; background:transparent;
-  color:var(--dim); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:color .15s, background .2s; }
-#themeBtn:hover { color:var(--txt); background:rgba(255,255,255,.14); }
+  box-shadow:inset 0 1px 0 var(--glass-hi), inset 0 -1px 2px var(--glass-lo), var(--glass-sh); }
+.chip { min-height:24px; padding:0 9px; border-radius:var(--r-pill); border:1px solid transparent; font-size:10px;
+  font-weight:700; cursor:pointer; color:var(--dim); background:transparent; display:flex; align-items:center; gap:3px;
+  transition:background .14s var(--ease-smooth), color .14s, transform .3s var(--ease-spring), border-color .14s; }
+.chip:hover { color:var(--txt); }
+.chip:active { transform:scale(.9); transition:transform .1s ease-in; }
+.chip.on { background:var(--acc); border-color:var(--acc); color:#fff; box-shadow:0 2px 8px var(--acc-soft); }
 
-/* ================= 底部主面板 ================= */
+/* ══════════════ 底部主面板(大玻璃) ══════════════ */
 #panel { position:absolute; left:50%; transform:translateX(-50%); bottom:10px; z-index:10;
-  width:min(560px, calc(100vw - 16px)); max-height:calc(100dvh - 70px);
-  display:flex; flex-direction:column; border-radius:22px; overflow:hidden;
-  background:var(--glass-panel, linear-gradient(180deg, rgba(255,255,255,.18) 0%, rgba(255,255,255,.05) 34%, rgba(255,255,255,.09) 100%), rgba(255,255,255,.10));
+  width:min(600px, calc(100vw - 16px)); max-height:calc(100dvh - 62px);
+  display:flex; flex-direction:column; border-radius:24px; overflow:hidden;
+  background:var(--glass-panel);
   border:1px solid var(--glass-edge);
-  backdrop-filter:blur(26px) saturate(1.9); -webkit-backdrop-filter:blur(26px) saturate(1.9);
-  box-shadow:inset 0 1px 0 var(--glass-hi), inset 0 -1px 2px var(--glass-lo), 0 12px 40px rgba(0,0,0,.36);
-  transition:transform .38s var(--ease-spring), opacity .26s var(--ease-smooth); }
-:root[data-theme="light"] #panel {
-  background:linear-gradient(180deg, rgba(255,255,255,.78) 0%, rgba(255,255,255,.52) 36%, rgba(255,255,255,.66) 100%), rgba(255,255,255,.58); }
+  backdrop-filter:var(--glass-panel-blur); -webkit-backdrop-filter:var(--glass-panel-blur);
+  box-shadow:inset 0 1px 0 var(--glass-hi), inset 0 -1px 2px var(--glass-lo), 0 12px 40px rgba(0,0,0,.36); }
+:root[data-theme="light"] #panel { box-shadow:inset 0 1px 0 rgba(255,255,255,.85), inset 0 -1px 1px var(--glass-lo), 0 12px 36px rgba(15,23,42,.16); }
 
-/* ---------- 搜索卡 ---------- */
+/* ───── 搜索卡 ───── */
 #searchCard { padding:12px 12px 10px; flex:none; }
 .srow { display:flex; align-items:center; gap:7px; }
 .sfield { flex:1; min-width:0; position:relative; }
-.sfield label { position:absolute; left:11px; top:5px; font-size:8.5px; font-weight:700; letter-spacing:.4px;
-  color:var(--dim); pointer-events:none; }
-.sfield input { width:100%; height:38px; padding:14px 10px 4px; border:1px solid var(--glass-edge);
+.sfield label { position:absolute; left:11px; top:4px; font-size:8.5px; font-weight:700; letter-spacing:.4px;
+  color:var(--dim); pointer-events:none; z-index:1; }
+.sfield input { width:100%; height:40px; padding:15px 10px 4px; border:1px solid var(--glass-edge);
   border-radius:var(--r-sm); background:var(--glass); color:var(--txt); font-size:14px; font-weight:700;
-  backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); outline:none; transition:border-color .15s, background .15s; }
+  backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); outline:none;
+  transition:border-color .15s, background .15s; }
 .sfield input:focus { border-color:var(--acc-border); background:var(--glass-2); }
 .sfield input::placeholder { color:var(--dim); font-weight:500; }
 :root[data-theme="light"] .sfield input { background:rgba(255,255,255,.85); }
-#swapBtn { width:32px; height:32px; flex:none; border:1px solid var(--glass-edge); border-radius:50%;
-  background:var(--glass); color:var(--txt); cursor:pointer; display:flex; align-items:center; justify-content:center;
-  backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); transition:transform .38s var(--ease-spring), background .15s; }
-#swapBtn:hover { background:var(--glass-2); }
-#swapBtn:active { transform:rotate(180deg) scale(.9); transition:transform .12s ease-in; }
-#goBtn { height:38px; padding:0 16px; flex:none; border:0; border-radius:var(--r-sm);
+.gcircle { position:relative; width:34px; height:34px; flex:none; border-radius:50%; padding:0;
+  display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--txt);
+  background:var(--glass); border:1px solid var(--glass-edge);
+  backdrop-filter:blur(14px) saturate(1.4); -webkit-backdrop-filter:blur(14px) saturate(1.4);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.5), inset 0 1px 1.5px var(--glass-hi), inset 0 -2px 4px var(--glass-lo), var(--glass-sh);
+  transition:transform .38s var(--ease-spring), background .2s var(--ease-smooth); overflow:hidden; }
+.gcircle::before { content:''; position:absolute; inset:0; border-radius:50%;
+  background:linear-gradient(165deg, rgba(255,255,255,.42) 0%, rgba(255,255,255,.06) 24%, rgba(255,255,255,0) 48%); pointer-events:none; }
+@media (hover:hover) { .gcircle:hover { background:var(--glass-2); } }
+.gcircle:active { transform:scale(.88) rotate(180deg); transition:transform .18s ease-in; }
+#goBtn { height:40px; padding:0 15px; flex:none; border:0; border-radius:var(--r-sm);
   background:var(--acc); color:#fff; font-size:13px; font-weight:800; cursor:pointer;
   display:flex; align-items:center; gap:5px; box-shadow:0 2px 10px var(--acc-soft);
   transition:transform .3s var(--ease-spring), filter .15s; }
 #goBtn:hover { filter:brightness(1.1); }
 #goBtn:active { transform:scale(.94); transition:transform .1s ease-in; }
-#goBtn:disabled { opacity:.5; cursor:default; }
 .mrow { display:flex; align-items:center; gap:6px; margin-top:8px; flex-wrap:wrap; }
-.mchip { height:26px; padding:0 11px; border:1px solid var(--glass-edge); border-radius:var(--r-pill);
+.mchip { height:27px; padding:0 11px; border:1px solid var(--glass-edge); border-radius:var(--r-pill);
   background:transparent; color:var(--dim); font-size:11px; font-weight:700; cursor:pointer;
-  display:flex; align-items:center; gap:4px; transition:color .15s, background .28s var(--ease-spring), border-color .15s; }
+  display:flex; align-items:center; gap:4px;
+  transition:color .15s, background .28s var(--ease-spring), border-color .15s; }
 .mchip:hover { color:var(--txt); background:rgba(255,255,255,.08); }
 .mchip.on { color:#fff; background:var(--acc); border-color:var(--acc); box-shadow:0 2px 8px var(--acc-soft); }
-.mchip .k { font-size:8.5px; opacity:.75; font-weight:600; }
-#timeWrap { display:none; align-items:center; gap:5px; height:26px; padding:0 10px; border:1px solid var(--glass-edge);
+.mchip .k { font-size:8.5px; opacity:.78; font-weight:600; }
+#timeWrap { display:none; align-items:center; gap:5px; height:27px; padding:0 10px; border:1px solid var(--glass-edge);
   border-radius:var(--r-pill); background:var(--glass); }
 #timeWrap.show { display:flex; }
 #timeWrap input { border:0; background:transparent; color:var(--txt); font-size:12px; font-weight:700; outline:none; font-variant-numeric:tabular-nums; }
 #timeWrap input::-webkit-calendar-picker-indicator { filter:invert(.6); cursor:pointer; }
-.daySel { height:26px; border:1px solid var(--glass-edge); border-radius:var(--r-pill); background:var(--glass);
-  color:var(--txt); font-size:11px; font-weight:700; padding:0 8px; outline:none; cursor:pointer; }
+:root[data-theme="light"] #timeWrap input::-webkit-calendar-picker-indicator { filter:none; }
+.daySel { height:24px; border:1px solid var(--glass-edge); border-radius:var(--r-pill); background:var(--glass);
+  color:var(--txt); font-size:11px; font-weight:700; padding:0 7px; outline:none; cursor:pointer; }
 .daySel option { background:var(--glass-solid); color:var(--txt); }
+#optWrap { display:flex; align-items:center; gap:6px; margin-top:6px; }
+#optWrap .mchip { height:24px; font-size:10.5px; }
 
-/* ---------- 联想面板 ---------- */
-#sug { position:absolute; left:12px; right:12px; top:64px; z-index:20; display:none;
-  max-height:min(300px, 46dvh); overflow-y:auto; border-radius:16px;
+/* ───── 联想面板 ───── */
+#sug { position:absolute; left:12px; right:12px; top:70px; z-index:20; display:none;
+  max-height:min(320px, 46dvh); overflow-y:auto; border-radius:16px;
   background:var(--glass-solid); border:1px solid var(--glass-edge);
   box-shadow:0 14px 44px rgba(0,0,0,.42), inset 0 1px 0 var(--glass-hi); }
 :root[data-theme="light"] #sug { background:rgba(255,255,255,.97); box-shadow:0 14px 44px rgba(15,23,42,.18), inset 0 1px 0 #fff; }
@@ -147,53 +161,92 @@ button { font-family:inherit; }
 .sug-it { display:flex; align-items:center; gap:8px; padding:8px 12px; cursor:pointer; font-size:13px; font-weight:600; transition:background .1s; }
 .sug-it:hover, .sug-it.hl-it { background:var(--acc-soft); }
 .sug-it .k { font-size:10px; color:var(--dim); font-weight:500; }
-.sug-it .langk { margin-left:auto; padding:1px 5px; border-radius:4px; background:rgba(120,140,180,.2); font-size:9px; font-weight:700; }
+.sug-it .rt { margin-left:auto; font-size:9.5px; color:var(--dim); font-weight:600; font-variant-numeric:tabular-nums; }
 .sug-it .hl { color:var(--acc-txt); font-weight:800; }
 .sug-empty { padding:14px 12px; text-align:center; color:var(--dim); font-size:12px; }
 .sug-empty .sug-q { color:var(--txt); font-weight:700; }
-.sug-dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:2px; flex:none; }
 
-/* ---------- 结果区 ---------- */
+/* ───── 结果区 ───── */
 #result { display:none; flex-direction:column; min-height:0; border-top:1px solid var(--line); }
 #result.show { display:flex; }
-#sumBar { display:flex; align-items:baseline; gap:8px; padding:10px 14px 8px; flex:none; flex-wrap:wrap; }
-#sumBar .tm { font-size:19px; font-weight:900; font-variant-numeric:tabular-nums; letter-spacing:-.3px; }
-#sumBar .tm small { font-size:11px; font-weight:700; color:var(--dim); }
+#sumBar { display:flex; align-items:baseline; gap:8px; padding:9px 14px 6px; flex:none; flex-wrap:wrap; }
+#sumBar .tm { font-size:20px; font-weight:900; font-variant-numeric:tabular-nums; letter-spacing:-.4px; }
+#sumBar .tm small { font-size:10.5px; font-weight:700; color:var(--dim); }
 #sumBar .arw { color:var(--dim); font-weight:700; }
 #sumBar .meta { display:flex; gap:8px; margin-left:auto; font-size:11px; color:var(--dim); font-weight:600; flex-wrap:wrap; justify-content:flex-end; }
 #sumBar .meta b { color:var(--txt); font-weight:800; font-variant-numeric:tabular-nums; }
-#legs { overflow-y:auto; padding:2px 14px 12px; overscroll-behavior:contain; }
+
+/* 方案卡片(横向滚动) */
+#routes { display:flex; gap:7px; padding:0 14px 9px; overflow-x:auto; flex:none; scrollbar-width:none; }
+#routes::-webkit-scrollbar { height:0; display:none; }
+.rcard { flex:none; width:148px; padding:8px 10px; border-radius:var(--r-sm); cursor:pointer;
+  border:1px solid var(--glass-edge); background:var(--glass);
+  transition:background .15s, transform .2s var(--ease-smooth), border-color .15s; }
+.rcard:hover { background:var(--glass-2); transform:translateY(-1.5px); }
+.rcard:active { transform:scale(.97); }
+.rcard.on { border-color:var(--acc); background:var(--acc-soft); box-shadow:0 2px 10px var(--acc-soft); }
+.rcard .rt { display:flex; align-items:baseline; gap:4px; font-size:13px; font-weight:900; font-variant-numeric:tabular-nums; letter-spacing:-.2px; }
+.rcard .rt .nd { font-size:8.5px; color:#f59e0b; font-weight:800; }
+.rcard .rd { font-size:10px; font-weight:700; color:var(--dim); margin-top:1px; font-variant-numeric:tabular-nums; }
+.rcard .rx { display:flex; align-items:center; gap:5px; margin-top:4px; font-size:9.5px; color:var(--dim); font-weight:600; }
+.rcard .rx b { color:var(--txt); }
+.rcard .rtag { display:inline-block; padding:1px 6px; border-radius:var(--r-pill); font-size:8.5px; font-weight:800;
+  background:var(--acc); color:#fff; margin-top:5px; }
+.rcard .rtag.g { background:rgba(120,140,180,.28); color:var(--txt); }
+
+/* 时间轴 */
+#legs { overflow-y:auto; padding:0 14px 10px; overscroll-behavior:contain; }
 #legs::-webkit-scrollbar { width:0; display:none; }
 #legs { scrollbar-width:none; }
-
-/* Yahoo 风格时间轴 */
 .tl { position:relative; }
-.tl-node { display:flex; align-items:flex-start; gap:10px; position:relative; padding:2px 0; }
-.tl-ic { width:22px; flex:none; display:flex; flex-direction:column; align-items:center; align-self:stretch; }
+.tl-node { display:flex; align-items:flex-start; gap:10px; position:relative; }
+.tl-ic { width:20px; flex:none; display:flex; flex-direction:column; align-items:center; align-self:stretch; }
 .tl-dot { width:11px; height:11px; border-radius:50%; border:2.5px solid var(--acc); background:var(--bg); flex:none; z-index:1; }
 .tl-dot.end { background:var(--acc); }
 .tl-line { width:2.5px; flex:1; background:var(--glass-edge); margin:2px 0; border-radius:2px; }
-.tl-line.xfr { background:repeating-linear-gradient(180deg, var(--dim) 0 3px, transparent 3px 6px); opacity:.55; width:2px; }
+.tl-line.xfr { background:repeating-linear-gradient(180deg, var(--dim) 0 3px, transparent 3px 6px); opacity:.5; width:2px; }
 .tl-line.walk { background:repeating-linear-gradient(180deg, #7dd3fc 0 4px, transparent 4px 7px); width:2px; }
-.tl-body { flex:1; min-width:0; padding-bottom:8px; }
-.tl-st { display:flex; align-items:baseline; gap:7px; }
-.tl-st .nm { font-size:14.5px; font-weight:800; }
+.tl-body { flex:1; min-width:0; }
+.tl-st { display:flex; align-items:baseline; gap:7px; padding:1px 0; }
+.tl-st .nm { font-size:15px; font-weight:800; letter-spacing:-.2px; }
 .tl-st .zh { font-size:10.5px; color:var(--dim); font-weight:600; }
-.tl-st .t { margin-left:auto; font-size:14px; font-weight:900; font-variant-numeric:tabular-nums; }
-.tl-st .t .lb { font-size:9.5px; font-weight:700; color:var(--dim); margin-right:3px; }
+.tl-st .t { margin-left:auto; font-size:14.5px; font-weight:900; font-variant-numeric:tabular-nums; }
+.tl-st .t .lb { font-size:9px; font-weight:700; color:var(--dim); margin-right:3px; }
 .tl-st .t .nd { font-size:9.5px; color:#f59e0b; font-weight:800; }
-.tl-xfr { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--dim); font-weight:700; padding:1px 0 7px 32px; }
-.tl-xfr .xm { color:#fbbf24; }
-.tl-train { display:flex; align-items:center; gap:6px; font-size:11.5px; font-weight:700; padding:1px 0 3px; flex-wrap:wrap; }
-.tl-train .lc { width:4px; height:14px; border-radius:2px; flex:none; }
-.tl-train .tn { color:var(--txt); }
-.tl-train .ty { color:var(--dim); font-weight:600; }
-.tl-train .nkm { margin-left:auto; color:var(--dim); font-weight:600; font-variant-numeric:tabular-nums; }
-.tl-via { font-size:10px; color:var(--dim); line-height:1.55; padding:0 0 4px; }
-.tl-via b { color:var(--dim); font-weight:600; }
-.tl-walk { display:flex; align-items:center; gap:5px; font-size:11px; color:#7dd3fc; font-weight:700; padding:1px 0 6px; }
+/* 列车卡 */
+.tcard { margin:3px 0 4px; border-radius:var(--r-xs); border:1px solid var(--glass-edge);
+  border-left:3px solid var(--lc, #4f8ef7); background:var(--glass);
+  box-shadow:0 1px 4px var(--glass-lo); overflow:hidden; }
+.tcard .th { display:flex; align-items:center; gap:7px; padding:6px 9px; }
+.tcard .tn { font-size:12px; font-weight:800; color:color-mix(in srgb, var(--lc,#4f8ef7) 62%, var(--txt) 38%); }
+.tcard .ty { padding:1px 6px; border-radius:4px; font-size:9.5px; font-weight:800;
+  background:color-mix(in srgb, var(--lc,#4f8ef7) 24%, transparent); color:color-mix(in srgb, var(--lc,#4f8ef7) 70%, var(--txt) 30%); }
+.tcard .tnm { font-size:11px; font-weight:800; color:var(--txt); }
+.tcard .dst { margin-left:auto; font-size:10px; font-weight:700; color:var(--dim); white-space:nowrap; }
+.tcard .tf { padding:0 9px 6px; font-size:9.5px; color:var(--dim); font-weight:600; font-variant-numeric:tabular-nums; }
+.tcard .nxt { display:flex; align-items:center; gap:4px; width:100%; padding:4px 9px; border:0; border-top:1px solid var(--line);
+  background:transparent; color:var(--acc-txt); font-size:10px; font-weight:800; cursor:pointer; transition:background .15s; }
+.tcard .nxt:hover { background:var(--acc-soft); }
+.tcard .nxt .cv { margin-left:auto; color:var(--dim); font-weight:600; font-size:9px; }
+.tcard .nxt.open .cv { color:var(--acc-txt); }
+/* 后续班次列表 */
+.nlist { border-top:1px solid var(--line); background:var(--glass-lo); }
+.nitem { display:flex; align-items:center; gap:8px; padding:6px 9px; cursor:pointer; font-size:11px; font-weight:700;
+  transition:background .1s; border-top:1px solid var(--line); }
+.nitem:first-child { border-top:0; }
+.nitem:hover { background:var(--acc-soft); }
+.nitem .nt { font-variant-numeric:tabular-nums; font-size:12px; font-weight:900; }
+.nitem .nty { font-size:9.5px; font-weight:700; color:var(--dim); }
+.nitem .nr { margin-left:auto; font-size:9.5px; color:var(--dim); font-weight:700; font-variant-numeric:tabular-nums; }
+.nitem .nr.ok { color:#34d399; }
+.nitem .nr.bad { color:#f87171; }
+.tl-xfr { display:flex; align-items:center; gap:6px; font-size:10.5px; color:var(--dim); font-weight:700; padding:1px 0 3px 30px; }
+.tl-xfr .xm { color:#fbbf24; font-weight:800; }
+.tl-walk { display:flex; align-items:center; gap:5px; font-size:10.5px; color:#7dd3fc; font-weight:700; padding:1px 0 3px 30px; }
+.tl-note { font-size:9px; color:var(--dim); padding:6px 0 2px 30px; font-weight:600; line-height:1.5; }
+.tl-empty { padding:16px 4px; text-align:center; font-size:12px; color:var(--dim); font-weight:600; }
 
-/* ---------- 加载遮罩 ---------- */
+/* ───── 加载遮罩 ───── */
 #loader { position:fixed; inset:0; z-index:50; display:flex; flex-direction:column; align-items:center;
   justify-content:center; gap:14px; background:var(--bg); transition:opacity .45s var(--ease-smooth); }
 #loader.done { opacity:0; pointer-events:none; }
@@ -203,23 +256,35 @@ button { font-family:inherit; }
   background:linear-gradient(90deg, var(--acc), var(--acc2)); transition:width .3s var(--ease-smooth); }
 #loader .lp { font-size:11px; font-weight:800; color:var(--acc-txt); font-variant-numeric:tabular-nums; }
 #loader .brand2 { display:flex; align-items:center; gap:9px; }
-#loader .brand2 .lg { width:38px; height:38px; border-radius:50%; background:#fff; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 16px var(--acc-soft); overflow:hidden; }
+#loader .brand2 .lg { width:40px; height:40px; border-radius:50%; background:#fff; display:flex; align-items:center;
+  justify-content:center; box-shadow:0 4px 16px var(--acc-soft); overflow:hidden; }
 #loader .brand2 .lg img { width:100%; height:100%; object-fit:cover; }
 #loader .brand2 b { font-size:15px; font-weight:900; }
 
-/* ---------- toast ---------- */
-#toast { position:fixed; left:50%; top:64px; transform:translateX(-50%) translateY(-8px); z-index:60;
+/* ───── toast ───── */
+#toast { position:fixed; left:50%; top:62px; transform:translateX(-50%) translateY(-8px); z-index:60;
   padding:8px 16px; border-radius:var(--r-pill); background:var(--glass-solid); color:var(--txt);
   border:1px solid var(--glass-edge); box-shadow:0 8px 28px rgba(0,0,0,.4); font-size:12.5px; font-weight:700;
   opacity:0; pointer-events:none; transition:opacity .25s var(--ease-smooth), transform .25s var(--ease-spring); max-width:calc(100vw - 32px); }
 #toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
 :root[data-theme="light"] #toast { background:rgba(255,255,255,.97); box-shadow:0 8px 28px rgba(15,23,42,.2); }
 
-/* ---------- 面板收起(结果时上移让位) ---------- */
-#panel.compact #searchCard { padding-bottom:8px; }
-@media (max-width:480px) {
-  #brand .sub { display:none; }
-  #sumBar .tm { font-size:17px; }
+/* ───── 可访问性 / 性能回退 ───── */
+@media (prefers-reduced-transparency: reduce) {
+  #brand, #hudRight, .gcircle, #panel, .rcard, .tcard, #toast, #sug {
+    background:var(--glass-solid) !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration:.001ms !important; transition-duration:.001ms !important; }
+}
+html.perf-low #brand, html.perf-low #hudRight, html.perf-low .gcircle, html.perf-low #panel,
+html.perf-low .rcard, html.perf-low .tcard { backdrop-filter:none !important; -webkit-backdrop-filter:none !important; box-shadow:0 1px 4px rgba(0,0,0,.3) !important; }
+
+@media (max-width:520px) {
+  #brand .sub, #brand b { display:none; }
+  #brand { padding:0 8px 0 4px; }
+  #sumBar .tm { font-size:18px; }
+  .rcard { width:136px; }
 }
 </style>
 </head>
@@ -232,12 +297,13 @@ button { font-family:inherit; }
     <span><b>Mini JapanRail</b><br><span class="sub" id="brandSub">乗換案内</span></span>
   </a>
   <div id="hudRight">
-    <button class="lchip on" data-lang="zh">中文</button>
-    <button class="lchip" data-lang="ja">日本語</button>
-    <button class="lchip" data-lang="en">EN</button>
-    <button id="themeBtn" title="Theme">
-      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
-    </button>
+    <button class="chip on" data-lang="zh">中文</button>
+    <button class="chip" data-lang="ja">日本語</button>
+    <button class="chip" data-lang="en">EN</button>
+    <span style="width:1px;height:16px;background:var(--line);flex:none"></span>
+    <button class="chip" data-theme="dark">暗</button>
+    <button class="chip" data-theme="light">亮</button>
+    <button class="chip" data-theme="auto">Auto</button>
   </div>
 </header>
 
@@ -248,23 +314,24 @@ button { font-family:inherit; }
         <label id="lbFrom">起点</label>
         <input id="rFrom" type="text" autocomplete="off" spellcheck="false" placeholder="東京 / Tokyo">
       </div>
-      <button id="swapBtn" title="Swap">
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v13M7 17l-3-3M7 17l3-3M17 20V7M17 7l-3 3M17 7l3 3"/></svg>
+      <button id="swapBtn" class="gcircle" title="Swap">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v13M7 17l-3-3M7 17l3-3M17 20V7M17 7l-3 3M17 7l3 3"/></svg>
       </button>
       <div class="sfield">
         <label id="lbTo">终点</label>
         <input id="rTo" type="text" autocomplete="off" spellcheck="false" placeholder="京都 / Kyoto">
       </div>
       <button id="goBtn">
-        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h14M13 6l6 6-6 6"/></svg>
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h14M13 6l6 6-6 6"/></svg>
         <span id="goTxt">搜索</span>
       </button>
     </div>
     <div class="mrow">
-      <button class="mchip on" data-mode="early"><span id="mEarly">早</span><span class="k">早着</span></button>
-      <button class="mchip" data-mode="easy"><span id="mEasy">楽</span><span class="k">乗換少</span></button>
-      <button class="mchip" data-mode="dep"><span id="mDep">指定</span><span class="k">出発時刻</span></button>
-      <button class="mchip" data-mode="first"><span id="mFirst">始発</span><span class="k">始発で行く</span></button>
+      <button class="mchip on" data-mode="dep"><span id="mDep">出发</span><span class="k">指定时刻</span></button>
+      <button class="mchip" data-mode="now"><span id="mNow">现在</span><span class="k">从现在</span></button>
+      <button class="mchip" data-mode="first"><span id="mFirst">始発</span><span class="k">首班车</span></button>
+      <button class="mchip" data-mode="last"><span id="mLast">終電</span><span class="k">末班车</span></button>
+      <button class="mchip" data-mode="arr"><span id="mArr">到达</span><span class="k">指定到达</span></button>
       <span id="timeWrap"><input type="time" id="depTime" value="09:00"><span id="dayLb" style="font-size:10px;color:var(--dim);font-weight:700">曜日</span>
         <select id="daySel" class="daySel">
           <option value="wd">平日</option>
@@ -277,6 +344,7 @@ button { font-family:inherit; }
   </div>
   <div id="result">
     <div id="sumBar"></div>
+    <div id="routes"></div>
     <div id="legs"></div>
   </div>
 </section>
@@ -290,127 +358,157 @@ button { font-family:inherit; }
 
 <div id="toast"></div>
 <script>
-/* ================= 工具 ================= */
+'use strict';
+/* ══════════════════ 工具 ══════════════════ */
 const $ = id => document.getElementById(id);
 const pad = n => String(n).padStart(2, '0');
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 function debounce(fn, ms) { let t; return function (...a) { clearTimeout(t); t = setTimeout(() => fn.apply(this, a), ms); }; }
 const toastEl = $('toast');
-function toast(s, ms = 2600) { toastEl.textContent = s; toastEl.classList.add('show'); clearTimeout(toast._t); toast._t = setTimeout(() => toastEl.classList.remove('show'), ms); }
-/* 绝对分钟 → HH:MM(跨日 +1d) */
+let toastT = 0;
+function toast(s, ms = 2600) { toastEl.textContent = s; toastEl.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => toastEl.classList.remove('show'), ms); }
+/* 绝对分钟(可跨日) → HH:MM */
 function fmtMin(m) {
   const d = Math.floor(m / 1440), mm = m % 1440;
   return pad(Math.floor(mm / 60)) + ':' + pad(mm % 60) + (d > 0 ? '<span class="nd">+' + d + 'd</span>' : '');
 }
-function fmtDur(m) {
-  const h = Math.floor(m / 60), mm = m % 60;
-  return h > 0 ? h + 'h' + pad(mm) + 'm' : mm + 'm';
-}
-/* 分钟 → <input type=time> 值 */
-function minToTime(m) { const mm = m % 1440; return pad(Math.floor(mm / 60)) + ':' + pad(mm % 60); }
+function fmtMinRaw(m) { const d = Math.floor(m / 1440), mm = m % 1440; return pad(Math.floor(mm / 60)) + ':' + pad(mm % 60) + (d > 0 ? '+' + d + 'd' : ''); }
+function fmtDur(m) { const h = Math.floor(m / 60), mm = m % 60; return h > 0 ? h + 'h' + pad(mm) + 'm' : mm + 'm'; }
+function minToTime(m) { const mm = ((m % 1440) + 1440) % 1440; return pad(Math.floor(mm / 60)) + ':' + pad(mm % 60); }
 function timeToMin(v) { const p = (v || '0:0').split(':'); return (+p[0] || 0) * 60 + (+p[1] || 0); }
 
-/* ================= i18n ================= */
+/* ══════════════════ i18n ══════════════════ */
 const I18N = {
   zh: {
     sub: '乗換案内', from: '起点', to: '终点', go: '搜索', swap: '交换起终点',
-    mEarly: '早', mEarlyK: '早着', mEasy: '楽', mEasyK: '乗換少', mDep: '指定', mDepK: '出発時刻', mFirst: '始発', mFirstK: '始発で行く',
-    dayWd: '平日', daySa: '土曜', daySu: '休日', day: '曜日', depTime: '出発時刻',
-    loading: '加载中', phSta: '车站 / 线路…', noMatch: '无匹配', station: '车站', line: '线路',
-    sumArr: '到着', sumDep: '出発', sumDur: '所要', sumXfr: '乗換', sumKm: '営業', sumMin: '分', sumTimes: '次',
-    noRoute: '未找到连通路径(请检查站名)', sameSta: '起终点相同', badSta: '找不到车站', searching: '検索中…',
-    walk: '步行', walkMin: '徒步', xfrWait: '乗換', dep: '発', arr: '着', via: '経由', stops: '駅', kmUnit: 'km',
-    firstOf: '始発', themeTip: '主题', backHome: '返回主页',
-    errData: '数据加载失败,请检查网络后重试', retry: '重试',
-    legKm: '{0} 区間 · {1} km', xfrAt: '{0} 乗換 {1} 分', walkAt: '{0} 徒步 {1} 分({2})',
-    dayAuto: '自动',
-    autoFirst: '当前时刻无班次，已改为始发车检索', dataNote: '时刻为静态数据快照，与最新时刻表可能有数分钟偏差',
-    mapOff: '地图不可用(WebGL2 缺失或加载失败)，检索功能不受影响',
-    toDir: '{0}方面', xfrN: '乗換{0}回', firstDep: '始発', nowMode: '現在時刻から',
+    mNow: '现在', mNowK: '从现在起', mDep: '出发', mDepK: '指定出发', mFirst: '始発', mFirstK: '首班车',
+    mLast: '終電', mLastK: '末班车', mArr: '到达', mArrK: '指定到达',
+    dayWd: '平日', daySa: '土曜', daySu: '休日', day: '曜日',
+    loading: '加载中', noMatch: '无匹配', searching: '検索中…',
+    sumDep: '発', sumArr: '着', sumDur: '所要', sumXfr: '乗換', sumKm: '营业', sumTimes: '次', kmUnit: 'km',
+    noRoute: '未找到连通路径', sameSta: '起终点相同', badSta: '找不到车站，请从列表中选择',
+    walk: '步行', xfrWait: '乗換', dep: '発', arr: '着', via: '経由', stops: '駅',
+    xfrN: '乗換{0}回', dirTo: '{0}行', firstDep: '始発',
+    themeTip: '主题', backHome: '返回主页', errData: '数据加载失败，请检查网络后重试', retry: '重试',
+    autoFirst: '当前时刻已无班次，已改为首班车检索',
+    lastNote: '可到达终点的末班路线(可能跨日)', arrNote: '按 {0} 前到达检索',
+    dataNote: '时刻为静态数据快照，与最新时刻表可能有数分钟偏差。换乘时间为按站规模估算的站内走行时间。',
+    mapOff: '地图不可用（WebGL2 缺失或加载失败），检索功能不受影响',
+    tagFast: '最快', tagEasy: '乗換少', tagAlt: '备选',
+    nextTrips: '后续班次', nextNone: '今日已无后续班次', arriveAt: '到达 {0}', noConn: '改乘后无法到达',
+    walkMin: '徒步 {0} 分', xfrAt: '乗換 {0} 分', legInfo: '{0} 駅 · {1} {2}', boarding: '乗', alighting: '降',
+    emptyLegs: '未找到可连接的班次', dayAuto: '自动', tapTrains: '点击列车卡可查看后续班次',
   },
   ja: {
     sub: '乗換案内', from: '出発', to: '到着', go: '検索', swap: '出発/到着を入れ替え',
-    mEarly: '早', mEarlyK: '早着', mEasy: '楽', mEasyK: '乗換少', mDep: '指定', mDepK: '出発時刻', mFirst: '始発', mFirstK: '始発で行く',
-    dayWd: '平日', daySa: '土曜', daySu: '休日', day: '曜日', depTime: '出発時刻',
-    loading: '読込中', phSta: '駅 / 路線…', noMatch: '該当なし', station: '駅', line: '路線',
-    sumArr: '着', sumDep: '発', sumDur: '所要', sumXfr: '乗換', sumKm: '営業', sumMin: '分', sumTimes: '回',
-    noRoute: '連絡経路なし(駅名確認)', sameSta: '同一点', badSta: '駅が見つかりません', searching: '検索中…',
-    walk: '徒歩', walkMin: '徒歩', xfrWait: '乗換', dep: '発', arr: '着', via: '経由', stops: '駅', kmUnit: 'km',
-    firstOf: '始発', themeTip: 'テーマ', backHome: 'トップへ戻る',
-    errData: 'データの読み込みに失敗しました。ネットワークを確認してもう一度お試しください', retry: '再試行',
-    legKm: '{0} 区間 · {1} km', xfrAt: '{0} 乗換 {1} 分', walkAt: '{0} 徒歩 {1} 分({2})',
-    dayAuto: '自動',
-    autoFirst: '現在時刻に便がないため始発で検索しました', dataNote: '時刻は静的スナップショットです。最新の時刻表と数分異なる場合があります',
-    mapOff: '地図を利用できません(WebGL2 未対応/読込失敗)。検索機能は影響ありません',
-    toDir: '{0}方面', xfrN: '乗換{0}回', firstDep: '始発', nowMode: '現在時刻から',
+    mNow: '現在', mNowK: '現在時刻から', mDep: '出発', mDepK: '時刻指定', mFirst: '始発', mFirstK: '始発で行く',
+    mLast: '終電', mLastK: '最終で行く', mArr: '到着', mArrK: '到着指定',
+    dayWd: '平日', daySa: '土曜', daySu: '休日', day: '曜日',
+    loading: '読込中', noMatch: '該当なし', searching: '検索中…',
+    sumDep: '発', sumArr: '着', sumDur: '所要', sumXfr: '乗換', sumKm: '営業', sumTimes: '回', kmUnit: 'km',
+    noRoute: '連絡経路が見つかりません', sameSta: '同じ駅です', badSta: '駅が見つかりません。一覧から選んでください',
+    walk: '徒歩', xfrWait: '乗換', dep: '発', arr: '着', via: '経由', stops: '駅',
+    xfrN: '乗換{0}回', dirTo: '{0}行', firstDep: '始発',
+    themeTip: 'テーマ', backHome: 'トップへ戻る', errData: 'データの読み込みに失敗しました', retry: '再試行',
+    autoFirst: '現在時刻に便がないため始発で検索しました',
+    lastNote: '終点まで到着できる最終の経路です(日付を跨ぐ場合あり)', arrNote: '{0} までに到着する経路',
+    dataNote: '時刻は静的スナップショットです。最新の時刻表と数分異なる場合があります。乗換時間は駅規模による推定です。',
+    mapOff: '地図を利用できません（WebGL2 未対応）。検索機能は影響ありません',
+    tagFast: '最速', tagEasy: '乗換少', tagAlt: '別経路',
+    nextTrips: '後の便', nextNone: '本日の便はもうありません', arriveAt: '{0} 着', noConn: 'この便では到着できません',
+    walkMin: '徒歩 {0} 分', xfrAt: '乗換 {0} 分', legInfo: '{0} 駅 · {1} {2}', boarding: '乗', alighting: '降',
+    emptyLegs: '接続できる便が見つかりません', dayAuto: '自動', tapTrains: '列車カードをタップで後の便を表示',
   },
   en: {
     sub: 'Route planner', from: 'From', to: 'To', go: 'Search', swap: 'Swap from/to',
-    mEarly: 'Early', mEarlyK: 'earliest arr.', mEasy: 'Easy', mEasyK: 'fewest xfr', mDep: 'Depart', mDepK: 'set time', mFirst: 'First', mFirstK: 'first train',
-    dayWd: 'Weekday', daySa: 'Saturday', daySu: 'Sunday', day: 'Day', depTime: 'Depart at',
-    loading: 'Loading', phSta: 'Station / line…', noMatch: 'No matches', station: 'Station', line: 'Line',
-    sumArr: 'Arr', sumDep: 'Dep', sumDur: 'Duration', sumXfr: 'Xfr', sumKm: 'Dist', sumMin: 'min', sumTimes: '',
-    noRoute: 'No connected route (check names)', sameSta: 'Same stations', badSta: 'Station not found', searching: 'Searching…',
-    walk: 'Walk', walkMin: 'walk', xfrWait: 'Change', dep: 'dep', arr: 'arr', via: 'via', stops: 'stops', kmUnit: 'km',
-    firstOf: 'First train', themeTip: 'Theme', backHome: 'Back home',
-    errData: 'Failed to load data. Check your network and retry', retry: 'Retry',
-    legKm: '{0} stops · {1} km', xfrAt: 'Change at {0}, {1} min', walkAt: 'Walk {1} min from {0} ({2})',
-    dayAuto: 'Auto',
-    autoFirst: 'No trains at this time; searched from the first train', dataNote: 'Timetable is a static snapshot; may differ by a few minutes',
-    mapOff: 'Map unavailable (WebGL2 unsupported or failed to load); search still works',
-    toDir: 'toward {0}', xfrN: '{0} changes', firstDep: 'First train', nowMode: 'from now',
+    mNow: 'Now', mNowK: 'depart now', mDep: 'Depart', mDepK: 'set time', mFirst: 'First', mFirstK: 'first train',
+    mLast: 'Last', mLastK: 'last train', mArr: 'Arrive', mArrK: 'arrive by',
+    dayWd: 'Weekday', daySa: 'Saturday', daySu: 'Sunday', day: 'Day',
+    loading: 'Loading', noMatch: 'No matches', searching: 'Searching…',
+    sumDep: 'dep', sumArr: 'arr', sumDur: 'Time', sumXfr: 'Changes', sumKm: 'Dist', sumTimes: '', kmUnit: 'km',
+    noRoute: 'No connected route found', sameSta: 'Same station', badSta: 'Station not found — pick one from the list',
+    walk: 'Walk', xfrWait: 'Change', dep: 'dep', arr: 'arr', via: 'via', stops: 'stops',
+    xfrN: '{0} changes', dirTo: 'to {0}', firstDep: 'First train',
+    themeTip: 'Theme', backHome: 'Back home', errData: 'Failed to load data. Check your network and retry', retry: 'Retry',
+    autoFirst: 'No trains at this time; searched from the first train',
+    lastNote: 'Last route reaching the destination (may pass midnight)', arrNote: 'Arriving by {0}',
+    dataNote: 'Timetable is a static snapshot; may differ by a few minutes. Transfer times are estimates by station size.',
+    mapOff: 'Map unavailable (WebGL2 unsupported); search still works',
+    tagFast: 'Fastest', tagEasy: 'Fewest', tagAlt: 'Alt',
+    nextTrips: 'Later trains', nextNone: 'No later trains today', arriveAt: 'arr {0}', noConn: 'Cannot arrive on this train',
+    walkMin: 'Walk {0} min', xfrAt: 'Change {0} min', legInfo: '{0} stops · {1} {2}', boarding: 'board', alighting: 'alight',
+    emptyLegs: 'No connecting services found', dayAuto: 'Auto', tapTrains: 'Tap a train card to see later departures',
   },
 };
-let lang = localStorage.getItem('mjrj_lang') || (['ja', 'en'].includes(navigator.language?.slice(0, 2)) ? navigator.language.slice(0, 2) : 'zh');
+let lang = localStorage.getItem('mjrj_lang') || (['ja', 'en'].indexOf((navigator.language || '').slice(0, 2)) >= 0 ? navigator.language.slice(0, 2) : 'zh');
 if (!I18N[lang]) lang = 'zh';
 const T = () => I18N[lang];
 function tf(s, ...a) { return String(s).replace(/\{(\d)\}/g, (_, i) => a[+i] ?? ''); }
+/* 乗換回数: 英文需处理 0/1/复数 */
+function xfrLabel(n) {
+  if (lang === 'en') return n === 0 ? 'Direct' : n + (n === 1 ? ' change' : ' changes');
+  return tf(T().xfrN, n);
+}
 
-/* ================= 主题 ================= */
-function applyTheme(t) {
-  document.documentElement.dataset.theme = t;
-  localStorage.setItem('mjrj_theme', t);
+/* ══════════════════ 全局状态 ══════════════════ */
+const state = { from: null, to: null, mode: 'dep', day: 'wd', depTime: 9 * 60, excludeLimited: false };
+let ST = null, LINES = null, TYPES = null, TM = null, TRIPS = null, TRF = null, SEG = null;
+let node2tmaps = null, nameIndex = null, patCache = null, groupsByDay = null;
+let WALK = null, walkMin = null, tmapLine = null, tmapKm = null, tmapEnd = null;
+let lineColor = null;
+let map = null, mapReady = false;
+let curResult = null;      /* 当前结果 {cands:[], idx, ...} */
+let openNext = -1;         /* 展开后续班次的 leg 下标 */
+
+/* ══════════════════ 主题(与主页同 key: mjr3d_theme) ══════════════════ */
+const mqLight = window.matchMedia('(prefers-color-scheme: light)');
+function resolveTheme(mode) { return mode === 'auto' ? (mqLight.matches ? 'light' : 'dark') : mode; }
+function applyThemeMode() {
+  const mode = localStorage.getItem('mjr3d_theme') || 'auto';
+  const t = resolveTheme(mode);
+  document.documentElement.setAttribute('data-theme', t);
+  document.querySelectorAll('#hudRight .chip[data-theme]').forEach(c => c.classList.toggle('on', c.dataset.theme === mode));
   const mb = document.querySelector('meta[name=theme-color]');
   if (mb) mb.content = t === 'light' ? '#dfe4ec' : '#0b0f16';
-  /* 深色模式用深色版 logo(与主页一致) */
   document.querySelectorAll('.lg img').forEach(im => { im.src = t === 'dark' ? 'logo-dark.png' : 'logo.png'; });
-  if (window.__map && window.__mapReady) refreshTrackColors();
+  if (mapReady) refreshTrackColors();
 }
-(function () {
-  let t = localStorage.getItem('mjrj_theme');
-  if (!t) t = matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
-  applyTheme(t);
-})();
-$('themeBtn').addEventListener('click', () => {
-  applyTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light');
-});
+document.querySelectorAll('#hudRight .chip[data-theme]').forEach(c => c.addEventListener('click', () => {
+  localStorage.setItem('mjr3d_theme', c.dataset.theme); applyThemeMode();
+}));
+mqLight.addEventListener('change', () => { if ((localStorage.getItem('mjr3d_theme') || 'auto') === 'auto') applyThemeMode(); });
+applyThemeMode();
 
-/* ================= 语言切换 ================= */
-document.querySelectorAll('.lchip').forEach(b => b.addEventListener('click', () => {
+/* ══════════════════ 语言切换 ══════════════════ */
+document.querySelectorAll('#hudRight .chip[data-lang]').forEach(b => b.addEventListener('click', () => {
   lang = b.dataset.lang; localStorage.setItem('mjrj_lang', lang);
-  document.querySelectorAll('.lchip').forEach(x => x.classList.toggle('on', x === b));
+  document.querySelectorAll('#hudRight .chip[data-lang]').forEach(x => x.classList.toggle('on', x === b));
   applyI18n();
-  if (curResult) renderResult(curResult);   /* 重渲结果 */
-  if (state.from || state.to) updateSugFor($('rFrom'), $('rTo'));
+  if (curResult) renderResult(curResult);
+  if (sugWhich) doSuggest(sugWhich);
 }));
 function applyI18n() {
   const t = T();
   $('brandSub').textContent = t.sub;
   $('lbFrom').textContent = t.from; $('lbTo').textContent = t.to; $('goTxt').textContent = t.go;
-  $('mEarly').textContent = t.mEarly; document.querySelector('[data-mode=early] .k').textContent = t.mEarlyK;
-  $('mEasy').textContent = t.mEasy; document.querySelector('[data-mode=easy] .k').textContent = t.mEasyK;
+  $('mNow').textContent = t.mNow; document.querySelector('[data-mode=now] .k').textContent = t.mNowK;
   $('mDep').textContent = t.mDep; document.querySelector('[data-mode=dep] .k').textContent = t.mDepK;
   $('mFirst').textContent = t.mFirst; document.querySelector('[data-mode=first] .k').textContent = t.mFirstK;
+  $('mLast').textContent = t.mLast; document.querySelector('[data-mode=last] .k').textContent = t.mLastK;
+  $('mArr').textContent = t.mArr; document.querySelector('[data-mode=arr] .k').textContent = t.mArrK;
   $('dayLb').textContent = t.day;
-  $('swapBtn').title = t.swap; $('themeBtn').title = t.themeTip; $('brand').title = t.backHome;
-  $('rFrom').placeholder = lang === 'zh' ? '東京 / Tokyo' : (lang === 'ja' ? '東京 / Tokyo' : 'Tokyo');
-  $('rTo').placeholder = lang === 'zh' ? '京都 / Kyoto' : (lang === 'ja' ? '京都 / Kyoto' : 'Kyoto');
+  const ds = $('daySel'); ds.options[0].textContent = t.dayWd; ds.options[1].textContent = t.daySa; ds.options[2].textContent = t.daySu;
+  $('swapBtn').title = t.swap; $('brand').title = t.backHome;
+  $('rFrom').placeholder = lang === 'en' ? 'Tokyo' : '東京 / Tokyo';
+  $('rTo').placeholder = lang === 'en' ? 'Kyoto' : '京都 / Kyoto';
   document.documentElement.lang = lang === 'zh' ? 'zh-Hans' : lang;
+  /* 语言 chip 同步当前 lang */
+  document.querySelectorAll('#hudRight .chip[data-lang]').forEach(x => x.classList.toggle('on', x.dataset.lang === lang));
 }
 applyI18n();
 
-/* ================= IndexedDB 缓存(与主页同款) ================= */
-const DATA_VERSION = 'mjrj1';
+/* ══════════════════ IndexedDB 缓存(与主页同款) ══════════════════ */
+const DATA_VERSION = 'mjrj2';
 let idb = null;
 function openIDB() {
   return new Promise((res, rej) => {
@@ -469,7 +567,7 @@ async function fetchJSONWithCache(url, onProg) {
   const res = await fetch(url);
   if (!res.ok) throw new Error(url + ' HTTP ' + res.status);
   let j;
-  if (res.body) {
+  if (res.body && res.headers.get('content-length')) {
     const reader = res.body.getReader(), chunks = [];
     let got = 0;
     const total = +res.headers.get('content-length') || 0;
@@ -486,22 +584,7 @@ async function fetchJSONWithCache(url, onProg) {
   return j;
 }
 
-/* ================= 全局状态 ================= */
-const state = {
-  from: null, to: null,     /* 节点 idx */
-  mode: 'early',            /* early | easy | dep | first */
-  day: 'wd',                /* wd | sa | su */
-  depTime: 9 * 60,
-};
-let curResult = null;       /* 最近一次结果(语言切换时重渲) */
-let ST = null, LINES = null, TYPES = null, TM = null, TRIPS = null, TRF = null, SEG = null;
-let node2tmaps = null, patCache = null, nameIndex = null;
-let groupsByDay = null;     /* day -> Map<tmapIdx, groups[]> */
-let BIG = null, WALK = null, walkMin = null;
-let lineColor = null, segIndex = null, segAdj = null;
-let map = null, mapReady = false;
-
-/* ================= 数据加载 ================= */
+/* ══════════════════ 数据加载 ══════════════════ */
 const FILES = [
   ['stations.json', 'stations'], ['lines.json', 'lines'], ['types.json', 'types'],
   ['tmaps.json', 'tmaps'], ['transfers.json', 'transfers'],
@@ -514,21 +597,15 @@ function setLoad(p, msg) {
   if (msg) $('lmsg').textContent = msg;
 }
 async function loadData() {
-  const n = FILES.length + 1; /* +segments3d */
+  const n = FILES.length + 1;
   let done = 0;
   const bump = () => setLoad(++done / n, T().loading + ' ' + Math.round(done / n * 100) + '%');
   const tasks = FILES.map(async ([f, key]) => {
-    const j = await fetchJSONWithCache('data/journey/' + f, (g, t) => {
-      setLoad((done + Math.min(1, t ? g / t : 0)) / n);
-    });
-    assignData(key, j);
-    bump();
+    const j = await fetchJSONWithCache('data/journey/' + f, (g, t) => setLoad((done + Math.min(1, t ? g / t : 0)) / n));
+    assignData(key, j); bump();
   });
-  /* 地图轨道层(失败不阻塞) */
-  const segTask = fetchJSONWithCache('data/segments3d.geojson', (g, t) => {
-    setLoad((done + Math.min(1, t ? g / t : 0)) / n);
-  }).then(j => { SEG = j; }).catch(e => console.warn('[segments3d]', e));
-  tasks.push(segTask);
+  tasks.push(fetchJSONWithCache('data/segments3d.geojson', (g, t) => setLoad((done + Math.min(1, t ? g / t : 0)) / n))
+    .then(j => { SEG = j; }).catch(e => console.warn('[segments3d]', e)));
   await Promise.all(tasks);
   bump();
 }
@@ -538,52 +615,572 @@ function assignData(key, j) {
   else if (key === 'types') TYPES = j.T;
   else if (key === 'tmaps') TM = j;
   else if (key === 'transfers') TRF = j;
-  else if (key === 'tripsWd') TRIPS = Object.assign(TRIPS || {}, { wd: j.T });
-  else if (key === 'tripsSa') TRIPS = Object.assign(TRIPS || {}, { sa: j.T });
-  else if (key === 'tripsSu') TRIPS = Object.assign(TRIPS || {}, { su: j.T });
+  else if (key === 'tripsWd') (TRIPS = TRIPS || {}).wd = j.T;
+  else if (key === 'tripsSa') (TRIPS = TRIPS || {}).sa = j.T;
+  else if (key === 'tripsSu') (TRIPS = TRIPS || {}).su = j.T;
 }
-/* ================= 运行时索引 ================= */
+
+/* ══════════════════ 运行时索引 ══════════════════ */
+/* 换乘时间: 按站的 tmap 引用数分档(大枢纽走行更长) */
+function transferMin(p) {
+  const r = ST.R[p];
+  return r >= 600 ? 7 : r >= 250 ? 6 : r >= 60 ? 5 : 4;
+}
 function buildIndexes() {
-  /* node → tmap 列表 */
-  node2tmaps = new Map();
-  TM.T.forEach((t, ti) => {
-    for (const s of new Set(t[0])) {
-      let a = node2tmaps.get(s); if (!a) node2tmaps.set(s, a = []);
-      a.push(ti);
+  const NT = TM.T.length;
+  node2tmaps = new Array(ST.N.length);
+  for (let ti = 0; ti < NT; ti++) {
+    const S = TM.T[ti][0];
+    for (let i = 0; i < S.length; i++) {
+      const s = S[i];
+      let a = node2tmaps[s];
+      if (!a) node2tmaps[s] = a = [];
+      if (a[a.length - 1] !== ti) a.push(ti);
     }
-  });
+  }
+  /* tmap 主导线路: 全程区间线路的众数。
+     不用「上车区间」的线路 —— 并行几何会让 JR中央線 在 新宿→四ツ谷 被误判为 丸ノ内線。 */
+  tmapLine = new Int32Array(NT);
+  tmapKm = new Float32Array(NT);
+  tmapEnd = new Int32Array(NT);
+  for (let ti = 0; ti < NT; ti++) {
+    const t = TM.T[ti], L = t[1], K = t[2], S = t[0];
+    const cnt = new Map();
+    let best = -1, bestN = 0, km = 0;
+    for (let i = 0; i < L.length; i++) {
+      const li = L[i];
+      if (li >= 0) { const c = (cnt.get(li) || 0) + 1; cnt.set(li, c); if (c > bestN) { bestN = c; best = li; } }
+      km += K[i];
+    }
+    tmapLine[ti] = best; tmapKm[ti] = km / 10; tmapEnd[ti] = S[S.length - 1];
+  }
   patCache = new Map();
-  /* 站名搜索索引: N(日) + Z(中) + X(别名) */
   nameIndex = [];
   const seen = new Set();
-  ST.N.forEach((n, i) => { nameIndex.push({ i, n, z: ST.Z[i] }); seen.add(i); });
+  for (let i = 0; i < ST.N.length; i++) { nameIndex.push({ i, n: ST.N[i], z: ST.Z[i] }); seen.add(i); }
   for (const [i, al] of (ST.X || [])) {
     if (seen.has(i)) continue;
-    nameIndex.push({ i, n: al[0], z: ST.Z[i] || al[0] });
-    seen.add(i);
+    nameIndex.push({ i, n: al[0], z: ST.Z[i] || al[0] }); seen.add(i);
+  }
+  lineColor = new Map();
+  for (const l of LINES) if (l[2]) lineColor.set(l[0], l[2]);
+}
+function prepRuntime() {
+  WALK = new Map(); walkMin = new Map();
+  for (const e of TRF.walk) {
+    const a = e[0], b = e[1], m = e[2];
+    if (!WALK.has(a)) WALK.set(a, []); if (!WALK.has(b)) WALK.set(b, []);
+    WALK.get(a).push([b, m]); WALK.get(b).push([a, m]);
+    walkMin.set(a + ',' + b, m); walkMin.set(b + ',' + a, m);
+  }
+  groupsByDay = {};
+  for (const day of ['wd', 'sa', 'su']) {
+    const m = new Map();
+    for (const g of TRIPS[day]) {
+      let a = m.get(g[0]); if (!a) m.set(g[0], a = []);
+      a.push(g);
+    }
+    for (const a of m.values()) for (const g of a) {
+      if (g.length > 4) { const tail = g.slice(3).sort((x, y) => x - y); g.length = 3; for (const v of tail) g.push(v); }
+    }
+    groupsByDay[day] = m;
   }
 }
-/* pattern → (arr/dep 偏移)。pattern 串 = 首站 d0 之后的 2N-3 差值:
-   偶数位 run_i(站 i-1 发→站 i 着), 奇数位 dwell_i(站 i 停, i=1..N-2); 首站 dep 偏移=0。
-   注意递推: arr[i] = dep[i-1] + run_i (dep 含前期 dwell, 不可只累加 run) */
+/* pattern → [arrOffsets, depOffsets]。
+   pattern 串 = 首站 d0 之后的 2N-3 个差值: 偶数位 run_i, 奇数位 dwell_i; 首站 dep 偏移 = 0。
+   递推: arr[i] = dep[i-1] + run_i。 */
 function patOffsets(ti, pi) {
-  const key = ti * 4096 + pi;
+  const key = ti * 8192 + pi;
   let r = patCache.get(key);
   if (r) return r;
-  const pat = TM.T[ti][3][pi].split(',').map(Number);
-  const N = TM.T[ti][0].length;
-  const runs = pat.filter((_, k) => k % 2 === 0);
-  const dwells = pat.filter((_, k) => k % 2 === 1);
-  const arr = new Array(N).fill(0), dep = new Array(N).fill(0);
-  for (let i = 1; i < N; i++) {
-    arr[i] = dep[i - 1] + runs[i - 1];
-    dep[i] = arr[i] + (i - 1 < dwells.length ? dwells[i - 1] : 0);
+  const raw = TM.T[ti][3][pi];
+  const n = TM.T[ti][0].length;
+  /* pattern 串是交替的 run/dwell: [run1, dwell1, run2, dwell2, ...]
+     (长度 2N-3; 末站无 dwell)。手写解析避免 split().map(Number) 的临时数组。 */
+  const vals = [];
+  let cur = 0;
+  for (let k = 0; k < raw.length; k++) {
+    const c = raw.charCodeAt(k);
+    if (c === 44) { vals.push(cur); cur = 0; }
+    else cur = cur * 10 + (c - 48);
+  }
+  vals.push(cur);
+  const arr = new Int32Array(n), dep = new Int32Array(n);
+  let vi = 0;
+  for (let s = 1; s < n; s++) {
+    arr[s] = dep[s - 1] + (vals[vi++] || 0);
+    dep[s] = arr[s] + (vals[vi++] || 0);
   }
   r = [arr, dep];
   patCache.set(key, r);
   return r;
 }
-/* 站名 → 节点 idx(精确 > 前缀 > 包含; 日文名优先) */
+function bisectLeftG(g, x) {
+  let lo = 3, hi = g.length;
+  while (lo < hi) { const mid = (lo + hi) >> 1; if (g[mid] < x) lo = mid + 1; else hi = mid; }
+  return lo;
+}
+function bisectRightG(g, x) {
+  let lo = 3, hi = g.length;
+  while (lo < hi) { const mid = (lo + hi) >> 1; if (g[mid] <= x) lo = mid + 1; else hi = mid; }
+  return lo;
+}
+/* ti 的第 si 站、出发 >= tmin 的最早班次 → [depAbs, pi, ty, d0] */
+function earliestTrip(ti, si, tmin, day, noLimited) {
+  const gs = groupsByDay[day].get(ti);
+  if (!gs) return null;
+  let best = null;
+  for (let gi = 0; gi < gs.length; gi++) {
+    const g = gs[gi];
+    if (noLimited && LIMITED_TYPE[g[2]]) continue;
+    const dep = patOffsets(ti, g[1])[1][si];
+    const k = bisectLeftG(g, tmin - dep);
+    if (k < g.length) {
+      const da = g[k] + dep;
+      if (best === null || da < best[0]) best = [da, g[1], g[2], g[k]];
+    }
+  }
+  return best;
+}
+/* ti 的第 sj 站、到达 <= tmax 的最晚班次 → [arrAbs, pi, ty, d0](反向搜索用) */
+function latestArrive(ti, sj, tmax, day, noLimited) {
+  const gs = groupsByDay[day].get(ti);
+  if (!gs) return null;
+  let best = null;
+  for (let gi = 0; gi < gs.length; gi++) {
+    const g = gs[gi];
+    if (noLimited && LIMITED_TYPE[g[2]]) continue;
+    const arr = patOffsets(ti, g[1])[0][sj];
+    const k = bisectRightG(g, tmax - arr) - 1;
+    if (k >= 3) {
+      const aa = g[k] + arr;
+      if (best === null || aa > best[0]) best = [aa, g[1], g[2], g[k]];
+    }
+  }
+  return best;
+}
+/* 特急/新幹線种别(用于「普通车优先」变体) */
+const TOKKYU_ICONS = new Set(['特', '関', '紀', '中', '丹', '寝', '京', 'ミ', 'フ', '富', '九', '川',
+  'Ｔ', 'Ｓ', 'Ｎ', 'ホ', '拝', 'ラ', 'ア', 'エ', '空']);
+const SHINKANSEN_TYPES = new Set(['Nozomi', 'Hikari', 'Kodama', 'Tsubasa', 'Hayabusa', 'Komachi', 'Asama',
+  'Kagayaki', 'Yamabiko', 'Toki', 'Tanigawa', 'Nasuno', 'Hakutaka', 'Hayate', 'Mizuho', 'Sakura',
+  'Tsubame', 'Kamome', 'Tsurugi']);
+let LIMITED_TYPE = null;
+function buildTypeFlags() {
+  LIMITED_TYPE = new Array(TYPES.length);
+  for (let i = 0; i < TYPES.length; i++) {
+    const n = TYPES[i][0];
+    LIMITED_TYPE[i] = TOKKYU_ICONS.has(n) || SHINKANSEN_TYPES.has(n);
+  }
+}
+
+/* ══════════════════ 正向 RAPTOR(多轮快照 → 换乘次数 Pareto) ══════════════════ */
+const INF = 1 << 30;
+function raptorFwd(orig, dest, tStart, day, opt) {
+  const maxK = opt.maxK || 5, banned = opt.banned, noLimited = opt.noLimited;
+  if (orig < 0 || dest < 0 || orig === dest) return null;
+  const N = ST.N.length;
+  const tau = new Int32Array(N).fill(INF);
+  const par = new Array(N).fill(null);
+  tau[orig] = tStart;
+  const rounds = [];
+  let marked = [orig];
+  const ow = new Map();
+  const wl0 = WALK.get(orig);
+  if (wl0) for (const e of wl0) ow.set(e[0], e[1]);
+  for (let k = 1; k <= maxK; k++) {
+    const scan = new Set();
+    for (let mi = 0; mi < marked.length; mi++) {
+      const l = node2tmaps[marked[mi]];
+      if (l) for (let i = 0; i < l.length; i++) scan.add(l[i]);
+    }
+    if (k === 1) for (const nb of ow.keys()) {
+      const l = node2tmaps[nb];
+      if (l) for (let i = 0; i < l.length; i++) scan.add(l[i]);
+    }
+    const newMarked = [];
+    for (const ti of scan) {
+      if (banned && banned.has(ti)) continue;
+      const t = TM.T[ti], S = t[0];
+      let bestTrip = null, bestBoard = -1, bestWalk = -1;
+      for (let si = 0; si < S.length; si++) {
+        const p = S[si];
+        let tmin = -1, wf = -1;
+        if (p === orig && k === 1) tmin = tStart;
+        else if (k === 1 && ow.has(p)) { tmin = tStart + ow.get(p); wf = orig; }
+        else if (tau[p] < INF) {
+          tmin = tau[p] + transferMin(p); wf = -1;
+          const wl = WALK.get(p);
+          if (wl) for (let wi = 0; wi < wl.length; wi++) {
+            const e = wl[wi];
+            if (tau[e[0]] < INF && tau[e[0]] + e[1] < tmin) { tmin = tau[e[0]] + e[1]; wf = e[0]; }
+          }
+        } else continue;
+        const tr = earliestTrip(ti, si, tmin, day, noLimited);
+        if (tr && (bestTrip === null || tr[0] < bestTrip[0])) { bestTrip = tr; bestBoard = si; bestWalk = wf; }
+      }
+      if (bestTrip === null) continue;
+      const pi = bestTrip[1], ty = bestTrip[2], d0 = bestTrip[3];
+      const arr = patOffsets(ti, pi)[0];
+      for (let sj = bestBoard + 1; sj < S.length; sj++) {
+        const p2 = S[sj], aa = d0 + arr[sj];
+        if (aa < tau[p2]) {
+          tau[p2] = aa;
+          par[p2] = [ti, pi, ty, d0, bestBoard, bestWalk, sj];
+          newMarked.push(p2);
+        }
+      }
+    }
+    if (!newMarked.length) break;
+    rounds.push([k, Int32Array.from(tau), par.slice()]);
+    marked = newMarked;
+  }
+  return rounds;
+}
+/* ══════════════════ 反向 RAPTOR(終電 / 指定到达) ══════════════════
+   rev[p] = 最晚从 p 出发仍能在 tLimit 前到达 dest 的时刻。
+   从 dest 倒推: 若某班次在 sj 的到达 ≤ rev[S[sj]] − 换乘时间, 则它所有上游站 si 都可上车。 */
+function raptorRev(orig, dest, tLimit, day, opt) {
+  const maxK = opt.maxK || 5, banned = opt.banned;
+  const N = ST.N.length;
+  const rev = new Int32Array(N).fill(-INF);
+  const par = new Array(N).fill(null);
+  rev[dest] = tLimit;
+  /* 终点步行衔接: 到邻站后徒步到终点 */
+  const dwl = WALK.get(dest);
+  let marked = [dest];
+  if (dwl) for (const e of dwl) { rev[e[0]] = tLimit - e[1]; marked.push(e[0]); }
+  for (let k = 1; k <= maxK; k++) {
+    const scan = new Set();
+    for (let mi = 0; mi < marked.length; mi++) {
+      const l = node2tmaps[marked[mi]];
+      if (l) for (let i = 0; i < l.length; i++) scan.add(l[i]);
+    }
+    const newMarked = [];
+    for (const ti of scan) {
+      if (banned && banned.has(ti)) continue;
+      const S = TM.T[ti][0];
+      let best = null, bestAlight = -1;
+      for (let sj = S.length - 1; sj >= 1; sj--) {
+        const p2 = S[sj];
+        if (rev[p2] <= -INF) continue;
+        let tmax = rev[p2];
+        if (p2 !== dest) tmax -= transferMin(p2);
+        const tr = latestArrive(ti, sj, tmax, day, opt.noLimited);
+        if (!tr) continue;
+        if (best === null || tr[0] > best[0]) { best = tr; bestAlight = sj; }
+      }
+      if (best === null) continue;
+      const pi = best[1], ty = best[2], d0 = best[3];
+      const dep = patOffsets(ti, pi)[1];
+      for (let si = 0; si < bestAlight; si++) {
+        const p1 = S[si], da = d0 + dep[si];
+        if (da > rev[p1]) {
+          rev[p1] = da;
+          par[p1] = [ti, pi, ty, d0, si, -1, bestAlight];
+          newMarked.push(p1);
+        }
+      }
+    }
+    if (!newMarked.length) break;
+    marked = newMarked;
+  }
+  return { rev, par };
+}
+
+/* ══════════════════ 方案提取 ══════════════════ */
+function finishFwd(rounds, orig, dest) {
+  const out = [];
+  for (const [k, tau, par] of rounds) {
+    let bestArr = tau[dest], fw = null;
+    const dwl = WALK.get(dest);
+    if (dwl) for (const e of dwl) {
+      if (tau[e[0]] < INF && tau[e[0]] + e[1] < bestArr) { bestArr = tau[e[0]] + e[1]; fw = [e[0], e[1]]; }
+    }
+    if (bestArr >= INF) continue;
+    if (!par[dest] && !fw) continue;
+    const legs = [];
+    let cur = fw ? fw[0] : dest, ok = true;
+    while (cur !== orig) {
+      const pr = par[cur];
+      if (!pr) { ok = false; break; }
+      legs.push({ tmap: pr[0], pi: pr[1], ty: pr[2], d0: pr[3], board: pr[4], walkFrom: pr[5], alight: pr[6] });
+      cur = pr[5] >= 0 ? pr[5] : TM.T[pr[0]][0][pr[4]];
+      if (legs.length > 12) { ok = false; break; }
+    }
+    if (!ok) continue;
+    legs.reverse();
+    const r = finalizeLegs(legs, orig, dest, fw);
+    if (r) { r.k = k; out.push(r); }
+  }
+  return out;
+}
+/* 从反向搜索结果回溯出正向行程 */
+function finishRev(res, orig, dest) {
+  const par = res.par;
+  if (res.rev[orig] <= -INF) return [];
+  const chain = [];
+  let node = orig, guard = 0;
+  while (node !== dest && guard++ < 14) {
+    const pr = par[node];
+    if (!pr) return [];
+    chain.push(pr);
+    const nxt = TM.T[pr[0]][0][pr[6]];
+    if (nxt === node) return [];
+    node = nxt;
+  }
+  if (node !== dest) return [];
+  const legs = chain.map(pr => ({ tmap: pr[0], pi: pr[1], ty: pr[2], d0: pr[3], board: pr[4], walkFrom: -1, alight: pr[6] }));
+  /* 末段若为「到邻站后徒步到终点」, 转成 finalWalk */
+  let fw = null;
+  const last = legs[legs.length - 1];
+  const lastNode = TM.T[last.tmap][0][last.alight];
+  if (lastNode !== dest) {
+    const m = walkMin.get(lastNode + ',' + dest);
+    if (m) fw = [lastNode, m];
+  }
+  const r = finalizeLegs(legs, orig, dest, fw);
+  return r ? [r] : [];
+}
+/* 补全 leg 字段 + 时序校验 */
+function finalizeLegs(legs, orig, dest, finalWalk) {
+  if (!legs.length) return null;
+  let prevArr = -1, km = 0;
+  for (const lg of legs) {
+    const t = TM.T[lg.tmap], S = t[0];
+    const off = patOffsets(lg.tmap, lg.pi);
+    lg.dep = lg.d0 + off[1][lg.board];
+    lg.arr = lg.d0 + off[0][lg.alight];
+    lg.fromNode = lg.walkFrom >= 0 ? lg.walkFrom : S[lg.board];
+    lg.toNode = S[lg.alight];
+    if (prevArr >= 0 && lg.dep < prevArr) return null;
+    prevArr = lg.arr;
+    for (let i = lg.board; i < lg.alight; i++) km += t[2][i];
+    lg.walkMin = lg.walkFrom >= 0 ? (walkMin.get(lg.walkFrom + ',' + S[lg.board]) || 0) : 0;
+  }
+  const lastArr = legs[legs.length - 1].arr + (finalWalk ? finalWalk[1] : 0);
+  return {
+    arr: lastArr, dep: legs[0].dep, xfr: legs.length - 1, legs, finalWalk,
+    km: km / 10, from: orig, to: dest,
+  };
+}
+function sig(r) {
+  let s = '';
+  for (const lg of r.legs) s += lg.tmap + ':' + lg.d0 + ':' + lg.board + ':' + lg.alight + '|';
+  return s;
+}
+/* 主搜索: 迭代禁用已用列车 → 生成走不同线路/班次的备选 */
+function searchRoutes(orig, dest, tStart, day, opt) {
+  const seen = new Set(), out = [], banned = new Set();
+  const want = opt.want || 4;
+  for (let it = 0; it <= want; it++) {
+    const rounds = raptorFwd(orig, dest, tStart, day, { maxK: opt.maxK || 5, banned, noLimited: opt.noLimited });
+    if (rounds) for (const r of finishFwd(rounds, orig, dest)) {
+      const s = sig(r);
+      if (!seen.has(s)) { seen.add(s); out.push(r); }
+    }
+    if (out.length >= want) break;
+    const cand = out.slice().sort((a, b) => a.arr - b.arr || a.xfr - b.xfr)[0];
+    if (!cand) break;
+    let added = false;
+    for (const lg of cand.legs) if (!banned.has(lg.tmap)) { banned.add(lg.tmap); added = true; }
+    if (!added) break;
+  }
+  out.sort((a, b) => a.arr - b.arr || a.xfr - b.xfr);
+  return out;
+}
+/* 挑选展示方案: 最快 / 乗換少 / 备选。严格过滤荒谬慢方案。 */
+function pickRoutes(cands, maxShow) {
+  if (!cands.length) return [];
+  const fastest = cands.reduce((a, b) => (b.arr < a.arr || (b.arr === a.arr && b.xfr < a.xfr)) ? b : a);
+  const dur = fastest.arr - fastest.dep;
+  const lim = fastest.arr + Math.max(25, dur * 0.5);
+  const ok = cands.filter(r => r.arr <= lim);
+  const res = [{ tag: 'fast', r: fastest }];
+  let easy = null;
+  const byX = ok.slice().sort((a, b) => a.xfr - b.xfr || b.dep - a.dep || a.arr - b.arr);
+  for (const r of byX) if (sig(r) !== sig(fastest)) { easy = r; break; }
+  if (easy) res.push({ tag: 'easy', r: easy });
+  for (const r of ok) {
+    if (res.length >= (maxShow || 4)) break;
+    if (res.some(x => sig(x.r) === sig(r))) continue;
+    res.push({ tag: 'alt', r });
+  }
+  return res;
+}
+/* 起点当日最早出发 */
+function firstDeparture(orig, day) {
+  const list = node2tmaps[orig];
+  if (!list) return null;
+  let best = null;
+  for (const ti of list) {
+    const S = TM.T[ti][0];
+    const si = S.indexOf(orig);
+    if (si < 0) continue;
+    const gs = groupsByDay[day].get(ti);
+    if (!gs) continue;
+    for (const g of gs) {
+      if (g.length > 3) { const d = g[3] + patOffsets(ti, g[1])[1][si]; if (best === null || d < best) best = d; }
+    }
+  }
+  return best;
+}
+/* 終電: 反向搜索起点最晚可出发时刻(当日 24:00 + 4h 的运行窗口内) */
+function lastDeparture(orig, dest, day, opt) {
+  for (let limit = 1440 + 300; limit >= 1440 - 120; limit -= 30) {
+    const res = raptorRev(orig, dest, limit, day, opt || {});
+    if (res.rev[orig] > -INF) {
+      const legs = finishRev(res, orig, dest);
+      if (legs.length) return { dep: res.rev[orig], limit, cands: legs };
+    }
+  }
+  return null;
+}
+/* 某 tmap 在 si 站、after 之后的后续 n 班 */
+function nextTrips(ti, si, after, day, n) {
+  const gs = groupsByDay[day].get(ti);
+  if (!gs) return [];
+  const all = [];
+  for (const g of gs) {
+    const dep = patOffsets(ti, g[1])[1][si];
+    for (let k = 3; k < g.length; k++) {
+      const da = g[k] + dep;
+      if (da > after) all.push({ dep: da, pi: g[1], ty: g[2], d0: g[k] });
+    }
+  }
+  all.sort((a, b) => a.dep - b.dep);
+  return all.slice(0, n);
+}
+/* 后续班次 = 同一「乘→下车」区间上、同一主导线路的后续列车。
+   只在原 tmap 内找是不够的: 单个 tmap 往往一天只有几班(如新宿→大船的直通 tmap 仅 4 班),
+   而同一区间实际上十几分钟就有一班, 分布在不同的 tmap 上。 */
+function nextLegTrips(lg, day, n) {
+  const ti = lg.tmap, S = TM.T[ti][0];
+  const bNode = S[lg.board], aNode = S[lg.alight];
+  const after = lg.dep;
+  const mainLine = legLine(ti, lg.board, lg.alight);
+  const out = [];
+  const seen = new Set();
+  const list = node2tmaps[bNode] || [];
+  for (const tj of list) {
+    const T2 = TM.T[tj], S2 = T2[0];
+    const bi = S2.indexOf(bNode); if (bi < 0) continue;
+    const ai = S2.indexOf(aNode); if (ai <= bi) continue;
+    if (legLine(tj, bi, ai) !== mainLine) continue;   /* 只保留同一条线路 */
+    const gs = groupsByDay[day].get(tj);
+    if (!gs) continue;
+    for (const g of gs) {
+      const off = patOffsets(tj, g[1])[1][bi];
+      for (let k = 3; k < g.length; k++) {
+        const da = g[k] + off;
+        if (da <= after) continue;
+        const key = tj + '|' + g[k];
+        if (seen.has(key)) continue;
+        seen.add(key);
+        out.push({ tmap: tj, board: bi, alight: ai, dep: da, pi: g[1], ty: g[2], d0: g[k] });
+      }
+    }
+  }
+  out.sort((a, b) => a.dep - b.dep);
+  return out.slice(0, n || 6);
+}
+
+/* ══════════════════ 检索执行 ══════════════════ */
+function doSearch() {
+  hideSug();
+  const f = nodeIdx($('rFrom').value), t = nodeIdx($('rTo').value);
+  if (f < 0 || t < 0) { toast(T().badSta); return; }
+  if (f === t) { toast(T().sameSta); return; }
+  state.from = f; state.to = t;
+  $('rFrom').value = ST.D[f]; $('rTo').value = ST.D[t];
+  const day = state.day, mode = state.mode;
+  const noLimited = state.excludeLimited;
+  let cands = [], note = '';
+  const opt = { noLimited, want: 8 };
+  if (mode === 'first') {
+    const fd = firstDeparture(f, day);
+    if (fd == null) { toast(T().noRoute); return; }
+    cands = searchRoutes(f, t, fd, day, opt);
+  } else if (mode === 'last') {
+    const lr = lastDeparture(f, t, day, opt);
+    if (!lr) { toast(T().noRoute); return; }
+    cands = searchRoutes(f, t, lr.dep, day, opt);
+    if (!cands.length) cands = lr.cands;
+    note = T().lastNote;
+  } else if (mode === 'arr') {
+    const tArr = timeToMin($('depTime').value);
+    const res = raptorRev(f, t, tArr, day, opt);
+    cands = finishRev(res, f, t);
+    note = tf(T().arrNote, fmtMinRaw(tArr));
+  } else {
+    let tStart = mode === 'now' ? Math.floor(nowMin()) : Math.floor(timeToMin($('depTime').value));
+    cands = searchRoutes(f, t, tStart, day, opt);
+    if (!cands.length && mode === 'now') {
+      const fd = firstDeparture(f, day);
+      if (fd != null) { cands = searchRoutes(f, t, fd, day, opt); note = T().autoFirst; }
+    }
+  }
+  if (!cands.length) { toast(T().noRoute); $('result').classList.remove('show'); return; }
+  const picked = pickRoutes(cands, 4);
+  curResult = { cands: picked, all: cands, idx: 0, note, from: f, to: t, day, mode };
+  openNext = -1;
+  renderResult(curResult);
+  highlightOnMap(picked[0].r);
+  stateHash();
+  $('result').classList.add('show');
+}
+/* 改乘后续班次: 前 i 段固定, 第 i 段换成新班次, 后续重算。
+   新班次可能属于另一个 tmap(同区间不同停站), 所以按「乘/下车站节点」在新 tmap 重新定位。 */
+function reRouteWith(legIdx, newTrip, alightNode) {
+  const cur = curResult.cands[curResult.idx].r;
+  const prefix = cur.legs.slice(0, legIdx);
+  const lg = cur.legs[legIdx];
+  const oldS = TM.T[lg.tmap][0];
+  const bNode = oldS[lg.board];
+  const ti = (newTrip && newTrip.tmap != null) ? newTrip.tmap : lg.tmap;
+  const S = TM.T[ti][0];
+  const board = (newTrip && newTrip.board != null) ? newTrip.board : S.indexOf(bNode);
+  if (board < 0) return null;
+  let alight = -1;
+  if (newTrip && newTrip.alight != null) alight = newTrip.alight;
+  else {
+    const aNode = alightNode != null ? alightNode : oldS[lg.alight];
+    const ai = S.indexOf(aNode);
+    alight = ai > board ? ai : -1;
+  }
+  if (alight < 0 || alight <= board) return null;
+  const nl = {
+    tmap: ti, pi: newTrip.pi, ty: newTrip.ty, d0: newTrip.d0,
+    board, walkFrom: lg.walkFrom, alight,
+  };
+  const off = patOffsets(ti, nl.pi);
+  nl.dep = nl.d0 + off[1][nl.board];
+  nl.arr = nl.d0 + off[0][nl.alight];
+  nl.fromNode = nl.walkFrom >= 0 ? nl.walkFrom : S[nl.board];
+  nl.toNode = S[nl.alight];
+  nl.walkMin = nl.walkFrom >= 0 ? (walkMin.get(nl.walkFrom + ',' + S[nl.board]) || 0) : 0;
+  const prevEnd = prefix.length ? prefix[prefix.length - 1].arr : -1;
+  if (prevEnd >= 0 && nl.dep < prevEnd) return null;
+  const legs = prefix.concat([nl]);
+  /* 从下车站重跑后续 */
+  if (nl.toNode !== cur.to) {
+    const tStart = nl.arr + transferMin(nl.toNode);
+    const rounds = raptorFwd(nl.toNode, cur.to, tStart, curResult.day, { maxK: 4 });
+    if (rounds && rounds.length) {
+      const rest = finishFwd(rounds, nl.toNode, cur.to).sort((a, b) => a.arr - b.arr || a.xfr - b.xfr)[0];
+      if (rest) {
+        for (const rl of rest.legs) legs.push(rl);
+        const r = finalizeLegs(legs, cur.from, cur.to, rest.finalWalk);
+        if (r) return r;
+      }
+    }
+    return null;
+  }
+  const r = finalizeLegs(legs, cur.from, cur.to, null);
+  return r;
+}
+
+/* ══════════════════ 站名解析与联想 ══════════════════ */
 function nodeIdx(nm) {
   nm = String(nm || '').trim();
   if (!nm) return -1;
@@ -592,216 +1189,11 @@ function nodeIdx(nm) {
     let sc = -1;
     if (e.n === nm || e.z === nm) sc = 0;
     else if (e.n.startsWith(nm) || (e.z && e.z.startsWith(nm))) sc = 1;
-    else if (e.n.includes(nm) || (e.z && e.z.includes(nm))) sc = 2;
+    else if (e.n.indexOf(nm) >= 0 || (e.z && e.z.indexOf(nm) >= 0)) sc = 2;
     if (sc >= 0 && sc < bestSc) { bestSc = sc; best = e.i; if (sc === 0) break; }
   }
   return best;
 }
-
-/* ================= P3: 运行时索引与 RAPTOR ================= */
-function nSt() { return ST.N.length; }
-function prepRuntime() {
-  BIG = new Set(TRF.big);
-  WALK = new Map(); walkMin = new Map();
-  for (const e of TRF.walk) {
-    const a = e[0], b = e[1], m = e[2];
-    if (!WALK.has(a)) WALK.set(a, []); if (!WALK.has(b)) WALK.set(b, []);
-    WALK.get(a).push([b, m]); WALK.get(b).push([a, m]);
-    walkMin.set(a * 1e5 + b, m); walkMin.set(b * 1e5 + a, m);
-  }
-  /* 曜日别 trip 分组(防御性排序 d0) */
-  groupsByDay = {};
-  for (const day of ['wd', 'sa', 'su']) {
-    const m = new Map();
-    for (const g of TRIPS[day]) {
-      let a = m.get(g[0]); if (!a) m.set(g[0], a = []);
-      a.push(g);
-    }
-    for (const [, a] of m) for (const g of a) {
-      if (g.length > 4) { const tail = g.slice(3).sort((x, y) => x - y); g.length = 3; for (const v of tail) g.push(v); }
-    }
-    groupsByDay[day] = m;
-  }
-  lineColor = new Map();
-  for (const l of LINES) if (l[2]) lineColor.set(l[0], l[2]);
-}
-function transferMin(p) { return BIG.has(p) ? 6 : 4; }
-/* group 数组 [patIdx,typeIdx,...d0s] 中找首个 d0 >= x 的下标(自 3 起) */
-function bisectLeftG(g, x) {
-  let lo = 3, hi = g.length;
-  while (lo < hi) { const mid = (lo + hi) >> 1; if (g[mid] < x) lo = mid + 1; else hi = mid; }
-  return lo;
-}
-/* tmap ti 停站 si, 出发 >= tmin 的最早班次 → [depAbs, patIdx, typeIdx, d0] | null */
-function earliestTrip(ti, si, tmin, day) {
-  const groups = groupsByDay[day].get(ti);
-  if (!groups) return null;
-  let best = null;
-  for (let gi = 0; gi < groups.length; gi++) {
-    const g = groups[gi];
-    const dep = patOffsets(ti, g[1])[1];
-    const k = bisectLeftG(g, tmin - dep[si]);
-    if (k < g.length) {
-      const depAbs = g[k] + dep[si];
-      if (best === null || depAbs < best[0]) best = [depAbs, g[1], g[2], g[k]];
-    }
-  }
-  return best;
-}
-/* RAPTOR: opt.easy=true 首轮到达即停(乗換最少); 否则跑满轮数取最早到达 */
-function raptor(orig, dest, tStart, day, opt = {}) {
-  if (orig < 0 || dest < 0 || orig === dest) return null;
-  const maxK = opt.maxK || 6;
-  const INF = 1e9;
-  const tau = new Int32Array(nSt()).fill(INF);
-  const parent = new Array(nSt()).fill(null);
-  tau[orig] = tStart;
-  let marked = new Set([orig]);
-  for (let k = 1; k <= maxK; k++) {
-    const scan = new Set();
-    const originWalk = (k === 1) ? new Map() : null;
-    for (const p of marked) {
-      const l = node2tmaps.get(p);
-      if (l) for (let i = 0; i < l.length; i++) scan.add(l[i]);
-      if (k === 1 && p === orig) {
-        const wl = WALK.get(orig);
-        if (wl) for (const e of wl) {
-          originWalk.set(e[0], e[1]);
-          const l2 = node2tmaps.get(e[0]);
-          if (l2) for (let i = 0; i < l2.length; i++) scan.add(l2[i]);
-        }
-      }
-    }
-    const newMarked = new Set();
-    for (const ti of scan) {
-      const S = TM.T[ti][0];
-      let bestTrip = null, bestBoard = -1, bestWalk = -1;
-      for (let si = 0; si < S.length; si++) {
-        const p = S[si];
-        let tmin, wf = -1;
-        if (p === orig && k === 1) tmin = tStart;
-        else if (originWalk && originWalk.has(p)) { tmin = tStart + originWalk.get(p); wf = orig; }
-        else if (tau[p] < INF) {
-          tmin = tau[p] + transferMin(p);
-          const wl = WALK.get(p);
-          if (wl) for (const e of wl) {
-            if (tau[e[0]] < INF && tau[e[0]] + e[1] < tmin) { tmin = tau[e[0]] + e[1]; wf = e[0]; }
-          }
-        } else continue;
-        const tr = earliestTrip(ti, si, tmin, day);
-        if (tr && (bestTrip === null || tr[0] < bestTrip[0])) { bestTrip = tr; bestBoard = si; bestWalk = wf; }
-      }
-      if (bestTrip === null) continue;
-      const depAbs = bestTrip[0], pi = bestTrip[1], d0 = bestTrip[3];
-      const arr = patOffsets(ti, pi)[0];
-      for (let sj = bestBoard + 1; sj < S.length; sj++) {
-        const p2 = S[sj], arrAbs = d0 + arr[sj];
-        if (arrAbs < tau[p2]) {
-          tau[p2] = arrAbs;
-          parent[p2] = [ti, pi, bestTrip[2], d0, bestBoard, bestWalk, sj];
-          newMarked.add(p2);
-        }
-      }
-    }
-    if (!newMarked.size) break;
-    marked = newMarked;
-    if (opt.easy && tau[dest] < INF) break;   /* 楽: 最少乗換轮即到 */
-  }
-  /* 终点步行衔接(到达邻站后徒步到终点) */
-  let bestArr = tau[dest], finalWalk = null;
-  const dwl = WALK.get(dest);
-  if (dwl) for (const e of dwl) {
-    if (tau[e[0]] < INF && tau[e[0]] + e[1] < bestArr) { bestArr = tau[e[0]] + e[1]; finalWalk = [e[0], e[1]]; }
-  }
-  if (bestArr >= INF) return null;
-  /* 回溯 */
-  const legs = [];
-  let cur = finalWalk ? finalWalk[0] : dest;
-  while (cur !== orig) {
-    const pr = parent[cur];
-    if (!pr) return null;
-    legs.push({ tmap: pr[0], pi: pr[1], ty: pr[2], d0: pr[3], board: pr[4], walkFrom: pr[5], alight: pr[6] });
-    cur = pr[5] >= 0 ? pr[5] : TM.T[pr[0]][0][pr[4]];
-    if (legs.length > 12) return null;
-  }
-  legs.reverse();
-  /* 补全字段 + 时序校验 */
-  let prevArr = -1, km = 0;
-  for (const lg of legs) {
-    const t = TM.T[lg.tmap], S = t[0];
-    const dep = patOffsets(lg.tmap, lg.pi)[1], arr = patOffsets(lg.tmap, lg.pi)[0];
-    lg.dep = lg.d0 + dep[lg.board];
-    lg.arr = lg.d0 + arr[lg.alight];
-    lg.fromNode = lg.walkFrom >= 0 ? lg.walkFrom : S[lg.board];
-    lg.toNode = S[lg.alight];
-    if (prevArr >= 0 && lg.dep < prevArr) return null;
-    prevArr = lg.arr;
-    for (let i = lg.board; i < lg.alight; i++) km += t[2][i];
-    lg.walkMin = lg.walkFrom >= 0 ? (walkMin.get(lg.walkFrom * 1e5 + S[lg.board]) ?? 0) : 0;
-  }
-  return { arr: bestArr, dep: legs[0].dep, transfers: legs.length - 1, legs, finalWalk, km: km / 10, from: orig, to: dest, day, tStart, mode: opt.easy ? 'easy' : 'early' };
-}
-/* 始発: 起点当日最早出发时刻 */
-function firstDeparture(orig, day) {
-  const list = node2tmaps.get(orig);
-  if (!list) return null;
-  let best = null;
-  for (const ti of list) {
-    const S = TM.T[ti][0];
-    const si = S.indexOf(orig);
-    if (si < 0) continue;
-    const groups = groupsByDay[day].get(ti);
-    if (!groups) continue;
-    for (const g of groups) {
-      const dep = patOffsets(ti, g[1])[1];
-      if (g.length > 3) { const d = g[3] + dep[si]; if (best === null || d < best) best = d; }
-    }
-  }
-  return best;
-}
-/* ================= 时刻基准: 与主页一致(全站 JST + 日本祝日→休日时刻) ================= */
-const JST = 9 * 3600 * 1000;
-/* 日本节假日 2024–2030(固定日 + 春分/秋分),振替休日与国民の休日按规则推导(与主页 index.html 同表) */
-const HOLIDAY_BASE = {
-  2024: [[1,1],[1,8],[2,12],[2,23],[3,20],[4,29],[5,3],[5,4],[5,5],[5,6],[7,15],[8,11],[9,16],[9,23],[10,14],[11,4],[11,23]],
-  2025: [[1,1],[1,13],[2,11],[2,23],[3,20],[4,29],[5,3],[5,4],[5,5],[5,6],[7,21],[8,11],[9,15],[9,23],[10,13],[11,3],[11,24]],
-  2026: [[1,1],[1,12],[2,11],[2,23],[3,20],[4,29],[5,3],[5,4],[5,5],[5,6],[7,20],[8,11],[9,21],[9,22],[9,23],[10,12],[11,3],[11,23]],
-  2027: [[1,1],[1,11],[2,11],[2,23],[3,22],[4,29],[5,3],[5,4],[5,5],[7,19],[8,11],[9,20],[9,23],[10,11],[11,3],[11,23]],
-  2028: [[1,1],[1,10],[2,11],[2,23],[3,20],[4,29],[5,3],[5,4],[5,5],[7,17],[8,11],[9,18],[9,22],[10,9],[11,3],[11,23]],
-  2029: [[1,1],[1,8],[2,11],[2,12],[2,23],[3,20],[4,29],[5,3],[5,4],[5,5],[7,16],[8,11],[9,17],[9,23],[10,8],[11,3],[11,23]],
-  2030: [[1,1],[1,14],[2,11],[2,23],[3,21],[4,29],[5,3],[5,4],[5,5],[5,6],[7,15],[8,11],[9,16],[9,23],[10,14],[11,4],[11,23]],
-};
-const HOLIDAYS = (() => {
-  const set = new Set();
-  const keyOf = d => d.toISOString().slice(0, 10);
-  for (const y in HOLIDAY_BASE) {
-    for (const [m, d] of HOLIDAY_BASE[y]) set.add(`${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`);
-    /* 振替休日: 基日若为周日, 顺延至下一个非节假日平日 */
-    const days = HOLIDAY_BASE[y].map(([m, d]) => new Date(Date.UTC(y, m-1, d)));
-    for (const dt of days) {
-      if (dt.getUTCDay() === 0) { const nx = new Date(dt); do { nx.setUTCDate(nx.getUTCDate()+1); } while (set.has(keyOf(nx)) || nx.getUTCDay() === 0); set.add(keyOf(nx)); }
-    }
-    /* 国民の休日: 夹在两节假日间的平日 */
-    for (let t = 0; t < 370; t++) {
-      const dt = new Date(Date.UTC(y, 0, 1+t));
-      const t0 = dt.getTime(), k = keyOf(dt), kp = keyOf(new Date(t0-86400000)), kn = keyOf(new Date(t0+86400000));
-      const wd = dt.getUTCDay();
-      if (wd >= 1 && wd <= 5 && set.has(kp) && set.has(kn) && !set.has(k)) set.add(k);
-    }
-  }
-  return set;
-})();
-function jstParts(ms) { const d = new Date(ms + JST); return { y: d.getUTCFullYear(), m: d.getUTCMonth()+1, d: d.getUTCDate(), wd: d.getUTCDay(), key: d.toISOString().slice(0,10) }; }
-/* 今天(JST)对应的曜日模式: 祝日→休日 */
-function todayDayMode() {
-  const p = jstParts(Date.now());
-  if (HOLIDAYS.has(p.key)) return 'su';
-  return p.wd === 6 ? 'sa' : p.wd === 0 ? 'su' : 'wd';
-}
-/* JST 当前分钟数(0-1439) */
-function nowMin() { return (Date.now() + JST) % 86400000 / 60000; }
-
-/* ================= 搜索联想 ================= */
 let sugWhich = null, sugItems = [];
 function hlText(text, q) {
   if (!q) return esc(text);
@@ -813,27 +1205,28 @@ function doSuggest(which) {
   const input = which === 'from' ? $('rFrom') : $('rTo');
   const q = input.value.trim();
   const box = $('sug');
-  if (!q) { box.style.display = 'none'; sugItems = []; return; }
+  if (!q) { box.style.display = 'none'; sugItems = []; sugWhich = null; return; }
   const items = [];
   for (const e of nameIndex) {
     let sc = -1;
     if (e.n === q || e.z === q) sc = 0;
     else if (e.n.startsWith(q) || (e.z && e.z.startsWith(q))) sc = 1;
-    else if (e.n.includes(q) || (e.z && e.z.includes(q))) sc = 2;
-    if (sc >= 0) items.push([sc, e.n.length, e]);
+    else if (e.n.indexOf(q) >= 0 || (e.z && e.z.indexOf(q) >= 0)) sc = 2;
+    if (sc >= 0) items.push([sc, e.n.length, -ST.R[e.i], e]);
   }
-  items.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
-  sugItems = items.slice(0, 10).map(x => x[2]);
+  items.sort((a, b) => a[0] - b[0] || a[1] - b[1] || a[2] - b[2]);
+  sugItems = items.slice(0, 12).map(x => x[3]);
   sugWhich = which;
   if (!sugItems.length) {
     box.innerHTML = '<div class="sug-empty"><span class="sug-q">' + esc(q) + '</span> — ' + esc(T().noMatch) + '</div>';
     box.style.display = 'block'; return;
   }
-  box.innerHTML = sugItems.map((e, i) =>
-    '<div class="sug-it' + (i === 0 ? ' hl-it' : '') + '" data-i="' + e.i + '">' +
-    '<span class="sug-dot" style="background:var(--acc)"></span>' +
-    '<span>' + hlText(ST.D[e.i], q) + (ST.Z[e.i] && ST.Z[e.i] !== ST.D[e.i] ? ' <span class="k">' + hlText(ST.Z[e.i], q) + '</span>' : '') + '</span>' +
-    '</div>').join('');
+  box.innerHTML = '<div class="sug-grp">' + esc(T().from === undefined ? '' : (lang === 'zh' ? '车站' : lang === 'ja' ? '駅' : 'Stations')) + '</div>' +
+    sugItems.map((e, i) =>
+      '<div class="sug-it' + (i === 0 ? ' hl-it' : '') + '" data-i="' + e.i + '">' +
+      '<span>' + hlText(ST.D[e.i], q) + (ST.Z[e.i] && ST.Z[e.i] !== ST.D[e.i] ? ' <span class="k">' + hlText(ST.Z[e.i], q) + '</span>' : '') + '</span>' +
+      '<span class="rt">' + ST.R[e.i] + '</span>' +
+      '</div>').join('');
   box.style.display = 'block';
 }
 function hideSug() { $('sug').style.display = 'none'; sugWhich = null; }
@@ -853,22 +1246,21 @@ function bindInput(which) {
   input.addEventListener('keydown', ev => {
     if (ev.key === 'Enter') {
       ev.preventDefault();
-      if (sugItems.length && sugWhich === which) pickStation(sugItems[0].i, which);
+      if (sugItems.length && sugWhich === which) { pickStation(sugItems[0].i, which); $('rTo').focus(); }
       else doSearch();
-      if (which === 'from') $('rTo').focus(); else $('rTo').blur();
     } else if (ev.key === 'Escape') hideSug();
   });
   input.addEventListener('blur', () => setTimeout(hideSug, 130));
 }
 bindInput('from'); bindInput('to');
 
-/* ================= 模式 / 控件 ================= */
+/* ══════════════════ 模式 / 控件 ══════════════════ */
 function setMode(m) {
   state.mode = m;
-  document.querySelectorAll('.mchip').forEach(c => c.classList.toggle('on', c.dataset.mode === m));
-  $('timeWrap').classList.toggle('show', m === 'dep');
+  document.querySelectorAll('.mchip[data-mode]').forEach(c => c.classList.toggle('on', c.dataset.mode === m));
+  $('timeWrap').classList.toggle('show', m === 'dep' || m === 'arr');
 }
-document.querySelectorAll('.mchip').forEach(c => c.addEventListener('click', () => {
+document.querySelectorAll('.mchip[data-mode]').forEach(c => c.addEventListener('click', () => {
   setMode(c.dataset.mode);
   if (state.from != null && state.to != null) doSearch();
   stateHash();
@@ -887,105 +1279,204 @@ $('daySel').addEventListener('change', () => {
 });
 $('depTime').addEventListener('change', () => {
   state.depTime = timeToMin($('depTime').value);
-  if (state.mode === 'dep' && state.from != null && state.to != null) doSearch();   /* 指定模式下改时刻即重搜 */
+  if ((state.mode === 'dep' || state.mode === 'arr') && state.from != null && state.to != null) doSearch();
 });
 $('goBtn').addEventListener('click', doSearch);
 
-/* ================= 检索执行 ================= */
-function doSearch() {
-  hideSug();
-  const f = nodeIdx($('rFrom').value), t = nodeIdx($('rTo').value);
-  if (f < 0 || t < 0) { toast(T().badSta); return; }
-  if (f === t) { toast(T().sameSta); return; }
-  state.from = f; state.to = t;
-  $('rFrom').value = ST.D[f]; $('rTo').value = ST.D[t];
-  const mode = state.mode;
-  let tStart, autoFirst = false;
-  if (mode === 'first') {
-    tStart = firstDeparture(f, state.day);
-    if (tStart == null) { toast(T().noRoute); return; }
-  } else if (mode === 'dep') {
-    tStart = timeToMin($('depTime').value);
-  } else tStart = nowMin();
-  let res = raptor(f, t, tStart, state.day, { easy: mode === 'easy' });
-  if (!res && (mode === 'early' || mode === 'easy')) {
-    /* 当前时刻无车(深夜等) → 自动改始発再试 */
-    const fd = firstDeparture(f, state.day);
-    if (fd != null) { const r2 = raptor(f, t, fd, state.day, { easy: mode === 'easy' }); if (r2) { res = r2; autoFirst = true; } }
-  }
-  if (!res) { toast(T().noRoute); return; }
-  res.autoFirst = autoFirst;
-  curResult = res;
-  renderResult(res);
-  highlightOnMap(res);
-  stateHash();
-  $('result').classList.add('show');
-  $('panel').classList.add('compact');
-}
-
-/* ================= 结果渲染(Yahoo 风格时间轴) ================= */
+/* ══════════════════ 结果渲染 ══════════════════ */
 const TYPE_JA = { Nozomi: 'のぞみ', Hikari: 'ひかり', Kodama: 'こだま', Tsubasa: 'つばさ', Hayabusa: 'はやぶさ', Komachi: 'こまち', Asama: 'あさま', Kagayaki: 'かがやき', Yamabiko: 'やまびこ', Toki: 'とき', Tanigawa: 'たにがわ', Nasuno: 'なすの', Hakutaka: 'はくたか', Hayate: 'はやて', Mizuho: 'みずほ', Sakura: 'さくら', Tsubame: 'つばめ', Kamome: 'かもめ', Tsurugi: 'つるぎ' };
-function typeName(ty) { const n = TYPES[ty] ? TYPES[ty][0] : ''; return TYPE_JA[n] || n; }
+function typeJa(ty) { const n = TYPES[ty] ? TYPES[ty][0] : ''; return TYPE_JA[n] || n; }
+function typeZh(ty) { return TYPES[ty] ? TYPES[ty][1] : ''; }
+/* 乘车区间内的「主导线路」= 区间线路众数, 平局取里程大者。
+   不能直接用全程众数: 直通运行会把「大船→鎌倉」的横須賀線误标成総武線,
+   把「新宿→大船」的湘南新宿ライン误标成高崎線。 */
+function legLine(ti, board, alight) {
+  const t = TM.T[ti], L = t[1], K = t[2];
+  const cnt = new Map(), km = new Map();
+  let best = -1, bestN = 0, bestK = -1;
+  for (let i = board; i < alight; i++) {
+    const li = L[i];
+    if (li < 0) continue;
+    const n = (cnt.get(li) || 0) + 1, k = (km.get(li) || 0) + K[i];
+    cnt.set(li, n); km.set(li, k);
+    if (n > bestN || (n === bestN && k > bestK)) { bestN = n; bestK = k; best = li; }
+  }
+  return best >= 0 ? best : tmapLine[ti];
+}
+function lineName(ti, b, a) { const li = (b == null) ? tmapLine[ti] : legLine(ti, b, a); return li >= 0 ? LINES[li] : null; }
+function lineColorOf(ti, b, a) { const li = (b == null) ? tmapLine[ti] : legLine(ti, b, a); return li >= 0 && LINES[li][2] ? LINES[li][2] : '#4f8ef7'; }
+/* 列车爱称: tmap 的 TN 表按种别取 */
+function trainName(ti, ty) {
+  const TN = TM.T[ti][4];
+  if (!TN) return '';
+  const ic = TYPES[ty] ? TYPES[ty][0] : '';
+  return TN[ic] || TN['_'] || '';
+}
 function renderResult(res) {
   const t = T();
-  const depS = fmtMin(res.dep), arrS = fmtMin(res.arr);
-  const durS = fmtDur(res.arr - res.dep);
-  const xfrS = tf(t.xfrN, res.transfers);
+  const cur = res.cands[res.idx].r;
+  const depS = fmtMin(cur.dep), arrS = fmtMin(cur.arr);
+  const durS = fmtDur(cur.arr - cur.dep);
   let html = '<span class="tm">' + depS + ' <small>' + t.sumDep + '</small></span><span class="arw">→</span><span class="tm">' + arrS + ' <small>' + t.sumArr + '</small></span>' +
-    '<span class="meta"><span>' + t.sumDur + ' <b>' + durS + '</b></span><span>' + t.sumXfr + ' <b>' + xfrS + '</b></span><span>' + t.sumKm + ' <b>' + res.km.toFixed(1) + ' ' + t.kmUnit + '</b></span></span>';
-  if (res.autoFirst) html += '<div style="flex-basis:100%;font-size:10px;color:#fbbf24;font-weight:700;padding-top:2px">' + esc(t.autoFirst) + '</div>';
+    '<span class="meta"><span>' + t.sumDur + ' <b>' + durS + '</b></span><span>' + t.sumXfr + ' <b>' + xfrLabel(cur.xfr) + '</b></span><span>' + t.sumKm + ' <b>' + cur.km.toFixed(1) + ' ' + t.kmUnit + '</b></span></span>';
+  if (res.note) html += '<div style="flex-basis:100%;font-size:10px;color:#fbbf24;font-weight:700;padding-top:2px">' + esc(res.note) + '</div>';
   $('sumBar').innerHTML = html;
-  /* ---- 时间轴 ---- */
-  const stRow = (ni, time, label) =>
-    '<div class="tl-st"><span class="nm">' + esc(ST.D[ni]) + '</span>' +
-    (ST.Z[ni] && ST.Z[ni] !== ST.D[ni] ? '<span class="zh">' + esc(ST.Z[ni]) + '</span>' : '') +
-    '<span class="t"><span class="lb">' + label + '</span>' + fmtMin(time) + '</span></div>';
-  const node = (ni, time, label, lineCls, isEnd) =>
+  /* 方案卡 */
+  $('routes').innerHTML = res.cands.map((c, i) => {
+    const r = c.r;
+    const tg = c.tag === 'fast' ? t.tagFast : c.tag === 'easy' ? t.tagEasy : t.tagAlt;
+    const cls = c.tag === 'fast' ? '' : ' g';
+    return '<div class="rcard' + (i === res.idx ? ' on' : '') + '" data-i="' + i + '">' +
+      '<div class="rt">' + fmtMin(r.dep) + '<span style="color:var(--dim);font-size:10px">→</span>' + fmtMin(r.arr) + '</div>' +
+      '<div class="rd">' + fmtDur(r.arr - r.dep) + ' · ' + xfrLabel(r.xfr) + '</div>' +
+      '<div class="rx"><span>' + r.km.toFixed(0) + ' ' + t.kmUnit + '</span></div>' +
+      '<span class="rtag' + cls + '">' + esc(tg) + '</span>' +
+      '</div>';
+  }).join('');
+  $('routes').querySelectorAll('.rcard').forEach(el => el.addEventListener('click', () => {
+    curResult.idx = +el.dataset.i; openNext = -1;
+    renderResult(curResult);
+    highlightOnMap(curResult.cands[curResult.idx].r);
+    stateHash();
+  }));
+  renderLegs(cur);
+}
+function renderLegs(r) {
+  const t = T();
+  if (!r.legs.length) { $('legs').innerHTML = '<div class="tl-empty">' + esc(t.emptyLegs) + '</div>'; return; }
+  const stRow = (ni, time, label, isEnd) =>
     '<div class="tl-node"><div class="tl-ic">' + (isEnd ? '<div class="tl-dot end"></div>' : '<div class="tl-dot"></div>') +
-    (isEnd ? '' : '<div class="tl-line ' + (lineCls || '') + '"></div>') + '</div><div class="tl-body">' +
-    stRow(ni, time, label) + '</div></div>';
-  const xfrRow = (ni, mins) =>
-    '<div class="tl-xfr"><span class="xm">⇄</span><span>' + esc(ST.D[ni]) + '</span><span>' + t.sumXfr + ' ' + mins + ' ' + t.sumMin + '</span></div>';
-  const walkRow = (fromNi, toNi, mins, before) =>
-    '<div class="tl-walk" style="' + (before ? '' : 'padding-left:32px') + '"><span>🚶</span><span>' + esc(ST.D[fromNi]) + ' → ' + esc(ST.D[toNi]) + '</span><span>' + t.walk + ' ' + mins + ' ' + t.sumMin + '</span></div>';
+    (isEnd ? '' : '<div class="tl-line"></div>') + '</div><div class="tl-body"><div class="tl-st">' +
+    '<span class="nm">' + esc(ST.D[ni]) + '</span>' +
+    (ST.Z[ni] && ST.Z[ni] !== ST.D[ni] && lang !== 'ja' ? '<span class="zh">' + esc(ST.Z[ni]) + '</span>' : '') +
+    '<span class="t"><span class="lb">' + label + '</span>' + fmtMin(time) + '</span></div></div></div>';
   let tl = '<div class="tl">';
-  res.legs.forEach((lg, li) => {
-    const T_ = TM.T[lg.tmap], S = T_[0], L = T_[1];
-    const li0 = L[lg.board];
-    const line = li0 >= 0 ? LINES[li0] : null;
-    const color = line && line[2] ? line[2] : '#6da9ff';
-    const nextWalk = (li + 1 < res.legs.length && res.legs[li + 1].walkFrom >= 0) || (li + 1 === res.legs.length && res.finalWalk);
-    /* 换乘/步行衔接行(在本 leg 节点之后) */
-    let linkRow = '';
-    if (li + 1 < res.legs.length) {
-      const nx = res.legs[li + 1];
-      if (nx.walkFrom >= 0 && nx.walkMin > 0) linkRow = walkRow(nx.walkFrom, S[nx.board], nx.walkMin, false);
-      else linkRow = xfrRow(S[nx.board], nx.dep - lg.arr);
-    } else if (res.finalWalk) linkRow = walkRow(res.finalWalk[0], res.to, res.finalWalk[1], false);
-    /* 起点前的步行(罕见: 起点需先徒步到乘车场) */
-    if (li === 0 && lg.walkFrom >= 0 && lg.walkMin > 0) tl += walkRow(lg.walkFrom, S[lg.board], lg.walkMin, true);
-    tl += node(lg.fromNode, lg.dep, t.dep, nextWalk ? 'walk' : (li + 1 < res.legs.length || res.finalWalk ? 'xfr' : ''), false);
-    /* 列车信息 */
-    const mids = [];
-    for (let i = lg.board + 1; i < lg.alight; i++) mids.push(ST.D[S[i]]);
-    tl += '<div style="display:flex;gap:10px"><div style="width:22px;flex:none"></div><div class="tl-body" style="padding-bottom:8px">' +
-      '<div class="tl-train"><span class="lc" style="background:' + esc(color) + '"></span>' +
-      '<span class="tn">' + esc(line ? line[0] : '?') + '</span>' +
-      '<span class="ty">' + esc(typeName(lg.ty)) + '</span>' +
-      '<span class="nkm">' + esc(tf(t.toDir, ST.D[S[S.length - 1]])) + ' · ' + (lg.alight - lg.board) + ' ' + esc(t.stops) + '</span></div>';
-    if (mids.length) {
-      const shown = mids.slice(0, 12).join('・');
-      tl += '<div class="tl-via">' + esc(t.via) + ': ' + esc(shown) + (mids.length > 12 ? ' …(+' + (mids.length - 12) + ')' : '') + '</div>';
+  r.legs.forEach((lg, li) => {
+    const ti = lg.tmap, S = TM.T[ti][0];
+    const ln = lineName(ti, lg.board, lg.alight);
+    const color = lineColorOf(ti, lg.board, lg.alight);
+    const nm = trainName(ti, lg.ty);
+    const dst = ST.D[S[S.length - 1]];
+    const nStop = lg.alight - lg.board;
+    let kmLeg = 0;
+    for (let i = lg.board; i < lg.alight; i++) kmLeg += TM.T[ti][2][i];
+    kmLeg /= 10;
+    /* 起点前徒步 */
+    if (li === 0 && lg.walkFrom >= 0 && lg.walkMin > 0)
+      tl += '<div class="tl-walk"><span>🚶</span><span>' + esc(ST.D[lg.walkFrom]) + ' → ' + esc(ST.D[S[lg.board]]) + '</span><span>' + tf(t.walkMin, lg.walkMin) + '</span></div>';
+    tl += stRow(lg.fromNode, lg.dep, t.dep, false);
+    /* 列车卡 */
+    tl += '<div style="display:flex;gap:10px"><div style="width:20px;flex:none;display:flex;justify-content:center">' +
+      '<div style="width:2.5px;background:' + esc(color) + ';opacity:.55;border-radius:2px"></div></div>' +
+      '<div style="flex:1;min-width:0">' +
+      '<div class="tcard" style="--lc:' + esc(color) + '">' +
+      '<div class="th">' +
+      '<span class="tn">' + esc(lang === 'zh' && ln ? ln[1] : (ln ? ln[0] : '?')) + '</span>' +
+      '<span class="ty">' + esc(lang === 'ja' ? typeJa(lg.ty) : typeZh(lg.ty)) + '</span>' +
+      (nm ? '<span class="tnm">' + esc(nm) + '</span>' : '') +
+      '<span class="dst">' + esc(tf(t.dirTo, dst)) + '</span>' +
+      '</div>' +
+      '<div class="tf">' + esc(tf(t.legInfo, nStop, kmLeg.toFixed(1), t.kmUnit)) + '</div>' +
+      '<button class="nxt' + (openNext === li ? ' open' : '') + '" data-li="' + li + '">' +
+      '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .2s var(--ease-smooth);transform:rotate(' + (openNext === li ? 90 : 0) + 'deg)"><path d="M9 6l6 6-6 6"/></svg>' +
+      esc(t.nextTrips) + '<span class="cv">' + esc(t.tapTrains) + '</span></button>' +
+      (openNext === li ? renderNextList(li, lg) : '') +
+      '</div></div></div>';
+    /* 换乘 / 终到徒步 */
+    if (li + 1 < r.legs.length) {
+      const nx = r.legs[li + 1];
+      if (nx.walkFrom >= 0 && nx.walkMin > 0)
+        tl += '<div class="tl-walk"><span>🚶</span><span>' + esc(ST.D[nx.walkFrom]) + ' → ' + esc(ST.D[TM.T[nx.tmap][0][nx.board]]) + '</span><span>' + tf(t.walkMin, nx.walkMin) + '</span></div>';
+      else
+        tl += '<div class="tl-xfr"><span class="xm">⇄</span><span>' + esc(ST.D[lg.toNode]) + '</span><span>' + tf(t.xfrAt, nx.dep - lg.arr) + '</span></div>';
+    } else if (r.finalWalk) {
+      tl += '<div class="tl-walk"><span>🚶</span><span>' + esc(ST.D[r.finalWalk[0]]) + ' → ' + esc(ST.D[r.to]) + '</span><span>' + tf(t.walkMin, r.finalWalk[1]) + '</span></div>';
     }
-    tl += '</div></div>';
-    tl += linkRow;
   });
-  tl += node(res.to, res.arr, t.arr, '', true);
-  tl += '<div style="font-size:9.5px;color:var(--dim);padding:8px 0 2px 32px;font-weight:600">' + esc(t.dataNote) + '</div>';
+  tl += stRow(r.to, r.arr, t.arr, true);
+  tl += '<div class="tl-note">' + esc(t.dataNote) + '</div>';
   tl += '</div>';
   $('legs').innerHTML = tl;
+  $('legs').querySelectorAll('.nxt').forEach(b => b.addEventListener('click', ev => {
+    ev.stopPropagation();
+    const li = +b.dataset.li;
+    openNext = (openNext === li) ? -1 : li;
+    renderResult(curResult);
+  }));
+  $('legs').querySelectorAll('.nitem').forEach(b => b.addEventListener('click', () => {
+    const li = +b.dataset.li, pi = +b.dataset.pi, d0 = +b.dataset.d0, ty = +b.dataset.ty;
+    const tm = b.dataset.tm != null && b.dataset.tm !== '' ? +b.dataset.tm : null;
+    const bd = b.dataset.bd != null && b.dataset.bd !== '' ? +b.dataset.bd : null;
+    const al = b.dataset.al != null && b.dataset.al !== '' ? +b.dataset.al : null;
+    const nr = reRouteWith(li, { tmap: tm, board: bd, alight: al, pi, ty, d0 }, null);
+    if (!nr) { toast(T().noConn); return; }
+    curResult.cands[curResult.idx] = { tag: 'alt', r: nr };
+    openNext = -1;
+    renderResult(curResult);
+    highlightOnMap(nr);
+    stateHash();
+  }));
 }
-/* ================= P4: 小地图 ================= */
+function renderNextList(li, lg) {
+  const t = T();
+  const list = nextLegTrips(lg, curResult.day, 6);
+  if (!list.length) return '<div class="nlist"><div class="nitem" style="cursor:default;color:var(--dim)">' + esc(t.nextNone) + '</div></div>';
+  return '<div class="nlist">' + list.map(x => {
+    const off = patOffsets(x.tmap, x.pi);
+    const arrAt = x.d0 + off[0][x.alight];
+    const nr = reRouteWith(li, x, null);
+    const okTxt = nr ? tf(t.arriveAt, fmtMinRaw(nr.arr)) : t.noConn;
+    const cls = nr ? 'ok' : 'bad';
+    const S2 = TM.T[x.tmap][0];
+    const sameTmap = x.tmap === lg.tmap;
+    return '<div class="nitem" data-li="' + li + '" data-tm="' + x.tmap + '" data-bd="' + x.board + '" data-al="' + x.alight +
+      '" data-pi="' + x.pi + '" data-d0="' + x.d0 + '" data-ty="' + x.ty + '"' + (sameTmap ? '' : ' style="opacity:.86"') + '>' +
+      '<span class="nt">' + fmtMinRaw(x.dep) + '</span>' +
+      '<span class="nty">' + esc(lang === 'ja' ? typeJa(x.ty) : typeZh(x.ty)) + '</span>' +
+      '<span class="nty">' + esc(tf(t.dirTo, ST.D[S2[S2.length - 1]])) + '</span>' +
+      '<span class="nr ' + cls + '">' + esc(okTxt) + '</span>' +
+      '</div>';
+  }).join('') + '</div>';
+}
+
+/* ══════════════════ 时刻基准(全站 JST + 日本祝日→休日) ══════════════════ */
+const JST = 9 * 3600 * 1000;
+const HOLIDAY_BASE = {
+  2024: [[1,1],[1,8],[2,12],[2,23],[3,20],[4,29],[5,3],[5,4],[5,5],[5,6],[7,15],[8,11],[9,16],[9,23],[10,14],[11,4],[11,23]],
+  2025: [[1,1],[1,13],[2,11],[2,23],[3,20],[4,29],[5,3],[5,4],[5,5],[5,6],[7,21],[8,11],[9,15],[9,23],[10,13],[11,3],[11,24]],
+  2026: [[1,1],[1,12],[2,11],[2,23],[3,20],[4,29],[5,3],[5,4],[5,5],[5,6],[7,20],[8,11],[9,21],[9,22],[9,23],[10,12],[11,3],[11,23]],
+  2027: [[1,1],[1,11],[2,11],[2,23],[3,22],[4,29],[5,3],[5,4],[5,5],[7,19],[8,11],[9,20],[9,23],[10,11],[11,3],[11,23]],
+  2028: [[1,1],[1,10],[2,11],[2,23],[3,20],[4,29],[5,3],[5,4],[5,5],[7,17],[8,11],[9,18],[9,22],[10,9],[11,3],[11,23]],
+  2029: [[1,1],[1,8],[2,11],[2,12],[2,23],[3,20],[4,29],[5,3],[5,4],[5,5],[7,16],[8,11],[9,17],[9,23],[10,8],[11,3],[11,23]],
+  2030: [[1,1],[1,14],[2,11],[2,23],[3,21],[4,29],[5,3],[5,4],[5,5],[5,6],[7,15],[8,11],[9,16],[9,23],[10,14],[11,4],[11,23]],
+};
+const HOLIDAYS = (() => {
+  const set = new Set();
+  const keyOf = d => d.toISOString().slice(0, 10);
+  for (const y in HOLIDAY_BASE) {
+    for (const [m, d] of HOLIDAY_BASE[y]) set.add(`${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`);
+    const days = HOLIDAY_BASE[y].map(([m, d]) => new Date(Date.UTC(y, m-1, d)));
+    for (const dt of days) {
+      if (dt.getUTCDay() === 0) { const nx = new Date(dt); do { nx.setUTCDate(nx.getUTCDate()+1); } while (set.has(keyOf(nx)) || nx.getUTCDay() === 0); set.add(keyOf(nx)); }
+    }
+    for (let t = 0; t < 370; t++) {
+      const dt = new Date(Date.UTC(y, 0, 1+t));
+      const t0 = dt.getTime(), k = keyOf(dt), kp = keyOf(new Date(t0-86400000)), kn = keyOf(new Date(t0+86400000));
+      const wd = dt.getUTCDay();
+      if (wd >= 1 && wd <= 5 && set.has(kp) && set.has(kn) && !set.has(k)) set.add(k);
+    }
+  }
+  return set;
+})();
+function jstParts(ms) { const d = new Date(ms + JST); return { y: d.getUTCFullYear(), m: d.getUTCMonth()+1, d: d.getUTCDate(), wd: d.getUTCDay(), key: d.toISOString().slice(0,10) }; }
+function todayDayMode() {
+  const p = jstParts(Date.now());
+  if (HOLIDAYS.has(p.key)) return 'su';
+  return p.wd === 6 ? 'sa' : p.wd === 0 ? 'su' : 'wd';
+}
+function nowMin() { return Math.floor((Date.now() + JST) % 86400000 / 60000); }
+
+/* ══════════════════ 小地图 ══════════════════ */
 function baseStyle() {
   return {
     version: 8,
@@ -997,7 +1488,6 @@ function baseStyle() {
     ],
   };
 }
-/* 地图不可用时的占位提示(不影响检索) */
 function mapNote(msg) {
   const el = $('map');
   if (!el || el.dataset.note) return;
@@ -1012,7 +1502,6 @@ async function initMap() {
   let mg;
   try { mg = await import('https://cdn.jsdelivr.net/npm/maplibre-gl@6.12.0/dist/maplibre-gl.mjs'); }
   catch (e) { console.warn('[map] import failed', e); mapNote(T().mapOff); return; }
-  window.__map = true;
   try {
     map = new mg.Map({
       container: 'map', style: baseStyle(),
@@ -1020,7 +1509,7 @@ async function initMap() {
       attributionControl: new mg.AttributionControl({ compact: true }),
       fadeDuration: 0, refreshExpiredTiles: false,
     });
-  } catch (e) { console.warn('[map] init failed(WebGL2?)', e); mapNote(T().mapOff); return; }
+  } catch (e) { console.warn('[map] init failed', e); mapNote(T().mapOff); return; }
   map.on('load', () => {
     mapReady = true;
     map.addSource('segs', { type: 'geojson', data: SEG });
@@ -1049,12 +1538,12 @@ async function initMap() {
       'text-offset': [0, 1.1], 'text-anchor': 'top', 'text-allow-overlap': false },
       paint: { 'text-color': '#eaf2ff', 'text-halo-color': 'rgba(6,8,14,0.85)', 'text-halo-width': 1.4 } });
     refreshTrackColors();
-    if (curResult) highlightOnMap(curResult);
+    if (curResult) highlightOnMap(curResult.cands[curResult.idx].r);
   });
 }
 function refreshTrackColors() {
   if (!map || !mapReady) return;
-  const light = document.documentElement.dataset.theme === 'light';
+  const light = document.documentElement.getAttribute('data-theme') === 'light';
   const paint = light
     ? { 'raster-saturation': -0.2, 'raster-brightness-max': 1.0, 'raster-brightness-min': 0.0, 'raster-contrast': 0.05, 'raster-opacity': 1.0 }
     : { 'raster-saturation': -0.85, 'raster-brightness-max': 0.34, 'raster-brightness-min': 0.02, 'raster-contrast': 0.12, 'raster-opacity': 0.96 };
@@ -1066,7 +1555,7 @@ function refreshTrackColors() {
     map.setPaintProperty('hl-sta-label', 'text-halo-color', light ? 'rgba(255,255,255,0.9)' : 'rgba(6,8,14,0.85)');
   } catch (e) { }
 }
-/* segments3d 索引: (line|from|to) -> [fi...]; 站名邻接表(高亮跨站区间寻路) */
+let segIndex = null, segAdj = null;
 function buildSegIndex() {
   segIndex = new Map(); segAdj = new Map();
   if (!SEG || !SEG.features) return;
@@ -1081,7 +1570,6 @@ function buildSegIndex() {
     segAdj.get(a).push({ to: b, line: ln, color: p.color || '#888', fi: i });
   }
 }
-/* 两站间轨道几何: 先直连, 失败则 BFS(同线路优先, ≤9 跳) */
 function legGeomIdx(fromN, toN, line) {
   let arr = segIndex.get(line + '|' + fromN + '|' + toN) || segIndex.get(line + '|' + toN + '|' + fromN);
   if (arr) return arr;
@@ -1104,19 +1592,22 @@ function legGeomIdx(fromN, toN, line) {
   }
   return null;
 }
-function highlightOnMap(res) {
-  if (!mapReady) return;
+function highlightOnMap(r) {
+  if (!mapReady || !r) return;
   const feats = [], walkFeats = [], pts = [];
   const addPt = ni => pts.push({ type: 'Feature', properties: { n: ST.D[ni] }, geometry: { type: 'Point', coordinates: ST.S[ni] } });
-  addPt(res.from); addPt(res.to);
-  for (const lg of res.legs) {
-    const T_ = TM.T[lg.tmap], S = T_[0], L = T_[1];
+  addPt(r.from); addPt(r.to);
+  for (const lg of r.legs) {
+    const ti = lg.tmap, S = TM.T[ti][0], L = TM.T[ti][1];
+    const color = lineColorOf(ti, lg.board, lg.alight);
+    const ln = lineName(ti, lg.board, lg.alight);
+    const lineNameJa = ln ? ln[0] : null;
     if (lg.walkFrom >= 0) walkFeats.push({ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: [ST.S[lg.walkFrom], ST.S[S[lg.board]]] } });
     for (let i = lg.board; i < lg.alight; i++) {
-      const li0 = L[i];
-      const lineName = li0 >= 0 ? LINES[li0][0] : null;
-      const color = li0 >= 0 && LINES[li0][2] ? LINES[li0][2] : '#6da9ff';
-      const idxArr = lineName ? legGeomIdx(ST.N[S[i]], ST.N[S[i + 1]], lineName) : null;
+      /* 几何优先按该区间真实的线路名匹配(并行区间主导名可能不同), 回落主导名 */
+      const segJa = L[i] >= 0 && LINES[L[i]] ? LINES[L[i]][0] : null;
+      let idxArr = segJa ? legGeomIdx(ST.N[S[i]], ST.N[S[i + 1]], segJa) : null;
+      if ((!idxArr || !idxArr.length) && lineNameJa) idxArr = legGeomIdx(ST.N[S[i]], ST.N[S[i + 1]], lineNameJa);
       if (idxArr && idxArr.length) {
         for (const fi of idxArr) feats.push({ type: 'Feature', properties: { color }, geometry: SEG.features[fi].geometry });
       } else {
@@ -1124,7 +1615,7 @@ function highlightOnMap(res) {
       }
     }
   }
-  if (res.finalWalk) walkFeats.push({ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: [ST.S[res.finalWalk[0]], ST.S[res.to]] } });
+  if (r.finalWalk) walkFeats.push({ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: [ST.S[r.finalWalk[0]], ST.S[r.to]] } });
   try {
     map.getSource('hl').setData({ type: 'FeatureCollection', features: feats });
     map.getSource('hlwalk').setData({ type: 'FeatureCollection', features: walkFeats });
@@ -1142,13 +1633,14 @@ function highlightOnMap(res) {
   if (minX <= maxX) map.fitBounds([[minX, minY], [maxX, maxY]], { padding: 70, maxZoom: 12, duration: 900 });
 }
 
-/* ================= P5: hash 持久化 + 启动 ================= */
+/* ══════════════════ hash 持久化 + 启动 ══════════════════ */
 function stateHash() {
   if (state.from == null || state.to == null) return;
   const p = new URLSearchParams();
   p.set('f', ST.N[state.from]); p.set('t', ST.N[state.to]);
   p.set('m', state.mode); p.set('d', state.day);
-  if (state.mode === 'dep') p.set('tm', minToTime(timeToMin($('depTime').value)));
+  if (state.mode === 'dep' || state.mode === 'arr') p.set('tm', minToTime(timeToMin($('depTime').value)));
+  if (curResult) p.set('i', curResult.idx);
   history.replaceState(null, '', '#mjrj=' + p.toString());
 }
 function parseHash() {
@@ -1160,28 +1652,24 @@ function parseHash() {
   if (f < 0 || t < 0 || f === t) return false;
   state.from = f; state.to = t;
   $('rFrom').value = ST.D[f]; $('rTo').value = ST.D[t];
-  const m = p.get('m'); if (['early', 'easy', 'dep', 'first'].includes(m)) setMode(m);
-  const d = p.get('d'); if (['wd', 'sa', 'su'].includes(d)) { state.day = d; $('daySel').value = d; }
+  const m = p.get('m'); if (['now', 'dep', 'first', 'last', 'arr'].indexOf(m) >= 0) setMode(m);
+  const d = p.get('d'); if (['wd', 'sa', 'su'].indexOf(d) >= 0) { state.day = d; $('daySel').value = d; }
   if (p.get('tm')) { $('depTime').value = p.get('tm'); state.depTime = timeToMin(p.get('tm')); }
   return true;
 }
-(function boot() {
-  bootRun();
-})();
-async function bootRun() {
+(async function bootRun() {
   try {
     await loadData();
+    buildTypeFlags();
     buildIndexes();
     prepRuntime();
     buildSegIndex();
-    /* 曜日默认按今天(JST, 祝日→休日) */
+    setMode(state.mode);          /* 必须: timeWrap 的 show 由 setMode 控制 */
     state.day = todayDayMode();
     $('daySel').value = state.day;
-    /* 指定时刻默认当前(5 分丸め) */
     const now5 = Math.floor(nowMin() / 5) * 5;
     $('depTime').value = minToTime(now5);
     state.depTime = now5;
-    initMap();
     if (parseHash()) doSearch();
   } catch (e) {
     console.error(e);
@@ -1193,9 +1681,8 @@ async function bootRun() {
     return;
   }
   $('loader').classList.add('done');
-  setTimeout(() => { $('loader').style.display = 'none'; }, 480);
-}
-
+  setTimeout(() => { $('loader').style.display = 'none'; initMap(); }, 480);
+})();
 </script>
 </body>
 </html>

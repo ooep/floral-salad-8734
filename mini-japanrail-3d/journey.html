@@ -94,8 +94,8 @@ button,input,select { font-family:inherit; }
 
 /* ══════════════ 底部主面板(大玻璃) ══════════════ */
 #panel { position:absolute; left:50%; transform:translateX(-50%); bottom:10px; z-index:10;
-  width:min(600px, calc(100vw - 16px)); max-height:calc(100dvh - 62px);
-  display:flex; flex-direction:column; border-radius:24px; overflow:hidden;
+  width:min(624px, calc(100vw - 16px)); max-height:calc(100dvh - 62px);
+  display:flex; flex-direction:column; border-radius:26px; overflow:hidden;
   background:var(--glass-panel);
   border:1px solid var(--glass-edge);
   backdrop-filter:var(--glass-panel-blur); -webkit-backdrop-filter:var(--glass-panel-blur);
@@ -103,8 +103,8 @@ button,input,select { font-family:inherit; }
 :root[data-theme="light"] #panel { box-shadow:inset 0 1px 0 rgba(255,255,255,.85), inset 0 -1px 1px var(--glass-lo), 0 12px 36px rgba(15,23,42,.16); }
 
 /* ───── 搜索卡 ───── */
-#searchCard { padding:12px 12px 10px; flex:none; }
-.srow { display:flex; align-items:center; gap:7px; }
+#searchCard { padding:14px 14px 12px; flex:none; }
+.srow { display:flex; align-items:center; gap:8px; }
 .sfield { flex:1; min-width:0; position:relative; }
 .sfield label { position:absolute; left:11px; top:4px; font-size:8.5px; font-weight:700; letter-spacing:.4px;
   color:var(--dim); pointer-events:none; z-index:1; }
@@ -138,7 +138,9 @@ button,input,select { font-family:inherit; }
   transition:color .15s, background .28s var(--ease-spring), border-color .15s; }
 .mchip:hover { color:var(--txt); background:rgba(255,255,255,.08); }
 .mchip.on { color:#fff; background:var(--acc); border-color:var(--acc); box-shadow:0 2px 8px var(--acc-soft); }
-.mchip .k { font-size:8.5px; opacity:.78; font-weight:600; }
+/* 副标题只在选中态显示: 五个模式挤在一行时更干净, 又保留对始発/終電 的说明 */
+.mchip .k { font-size:8.5px; opacity:.78; font-weight:600; display:none; }
+.mchip.on .k { display:inline; }
 #timeWrap { display:none; align-items:center; gap:5px; height:27px; padding:0 10px; border:1px solid var(--glass-edge);
   border-radius:var(--r-pill); background:var(--glass); }
 #timeWrap.show { display:flex; }
@@ -148,11 +150,24 @@ button,input,select { font-family:inherit; }
 .daySel { height:24px; border:1px solid var(--glass-edge); border-radius:var(--r-pill); background:var(--glass);
   color:var(--txt); font-size:11px; font-weight:700; padding:0 7px; outline:none; cursor:pointer; }
 .daySel option { background:var(--glass-solid); color:var(--txt); }
-#optWrap { display:flex; align-items:center; gap:6px; margin-top:6px; }
-#optWrap .mchip { height:24px; font-size:10.5px; }
+/* ───── 列车种别 / 乗換上限 ───── */
+#optWrap { display:flex; align-items:center; gap:5px; margin-top:10px; padding-top:9px; flex-wrap:wrap;
+  border-top:1px solid var(--line); }
+#optWrap .olb { font-size:9px; font-weight:700; letter-spacing:.5px; color:var(--dim); flex:none; }
+#optWrap .osep { width:1px; height:13px; background:var(--line); flex:none; margin:0 4px; }
+.ochip { height:24px; padding:0 9px; border:1px solid var(--glass-edge); border-radius:var(--r-pill);
+  background:transparent; color:var(--dim); font-size:10.5px; font-weight:700; cursor:pointer;
+  display:flex; align-items:center; gap:5px;
+  transition:color .15s, background .28s var(--ease-spring), border-color .15s, opacity .15s; }
+.ochip::before { content:''; width:5px; height:5px; border-radius:50%; flex:none;
+  background:var(--dim); opacity:.45; transition:background .2s, opacity .2s; }
+.ochip:not(.on) { opacity:.6; }
+.ochip:hover { color:var(--txt); background:rgba(255,255,255,.07); }
+.ochip.on { color:var(--txt); background:var(--acc-soft); border-color:var(--acc-border); }
+.ochip.on::before { background:var(--acc); opacity:1; }
 
 /* ───── 联想面板 ───── */
-#sug { position:absolute; left:12px; right:12px; top:70px; z-index:20; display:none;
+#sug { position:absolute; left:14px; right:14px; top:72px; z-index:20; display:none;
   max-height:min(320px, 46dvh); overflow-y:auto; border-radius:16px;
   background:var(--glass-solid); border:1px solid var(--glass-edge);
   box-shadow:0 14px 44px rgba(0,0,0,.42), inset 0 1px 0 var(--glass-hi); }
@@ -280,6 +295,21 @@ button,input,select { font-family:inherit; }
 html.perf-low #brand, html.perf-low #hudRight, html.perf-low .gcircle, html.perf-low #panel,
 html.perf-low .rcard, html.perf-low .tcard { backdrop-filter:none !important; -webkit-backdrop-filter:none !important; box-shadow:0 1px 4px rgba(0,0,0,.3) !important; }
 
+/* ───── 抽屉把手: 仅移动端, 点击折叠/展开, 可拖拽 ───── */
+#grip { display:none; }
+@media (max-width:640px) {
+  #grip { display:flex; align-items:flex-start; justify-content:center; width:100%; height:20px;
+    padding:7px 0 0; margin:0; border:0; background:transparent; cursor:pointer; touch-action:none; flex:none;
+    -webkit-tap-highlight-color:transparent; user-select:none; }
+  #grip span { width:40px; height:4.5px; border-radius:3px; background:var(--dim); opacity:.5;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.28); transition:opacity .2s, width .3s var(--ease-spring); }
+  #grip:active span { opacity:.95; width:48px; }
+  #panel { transition:transform .5s var(--ease-spring); will-change:transform; }
+  #panel.dragging { transition:none; }
+  #panel.collapsed { transform:translate(-50%, calc(100% - var(--peek, 162px))); }
+  #sug { top:80px; }
+}
+
 @media (max-width:520px) {
   #brand .sub, #brand b { display:none; }
   #brand { padding:0 8px 0 4px; }
@@ -308,6 +338,7 @@ html.perf-low .rcard, html.perf-low .tcard { backdrop-filter:none !important; -w
 </header>
 
 <section id="panel">
+  <button id="grip" aria-label="收起/展开面板"><span></span></button>
   <div id="searchCard">
     <div class="srow">
       <div class="sfield">
@@ -339,6 +370,21 @@ html.perf-low .rcard, html.perf-low .tcard { backdrop-filter:none !important; -w
           <option value="su">休日</option>
         </select>
       </span>
+    </div>
+    <div id="optWrap">
+      <span class="olb" id="optLb">列车种别</span>
+      <button class="ochip on" data-cat="shinkansen" id="catSk">新幹線</button>
+      <button class="ochip on" data-cat="tokkyu" id="catTk">特急</button>
+      <button class="ochip on" data-cat="liner" id="catLn">Liner</button>
+      <button class="ochip on" data-cat="express" id="catEx">急行・快速</button>
+      <button class="ochip on" data-cat="local" id="catLo">普通</button>
+      <span class="osep"></span>
+      <span class="olb" id="xfrLb">乗換</span>
+      <select id="xfrSel" class="daySel">
+        <option value="3" id="xfrFew">少</option>
+        <option value="5" id="xfrStd">标准</option>
+        <option value="7" id="xfrAny">不限</option>
+      </select>
     </div>
     <div id="sug"></div>
   </div>
@@ -398,6 +444,8 @@ const I18N = {
     nextTrips: '后续班次', nextNone: '今日已无后续班次', arriveAt: '到达 {0}', noConn: '改乘后无法到达',
     walkMin: '徒步 {0} 分', xfrAt: '乗換 {0} 分', legInfo: '{0} 駅 · {1} {2}', boarding: '乗', alighting: '降',
     emptyLegs: '未找到可连接的班次', dayAuto: '自动', tapTrains: '点击列车卡可查看后续班次',
+    optLb: '列车种别', catSk: '新幹線', catTk: '特急', catLn: 'Liner', catEx: '急行・快速', catLo: '普通',
+    xfrLb: '乗換', xfrFew: '少', xfrStd: '标准', xfrAny: '不限', optTip: '关闭的种别不参与检索', optMin: '至少保留一种列车种别',
   },
   ja: {
     sub: '乗換案内', from: '出発', to: '到着', go: '検索', swap: '出発/到着を入れ替え',
@@ -418,6 +466,8 @@ const I18N = {
     nextTrips: '後の便', nextNone: '本日の便はもうありません', arriveAt: '{0} 着', noConn: 'この便では到着できません',
     walkMin: '徒歩 {0} 分', xfrAt: '乗換 {0} 分', legInfo: '{0} 駅 · {1} {2}', boarding: '乗', alighting: '降',
     emptyLegs: '接続できる便が見つかりません', dayAuto: '自動', tapTrains: '列車カードをタップで後の便を表示',
+    optLb: '列車種別', catSk: '新幹線', catTk: '特急', catLn: 'ライナー', catEx: '急行・快速', catLo: '普通',
+    xfrLb: '乗換', xfrFew: '少なめ', xfrStd: '標準', xfrAny: '制限なし', optTip: 'オフの種別は検索対象外です', optMin: '列車種別は1つ以上選んでください',
   },
   en: {
     sub: 'Route planner', from: 'From', to: 'To', go: 'Search', swap: 'Swap from/to',
@@ -438,6 +488,8 @@ const I18N = {
     nextTrips: 'Later trains', nextNone: 'No later trains today', arriveAt: 'arr {0}', noConn: 'Cannot arrive on this train',
     walkMin: 'Walk {0} min', xfrAt: 'Change {0} min', legInfo: '{0} stops · {1} {2}', boarding: 'board', alighting: 'alight',
     emptyLegs: 'No connecting services found', dayAuto: 'Auto', tapTrains: 'Tap a train card to see later departures',
+    optLb: 'Train type', catSk: 'Shinkansen', catTk: 'Ltd. Exp.', catLn: 'Liner', catEx: 'Rapid', catLo: 'Local',
+    xfrLb: 'Changes', xfrFew: 'Few', xfrStd: 'Normal', xfrAny: 'Any', optTip: 'Disabled types are excluded from search', optMin: 'Keep at least one train type',
   },
 };
 let lang = localStorage.getItem('mjrj_lang') || (['ja', 'en'].indexOf((navigator.language || '').slice(0, 2)) >= 0 ? navigator.language.slice(0, 2) : 'zh');
@@ -451,7 +503,12 @@ function xfrLabel(n) {
 }
 
 /* ══════════════════ 全局状态 ══════════════════ */
-const state = { from: null, to: null, mode: 'dep', day: 'wd', depTime: 9 * 60, excludeLimited: false };
+const state = {
+  from: null, to: null, mode: 'dep', day: 'wd', depTime: 9 * 60,
+  /* 列车种别开关(对应 CAT_KEY) 与乗換回数上限 */
+  catOn: { shinkansen: true, tokkyu: true, liner: true, express: true, local: true },
+  maxXfr: 5,
+};
 let ST = null, LINES = null, TYPES = null, TM = null, TRIPS = null, TRF = null, SEG = null;
 let node2tmaps = null, nameIndex = null, patCache = null, groupsByDay = null;
 let WALK = null, walkMin = null, tmapLine = null, tmapKm = null, tmapEnd = null;
@@ -498,6 +555,12 @@ function applyI18n() {
   $('mArr').textContent = t.mArr; document.querySelector('[data-mode=arr] .k').textContent = t.mArrK;
   $('dayLb').textContent = t.day;
   const ds = $('daySel'); ds.options[0].textContent = t.dayWd; ds.options[1].textContent = t.daySa; ds.options[2].textContent = t.daySu;
+  $('optLb').textContent = t.optLb;
+  $('catSk').textContent = t.catSk; $('catTk').textContent = t.catTk; $('catLn').textContent = t.catLn;
+  $('catEx').textContent = t.catEx; $('catLo').textContent = t.catLo;
+  $('xfrLb').textContent = t.xfrLb;
+  $('xfrFew').textContent = t.xfrFew; $('xfrStd').textContent = t.xfrStd; $('xfrAny').textContent = t.xfrAny;
+  $('optWrap').title = t.optTip;
   $('swapBtn').title = t.swap; $('brand').title = t.backHome;
   $('rFrom').placeholder = lang === 'en' ? 'Tokyo' : '東京 / Tokyo';
   $('rTo').placeholder = lang === 'en' ? 'Kyoto' : '京都 / Kyoto';
@@ -506,6 +569,87 @@ function applyI18n() {
   document.querySelectorAll('#hudRight .chip[data-lang]').forEach(x => x.classList.toggle('on', x.dataset.lang === lang));
 }
 applyI18n();
+
+/* ══════════════════ 检索选项: 列车种别 + 乗換上限 ══════════════════ */
+function syncOptUI() {
+  document.querySelectorAll('#optWrap .ochip').forEach(b => b.classList.toggle('on', !!state.catOn[b.dataset.cat]));
+  $('xfrSel').value = String(state.maxXfr);
+}
+function saveOpt() {
+  try { localStorage.setItem('mjrj_opt', JSON.stringify({ c: state.catOn, x: state.maxXfr })); } catch (e) { }
+}
+function loadOpt() {
+  try {
+    const o = JSON.parse(localStorage.getItem('mjrj_opt') || 'null');
+    if (o && o.c) for (const k of CAT_KEY) if (typeof o.c[k] === 'boolean') state.catOn[k] = o.c[k];
+    if (o && [3, 5, 7].indexOf(+o.x) >= 0) state.maxXfr = +o.x;
+  } catch (e) { }
+  if (!CAT_KEY.some(k => state.catOn[k])) for (const k of CAT_KEY) state.catOn[k] = true;
+  syncOptUI();
+}
+document.querySelectorAll('#optWrap .ochip').forEach(b => b.addEventListener('click', () => {
+  const k = b.dataset.cat;
+  state.catOn[k] = !state.catOn[k];
+  /* 全关必然无解, 拒绝并提示 */
+  if (!CAT_KEY.some(x => state.catOn[x])) { state.catOn[k] = true; toast(T().optMin); }
+  syncOptUI(); saveOpt(); stateHash();
+  if (state.from != null && state.to != null) doSearch();
+}));
+$('xfrSel').addEventListener('change', () => {
+  state.maxXfr = +$('xfrSel').value || 5;
+  saveOpt(); stateHash();
+  if (state.from != null && state.to != null) doSearch();
+});
+
+/* ══════════════════ 移动端抽屉: 折叠/展开(把手可点可拖) ══════════════════ */
+const isMobileView = () => window.matchMedia('(max-width:640px)').matches;
+function peekHeight() {
+  const g = $('grip'), sc = $('searchCard');
+  return (g && sc && sc.offsetHeight) ? g.offsetHeight + sc.offsetHeight + 14 : 162;
+}
+function setCollapsed(v) {
+  const pn = $('panel');
+  if (!isMobileView()) { pn.classList.remove('collapsed'); pn.style.removeProperty('--peek'); return; }
+  pn.style.setProperty('--peek', peekHeight() + 'px');
+  pn.classList.toggle('collapsed', !!v);
+  /* 折叠态变化后, 把已选径路重新聚焦到可见地图区域 */
+  if (curResult) setTimeout(() => highlightOnMap(curResult.cands[curResult.idx].r), 80);
+}
+(function () {
+  const g = $('grip'), pn = $('panel');
+  let y0 = 0, base = 0, dragging = false, moved = false;
+  const maxOff = () => Math.max(120, pn.offsetHeight - peekHeight());
+  g.addEventListener('pointerdown', e => {
+    if (!isMobileView()) return;
+    dragging = true; moved = false; y0 = e.clientY;
+    base = pn.classList.contains('collapsed') ? maxOff() : 0;
+    try { g.setPointerCapture(e.pointerId); } catch (err) { }
+  });
+  g.addEventListener('pointermove', e => {
+    if (!dragging) return;
+    const dy = e.clientY - y0;
+    if (!moved && Math.abs(dy) > 7) { moved = true; pn.classList.add('dragging'); }
+    if (!moved) return;
+    pn.style.transform = 'translate(-50%,' + Math.min(maxOff(), Math.max(0, base + dy)) + 'px)';
+  });
+  const end = e => {
+    if (!dragging) return; dragging = false;
+    pn.classList.remove('dragging'); pn.style.removeProperty('transform');
+    if (!moved) { setCollapsed(!pn.classList.contains('collapsed')); return; }
+    const off = Math.min(maxOff(), Math.max(0, base + (e.clientY - y0)));
+    setCollapsed(off > maxOff() * 0.35);
+  };
+  g.addEventListener('pointerup', end);
+  g.addEventListener('pointercancel', end);
+  /* 折叠时点输入框 → 展开(否则联想列表被抽屉裁掉) */
+  $('rFrom').addEventListener('focus', () => { if (pn.classList.contains('collapsed')) setCollapsed(false); });
+  $('rTo').addEventListener('focus', () => { if (pn.classList.contains('collapsed')) setCollapsed(false); });
+  /* 视口变化: 重算折叠留白 / 退出移动端时复位 */
+  window.addEventListener('resize', () => {
+    if (!isMobileView()) setCollapsed(false);
+    else if (pn.classList.contains('collapsed')) setCollapsed(true);
+  });
+})();
 
 /* ══════════════════ IndexedDB 缓存(与主页同款) ══════════════════ */
 const DATA_VERSION = 'mjrj2';
@@ -731,13 +875,13 @@ function bisectRightG(g, x) {
   return lo;
 }
 /* ti 的第 si 站、出发 >= tmin 的最早班次 → [depAbs, pi, ty, d0] */
-function earliestTrip(ti, si, tmin, day, noLimited) {
+function earliestTrip(ti, si, tmin, day, catOff) {
   const gs = groupsByDay[day].get(ti);
   if (!gs) return null;
   let best = null;
   for (let gi = 0; gi < gs.length; gi++) {
     const g = gs[gi];
-    if (noLimited && LIMITED_TYPE[g[2]]) continue;
+    if (catOff && catOff[TYPE_CAT[g[2]]]) continue;
     const dep = patOffsets(ti, g[1])[1][si];
     const k = bisectLeftG(g, tmin - dep);
     if (k < g.length) {
@@ -748,13 +892,13 @@ function earliestTrip(ti, si, tmin, day, noLimited) {
   return best;
 }
 /* ti 的第 sj 站、到达 <= tmax 的最晚班次 → [arrAbs, pi, ty, d0](反向搜索用) */
-function latestArrive(ti, sj, tmax, day, noLimited) {
+function latestArrive(ti, sj, tmax, day, catOff) {
   const gs = groupsByDay[day].get(ti);
   if (!gs) return null;
   let best = null;
   for (let gi = 0; gi < gs.length; gi++) {
     const g = gs[gi];
-    if (noLimited && LIMITED_TYPE[g[2]]) continue;
+    if (catOff && catOff[TYPE_CAT[g[2]]]) continue;
     const arr = patOffsets(ti, g[1])[0][sj];
     const k = bisectRightG(g, tmax - arr) - 1;
     if (k >= 3) {
@@ -764,25 +908,47 @@ function latestArrive(ti, sj, tmax, day, noLimited) {
   }
   return best;
 }
-/* 特急/新幹線种别(用于「普通车优先」变体) */
-const TOKKYU_ICONS = new Set(['特', '関', '紀', '中', '丹', '寝', '京', 'ミ', 'フ', '富', '九', '川',
-  'Ｔ', 'Ｓ', 'Ｎ', 'ホ', '拝', 'ラ', 'ア', 'エ', '空']);
+/* ── 列车种别分类 ──
+   用户可逐类开关(新幹線 / 特急 / Liner / 急行・快速 / 普通)。
+   分类优先看新幹線爱称, 再看日文种别名, 最后按图标兜底。 */
+const CAT_LOCAL = 0, CAT_EXPRESS = 1, CAT_TOKKYU = 2, CAT_LINER = 3, CAT_SHINKANSEN = 4;
+const CAT_N = 5;
+const CAT_KEY = ['local', 'express', 'tokkyu', 'liner', 'shinkansen'];
 const SHINKANSEN_TYPES = new Set(['Nozomi', 'Hikari', 'Kodama', 'Tsubasa', 'Hayabusa', 'Komachi', 'Asama',
   'Kagayaki', 'Yamabiko', 'Toki', 'Tanigawa', 'Nasuno', 'Hakutaka', 'Hayate', 'Mizuho', 'Sakura',
   'Tsubame', 'Kamome', 'Tsurugi']);
-let LIMITED_TYPE = null;
+const CAT_BY_JA = {
+  '普通': CAT_LOCAL, '各停': CAT_LOCAL,
+  '特急': CAT_TOKKYU, 'Liner': CAT_LINER,
+  '急行': CAT_EXPRESS, '準急': CAT_EXPRESS, '快速': CAT_EXPRESS, '新快速': CAT_EXPRESS,
+  '区間': CAT_EXPRESS, '直行': CAT_EXPRESS, '通勤': CAT_EXPRESS, '机场快速': CAT_EXPRESS,
+};
+/* 日文名无法区分的, 按图标兜底: 寝台=寝台特急, ミュースカイ=名鉄有料 */
+const CAT_BY_ICON = { '寝': CAT_TOKKYU, 'ミ': CAT_TOKKYU };
+let TYPE_CAT = null;
 function buildTypeFlags() {
-  LIMITED_TYPE = new Array(TYPES.length);
+  TYPE_CAT = new Int8Array(TYPES.length);
   for (let i = 0; i < TYPES.length; i++) {
-    const n = TYPES[i][0];
-    LIMITED_TYPE[i] = TOKKYU_ICONS.has(n) || SHINKANSEN_TYPES.has(n);
+    const ic = TYPES[i][0], ja = TYPES[i][1];
+    let c;
+    if (SHINKANSEN_TYPES.has(ic)) c = CAT_SHINKANSEN;
+    else if (CAT_BY_ICON[ic] !== undefined) c = CAT_BY_ICON[ic];
+    else if (CAT_BY_JA[ja] !== undefined) c = CAT_BY_JA[ja];
+    else c = CAT_EXPRESS;            /* 未知种别归入快速类, 默认可见 */
+    TYPE_CAT[i] = c;
   }
+}
+/* state.catOn → 每类是否屏蔽(1=屏蔽)。路由/后续班次共用。 */
+function catOffArr() {
+  const a = new Uint8Array(CAT_N);
+  for (let c = 0; c < CAT_N; c++) a[c] = state.catOn[CAT_KEY[c]] ? 0 : 1;
+  return a;
 }
 
 /* ══════════════════ 正向 RAPTOR(多轮快照 → 换乘次数 Pareto) ══════════════════ */
 const INF = 1 << 30;
 function raptorFwd(orig, dest, tStart, day, opt) {
-  const maxK = opt.maxK || 5, banned = opt.banned, noLimited = opt.noLimited;
+  const maxK = opt.maxK || 5, banned = opt.banned, catOff = opt.catOff;
   if (orig < 0 || dest < 0 || orig === dest) return null;
   const N = ST.N.length;
   const tau = new Int32Array(N).fill(INF);
@@ -821,7 +987,7 @@ function raptorFwd(orig, dest, tStart, day, opt) {
             if (tau[e[0]] < INF && tau[e[0]] + e[1] < tmin) { tmin = tau[e[0]] + e[1]; wf = e[0]; }
           }
         } else continue;
-        const tr = earliestTrip(ti, si, tmin, day, noLimited);
+        const tr = earliestTrip(ti, si, tmin, day, catOff);
         if (tr && (bestTrip === null || tr[0] < bestTrip[0])) { bestTrip = tr; bestBoard = si; bestWalk = wf; }
       }
       if (bestTrip === null) continue;
@@ -871,7 +1037,7 @@ function raptorRev(orig, dest, tLimit, day, opt) {
         if (rev[p2] <= -INF) continue;
         let tmax = rev[p2];
         if (p2 !== dest) tmax -= transferMin(p2);
-        const tr = latestArrive(ti, sj, tmax, day, opt.noLimited);
+        const tr = latestArrive(ti, sj, tmax, day, opt.catOff);
         if (!tr) continue;
         if (best === null || tr[0] > best[0]) { best = tr; bestAlight = sj; }
       }
@@ -979,7 +1145,7 @@ function searchRoutes(orig, dest, tStart, day, opt) {
   const seen = new Set(), out = [], banned = new Set();
   const want = opt.want || 4;
   for (let it = 0; it <= want; it++) {
-    const rounds = raptorFwd(orig, dest, tStart, day, { maxK: opt.maxK || 5, banned, noLimited: opt.noLimited });
+    const rounds = raptorFwd(orig, dest, tStart, day, { maxK: opt.maxK || 5, banned, catOff: opt.catOff });
     if (rounds) for (const r of finishFwd(rounds, orig, dest)) {
       const s = sig(r);
       if (!seen.has(s)) { seen.add(s); out.push(r); }
@@ -1059,7 +1225,7 @@ function nextTrips(ti, si, after, day, n) {
 /* 后续班次 = 同一「乘→下车」区间上、同一主导线路的后续列车。
    只在原 tmap 内找是不够的: 单个 tmap 往往一天只有几班(如新宿→大船的直通 tmap 仅 4 班),
    而同一区间实际上十几分钟就有一班, 分布在不同的 tmap 上。 */
-function nextLegTrips(lg, day, n) {
+function nextLegTrips(lg, day, n, catOff) {
   const ti = lg.tmap, S = TM.T[ti][0];
   const bNode = S[lg.board], aNode = S[lg.alight];
   const after = lg.dep;
@@ -1075,6 +1241,7 @@ function nextLegTrips(lg, day, n) {
     const gs = groupsByDay[day].get(tj);
     if (!gs) continue;
     for (const g of gs) {
+      if (catOff && catOff[TYPE_CAT[g[2]]]) continue;
       const off = patOffsets(tj, g[1])[1][bi];
       for (let k = 3; k < g.length; k++) {
         const da = g[k] + off;
@@ -1103,9 +1270,8 @@ function doSearch() {
   state.from = f; state.to = t;
   $('rFrom').value = ST.D[f]; $('rTo').value = ST.D[t];
   const day = state.day, mode = state.mode;
-  const noLimited = state.excludeLimited;
   let cands = [], note = '';
-  const opt = { noLimited, want: 8 };
+  const opt = { catOff: catOffArr(), maxK: state.maxXfr || 5, want: 8 };
   if (mode === 'first') {
     const fd = firstDeparture(f, day);
     if (fd == null) { toast(T().noRoute); return; }
@@ -1137,6 +1303,8 @@ function doSearch() {
   highlightOnMap(picked[0].r);
   stateHash();
   $('result').classList.add('show');
+  /* 移动端: 新结果出来时展开抽屉 */
+  if (isMobileView() && $('panel').classList.contains('collapsed')) setCollapsed(false);
 }
 /* 改乘后续班次: 前 i 段固定, 第 i 段换成新班次, 后续重算。
    新班次可能属于另一个 tmap(同区间不同停站), 所以按「乘/下车站节点」在新 tmap 重新定位。 */
@@ -1174,7 +1342,7 @@ function reRouteWith(legIdx, newTrip, alightNode) {
   /* 从下车站重跑后续 */
   if (nl.toNode !== cur.to) {
     const tStart = nl.arr + transferMin(nl.toNode);
-    const rounds = raptorFwd(nl.toNode, cur.to, tStart, curResult.day, { maxK: 4 });
+    const rounds = raptorFwd(nl.toNode, cur.to, tStart, curResult.day, { maxK: state.maxXfr || 5, catOff: catOffArr() });
     if (rounds && rounds.length) {
       const rest = finishFwd(rounds, nl.toNode, cur.to).sort((a, b) => a.arr - b.arr || a.xfr - b.xfr)[0];
       if (rest) {
@@ -1434,7 +1602,7 @@ function renderLegs(r) {
 }
 function renderNextList(li, lg) {
   const t = T();
-  const list = nextLegTrips(lg, curResult.day, 6);
+  const list = nextLegTrips(lg, curResult.day, 6, catOffArr());
   if (!list.length) return '<div class="nlist"><div class="nitem" style="cursor:default;color:var(--dim)">' + esc(t.nextNone) + '</div></div>';
   return '<div class="nlist">' + list.map(x => {
     const off = patOffsets(x.tmap, x.pi);
@@ -1556,6 +1724,8 @@ async function initMap() {
     if (curResult) highlightOnMap(curResult.cands[curResult.idx].r);
   });
 }
+/* mapDim: 有查询径路时, 无关线路整体灰化, 只留径路的线路色 */
+let mapDim = false;
 function refreshTrackColors() {
   if (!map || !mapReady) return;
   const light = document.documentElement.getAttribute('data-theme') === 'light';
@@ -1565,7 +1735,19 @@ function refreshTrackColors() {
   for (const k in paint) { try { map.setPaintProperty('basemap', k, paint[k]); } catch (e) { } }
   try {
     map.setPaintProperty('bg', 'background-color', light ? '#dfe4ec' : '#0b0f16');
-    map.setPaintProperty('segs', 'line-opacity', light ? 0.95 : 0.92);
+    if (mapDim) {
+      /* 聚焦模式: 全网线路灰化退后, 径路成为唯一彩色元素 */
+      const gray = light ? '#a6afba' : '#46505f';
+      map.setPaintProperty('segs', 'line-color', gray);
+      map.setPaintProperty('segs', 'line-opacity', light ? 0.55 : 0.42);
+      map.setPaintProperty('segs-glow', 'line-color', gray);
+      map.setPaintProperty('segs-glow', 'line-opacity', 0.07);
+    } else {
+      map.setPaintProperty('segs', 'line-color', ['get', 'color']);
+      map.setPaintProperty('segs', 'line-opacity', light ? 0.95 : 0.92);
+      map.setPaintProperty('segs-glow', 'line-color', ['get', 'color']);
+      map.setPaintProperty('segs-glow', 'line-opacity', 0.16);
+    }
     map.setPaintProperty('hl-sta-label', 'text-color', light ? '#0f172a' : '#eaf2ff');
     map.setPaintProperty('hl-sta-label', 'text-halo-color', light ? 'rgba(255,255,255,0.9)' : 'rgba(6,8,14,0.85)');
   } catch (e) { }
@@ -1631,6 +1813,9 @@ function highlightOnMap(r) {
     }
   }
   if (r.finalWalk) walkFeats.push({ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: [ST.S[r.finalWalk[0]], ST.S[r.to]] } });
+  /* 有径路 → 全网灰化, 只保留径路彩色(初次进入时保持原样) */
+  const dim = feats.length > 0;
+  if (dim !== mapDim && mapReady) { mapDim = dim; refreshTrackColors(); }
   try {
     map.getSource('hl').setData({ type: 'FeatureCollection', features: feats });
     map.getSource('hlwalk').setData({ type: 'FeatureCollection', features: walkFeats });
@@ -1645,7 +1830,13 @@ function highlightOnMap(r) {
   for (const f of feats) acc(f.geometry.coordinates);
   for (const f of walkFeats) acc(f.geometry.coordinates);
   for (const p of pts) acc(p.geometry.coordinates);
-  if (minX <= maxX) map.fitBounds([[minX, minY], [maxX, maxY]], { padding: 70, maxZoom: 12, duration: 900 });
+  if (minX <= maxX) {
+    /* 移动端: 抽屉占据下半屏, 径路聚焦到抽屉以上的可见区域 */
+    const pad = isMobileView()
+      ? { top: 64, left: 26, right: 26, bottom: $('panel').classList.contains('collapsed') ? 140 : Math.round(window.innerHeight * 0.5) }
+      : 70;
+    map.fitBounds([[minX, minY], [maxX, maxY]], { padding: pad, maxZoom: 12, duration: 900 });
+  }
 }
 
 /* ══════════════════ hash 持久化 + 启动 ══════════════════ */
@@ -1656,6 +1847,10 @@ function stateHash() {
      用 N 会让分享出去的链接在下次打开时解析到错误的同名站。 */
   p.set('f', ST.D[state.from]); p.set('t', ST.D[state.to]);
   p.set('m', state.mode); p.set('d', state.day);
+  /* 只在非默认时写入, 保持链接简短 */
+  const cb = CAT_KEY.map(k => state.catOn[k] ? '1' : '0').join('');
+  if (cb !== '11111') p.set('c', cb);
+  if (state.maxXfr !== 5) p.set('x', state.maxXfr);
   if (state.mode === 'dep' || state.mode === 'arr') p.set('tm', minToTime(timeToMin($('depTime').value)));
   if (curResult) p.set('i', curResult.idx);
   history.replaceState(null, '', '#mjrj=' + p.toString());
@@ -1671,6 +1866,12 @@ function parseHash() {
   $('rFrom').value = ST.D[f]; $('rTo').value = ST.D[t];
   const m = p.get('m'); if (['now', 'dep', 'first', 'last', 'arr'].indexOf(m) >= 0) setMode(m);
   const d = p.get('d'); if (['wd', 'sa', 'su'].indexOf(d) >= 0) { state.day = d; $('daySel').value = d; }
+  /* c = 5 位种别开关位图(顺序同 CAT_KEY), x = 乗換上限 */
+  /* 双向还原: 链接是权威来源, 否则本地存过关闭项时链接里的「开启」位无法覆盖 */
+  const cb = p.get('c');
+  if (cb && cb.length === CAT_N) for (let i = 0; i < CAT_N; i++) state.catOn[CAT_KEY[i]] = cb[i] !== '0';
+  const xv = +p.get('x'); if ([3, 5, 7].indexOf(xv) >= 0) state.maxXfr = xv;
+  syncOptUI();
   if (p.get('tm')) { $('depTime').value = p.get('tm'); state.depTime = timeToMin(p.get('tm')); }
   return true;
 }
@@ -1678,6 +1879,7 @@ function parseHash() {
   try {
     await loadData();
     buildTypeFlags();
+    loadOpt();                       /* 恢复上次选择的列车种别 / 乗換上限 */
     buildIndexes();
     prepRuntime();
     buildSegIndex();

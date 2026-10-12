@@ -1508,7 +1508,7 @@ function lmStart() {
 const FILES_PCT = 55, IDX_PCT = 78, PRS_PCT = 97;
 /* 数据版本号:segments/stations/station_map 等静态数据每次变更时必须递增,
    否则 IndexedDB 缓存可能让旧数据(如已修的幽灵直线)继续生效 */
-const DATA_VERSION = '2026-10-10b';
+const DATA_VERSION = '2026-10-12a';
 const loadSizes = { 'data/segments3d.geojson': 11347006, 'data/stations3d.geojson': 1881446, 'data/tmaps.json': 3158412, 'data/station_map.json': 11006682, 'data/tokkyu.json': 59100, 'data/names_i18n.json': 482556, 'data/trains_wd.json': 13494947, 'data/trains_sa.json': 12228166, 'data/trains_su.json': 12284312, 'data/station_overall_footprints.geojson': 6902234, 'data/station_entrances.geojson': 2787587, 'data/station_platforms.geojson': 4254264 };
 let _fileTotal = 8, _fileIdx = 0;
 function nextFileIdx() { return _fileIdx++; }
@@ -4432,9 +4432,28 @@ function isKeihinTohokuTrip(t) {
   t._jk = jk;
   return jk;
 }
+/* 大阪地铁中央线(Osaka Metro Chuo Line)专用消歧:
+ * 时刻表源(tmaps)把该线记为裸名「中央線」,与图集中 JR东日本/东海中央线的键「中央線」
+ * (=22, E233系)碰撞,导致中央线列车误配 JR 东日本车头。JR 东日本/东海在 tmaps 中均用
+ * 「中央本線」命名,裸「中央線」仅大阪地铁使用;再用中央线独占站名二次确认,杜绝误伤
+ * (JR 中央本線列车停靠东京/新宿/高尾等,不在此集合)。几何段名「4号線(中央線)」的路径
+ * 由图集新增的同名键直接解析。 */
+const OSAKA_METRO_CHUO_STATIONS = new Set(['夢洲', 'コスモスクエア', '大阪港', '朝潮橋', '弁天町', '九条', '阿波座', '本町', '堺筋本町', '谷町四丁目', '森ノ宮', '緑橋', '深江橋', '高井田', '長田', '荒本', '吉田', '新石切', '生駒']);
+function isOsakaMetroChuoTrip(t) {
+  if (!t || !t.lines || !t.lines.length) return false;
+  if (t._omc !== undefined) return t._omc;
+  let omc = false;
+  if (t.lines.includes('中央線')) {
+    const jas = t.jasN || [];
+    for (let i = 0; i < jas.length; i++) if (OSAKA_METRO_CHUO_STATIONS.has(jas[i])) { omc = true; break; }
+  }
+  t._omc = omc;
+  return omc;
+}
 function lineIconFor(t) {
   if (!ATLAS || !t || !t.lines) return -1;
   if (isKeihinTohokuTrip(t)) { const v = ATLAS.line['根岸線']; if (v !== undefined) return v; }
+  if (isOsakaMetroChuoTrip(t)) { const v = ATLAS.line['大阪メトロ中央線']; if (v !== undefined) return v; }
   if (t.lines.length > 1) {
     /* 直通系统线路优先(武藏野线直通车体归属) */
     for (const ln of ICON_PRIORITY_LINES) { if (t.lines.includes(ln)) { const v = ATLAS.line[ln]; if (v !== undefined) return v; } }
@@ -4455,6 +4474,9 @@ function trainIconIdx(t, lineName) {
   if (!ATLAS) return -1;
   if (t.nm && ATLAS.tokkyu[t.nm] !== undefined) return ATLAS.tokkyu[t.nm];
   if (isKeihinTohokuTrip(t)) { const v = ATLAS.line['根岸線']; if (v !== undefined) return v; }
+  /* 大阪地铁中央线:必须在 lineName 查找之前 —— showTrPick 传入的 lineName 就是裸「中央線」,
+     直接查会命中 JR 东日本 E233(22);此处强制改判大阪地铁中央线图标 */
+  if (isOsakaMetroChuoTrip(t)) { const v = ATLAS.line['大阪メトロ中央線']; if (v !== undefined) return v; }
   /* 纯共享干道直通(上野東京線等): 优先E217湘南色兜底, 防止 p[3]='東海道線' 绕过兜底取到西日本W223(143) */
   if (t.lines.length > 1 && t.lines.every(ln => ICON_SKIP_LINES.has(ln)) && ATLAS.fallback !== undefined) return ATLAS.fallback;
   if (lineName && ATLAS.line[lineName] !== undefined) return ATLAS.line[lineName];

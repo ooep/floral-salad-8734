@@ -963,7 +963,7 @@ CSS = """
 """
 
 
-def page_head(cfg, title, desc, url, og_img_url):
+def page_head(cfg, title, desc, url, og_img_url, keywords='', robots='index,follow,max-snippet:-1,max-image-preview:large'):
     # 品牌 logo 注入：CSS 里 ::before 占位符 → 相对路径 logo（随主题切换浅/深色）
     # 用相对路径而非 site_base 绝对 URL，保证各部署环境（GitHub Pages 子路径、
     # Cloudflare 根路径、自定义域名）均能正确加载。
@@ -991,6 +991,8 @@ def page_head(cfg, title, desc, url, og_img_url):
         '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
         '<title>' + esc(title) + '</title>\n'
         '<meta name="description" content="' + esc(desc) + '">\n'
+        + (('<meta name="keywords" content="' + esc(keywords) + '">\n') if keywords else '')
+        + '<meta name="robots" content="' + esc(robots) + '">\n'
         '<link rel="canonical" href="' + esc(url) + '">\n'
         '<meta property="og:type" content="website">\n'
         '<meta property="og:site_name" content="' + esc(cfg['site_name']) + '">\n'
@@ -998,6 +1000,8 @@ def page_head(cfg, title, desc, url, og_img_url):
         '<meta property="og:description" content="' + esc(desc) + '">\n'
         '<meta property="og:url" content="' + esc(url) + '">\n'
         '<meta property="og:image" content="' + esc(og_img_url) + '">\n'
+        '<meta property="og:image:width" content="1200">\n'
+        '<meta property="og:image:height" content="630">\n'
         '<meta property="og:locale" content="zh_CN">\n'
         '<meta property="og:locale:alternate" content="ja_JP">\n'
         '<meta property="og:locale:alternate" content="en_US">\n'
@@ -1231,7 +1235,7 @@ def station_page(rec, lines, neighbors, cfg, tozh):
         '© Mini JapanRail</p></footer>\n'
         + '</div>\n'
     )
-    return page_head(cfg, title, desc, url, og_img_url) + \
+    return page_head(cfg, title, desc, url, og_img_url, keywords=','.join(dict.fromkeys([x for x in ([disp, name, zh, en] + line_names[:4] + ([pref_zh] if pref_zh else []) + ['日本车站', '駅', '车站', '駅一覧', '列车走行位置', '運行情報', '日本铁路']) if x]))) + \
         '<script type="application/ld+json">' + json.dumps(jsonld, ensure_ascii=False) + '</script>\n' \
         '</head>\n<body>\n' + body + '</body>\n</html>\n'
 
@@ -1244,9 +1248,9 @@ def line_page(rec, stations, cfg, tozh, ordered=None):
     url = abs_url(cfg, 'lines/' + slug + '/')
     og_img_url = abs_url(cfg, cfg['og_image'])
     if en:
-        title = '%s（%s / %s）— 线路车站一览 | %s' % (lname, zh, en, cfg['site_name'])
+        title = '%s（%s / %s）— 线路车站一览・沿線の駅 | %s' % (lname, zh, en, cfg['site_name'])
     else:
-        title = '%s（%s）— 线路车站一览 | %s' % (lname, zh, cfg['site_name'])
+        title = '%s（%s）— 线路车站一览・沿線の駅 | %s' % (lname, zh, cfg['site_name'])
     if len(title) > 78:
         title = title[:75] + '…'
     # 车站列表
@@ -1476,7 +1480,7 @@ def line_page(rec, stations, cfg, tozh, ordered=None):
         '© Mini JapanRail</p></footer>\n'
         + '</div>\n'
     )
-    return page_head(cfg, title, desc, url, og_img_url) + \
+    return page_head(cfg, title, desc, url, og_img_url, keywords=','.join([x for x in ([lname, zh, en, lname + '駅', '线路', '路線', '鉄道路線', '列车走行位置', '運行情報', '日本铁路']) if x])) + \
         '<script type="application/ld+json">' + json.dumps(jsonld, ensure_ascii=False) + '</script>\n' \
         '</head>\n<body>\n' + body + '</body>\n</html>\n'
 
@@ -1484,8 +1488,8 @@ def line_page(rec, stations, cfg, tozh, ordered=None):
 def index_lines_page(lines, stations, cfg, tozh, line_counts=None):
     url = abs_url(cfg, 'lines/')
     og_img_url = abs_url(cfg, cfg['og_image'])
-    title = '全日本铁路线路一览（新干线・JR・私铁・地下铁・路面电车）| %s' % cfg['site_name']
-    desc = 'Mini JapanRail 收录的全日本铁路线路一览（%d 条）：新干线、JR、私铁、地下铁、单轨、路面电车等，每条线路均有独立页面、途经车站与列车走行位置（列車走行位置・運行情報）。' % len(lines)
+    title = '全日本铁路线路一览（新干线・JR・私铁・地下铁・路面电车）路線一覧・Railway Lines | %s' % cfg['site_name']
+    desc = 'Mini JapanRail 收录的全日本铁路线路一览（%d 条）：新干线、JR、私铁、地下铁、单轨、路面电车等，每条线路均有独立页面、途经车站、线路色与列车走行位置（列車走行位置・運行情報 / Japan railway lines list）。' % len(lines)
     kinds_order = ['鉄道', '路面電車', 'モノレール', '案内軌条式', '鋼索鉄道', '無軌条電車', '浮上式']
     groups = defaultdict(list)
     for lname, rec in sorted(lines.items(), key=lambda kv: kv[0]):
@@ -1517,7 +1521,7 @@ def index_lines_page(lines, stations, cfg, tozh, line_counts=None):
         '<footer><p class="fstat">Mini JapanRail · 全日本 %d 条线路 · %d 个车站</p>\n' % (len(lines), len(stations)) +
         '<p><a href="' + esc(abs_url(cfg, '')) + '">回到地图</a> · <a href="' + esc(abs_url(cfg, 'stations/')) + '">全部车站</a></p></footer>\n</div>\n'
     )
-    return page_head(cfg, title, desc, url, og_img_url) + \
+    return page_head(cfg, title, desc, url, og_img_url, keywords='全日本铁路线路一览,日本铁路线路,新干线线路,JR线路,私铁,地下铁,路面电车,单轨,路線一覧,鉄道路線,列車走行位置,運行情報') + \
         '<script type="application/ld+json">' + json.dumps(jsonld, ensure_ascii=False) + '</script>\n' \
         '</head>\n<body>\n' + body + '</body>\n</html>\n'
 
@@ -1525,8 +1529,8 @@ def index_lines_page(lines, stations, cfg, tozh, line_counts=None):
 def index_stations_page(stations, cfg, tozh, lines=None):
     url = abs_url(cfg, 'stations/')
     og_img_url = abs_url(cfg, cfg['og_image'])
-    title = '全日本车站一览（新干线・JR・私铁・地下铁）| %s' % cfg['site_name']
-    desc = 'Mini JapanRail 收录的全日本车站一览（%d 站，按都道府县分组），每个车站均有独立页面，包含途经线路、位置、相邻车站与列车走行位置。' % len(stations)
+    title = '全日本车站一览（新干线・JR・私铁・地下铁）駅一覧・Station List | %s' % cfg['site_name']
+    desc = 'Mini JapanRail 收录的全日本车站一览（%d 站，按都道府县分组）：新干线、JR、私铁、地下铁、单轨、路面电车车站，每个车站均有独立页面，包含途经线路、位置、相邻车站与列车走行位置（駅一覧・列車走行位置・運行情報）。' % len(stations)
     groups = defaultdict(list)
     for key, rec in stations.items():
         groups[rec['pref'] or 'その他'].append(rec)
@@ -1557,7 +1561,7 @@ def index_stations_page(stations, cfg, tozh, lines=None):
         '<footer><p class="fstat">Mini JapanRail · 全日本 %d 条线路 · %d 个车站</p>\n' % (len(lines), len(stations)) +
         '<p><a href="' + esc(abs_url(cfg, '')) + '">回到地图</a> · <a href="' + esc(abs_url(cfg, 'lines/')) + '">全部线路</a></p></footer>\n</div>\n'
     )
-    return page_head(cfg, title, desc, url, og_img_url) + \
+    return page_head(cfg, title, desc, url, og_img_url, keywords='全日本车站一览,日本车站,车站列表,駅一覧,新干线车站,JR车站,私铁车站,地下铁车站,列車走行位置,運行情報') + \
         '<script type="application/ld+json">' + json.dumps(jsonld, ensure_ascii=False) + '</script>\n' \
         '</head>\n<body>\n' + body + '</body>\n</html>\n'
 
@@ -1622,8 +1626,8 @@ def write_404(cfg):
         '</div>\n'
     )
     with open(os.path.join(ROOT, '404.html'), 'w', encoding='utf-8') as f:
-        f.write(page_head(cfg, title, desc, abs_url(cfg, '404.html'), og_img_url)
-                + '<meta name="robots" content="noindex,nofollow">\n</head>\n<body>\n' + body + '</body>\n</html>\n')
+        f.write(page_head(cfg, title, desc, abs_url(cfg, '404.html'), og_img_url, robots='noindex,nofollow')
+                + '</head>\n<body>\n' + body + '</body>\n</html>\n')
 
 
 # ---------------- OG 分享图 ----------------

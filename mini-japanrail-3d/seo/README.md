@@ -71,13 +71,15 @@ CI（`.github/workflows/deploy.yml`）已在每次部署前自动运行生成器
 
 ## 标题（Title）规则建议
 
+> 完整的标题候选、关键词矩阵、结构化数据与收录动作清单见 **[KEYWORDS.md](KEYWORDS.md)**。
+
 | 页面 | 格式 |
 | --- | --- |
 | 首页 | `Mini JapanRail｜全日本列车实时运行可视化地图・列車走行位置・運行情報 \| Japan Train Live Map` |
-| 线路页 | `山手線（山手线 / Yamanote Line）— 线路车站一览 \| Mini JapanRail` |
+| 线路页 | `山手線（山手线 / Yamanote Line）— 线路车站一览・沿線の駅 \| Mini JapanRail` |
 | 车站页 | `東京（东京站 / Tōkyō）— 途经上越新幹線、上越線 等 \| Mini JapanRail` |
-| 线路一览 | `全日本铁路线路一览（新干线・JR・私铁・地下铁・路面电车）\| Mini JapanRail` |
-| 车站一览 | `全日本车站一览（新干线・JR・私铁・地下铁）\| Mini JapanRail` |
+| 线路一览 | `全日本铁路线路一览（新干线・JR・私铁・地下铁・路面电车）路線一覧・Railway Lines \| Mini JapanRail` |
+| 车站一览 | `全日本车站一览（新干线・JR・私铁・地下铁）駅一覧・Station List \| Mini JapanRail` |
 | 同名站 | 自动带消歧后缀，如 `高田(奈良県)（高田站 / Kōda）…` |
 
 要点：日文名优先（利于 Yahoo! Japan / Naver），紧跟中文与英文名（利于百度 / Google），

@@ -62,9 +62,15 @@ jobs:
           import json, os
           for f in ['index.html','data/segments.geojson','data/stations.geojson',
                     'data/live/tmaps.json','data/live/trains_wd.json',
-                    'data/live/trains_sa.json','data/live/trains_su.json']:
+                    'data/live/trains_sa.json','data/live/trains_su.json',
+                    'mini-japanrail-3d/index.html','mini-japanrail-3d/journey.html',
+                    'mini-japanrail-3d/data/journey/stations.json',
+                    'mini-japanrail-3d/data/journey/tmaps.json',
+                    'mini-japanrail-3d/data/journey/trips_wd.json',
+                    'mini-japanrail-3d/data/journey/trips_sa.json',
+                    'mini-japanrail-3d/data/journey/trips_su.json']:
               assert os.path.exists(f), 'missing: ' + f
-          print('数据资产完整: 页面 + 地图 + tmaps + 三份本地时刻表')
+          print('数据资产完整: 页面 + 地图 + tmaps + 三份本地时刻表 + 换乘案内(journey)')
           for n in ['wd','sa','su']:
               d = json.load(open('data/live/trains_%s.json' % n, encoding='utf-8'))
               print('trains_%s.json: %d 班次 @ %s' % (n, d['n'], d['b']))

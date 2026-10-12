@@ -1003,13 +1003,40 @@ body:not(.sidebar-collapsed) #sidebar-toggle { left: calc(var(--sidebar-w) + 10p
 .medal-prog-track { height: 7px; border-radius: 4px; background: var(--glass-lo); overflow: hidden; margin-top: 7px; box-shadow: inset 0 1px 2px rgba(0,0,0,.35); }
 .medal-prog-fill { height: 100%; background: linear-gradient(90deg, var(--success), var(--accent)); border-radius: 4px; transition: width .55s var(--ease-spring); box-shadow: 0 0 8px rgba(91,182,255,.5); }
 
+/* ─── 3D medal viewer ─── */
+.medal-3d {
+    position: relative; width: 100%; height: 200px;
+    margin: 0 auto 12px; display: none; touch-action: none;
+    opacity: 0; transform: scale(.88);
+    animation: m3dIn .55s var(--spring-out) forwards;
+}
+.medal-3d.on { display: block; }
+@keyframes m3dIn { to { opacity: 1; transform: scale(1); } }
+#medal-canvas { width: 100%; height: 100%; display: block; cursor: grab; }
+#medal-canvas:active { cursor: grabbing; }
+.medal-stage.off { display: none; }
+.m3d-hint {
+    position: absolute; top: 1px; right: 1px;
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 9px; font-weight: 800; letter-spacing: .6px;
+    color: var(--text-muted); padding: 3px 8px; border-radius: var(--r-pill);
+    background: var(--glass-lo); box-shadow: inset 0 0 0 1px var(--glass-edge);
+    pointer-events: none; user-select: none; white-space: nowrap; opacity: .9;
+}
+.m3d-hint svg { width: 10px; height: 10px; }
+/* 3D 进行中：停用遮罩毛玻璃（3D 画布每帧刷新会导致遮罩 blur 重算，严重掉帧），
+   以稍强的压暗补偿观感 */
+/* 遮罩不使用 class 切换压暗：对全屏 fixed 元素变更 class 会触发整视口重绘，
+   与输入事件派发叠加时在软件 GL 环境下会卡死输入管线 */
+@media (max-height: 680px) { .medal-3d { height: 138px; } }
+@media (max-width: 380px) { .medal-3d { height: 178px; } }
+
 /* ─── Modal (Liquid Glass) ─── */
 .modal-overlay {
     position: fixed; top: 0; left: 0;
     width: 100vw; height: 100vh;
     height: 100dvh;
-    background: rgba(0, 0, 0, 0.45);
-    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    background: rgba(0, 0, 0, .56);
     z-index: 200;
     display: none;
     align-items: center;
@@ -1394,6 +1421,10 @@ body:not(.sidebar-collapsed) #sidebar-toggle { left: calc(var(--sidebar-w) + 10p
             <div class="medal-lock">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
             </div>
+        </div>
+        <div class="medal-3d" id="medal-3d">
+            <canvas id="medal-canvas"></canvas>
+            <span class="m3d-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11.5A8 8 0 1 0 12 20a8 8 0 0 0 8-8.5z"/><path d="M4.5 4.5v4h4"/></svg><span data-i18n="medal_rotate">360° 拖动旋转</span></span>
         </div>
         <div class="medal-tier" id="medal-tier"></div>
         <h3 id="medal-name"></h3>
@@ -1785,6 +1816,7 @@ const I18N = {
         tier_platinum: 'Platinum',
         medal_hint_earned: 'Added to your honours',
         medal_hint_locked: 'Ride the required services to unlock',
+        medal_rotate: '360° drag to spin',
         cat_shinkansen: 'Shinkansen',
         cat_limited: 'Limited Express',
         cat_route: 'Route Mastery',
@@ -1850,6 +1882,7 @@ const I18N = {
         tier_platinum: 'プラチナ',
         medal_hint_earned: '名誉の殿堂に収蔵',
         medal_hint_locked: '条件を満たすと獲得できます',
+        medal_rotate: '360° ドラッグで回転',
         cat_shinkansen: '新幹線',
         cat_limited: '特急',
         cat_route: '路線制覇',
@@ -1915,6 +1948,7 @@ const I18N = {
         tier_platinum: '铂金',
         medal_hint_earned: '已收入荣誉殿堂',
         medal_hint_locked: '乘车达成条件即可解锁',
+        medal_rotate: '360° 拖动旋转',
         cat_shinkansen: '新干线',
         cat_limited: '特急',
         cat_route: '路线制霸',
@@ -2794,9 +2828,24 @@ function openMedalDetail(id) {
     const m = computeMedals().find(x => x.id === id);
     if (!m) return;
     const earned = m.res.got;
+    // ── 3D or 2D presentation ──
+    const stage = document.getElementById('medal-stage');
+    const wrap3d = document.getElementById('medal-3d');
     document.getElementById('medal-big').innerHTML = MEDAL_ICONS[m.icon] || '';
     document.getElementById('medal-big').className = 'medal-big' + (earned ? ` earned ${m.tier}` : '');
-    document.getElementById('medal-stage').className = 'medal-stage' + (earned ? ` earned ${m.tier}` : '');
+    stage.className = 'medal-stage' + (earned ? ` earned ${m.tier}` : '');
+    document.getElementById('modal-medal').classList.add('show');
+    if (window.__medal3d) {
+        stage.classList.add('off');
+        window.__medal3d.open({ tier: m.tier, earned, icon: MEDAL_ICONS[m.icon] || '' });
+        /* 3D 勋章展示期间暂停地图渲染循环：避免两个 WebGL 上下文争用 GPU。
+           仅 3D 路径暂停（2D 路径保留地图，玻璃卡片后面的动态底图更好看），
+           关闭时由下面的 MutationObserver 对称 resume() 恢复。 */
+        try { if (typeof map !== 'undefined' && map && typeof map.stop === 'function') map.stop(); } catch (e) {}
+    } else {
+        if (wrap3d) wrap3d.classList.remove('on');
+        stage.classList.remove('off');
+    }
     const ribbon = document.getElementById('medal-ribbon');
     ribbon.textContent = t(earned ? 'medal_earned' : 'medal_locked');
     ribbon.className = 'medal-ribbon' + (earned ? ` earned ${m.tier}` : '');
@@ -3149,6 +3198,23 @@ document.getElementById('share-close').addEventListener('click', () => {
 document.getElementById('medal-close').addEventListener('click', () => {
     document.getElementById('modal-medal').classList.remove('show');
 });
+
+// 3D medal viewer: 弹窗关闭（按钮 / 遮罩 / Esc）时停渲染，并恢复地图渲染循环
+const _medalOverlay = document.getElementById('modal-medal');
+if (_medalOverlay && 'MutationObserver' in window) {
+    new MutationObserver(() => {
+        if (!_medalOverlay.classList.contains('show')) {
+            if (window.__medal3d) { try { window.__medal3d.close(); } catch (e) {} }
+            /* 恢复被暂停的地图：resume() 优先；老版本 MapLibre 没有该方法时退回 triggerRepaint() */
+            try {
+                if (typeof map !== 'undefined' && map) {
+                    if (typeof map.resume === 'function') map.resume();
+                    else if (typeof map.triggerRepaint === 'function') map.triggerRepaint();
+                }
+            } catch (e) {}
+        }
+    }).observe(_medalOverlay, { attributes: true, attributeFilter: ['class'] });
+}
 
 // ═══════════════════════════════════════════════════════════════
 // POSTER EXPORT
@@ -3615,6 +3681,367 @@ document.getElementById('btn-theme').addEventListener('click', () => {
 // Init
 applyLang();
 try { applyTheme(localStorage.getItem(THEME_KEY) || 'dark'); } catch (e) { applyTheme('dark'); }
+</script>
+
+<script type="importmap">
+{
+    "imports": {
+        "three": "https://unpkg.com/three@0.166.0/build/three.module.min.js",
+        "three/addons/": "https://unpkg.com/three@0.166.0/examples/jsm/"
+    }
+}
+</script>
+<script type="module">
+/* ═══════════════════════════════════════════════════════════════
+   3D MEDAL VIEWER — 可 360° 拖拽旋转的金属勋章
+   ═══════════════════════════════════════════════════════════════ */
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+(() => {
+    const wrap = document.getElementById('medal-3d');
+    const canvas = document.getElementById('medal-canvas');
+    if (!wrap || !canvas) return;
+
+    const IDLE_SPEED = 1.35;
+    const FINISH = {
+        bronze:   { color: 0xC08141, ink: '#3a2210', rough: 0.30, glow: 0x8f4d16, rim: 1.14 },
+        silver:   { color: 0xDAE1EA, ink: '#2c3540', rough: 0.21, glow: 0x7d9cc9, rim: 1.10 },
+        gold:     { color: 0xEFC24B, ink: '#463406', rough: 0.24, glow: 0xc48f16, rim: 1.10 },
+        platinum: { color: 0xAEE4F2, ink: '#093744', rough: 0.15, glow: 0x36aed2, rim: 1.08 },
+    };
+    const LOCKED_FINISH = { color: 0x6F767F, ink: '#282e35', rough: 0.60, glow: 0x39414a, rim: 1.06, metal: 0.55 };
+
+    let renderer = null, scene, camera, controls, root, glowLight;
+    let sideM, frontM, backM, rimM, ringM, loopM;
+    let backTex = null, texCache = {}, raf = 0, running = false, dormant = false;
+    let spin = 0, openT = 0, glowBase = 16, dragA = 0, dragT = 0, TIER = 'high', lastFrame = 0;
+
+    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+    const easeOutBack = (x) => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
+    const bright = (hex, k) => {
+        const c = new THREE.Color(hex);
+        c.multiplyScalar(k);
+        return '#' + c.getHexString();
+    };
+    /* 原金属色的暗调，用于凹刻图案（比纯黑更真实） */
+    const inkOf = (hex, k) => {
+        const c = new THREE.Color(hex);
+        c.multiplyScalar(k);
+        return '#' + c.getHexString();
+    };
+    const loadImg = (src) => new Promise((res, rej) => {
+        const i = new Image();
+        i.onload = () => res(i);
+        i.onerror = () => rej(new Error('svg'));
+        i.src = src;
+    });
+
+    /* 软件渲染（SwiftShader / llvmpipe）下自动降级，保证流畅 */
+    function detectGpu() {
+        try {
+            const c = document.createElement('canvas');
+            const gl = c.getContext('webgl2') || c.getContext('webgl');
+            if (!gl) return 'low';
+            const ext = gl.getExtension('WEBGL_debug_renderer_info');
+            const s = ext ? String(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)) : '';
+            const lose = gl.getExtension('WEBGL_lose_context');
+            if (lose) lose.loseContext();
+            return (/swiftshader|llvmpipe|software|basic render/i.test(s)) ? 'low' : 'high';
+        } catch (e) { return 'high'; }
+    }
+
+    /* ── 纹样纹理生成 ── */
+    function svgToTexture(svg, ink, mode) {
+        return new Promise(resolve => {
+            const S = 512;
+            const c = document.createElement('canvas');
+            c.width = c.height = S;
+            const x = c.getContext('2d');
+            x.fillStyle = '#ffffff';
+            x.fillRect(0, 0, S, S);
+            const g = x.createRadialGradient(S * .4, S * .32, S * .03, S * .5, S * .5, S * .76);
+            g.addColorStop(0, 'rgba(255,255,255,1)');
+            g.addColorStop(.58, 'rgba(245,247,250,1)');
+            g.addColorStop(1, 'rgba(212,218,228,1)');
+            x.fillStyle = g;
+            x.fillRect(0, 0, S, S);
+            const pad = S * 0.265, size = S * 0.47;
+            const mkSrc = (col) => 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(
+                String(svg).replace(/currentColor/g, col)
+                    .replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" '));
+            Promise.all([loadImg(mkSrc(mode === 'bump' ? '#101010' : ink)), loadImg(mkSrc('#ffffff'))])
+                .then(([main, hi]) => {
+                    if (mode === 'face') {
+                        // 右下高光 → 凹刻浮雕感
+                        x.globalAlpha = 0.5;
+                        x.drawImage(hi, pad + S * 0.013, pad + S * 0.015, size, size);
+                        x.globalAlpha = 1;
+                    }
+                    x.drawImage(main, pad, pad, size, size);
+                    const tex = new THREE.CanvasTexture(c);
+                    tex.colorSpace = THREE.SRGBColorSpace;
+                    tex.anisotropy = renderer ? renderer.capabilities.getMaxAnisotropy() : 1;
+                    resolve(tex);
+                })
+                .catch(() => resolve(null));
+        });
+    }
+
+    function star(x, cx, cy, R, r, n) {
+        x.beginPath();
+        for (let i = 0; i < n * 2; i++) {
+            const rad = (i % 2) ? r : R;
+            const a = -Math.PI / 2 + (Math.PI / n) * i;
+            const px = cx + Math.cos(a) * rad, py = cy + Math.sin(a) * rad;
+            if (i) x.lineTo(px, py); else x.moveTo(px, py);
+        }
+        x.closePath(); x.fill();
+    }
+
+    /* 背面刻字（同心刻线 + 环绕刻字 + 星徽） */
+    function makeBackTexture() {
+        const S = 512;
+        const c = document.createElement('canvas');
+        c.width = c.height = S;
+        const x = c.getContext('2d');
+        x.fillStyle = '#ffffff';
+        x.fillRect(0, 0, S, S);
+        const g = x.createRadialGradient(S * .4, S * .3, S * .03, S * .5, S * .5, S * .76);
+        g.addColorStop(0, 'rgba(255,255,255,1)');
+        g.addColorStop(.6, 'rgba(238,241,246,1)');
+        g.addColorStop(1, 'rgba(197,204,215,1)');
+        x.fillStyle = g;
+        x.fillRect(0, 0, S, S);
+
+        x.strokeStyle = 'rgba(118,122,131,.5)';
+        x.lineWidth = S * .011;
+        [0.895, 0.838].forEach(r => {
+            x.beginPath(); x.arc(S / 2, S / 2, S * r * .5, 0, Math.PI * 2); x.stroke();
+        });
+        x.lineWidth = S * .007;
+        x.beginPath(); x.arc(S / 2, S / 2, S * .30 * .5, 0, Math.PI * 2); x.stroke();
+
+        const txt = 'MINI JAPANRAIL';
+        x.fillStyle = 'rgba(110,114,123,.92)';
+        x.font = '700 ' + Math.round(S * .036) + 'px system-ui, -apple-system, sans-serif';
+        x.textAlign = 'center'; x.textBaseline = 'middle';
+        const R = S * .406, span = 0.66;
+        for (let i = 0; i < txt.length; i++) {
+            const a = -Math.PI / 2 - span / 2 + (span / (txt.length - 1)) * i;
+            x.save();
+            x.translate(S / 2 + Math.cos(a) * R, S / 2 + Math.sin(a) * R);
+            x.rotate(a + Math.PI / 2);
+            x.fillText(txt[i], 0, 0);
+            x.restore();
+        }
+        x.fillStyle = 'rgba(110,114,123,.95)';
+        star(x, S / 2, S / 2, S * .155, S * .062, 5);
+
+        const tex = new THREE.CanvasTexture(c);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        if (renderer) tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+        return tex;
+    }
+
+    /* ── 场景搭建 ── */
+    function build() {
+        const low = detectGpu() === 'low';
+        TIER = low ? 'low' : 'high';
+        renderer = new THREE.WebGLRenderer({ canvas, antialias: !low, alpha: true, powerPreference: 'high-performance' });
+        renderer.setPixelRatio(low ? 1 : Math.min(window.devicePixelRatio || 1, 2));
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.06;
+        renderer.setClearColor(0x000000, 0);
+
+        scene = new THREE.Scene();
+        camera = new THREE.PerspectiveCamera(34, 1, 0.1, 100);
+        camera.position.set(0.18, 0.34, 4.6);
+
+        const pmrem = new THREE.PMREMGenerator(renderer);
+        scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.05).texture;
+        pmrem.dispose();
+
+        scene.add(new THREE.HemisphereLight(0xdfe9ff, 0x2b3138, 1.1));
+        const d1 = new THREE.DirectionalLight(0xffffff, 2.6); d1.position.set(2.4, 3.2, 3.8); scene.add(d1);
+        const d2 = new THREE.DirectionalLight(0x9dc2ff, 1.0); d2.position.set(-3.4, -1.2, 2.0); scene.add(d2);
+        if (!low) {
+            const d3 = new THREE.DirectionalLight(0xffe9c4, 0.8); d3.position.set(0.2, -3.2, 2.4); scene.add(d3);
+            const d4 = new THREE.DirectionalLight(0xffffff, 0.5); d4.position.set(0.1, 0.4, 4.2); scene.add(d4);
+        }
+        glowLight = new THREE.PointLight(0xffffff, 16, 11, 2); glowLight.position.set(0, 0.15, 2.7); scene.add(glowLight);
+
+        const mk = () => new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 1, roughness: .3, envMapIntensity: 1.15 });
+        sideM = mk(); frontM = mk(); backM = mk();
+        rimM = mk(); rimM.roughness = 0.13;
+        ringM = mk(); ringM.roughness = 0.18;
+        loopM = mk(); loopM.roughness = 0.20;
+
+        const seg = low ? 96 : 180, tub = low ? 14 : 22;
+        root = new THREE.Group();
+        const disc = new THREE.Mesh(
+            new THREE.CylinderGeometry(1, 1, 0.17, seg, 1, false),
+            [sideM, frontM, backM]);
+        disc.rotation.x = Math.PI / 2;
+        const rim = new THREE.Mesh(new THREE.TorusGeometry(0.968, 0.054, tub, seg), rimM);
+        const ring = new THREE.Mesh(new THREE.RingGeometry(0.70, 0.722, seg), ringM);
+        ring.position.z = 0.0875;
+        const loop = new THREE.Mesh(new THREE.TorusGeometry(0.088, 0.026, 16, low ? 40 : 56), loopM);
+        loop.position.set(0, 1.055, 0);
+        root.add(disc, rim, ring, loop);
+        scene.add(root);
+        root.scale.setScalar(0.55);
+
+        controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.075;
+        controls.enablePan = false;
+        controls.rotateSpeed = 0.85;
+        controls.zoomSpeed = 0.7;
+        controls.minDistance = 2.85;
+        controls.maxDistance = 7.2;
+        controls.minPolarAngle = 0.18;
+        controls.maxPolarAngle = Math.PI - 0.18;
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = IDLE_SPEED;
+        controls.target.set(0, 0, 0);
+        controls.addEventListener('start', () => {
+            dragA = controls.getAzimuthalAngle();
+            dragT = performance.now();
+            controls.autoRotate = false;
+        });
+        controls.addEventListener('end', () => {
+            const dt = Math.max(30, performance.now() - dragT) / 1000;
+            const v = THREE.MathUtils.radToDeg(controls.getAzimuthalAngle() - dragA) / dt;
+            spin = clamp(v, -20, 20);
+            controls.autoRotate = true;
+        });
+        canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); running = false; });
+        backTex = makeBackTexture();
+    }
+
+    async function applyMedal(tier, earned, iconSvg) {
+        if (!frontM) return;
+        const f = earned ? (FINISH[tier] || FINISH.bronze) : LOCKED_FINISH;
+        const metal = (f.metal === undefined) ? 1 : f.metal;
+        const env = earned ? 1.15 : 0.5;
+        [sideM, frontM, backM].forEach(mm => {
+            mm.color.setHex(f.color); mm.metalness = metal;
+            mm.roughness = f.rough; mm.envMapIntensity = env;
+            mm.needsUpdate = true;
+        });
+        rimM.color.set(bright(f.color, f.rim));
+        rimM.metalness = metal; rimM.roughness = earned ? 0.13 : 0.32;
+        rimM.envMapIntensity = earned ? 1.35 : 0.5; rimM.needsUpdate = true;
+        ringM.metalness = metal; ringM.roughness = earned ? 0.18 : 0.36;
+        ringM.envMapIntensity = earned ? 1.3 : 0.5; ringM.needsUpdate = true;
+        loopM.metalness = metal; loopM.roughness = earned ? 0.20 : 0.36;
+        loopM.envMapIntensity = env; loopM.needsUpdate = true;
+
+        glowLight.color.setHex(f.glow);
+        glowBase = earned ? 16 : 5;
+
+        const key = (earned ? 'e:' : 'l:') + TIER + ':' + iconSvg;
+        let pair = texCache[key];
+        if (!pair) {
+            const ink = inkOf(f.color, earned ? 0.46 : 0.5);
+            pair = await Promise.all([
+                svgToTexture(iconSvg, ink, 'face'),
+                TIER === 'high' ? svgToTexture(iconSvg, ink, 'bump') : Promise.resolve(null),
+            ]);
+            texCache[key] = pair;
+        }
+        const face = pair[0], bump = pair[1];
+        if (face) frontM.map = face;
+        if (bump) { frontM.bumpMap = bump; frontM.bumpScale = 0.024; }
+        frontM.needsUpdate = true;
+        backM.map = backTex;
+        backM.needsUpdate = true;
+    }
+
+    function resize() {
+        if (!renderer) return;
+        const w = Math.max(80, wrap.clientWidth), h = Math.max(80, wrap.clientHeight);
+        renderer.setSize(w, h, false);
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+    }
+
+    function fail() {
+        window.__medal3d = null;
+        wrap.classList.remove('on');
+        const st = document.getElementById('medal-stage');
+        if (st) st.classList.remove('off');
+    }
+
+    /* 休眠态：不再渲染，但保持 rAF 心跳。
+       关闭时不清空整个渲染循环 —— 实测中掐断循环会让 Chromium 的输入事件 ack
+       长时间等待，页面像卡死一样无响应；保留一个空的 rAF 心跳即可避免，
+       代价几乎为零（不做任何 GPU 工作）。 */
+    function loop() {
+        if (dormant) { raf = requestAnimationFrame(loop); return; }
+        if (!running) { raf = 0; return; }
+        raf = requestAnimationFrame(loop);
+        const now = performance.now();
+        if (TIER === 'low' && now - lastFrame < 24) return;   /* 低配限频省电 */
+        lastFrame = now;
+        const t = (now - openT) / 1000;
+        const k = clamp((now - openT) / 620, 0, 1);
+        root.scale.setScalar(0.55 + 0.45 * easeOutBack(k));
+        root.position.y = Math.sin(t * 1.25) * 0.035;
+        root.rotation.z = Math.sin(t * 0.8) * 0.03;
+        glowLight.position.set(Math.sin(t * 0.6) * 1.7, Math.cos(t * 0.45) * 1.0, 2.15);
+        glowLight.intensity = glowBase * (0.86 + 0.14 * Math.sin(t * 2.3));
+        if (Math.abs(spin) < 0.5) spin = 0;
+        else { controls.autoRotateSpeed = IDLE_SPEED + spin; spin *= 0.9; }
+        controls.update();
+        renderer.render(scene, camera);
+    }
+
+    function open(o) {
+        try {
+            wrap.classList.add('on');
+            if (!renderer) build();
+            resize();
+            requestAnimationFrame(resize);
+            if (!renderer || !controls) throw new Error('init failed');
+        } catch (e) { try { if (renderer) renderer.dispose(); } catch (x) {} renderer = null; fail(); return; }
+        running = true;
+        dormant = false;
+        applyMedal(o.tier, o.earned, o.icon);
+        camera.position.set(0.18, 0.34, 4.6);
+        controls.target.set(0, 0, 0);
+        controls.update();
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = IDLE_SPEED;
+        spin = 0;
+        root.scale.setScalar(0.55);
+        openT = performance.now();
+        if (!raf) raf = requestAnimationFrame(loop);
+    }
+
+    function close() {
+        running = false;
+        dormant = true;
+        if (!raf) raf = requestAnimationFrame(loop);
+    }
+
+    window.__medal3d = { open, close, ready: true };
+
+    /* 页面隐藏时彻底停机（省电）；回到前台后若仍处于休眠态则恢复心跳 */
+    document.addEventListener('visibilitychange', () => {
+        if (!window.__medal3d) return;
+        if (document.hidden) {
+            dormant = false;
+            running = false;
+            if (raf) { cancelAnimationFrame(raf); raf = 0; }
+        } else if (!running && !raf) {
+            dormant = true;
+            raf = requestAnimationFrame(loop);
+        }
+    });
+})();
 </script>
 </body>
 </html>

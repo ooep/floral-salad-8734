@@ -437,7 +437,6 @@ const I18N = {
     xfrN: '乗換{0}回', dirTo: '{0}行', firstDep: '始発',
     themeTip: '主题', backHome: '返回主页', errData: '数据加载失败，请检查网络后重试', retry: '重试',
     autoFirst: '该时刻已无班次，已改为首班车检索',
-    nextDay: '当日已无衔接班次，已改为次日首班检索',
     arrEarliest: '指定时刻前无法到达，已显示最早到达方案',
     lastNote: '可到达终点的末班路线(可能跨日)', arrNote: '按 {0} 前到达检索',
     dataNote: '时刻为静态数据快照，与最新时刻表可能有数分钟偏差。换乘时间为按站规模估算的站内走行时间。',
@@ -461,7 +460,6 @@ const I18N = {
     xfrN: '乗換{0}回', dirTo: '{0}行', firstDep: '始発',
     themeTip: 'テーマ', backHome: 'トップへ戻る', errData: 'データの読み込みに失敗しました', retry: '再試行',
     autoFirst: 'この時刻に便がないため始発で検索しました',
-    nextDay: 'この日の接続便がないため翌日の始発で検索しました',
     arrEarliest: '指定時刻までに到着できないため、最早到着の経路を表示します',
     lastNote: '終点まで到着できる最終の経路です(日付を跨ぐ場合あり)', arrNote: '{0} までに到着する経路',
     dataNote: '時刻は静的スナップショットです。最新の時刻表と数分異なる場合があります。乗換時間は駅規模による推定です。',
@@ -485,7 +483,6 @@ const I18N = {
     xfrN: '{0} changes', dirTo: 'to {0}', firstDep: 'First train',
     themeTip: 'Theme', backHome: 'Back home', errData: 'Failed to load data. Check your network and retry', retry: 'Retry',
     autoFirst: 'No trains at that time; searched from the first departure',
-    nextDay: "No connections left today; searched from the next day's first departure",
     arrEarliest: 'Cannot arrive by that time; showing the earliest arrival',
     lastNote: 'Last route reaching the destination (may pass midnight)', arrNote: 'Arriving by {0}',
     dataNote: 'Timetable is a static snapshot; may differ by a few minutes. Transfer times are estimates by station size.',
@@ -889,11 +886,18 @@ function earliestTrip(ti, si, tmin, day, catOff) {
     const g = gs[gi];
     if (catOff && catOff[TYPE_CAT[g[2]]]) continue;
     const dep = patOffsets(ti, g[1])[1][si];
-    const k = bisectLeftG(g, tmin - dep);
-    if (k < g.length) {
-      const da = g[k] + dep;
-      if (best === null || da < best[0]) best = [da, g[1], g[2], g[k]];
+    /* 跨日等待: 当日该站已无 ≥tmin 的班次时, 顺延到次日(+1440)、再日(+2880)…的首班,
+       取最早者(最多 +3 天)。数据只有一份时刻表, 次日按同一份表近似。
+       用于跨日长途(如 宿毛→藻琴), 否则「末班已过、需隔夜再走」会被误判为无路径。
+       注意必须保证 上车时刻 ≥ tmin(用 sh 偏移后再二分), 否则会产生早于到达的上车。 */
+    let k = -1, sh = 0;
+    for (sh = 0; sh <= 4320; sh += 1440) {
+      k = bisectLeftG(g, tmin - dep - sh);
+      if (k < g.length) break;
     }
+    if (k >= g.length) continue;
+    const da = g[k] + dep + sh;
+    if (best === null || da < best[0]) best = [da, g[1], g[2], g[k] + sh];
   }
   return best;
 }
@@ -906,10 +910,16 @@ function latestArrive(ti, sj, tmax, day, catOff) {
     const g = gs[gi];
     if (catOff && catOff[TYPE_CAT[g[2]]]) continue;
     const arr = patOffsets(ti, g[1])[0][sj];
-    const k = bisectRightG(g, tmax - arr) - 1;
+    /* 跨日(反向): 当日已无 ≤tmax 的班次时, 顺延到前一日(−1440)…(最多 −3 天),
+       取最晚者, 保证到达时刻 ≤ tmax。用于跨日长途的 終電/指定到达。 */
+    let k = -1, sh = 0;
+    for (sh = 0; sh >= -4320; sh -= 1440) {
+      k = bisectRightG(g, tmax - arr - sh) - 1;
+      if (k >= 3) break;
+    }
     if (k >= 3) {
-      const aa = g[k] + arr;
-      if (best === null || aa > best[0]) best = [aa, g[1], g[2], g[k]];
+      const aa = g[k] + arr + sh;
+      if (best === null || aa > best[0]) best = [aa, g[1], g[2], g[k] + sh];
     }
   }
   return best;
@@ -1228,23 +1238,18 @@ function firstDeparture(orig, day) {
   }
   return best;
 }
-/* 跨日检索: 把整条方案的时间整体后移(次日 = +1440 分), 用于「当日已无衔接班次」的场景。
-   数据只有一份时刻表, 次日按同一份表(+1 天)近似, 显示时会带 +1d 标记。 */
-function shiftRoute(r, mins) {
-  r.dep += mins; r.arr += mins;
-  for (const lg of r.legs) { lg.dep += mins; lg.arr += mins; }
-  return r;
-}
-/* 无路径兜底(now/dep 模式): 当日该时刻起已无衔接班次时,
-   ①用「次日」时刻表(同一份数据整体 +1 天)检索 ②仍无则放宽乗換上限 ③最后退回当日首班。
-   目的: 偏远小站/长途(如 喜多灘→秋田/大阪)在晚间出发时, 不再直接显示「未找到连通路径」。 */
+/* 无路径兜底(now/dep 模式): ①放宽乗換上限 ②退回当日首班起检索。
+   跨日/隔夜等待已由 raptorFwd 的 earliestTrip 处理, 此处不再做整条方案的时间平移。 */
 function noRouteFallback(f, t, tStart, day, opt) {
+  if ((opt.maxK || 5) < 9) {
+    const c = searchRoutes(f, t, tStart, day, { ...opt, maxK: 9 });
+    if (c.length) return { cands: c, note: '' };
+  }
   const fd = firstDeparture(f, day);
-  if (fd == null) return { cands: [], note: '' };
-  let c = searchRoutes(f, t, fd, day, opt);
-  if (!c.length && (opt.maxK || 5) < 7) c = searchRoutes(f, t, fd, day, { ...opt, maxK: 7 });
-  if (c.length) { for (const r of c) shiftRoute(r, 1440); return { cands: c, note: T().nextDay }; }
-  if (fd < tStart) { c = searchRoutes(f, t, fd, day, opt); if (c.length) return { cands: c, note: T().autoFirst }; }
+  if (fd != null && fd < tStart) {
+    const c = searchRoutes(f, t, fd, day, { ...opt, maxK: 9 });
+    if (c.length) return { cands: c, note: T().autoFirst };
+  }
   return { cands: [], note: '' };
 }
 /* 終電: 反向搜索起点最晚可出发时刻(当日 24:00 + 4h 的运行窗口内) */
@@ -1343,7 +1348,7 @@ function doSearch() {
       const fd = firstDeparture(f, day);
       if (fd != null) {
         cands = searchRoutes(f, t, fd, day, opt);
-        if (!cands.length && (opt.maxK || 5) < 7) cands = searchRoutes(f, t, fd, day, { ...opt, maxK: 7 });
+        if (!cands.length && (opt.maxK || 5) < 9) cands = searchRoutes(f, t, fd, day, { ...opt, maxK: 9 });
         if (cands.length) note = T().arrEarliest;
       }
     }

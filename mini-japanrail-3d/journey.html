@@ -655,12 +655,17 @@ function buildIndexes() {
     tmapLine[ti] = best; tmapKm[ti] = km / 10; tmapEnd[ti] = S[S.length - 1];
   }
   patCache = new Map();
+  /* nameIndex 同时索引三种名字:
+       n = 规范名 ST.N (重名站不带消歧后缀)
+       d = 显示名 ST.D (重名站带括号后缀, 如 大宮(埼玉県) / 大宮(京都府))
+       z = 中文名 ST.Z
+     必须索引 d —— 输入框里填的就是 D, 只查 N 会让 858 个重名站全部「搜得到却点不了」。 */
   nameIndex = [];
   const seen = new Set();
-  for (let i = 0; i < ST.N.length; i++) { nameIndex.push({ i, n: ST.N[i], z: ST.Z[i] }); seen.add(i); }
+  for (let i = 0; i < ST.N.length; i++) { nameIndex.push({ i, n: ST.N[i], d: ST.D[i], z: ST.Z[i] }); seen.add(i); }
   for (const [i, al] of (ST.X || [])) {
     if (seen.has(i)) continue;
-    nameIndex.push({ i, n: al[0], z: ST.Z[i] || al[0] }); seen.add(i);
+    nameIndex.push({ i, n: al[0], d: ST.D[i], z: ST.Z[i] || al[0] }); seen.add(i);
   }
   lineColor = new Map();
   for (const l of LINES) if (l[2]) lineColor.set(l[0], l[2]);
@@ -1088,7 +1093,11 @@ function nextLegTrips(lg, day, n) {
 /* ══════════════════ 检索执行 ══════════════════ */
 function doSearch() {
   hideSug();
-  const f = nodeIdx($('rFrom').value), t = nodeIdx($('rTo').value);
+  /* 优先用点击建议列表时记录的节点: 输入框里是显示名 D, 重名站(带括号)必须靠它精确定位,
+     否则 大宮(京都府) 会被 nodeIdx 解析成另一个 大宮。文本没变才复用, 改过就重新解析。 */
+  const fv = normName($('rFrom').value), tv = normName($('rTo').value);
+  let f = state.from != null && ST.D[state.from] === fv ? state.from : nodeIdx(fv);
+  let t = state.to != null && ST.D[state.to] === tv ? state.to : nodeIdx(tv);
   if (f < 0 || t < 0) { toast(T().badSta); return; }
   if (f === t) { toast(T().sameSta); return; }
   state.from = f; state.to = t;
@@ -1181,15 +1190,21 @@ function reRouteWith(legIdx, newTrip, alightNode) {
 }
 
 /* ══════════════════ 站名解析与联想 ══════════════════ */
+/* 输入归一化: 全角括号 → 半角。数据里 858 个重名站的消歧后缀统一用半角 ()。 */
+function normName(s) {
+  return String(s || '').trim().replace(/（/g, '(').replace(/）/g, ')');
+}
+/* 名字 → 节点。精确匹配优先, 且必须覆盖显示名 d(带括号后缀)。
+   否则「大宮(京都府)」这类站搜得到却解析不了。 */
 function nodeIdx(nm) {
-  nm = String(nm || '').trim();
+  nm = normName(nm);
   if (!nm) return -1;
   let best = -1, bestSc = 99;
   for (const e of nameIndex) {
     let sc = -1;
-    if (e.n === nm || e.z === nm) sc = 0;
-    else if (e.n.startsWith(nm) || (e.z && e.z.startsWith(nm))) sc = 1;
-    else if (e.n.indexOf(nm) >= 0 || (e.z && e.z.indexOf(nm) >= 0)) sc = 2;
+    if (nm === e.d || nm === e.n || nm === e.z) sc = 0;
+    else if (e.d.startsWith(nm) || e.n.startsWith(nm) || (e.z && e.z.startsWith(nm))) sc = 1;
+    else if (e.d.indexOf(nm) >= 0 || e.n.indexOf(nm) >= 0 || (e.z && e.z.indexOf(nm) >= 0)) sc = 2;
     if (sc >= 0 && sc < bestSc) { bestSc = sc; best = e.i; if (sc === 0) break; }
   }
   return best;
@@ -1203,15 +1218,15 @@ function hlText(text, q) {
 }
 function doSuggest(which) {
   const input = which === 'from' ? $('rFrom') : $('rTo');
-  const q = input.value.trim();
+  const q = normName(input.value);
   const box = $('sug');
   if (!q) { box.style.display = 'none'; sugItems = []; sugWhich = null; return; }
   const items = [];
   for (const e of nameIndex) {
     let sc = -1;
-    if (e.n === q || e.z === q) sc = 0;
-    else if (e.n.startsWith(q) || (e.z && e.z.startsWith(q))) sc = 1;
-    else if (e.n.indexOf(q) >= 0 || (e.z && e.z.indexOf(q) >= 0)) sc = 2;
+    if (q === e.d || q === e.n || q === e.z) sc = 0;
+    else if (e.d.startsWith(q) || e.n.startsWith(q) || (e.z && e.z.startsWith(q))) sc = 1;
+    else if (e.d.indexOf(q) >= 0 || e.n.indexOf(q) >= 0 || (e.z && e.z.indexOf(q) >= 0)) sc = 2;
     if (sc >= 0) items.push([sc, e.n.length, -ST.R[e.i], e]);
   }
   items.sort((a, b) => a[0] - b[0] || a[1] - b[1] || a[2] - b[2]);
@@ -1637,7 +1652,9 @@ function highlightOnMap(r) {
 function stateHash() {
   if (state.from == null || state.to == null) return;
   const p = new URLSearchParams();
-  p.set('f', ST.N[state.from]); p.set('t', ST.N[state.to]);
+  /* 写显示名 D 而非规范名 N: 重名站(大宮(埼玉県)/大宮(京都府))只有 D 能区分,
+     用 N 会让分享出去的链接在下次打开时解析到错误的同名站。 */
+  p.set('f', ST.D[state.from]); p.set('t', ST.D[state.to]);
   p.set('m', state.mode); p.set('d', state.day);
   if (state.mode === 'dep' || state.mode === 'arr') p.set('tm', minToTime(timeToMin($('depTime').value)));
   if (curResult) p.set('i', curResult.idx);

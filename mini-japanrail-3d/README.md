@@ -93,3 +93,47 @@ python3 -m http.server 8931
 - 本地生成：`cd mini-japanrail-3d && python3 seo/build_seo_static.py`
 - 域名配置：`seo/seo_config.json` 的 `site_base`（与 `index.html` head 中 3 处域名保持一致）
 - CI 已在部署前自动重新生成，产物不入库（见仓库根 `.gitignore`）
+
+## 换乘案内页（journey.html）
+
+主页「路线」tab 输入起终点后点击 → 即跳转 `journey.html`——**班次级**换乘案内
+（RAPTOR 算法），与主页的「线路拼接」本质不同：知道坐哪一班、几点发、换乘等多久、几点到。
+
+- **数据**（`data/journey/`，由 `scripts/build_journey_data.py` 从 `tmaps.json` + `trains_{wd,sa,su}.json` 生成）：
+
+  | 文件 | 内容 |
+  |---|---|
+  | `stations.json` | 站节点（同名站 3km 聚类为换乘节点）：坐标 + 规范名 N + 显示名 D + 中文名 Z + 别名 X |
+  | `lines.json` | 线路目录 `[日名, 中名, 色]`（轨道口径，无品牌名） |
+  | `tmaps.json` | 停站模板：`[S 停站节点, L 区间线路, K 区间km(×10), P 时刻pattern, TN 爱称]` |
+  | `trips_{wd,sa,su}.json` | 班次实例：`[tmap, pattern, 车种, d0, d0, …]`（同 tmap+pattern 的班次只存首站发车分） |
+  | `transfers.json` | 大站换乘罚时（6min/4min）+ 物理近站步行边（<800m，罚时=距离/80+2） |
+  | `types.json` | 车种词表（普/快/特/各/急… + 中文名） |
+
+  **pattern 时刻编码**：去掉首站 d0 后的 `2N-3` 差值串，偶数位=运行分 `run_i`（站 i-1 发→站 i 着），
+  奇数位=停车分 `dwell_i`（站 i，i=1..N-2）。绝对时刻递推：
+  `arr[i] = dep[i-1] + run_i`，`dep[i] = arr[i] + dwell_i`（**dep 含前期 dwell，不可只累加 run**）。
+  已对全部 266,971 个班次做「built (pattern,d0) ↔ 原始 s 串」逐站全量审计，零误差。
+
+- **算法**：RAPTOR（round-based，maxK=6）。`τ[stop]`=最早到达分钟（绝对分钟，跨日不取模）；
+  「某站乘某线 ≥t 的下一班」= 在该 tmap 有序 `dep0` 数组上二分，O(log n)。
+  排序四模式：**早**（跑满轮数取全局最早）/ **楽**（首轮到达即停=换乘最少）/ **指定出发** / **始発**（起点当日最早班次）。
+  环线 tmap 存在重复站 → 回溯在 parent 中存 alight 下标（禁 `indexOf`）。
+
+- **时刻基准**：与主页一致——「早」模式的出发时刻 = JST 当前分钟（`(Date.now()+9h) % 86400000`，
+  与浏览器本地时区无关）；曜日默认值按 JST 日期 + 节假日历（祝日→休日时刻，振替休日/国民の休日
+  推导与主页同一张 HOLIDAY_BASE 表）。
+
+- **校准**（Yahoo!乗換案内，2026-10-12）：東京→京都 09:00 のぞみ135号 09:00→11:15 逐站一致
+  （品川 09:07 / 新横浜 09:18 / 名古屋 10:41）；札幌→函館 10:30 特急北斗10号 10:56→14:40 一致。
+  部分都市圈班次与现行 Yahoo 有分钟级偏差（源数据为静态快照，页面内已提示）。
+  不含飞机与末电（v2）；票价无数据源，显示营业里程 km。
+
+- **本地预览**：
+  ```bash
+  cd mini-japanrail-3d && python3 -m http.server 8000
+  # http://localhost:8000/journey.html
+  # 带参: journey.html#mjrj=f=東京&t=京都&d=wd&m=early
+  ```
+- **重建数据**：`python3 scripts/build_journey_data.py`（输入默认取 `mini-japanrail-3d/data/`，输出 `data/journey/`）。
+  refresh.yml 每周刷新时刻表后会自动重建；构建失败沿用旧数据（旧数据仍自洽）。

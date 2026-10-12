@@ -396,6 +396,32 @@ html.perf-low .rcard, html.perf-low .tcard, html.perf-low .stat { backdrop-filte
   .rcard:nth-child(n+4) { animation-delay:.16s; }
 }
 
+/* ══════ 方案卡线路色条 / 中间站展开(层级) / 输入框清除 ══════ */
+.rbar { display:flex; gap:1.5px; height:4px; border-radius:2px; overflow:hidden; margin-bottom:7px; }
+.rbar i { display:block; height:100%; border-radius:2px; min-width:3px; }
+.stops-btn { display:flex; align-items:center; gap:5px; width:100%; padding:6px 10px; border:0;
+  border-top:1px solid var(--line); background:transparent; color:var(--dim); font-size:10.5px;
+  font-weight:800; cursor:pointer; transition:background .15s, color .15s; }
+@media (hover:hover) { .stops-btn:hover { background:var(--acc-soft); color:var(--acc-txt); } }
+.stops-btn .cv { flex:none; transition:transform .3s var(--ease-spring); }
+.stops-btn.open { color:var(--acc-txt); background:var(--acc-soft); }
+.stops-btn.open .cv { transform:rotate(90deg); }
+.stops-list { display:grid; grid-template-rows:0fr; transition:grid-template-rows .32s var(--ease-smooth); }
+.stops-list.open { grid-template-rows:1fr; }
+.stops-list > div { overflow:hidden; min-height:0; }
+.sitem { display:flex; align-items:center; gap:8px; padding:6px 10px 6px 18px; border-top:1px solid var(--line); font-size:11px; }
+.sitem .sn { font-weight:700; color:var(--txt); }
+.sitem .st2 { margin-left:auto; font-variant-numeric:tabular-nums; font-weight:800; color:var(--dim); white-space:nowrap; }
+.sitem .dw { color:var(--dim); opacity:.6; font-weight:600; }
+.sfield input { padding-right:34px; }
+.clr { position:absolute; right:5px; top:50%; transform:translateY(-50%); width:24px; height:24px;
+  border:0; border-radius:50%; background:var(--glass-2); color:var(--dim); display:none;
+  align-items:center; justify-content:center; cursor:pointer; z-index:2;
+  transition:background .15s, color .15s, transform .2s var(--ease-spring); }
+.sfield.has-v .clr { display:flex; }
+@media (hover:hover) { .clr:hover { background:var(--acc-soft); color:var(--txt); } }
+.clr:active { transform:translateY(-50%) scale(.85); }
+
 </style>
 </head>
 <body>
@@ -424,6 +450,7 @@ html.perf-low .rcard, html.perf-low .tcard, html.perf-low .stat { backdrop-filte
       <div class="sfield">
         <label id="lbFrom">起点</label>
         <input id="rFrom" type="text" autocomplete="off" spellcheck="false" placeholder="東京 / Tokyo">
+        <button class="clr" data-clr="from" type="button" aria-label="clear"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
       </div>
       <button id="swapBtn" class="gcircle" title="Swap">
         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v13M7 17l-3-3M7 17l3-3M17 20V7M17 7l-3 3M17 7l3 3"/></svg>
@@ -431,6 +458,7 @@ html.perf-low .rcard, html.perf-low .tcard, html.perf-low .stat { backdrop-filte
       <div class="sfield">
         <label id="lbTo">终点</label>
         <input id="rTo" type="text" autocomplete="off" spellcheck="false" placeholder="京都 / Kyoto">
+        <button class="clr" data-clr="to" type="button" aria-label="clear"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
       </div>
       <button id="goBtn">
         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h14M13 6l6 6-6 6"/></svg>
@@ -534,6 +562,7 @@ const I18N = {
     nextTrips: '后续班次', nextNone: '今日已无后续班次', arriveAt: '到达 {0}', noConn: '改乘后无法到达',
     walkMin: '徒步 {0} 分', xfrAt: '乗換 {0} 分', legInfo: '{0} 駅 · {1} {2}', boarding: '乗', alighting: '降',
     emptyLegs: '未找到可连接的班次', dayAuto: '自动', tapTrains: '点击列车卡可查看后续班次',
+    midStops: '途中 {0} 駅',
     detail: '詳細条件', catAll: '全種別', optLb: '列车种别', catSk: '新幹線', catTk: '特急', catLn: 'Liner', catEx: '急行・快速', catLo: '普通',
     xfrLb: '乗換', xfrFew: '少', xfrStd: '标准', xfrAny: '不限', optTip: '关闭的种别不参与检索', optMin: '至少保留一种列车种别',
   },
@@ -557,6 +586,7 @@ const I18N = {
     nextTrips: '後の便', nextNone: '本日の便はもうありません', arriveAt: '{0} 着', noConn: 'この便では到着できません',
     walkMin: '徒歩 {0} 分', xfrAt: '乗換 {0} 分', legInfo: '{0} 駅 · {1} {2}', boarding: '乗', alighting: '降',
     emptyLegs: '接続できる便が見つかりません', dayAuto: '自動', tapTrains: '列車カードをタップで後の便を表示',
+    midStops: '途中{0}駅',
     detail: '詳細条件', catAll: '全種別', optLb: '列車種別', catSk: '新幹線', catTk: '特急', catLn: 'ライナー', catEx: '急行・快速', catLo: '普通',
     xfrLb: '乗換', xfrFew: '少なめ', xfrStd: '標準', xfrAny: '制限なし', optTip: 'オフの種別は検索対象外です', optMin: '列車種別は1つ以上選んでください',
   },
@@ -580,6 +610,7 @@ const I18N = {
     nextTrips: 'Later trains', nextNone: 'No later trains today', arriveAt: 'arr {0}', noConn: 'Cannot arrive on this train',
     walkMin: 'Walk {0} min', xfrAt: 'Change {0} min', legInfo: '{0} stops · {1} {2}', boarding: 'board', alighting: 'alight',
     emptyLegs: 'No connecting services found', dayAuto: 'Auto', tapTrains: 'Tap a train card to see later departures',
+    midStops: '{0} intermediate stops',
     detail: 'Options', catAll: 'All types', optLb: 'Train type', catSk: 'Shinkansen', catTk: 'Ltd. Exp.', catLn: 'Liner', catEx: 'Rapid', catLo: 'Local',
     xfrLb: 'Changes', xfrFew: 'Few', xfrStd: 'Normal', xfrAny: 'Any', optTip: 'Disabled types are excluded from search', optMin: 'Keep at least one train type',
   },
@@ -608,6 +639,7 @@ let lineColor = null;
 let map = null, mapReady = false;
 let curResult = null;      /* 当前结果 {cands:[], idx, ...} */
 let openNext = -1;         /* 展开后续班次的 leg 下标 */
+let openStops = -1;        /* 展开中间停靠站的 leg 下标 */
 
 /* ══════════════════ 主题(与主页同 key: mjr3d_theme) ══════════════════ */
 const mqLight = window.matchMedia('(prefers-color-scheme: light)');
@@ -1681,7 +1713,19 @@ function renderResult(res) {
     const r = c.r;
     const tg = c.tag === 'fast' ? t.tagFast : c.tag === 'easy' ? t.tagEasy : t.tagAlt;
     const cls = c.tag === 'fast' ? '' : ' g';
-    return '<div class="rcard' + (i === res.idx ? ' on' : '') + '" data-i="' + i + '">' +
+    /* 线路色条: 按区间营业里程分配宽度, 换乘处自然分段 */
+    let bar = '';
+    if (r.legs && r.legs.length) {
+      const segs = r.legs.map(lg => {
+        let km = 0; const K = TM.T[lg.tmap][2];
+        if (K) for (let k = lg.board; k < lg.alight; k++) km += (K[k] || 0);
+        return { c: lineColorOf(lg.tmap, lg.board, lg.alight), km: Math.max(km / 10, 0.2) };
+      });
+      const tot = segs.reduce((a, b) => a + b.km, 0) || 1;
+      bar = '<div class="rbar">' + segs.map(s =>
+        '<i style="flex:' + (s.km / tot * 100).toFixed(2) + ';background:' + esc(s.c) + '"></i>').join('') + '</div>';
+    }
+    return '<div class="rcard' + (i === res.idx ? ' on' : '') + '" data-i="' + i + '">' + bar +
       '<div class="rt">' + fmtMin(r.dep) + '<span style="color:var(--dim);font-size:10px">→</span>' + fmtMin(r.arr) + '</div>' +
       '<div class="rd">' + fmtDur(r.arr - r.dep) + ' · ' + xfrLabel(r.xfr) + '</div>' +
       '<div class="rx"><span>' + r.km.toFixed(0) + ' ' + t.kmUnit + '</span></div>' +
@@ -1689,7 +1733,7 @@ function renderResult(res) {
       '</div>';
   }).join('');
   $('routes').querySelectorAll('.rcard').forEach(el => el.addEventListener('click', () => {
-    curResult.idx = +el.dataset.i; openNext = -1;
+    curResult.idx = +el.dataset.i; openNext = -1; openStops = -1;
     renderResult(curResult);
     highlightOnMap(curResult.cands[curResult.idx].r);
     stateHash();
@@ -1716,6 +1760,23 @@ function renderLegs(r) {
     let kmLeg = 0;
     for (let i = lg.board; i < lg.alight; i++) kmLeg += TM.T[ti][2][i];
     kmLeg /= 10;
+    /* 中间停靠站(可展开层级): 长距离乘车默认收起, 释放移动端竖向空间 */
+    const nMid = lg.alight - lg.board - 1;
+    let stopsHtml = '';
+    if (nMid > 0) {
+      const off = patOffsets(ti, lg.pi);
+      let rows = '';
+      for (let s = lg.board + 1; s < lg.alight; s++) {
+        const aT = lg.d0 + off[0][s], dT = lg.d0 + off[1][s];
+        rows += '<div class="sitem"><span class="sn">' + esc(ST.D[S[s]]) + '</span>' +
+          '<span class="st2">' + fmtMin(aT) +
+          (dT > aT ? '<span class="dw">/' + fmtMin(dT) + '</span>' : '') + '</span></div>';
+      }
+      stopsHtml = '<button class="stops-btn' + (openStops === li ? ' open' : '') + '" data-sli="' + li + '">' +
+        '<svg class="cv" viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>' +
+        '<span>' + esc(tf(t.midStops, nMid)) + '</span></button>' +
+        '<div class="stops-list' + (openStops === li ? ' open' : '') + '"><div>' + rows + '</div></div>';
+    }
     /* 起点前徒步 */
     if (li === 0 && lg.walkFrom >= 0 && lg.walkMin > 0)
       tl += '<div class="tl-walk"><span>🚶</span><span>' + esc(ST.D[lg.walkFrom]) + ' → ' + esc(ST.D[S[lg.board]]) + '</span><span>' + tf(t.walkMin, lg.walkMin) + '</span></div>';
@@ -1732,6 +1793,7 @@ function renderLegs(r) {
       '<span class="dst">' + esc(tf(t.dirTo, dst)) + '</span>' +
       '</div>' +
       '<div class="tf">' + esc(tf(t.legInfo, nStop, kmLeg.toFixed(1), t.kmUnit)) + '</div>' +
+      stopsHtml +
       '<button class="nxt' + (openNext === li ? ' open' : '') + '" data-li="' + li + '">' +
       '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .2s var(--ease-smooth);transform:rotate(' + (openNext === li ? 90 : 0) + 'deg)"><path d="M9 6l6 6-6 6"/></svg>' +
       esc(t.nextTrips) + '<span class="cv">' + esc(t.tapTrains) + '</span></button>' +
@@ -1752,6 +1814,12 @@ function renderLegs(r) {
   tl += '<div class="tl-note">' + esc(t.dataNote) + '</div>';
   tl += '</div>';
   $('legs').innerHTML = tl;
+  $('legs').querySelectorAll('.stops-btn').forEach(b => b.addEventListener('click', ev => {
+    ev.stopPropagation();
+    const li = +b.dataset.sli;
+    openStops = (openStops === li) ? -1 : li;
+    renderResult(curResult);
+  }));
   $('legs').querySelectorAll('.nxt').forEach(b => b.addEventListener('click', ev => {
     ev.stopPropagation();
     const li = +b.dataset.li;
@@ -1766,7 +1834,7 @@ function renderLegs(r) {
     const nr = reRouteWith(li, { tmap: tm, board: bd, alight: al, pi, ty, d0 }, null);
     if (!nr) { toast(T().noConn); return; }
     curResult.cands[curResult.idx] = { tag: 'alt', r: nr };
-    openNext = -1;
+    openNext = -1; openStops = -1;
     renderResult(curResult);
     highlightOnMap(nr);
     stateHash();
@@ -2061,7 +2129,9 @@ function parseHash() {
     const now5 = Math.floor(nowMin() / 5) * 5;
     $('depTime').value = minToTime(now5);
     state.depTime = now5;
+    syncClr();
     if (parseHash()) doSearch();
+    syncClr();
   } catch (e) {
     console.error(e);
     $('lmsg').textContent = T().errData;
@@ -2096,6 +2166,29 @@ function parseHash() {
     else setTimeout(() => { if (curResult) highlightOnMap(curResult.cands[curResult.idx].r); }, 400);
   });
 })();
+
+/* ══════════════════ 输入框清除按钮 ══════════════════ */
+function syncClr() {
+  [['rFrom', 'from'], ['rTo', 'to']].forEach(p => {
+    const el = $(p[0]); if (!el) return;
+    const f = el.closest('.sfield'); if (!f) return;
+    f.classList.toggle('has-v', !!el.value);
+  });
+}
+['rFrom', 'rTo'].forEach(id => {
+  const el = $(id); if (!el) return;
+  el.addEventListener('input', syncClr);
+  el.addEventListener('change', syncClr);
+});
+document.querySelectorAll('.clr').forEach(b => b.addEventListener('click', () => {
+  const isFrom = b.dataset.clr === 'from';
+  const el = $(isFrom ? 'rFrom' : 'rTo');
+  el.value = '';
+  if (isFrom) state.from = null; else state.to = null;
+  syncClr(); el.focus();
+  $('result').classList.remove('show');
+  stateHash();
+}));
 
 </script>
 </body>

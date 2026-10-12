@@ -96,25 +96,43 @@ button,input,select { font-family:inherit; }
 .chip.on { background:var(--acc); border-color:var(--acc); color:#fff; box-shadow:0 2px 8px var(--acc-soft); }
 
 /* ══════════════ 主面板: 移动端底部抽屉(默认) ══════════════ */
-#panel { position:absolute; left:8px; right:8px; bottom:calc(8px + env(safe-area-inset-bottom)); z-index:10;
-  display:flex; flex-direction:column; border-radius:26px; overflow:hidden;
-  max-height:min(88dvh, 820px);
-  background:var(--glass-panel);
-  border:1px solid var(--glass-edge);
+/* ══════ 宿主 + 两级抽屉(Apple Maps 式: 主抽屉 → 路线详情抽屉) ══════ */
+#panel { position:absolute; inset:0; z-index:10; pointer-events:none; background:none; border:0; box-shadow:none; }
+.sheet { position:absolute; left:8px; right:8px; bottom:calc(8px + env(safe-area-inset-bottom));
+  z-index:1; display:flex; flex-direction:column; border-radius:26px; overflow:hidden;
+  max-height:min(88dvh, 820px); pointer-events:auto;
+  background:var(--glass-panel); border:1px solid var(--glass-edge);
   backdrop-filter:var(--glass-panel-blur); -webkit-backdrop-filter:var(--glass-panel-blur);
-  box-shadow:inset 0 1px 0 var(--glass-hi), inset 0 -1px 2px var(--glass-lo), 0 12px 40px rgba(0,0,0,.36); }
-:root[data-theme="light"] #panel { box-shadow:inset 0 1px 0 rgba(255,255,255,.85), inset 0 -1px 1px var(--glass-lo), 0 12px 36px rgba(15,23,42,.16); }
+  box-shadow:inset 0 1px 0 var(--glass-hi), inset 0 -1px 2px var(--glass-lo), 0 12px 40px rgba(0,0,0,.36);
+  transition:transform .48s var(--ease-spring), opacity .28s var(--ease-smooth); will-change:transform; }
+:root[data-theme="light"] .sheet { box-shadow:inset 0 1px 0 rgba(255,255,255,.85), inset 0 -1px 1px var(--glass-lo), 0 12px 36px rgba(15,23,42,.16); }
+.sheet.dragging { transition:none; }
+/* 主抽屉: 折叠到「仅搜索卡」的 peek 档; 详情打开时整体收起隐藏 */
+#sheetMain.collapsed { transform:translateY(calc(100% - var(--peek, 170px))); }
+#sheetMain.stowed { transform:translateY(112%); opacity:0; pointer-events:none; }
+/* 路线详情抽屉: hidden → medium(露出地图) → full */
+#sheetDetail { z-index:2; max-height:min(66dvh, 660px); transform:translateY(112%); pointer-events:none; }
+#sheetDetail.show { transform:translateY(0); pointer-events:auto; }
+#sheetDetail.show.medium { transform:translateY(calc(100% - var(--med, 34dvh))); }
 
-/* ───── 抽屉把手(仅移动端) ───── */
-#grip { display:flex; align-items:flex-start; justify-content:center; width:100%; height:22px;
+/* ───── 抽屉把手 ───── */
+#grip, #dgrip { display:flex; align-items:flex-start; justify-content:center; width:100%; height:22px;
   padding:8px 0 0; margin:0; border:0; background:transparent; cursor:pointer; touch-action:none; flex:none;
   -webkit-tap-highlight-color:transparent; user-select:none; }
-#grip span { width:40px; height:4.5px; border-radius:3px; background:var(--dim); opacity:.5;
+#grip span, #dgrip span { width:40px; height:4.5px; border-radius:3px; background:var(--dim); opacity:.5;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.28); transition:opacity .2s, width .3s var(--ease-spring); }
-#grip:active span { opacity:.95; width:48px; }
-#panel { transition:transform .5s var(--ease-spring); will-change:transform; }
-#panel.dragging { transition:none; }
-#panel.collapsed { transform:translateY(calc(100% - var(--peek, 170px))); }
+#grip:active span, #dgrip:active span { opacity:.95; width:48px; }
+
+/* ───── 详情抽屉头部(返回 + 概要标题) ───── */
+#detailHead { display:flex; align-items:center; gap:8px; padding:6px 13px 10px; flex:none; border-bottom:1px solid var(--line); }
+#backBtn { display:flex; align-items:center; gap:2px; height:30px; padding:0 11px 0 7px; flex:none;
+  border:1px solid var(--glass-edge); border-radius:var(--r-pill); background:var(--glass);
+  color:var(--acc-txt); font-size:11.5px; font-weight:800; cursor:pointer;
+  transition:transform .25s var(--ease-spring), background .2s; }
+@media (hover:hover) { #backBtn:hover { background:var(--glass-2); } }
+#backBtn:active { transform:scale(.93); }
+#dTitle { flex:1; min-width:0; font-size:12px; font-weight:800; color:var(--txt);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-variant-numeric:tabular-nums; }
 
 /* ───── 搜索卡 ───── */
 #searchCard { padding:12px 13px 12px; flex:none; position:relative; }
@@ -254,7 +272,7 @@ button,input,select { font-family:inherit; }
 .rcard .rtag.g { background:rgba(120,140,180,.28); color:var(--txt); }
 
 /* 时间轴 */
-#legs { overflow-y:auto; padding:0 13px 12px; overscroll-behavior:contain; scrollbar-width:none; }
+#legs { flex:1 1 auto; min-height:0; overflow-y:auto; padding:0 13px 12px; overscroll-behavior:contain; scrollbar-width:none; }
 #legs::-webkit-scrollbar { width:0; display:none; }
 .tl { position:relative; }
 .tl-node { display:flex; align-items:stretch; gap:10px; position:relative; }
@@ -357,17 +375,24 @@ html.perf-low .rcard, html.perf-low .tcard, html.perf-low .stat { backdrop-filte
 /* ══════════════ 桌面(≥900px): 面板改为左侧栏, 地图完整可见 ══════════════ */
 @media (min-width:900px) {
   #topHud { left:auto; right:var(--pad); transform:none; top:var(--pad); }
-  #panel { left:var(--pad); right:auto; top:var(--pad); bottom:var(--pad);
-    width:var(--sbw); max-height:none; border-radius:22px; transform:none !important;
-    transition:box-shadow .3s var(--ease-smooth); }
-  #grip { display:none; }
-  /* 侧栏内: 搜索区固定, 结果区滚动 */
+  #panel { left:var(--pad); right:auto; top:var(--pad); bottom:var(--pad); width:var(--sbw);
+    display:flex; flex-direction:column; border-radius:22px; overflow:hidden; pointer-events:auto;
+    background:var(--glass-panel); border:1px solid var(--glass-edge);
+    backdrop-filter:var(--glass-panel-blur); -webkit-backdrop-filter:var(--glass-panel-blur);
+    box-shadow:inset 0 1px 0 var(--glass-hi), inset 0 -1px 2px var(--glass-lo), 0 12px 40px rgba(0,0,0,.36);
+    animation:sbIn .55s var(--ease-smooth) both; }
+  /* 桌面不做抽屉: 两层内容上下堆叠, 全部可见 */
+  .sheet { position:static; max-height:none; border-radius:0; border:0; background:none;
+    backdrop-filter:none; -webkit-backdrop-filter:none; box-shadow:none; overflow:visible;
+    transform:none !important; opacity:1 !important; transition:none; will-change:auto; }
+  #sheetMain { flex:none; }
+  #sheetDetail { flex:1 1 auto; min-height:0; display:flex; flex-direction:column; z-index:1; }
+  #grip, #dgrip { display:none; }
+  #detailHead { display:none; }
   #searchCard { padding:14px 14px 12px; }
-  #result { flex:1 1 auto; min-height:0; }
+  #result { flex:none; }
   #legs { flex:1 1 auto; min-height:0; }
   #sug { top:62px; }
-  /* 侧栏入场动效 */
-  #panel { animation:sbIn .55s var(--ease-smooth) both; }
   @keyframes sbIn { from { opacity:0; transform:translateX(-18px); } to { opacity:1; transform:none; } }
   /* 结果卡错落入场 */
   .rcard { animation:rise .42s var(--ease-smooth) both; }
@@ -444,6 +469,7 @@ html.perf-low .rcard, html.perf-low .tcard, html.perf-low .stat { backdrop-filte
 </header>
 
 <section id="panel">
+  <div id="sheetMain" class="sheet">
   <button id="grip" aria-label="收起/展开面板"><span></span></button>
   <div id="searchCard">
     <div class="srow">
@@ -508,6 +534,18 @@ html.perf-low .rcard, html.perf-low .tcard, html.perf-low .stat { backdrop-filte
   <div id="result">
     <div id="sumBar"></div>
     <div id="routes"></div>
+  </div>
+  </div>
+
+  <div id="sheetDetail" class="sheet" aria-hidden="true">
+    <button id="dgrip" aria-label="收起路线详情"><span></span></button>
+    <div id="detailHead">
+      <button id="backBtn" type="button">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+        <span id="backTxt">返回</span>
+      </button>
+      <div id="dTitle"></div>
+    </div>
     <div id="legs"></div>
   </div>
 </section>
@@ -562,6 +600,7 @@ const I18N = {
     nextTrips: '后续班次', nextNone: '今日已无后续班次', arriveAt: '到达 {0}', noConn: '改乘后无法到达',
     walkMin: '徒步 {0} 分', xfrAt: '乗換 {0} 分', legInfo: '{0} 駅 · {1} {2}', boarding: '乗', alighting: '降',
     emptyLegs: '未找到可连接的班次', dayAuto: '自动', tapTrains: '点击列车卡可查看后续班次',
+    backList: '返回',
     midStops: '途中 {0} 駅',
     detail: '詳細条件', catAll: '全種別', optLb: '列车种别', catSk: '新幹線', catTk: '特急', catLn: 'Liner', catEx: '急行・快速', catLo: '普通',
     xfrLb: '乗換', xfrFew: '少', xfrStd: '标准', xfrAny: '不限', optTip: '关闭的种别不参与检索', optMin: '至少保留一种列车种别',
@@ -586,6 +625,7 @@ const I18N = {
     nextTrips: '後の便', nextNone: '本日の便はもうありません', arriveAt: '{0} 着', noConn: 'この便では到着できません',
     walkMin: '徒歩 {0} 分', xfrAt: '乗換 {0} 分', legInfo: '{0} 駅 · {1} {2}', boarding: '乗', alighting: '降',
     emptyLegs: '接続できる便が見つかりません', dayAuto: '自動', tapTrains: '列車カードをタップで後の便を表示',
+    backList: '戻る',
     midStops: '途中{0}駅',
     detail: '詳細条件', catAll: '全種別', optLb: '列車種別', catSk: '新幹線', catTk: '特急', catLn: 'ライナー', catEx: '急行・快速', catLo: '普通',
     xfrLb: '乗換', xfrFew: '少なめ', xfrStd: '標準', xfrAny: '制限なし', optTip: 'オフの種別は検索対象外です', optMin: '列車種別は1つ以上選んでください',
@@ -610,6 +650,7 @@ const I18N = {
     nextTrips: 'Later trains', nextNone: 'No later trains today', arriveAt: 'arr {0}', noConn: 'Cannot arrive on this train',
     walkMin: 'Walk {0} min', xfrAt: 'Change {0} min', legInfo: '{0} stops · {1} {2}', boarding: 'board', alighting: 'alight',
     emptyLegs: 'No connecting services found', dayAuto: 'Auto', tapTrains: 'Tap a train card to see later departures',
+    backList: 'Back',
     midStops: '{0} intermediate stops',
     detail: 'Options', catAll: 'All types', optLb: 'Train type', catSk: 'Shinkansen', catTk: 'Ltd. Exp.', catLn: 'Liner', catEx: 'Rapid', catLo: 'Local',
     xfrLb: 'Changes', xfrFew: 'Few', xfrStd: 'Normal', xfrAny: 'Any', optTip: 'Disabled types are excluded from search', optMin: 'Keep at least one train type',
@@ -652,7 +693,7 @@ function applyThemeMode() {
   const mb = document.querySelector('meta[name=theme-color]');
   if (mb) mb.content = t === 'light' ? '#dfe4ec' : '#0b0f16';
   document.querySelectorAll('.lg img').forEach(im => { im.src = t === 'dark' ? 'logo-dark.png' : 'logo.png'; });
-  if (mapReady) refreshTrackColors();
+  if (mapReady) { refreshTrackColors(); syncMapTheme(); }
 }
 document.querySelectorAll('#hudRight .chip[data-theme]').forEach(c => c.addEventListener('click', () => {
   localStorage.setItem('mjr3d_theme', c.dataset.theme); applyThemeMode();
@@ -681,6 +722,7 @@ function applyI18n() {
   const ds = $('daySel'); ds.options[0].textContent = t.dayWd; ds.options[1].textContent = t.daySa; ds.options[2].textContent = t.daySu;
   $('optLb').textContent = t.optLb;
   $('optTglLb').textContent = t.detail;
+  $('backTxt').textContent = t.backList;
   $('optToggle').title = t.optTip;
   $('catSk').textContent = t.catSk; $('catTk').textContent = t.catTk; $('catLn').textContent = t.catLn;
   $('catEx').textContent = t.catEx; $('catLo').textContent = t.catLo;
@@ -743,7 +785,7 @@ function peekHeight() {
   return (g && sc && sc.offsetHeight) ? g.offsetHeight + sc.offsetHeight + 14 : 162;
 }
 function setCollapsed(v) {
-  const pn = $('panel');
+  const pn = $('sheetMain');
   if (!isMobileView()) { pn.classList.remove('collapsed'); pn.style.removeProperty('--peek'); return; }
   pn.style.setProperty('--peek', peekHeight() + 'px');
   pn.classList.toggle('collapsed', !!v);
@@ -751,7 +793,7 @@ function setCollapsed(v) {
   if (curResult) setTimeout(() => highlightOnMap(curResult.cands[curResult.idx].r), 80);
 }
 (function () {
-  const g = $('grip'), pn = $('panel');
+  const g = $('grip'), pn = $('sheetMain');
   let y0 = 0, base = 0, dragging = false, moved = false;
   const maxOff = () => Math.max(120, pn.offsetHeight - peekHeight());
   g.addEventListener('pointerdown', e => {
@@ -1500,7 +1542,8 @@ function doSearch() {
   stateHash();
   $('result').classList.add('show');
   /* 移动端: 新结果出来时展开抽屉 */
-  if (isMobileView() && $('panel').classList.contains('collapsed')) setCollapsed(false);
+  closeDetail();
+  if (isMobileView() && $('sheetMain').classList.contains('collapsed')) setCollapsed(false);
 }
 /* 改乘后续班次: 前 i 段固定, 第 i 段换成新班次, 后续重算。
    新班次可能属于另一个 tmap(同区间不同停站), 所以按「乘/下车站节点」在新 tmap 重新定位。 */
@@ -1708,6 +1751,7 @@ function renderResult(res) {
     '</div>';
   if (res.note) html += '<div class="sum-note">' + esc(res.note) + '</div>';
   $('sumBar').innerHTML = html;
+  $('dTitle').textContent = fmtMinRaw(cur.dep) + ' → ' + fmtMinRaw(cur.arr) + ' · ' + durS;
   /* 方案卡 */
   $('routes').innerHTML = res.cands.map((c, i) => {
     const r = c.r;
@@ -1735,6 +1779,7 @@ function renderResult(res) {
   $('routes').querySelectorAll('.rcard').forEach(el => el.addEventListener('click', () => {
     curResult.idx = +el.dataset.i; openNext = -1; openStops = -1;
     renderResult(curResult);
+    openDetail();
     highlightOnMap(curResult.cands[curResult.idx].r);
     stateHash();
   }));
@@ -1900,16 +1945,32 @@ function todayDayMode() {
 function nowMin() { return Math.floor((Date.now() + JST) % 86400000 / 60000); }
 
 /* ══════════════════ 小地图 ══════════════════ */
+function isDarkUI() { return document.documentElement.getAttribute('data-theme') !== 'light'; }
 function baseStyle() {
+  const dark = isDarkUI();
   return {
     version: 8,
     glyphs: 'https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf',
     sources: { basemap: { type: 'raster', tiles: ['https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png'], tileSize: 256, minzoom: 2, maxzoom: 17, attribution: '© 国土地理院' } },
     layers: [
-      { id: 'bg', type: 'background', paint: { 'background-color': '#0b0f16' } },
-      { id: 'basemap', type: 'raster', source: 'basemap', paint: { 'raster-saturation': -0.85, 'raster-brightness-max': 0.34, 'raster-brightness-min': 0.02, 'raster-contrast': 0.12, 'raster-opacity': 0.96 } },
+      { id: 'bg', type: 'background', paint: { 'background-color': dark ? '#101724' : '#eef2f8' } },
+      { id: 'basemap', type: 'raster', source: 'basemap', paint: dark
+          ? { 'raster-saturation': -0.5, 'raster-brightness-max': 0.58, 'raster-brightness-min': 0.05, 'raster-contrast': 0.06, 'raster-opacity': 0.98 }
+          : { 'raster-saturation': 0, 'raster-brightness-max': 1, 'raster-brightness-min': 0, 'raster-contrast': 0, 'raster-opacity': 1 } },
     ],
   };
+}
+/* 主题切换时同步底图明暗(避免深色主题下地图糊成一块黑) */
+function syncMapTheme() {
+  if (!mapReady || !map) return;
+  const dark = isDarkUI();
+  try {
+    map.setPaintProperty('bg', 'background-color', dark ? '#101724' : '#eef2f8');
+    map.setPaintProperty('basemap', 'raster-saturation', dark ? -0.5 : 0);
+    map.setPaintProperty('basemap', 'raster-brightness-max', dark ? 0.58 : 1);
+    map.setPaintProperty('basemap', 'raster-brightness-min', dark ? 0.05 : 0);
+    map.setPaintProperty('basemap', 'raster-contrast', dark ? 0.06 : 0);
+  } catch (e) { }
 }
 function mapNote(msg) {
   const el = $('map');
@@ -1970,11 +2031,11 @@ function refreshTrackColors() {
   if (!map || !mapReady) return;
   const light = document.documentElement.getAttribute('data-theme') === 'light';
   const paint = light
-    ? { 'raster-saturation': -0.2, 'raster-brightness-max': 1.0, 'raster-brightness-min': 0.0, 'raster-contrast': 0.05, 'raster-opacity': 1.0 }
-    : { 'raster-saturation': -0.85, 'raster-brightness-max': 0.34, 'raster-brightness-min': 0.02, 'raster-contrast': 0.12, 'raster-opacity': 0.96 };
+    ? { 'raster-saturation': 0, 'raster-brightness-max': 1.0, 'raster-brightness-min': 0.0, 'raster-contrast': 0.0, 'raster-opacity': 1.0 }
+    : { 'raster-saturation': -0.5, 'raster-brightness-max': 0.58, 'raster-brightness-min': 0.05, 'raster-contrast': 0.06, 'raster-opacity': 0.98 };
   for (const k in paint) { try { map.setPaintProperty('basemap', k, paint[k]); } catch (e) { } }
   try {
-    map.setPaintProperty('bg', 'background-color', light ? '#dfe4ec' : '#0b0f16');
+    map.setPaintProperty('bg', 'background-color', light ? '#eef2f8' : '#101724');
     if (mapDim) {
       /* 聚焦模式: 全网线路灰化退后, 径路成为唯一彩色元素 */
       const gray = light ? '#a6afba' : '#46505f';
@@ -2073,7 +2134,9 @@ function highlightOnMap(r) {
   if (minX <= maxX) {
     /* 移动端: 抽屉占据下半屏, 径路聚焦到抽屉以上的可见区域 */
     const pad = isMobileView()
-      ? { top: 64, left: 26, right: 26, bottom: $('panel').classList.contains('collapsed') ? 140 : Math.round(window.innerHeight * 0.5) }
+      ? { top: 64, left: 26, right: 26, bottom: detailVisible()
+          ? Math.round(($('sheetDetail').offsetHeight || 300) + 24)
+          : ($('sheetMain').classList.contains('collapsed') ? 140 : Math.round(window.innerHeight * 0.5)) }
       : { top: 44, left: Math.round(($('panel').offsetWidth || 400) + 56), right: 44, bottom: 44 };
     map.fitBounds([[minX, minY], [maxX, maxY]], { padding: pad, maxZoom: 12, duration: 900 });
   }
@@ -2162,7 +2225,7 @@ function parseHash() {
   tg.addEventListener('click', () => {
     applyAnim(tg.getAttribute('aria-expanded') !== 'true');
     /* 移动端抽屉折叠态下展开条件会改变高度 → 重算留白 */
-    if ($('panel').classList.contains('collapsed')) setTimeout(() => setCollapsed(true), 400);
+    if ($('sheetMain').classList.contains('collapsed')) setTimeout(() => setCollapsed(true), 400);
     else setTimeout(() => { if (curResult) highlightOnMap(curResult.cands[curResult.idx].r); }, 400);
   });
 })();
@@ -2189,6 +2252,77 @@ document.querySelectorAll('.clr').forEach(b => b.addEventListener('click', () =>
   $('result').classList.remove('show');
   stateHash();
 }));
+
+/* ══════════════════ Apple Maps 式两级抽屉 ══════════════════ */
+let detailState = 'hidden';               /* hidden | medium | full */
+const detailVisible = () => detailState !== 'hidden' && isMobileView();
+function openDetail() {
+  if (!isMobileView()) return;
+  const m = $('sheetMain'), d = $('sheetDetail');
+  m.classList.remove('collapsed');
+  m.classList.add('stowed');              /* 隐藏上一级(带输入框的)主抽屉 */
+  d.setAttribute('aria-hidden', 'false');
+  detailState = 'full';
+  d.classList.add('show'); d.classList.remove('medium');
+  d.style.removeProperty('transform');
+  setTimeout(() => { if (curResult) highlightOnMap(curResult.cands[curResult.idx].r); }, 420);
+}
+function closeDetail() {
+  const m = $('sheetMain'), d = $('sheetDetail');
+  detailState = 'hidden';
+  d.classList.remove('show', 'medium');
+  d.style.removeProperty('transform');
+  d.setAttribute('aria-hidden', 'true');
+  m.classList.remove('stowed');
+  setTimeout(() => { if (curResult) highlightOnMap(curResult.cands[curResult.idx].r); }, 420);
+}
+$('backBtn').addEventListener('click', () => { closeDetail(); });
+/* 点概要区也可进入详情(更大的点击目标) */
+$('sumBar').addEventListener('click', () => {
+  if (isMobileView() && curResult && !detailVisible()) openDetail();
+});
+/* 详情抽屉把手: 点击在 full↔medium 间切换, medium 再点则关闭回到主抽屉; 可拖拽 */
+(function () {
+  const g = $('dgrip'), d = $('sheetDetail');
+  let y0 = 0, base = 0, dragging = false, moved = false;
+  const H = () => d.offsetHeight || 1;
+  const medOff = () => Math.max(110, H() - Math.round(window.innerHeight * 0.34));
+  const curOff = () => detailState === 'full' ? 0 : medOff();
+  g.addEventListener('pointerdown', e => {
+    if (!isMobileView() || detailState === 'hidden') return;
+    dragging = true; moved = false; y0 = e.clientY; base = curOff();
+    try { g.setPointerCapture(e.pointerId); } catch (err) { }
+  });
+  g.addEventListener('pointermove', e => {
+    if (!dragging) return;
+    const dy = e.clientY - y0;
+    if (!moved && Math.abs(dy) > 7) { moved = true; d.classList.add('dragging'); }
+    if (!moved) return;
+    d.style.transform = 'translateY(' + Math.min(H(), Math.max(0, base + dy)) + 'px)';
+  });
+  const end = e => {
+    if (!dragging) return; dragging = false;
+    d.classList.remove('dragging'); d.style.removeProperty('transform');
+    if (!moved) {
+      if (detailState === 'full') { detailState = 'medium'; d.classList.add('medium'); }
+      else closeDetail();
+      setTimeout(() => { if (curResult) highlightOnMap(curResult.cands[curResult.idx].r); }, 420);
+      return;
+    }
+    const off = Math.min(H(), Math.max(0, base + (e.clientY - y0)));
+    if (detailState === 'full') {
+      if (off > medOff() * 0.45) { detailState = 'medium'; d.classList.add('medium'); }
+    } else {
+      if (off > medOff() + 90) closeDetail();
+      else { detailState = 'full'; d.classList.remove('medium'); }
+    }
+    setTimeout(() => { if (curResult) highlightOnMap(curResult.cands[curResult.idx].r); }, 420);
+  };
+  g.addEventListener('pointerup', end);
+  g.addEventListener('pointercancel', end);
+})();
+/* 视口切到桌面时复位抽屉层级 */
+window.addEventListener('resize', () => { if (!isMobileView() && detailState !== 'hidden') closeDetail(); });
 
 </script>
 </body>

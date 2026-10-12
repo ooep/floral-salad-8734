@@ -49,6 +49,11 @@ jobs:
         # 契约校验不通过则 exit 1 → 后续 commit/部署中止,旧数据保持,页面不受影响
         run: python3 scripts/sync_mini_3d.py
 
+      - name: Build journey planner data (RAPTOR)
+        # 由同步后的 tmaps/trains_{wd,sa,su} 生成 data/journey/(stations/lines/tmaps/trips/transfers)
+        # 失败不阻断: journey 页会回退到上一次提交的数据(旧数据仍自洽)
+        run: python3 mini-japanrail-3d/scripts/build_journey_data.py || echo '::warning::journey 数据构建失败,沿用旧数据'
+
       - name: Refresh official geometry (incremental, throttled 2.2s)
         # resume: 已缓存 rw 跳过, 通常 0 个新请求; 仅新开线才抓取(失败不阻断, 下周重试)
         run: python3 scripts/fetch_ra_geometry.py --sleep 2.2
@@ -84,9 +89,11 @@ jobs:
                     'data/segments.geojson','data/stations.geojson',
                     'data/names_en.json','data/live/tmaps.json',
                     'data/live/trains_wd.json','data/live/trains_sa.json','data/live/trains_su.json',
-                    'mini-japanrail-3d/index.html']:
-              assert os.path.exists(f), 'dist 缺文件: ' + f
-          print('dist 完整: 页面 + 数据 + 3D 子站')
+                    'mini-japanrail-3d/index.html','mini-japanrail-3d/journey.html',
+                    'mini-japanrail-3d/data/journey/stations.json',
+                    'mini-japanrail-3d/data/journey/trips_wd.json']:
+            assert os.path.exists(f), 'dist 缺文件: ' + f
+          print('dist 完整: 页面 + 数据 + 3D 子站 + 换乘案内页')
           PY
 
       - name: Configure Pages

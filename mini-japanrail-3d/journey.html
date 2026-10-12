@@ -982,17 +982,22 @@ function raptorFwd(orig, dest, tStart, day, opt) {
       let bestTrip = null, bestBoard = -1, bestWalk = -1;
       for (let si = 0; si < S.length; si++) {
         const p = S[si];
-        let tmin = -1, wf = -1;
+        let tmin = INF, wf = -1;
         if (p === orig && k === 1) tmin = tStart;
         else if (k === 1 && ow.has(p)) { tmin = tStart + ow.get(p); wf = orig; }
-        else if (tau[p] < INF) {
-          tmin = tau[p] + transferMin(p); wf = -1;
+        else {
+          if (tau[p] < INF) { tmin = tau[p] + transferMin(p); wf = -1; }
+          /* 步行接驳: 从「已到达的邻站」走到本上车点 p —— 即使 p 本身尚未到达。
+             原实现把步行边放在 tau[p]<INF 分支内, 只有当 p 已被到达时才考虑,
+             导致「异名邻站需步行换乘」的接续永远走不通
+             (如 西田原本[近鉄田原本線] —步行4分— 田原本[橿原線]), 大量跨线换乘被判为无路径。 */
           const wl = WALK.get(p);
           if (wl) for (let wi = 0; wi < wl.length; wi++) {
             const e = wl[wi];
             if (tau[e[0]] < INF && tau[e[0]] + e[1] < tmin) { tmin = tau[e[0]] + e[1]; wf = e[0]; }
           }
-        } else continue;
+        }
+        if (tmin >= INF) continue;
         const tr = earliestTrip(ti, si, tmin, day, catOff);
         if (tr && (bestTrip === null || tr[0] < bestTrip[0])) { bestTrip = tr; bestBoard = si; bestWalk = wf; }
       }
@@ -1007,6 +1012,14 @@ function raptorFwd(orig, dest, tStart, day, opt) {
           newMarked.push(p2);
         }
       }
+    }
+    /* 把本轮新到达站的「步行邻站」也纳入下一轮扫描:
+       否则「步行到尚未到达的邻站再上车」的接续, 其邻站的线路不会被检索到,
+       跨线换乘(如 西田原本[田原本線] —步行— 田原本[橿原線])会被误判为无路径。 */
+    const nmLen = newMarked.length;
+    for (let ni = 0; ni < nmLen; ni++) {
+      const wl = WALK.get(newMarked[ni]);
+      if (wl) for (let wi = 0; wi < wl.length; wi++) newMarked.push(wl[wi][0]);
     }
     if (!newMarked.length) break;
     rounds.push([k, Int32Array.from(tau), par.slice()]);

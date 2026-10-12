@@ -436,7 +436,7 @@ const I18N = {
     walk: '步行', xfrWait: '乗換', dep: '発', arr: '着', via: '経由', stops: '駅',
     xfrN: '乗換{0}回', dirTo: '{0}行', firstDep: '始発',
     themeTip: '主题', backHome: '返回主页', errData: '数据加载失败，请检查网络后重试', retry: '重试',
-    autoFirst: '当前时刻已无班次，已改为首班车检索',
+    autoFirst: '该时刻已无班次，已改为首班车检索',
     lastNote: '可到达终点的末班路线(可能跨日)', arrNote: '按 {0} 前到达检索',
     dataNote: '时刻为静态数据快照，与最新时刻表可能有数分钟偏差。换乘时间为按站规模估算的站内走行时间。',
     mapOff: '地图不可用（WebGL2 缺失或加载失败），检索功能不受影响',
@@ -458,7 +458,7 @@ const I18N = {
     walk: '徒歩', xfrWait: '乗換', dep: '発', arr: '着', via: '経由', stops: '駅',
     xfrN: '乗換{0}回', dirTo: '{0}行', firstDep: '始発',
     themeTip: 'テーマ', backHome: 'トップへ戻る', errData: 'データの読み込みに失敗しました', retry: '再試行',
-    autoFirst: '現在時刻に便がないため始発で検索しました',
+    autoFirst: 'この時刻に便がないため始発で検索しました',
     lastNote: '終点まで到着できる最終の経路です(日付を跨ぐ場合あり)', arrNote: '{0} までに到着する経路',
     dataNote: '時刻は静的スナップショットです。最新の時刻表と数分異なる場合があります。乗換時間は駅規模による推定です。',
     mapOff: '地図を利用できません（WebGL2 未対応）。検索機能は影響ありません',
@@ -480,7 +480,7 @@ const I18N = {
     walk: 'Walk', xfrWait: 'Change', dep: 'dep', arr: 'arr', via: 'via', stops: 'stops',
     xfrN: '{0} changes', dirTo: 'to {0}', firstDep: 'First train',
     themeTip: 'Theme', backHome: 'Back home', errData: 'Failed to load data. Check your network and retry', retry: 'Retry',
-    autoFirst: 'No trains at this time; searched from the first train',
+    autoFirst: 'No trains at that time; searched from the first departure',
     lastNote: 'Last route reaching the destination (may pass midnight)', arrNote: 'Arriving by {0}',
     dataNote: 'Timetable is a static snapshot; may differ by a few minutes. Transfer times are estimates by station size.',
     mapOff: 'Map unavailable (WebGL2 unsupported); search still works',
@@ -1290,9 +1290,12 @@ function doSearch() {
   } else {
     let tStart = mode === 'now' ? Math.floor(nowMin()) : Math.floor(timeToMin($('depTime').value));
     cands = searchRoutes(f, t, tStart, day, opt);
-    if (!cands.length && mode === 'now') {
+    /* 指定时刻无班次 → 自动 fallback 到当日首班:
+       多见于偏远小站晚班出发, 当日末班已过、次日首班才能衔接(跨日运营数据未覆盖)。
+       now 模式和 dep 模式均兜底, 避免用户看到「找不到路径」后无所适从。 */
+    if (!cands.length) {
       const fd = firstDeparture(f, day);
-      if (fd != null) { cands = searchRoutes(f, t, fd, day, opt); note = T().autoFirst; }
+      if (fd != null && fd < tStart) { cands = searchRoutes(f, t, fd, day, opt); note = T().autoFirst; }
     }
   }
   if (!cands.length) { toast(T().noRoute); $('result').classList.remove('show'); return; }

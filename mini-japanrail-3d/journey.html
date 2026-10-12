@@ -1069,6 +1069,18 @@ function raptorRev(orig, dest, tLimit, day, opt) {
             rev[p1] = da;
             par[p1] = [ti, pi, ty, d0, si, -1, sj];
             newMarked.push(p1);
+            /* 步行接驳(反向, 与正向对称): p1 为上车点, 也可从它的步行邻站 q 走来再上车,
+               → rev[q] = rev[p1] − walkMin, 且 q 的线路下一轮也要扫描。
+               否则「异名邻站步行换乘」在終電/指定到达模式下同样会被漏掉。 */
+            const wl = WALK.get(p1);
+            if (wl) for (let wi = 0; wi < wl.length; wi++) {
+              const q = wl[wi][0], wm = wl[wi][1];
+              if (da - wm > rev[q]) {
+                rev[q] = da - wm;
+                par[q] = [ti, pi, ty, d0, si, q, sj];
+                newMarked.push(q);
+              }
+            }
           }
         }
       }
@@ -1121,7 +1133,7 @@ function finishRev(res, orig, dest) {
     node = nxt;
   }
   if (node !== dest) return [];
-  const legs = chain.map(pr => ({ tmap: pr[0], pi: pr[1], ty: pr[2], d0: pr[3], board: pr[4], walkFrom: -1, alight: pr[6] }));
+  const legs = chain.map(pr => ({ tmap: pr[0], pi: pr[1], ty: pr[2], d0: pr[3], board: pr[4], walkFrom: pr[5], alight: pr[6] }));
   /* 末段若为「到邻站后徒步到终点」, 转成 finalWalk */
   let fw = null;
   const last = legs[legs.length - 1];

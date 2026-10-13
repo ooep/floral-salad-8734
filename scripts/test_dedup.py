@@ -16,9 +16,11 @@ test_dedup.py — 本地验证 build_trains.dedup_express_dups 的保守去重�
   8. はやぶさ+こまち 并结组（同发车、不同 tmap）→ 全部保留
   9. 普通/快速类删除数必须为 0（绝不误删近郊真实列车）
   10. 全量: 合并后存活记录的字段与输入完全一致（不损坏数据）
-  11. 端到端: 从 live 重建源 → 跑 build_trains.py → 输出合法、三文件各 -4 条
+  11. 端到端: 从 live 重建源（注入合成重复对） → 跑 build_trains.py → 输出无损重建当前 live 数据
+     （注入的重复对被合并, 可见 stdout「保守去重合并: 4」）
 
 运行: python3 scripts/test_dedup.py
+（2026-10-13 起 data/live 已是去重后数据, 测试改为按保留记录合成 +1 分钟副本注入输入, 自包含可复现）
 """
 import json, os, re, subprocess, sys, tempfile
 
@@ -77,6 +79,20 @@ def main():
             failures.append(name)
 
     recs = build_recs()
+    # 2026-10-13 起 data/live 已是去重后数据, 原重复对已不在仓库内。
+    # 为使测试自包含（不依赖会被部署覆盖的旧快照）, 按已知 4 组重复的
+    # 「保留记录」合成 +1 分钟副本注入输入, 重建当年触发的场景。
+    for t, icon, dep0 in [(2933, "特", 1119), (4024, "Komachi", 1098),
+                          (13987, "特", 599), (12288, "特", 836)]:
+        base = next((tid, r) for tid, r in recs.items()
+                    if r["t"] == t and r["i"] == icon and r["s"].startswith(f"{dep0},"))
+        tid, r = base
+        dup = dict(r)
+        dup["_"] = tid + "_DUP"
+        vals = r["s"].split(",")
+        vals[0] = str(int(vals[0]) + 1)          # 仅发车分钟 +1, 相对时刻串(s[1:])保持相同
+        dup["s"] = ",".join(vals)
+        recs[dup["_"]] = dup
     before = dict(recs)
     merged, dropped = dedup_express_dups(recs)
     print(f"输入 {len(before)} 条 → 合并后 {len(merged)} 条, 合并删除 {dropped} 条\n")
@@ -153,10 +169,10 @@ def main():
                     assert isinstance(dd["T"], list)
                 except Exception:
                     ok = False
-        check("11. 端到端 build_trains.py 成功且三文件各减 4 条",
-              ok and sizes.get("wd") == orig_counts["wd"] - 4
-              and sizes.get("sa") == orig_counts["sa"] - 4
-              and sizes.get("su") == orig_counts["su"] - 4)
+        check("11. 端到端 build_trains.py 成功且无损重建当前 live 数据（合成重复被合并）",
+              ok and sizes.get("wd") == orig_counts["wd"]
+              and sizes.get("sa") == orig_counts["sa"]
+              and sizes.get("su") == orig_counts["su"])
         if ok:
             dd = json.load(open(os.path.join(out, "trains_sa.json"), encoding="utf-8"))
             k = [x for x in dd["T"] if x["t"] == 2933]

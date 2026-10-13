@@ -1245,9 +1245,13 @@ function tripName(ic, N, jas, linesN) {
   const sig = tripSig(N, jas, linesN);
   return TOKKYU.nmI[sig + '|' + ic] || TOKKYU.nm[sig] || ICON_NAME[ic] || null;
 }
-/* ---- 併结/分割列车检测:同发车时刻 + 同起点同向 + 共享连续站序 ≥3 站 + 运行窗重叠
+/* ---- 併结/分割列车检测:同发车时刻 + 同起点同向 + 共享连续站序 ≥4 站(自始发站起) + 运行窗重叠
        → 登记併结窗口 [t0,t1]、分割站、伙伴车次。併结区间内两车坐标重合,
-         渲染时沿车尾方向错开一个车长(一前一后紧贴),分割后各自运行 ---- */
+         渲染时沿车尾方向错开一个车长(一前一后紧贴),分割后各自运行 ----
+       防误判护栏(2026-10-13,修复"东北新干线与つばさ併结/于大宫分割"乱套):
+       ① 共享段 ≥4 站:新干线 东京-上野-大宫、南海 なんば-新今宮-天下茶屋 等共用主干上,
+         不同系统的列车同分钟发车恰共享 3 站(かがやき×つばさ、かがやき×はくたか 等),并非併结;
+       ② 共享段必须从双方始发站开始:併结均在始发站连挂,中途才出现的公共段(やまびこ×はやぶさ 盛冈)是巧合 ---- */
 function buildCouplings(trips) {
   const byDep = new Map();
   for (let i = 0; i < trips.length; i++) {
@@ -1271,11 +1275,12 @@ function buildCouplings(trips) {
         while (i + k < A.N && j + k < B.N && A.jasN[i + k] === B.jasN[j + k]) k++;
         if (k > best) { best = k; endA = i + k - 1; endB = j + k - 1; }
       }
-      if (best < 3) continue;                                    // 至少 3 站(2+ 区间)才算併结
+      if (best < 4) continue;                                    // 至少 4 站(3+ 区间)才算併结
+      const stA = endA - best + 1, stB = endB - best + 1;
+      if (stA !== 0 || stB !== 0) continue;                      // 共享段必须从双方始发站开始(併结均在起点连挂)
       if (endA === A.N - 1 && endB === B.N - 1) continue;        // 公共段覆盖双方全程 = 重复记录/完全相同列车
       const na = A.nm || '', nb = B.nm || '';
       if (na && nb && na === nb) continue;                       // 同爱称非同向併结(如のぞみ×のぞみ)
-      const stA = endA - best + 1, stB = endB - best + 1;
       const t0 = Math.max(A.dep[stA], B.dep[stB]);               // 进入併结段(发车)
       const t1 = Math.min(A.dep[endA], B.dep[endB]);             // 离开分割站(发车)
       const w0 = Math.max(A.w0, B.w0), w1 = Math.min(A.w1, B.w1);

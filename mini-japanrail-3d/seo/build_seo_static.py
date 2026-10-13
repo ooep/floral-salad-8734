@@ -1574,8 +1574,11 @@ def write_sitemaps(cfg, lines, stations):
     lastmod = cfg.get('lastmod_date') or ''
     pages = [
         (abs_url(cfg, ''), '1.0', 'daily'),
+        (abs_url(cfg, 'journey.html'), '0.8', 'weekly'),
         (abs_url(cfg, 'lines/'), '0.9', 'weekly'),
         (abs_url(cfg, 'stations/'), '0.9', 'weekly'),
+        (abs_url(cfg, 'orm-demo.html'), '0.4', 'monthly'),
+        (abs_url(cfg, 'privacy.html'), '0.3', 'yearly'),
     ]
     def url_tag(url, prio, freq):
         lm = ('<lastmod>%s</lastmod>' % lastmod) if lastmod else ''

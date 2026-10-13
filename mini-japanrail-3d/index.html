@@ -1557,7 +1557,7 @@ function lmStart() {
 const FILES_PCT = 55, IDX_PCT = 78, PRS_PCT = 97;
 /* 数据版本号:segments/stations/station_map 等静态数据每次变更时必须递增,
    否则 IndexedDB 缓存可能让旧数据(如已修的幽灵直线)继续生效 */
-const DATA_VERSION = '2026-10-13c';   // 静态数据变更必须递增；本次修复 etag 重验证后强制全量刷新一次
+const DATA_VERSION = '2026-10-13d';   // 静态数据变更必须递增；本次修复 etag 重验证后强制全量刷新一次
 const loadSizes = { 'https://jr-static.suki.ing/data/segments3d.geojson': 11347006, 'https://jr-static.suki.ing/data/stations3d.geojson': 1881446, 'https://jr-static.suki.ing/data/tmaps.json': 3158412, 'https://jr-static.suki.ing/data/station_map.json': 12090306, 'https://jr-static.suki.ing/data/tokkyu.json': 59100, 'https://jr-static.suki.ing/data/names_i18n.json': 482556, 'https://jr-static.suki.ing/data/trains_wd.json': 13494947, 'https://jr-static.suki.ing/data/trains_sa.json': 12228166, 'https://jr-static.suki.ing/data/trains_su.json': 12284312, 'https://jr-static.suki.ing/data/station_overall_footprints.geojson': 6902234, 'https://jr-static.suki.ing/data/station_entrances.geojson': 2787587, 'https://jr-static.suki.ing/data/station_platforms.geojson': 4254264 };
 let _fileTotal = 8, _fileIdx = 0;
 function nextFileIdx() { return _fileIdx++; }
@@ -1968,6 +1968,13 @@ function segSubPath(A, B, ca, cb, lineSet) {
         }
       }
     }
+  }
+  /* 端点校验(修复鹿児島本線等粗粒度长段折线在区间内打结/乱序导致的截取错位):
+     截取子路径端点必须与 A/B 站坐标匹配, 偏差 >3km 视为截取失败 —— 返回 null,
+     让 officialPath(每区间官方短折线, 干净) 接管, 避免列车沿错误长段一路乱跑 */
+  if (out && out.coords.length >= 2) {
+    const c0 = out.coords[0], cN = out.coords[out.coords.length - 1];
+    if (geoKm(c0, ca) > 3 || geoKm(cN, cb) > 3) out = null;
   }
   if (segSubCache.size > 40000) segSubCache.clear();
   segSubCache.set(key, out);

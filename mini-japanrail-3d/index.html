@@ -174,7 +174,7 @@ html,body { width:100%; height:100%; overflow:hidden; background:var(--bg); colo
   #topHud { top: max(10px, env(safe-area-inset-top)); }
   #dock { bottom: max(12px, env(safe-area-inset-bottom)); }
   #detail { bottom: max(14px, env(safe-area-inset-bottom)); }
-  .foot { bottom: max(68px, calc(env(safe-area-inset-bottom) + 60px)); }
+  .foot { bottom: max(4px, env(safe-area-inset-bottom)); }
 }
 #map { position:absolute; inset:0; }
 ::-webkit-scrollbar { width:5px; height:5px; } ::-webkit-scrollbar-thumb { background:rgba(120,140,180,.28); border-radius:3px; } ::-webkit-scrollbar-thumb:hover { background:rgba(120,140,180,.45); } ::-webkit-scrollbar-track { background:transparent; }
@@ -649,7 +649,8 @@ button { font-family:inherit; }
 #searchPanel #sug { margin:0; max-height:min(52vh,420px); border:0; border-radius:0; background:transparent; box-shadow:none; border-top:1px solid var(--line); }
 #searchPanel #sug .sug-it { padding:9px 14px; font-size:13px; }
 #searchPanel #sug .sug-empty { padding:14px; font-size:13px; }
-.foot { position:absolute; bottom:68px; right:12px; font-size:9px; color:var(--dim); z-index:5; pointer-events:none; text-shadow:0 1px 3px rgba(0,0,0,.6); opacity:.9; max-width:min(260px,calc(100vw - 24px)); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:right; }
+.foot { position:absolute; bottom:max(4px, env(safe-area-inset-bottom)); right:6px; font-size:9px; color:var(--dim); z-index:5; pointer-events:none; text-shadow:0 1px 3px rgba(0,0,0,.6); opacity:.9; white-space:nowrap; text-align:right; }
+#dock:has(#clock.expanded) ~ .foot { opacity:0; }
 .maplibregl-ctrl-attrib { background:color-mix(in srgb,var(--panel) 65%,transparent)!important; backdrop-filter:blur(8px); color:var(--dim)!important; font-size:8.5px!important; padding:2px 7px!important; border-radius:8px 0 0 0!important; }
 .maplibregl-ctrl-attrib a { color:var(--dim)!important; }
 
@@ -869,6 +870,26 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
 .dg-cell .tag { display:block; font-size:9px; color:#ffd27a; }
 #sheet .empty { padding:30px 16px; text-align:center; color:var(--dim); font-size:13px; }
 
+/* ===== 线路抽屉(pureline 模式):底部抽屉,样式与 #sheet 一致,高度可无级拖拽 ===== */
+#lineSheet { position:fixed; left:50%; bottom:0; width:min(560px,100vw); height:56vh;
+  transform:translate(-50%,105%); background:var(--glass-panel); border:1px solid var(--glass-edge); border-bottom:0;
+  border-radius:26px 26px 0 0; box-shadow:0 -10px 30px rgba(15,23,42,.28), inset 0 1px 0 var(--glass-hi);
+  z-index:22; display:flex; flex-direction:column; overflow:hidden;
+  opacity:0; visibility:hidden; transition:transform .38s var(--ease-smooth), opacity .28s ease, visibility 0s linear .38s; }
+#lineSheet.open { opacity:1; visibility:visible; pointer-events:auto; transform:translate(-50%,0); transition:transform .38s var(--ease-spring), opacity .28s ease, visibility 0s linear 0s; }
+#lineSheet .ls-grab { width:100%; height:22px; flex:none; cursor:ns-resize; touch-action:none; position:relative; display:flex; align-items:center; justify-content:center; }
+#lineSheet .ls-grab::before { content:""; width:44px; height:5px; border-radius:3px; background:rgba(150,170,200,.5); }
+#lineSheet .ls-grab:active::before { background:var(--acc); }
+#lineSheet .ls-head { padding:0 18px 10px; display:flex; align-items:flex-start; gap:10px; flex:none; }
+#lineSheet .ls-nm { font-size:22px; font-weight:800; letter-spacing:-.4px; line-height:1.1; flex:1; min-width:0; }
+#lineSheet .ls-sub { font-size:11.5px; color:var(--dim); margin-top:3px; }
+#lineSheet .ls-x { margin-left:auto; flex:none; width:32px; height:32px; min-width:32px; min-height:32px; padding:0; border-radius:50%; border:1px solid transparent; background:transparent; color:var(--dim); cursor:pointer; display:flex; align-items:center; justify-content:center; }
+#lineSheet .ls-x:hover { background:rgba(120,140,180,.32); color:var(--txt); }
+#lineSheet .ls-x:active { transform:scale(.86); }
+#lineSheet .ls-body { flex:1; min-height:0; overflow:hidden; border-top:1px solid var(--glass-lo); }
+#lineSheet .ls-body iframe { width:100%; height:100%; border:0; background:transparent; }
+#lineSheet .ls-close-pill { position:absolute; right:14px; bottom:calc(100% + 10px); z-index:23; }
+
 /* ===== 信息 tab 面板（复用 .sh-body 滚动；玻璃拟态主题） ===== */
 .tab-panel[hidden]{ display:none; }
 .gd-loading, .gd-empty { padding:36px 16px; text-align:center; color:var(--dim); font-size:13px; line-height:1.7; }
@@ -1035,7 +1056,7 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
     <div class="stab-sec" data-tab="set">
       <div class="sec">
         <div class="sec-t" id="tSet">设置</div>
-        <div class="sw on" id="swPerf"><span id="tSw11">性能改善</span><span class="trk"></span></div>
+        <div class="sw" id="swPerf"><span id="tSw11">性能改善</span><span class="trk"></span></div>
         <div class="swnote" id="tSw11Note">低倍率只显示新干线・特急，放大后逐级加入快速・普通列车（含地铁・路面电车），切换为淡入淡出</div>
         <div class="sw on" id="swLabel"><span id="tSw1">车站标签</span><span class="trk"></span></div>
         <div class="sw on" id="swGlow"><span id="tSw2">轨道光晕</span><span class="trk"></span></div>
@@ -1056,8 +1077,8 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
         <div class="sw on" id="swTip"><span id="tSw7">列车悬浮提示</span><span class="trk"></span></div>
         <div class="sec-t" id="tMode" style="margin-top:12px">列车显示</div>
         <div class="frow" id="trainModeRow">
-          <button class="chip on" data-mode="3d" id="tMode3d">3D</button>
-          <button class="chip" data-mode="icon" id="tModeIcon">图标</button>
+          <button class="chip" data-mode="3d" id="tMode3d">3D</button>
+          <button class="chip on" data-mode="icon" id="tModeIcon">图标</button>
           <button class="chip" data-mode="cute" id="tModeCute">可爱</button>
         </div>
         <div class="sec-t" id="tIconSet" style="margin-top:12px">图标集</div>
@@ -1151,6 +1172,17 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
   <div class="sh-body" id="shBody"><div class="empty">時刻表を読込中…</div></div>
   <div class="sh-body tab-panel" id="panelInfo" hidden></div>
   <div class="sh-body tab-panel" id="panelGuide" hidden></div>
+</div>
+<div id="lineSheet">
+  <div class="ls-grab" id="lsGrab"></div>
+  <div class="ls-head">
+    <div style="flex:1;min-width:0">
+      <div class="ls-nm" id="lsNm">线路</div>
+      <div class="ls-sub" id="lsSub">正在加载…</div>
+    </div>
+    <button class="ls-x" id="lsX" type="button" aria-label="关闭"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="ls-body"><iframe id="lsFrame" title="线路百科" referrerpolicy="no-referrer"></iframe></div>
 </div>
 <div id="toast"></div>
 <div class="foot" id="footNote"></div>
@@ -1248,10 +1280,17 @@ function tripName(ic, N, jas, linesN) {
 /* ---- 併结/分割列车检测:同发车时刻 + 同起点同向 + 共享连续站序 ≥4 站(自始发站起) + 运行窗重叠
        → 登记併结窗口 [t0,t1]、分割站、伙伴车次。併结区间内两车坐标重合,
          渲染时沿车尾方向错开一个车长(一前一后紧贴),分割后各自运行 ----
-       防误判护栏(2026-10-13,修复"东北新干线与つばさ併结/于大宫分割"乱套):
+       防误判护栏(2026-10-13, 两轮修复):
        ① 共享段 ≥4 站:新干线 东京-上野-大宫、南海 なんば-新今宮-天下茶屋 等共用主干上,
          不同系统的列车同分钟发车恰共享 3 站(かがやき×つばさ、かがやき×はくたか 等),并非併结;
-       ② 共享段必须从双方始发站开始:併结均在始发站连挂,中途才出现的公共段(やまびこ×はやぶさ 盛冈)是巧合 ---- */
+       ② 共享段必须从双方始发站开始:併结均在始发站连挂,中途才出现的公共段(やまびこ×はやぶさ 盛冈)是巧合;
+       ③ 车种白名单(COUPLE_CLASSES):併结是优等列车专属(新干线/特急/関空快速×紀州路快速 等),
+         近郊 快/普/急/準/各/直/区 等不同种别同分钟共长主干只是运行图巧合, 一律不标注 ----
+      */
+const COUPLE_CLASSES = new Set([
+  'Hayabusa','Komachi','Yamabiko','Tsubasa','Toki','Tanigawa',
+  'Sakura','Tsubame','特','新','関','紀',
+]);
 function buildCouplings(trips) {
   const byDep = new Map();
   for (let i = 0; i < trips.length; i++) {
@@ -1266,6 +1305,7 @@ function buildCouplings(trips) {
     if (bucket.length < 2) continue;
     for (let a = 0; a < bucket.length; a++) for (let b = a + 1; b < bucket.length; b++) {
       const A = bucket[a], B = bucket[b];
+      if (!COUPLE_CLASSES.has(A.i) || !COUPLE_CLASSES.has(B.i)) continue; // 车种白名单(近郊快普急準各不併结)
       if (A.jasN[0] !== B.jasN[0] || A.jasN[1] !== B.jasN[1]) continue; // 同起点且同向(第二站相同)
       /* 最长公共连续站序(双向遍历,含起点) */
       let best = 0, endA = 0, endB = 0;
@@ -3173,7 +3213,7 @@ function hexToRgb(hex) {
 }
 let trainSizeMul = 1;
 /* ---- 列车显示模式(3D 立体盒 / 图标贴图) ---- */
-let trainMode = localStorage.getItem('mjr3d_trainmode') || '3d'; /* '3d' | 'icon' | 'cute' */
+let trainMode = localStorage.getItem('mjr3d_trainmode') || 'icon'; /* '3d' | 'icon' | 'cute' — 默认图标模式 */
 let iconSet = localStorage.getItem('mjr3d_iconset') || 'default'; /* 图标模式图集: 'default' | 'vector' */
 /* 图集表: default=现有多用途图集 / vector=AI矢量重绘(黑描边) / cute=可爱风(kasu,未覆盖键回退默认图) */
 const ATLAS_SETS = {
@@ -3256,7 +3296,9 @@ let gridUsed = false; /* 本帧阶段 1 是否走了空间网格(诊断用,__lod
          代价是构建时多写几次,查询时用 _seen 帧戳去重。实测 z9.5 扫描量 9.5 万 ⇒ 1.4 万。)
    ★ 顶点构建同样做了减负(见 updateTrains 阶段 3):立体盒的 4 个侧墙原先每列车 new 出
      约 25 个临时数组,倾斜模式下每秒十几万次分配触发 GC 停顿,已改为模块级扁平常量。 */
-let perfLod = localStorage.getItem('mjr3d_perflod') !== '0'; /* 默认开启 */
+let perfLod = localStorage.getItem('mjr3d_perflod') === '1'; /* 默认关闭:仅用户主动开启才做低倍率分层 */
+/* pureline 模式:URL ?pureline=山手線 时,只显示经过该线路的列车,并打开线路百科抽屉 */
+let pureLine = null;
 const TIER_ENTER = [0, 0, 6.8, 9.0];  /* 各等级"开始显示"的缩放级;0 = 始终显示 */
 const TIER_EXIT  = [0, 0, 6.2, 8.4];  /* 各等级"停止显示"的缩放级(与 enter 构成迟滞带) */
 const TIER_ALL = [true, true, true, true];
@@ -3454,6 +3496,7 @@ function updateTrains(M, dtms) {
             if (t.mx1 < vp.mx0 || t.mx0 > vp.mx1 || t.my1 < vp.my0 || t.my0 > vp.my1) continue;
             const M2 = windowShift(t, M);
             if (M2 < t.w0 || M2 > t.w1) continue;
+            if (pureLine && !t.lines.some(l => matchLineCached(l, pureLine) >= 1)) continue;
             t._M2 = M2; t._ok = stamp;
             eligible.push(t);
             if (eligible.length >= MAXT) break;
@@ -3473,6 +3516,7 @@ function updateTrains(M, dtms) {
       if (vp && (t.mx1 < vp.mx0 || t.mx0 > vp.mx1 || t.my1 < vp.my0 || t.my0 > vp.my1)) continue;
       const M2 = windowShift(t, M);
       if (M2 < t.w0 || M2 > t.w1) continue;
+      if (pureLine && !t.lines.some(l => matchLineCached(l, pureLine) >= 1)) continue;
       t._M2 = M2; t._ok = stamp;
       eligible.push(t);
       if (eligible.length >= MAXT) break;   /* 顶点缓冲上限:先到先得(低等级在后,自然被截) */
@@ -3664,7 +3708,7 @@ function setBasemap(key) {
   stateHash();
 }
 function updateFootNote() {
-  $('footNote').textContent = T().h6 + ' · ' + BASEMAPS[baseKey].attr + ' / OpenFreeMap · ' + T().sub;
+  $('footNote').textContent = '© OFM';
 }
 function baseStyle() {
   return {
@@ -3861,6 +3905,7 @@ async function boot() {
     setLoadMsg('✓ ' + T().loaded);
     setTimeout(() => { $('loader').classList.add('hide'); }, 350);
     applyUrlState();
+    initPurelineMode();
     setBasemap(baseKey); /* 应用 URL / localStorage 记忆的底图源(含蒙版开关) */
     setStatus(T().goLive);
     if (!liveOn) setTimeout(() => { if (!liveOn) { setLive(true); } }, 600);
@@ -5561,6 +5606,68 @@ function highlightLine(lname) {
   closeDetail();
   toast(lname);
 }
+/* ── pureline 模式:URL ?pureline=xxx 时聚焦线路 + 只跑该线列车 + 打开线路百科抽屉 ── */
+function initPurelineMode() {
+  let q = null;
+  try { q = new URLSearchParams(location.search).get('pureline'); } catch (e) {}
+  if (!q) return;
+  q = decodeURIComponent(q).trim();
+  if (!q) return;
+  /* 确认该线路在线路要素里存在(避免拼错名导致空白) */
+  if (!segFC || !segFC.features || !segFC.features.some(f => matchLineCached(f.properties.line, q) >= 1)) return;
+  pureLine = q;
+  /* 聚焦 + 高亮该线(复用既有逻辑,但不弹 toast) */
+  const feats = segFC.features.filter(f => matchLineCached(f.properties.line, q) >= 1);
+  if (feats.length) {
+    setHighlight(feats.map(f => ({ type: 'Feature', properties: { color: f.properties.color || '#4f8ef7' }, geometry: f.geometry })), null);
+    map.fitBounds(featsToBounds(feats), { padding: 80, pitch: Math.min(map.getPitch(), 45), duration: 1300 });
+  }
+  /* 打开线路百科抽屉,iframe 加载同域 lines/<encoded>/ 静态页 */
+  openLineSheet(q);
+  /* 换日/换数据档后 dayList 重建,过滤条件 pureLine 仍在,无需额外处理 */
+}
+function openLineSheet(lineName) {
+  const sheet = $('lineSheet'); if (!sheet) return;
+  $('lsNm').textContent = lineName;
+  $('lsSub').textContent = '线路百科 · 只显示经过此线的列车';
+  /* 同域静态页 lines/<urlencoded>/index.html */
+  const frame = $('lsFrame');
+  frame.src = 'lines/' + encodeURIComponent(lineName) + '/';
+  sheet.classList.add('open');
+}
+function closeLineSheet() {
+  const sheet = $('lineSheet'); if (!sheet) return;
+  sheet.classList.remove('open');
+  $('lsFrame').src = 'about:blank';
+}
+/* 抽屉高度无级拖拽:在 grab 上按住上下拖动 */
+(function setupLineSheetDrag() {
+  const grab = $('lsGrab'); if (!grab) return;
+  const sheet = $('lineSheet');
+  let startY = 0, startH = 0, dragging = false;
+  const MIN_H = Math.round(window.innerHeight * 0.28);
+  const MAX_H = Math.round(window.innerHeight * 0.92);
+  grab.addEventListener('pointerdown', (e) => {
+    dragging = true;
+    startY = e.clientY;
+    startH = sheet.getBoundingClientRect().height;
+    grab.setPointerCapture(e.pointerId);
+    grab.style.cursor = 'ns-resize';
+    e.preventDefault();
+  });
+  grab.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    const dy = startY - e.clientY; /* 上拖为正 → 增高 */
+    let h = startH + dy;
+    h = Math.max(MIN_H, Math.min(MAX_H, h));
+    sheet.style.height = h + 'px';
+  });
+  const end = (e) => { dragging = false; grab.style.cursor = ''; };
+  grab.addEventListener('pointerup', end);
+  grab.addEventListener('pointercancel', end);
+  $('lsX').addEventListener('click', closeLineSheet);
+})();
+
 /* SEO 静态页深链：按 canonical 线路名选中线路（matchLine 兼容别名/直通段，如 中央本線→中央線）。
    仅新增函数，不改变搜索路径对 highlightLine 的既有调用行为。 */
 function highlightLineByCanon(q) {
@@ -5764,7 +5871,7 @@ $('swOrm').addEventListener('click', function () {
   if (ormEnabled && !ormLoaded) fetchOrmTracks(); /* 低配设备首次开启时按需拉取 */
 });
 $('swTrail').addEventListener('click', function () { this.classList.toggle('on'); });
-/* 性能改善(默认开):低倍率分层显示 + 淡入淡出。关闭 = 恢复旧行为(全等级全量渲染)。
+/* 性能改善(默认关):低倍率分层显示 + 淡入淡出。开启 = 低缩放只渲染新干线/特急。
    开关切换后等级门重新求值,差额部分走已有的 alpha 过渡淡入/淡出,不会突兀。 */
 $('swPerf').classList.toggle('on', perfLod);
 $('swPerf').addEventListener('click', function () {

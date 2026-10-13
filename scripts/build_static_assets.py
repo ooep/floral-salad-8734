@@ -98,6 +98,17 @@ def main():
     total += n
     print('[icons] %d' % n)
 
+    # 6) _headers —— Workers Static Assets 边缘直服(不经过 fetch handler)时注入 CORS，
+    #    保证浏览器 crossOrigin='anonymous' 加载图集/图标不污染 canvas（toDataURL/texImage2D 可用）。
+    #    注意：此文件必须由脚本生成；rmtree 重建 assets 时手工文件会被清掉。
+    headers_file = os.path.join(out, '_headers')
+    with open(headers_file, 'w', encoding='utf-8') as f:
+        f.write('/*\n')
+        f.write('  Access-Control-Allow-Origin: *\n')
+        f.write('  Access-Control-Expose-Headers: ETag, Last-Modified, Content-Length, Content-Type\n')
+    total += 1
+    print('[_headers] 1 (CORS on all assets)')
+
     # 汇总
     size = 0
     for root, _dirs, files in os.walk(out):

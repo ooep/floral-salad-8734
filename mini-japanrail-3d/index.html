@@ -3187,6 +3187,7 @@ function loadTrainAtlas() {
         fetch(s.file + '?v=3').then(r => r.ok ? r.json() : null).then(j => {
           if (!j) { retry(); return; }
           const im = new Image();
+          im.crossOrigin = 'anonymous';   /* 图集跨域(jr-static)：不设则 canvas 被污染,toDataURL/texImage2D 抛 SecurityError */
           im.onload = () => {
             s.json = j; s.img = im; s.ready = true;
             if (key === activeAtlasKey()) switchAtlas(key);

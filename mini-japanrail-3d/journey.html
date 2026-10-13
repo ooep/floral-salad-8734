@@ -149,6 +149,7 @@ button,input,select { font-family:inherit; }
   backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); outline:none;
   transition:border-color .15s, background .15s, box-shadow .15s; }
 .sfield input:focus { border-color:var(--acc-border); background:var(--glass-2); box-shadow:0 0 0 3px var(--acc-soft); }
+.sfield:has(input:focus) label { color:var(--acc-txt); }
 .sfield input::placeholder { color:var(--dim); font-weight:500; }
 :root[data-theme="light"] .sfield input { background:rgba(255,255,255,.85); }
 .gcircle { position:relative; width:36px; height:36px; flex:none; border-radius:50%; padding:0;
@@ -268,8 +269,8 @@ button,input,select { font-family:inherit; }
 }
 @keyframes sheetIn { from { opacity:0; transform:translateY(22px); } to { opacity:1; transform:translateY(0); } }
 
-/* ───── 联想面板 ───── */
-#sug { position:absolute; left:12px; right:12px; top:58px; z-index:20; display:none;
+/* ───── 联想面板: top 由 JS 根据当前聚焦的 input 动态设置 ───── */
+#sug { position:absolute; left:12px; right:12px; z-index:20; display:none;
   max-height:min(320px, 44dvh); overflow-y:auto;
   -webkit-overflow-scrolling:touch; border-radius:16px;
   background:var(--glass-solid); border:1px solid var(--glass-edge);
@@ -341,7 +342,7 @@ button,input,select { font-family:inherit; }
 .tl-dot.end { background:var(--acc); }
 .tl-line { width:2.5px; flex:1; background:var(--glass-edge); margin:2px 0; border-radius:2px; min-height:12px; }
 .tl-line.xfr { background:repeating-linear-gradient(180deg, var(--dim) 0 3px, transparent 3px 6px); opacity:.5; width:2px; }
-.tl-line.walk { background:repeating-linear-gradient(180deg, #7dd3fc 0 4px, transparent 4px 7px); width:2px; }
+.tl-line.walk { background:repeating-linear-gradient(180deg, var(--acc2) 0 4px, transparent 4px 7px); width:2px; }
 .tl-body { flex:1; min-width:0; padding-bottom:2px; }
 .tl-st { display:flex; align-items:center; gap:7px; padding:2px 0; flex-wrap:wrap; }
 .tl-st .nm { font-size:16px; font-weight:800; letter-spacing:-.3px; }
@@ -363,8 +364,8 @@ button,input,select { font-family:inherit; }
 .tcard .nxt { display:flex; align-items:center; gap:5px; width:100%; padding:6px 10px; border:0; border-top:1px solid var(--line);
   background:transparent; color:var(--acc-txt); font-size:10.5px; font-weight:800; cursor:pointer; transition:background .15s; }
 @media (hover:hover) { .tcard .nxt:hover { background:var(--acc-soft); } }
-.tcard .nxt .cv { margin-left:auto; color:var(--dim); font-weight:600; font-size:9px; }
-.tcard .nxt.open .cv { color:var(--acc-txt); }
+.tcard .nxt .cv { margin-left:auto; color:var(--dim); font-weight:600; font-size:9px; transition:transform .3s var(--ease-spring), color .15s; }
+.tcard .nxt.open .cv { color:var(--acc-txt); transform:rotate(90deg); }
 /* 后续班次列表 */
 .nlist { border-top:1px solid var(--line); background:var(--glass-lo); animation:nlistIn .26s var(--ease-smooth) both; }
 @keyframes nlistIn { from { opacity:0; } to { opacity:1; } }
@@ -379,7 +380,7 @@ button,input,select { font-family:inherit; }
 .nitem .nr.bad { color:var(--bad); }
 .tl-xfr { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--dim); font-weight:700; padding:2px 0 4px 30px; }
 .tl-xfr .xm { color:var(--warn); font-weight:800; }
-.tl-walk { display:flex; align-items:center; gap:5px; font-size:11px; color:#7dd3fc; font-weight:700; padding:2px 0 4px 30px; }
+.tl-walk { display:flex; align-items:center; gap:5px; font-size:11px; color:var(--acc2); font-weight:700; padding:2px 0 4px 30px; }
 .tl-note { font-size:9.5px; color:var(--dim); padding:8px 0 2px 30px; font-weight:600; line-height:1.55; }
 .tl-empty { padding:22px 4px; text-align:center; font-size:12.5px; color:var(--dim); font-weight:600; }
 
@@ -391,7 +392,6 @@ button,input,select { font-family:inherit; }
 #loader .lb2 { width:min(280px, 70vw); height:4px; border-radius:2px; background:var(--glass-2); overflow:hidden; }
 #loader .lb2 i { display:block; height:100%; width:0%; border-radius:2px;
   background:linear-gradient(90deg, var(--acc), var(--acc2)); transition:width .3s var(--ease-smooth); }
-#loader .lp { font-size:11px; font-weight:800; color:var(--acc-txt); font-variant-numeric:tabular-nums; }
 #loader .brand2 { display:flex; align-items:center; gap:9px; animation:brPulse 2.4s var(--ease-smooth) infinite; }
 @keyframes brPulse { 0%,100% { opacity:.92; } 50% { opacity:1; } }
 #loader .brand2 .lg { width:40px; height:40px; border-radius:50%; background:#fff; display:flex; align-items:center;
@@ -457,7 +457,6 @@ html.perf-low .rcard, html.perf-low .tcard, html.perf-low .stat { backdrop-filte
   #panel.empty .q-note { margin-top:auto; }
   #result { flex:none; }
   #legs { flex:1 1 auto; min-height:0; }
-  #sug { top:62px; }
   @keyframes sbIn { from { opacity:0; transform:translateX(-18px); } to { opacity:1; transform:none; } }
   /* 结果卡错落入场 */
   .rcard { animation:rise .42s var(--ease-smooth) both; }
@@ -579,7 +578,7 @@ html.perf-low .rcard, html.perf-low .tcard, html.perf-low .stat { backdrop-filte
       </span>
     </div>
     <div id="optSec">
-      <button id="optToggle" type="button" aria-expanded="false" aria-controls="optWrap" title="">
+      <button id="optToggle" type="button" aria-expanded="false" aria-controls="optWrap">
         <svg class="cv" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
         <span id="optTglLb">詳細条件</span>
         <span class="sum" id="optSum"></span>
@@ -1764,6 +1763,10 @@ function doSuggest(which) {
   const q = normName(input.value);
   const box = $('sug');
   if (!q || !nameIndex) { box.style.display = 'none'; sugItems = []; sugWhich = null; return; }   /* 索引未就绪时不联想 */
+  /* 动态定位: 紧贴当前聚焦的 input 下方(适配横向/上下排布两种 srow 布局) */
+  const cardRect = $('searchCard').getBoundingClientRect();
+  const inpRect = input.getBoundingClientRect();
+  box.style.top = (inpRect.bottom - cardRect.top + 6) + 'px';
   const items = [];
   for (const e of nameIndex) {
     let sc = -1;

@@ -2,7 +2,7 @@
 <html lang="zh-Hans" data-theme="dark">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
 <meta name="theme-color" content="#0b0f16">
 <title>乗換案内 · Mini JapanRail</title>
 <meta name="description" content="全日本铁路换乘案内：班次时刻、换乘次数、列车爱称与目的地、营业里程。纯静态时刻表检索。">
@@ -58,6 +58,9 @@
 html,body { width:100%; height:100%; overflow:hidden; background:var(--bg); color:var(--txt);
   font-family:-apple-system,"SF Pro SC","PingFang SC","Hiragino Sans GB","Noto Sans CJK SC","Yu Gothic UI","Noto Sans JP",sans-serif;
   -webkit-tap-highlight-color:transparent; }
+/* 全局锁定: body 固定 + 根禁滚动链 → 杜绝 iOS 橡皮筋过滚把整页拖出视口(黑边) */
+html { overscroll-behavior:none; }
+body { position:fixed; top:0; left:0; overscroll-behavior:none; }
 button,input,select { font-family:inherit; }
 ::-webkit-scrollbar { width:5px; height:5px; }
 ::-webkit-scrollbar-thumb { background:rgba(120,140,180,.28); border-radius:3px; }
@@ -97,7 +100,8 @@ button,input,select { font-family:inherit; }
 
 /* ══════════════ 主面板: 移动端底部抽屉(默认) ══════════════ */
 /* ══════ 宿主 + 两级抽屉(Apple Maps 式: 主抽屉 → 路线详情抽屉) ══════ */
-#panel { position:absolute; inset:0; z-index:10; pointer-events:none; background:none; border:0; box-shadow:none; }
+#panel { position:absolute; inset:0; z-index:10; pointer-events:none; background:none; border:0; box-shadow:none;
+  overflow:hidden; overscroll-behavior:none; }
 .sheet { position:absolute; left:8px; right:8px; bottom:calc(8px + env(safe-area-inset-bottom));
   z-index:1; display:flex; flex-direction:column; border-radius:26px; overflow:hidden;
   max-height:min(88dvh, 820px); pointer-events:auto;
@@ -218,7 +222,8 @@ button,input,select { font-family:inherit; }
 
 /* ───── 联想面板 ───── */
 #sug { position:absolute; left:12px; right:12px; top:58px; z-index:20; display:none;
-  max-height:min(320px, 44dvh); overflow-y:auto; border-radius:16px;
+  max-height:min(320px, 44dvh); overflow-y:auto; overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch; border-radius:16px;
   background:var(--glass-solid); border:1px solid var(--glass-edge);
   box-shadow:0 14px 44px rgba(0,0,0,.42), inset 0 1px 0 var(--glass-hi);
   animation:sugIn .22s var(--ease-smooth) both; }
@@ -234,7 +239,8 @@ button,input,select { font-family:inherit; }
 .sug-empty .sug-q { color:var(--txt); font-weight:700; }
 
 /* ───── 结果区 ───── */
-#result { display:none; flex-direction:column; min-height:0; border-top:1px solid var(--line); }
+#result { display:none; flex-direction:column; min-height:0; border-top:1px solid var(--line);
+  overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
 #result.show { display:flex; animation:resIn .34s var(--ease-smooth) both; }
 @keyframes resIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
 
@@ -255,7 +261,8 @@ button,input,select { font-family:inherit; }
 .sum-note { margin-top:8px; font-size:10px; color:var(--warn); font-weight:700; line-height:1.45; }
 
 /* 方案卡片(横向滚动) */
-#routes { display:flex; gap:8px; padding:0 13px 10px; overflow-x:auto; flex:none; scrollbar-width:none; }
+#routes { display:flex; gap:8px; padding:0 13px 10px; overflow-x:auto; flex:none; scrollbar-width:none;
+  overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
 #routes::-webkit-scrollbar { height:0; display:none; }
 .rcard { flex:none; width:136px; padding:10px 11px; border-radius:var(--r-sm); cursor:pointer;
   border:1px solid var(--glass-edge); background:var(--glass);
@@ -272,7 +279,8 @@ button,input,select { font-family:inherit; }
 .rcard .rtag.g { background:rgba(120,140,180,.28); color:var(--txt); }
 
 /* 时间轴 */
-#legs { flex:1 1 auto; min-height:0; overflow-y:auto; padding:0 13px 12px; overscroll-behavior:contain; scrollbar-width:none; }
+#legs { flex:1 1 auto; min-height:0; overflow-y:auto; padding:0 13px 12px; overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch; scrollbar-width:none; }
 #legs::-webkit-scrollbar { width:0; display:none; }
 .tl { position:relative; }
 .tl-node { display:flex; align-items:stretch; gap:10px; position:relative; }
@@ -2311,7 +2319,9 @@ $('sumBar').addEventListener('click', () => {
     }
     const off = Math.min(H(), Math.max(0, base + (e.clientY - y0)));
     if (detailState === 'full') {
-      if (off > medOff() * 0.45) { detailState = 'medium'; d.classList.add('medium'); }
+      /* 一次拖过「关闭阈值」→ 直接关闭(Apple Maps 式连续拖拽); 否则落到 medium 档 */
+      if (off > medOff() + 90) closeDetail();
+      else if (off > medOff() * 0.45) { detailState = 'medium'; d.classList.add('medium'); }
     } else {
       if (off > medOff() + 90) closeDetail();
       else { detailState = 'full'; d.classList.remove('medium'); }
@@ -2323,6 +2333,39 @@ $('sumBar').addEventListener('click', () => {
 })();
 /* 视口切到桌面时复位抽屉层级 */
 window.addEventListener('resize', () => { if (!isMobileView() && detailState !== 'hidden') closeDetail(); });
+
+/* ══════════════════ 过滚守卫(旧版 iOS 兜底) ══════════════════
+   现代浏览器靠 overscroll-behavior:contain 收当过滚; iOS<16 不支持该属性,
+   这里在滚动容器边界 preventDefault, 阻断滚动手势链到根(橡皮筋黑边)。
+   地图/把手区域放行(地图自管手势, 把手用指针事件拖拽)。 */
+(function () {
+  if (!('ontouchstart' in window)) return;
+  function scroller(el) {
+    while (el && el !== document.body && el !== document.documentElement) {
+      const cs = getComputedStyle(el);
+      if (/auto|scroll/.test(cs.overflowY) || /auto|scroll/.test(cs.overflowX)) return el;
+      el = el.parentElement;
+    }
+    return null;
+  }
+  let sy = 0, sx = 0, el = null;
+  document.addEventListener('touchstart', e => {
+    if (e.touches.length !== 1) { el = null; return; }
+    sy = e.touches[0].clientY; sx = e.touches[0].clientX;
+    const t = e.target;
+    el = (t instanceof Element && !t.closest('#map,#grip,#dgrip')) ? scroller(t) : null;
+  }, { passive: true });
+  document.addEventListener('touchmove', e => {
+    if (!el || e.touches.length !== 1) return;
+    const dy = e.touches[0].clientY - sy, dx = e.touches[0].clientX - sx;
+    const cs = getComputedStyle(el);
+    const canY = /auto|scroll/.test(cs.overflowY), canX = /auto|scroll/.test(cs.overflowX);
+    let stop = false;
+    if (canY && ((dy > 0 && el.scrollTop <= 0) || (dy < 0 && el.scrollTop + el.clientHeight >= el.scrollHeight - 1))) stop = true;
+    if (canX && ((dx > 0 && el.scrollLeft <= 0) || (dx < 0 && el.scrollLeft + el.clientWidth >= el.scrollWidth - 1))) stop = true;
+    if (stop) e.preventDefault();
+  }, { passive: false });
+})();
 
 </script>
 </body>

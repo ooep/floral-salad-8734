@@ -474,6 +474,8 @@ button { font-family:inherit; }
 #detail .dw-name { font-size:13.5px; font-weight:800; color:var(--txt); line-height:1.4; }
 #detail .dw-name small { font-size:11px; font-weight:500; color:var(--dim); margin-left:6px; }
 #detail .dw-op { font-size:11px; color:var(--dim); margin-top:2px; }
+#detail .dw-trip { font-size:11px; color:var(--txt); margin-top:7px; padding-top:7px; border-top:1px dashed var(--glass-lo); }
+#detail .dw-trip .lb { color:var(--dim); margin-right:7px; }
 #detail .dw-intro { font-size:12.5px; line-height:1.75; color:var(--txt); margin:8px 0 0; white-space:pre-wrap; }
 #detail .dw-secs { margin-top:4px; }
 #detail .dw-sec { border-top:1px dashed var(--glass-edge); }
@@ -4630,16 +4632,22 @@ function _wikiPick(bk) {
   return '';
 }
 
-function _wikiArtHtml(v, vj) {
+/* 展开内页中的班次行(原抽屉「班次」栏目移入此处) */
+function _wikiTripHtml(t) {
+  return t ? '<div class="dw-trip"><span class="lb">' + esc(T().tripId) + '</span>#' + esc(String(t.t)) + ' · ' + esc(t.nm || t.i || '') + '</div>' : '';
+}
+
+function _wikiArtHtml(v, vj, t) {
   const veh = (vj && vj['车辆']) || {};
   const nm = veh['名称'] || {};
   const ops = nm['运营者'] || [];
   const bk = veh['百科'] || {};
   const used = _wikiPick(bk);
   const art = used ? bk[used] : null;
+  const trip = _wikiTripHtml(t);
   let h = '<div class="dw-name">' + esc(nm['日文'] || v) + (nm['中文'] ? '<small>' + esc(nm['中文']) + '</small>' : '') + '</div>';
   if (ops.length) h += '<div class="dw-op">' + T().wikiOper + '：' + esc(ops.join('・')) + '</div>';
-  if (!art) return h + '<div class="dw-none">' + T().wikiEmpty + '</div>';
+  if (!art) return h + '<div class="dw-none">' + T().wikiEmpty + '</div>' + trip;
   if (art['首段']) h += '<p class="dw-intro">' + esc(art['首段']) + '</p>';
   const secs = art['章节'] || {};
   const keys = Object.keys(secs).filter(k => String(secs[k] || '').trim());
@@ -4651,6 +4659,7 @@ function _wikiArtHtml(v, vj) {
     h += '</div>';
   }
   if (art['链接']) h += '<a class="dw-link" href="' + esc(art['链接']) + '" target="_blank" rel="noopener">' + T().wikiFull + '</a>';
+  h += trip;
   if (used !== _wikiLangKey()) h += '<div class="dw-note">' + T().wikiNoLocal + '</div>';
   h += '<div class="dw-src">' + T().wikiSrc + '</div>';
   return h;
@@ -4666,12 +4675,12 @@ async function _wikiShow(t, v, vs) {
   const vj = await _fetchRessha(v);
   if (detailEl.dataset.tid !== String(t.t) + t.w0) return;   /* 已切走/关闭:丢弃过期写入 */
   if (!vj) {
-    art.innerHTML = '<div class="dw-none">' + T().wikiFail + '<br><button class="gd-retry" id="dwRetry">' + T().wikiRetry + '</button></div>';
+    art.innerHTML = '<div class="dw-none">' + T().wikiFail + '<br><button class="gd-retry" id="dwRetry">' + T().wikiRetry + '</button></div>' + _wikiTripHtml(t);
     const rb = $('dwRetry');
     if (rb) rb.onclick = () => _wikiShow(t, v, vs);
     return;
   }
-  art.innerHTML = _wikiArtHtml(v, vj);
+  art.innerHTML = _wikiArtHtml(v, vj, t);
   if (vs.others.length) {
     /* 通用特急键(如山陽電鉄特急)可聚合十余款车型:切换器封顶 6 款,其余以 +N 示意,避免刷屏 */
     const MAX_SW = 6, shown = vs.others.slice(0, MAX_SW);

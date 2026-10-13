@@ -1551,7 +1551,16 @@ function curMin() { return minOfDay(simNow()); }
 function fmtHMS(min) { min = ((min % 1440) + 1440) % 1440; const h = Math.floor(min / 60), m = Math.floor(min % 60), s = Math.floor((min * 60) % 60); return pad(h) + ':' + pad(m) + ':' + pad(s); }
 function fmtHm(min) { min = ((Math.round(min) % 1440) + 1440) % 1440; return pad(Math.floor(min / 60)) + ':' + pad(min % 60 | 0); }
 function doPlay() { if (clockMode === 'live') { enterManual(curMin()); } paused = false; $('btnPlay').innerHTML = ICO.play; syncSim(); syncLiveDot(); }
-function doPause() { if (clockMode === 'live') enterManual(curMin()); paused = true; simEpoch = simNow(); $('btnPlay').innerHTML = ICO.play; syncLiveDot(); }
+function doPause() {
+  if (clockMode === 'live') enterManual(curMin());
+  /* 必须先在 paused=false 时取 simNow(),否则 simNow() 走 paused 分支直接返回旧 simEpoch,
+     导致倍速播放后暂停→继续,时间跳回手动拖条的旧位置 */
+  const now = simNow();
+  paused = true;
+  simEpoch = now;
+  $('btnPlay').innerHTML = ICO.play;
+  syncLiveDot();
+}
 function doResume() { paused = false; wallT0 = Date.now(); $('btnPlay').innerHTML = ICO.pause; syncLiveDot(); }
 function enterManual(min) { clockMode = 'manual'; simEpoch = simDateBase() + min * 60000; wallT0 = Date.now(); }
 function simDateBase() { const p = jstDateParts(simNow()); return Date.UTC(p.y, p.m - 1, p.d) - JST; }

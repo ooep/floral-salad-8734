@@ -886,8 +886,22 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
 #lineSheet .ls-x { margin-left:auto; flex:none; width:32px; height:32px; min-width:32px; min-height:32px; padding:0; border-radius:50%; border:1px solid transparent; background:transparent; color:var(--dim); cursor:pointer; display:flex; align-items:center; justify-content:center; }
 #lineSheet .ls-x:hover { background:rgba(120,140,180,.32); color:var(--txt); }
 #lineSheet .ls-x:active { transform:scale(.86); }
-#lineSheet .ls-body { flex:1; min-height:0; overflow:hidden; border-top:1px solid var(--glass-lo); }
-#lineSheet .ls-body iframe { width:100%; height:100%; border:0; background:transparent; }
+#lineSheet .ls-body { flex:1; min-height:0; overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; padding:4px 20px 28px; border-top:1px solid var(--glass-lo); }
+/* 抽屉内正文(从 lines/<x>/ 静态页提取后注入,去掉了面包屑/目录/重复 h1) */
+#lineSheet .ls-body .lead { font-size:13.5px; color:var(--dim); line-height:1.7; margin:2px 0 14px; }
+#lineSheet .ls-body h2 { font-size:13.5px; font-weight:800; letter-spacing:.2px; color:var(--txt); margin:20px 0 8px; padding:0; display:flex; align-items:center; gap:8px; }
+#lineSheet .ls-body h2::before { content:""; width:3px; height:13px; border-radius:2px; background:var(--acc); flex:none; }
+#lineSheet .ls-body p { font-size:12.5px; line-height:1.75; color:var(--txt); margin:6px 0; }
+#lineSheet .ls-body a { color:var(--acc-txt); text-decoration:none; }
+#lineSheet .ls-body a:hover { text-decoration:underline; }
+#lineSheet .ls-body figure { margin:10px 0; }
+#lineSheet .ls-body figure svg { width:100%; height:auto; max-height:60vh; }
+#lineSheet .ls-body figcaption { font-size:10.5px; color:var(--dim); text-align:center; margin-top:4px; }
+#lineSheet .ls-body table { width:100%; border-collapse:collapse; font-size:12px; margin:8px 0; }
+#lineSheet .ls-body th, #lineSheet .ls-body td { padding:6px 8px; border-bottom:1px solid var(--glass-lo); text-align:left; }
+#lineSheet .ls-body th { color:var(--dim); font-weight:600; font-size:11px; }
+#lineSheet .ls-body ul, #lineSheet .ls-body ol { padding-left:20px; font-size:12.5px; line-height:1.8; color:var(--txt); }
+#lineSheet .ls-body .gd-loading { padding:30px 10px; text-align:center; color:var(--dim); font-size:12.5px; }
 #lineSheet .ls-close-pill { position:absolute; right:14px; bottom:calc(100% + 10px); z-index:23; }
 
 /* ===== 信息 tab 面板（复用 .sh-body 滚动；玻璃拟态主题） ===== */
@@ -1182,7 +1196,7 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
     </div>
     <button class="ls-x" id="lsX" type="button" aria-label="关闭"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
   </div>
-  <div class="ls-body"><iframe id="lsFrame" title="线路百科" referrerpolicy="no-referrer"></iframe></div>
+  <div class="ls-body" id="lsBody"><div class="gd-loading">正在加载线路百科…</div></div>
 </div>
 <div id="toast"></div>
 <div class="foot" id="footNote"></div>
@@ -5630,15 +5644,29 @@ function openLineSheet(lineName) {
   const sheet = $('lineSheet'); if (!sheet) return;
   $('lsNm').textContent = lineName;
   $('lsSub').textContent = '线路百科 · 只显示经过此线的列车';
-  /* 同域静态页 lines/<urlencoded>/index.html */
-  const frame = $('lsFrame');
-  frame.src = 'lines/' + encodeURIComponent(lineName) + '/';
+  const body = $('lsBody');
+  body.innerHTML = '<div class="gd-loading">正在加载线路百科…</div>';
   sheet.classList.add('open');
+  /* fetch 同域静态页,剥掉面包屑/目录/重复 h1,只留正文注入抽屉 */
+  fetch('lines/' + encodeURIComponent(lineName) + '/', { credentials: 'same-origin' })
+    .then(r => r.ok ? r.text() : Promise.reject(r.status))
+    .then(html => {
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const wrap = doc.querySelector('.wrap');
+      if (!wrap) throw new Error('no wrap');
+      wrap.querySelectorAll('nav.breadcrumb, nav.toc, h1, .foot, footer').forEach(n => n.remove());
+      /* 正文里的站内链接改成顶层跳转(抽屉里不点) */
+      body.innerHTML = wrap.innerHTML;
+      body.scrollTop = 0;
+    })
+    .catch(err => {
+      body.innerHTML = '<div class="gd-loading">百科加载失败 · <a href="lines/' + encodeURIComponent(lineName) + '/" target="_blank" rel="noopener">在新标签打开</a></div>';
+    });
 }
 function closeLineSheet() {
   const sheet = $('lineSheet'); if (!sheet) return;
   sheet.classList.remove('open');
-  $('lsFrame').src = 'about:blank';
+  $('lsBody').innerHTML = '';
 }
 /* 抽屉高度无级拖拽:在 grab 上按住上下拖动 */
 (function setupLineSheetDrag() {

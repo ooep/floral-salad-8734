@@ -5335,7 +5335,7 @@ async function renderInfoTab() {
 }
 
 /* ============ 指南 tab（eki-info：改札口/窓口/トイレ/バリアフリー/構内図） ============ */
-const EKI_INFO_BASE = 'https://raw.githubusercontent.com/ooep/eki-info/main/data/';
+const EKI_INFO_BASE = 'https://jr-static.suki.ing/data/';   // 指南数据已并入 jr-static（原 raw.githubusercontent.com/ooep/eki-info，大陆直连超时）
 let _guideData = null, _guideP = null;
 let _guideKey = null;
 

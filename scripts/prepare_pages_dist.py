@@ -12,10 +12,15 @@ prepare_pages_dist.py — 组装 Pages 发布目录（仅 html/css/js + SEO 静�
 
 用法：python3 scripts/prepare_pages_dist.py
 """
-import os, shutil, sys
+import os, re, shutil, sys
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MINI = os.path.join(REPO, 'mini-japanrail-3d')
+
+# IndexNow 密钥文件（{32位hex}.txt）：Bing/Yandex 免登录提交通道，
+# 需位于站点根可访问。按格式匹配，换 key 无需改代码。
+def is_indexnow_key(name):
+    return re.fullmatch(r'[0-9a-f]{32}\.txt', name) is not None
 
 # 前端可发布条目白名单（html/css/js + SEO 生成页 + 站点基础设施）
 KEEP_NAMES = {
@@ -37,7 +42,7 @@ def copy_frontend(dst):
     os.makedirs(dst, exist_ok=True)
     n = 0
     for name in os.listdir(MINI):
-        if name.startswith('.') or name in DROP_NAMES or name not in KEEP_NAMES:
+        if name.startswith('.') or name in DROP_NAMES or (name not in KEEP_NAMES and not is_indexnow_key(name)):
             continue
         s = os.path.join(MINI, name)
         if os.path.isdir(s):

@@ -270,7 +270,7 @@ button,input,select { font-family:inherit; }
 
 /* ───── 联想面板 ───── */
 #sug { position:absolute; left:12px; right:12px; top:58px; z-index:20; display:none;
-  max-height:min(320px, 44dvh); overflow-y:auto; overscroll-behavior:contain;
+  max-height:min(320px, 44dvh); overflow-y:auto;
   -webkit-overflow-scrolling:touch; border-radius:16px;
   background:var(--glass-solid); border:1px solid var(--glass-edge);
   box-shadow:0 14px 44px rgba(0,0,0,.42), inset 0 1px 0 var(--glass-hi);
@@ -288,7 +288,7 @@ button,input,select { font-family:inherit; }
 
 /* ───── 结果区 ───── */
 #result { display:none; flex-direction:column; min-height:0; border-top:1px solid var(--line);
-  overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
+  overflow-y:auto; -webkit-overflow-scrolling:touch; }
 #result.show { display:flex; animation:resIn .34s var(--ease-smooth) both; }
 @keyframes resIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
 
@@ -310,7 +310,7 @@ button,input,select { font-family:inherit; }
 
 /* 方案卡片(横向滚动) */
 #routes { display:flex; gap:8px; padding:0 13px 10px; overflow-x:auto; flex:none; scrollbar-width:none;
-  overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
+  -webkit-overflow-scrolling:touch; }
 #routes::-webkit-scrollbar { height:0; display:none; }
 .rcard { flex:none; width:136px; padding:10px 11px; border-radius:var(--r-sm); cursor:pointer;
   border:1px solid var(--glass-edge); background:var(--glass);
@@ -328,7 +328,7 @@ button,input,select { font-family:inherit; }
 .rcard .rtag.g { background:rgba(120,140,180,.28); color:var(--txt); }
 
 /* 时间轴 */
-#legs { flex:1 1 auto; min-height:0; overflow-y:auto; padding:0 13px 12px; overscroll-behavior:contain;
+#legs { flex:1 1 auto; min-height:0; overflow-y:auto; padding:0 13px 12px;
   -webkit-overflow-scrolling:touch; scrollbar-width:thin; scrollbar-color:rgba(125,145,180,.4) transparent; }
 #legs::-webkit-scrollbar { width:5px; }
 #legs::-webkit-scrollbar-thumb { background:rgba(125,145,180,.35); border-radius:3px; }
@@ -2500,38 +2500,16 @@ $('sumBar').addEventListener('click', () => {
 /* 视口切到桌面时复位抽屉层级 */
 window.addEventListener('resize', () => { if (!isMobileView() && detailState !== 'hidden') closeDetail(); });
 
-/* ══════════════════ 过滚守卫(旧版 iOS 兜底) ══════════════════
-   现代浏览器靠 overscroll-behavior:contain 收当过滚; iOS<16 不支持该属性,
-   这里在滚动容器边界 preventDefault, 阻断滚动手势链到根(橡皮筋黑边)。
-   地图/把手区域放行(地图自管手势, 把手用指针事件拖拽)。 */
-(function () {
-  if (!('ontouchstart' in window)) return;
-  function scroller(el) {
-    while (el && el !== document.body && el !== document.documentElement) {
-      const cs = getComputedStyle(el);
-      if (/auto|scroll/.test(cs.overflowY) || /auto|scroll/.test(cs.overflowX)) return el;
-      el = el.parentElement;
-    }
-    return null;
-  }
-  let sy = 0, sx = 0, el = null;
-  document.addEventListener('touchstart', e => {
-    if (e.touches.length !== 1) { el = null; return; }
-    sy = e.touches[0].clientY; sx = e.touches[0].clientX;
-    const t = e.target;
-    el = (t instanceof Element && !t.closest('#map,#grip,#dgrip')) ? scroller(t) : null;
-  }, { passive: true });
-  document.addEventListener('touchmove', e => {
-    if (!el || e.touches.length !== 1) return;
-    const dy = e.touches[0].clientY - sy, dx = e.touches[0].clientX - sx;
-    const cs = getComputedStyle(el);
-    const canY = /auto|scroll/.test(cs.overflowY), canX = /auto|scroll/.test(cs.overflowX);
-    let stop = false;
-    if (canY && ((dy > 0 && el.scrollTop <= 0) || (dy < 0 && el.scrollTop + el.clientHeight >= el.scrollHeight - 1))) stop = true;
-    if (canX && ((dx > 0 && el.scrollLeft <= 0) || (dx < 0 && el.scrollLeft + el.clientWidth >= el.scrollWidth - 1))) stop = true;
-    if (stop) e.preventDefault();
-  }, { passive: false });
-})();
+/* ══════════════════ 根滚动锁定说明(无 JS 触摸拦截) ══════════════════
+   早期版本曾在文档级挂 touchmove 守卫在边界 preventDefault, 阻断橡皮筋黑边;
+   但真机上误 preventDefault 会直接掐死抽屉内正常滚动(信息看不全)。
+   现改为纯结构方案, 滚动路径保持原生:
+   1) #panel overflow:hidden —— 隐藏/拖出态抽屉被裁切, 不向文档传播可滚溢出,
+      文档 scrollHeight 恒等于视口, 根无可滚内容(规范级行为, 各 iOS 版本一致);
+   2) body position:fixed —— 应用外壳模式, 根本身不参与滚动;
+   3) html/body/panel overscroll-behavior:none —— 现代浏览器双保险, 阻断滚动链。
+   内层滚动容器(#legs/#result/#routes/#sug)均为原生 overflow:auto, 不加任何
+   overscroll-behavior/JS 拦截, 保证真机触摸滚动 100% 原生行为。 */
 
 </script>
 </body>

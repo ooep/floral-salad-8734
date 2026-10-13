@@ -98,6 +98,15 @@ def main():
             ok = ({A["jasN"][0], B["jasN"][0]} & {"山形", "新庄"}) and "仙台" in {A["jasN"][0], B["jasN"][0]}
             check(f"{day} 福島伙伴均为やまびこ(仙台)×つばさ", ok, f"{A['jasN'][0]}×{B['jasN'][0]}")
 
+        # 岡山 サンライズ瀬戸(高松)×サンライズ出雲(出雲市)
+        okayama = [p for p in pairs if p[2] == "岡山"]
+        check(f"{day} 岡山有併结对", len(okayama) >= 1, f"got {len(okayama)}")
+        for a, b, sp, t0, t1, nm in okayama:
+            A, B = trips[a], trips[b]
+            ok = {A["jasN"][0], B["jasN"][0]} == {"高松", "出雲市"} and \
+                 A["jasN"][-1] == "東京" and B["jasN"][-1] == "東京"
+            check(f"{day} 岡山伙伴均为サンライズ瀬戸×出雲", ok, f"{A['jasN'][0]}×{B['jasN'][0]}")
+
         # ---- 反例 ----
         # 福島併结伙伴不含盛岡発やまびこ（并行列车, 16:08×16:15 不配对）
         for a, b, sp, t0, t1, nm in pairs:

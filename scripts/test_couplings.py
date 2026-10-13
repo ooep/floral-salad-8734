@@ -50,7 +50,7 @@ def trips_from(path):
 
 COUPLE_CLASSES = {
     "Hayabusa", "Komachi", "Yamabiko", "Tsubasa", "Toki", "Tanigawa",
-    "Sakura", "Tsubame", "特", "新", "関", "紀",
+    "Sakura", "Tsubame", "特", "新", "関", "紀", "寝",
 }
 
 

@@ -42,12 +42,14 @@ JOIN_POINTS = {
     ("宇多津", "松山", frozenset({"岡山", "高松"})),
     ("多度津", "松山", frozenset({"岡山", "高松"})),
     ("早岐", "博多", frozenset({"佐世保", "ハウステンボス"})),
+    # サンライズ瀬戸×出雲：上り 高松/出雲市 → 岡山併结 → 東京
+    ("岡山", "東京", frozenset({"高松", "出雲市"})),
 }
 
 # 参与併结的车种白名单（与 index.html COUPLE_CLASSES 一致）
 COUPLE_CLASSES = {
     "Hayabusa", "Komachi", "Yamabiko", "Tsubasa", "Toki", "Tanigawa",
-    "Sakura", "Tsubame", "特", "新", "関", "紀",
+    "Sakura", "Tsubame", "特", "新", "関", "紀", "寝",  # 寝=寝台特急(サンライズ瀬戸×出雲)
 }
 
 _TOKKYU_ICONS = set("関紀中丹寝京ミフ富九川ＴＳＮホ拝ラアエ空")

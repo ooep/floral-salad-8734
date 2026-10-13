@@ -6194,11 +6194,6 @@ window.__probe = (lineFilter, limit) => {
   return out;
 };
 if (!hasWebgl2) { loaderMsg.textContent = '⚠ WebGL2 unavailable'; }
-/* [test-hook] 暴露内部函数供本地自动化验证（推送前移除） */
-window.__mjr = { buildStaticIndexAsync, parseTripsAsync, trainPosition, normName,
-  segIndex: () => segIndex, stationMap: () => stationMap, tripList: () => tripList,
-  segFC: () => segFC, staFC: () => staFC, tmaps: () => tmaps, stationCands: () => stationCands,
-  segSubPath, officialPath, stationCoord: () => stationCoord };
 
 </script>
 </body>

@@ -16,9 +16,47 @@ schs = [dep0, run1, dwell1, run2, dwell2, ...]（长度 2N-2，终点站无停�
 用法：
   python3 scripts/build_trains.py                          # 自动找源
   python3 scripts/build_trains.py --src <目录> --out <目录>
+
+去重（保守版）:
+  源主数据偶尔把同一班次存成两条几乎相同的记录（同 tmap、同相对时刻、发车差
+  ≤1 分钟，如 きりしま#2933 的 18:39/18:40）。构建后按 MERGE_CLASSES 合并，
+  保留较早发车的一条。仅限优等列车车种；快速/普通不合并（城市近郊线同模式
+  1-2 分钟间隔是真实列车）。重联/并结（はやぶさ+こまち）与跨公司/指令边界改号
+  （みずほ 熊本、はやぶさ 新青森、のぞみ 新大阪等）tmap_id 均不同，不受影响。
 """
 import argparse, datetime, glob, json, os, re, sys
 from collections import Counter
+
+# 参与去重的车种（优等列车/新干线）。同一 tmap 模式的特急/新干线不可能隔
+# ≤1 分钟发两趟真实列车；快速/普通在城市近郊线有真实 1-2 分钟间隔，必须排除。
+MERGE_CLASSES = {"特", "Mizuho", "Nozomi", "Sakura", "Hayabusa", "Komachi",
+                 "Kagayaki", "Hikari", "Kodama", "Tsubame", "新"}
+
+def dedup_express_dups(recs):
+    """recs: {train_id: rec} -> (merged_recs, dropped)
+
+    合并条件（全部满足）：同 tmap_id + 同 rday + 相对时刻串（s 去首项）相同
+    + 车种 ∈ MERGE_CLASSES + 发车分钟差 ≤ 1 → 保留较早发车的一条。
+    """
+    merged = dict(recs)
+    groups = {}
+    for tid, rec in merged.items():
+        if rec["i"] not in MERGE_CLASSES:
+            continue
+        s = rec["s"].split(",")
+        rel = ",".join(s[1:])
+        groups.setdefault((rec["t"], rec["r"], rel), []).append((int(s[0]), tid))
+    dropped = 0
+    for lst in groups.values():
+        lst.sort()
+        anchor_dep = lst[0][0]
+        for dep0, tid in lst[1:]:
+            if dep0 - anchor_dep <= 1:
+                del merged[tid]
+                dropped += 1
+            else:
+                anchor_dep = dep0
+    return merged, dropped
 
 def mn(s):
     if not s:
@@ -122,6 +160,7 @@ def main():
         except Exception:
             continue
 
+    recs, deduped = dedup_express_dups(recs)
     now = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="minutes").replace("+00:00", " UTC")
     os.makedirs(args.out, exist_ok=True)
     meta = {"b": now, "n": len(recs), "src": os.path.basename(os.path.normpath(src))}
@@ -132,7 +171,7 @@ def main():
             json.dump({"b": now, "n": len(day_recs), "T": day_recs}, f, ensure_ascii=False, separators=(",", ":"))
         print(f"trains_{name}.json ({label}): {len(day_recs)} 班次 -> {path} ({os.path.getsize(path)/1e6:.1f}MB)")
 
-    print(f"唯一班次总数: {len(recs)} | 跳过: {skipped} | 负区间钳制: {neg_clamped}")
+    print(f"唯一班次总数: {len(recs)} | 跳过: {skipped} | 负区间钳制: {neg_clamped} | 保守去重合并: {deduped}")
     print(f"完成 @ {now}")
 
 if __name__ == "__main__":

@@ -1557,7 +1557,7 @@ function lmStart() {
 const FILES_PCT = 55, IDX_PCT = 78, PRS_PCT = 97;
 /* 数据版本号:segments/stations/station_map 等静态数据每次变更时必须递增,
    否则 IndexedDB 缓存可能让旧数据(如已修的幽灵直线)继续生效 */
-const DATA_VERSION = '2026-10-13c';
+const DATA_VERSION = '2026-10-13c';   // 静态数据变更必须递增；本次修复 etag 重验证后强制全量刷新一次
 const loadSizes = { 'https://jr-static.suki.ing/data/segments3d.geojson': 11347006, 'https://jr-static.suki.ing/data/stations3d.geojson': 1881446, 'https://jr-static.suki.ing/data/tmaps.json': 3158412, 'https://jr-static.suki.ing/data/station_map.json': 12090306, 'https://jr-static.suki.ing/data/tokkyu.json': 59100, 'https://jr-static.suki.ing/data/names_i18n.json': 482556, 'https://jr-static.suki.ing/data/trains_wd.json': 13494947, 'https://jr-static.suki.ing/data/trains_sa.json': 12228166, 'https://jr-static.suki.ing/data/trains_su.json': 12284312, 'https://jr-static.suki.ing/data/station_overall_footprints.geojson': 6902234, 'https://jr-static.suki.ing/data/station_entrances.geojson': 2787587, 'https://jr-static.suki.ing/data/station_platforms.geojson': 4254264 };
 let _fileTotal = 8, _fileIdx = 0;
 function nextFileIdx() { return _fileIdx++; }
@@ -1615,14 +1615,17 @@ async function fetchJSONWithCache(url, phaseKey, fileIdx, silent) {
     if (!idb) idb = await openIDB();
     const cached = await idbGet(key);
     if (cached && cached.v === DATA_VERSION && cached.j != null) {
-      const lm = cached.lm;
-      if (lm) {
-        const res = await fetch(url, { headers: { 'If-Modified-Since': lm } });
+      const lm = cached.lm, etag = cached.etag;
+      if (lm || etag) {
+        const hdrs = {};
+        if (lm) hdrs['If-Modified-Since'] = lm;
+        if (etag) hdrs['If-None-Match'] = etag;   /* jr-static 不返回 Last-Modified 且忽略 IMS,但 If-None-Match(ETag) 正确返回 304 */
+        const res = await fetch(url, { headers: hdrs });
         if (res.status === 304) { if (!silent) updateBar(fIdx, 1, 1); return cached.j; }
         if (res.ok) {
           const j = await res.json();
           if (!silent) updateBar(fIdx, 1, 1);
-          await idbPut(key, { v: DATA_VERSION, j, lm: res.headers.get('Last-Modified') || lm });
+          await idbPut(key, { v: DATA_VERSION, j, lm: res.headers.get('Last-Modified') || lm, etag: res.headers.get('ETag') || etag });
           return j;
         }
       } else { if (!silent) updateBar(fIdx, 1, 1); return cached.j; }
@@ -1648,7 +1651,7 @@ async function fetchJSONWithCache(url, phaseKey, fileIdx, silent) {
     j = JSON.parse(buf);
     if (!silent) updateBar(fIdx, 1, 1);
   }
-  try { if (idb) await idbPut(key, { v: DATA_VERSION, j, lm: res.headers.get('Last-Modified') || '' }); } catch (e) {}
+  try { if (idb) await idbPut(key, { v: DATA_VERSION, j, lm: res.headers.get('Last-Modified') || '', etag: res.headers.get('ETag') || '' }); } catch (e) {}
   return j;
 }
 function yieldToUI() { return new Promise(r => setTimeout(r, 0)); }

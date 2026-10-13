@@ -938,7 +938,7 @@ function setCollapsed(v) {
 })();
 
 /* ══════════════════ IndexedDB 缓存(与主页同款) ══════════════════ */
-const DATA_VERSION = 'mjrj2';
+const DATA_VERSION = 'mjrj3';   // 本次修复 etag 重验证后强制全量刷新一次
 let idb = null;
 function openIDB() {
   return new Promise((res, rej) => {
@@ -978,14 +978,18 @@ async function fetchJSONWithCache(url, onProg) {
     if (!idb) idb = await openIDB();
     const cached = await idbGet(key);
     if (cached && cached.v === DATA_VERSION && cached.j != null) {
-      if (cached.lm) {
+      const lm = cached.lm, etag = cached.etag;
+      if (lm || etag) {
         try {
-          const res = await fetch(url, { headers: { 'If-Modified-Since': cached.lm } });
+          const hdrs = {};
+          if (lm) hdrs['If-Modified-Since'] = lm;
+          if (etag) hdrs['If-None-Match'] = etag;   /* jr-static 不返回 Last-Modified 且忽略 IMS,但 If-None-Match(ETag) 正确返回 304 */
+          const res = await fetch(url, { headers: hdrs });
           if (res.status === 304) { if (onProg) onProg(1, 1); return cached.j; }
           if (res.ok) {
             const j = await res.json();
             if (onProg) onProg(1, 1);
-            await idbPut(key, { v: DATA_VERSION, j, lm: res.headers.get('Last-Modified') || cached.lm });
+            await idbPut(key, { v: DATA_VERSION, j, lm: res.headers.get('Last-Modified') || lm, etag: res.headers.get('ETag') || etag });
             return j;
           }
         } catch (e) { /* 走缓存 */ }
@@ -1010,7 +1014,7 @@ async function fetchJSONWithCache(url, onProg) {
     j = JSON.parse(new TextDecoder().decode(await new Blob(chunks).arrayBuffer()));
   } else j = await res.json();
   if (onProg) onProg(1, 1);
-  try { if (idb) await idbPut(key, { v: DATA_VERSION, j, lm: res.headers.get('Last-Modified') || '' }); } catch (e) { }
+  try { if (idb) await idbPut(key, { v: DATA_VERSION, j, lm: res.headers.get('Last-Modified') || '', etag: res.headers.get('ETag') || '' }); } catch (e) { }
   return j;
 }
 

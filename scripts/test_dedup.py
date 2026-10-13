@@ -19,6 +19,11 @@ test_dedup.py — 本地验证 build_trains.dedup_express_dups 的保守去重�
   11. 端到端: 从 live 重建源（注入合成重复对） → 跑 build_trains.py → 输出无损重建当前 live 数据
      （注入的重复对被合并, 可见 stdout「保守去重合并: 4」）
 
+回归用例（2026-10-13 查缺补漏新增）:
+  12. 跨 rday 双录（锚 r=1 + 副本 r=7, 同形差 1min）→ 合并, 保留记录 rday 取并集(7)
+  13. 新干线车型覆盖（Yamabiko/Asama 等加入 MERGE_CLASSES）→ 同形差 1min 合并
+  14. 日型无交集（r=1 平日 vs r=2 周六, 同形差 1min）→ 不合并（不同日型的真实班次）
+
 运行: python3 scripts/test_dedup.py
 （2026-10-13 起 data/live 已是去重后数据, 测试改为按保留记录合成 +1 分钟副本注入输入, 自包含可复现）
 """
@@ -41,14 +46,14 @@ def build_recs():
     return recs
 
 def find_dup_pair(recs, icon, dep0):
-    """返回共享 (t,r,rel) 且发车为 dep0/dep0+1 的相邻对 [(dep, tid), ...]。
+    """返回共享 (t,rel) 且发车为 dep0/dep0+1 的相邻对 [(dep, tid), ...]。
     同形组内可能有多个真实班次（如 596/716/836/837），只取 dep0 开始的相邻对。"""
     groups = {}
     for tid, rec in recs.items():
         if rec["i"] != icon:
             continue
         s = rec["s"].split(",")
-        groups.setdefault((rec["t"], rec["r"], ",".join(s[1:])), []).append((int(s[0]), tid))
+        groups.setdefault((rec["t"], ",".join(s[1:])), []).append((int(s[0]), tid))
     for lst in groups.values():
         lst.sort()
         for i in range(len(lst) - 1):
@@ -179,6 +184,50 @@ def main():
             check("11b. 端到端输出中 きりしま#2933 剩 1 条且为 18:39", len(k) == 1 and k[0]["s"].startswith("1119,"))
         merge_line = [l for l in r.stdout.splitlines() if "去重" in l]
         print("  (端到端 stdout 合并行: " + (merge_line[-1] if merge_line else "未找到") + ")")
+
+    # ============ 回归用例: 2026-10-13 查缺补漏 ============
+    print("\n—— 回归用例（跨 rday 双录 / 车型覆盖 / 日型无交集）——")
+
+    def inject(recs, tid, r, dep_shift=1):
+        base = recs[tid]
+        dup = dict(base)
+        dup["_"] = tid + "_REG" + str(r)
+        vals = base["s"].split(",")
+        vals[0] = str(int(vals[0]) + dep_shift)
+        dup["s"] = ",".join(vals)
+        dup["r"] = r
+        recs[dup["_"]] = dup
+        return dup["_"]
+
+    def pick(recs, icon, rmask=None, excl=None):
+        for tid, r in recs.items():
+            if r["i"] == icon and (rmask is None or r["r"] == rmask) and r["t"] != excl:
+                return tid
+        return None
+
+    # 12 跨 rday 双录（锚 r=1 + 副本 r=7, 同形差 1min）→ 合并, 日型并集
+    base_tid = pick(build_recs(), "特", rmask=1)
+    r12 = build_recs()
+    dup12 = inject(r12, base_tid, 7)
+    m12, d12 = dedup_express_dups(r12)
+    check("12. 跨 rday 双录（锚 r=1 + 副本 r=7）合并为 1 条且日型并集为 7",
+          d12 == 1 and dup12 not in m12 and base_tid in m12 and m12[base_tid]["r"] == 7)
+
+    # 13 新干线车型覆盖（Yamabiko 加入 MERGE_CLASSES）→ 合并
+    assert "Yamabiko" in MERGE_CLASSES and "Asama" in MERGE_CLASSES
+    yb_tid = pick(build_recs(), "Yamabiko")
+    r13 = build_recs()
+    dup13 = inject(r13, yb_tid, r13[yb_tid]["r"])
+    m13, d13 = dedup_express_dups(r13)
+    check("13. Yamabiko 同形差 1min 被合并（车型已进 MERGE_CLASSES）",
+          d13 == 1 and dup13 not in m13)
+
+    # 14 日型无交集（锚 r=1 平日 vs 副本 r=2 周六, 同形差 1min）→ 不合并
+    r14 = build_recs()
+    dup14 = inject(r14, base_tid, 2)   # 与 r=1 锚点无日型交集
+    m14, d14 = dedup_express_dups(r14)
+    check("14. 日型无交集（r=1 vs r=2）同形差 1min 不合并",
+          d14 == 0 and dup14 in m14 and base_tid in m14)
 
     print(f"\n结果: {'全部通过 ✔' if not failures else '失败 %d 项 ✘' % len(failures)}")
     sys.exit(1 if failures else 0)

@@ -29,14 +29,23 @@ from collections import Counter
 
 # 参与去重的车种（优等列车/新干线）。同一 tmap 模式的特急/新干线不可能隔
 # ≤1 分钟发两趟真实列车；快速/普通在城市近郊线有真实 1-2 分钟间隔，必须排除。
+# 注意：新增大类（如未来新增併结车型）需同步维护此处。
 MERGE_CLASSES = {"特", "Mizuho", "Nozomi", "Sakura", "Hayabusa", "Komachi",
-                 "Kagayaki", "Hikari", "Kodama", "Tsubame", "新"}
+                 "Kagayaki", "Hikari", "Kodama", "Tsubame", "新",
+                 "Yamabiko", "Tsubasa", "Asama", "Toki", "Tanigawa",
+                 "Tsurugi", "Hakutaka", "Nasuno", "Hayate"}
 
 def dedup_express_dups(recs):
     """recs: {train_id: rec} -> (merged_recs, dropped)
 
-    合并条件（全部满足）：同 tmap_id + 同 rday + 相对时刻串（s 去首项）相同
-    + 车种 ∈ MERGE_CLASSES + 发车分钟差 ≤ 1 → 保留较早发车的一条。
+    合并条件（全部满足）：同 tmap_id + 相对时刻串（s 去首项）相同
+    + 车种 ∈ MERGE_CLASSES + 发车分钟差 ≤ 1 + 两记录日型(rday 位掩码)有交集
+    → 保留较早发车的一条，并把被删记录的日型并入保留记录（防丢班次）。
+
+    rday 是位掩码（1=平日 2=周六 4=周日·假日），源数据会把同一班车按不同
+    日型范围各录一条（如 rday=1 与 rday=7），故分组键不再含 rday；但若两条
+    记录日型完全无交集（如平日一班、周末一班），说明是不同日型的真实班次，
+    即使同形差 1 分钟也不合并。
     """
     merged = dict(recs)
     groups = {}
@@ -45,17 +54,23 @@ def dedup_express_dups(recs):
             continue
         s = rec["s"].split(",")
         rel = ",".join(s[1:])
-        groups.setdefault((rec["t"], rec["r"], rel), []).append((int(s[0]), tid))
+        groups.setdefault((rec["t"], rel), []).append((int(s[0]), rec["r"], tid))
     dropped = 0
     for lst in groups.values():
         lst.sort()
         anchor_dep = lst[0][0]
-        for dep0, tid in lst[1:]:
-            if dep0 - anchor_dep <= 1:
+        anchor_r = lst[0][1]
+        anchor_tid = lst[0][2]
+        for dep0, r, tid in lst[1:]:
+            if dep0 - anchor_dep <= 1 and (r & anchor_r):
+                merged[anchor_tid]["r"] |= r   # 日型并集,防跨日型丢班次
+                anchor_r |= r
                 del merged[tid]
                 dropped += 1
             else:
                 anchor_dep = dep0
+                anchor_r = r
+                anchor_tid = tid
     return merged, dropped
 
 def mn(s):

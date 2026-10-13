@@ -5654,8 +5654,15 @@ function openLineSheet(lineName) {
       const doc = new DOMParser().parseFromString(html, 'text/html');
       const wrap = doc.querySelector('.wrap');
       if (!wrap) throw new Error('no wrap');
-      wrap.querySelectorAll('nav.breadcrumb, nav.toc, h1, .foot, footer').forEach(n => n.remove());
-      /* 正文里的站内链接改成顶层跳转(抽屉里不点) */
+      /* 剥掉:面包屑 / 目录 / 重复 h1 / 车站列表里的"地图↗"小链接 */
+      wrap.querySelectorAll('nav.breadcrumb, nav.toc, h1, footer, a.mini, a.map-cta, p.lang-links, p.wiki-links').forEach(n => n.remove());
+      /* 剥掉「同类线路推荐」整段(从该 h2 到 wrap 末尾都是推荐/导航/外链,抽屉里不需要) */
+      const sk = wrap.querySelector('h2#sec-samekind');
+      if (sk) { let n = sk; while (n) { const nx = n.nextSibling; n.remove(); n = nx; } }
+      /* 途经车站/换乘枢纽:剥掉所有链接外壳,只留纯文本(抽屉是纯展示,点了会跳走) */
+      wrap.querySelectorAll('a').forEach(a => {
+        a.replaceWith(doc.createTextNode(a.textContent));
+      });
       body.innerHTML = wrap.innerHTML;
       body.scrollTop = 0;
     })

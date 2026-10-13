@@ -455,6 +455,44 @@ button { font-family:inherit; }
 #detail .d-meta .lb { color:var(--dim); flex:none; font-size:11px; letter-spacing:.2px; }
 #detail .d-meta .mv { flex:1; min-width:0; text-align:right; font-variant-numeric:tabular-nums; font-weight:600; color:var(--txt); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 #detail .d-meta .d-cpl .mv { text-align:left; white-space:normal; line-height:1.8; }
+/* ---------- 列车百科折叠框(ressha-wiki,取代原「班次」栏目) ---------- */
+#detail .d-wiki { margin-top:10px; border-top:1px solid var(--glass-lo); }
+#detail .d-wiki .d-wiki-hd { display:flex; align-items:baseline; justify-content:space-between; gap:14px; padding:9px 2px; font-size:12.5px; line-height:1.5; cursor:pointer; -webkit-user-select:none; user-select:none; -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
+#detail .d-wiki .d-wiki-hd .lb { color:var(--dim); flex:none; font-size:11px; letter-spacing:.2px; }
+#detail .d-wiki .d-wiki-hd .mv { flex:1; min-width:0; text-align:right; font-weight:600; color:var(--txt); display:flex; align-items:center; justify-content:flex-end; gap:6px; }
+#detail .d-wiki .dw-v { min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#detail .d-wiki .dw-ar { flex:none; width:13px; height:13px; display:inline-flex; color:var(--dim); transition:transform var(--morph-in) var(--spring-in); }
+#detail .d-wiki[data-open="1"] .dw-ar { transform:rotate(180deg); }
+#detail .d-wiki.na .d-wiki-hd { cursor:default; }
+#detail .d-wiki.na .d-wiki-hd .mv { opacity:.55; font-weight:500; }
+#detail .d-wiki.na .dw-ar { display:none; }
+#detail .d-wiki-bd { display:grid; grid-template-rows:0fr; transition:grid-template-rows var(--morph-out) var(--spring-out); }
+#detail .d-wiki[data-open="1"] .d-wiki-bd { grid-template-rows:1fr; }
+#detail .d-wiki-bd > .dw-in { min-height:0; overflow:hidden; }
+#detail .dw-art { max-height:min(300px,42vh); overflow-y:auto; overscroll-behavior:contain; padding:2px 2px 4px; }
+#detail .dw-art .gd-loading { padding:14px 2px; font-size:12px; }
+#detail .dw-name { font-size:13.5px; font-weight:800; color:var(--txt); line-height:1.4; }
+#detail .dw-name small { font-size:11px; font-weight:500; color:var(--dim); margin-left:6px; }
+#detail .dw-op { font-size:11px; color:var(--dim); margin-top:2px; }
+#detail .dw-intro { font-size:12.5px; line-height:1.75; color:var(--txt); margin:8px 0 0; white-space:pre-wrap; }
+#detail .dw-secs { margin-top:4px; }
+#detail .dw-sec { border-top:1px dashed var(--glass-edge); }
+#detail .dw-sec summary { font-size:11.5px; font-weight:700; color:var(--dim); padding:7px 0; cursor:pointer; list-style:none; display:flex; align-items:center; gap:7px; -webkit-tap-highlight-color:transparent; }
+#detail .dw-sec summary::-webkit-details-marker { display:none; }
+#detail .dw-sec summary::before { content:""; flex:none; width:0; height:0; border-left:4px solid currentColor; border-top:3.5px solid transparent; border-bottom:3.5px solid transparent; transition:transform .18s var(--ease-smooth); }
+#detail .dw-sec[open] summary::before { transform:rotate(90deg); }
+#detail .dw-sec p { font-size:12.5px; line-height:1.75; color:var(--dim); margin:0 0 9px; white-space:pre-wrap; }
+#detail .dw-link { display:inline-block; margin-top:6px; font-size:11.5px; font-weight:600; color:var(--acc-txt); text-decoration:none; }
+#detail .dw-link:hover { text-decoration:underline; }
+#detail .dw-note { font-size:10.5px; color:var(--dim); opacity:.8; margin-top:6px; }
+#detail .dw-src { font-size:10px; color:var(--dim); opacity:.65; margin-top:8px; text-align:right; }
+#detail .dw-none { font-size:12px; color:var(--dim); padding:10px 2px; line-height:1.7; }
+#detail .dw-sw { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-top:10px; padding-top:9px; border-top:1px dashed var(--glass-edge); }
+#detail .dw-sw-t { font-size:10.5px; color:var(--dim); flex:none; }
+#detail .dw-more { font-size:10.5px; color:var(--dim); opacity:.7; padding:0 2px; }
+#detail .dw-chip { border:1px solid var(--glass-edge); background:var(--glass); color:var(--dim); font-size:11px; font-weight:600; padding:4px 10px; border-radius:var(--r-pill); cursor:pointer; white-space:nowrap; font-family:inherit; }
+#detail .dw-chip:hover { background:var(--glass-2); color:var(--txt); }
+#detail .dw-chip:active { transform:scale(.95); }
 .st-badge { display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:5px; vertical-align:1.5px; }
 .st-badge.run { background:#34d399; box-shadow:0 0 0 3px rgba(52,211,153,.18); }
 .st-badge.dwell { background:#fbbf24; box-shadow:0 0 0 3px rgba(251,191,36,.18); }
@@ -1303,6 +1341,9 @@ const I18N = {
     running:'运行中', dwelling:'停車中', speed:'速度', kmh:'km/h', firstLast:'全程', track:'轨道 = 官方线路色', legendNote:'列车颜色 = 所属线路色',
     followBtn:'跟随此列车', locateBtn:'定位', stopFollowBtn:'停止跟随', tripId:'班次', viaLines:'途经线路',
     cplLabel:'併结', cplSplit:'与 {0} 併结，于 {1} 分割', cplView:'查看 {0}',
+    wikiLabel:'列车百科', wikiEmpty:'暂无百科数据', wikiLoading:'百科数据加载中…', wikiFail:'百科数据加载失败',
+    wikiRetry:'重试', wikiSrc:'数据来源：ressha-wiki', wikiFull:'查看维基百科词条 ↗', wikiOther:'其他车型',
+    wikiNoLocal:'暂无中文词条，以下为日文原文', wikiOper:'运营',
     loadingSeg:'轨道网络', loadingSta:'车站', loadingTm:'班次映射', loadingTr:'时刻表', loaded:'完成', goLive:'数据就绪 — 点击右上实时开始',
     dayFileNote:'时刻表', paused:'暂停', liveMode:'实时', playMode:'回放', fps:'FPS',
     retry:'重试', loadingIdx:'构建索引', loadingPr:'解析时刻表', adapt:'性能模式:帧率低,已自动关闭列车光晕', cacheOn:'离线缓存已启用', failMsg:'加载失败，请检查网络后重试',
@@ -1333,6 +1374,9 @@ const I18N = {
     running:'運行中', dwelling:'停車中', speed:'速度', kmh:'km/h', firstLast:'全区間', track:'路線 = 公式路線色', legendNote:'列車色 = 所属路線色',
     followBtn:'列車を追跡', locateBtn:'位置', stopFollowBtn:'追跡停止', tripId:'列車', viaLines:'経由路線',
     cplLabel:'併結', cplSplit:'{0}と併結、{1}で分割', cplView:'{0}を表示',
+    wikiLabel:'列車百科', wikiEmpty:'百科データなし', wikiLoading:'百科データ読込中…', wikiFail:'百科データの読込に失敗しました',
+    wikiRetry:'再試行', wikiSrc:'データ：ressha-wiki', wikiFull:'Wikipedia 記事を見る ↗', wikiOther:'他の車種',
+    wikiNoLocal:'日本語版記事がないため他言語版を表示', wikiOper:'運行事業者',
     loadingSeg:'軌道網', loadingSta:'駅', loadingTm:'列車マップ', loadingTr:'時刻表', loaded:'完了', goLive:'準備完了 — 右上 リアルタイム で開始',
     dayFileNote:'時刻表', paused:'一時停止', liveMode:'リアルタイム', playMode:'再生', fps:'FPS',
     retry:'再試行', loadingIdx:'索引構築', loadingPr:'時刻表解析', adapt:'省電力モード:低FPSのため列車グローをOFF', cacheOn:'オフラインキャッシュ有効', failMsg:'読み込みに失敗しました。ネットワークを確認してもう一度お試しください',
@@ -1363,6 +1407,9 @@ const I18N = {
     running:'Running', dwelling:'At station', speed:'Speed', kmh:'km/h', firstLast:'Route', track:'Track = official line color', legendNote:'Train color = line color',
     followBtn:'Follow train', locateBtn:'Locate', stopFollowBtn:'Stop follow', tripId:'Trip', viaLines:'Lines',
     cplLabel:'Coupled', cplSplit:'Coupled w/ {0}, splits at {1}', cplView:'View {0}',
+    wikiLabel:'Train encyclopedia', wikiEmpty:'No encyclopedia data', wikiLoading:'Loading encyclopedia…', wikiFail:'Failed to load encyclopedia',
+    wikiRetry:'Retry', wikiSrc:'Data: ressha-wiki', wikiFull:'View Wikipedia article ↗', wikiOther:'Other models',
+    wikiNoLocal:'No Japanese article — showing another language', wikiOper:'Operator',
     loadingSeg:'Track network', loadingSta:'Stations', loadingTm:'Trip map', loadingTr:'Timetable', loaded:'done', goLive:'Ready — tap Live top-right',
     dayFileNote:'Timetable', paused:'Paused', liveMode:'Live', playMode:'Replay', fps:'FPS',
     retry:'Retry', loadingIdx:'Building index', loadingPr:'Parsing timetable', adapt:'Performance mode: low FPS, train glow off', cacheOn:'Offline cache enabled', failMsg:'Failed to load. Check your network and retry.',
@@ -4506,6 +4553,165 @@ function iconStyle(icIdx) {
   return 'background-image:url(' + png + ');background-size:' + (ATLAS.size[0] * sc) + 'px ' + (ATLAS.size[1] * sc) + 'px;' +
     'background-position:-' + ((col * ATLAS.cell[0] + 2) * sc) + 'px -' + ((row * ATLAS.cell[1] + 2) * sc) + 'px;';
 }
+/* ============ 列车百科（ressha-wiki，惰性加载，全路径防御） ============
+   取代原「班次」栏目:折叠信息框,点击展开该班次车型的维基百科介绍。
+   车型解析与车头图标同源(特急爱称 → 途经线路 → 图集兜底),保证百科内容
+   与抽屉头部显示的车头一致;同键下的其他候选车型以「其他车型」切换呈现。
+   数据:本地索引 data/train_wiki_map.json(站点键→车型清单) +
+        远程 https://raw.githubusercontent.com/ooep/ressha-wiki/main/data/<车型>.json */
+const RESSHA_BASE = 'https://raw.githubusercontent.com/ooep/ressha-wiki/main/data/';
+const ICO_CHEV_D = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
+let _twMap = null, _twMapP = null;        // train_wiki_map.json 会话缓存
+const _resshaFiles = new Map();           // 车型 JSON 会话缓存(按车型名)
+const _resshaInflight = new Map();        // 进行中的车型请求(按车型名去重)
+
+async function _loadTwMap() {
+  if (_twMap) return _twMap;
+  if (!_twMapP) {
+    _twMapP = fetchJSONWithCache('data/train_wiki_map.json')
+      .then(j => { _twMap = j || {}; })
+      .catch(() => { _twMap = {}; });
+  }
+  await _twMapP;
+  return _twMap;
+}
+
+/* 与 trainIconIdx/lineIconFor 同序:解析站点为该班次实际选用的图标键。
+   特急爱称(tk) → 京浜東北/大阪中央/南阿蘇专属 → 直通优先/跳过共享干道 → 单线;
+   返回 null = 站点显示图集兜底图(E217 湘南色通用通勤车) */
+function _iconKeyOf(t) {
+  if (t.nm && ATLAS && ATLAS.tokkyu[t.nm] !== undefined) return { k: 'tk', v: t.nm };
+  const has = l => !!(ATLAS && ATLAS.line[l] !== undefined);
+  const lines = t.lines || [];
+  let l = null;
+  if (isKeihinTohokuTrip(t)) l = '根岸線';
+  else if (isOsakaMetroChuoTrip(t)) l = '大阪メトロ中央線';
+  else if (isMinamiasoThroughTrip(t)) l = '高森線';
+  else if (lines.length > 1) {
+    for (const p of ICON_PRIORITY_LINES) if (lines.includes(p) && has(p)) { l = p; break; }
+    if (!l) for (const x of lines) { if (ICON_SKIP_LINES.has(x) || !has(x)) continue; l = x; break; }
+  } else if (lines.length === 1 && has(lines[0])) l = lines[0];
+  if (l && has(l)) return { k: 'ln', v: l };
+  return null;
+}
+
+/* 班次 → { primary, others }:primary = 图标 files[0] 对应车型(与车头一致),其余为同键候选 */
+function _wikiVehicles(t, m) {
+  const key = _iconKeyOf(t);
+  let list = key ? ((key.k === 'tk' ? (m.tk || {}) : (m.ln || {}))[key.v]) : m.fb;
+  if (!list || !list.length) return null;   /* 该键无百科车型(如大阪メトロ中央線) */
+  return { primary: list[0], others: list.slice(1) };
+}
+
+/* 车型名去运营者前缀(仅「其他车型」切换器短显示用) */
+const _VOP_PREFIX = ['JR東日本', 'JR西日本', 'JR東海', 'JR北海道', 'JR四国', 'JR九州', '新幹線', '国鉄', 'Osaka Metro', 'IGR'];
+function _vShort(n) {
+  const s = String(n || '');
+  for (const p of _VOP_PREFIX) if (s.startsWith(p) && s.length > p.length) return s.slice(p.length);
+  return s;
+}
+
+async function _fetchRessha(v) {
+  if (_resshaFiles.has(v)) return _resshaFiles.get(v);
+  if (_resshaInflight.has(v)) return _resshaInflight.get(v);
+  const p = fetch(RESSHA_BASE + encodeURIComponent(v) + '.json')
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(j => { _resshaFiles.set(v, j); _resshaInflight.delete(v); return j; })
+    .catch(() => { _resshaInflight.delete(v); return null; /* 失败不写缓存:重试可重新拉取 */ });
+  _resshaInflight.set(v, p);
+  return p;
+}
+
+/* 界面语言 → 日文 → 其他;返回实际采用的百科语言键 */
+function _wikiLangKey() { return lang === 'ja' ? '日文' : lang === 'en' ? '英文' : '中文'; }
+function _wikiPick(bk) {
+  const order = lang === 'ja' ? ['日文', '中文', '英文'] : lang === 'en' ? ['英文', '日文', '中文'] : ['中文', '日文', '英文'];
+  for (const k of order) if (bk && bk[k]) return k;
+  return '';
+}
+
+function _wikiArtHtml(v, vj) {
+  const veh = (vj && vj['车辆']) || {};
+  const nm = veh['名称'] || {};
+  const ops = nm['运营者'] || [];
+  const bk = veh['百科'] || {};
+  const used = _wikiPick(bk);
+  const art = used ? bk[used] : null;
+  let h = '<div class="dw-name">' + esc(nm['日文'] || v) + (nm['中文'] ? '<small>' + esc(nm['中文']) + '</small>' : '') + '</div>';
+  if (ops.length) h += '<div class="dw-op">' + T().wikiOper + '：' + esc(ops.join('・')) + '</div>';
+  if (!art) return h + '<div class="dw-none">' + T().wikiEmpty + '</div>';
+  if (art['首段']) h += '<p class="dw-intro">' + esc(art['首段']) + '</p>';
+  const secs = art['章节'] || {};
+  const keys = Object.keys(secs).filter(k => String(secs[k] || '').trim());
+  if (keys.length) {
+    h += '<div class="dw-secs">';
+    keys.forEach((k, i) => {
+      h += '<details class="dw-sec"' + (i === 0 ? ' open' : '') + '><summary>' + esc(k) + '</summary><p>' + esc(secs[k]) + '</p></details>';
+    });
+    h += '</div>';
+  }
+  if (art['链接']) h += '<a class="dw-link" href="' + esc(art['链接']) + '" target="_blank" rel="noopener">' + T().wikiFull + '</a>';
+  if (used !== _wikiLangKey()) h += '<div class="dw-note">' + T().wikiNoLocal + '</div>';
+  h += '<div class="dw-src">' + T().wikiSrc + '</div>';
+  return h;
+}
+
+/* 展开态:渲染选中车型(按需拉取),附「其他车型」切换器 */
+async function _wikiShow(t, v, vs) {
+  const art = $('dWikiArt'), vEl = $('dWikiV');
+  if (!art) return;
+  t._wikiV = v;
+  if (vEl) vEl.textContent = _vShort(v) + (vs.others.length ? ' +' + vs.others.length : '');
+  art.innerHTML = '<div class="gd-loading">' + T().wikiLoading + '</div>';
+  const vj = await _fetchRessha(v);
+  if (detailEl.dataset.tid !== String(t.t) + t.w0) return;   /* 已切走/关闭:丢弃过期写入 */
+  if (!vj) {
+    art.innerHTML = '<div class="dw-none">' + T().wikiFail + '<br><button class="gd-retry" id="dwRetry">' + T().wikiRetry + '</button></div>';
+    const rb = $('dwRetry');
+    if (rb) rb.onclick = () => _wikiShow(t, v, vs);
+    return;
+  }
+  art.innerHTML = _wikiArtHtml(v, vj);
+  if (vs.others.length) {
+    /* 通用特急键(如山陽電鉄特急)可聚合十余款车型:切换器封顶 6 款,其余以 +N 示意,避免刷屏 */
+    const MAX_SW = 6, shown = vs.others.slice(0, MAX_SW);
+    const sw = document.createElement('div');
+    sw.className = 'dw-sw';
+    sw.innerHTML = '<span class="dw-sw-t">' + T().wikiOther + '</span>' + shown.map(o =>
+      '<button class="dw-chip" data-v="' + esc(o) + '">' + esc(_vShort(o)) + '</button>').join('') +
+      (vs.others.length > MAX_SW ? '<span class="dw-more">+' + (vs.others.length - MAX_SW) + '</span>' : '');
+    art.appendChild(sw);
+    sw.querySelectorAll('.dw-chip').forEach(b => { b.onclick = ev => { ev.stopPropagation(); _wikiShow(t, b.dataset.v, vs); }; });
+  }
+}
+
+function _wikiBoxHtml() {
+  return '<div class="d-wiki" id="dWiki" data-open="0">' +
+    '<div class="d-wiki-hd" id="dWikiHd"><span class="lb">' + T().wikiLabel + '</span>' +
+    '<span class="mv"><span class="dw-v" id="dWikiV"></span><span class="dw-ar">' + ICO_CHEV_D + '</span></span></div>' +
+    '<div class="d-wiki-bd"><div class="dw-in"><div class="dw-art" id="dWikiArt"></div></div></div></div>';
+}
+
+/* 抽屉重建后初始化百科框:载索引→定车型→恢复展开态;不影响调用方其余逻辑 */
+async function wikiBoxInit(t) {
+  const box = $('dWiki'), hd = $('dWikiHd');
+  if (!box || !hd) return;
+  const m = await _loadTwMap();
+  if (detailEl.dataset.tid !== String(t.t) + t.w0) return;   /* 已切走:丢弃过期初始化 */
+  const vs = _wikiVehicles(t, m);
+  const vEl = $('dWikiV');
+  if (!vs) { box.classList.add('na'); if (vEl) vEl.textContent = T().wikiEmpty; return; }
+  const sel = (t._wikiV && (t._wikiV === vs.primary || vs.others.indexOf(t._wikiV) >= 0)) ? t._wikiV : vs.primary;
+  if (vEl) vEl.textContent = _vShort(sel) + (vs.others.length ? ' +' + vs.others.length : '');
+  const open = !!t._wikiOpen;
+  box.dataset.open = open ? '1' : '0';
+  hd.onclick = () => {
+    if (box.dataset.open === '1') { box.dataset.open = '0'; t._wikiOpen = false; return; }
+    box.dataset.open = '1'; t._wikiOpen = true;
+    _wikiShow(t, sel, vs);
+  };
+  if (open) _wikiShow(t, sel, vs);   /* 重建时恢复展开(车型数据已会话缓存,瞬间呈现) */
+}
 function updateDetailLive(t, p, M, rebuild) {
   if (!p) { p = trainPosition(t, windowShift(t, M)); }
   if (!p) return;
@@ -4530,13 +4736,13 @@ function updateDetailLive(t, p, M, rebuild) {
       '<div class="mrow"><span class="lb">' + T().status + '</span><span class="mv"><span class="st-badge ' + (running ? 'run' : 'dwell') + '"></span>' + (running ? T().running + ' · ' + Math.round(p[5]) + ' ' + T().kmh : '<b>' + T().dwelling + '</b> @ ' + jas[i]) + '</span></div>' +
       '<div class="mrow"><span class="lb">' + T().next + '</span><span class="mv">' + nextNm + ' ' + eta + '</span></div>' +
       (uniqLines.length ? '<div class="mrow"><span class="lb">' + T().viaLines + '</span><span class="mv">' + uniqLines.slice(0, 4).map(l => '<span class="lnchip" style="background:' + (lineColor.get(l) || '#6e6e6e') + '">' + l + '</span>').join('') + (uniqLines.length > 4 ? ' +' + (uniqLines.length - 4) : '') + '</span></div>' : '') +
-      '<div class="mrow"><span class="lb">' + T().tripId + '</span><span class="mv">#' + t.t + ' · ' + (t.nm || t.i) + '</span></div>' +
       (t.cpl && t.cpl.length ? '<div class="d-cpl mrow"><span class="lb">' + T().cplLabel + '</span><span class="mv">' + t.cpl.map(c => {
         const si = t.jasN.indexOf(c.split);
         const nm = c.name || '';
         return '<span>' + T().cplSplit.replace('{0}', nm).replace('{1}', si >= 0 ? t.jas[si] : c.split) + '</span>' +
           (nm ? '<button class="cplbtn" data-ci="' + t.cpl.indexOf(c) + '">' + T().cplView.replace('{0}', nm) + '</button>' : '');
       }).join('<i class="sep">；</i>') + '</span></div>' : '') +
+      _wikiBoxHtml() +
       '</div>' +
       '<div class="d-sep"></div>' +
       '<div class="d-stops"><div class="st-title">' + T().stopsTitle + '<span class="cnt">' + N + ' ' + T().stopsCount + '</span></div>' +
@@ -4581,6 +4787,7 @@ function updateDetailLive(t, p, M, rebuild) {
     $('dClose').onclick = () => { closeDetail(); liveDetailTrip = null; if (followTrip) stopFollow(); };
     $('dFollow').onclick = () => { if (followTrip === t) stopFollow(); else startFollow(t); };
     $('dLoc').onclick = () => { if (p) map.flyTo({ center: [p[0], p[1]], zoom: Math.max(map.getZoom(), 12), pitch: 55, duration: 1200 }); };
+    wikiBoxInit(t); /* 列车百科折叠框:异步载索引/车型数据,与本帧其余逻辑解耦 */
   } else {
     /* 每帧 innerHTML 重写有 GC/排版开销:内容不变时跳过,只写变化行 */
     const st = detailEl.querySelector('.d-meta');

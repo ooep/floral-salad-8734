@@ -638,7 +638,6 @@ html.perf-low .rcard, html.perf-low .tcard, html.perf-low .stat { backdrop-filte
   <div class="brand2"><span class="lg"><img src="https://jr-static.suki.ing/logo.png" alt=""></span><b>Mini JapanRail</b></div>
   <div class="lb2"><i id="lbar"></i></div>
   <div class="lt" id="lmsg">准备中…</div>
-  <div class="lp" id="lpct">0%</div>
 </div>
 
 <div id="toast"></div>
@@ -1041,7 +1040,6 @@ const FILES = [
 function setLoad(p, msg) {
   p = Math.max(0, Math.min(1, p));
   $('lbar').style.width = Math.round(p * 100) + '%';
-  $('lpct').textContent = Math.round(p * 100) + '%';
   if (msg) $('lmsg').textContent = msg;
 }
 async function loadData() {

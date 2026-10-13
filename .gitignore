@@ -30,3 +30,13 @@ mini-japanrail-3d/data/line_bsdiagrams
 mini-japanrail-3d/data/line_bsdiagrams.json
 # OSM 工作目录(原始 PBF/提取脚本/中间产物,不入库)
 .osm_work/
+
+# ===== 静态 Worker 资产组装产物（由 build_static_assets.py 生成，不入库） =====
+static-worker/assets/
+
+# ===== 本地工具依赖 =====
+node_modules/
+
+# ===== Pages 发布物组装产物（由 prepare_pages_dist.py 生成，不入库） =====
+dist/
+cf-mj3d/

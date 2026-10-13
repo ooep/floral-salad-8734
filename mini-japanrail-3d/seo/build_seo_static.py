@@ -37,6 +37,9 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # mini-japan
 CONFIG_PATH = os.path.join(ROOT, 'seo', 'seo_config.json')
 DATA_DIR = os.path.join(ROOT, 'data')
 
+# 静态资源域：大文件（图片/线路数据/时刻表等）统一由 jr-static Worker 托管
+STATIC_BASE = 'https://jr-static.suki.ing'
+
 DEFAULT_CONFIG = {
     'site_base': 'https://jr.suki.ing',
     'site_name': 'Mini JapanRail',
@@ -983,8 +986,8 @@ def page_head(cfg, title, desc, url, og_img_url, keywords='', robots='index,foll
         rel = '../' * len(segs)
     else:
         rel = ''  # 根级文件如 /404.html
-    css = (CSS.replace('__BRAND_LOGO__', rel + 'logo.png')
-              .replace('__BRAND_LOGO_DARK__', rel + 'logo-dark.png'))
+    css = (CSS.replace('__BRAND_LOGO__', STATIC_BASE + '/logo.png')
+              .replace('__BRAND_LOGO_DARK__', STATIC_BASE + '/logo-dark.png'))
     return (
         '<!DOCTYPE html>\n<html lang="zh-Hans">\n<head>\n'
         '<meta charset="utf-8">\n'
@@ -1010,9 +1013,9 @@ def page_head(cfg, title, desc, url, og_img_url, keywords='', robots='index,foll
         '<meta name="twitter:description" content="' + esc(desc) + '">\n'
         '<meta name="twitter:image" content="' + esc(og_img_url) + '">\n'
         '<meta name="theme-color" content="#0b0f16">\n'
-        '<link rel="icon" type="image/png" sizes="64x64" href="' + esc(rel + 'favicon.png') + '">\n'
-        '<link rel="icon" type="image/png" sizes="64x64" href="' + esc(rel + 'favicon-dark.png') + '" media="(prefers-color-scheme: dark)">\n'
-        '<link rel="apple-touch-icon" sizes="180x180" href="' + esc(rel + 'apple-touch-icon.png') + '">\n'
+        '<link rel="icon" type="image/png" sizes="64x64" href="' + esc(STATIC_BASE + '/favicon.png') + '">\n'
+        '<link rel="icon" type="image/png" sizes="64x64" href="' + esc(STATIC_BASE + '/favicon-dark.png') + '" media="(prefers-color-scheme: dark)">\n'
+        '<link rel="apple-touch-icon" sizes="180x180" href="' + esc(STATIC_BASE + '/apple-touch-icon.png') + '">\n'
         '<style>' + css + '</style>\n'
     )
 
@@ -1025,7 +1028,7 @@ def station_page(rec, lines, neighbors, cfg, tozh):
     en = rec['en']
     slug = quote_path(key)
     url = abs_url(cfg, 'stations/' + slug + '/')
-    og_img_url = abs_url(cfg, cfg['og_image'])
+    og_img_url = STATIC_BASE + '/' + cfg['og_image']
 
     # 标题：日文名优先，附中文/英文名与途经线路
     line_names = rec['lines']
@@ -1246,7 +1249,7 @@ def line_page(rec, stations, cfg, tozh, ordered=None):
     en = rec['en']
     slug = quote_path(lname)
     url = abs_url(cfg, 'lines/' + slug + '/')
-    og_img_url = abs_url(cfg, cfg['og_image'])
+    og_img_url = STATIC_BASE + '/' + cfg['og_image']
     if en:
         title = '%s（%s / %s）— 线路车站一览・沿線の駅 | %s' % (lname, zh, en, cfg['site_name'])
     else:
@@ -1487,7 +1490,7 @@ def line_page(rec, stations, cfg, tozh, ordered=None):
 
 def index_lines_page(lines, stations, cfg, tozh, line_counts=None):
     url = abs_url(cfg, 'lines/')
-    og_img_url = abs_url(cfg, cfg['og_image'])
+    og_img_url = STATIC_BASE + '/' + cfg['og_image']
     title = '全日本铁路线路一览（新干线・JR・私铁・地下铁・路面电车）路線一覧・Railway Lines | %s' % cfg['site_name']
     desc = 'Mini JapanRail 收录的全日本铁路线路一览（%d 条）：新干线、JR、私铁、地下铁、单轨、路面电车等，每条线路均有独立页面、途经车站、线路色与列车走行位置（列車走行位置・運行情報 / Japan railway lines list）。' % len(lines)
     kinds_order = ['鉄道', '路面電車', 'モノレール', '案内軌条式', '鋼索鉄道', '無軌条電車', '浮上式']
@@ -1528,7 +1531,7 @@ def index_lines_page(lines, stations, cfg, tozh, line_counts=None):
 
 def index_stations_page(stations, cfg, tozh, lines=None):
     url = abs_url(cfg, 'stations/')
-    og_img_url = abs_url(cfg, cfg['og_image'])
+    og_img_url = STATIC_BASE + '/' + cfg['og_image']
     title = '全日本车站一览（新干线・JR・私铁・地下铁）駅一覧・Station List | %s' % cfg['site_name']
     desc = 'Mini JapanRail 收录的全日本车站一览（%d 站，按都道府县分组）：新干线、JR、私铁、地下铁、单轨、路面电车车站，每个车站均有独立页面，包含途经线路、位置、相邻车站与列车走行位置（駅一覧・列車走行位置・運行情報）。' % len(stations)
     groups = defaultdict(list)
@@ -1613,7 +1616,7 @@ def write_robots(cfg):
 
 
 def write_404(cfg):
-    og_img_url = abs_url(cfg, cfg['og_image'])
+    og_img_url = STATIC_BASE + '/' + cfg['og_image']
     title = '页面不存在（404）| %s' % cfg['site_name']
     desc = '您访问的页面不存在。返回 Mini JapanRail 全日本列车实时运行可视化地图，或浏览全部线路 / 全部车站。'
     body = (

@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#0b0f16">
 <title>乗換案内 · Mini JapanRail</title>
 <meta name="description" content="全日本铁路换乘案内：班次时刻、换乘次数、列车爱称与目的地、营业里程。纯静态时刻表检索。">
-<link rel="icon" href="favicon.png">
+<link rel="icon" href="https://jr-static.suki.ing/favicon.png">
 <link href="https://cdn.jsdelivr.net/npm/maplibre-gl@6.12.0/dist/maplibre-gl.css" rel="stylesheet" />
 <!-- MapLibre 6.x 仅 ESM 构建, 由 initMap() 动态 import(失败不影响检索功能) -->
 <style>
@@ -524,7 +524,7 @@ html.perf-low .rcard, html.perf-low .tcard, html.perf-low .stat { backdrop-filte
 
 <header id="topHud">
   <a id="brand" href="./index.html" title="Mini JapanRail">
-    <span class="lg"><img src="logo.png" alt=""></span>
+    <span class="lg"><img src="https://jr-static.suki.ing/logo.png" alt=""></span>
     <span><b>Mini JapanRail</b><br><span class="sub" id="brandSub">乗換案内</span></span>
   </a>
   <div id="hudRight">
@@ -635,7 +635,7 @@ html.perf-low .rcard, html.perf-low .tcard, html.perf-low .stat { backdrop-filte
 </section>
 
 <div id="loader">
-  <div class="brand2"><span class="lg"><img src="logo.png" alt=""></span><b>Mini JapanRail</b></div>
+  <div class="brand2"><span class="lg"><img src="https://jr-static.suki.ing/logo.png" alt=""></span><b>Mini JapanRail</b></div>
   <div class="lb2"><i id="lbar"></i></div>
   <div class="lt" id="lmsg">准备中…</div>
   <div class="lp" id="lpct">0%</div>
@@ -791,7 +791,7 @@ function applyThemeMode() {
   }
   const mb = document.querySelector('meta[name=theme-color]');
   if (mb) mb.content = t === 'light' ? '#dfe4ec' : '#0b0f16';
-  document.querySelectorAll('.lg img').forEach(im => { im.src = t === 'dark' ? 'logo-dark.png' : 'logo.png'; });
+  document.querySelectorAll('.lg img').forEach(im => { im.src = t === 'dark' ? 'https://jr-static.suki.ing/logo-dark.png' : 'https://jr-static.suki.ing/logo.png'; });
   if (mapReady) { refreshTrackColors(); syncMapTheme(); }
 }
 /* 主题: 单按钮循环 暗→亮→自动(减少 HUD 占用, 移动端更透气) */
@@ -1031,11 +1031,11 @@ async function loadData() {
   let done = 0;
   const bump = () => setLoad(++done / n, T().loading + ' ' + Math.round(done / n * 100) + '%');
   const tasks = FILES.map(async ([f, key]) => {
-    const j = await fetchJSONWithCache('data/journey/' + f, (g, t) => setLoad((done + Math.min(1, t ? g / t : 0)) / n));
+    const j = await fetchJSONWithCache('https://jr-static.suki.ing/data/journey/' + f, (g, t) => setLoad((done + Math.min(1, t ? g / t : 0)) / n));
     assignData(key, j); bump();
   });
   /* 3D 几何(约 11MB)不阻塞启动: 搜索/换乘计算均不依赖它, 到齐后再建索引并按需初始化地图 */
-  fetchJSONWithCache('data/segments3d.geojson')
+  fetchJSONWithCache('https://jr-static.suki.ing/data/segments3d.geojson')
     .then(j => { SEG = j; buildSegIndex(); if (!mapTried) initMap(); })
     .catch(e => console.warn('[segments3d]', e));
   await Promise.all(tasks);

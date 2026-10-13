@@ -1,0 +1,12 @@
+# jr-static — Mini JapanRail 静态资源 Worker
+# 纯静态托管（Workers Static Assets 免费档：1GiB 存储 / 10万请求每日）
+# 部署：CLOUDFLARE_API_TOKEN=... wrangler deploy（在 static-worker/ 目录内）
+
+name = "jr-static"
+main = "index.js"
+compatibility_date = "2026-10-13"
+
+# 静态资产目录（由 scripts/build_static_assets.py 从仓库源目录组装生成，不入库）
+[assets]
+directory = "./assets"
+binding = "ASSETS"

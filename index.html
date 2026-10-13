@@ -8,10 +8,10 @@
 <meta property="og:description" content="interactive map of japan's railway lines" />
 <meta property="og:type" content="website" />
 <meta name="twitter:card" content="summary_large_image" />
-<link rel="icon" type="image/png" sizes="64x64" href="favicon.png" />
-<link rel="icon" type="image/png" sizes="64x64" href="favicon-dark.png" media="(prefers-color-scheme: dark)" />
-<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
-<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+<link rel="icon" type="image/png" sizes="64x64" href="https://jr-static.suki.ing/favicon.png" />
+<link rel="icon" type="image/png" sizes="64x64" href="https://jr-static.suki.ing/favicon-dark.png" media="(prefers-color-scheme: dark)" />
+<link rel="icon" type="image/png" sizes="192x192" href="https://jr-static.suki.ing/icon-192.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="https://jr-static.suki.ing/apple-touch-icon.png" />
 <style>* { margin: 0; padding: 0; box-sizing: border-box; }
 body { background: #07090d; color: #eee; font-family: 'Nunito', system-ui, sans-serif; overflow: hidden; }
 #map { width: 100vw; height: 100vh; /* 强制 GPU 合成层，减少主线程渲染压力 */ transform: translateZ(0); will-change: transform; /* 移动端：禁止浏览器默认手势，拖拽更丝滑 */ touch-action: none; }
@@ -845,8 +845,8 @@ const NO_MATCH = ['==', ['get', 'op'], ' '];
 
 map.on('load', async () => {
     const [fc, names] = await Promise.all([
-        fetch('data/segments.geojson').then(r => r.json()),
-        fetch('data/names_en.json').then(r => r.json()),
+        fetch('https://jr-static.suki.ing/data/segments.geojson').then(r => r.json()),
+        fetch('https://jr-static.suki.ing/data/names_en.json').then(r => r.json()),
     ]);
     NAMES = names;
     for (const f of fc.features) {
@@ -896,7 +896,7 @@ map.on('load', async () => {
             coordColorMap.get(key).add(color);
         }
     }
-    const sfc = await (await fetch('data/stations.geojson')).json();
+    const sfc = await (await fetch('https://jr-static.suki.ing/data/stations.geojson')).json();
     sfc.features.forEach((f, i) => {
         const p = f.properties;
         // Find colors of lines passing through this station's coordinates
@@ -1972,7 +1972,7 @@ document.addEventListener('click', () => { if (aboutOpen) setAboutOpen(false); }
     }
     function minOfDayJST() { return ((Date.now() / 1000 + 9 * 3600) % 86400) / 60; }
     // 本地时刻表文件：按运行日分组，页面只加载今日对应的一份（无外部抓取）
-    const TRAIN_FILES = { 1: 'data/live/trains_wd.json', 2: 'data/live/trains_sa.json', 4: 'data/live/trains_su.json' };
+    const TRAIN_FILES = { 1: 'https://jr-static.suki.ing/data/live/trains_wd.json', 2: 'https://jr-static.suki.ing/data/live/trains_sa.json', 4: 'https://jr-static.suki.ing/data/live/trains_su.json' };
     function inWindow(t, M) {
         const w = t.w;
         if (!w) return false;
@@ -2184,7 +2184,7 @@ document.addEventListener('click', () => { if (aboutOpen) setAboutOpen(false); }
             ensureReady(async () => {
                 if (!stationCoord) buildIndices();
                 if (!tmaps) {
-                    try { tmaps = await (await fetch('data/live/tmaps.json?t=' + Date.now())).json(); } catch (e) { tmaps = {}; }
+                    try { tmaps = await (await fetch('https://jr-static.suki.ing/data/live/tmaps.json?t=' + Date.now())).json(); } catch (e) { tmaps = {}; }
                 }
                 if (!map.getSource('live-trains')) {
                     map.addSource('live-trains', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });

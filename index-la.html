@@ -8,10 +8,10 @@
 <meta property="og:description" content="interactive map of japan's railway lines" />
 <meta property="og:type" content="website" />
 <meta name="twitter:card" content="summary_large_image" />
-<link rel="icon" type="image/png" sizes="64x64" href="favicon.png" />
-<link rel="icon" type="image/png" sizes="64x64" href="favicon-dark.png" media="(prefers-color-scheme: dark)" />
-<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
-<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+<link rel="icon" type="image/png" sizes="64x64" href="https://jr-static.suki.ing/favicon.png" />
+<link rel="icon" type="image/png" sizes="64x64" href="https://jr-static.suki.ing/favicon-dark.png" media="(prefers-color-scheme: dark)" />
+<link rel="icon" type="image/png" sizes="192x192" href="https://jr-static.suki.ing/icon-192.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="https://jr-static.suki.ing/apple-touch-icon.png" />
 <style>* { margin: 0; padding: 0; box-sizing: border-box; }
 body { background: #07090d; color: #eee; font-family: 'Nunito', system-ui, sans-serif; overflow: hidden; }
 #map { width: 100vw; height: 100vh; }
@@ -794,8 +794,8 @@ function updateAllWidths() {
 
 // ─── data load ───
 Promise.all([
-    fetch('data/segments.geojson').then(function(r) { return r.json(); }),
-    fetch('data/names_en.json').then(function(r) { return r.json(); }),
+    fetch('https://jr-static.suki.ing/data/segments.geojson').then(function(r) { return r.json(); }),
+    fetch('https://jr-static.suki.ing/data/names_en.json').then(function(r) { return r.json(); }),
 ]).then(function(results) {
     var fc = results[0];
     NAMES = results[1];
@@ -846,7 +846,7 @@ Promise.all([
     }).addTo(segGroup);
 
     // Load stations
-    return fetch('data/stations.geojson').then(function(r) { return r.json(); });
+    return fetch('https://jr-static.suki.ing/data/stations.geojson').then(function(r) { return r.json(); });
 }).then(function(sfc) {
     sfc.features.forEach(function(f, i) {
         var p = f.properties;

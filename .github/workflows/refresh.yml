@@ -3,7 +3,8 @@ name: Refresh timetables (weekly + manual)
 # 唯一会访问时刻表源的工作流。每周自动抓一次全表维护总时刻表，
 # 也可手动触发（workflow_dispatch）。
 # 流程: 全量抓取时刻表(fetch_timetables.py, 2.2s/请求节流) → 构建页面本地列车文件
-# (build_trains.py) → 提交 → 部署 Pages。
+# (build_trains.py) → 提交 → 由 push 触发的 deploy.yml 统一完成部署
+# （静态 Worker jr-static 与 Pages 均在其内重建，含新数据）。
 
 on:
   schedule:
@@ -62,6 +63,7 @@ jobs:
         run: python3 scripts/build_station_map_v2.py
 
       - name: Commit refreshed data
+        # 提交后 push 触发 deploy.yml：重新生成 SEO、重建并部署静态 Worker、部署 Pages
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -74,48 +76,3 @@ jobs:
             git rebase origin/main
             git push
           fi
-
-      - name: Prepare deploy dir
-        run: |
-          rm -rf dist && mkdir -p dist/data
-          cp index.html favicon.png favicon-dark.png apple-touch-icon.png icon-192.png icon-512.png dist/
-          cp -r data/segments.geojson data/stations.geojson data/names_en.json dist/data/
-          cp -r data/live dist/data/
-          cp -r mini-japanrail-3d dist/   # Mini JapanRail 子站 → /mini-japanrail-3d/
-          # 完整性闸门: dist 缺任何关键文件 → exit 1 → 部署中止, 线上保持旧版本继续运行(不 404)
-          python3 - <<'PY'
-          import os
-          for f in ['index.html','favicon.png','apple-touch-icon.png','icon-192.png','icon-512.png',
-                    'data/segments.geojson','data/stations.geojson',
-                    'data/names_en.json','data/live/tmaps.json',
-                    'data/live/trains_wd.json','data/live/trains_sa.json','data/live/trains_su.json',
-                    'mini-japanrail-3d/index.html','mini-japanrail-3d/journey.html',
-                    'mini-japanrail-3d/data/journey/stations.json',
-                    'mini-japanrail-3d/data/journey/trips_wd.json']:
-            assert os.path.exists(f), 'dist 缺文件: ' + f
-          print('dist 完整: 页面 + 数据 + 3D 子站 + 换乘案内页')
-          PY
-
-      - name: Configure Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: dist
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
-
-      - name: Deploy Mini JapanRail frontend to Cloudflare Pages
-        if: ${{ env.CF_API_TOKEN != '' }}
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-        run: |
-          # 只部署前端: 拷贝整个 mini-japanrail-3d 后剔除 scripts/(Python 构建脚本); .github 在仓库根,不在此目录
-          rm -rf cf-mj3d && mkdir -p cf-mj3d
-          cp -r mini-japanrail-3d/. cf-mj3d/
-          rm -rf cf-mj3d/scripts
-          npx wrangler@4 pages deploy cf-mj3d --project-name mini-japanrail-3d --branch main --commit-dirty=true

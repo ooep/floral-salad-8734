@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>ORM 线位体验 — 全日本铁路线位图</title>
-<link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
-<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="64x64" href="https://jr-static.suki.ing/favicon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="https://jr-static.suki.ing/apple-touch-icon.png">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@6.12.0/dist/maplibre-gl.css">
 <style>
 :root{
@@ -233,8 +233,8 @@ async function loadData(){
   try {
     /* 数据按 2 分片存储(各 <25MB, 适配 Cloudflare Pages 单文件上限), 合并后渲染 */
     const [r0, r1] = await Promise.all([
-      fetch('data/orm_tracks.0.geojson'),
-      fetch('data/orm_tracks.1.geojson'),
+      fetch('https://jr-static.suki.ing/data/orm_tracks.0.geojson'),
+      fetch('https://jr-static.suki.ing/data/orm_tracks.1.geojson'),
     ]);
     if (!r0.ok || !r1.ok) throw new Error('HTTP ' + r0.status + '/' + r1.status);
     const [a, b] = await Promise.all([r0.json(), r1.json()]);

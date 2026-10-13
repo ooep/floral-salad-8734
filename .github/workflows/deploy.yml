@@ -1,11 +1,13 @@
 name: Build & deploy site
 
-# 纯本地数据部署：不访问任何外部接口。
-# 页面「⚡实时」图层读取仓库内 data/live/trains_*.json（本地时刻表，按今日运行日加载），
-# 客户端按当前 JST 时间过滤渲染。数据刷新走 refresh.yml（手动）。
+# 架构（2026-10 拆分）:
+#   - Cloudflare Pages (mini-japanrail-3d, jr.suki.ing): 仅 HTML/CSS/JS + SEO 静态页
+#   - Worker jr-static (jr-static.suki.ing): 全部大文件静态资产（data/ geojson 时刻表、logos 图片、
+#     seo/img 车站图、图标等），纯静态零计费（Workers Static Assets 免费档）
+#   - 页面内所有大文件引用均已改写为 https://jr-static.suki.ing/ 绝对地址
+# 流程: 拉取配线图 → 生成 SEO 页 → 组装并部署静态 Worker → 组装前端发布物 → GH Pages + CF Pages
 # GitHub Pages: Actions 方式部署（仓库 Settings→Pages→Source: GitHub Actions）。
-# Cloudflare Pages: 项目 mini-japanrail-3d（仅前端 index.html+data+logos，不含 .github/scripts），
-# 仓库需配置 Secret: CF_API_TOKEN（可选）。任何 push 到 main（含 refresh.yml 时刻表刷新提交）都会触发重新部署。
+# Cloudflare: 仓库需配置 Secret: CF_API_TOKEN。
 
 on:
   push:
@@ -29,6 +31,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
 
       # 配线图：从临时仓库 ooep/jr-trackdiagrams（public）拉取到 mini-japanrail-3d/data/，
       # 供 SEO 生成器内联（缺失时静默跳过，不影响部署）。
@@ -76,14 +83,20 @@ jobs:
               print('trains_%s.json: %d 班次 @ %s' % (n, d['n'], d['b']))
           PY
 
-      - name: Prepare deploy dir
+      # 静态 Worker：从仓库源目录组装 assets（含刚生成的 OG 图），部署到 jr-static。
+      # 纯静态 Worker Static Assets，免费档内零计费。令牌缺失时跳过并告警（与 CF Pages 一致）。
+      - name: Deploy static assets worker (jr-static)
+        if: ${{ env.CF_API_TOKEN != '' }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: c75ed9a498500d7c232d9d59a353341d
         run: |
-          rm -rf dist && mkdir -p dist/data
-          cp index.html index-quest.html favicon.png favicon-dark.png apple-touch-icon.png icon-192.png icon-512.png dist/
-          cp -r data/segments.geojson data/stations.geojson data/names_en.json dist/data/
-          cp -r data/tokkyu_services.json data/train_icons_atlas.png dist/data/   # 铁路制霸：列车服务数据 + 图标图集
-          cp -r data/live dist/data/
-          cp -r mini-japanrail-3d dist/   # Mini JapanRail 子站 → /mini-japanrail-3d/
+          python3 scripts/build_static_assets.py
+          npx wrangler@4 deploy --config static-worker/wrangler.toml --outdir /tmp/wr-out 2>&1 | tail -12
+
+      - name: Prepare deploy dir (frontend only)
+        run: |
+          python3 scripts/prepare_pages_dist.py
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
@@ -102,8 +115,4 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
         run: |
-          # 只部署前端: 拷贝整个 mini-japanrail-3d 后剔除 scripts/(Python 构建脚本); .github 在仓库根,不在此目录
-          rm -rf cf-mj3d && mkdir -p cf-mj3d
-          cp -r mini-japanrail-3d/. cf-mj3d/
-          rm -rf cf-mj3d/scripts
           npx wrangler@4 pages deploy cf-mj3d --project-name mini-japanrail-3d --branch main --commit-dirty=true

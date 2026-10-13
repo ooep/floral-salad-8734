@@ -8,10 +8,10 @@
 <meta property="og:description" content="Track your railway journey across Japan" />
 <meta property="og:type" content="website" />
 <meta name="twitter:card" content="summary_large_image" />
-<link rel="icon" type="image/png" sizes="64x64" href="favicon.png" />
-<link rel="icon" type="image/png" sizes="64x64" href="favicon-dark.png" media="(prefers-color-scheme: dark)" />
-<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
-<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+<link rel="icon" type="image/png" sizes="64x64" href="https://jr-static.suki.ing/favicon.png" />
+<link rel="icon" type="image/png" sizes="64x64" href="https://jr-static.suki.ing/favicon-dark.png" media="(prefers-color-scheme: dark)" />
+<link rel="icon" type="image/png" sizes="192x192" href="https://jr-static.suki.ing/icon-192.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="https://jr-static.suki.ing/apple-touch-icon.png" />
 <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -852,7 +852,7 @@ body:not(.sidebar-collapsed) #sidebar-toggle { left: calc(var(--sidebar-w) + 10p
 
 .svc-icon {
     flex: none; width: 33px; height: 39px; margin-top: 1px;
-    background-image: url(data/train_icons_atlas.png);
+    background-image: url(https://jr-static.suki.ing/data/quest/train_icons_atlas.png);
     background-size: 792px 819px;
     background-repeat: no-repeat;
     image-rendering: -webkit-optimize-contrast;
@@ -2350,12 +2350,12 @@ function updateMapQuestState() {
 
 map.on('load', async () => {
     const [fc, names] = await Promise.all([
-        fetch('data/segments.geojson').then(r => r.json()),
-        fetch('data/names_en.json').then(r => r.json()).catch(() => ({ operators: {}, lines: {}, stations: {}, remarks: {} })),
+        fetch('https://jr-static.suki.ing/data/segments.geojson').then(r => r.json()),
+        fetch('https://jr-static.suki.ing/data/names_en.json').then(r => r.json()).catch(() => ({ operators: {}, lines: {}, stations: {}, remarks: {} })),
     ]);
 
     // Ride-mode dataset (特急/新幹線) — non-blocking
-    fetch('data/tokkyu_services.json').then(r => r.json()).then(d => {
+    fetch('https://jr-static.suki.ing/data/tokkyu_services.json').then(r => r.json()).then(d => {
         TRAINS = (d && d.services) || [];
         trainsLoaded = true;
         if (mode === 'ride') { renderRideMode(); attachRideEvents(); }

@@ -48,8 +48,14 @@ def trips_from(path):
     return trips, tmaps
 
 
+COUPLE_CLASSES = {
+    "Hayabusa", "Komachi", "Yamabiko", "Tsubasa", "Toki", "Tanigawa",
+    "Sakura", "Tsubame", "特", "新", "関", "紀",
+}
+
+
 def couplings_new(trips):
-    """与 index.html buildCouplings（2026-10-13 起）逐条对齐的规则。"""
+    """与 index.html buildCouplings（2026-10-13 起, 含车种白名单）逐条对齐的规则。"""
     by_dep = {}
     for t in trips:
         if t["N"] < 4:
@@ -62,6 +68,8 @@ def couplings_new(trips):
         for a in range(len(bucket)):
             for b in range(a + 1, len(bucket)):
                 A, B = bucket[a], bucket[b]
+                if A["i"] not in COUPLE_CLASSES or B["i"] not in COUPLE_CLASSES:
+                    continue  # 车种白名单: 近郊 快/普/急/準/各/直/区 不併结
                 if A["jasN"][0] != B["jasN"][0] or A["jasN"][1] != B["jasN"][1]:
                     continue
                 best = end_a = end_b = 0
@@ -88,7 +96,7 @@ def couplings_new(trips):
                 w0, w1 = max(A["w0"], B["w0"]), min(A["w1"], B["w1"])
                 if t0 > w1 or t1 < w0:
                     continue
-                pairs.add((frozenset((A["i"], B["i"])), A["jasN"][end_a], A["t"], B["t"]))
+                pairs.add((frozenset((A["i"], B["i"])), A["jasN"][end_a], A["tid"], B["tid"]))
     return pairs
 
 
@@ -105,14 +113,25 @@ def main():
         def has(a, b, split=None):
             return any(x[0] == frozenset((a, b)) and (split is None or x[1] == split) for x in pairs)
         print(f"--- trains_{n}.json: {len(pairs)} 对 ---")
+        check(f"{n}: 所有对均在车种白名单内",
+              all(x[0] <= frozenset(COUPLE_CLASSES) for x in pairs))
         check(f"{n}: かがやき×つばさ(大宫)消失", not has("Kagayaki", "Tsubasa"))
         check(f"{n}: かがやき×はくたか 消失", not has("Kagayaki", "Hakutaka"))
         check(f"{n}: やまびこ×つばさ(大宫)消失", not has("Yamabiko", "Tsubasa", "大宮"))
         check(f"{n}: やまびこ×はやぶさ 消失", not has("Yamabiko", "Hayabusa"))
+        check(f"{n}: ひかり×さくら(博多)消失", not has("Hikari", "Sakura"))
+        # 近郊/私铁/市电错标签(白名单过滤)全部消失
+        for name, a, b in [("鹿児島市電 普×直", "普", "直"), ("相模原 快×各", "快", "各"),
+                           ("新羽 快×普", "快", "普"), ("立川 中×快", "中", "快"),
+                           ("豊中 急×準", "急", "準"), ("成増 準×普", "準", "普")]:
+            check(f"{n}: {name} 不标注", not has(a, b))
         if n == "wd":
+            check(f"{n}: 总数落在合理区间(白名单后 ~85)", 70 <= len(pairs) <= 110)
             check(f"{n}: はやぶさ×こまち(盛冈)保留", has("Hayabusa", "Komachi", "盛岡"))
             check(f"{n}: やまびこ×つばさ(福岛)保留", has("Yamabiko", "Tsubasa", "福島"))
             check(f"{n}: とき×たにがわ(越后汤泽)保留", has("Toki", "Tanigawa", "越後湯沢"))
+            check(f"{n}: 関空×紀州路(日根野)保留", has("関", "紀", "日根野"))
+            check(f"{n}: さくら×つばめ(新水俣)保留", has("Sakura", "Tsubame", "新水俣"))
         for tid in DROPPED_TIDS:
             used = any(tid in (p[2], p[3]) for p in pairs)
             check(f"{n}: 去重删除记录 {tid[-8:]} 未参与併结", not used)

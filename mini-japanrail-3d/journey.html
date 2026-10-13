@@ -759,17 +759,15 @@ function xfrLabel(n) {
 /* ══════════════════ 全局状态 ══════════════════ */
 const state = {
   from: null, to: null, mode: 'dep', day: 'wd', depTime: 9 * 60,
-  /* 列车种别开关(对应 CAT_KEY) 与乗換回数上限。
-     默认 7(不限): 超长途(如 稚内→鹿児島)在 5 次换乘内往往只能得到「隔日」方案,
-     放宽到 7 才能得到当日/次日较优解; 用户仍可手动选 少(3)/标准(5)。 */
+  /* 列车种别开关(对应 CAT_KEY) 与乗換回数上限 */
   catOn: { shinkansen: true, tokkyu: true, liner: true, express: true, local: true },
-  maxXfr: 7,
+  maxXfr: 5,
 };
 let ST = null, LINES = null, TYPES = null, TM = null, TRIPS = null, TRF = null, SEG = null;
 let node2tmaps = null, nameIndex = null, patCache = null, groupsByDay = null;
 let WALK = null, walkMin = null, tmapLine = null, tmapKm = null, tmapEnd = null;
 let lineColor = null;
-let map = null, mapReady = false;
+let map = null, mapReady = false, mapTried = false;
 let curResult = null;      /* 当前结果 {cands:[], idx, ...} */
 let openNext = -1;         /* 展开后续班次的 leg 下标 */
 let openStops = -1;        /* 展开中间停靠站的 leg 下标 */
@@ -883,7 +881,7 @@ document.querySelectorAll('#optWrap .ochip').forEach(b => b.addEventListener('cl
   if (state.from != null && state.to != null) doSearch();
 }));
 $('xfrSel').addEventListener('change', () => {
-  state.maxXfr = +$('xfrSel').value || 7;
+  state.maxXfr = +$('xfrSel').value || 5;
   updateOptSum(); saveOpt(); stateHash();
   if (state.from != null && state.to != null) doSearch();
 });
@@ -1028,15 +1026,17 @@ function setLoad(p, msg) {
   if (msg) $('lmsg').textContent = msg;
 }
 async function loadData() {
-  const n = FILES.length + 1;
+  const n = FILES.length;
   let done = 0;
   const bump = () => setLoad(++done / n, T().loading + ' ' + Math.round(done / n * 100) + '%');
   const tasks = FILES.map(async ([f, key]) => {
     const j = await fetchJSONWithCache('data/journey/' + f, (g, t) => setLoad((done + Math.min(1, t ? g / t : 0)) / n));
     assignData(key, j); bump();
   });
-  tasks.push(fetchJSONWithCache('data/segments3d.geojson', (g, t) => setLoad((done + Math.min(1, t ? g / t : 0)) / n))
-    .then(j => { SEG = j; }).catch(e => console.warn('[segments3d]', e)));
+  /* 3D 几何(约 11MB)不阻塞启动: 搜索/换乘计算均不依赖它, 到齐后再建索引并按需初始化地图 */
+  fetchJSONWithCache('data/segments3d.geojson')
+    .then(j => { SEG = j; buildSegIndex(); if (!mapTried) initMap(); })
+    .catch(e => console.warn('[segments3d]', e));
   await Promise.all(tasks);
   bump();
 }
@@ -1260,10 +1260,6 @@ function raptorFwd(orig, dest, tStart, day, opt) {
   const wl0 = WALK.get(orig);
   if (wl0) for (const e of wl0) ow.set(e[0], e[1]);
   for (let k = 1; k <= maxK; k++) {
-    /* 本轮开始前的到达时刻快照。上车(判定)必须基于「上一轮」结果,
-       否则同一轮内会就地串联多段乘车, 使「乗換上限」失效
-       (实测 maxK=5 却出现 10 次换乘的行程)。这是标准 RAPTOR 的轮次语义: 每轮至多增加一段乘车。 */
-    const tauPrev = Int32Array.from(tau);
     const scan = new Set();
     for (let mi = 0; mi < marked.length; mi++) {
       const l = node2tmaps[marked[mi]];
@@ -1284,7 +1280,7 @@ function raptorFwd(orig, dest, tStart, day, opt) {
         if (p === orig && k === 1) tmin = tStart;
         else if (k === 1 && ow.has(p)) { tmin = tStart + ow.get(p); wf = orig; }
         else {
-          if (tauPrev[p] < INF) { tmin = tauPrev[p] + transferMin(p); wf = -1; }
+          if (tau[p] < INF) { tmin = tau[p] + transferMin(p); wf = -1; }
           /* 步行接驳: 从「已到达的邻站」走到本上车点 p —— 即使 p 本身尚未到达。
              原实现把步行边放在 tau[p]<INF 分支内, 只有当 p 已被到达时才考虑,
              导致「异名邻站需步行换乘」的接续永远走不通
@@ -1292,7 +1288,7 @@ function raptorFwd(orig, dest, tStart, day, opt) {
           const wl = WALK.get(p);
           if (wl) for (let wi = 0; wi < wl.length; wi++) {
             const e = wl[wi];
-            if (tauPrev[e[0]] < INF && tauPrev[e[0]] + e[1] < tmin) { tmin = tauPrev[e[0]] + e[1]; wf = e[0]; }
+            if (tau[e[0]] < INF && tau[e[0]] + e[1] < tmin) { tmin = tau[e[0]] + e[1]; wf = e[0]; }
           }
         }
         if (tmin >= INF) continue;
@@ -1337,11 +1333,8 @@ function raptorRev(orig, dest, tLimit, day, opt) {
   /* 终点步行衔接: 到邻站后徒步到终点 */
   const dwl = WALK.get(dest);
   let marked = [dest];
-  const rounds = [];
   if (dwl) for (const e of dwl) { rev[e[0]] = tLimit - e[1]; marked.push(e[0]); }
   for (let k = 1; k <= maxK; k++) {
-    /* 与正向对称: 用「上一轮」快照判定, 避免同轮内串联多段乘车使「乗換上限」失效。 */
-    const revPrev = Int32Array.from(rev);
     const scan = new Set();
     for (let mi = 0; mi < marked.length; mi++) {
       const l = node2tmaps[marked[mi]];
@@ -1357,8 +1350,8 @@ function raptorRev(orig, dest, tLimit, day, opt) {
          只取全局最优会漏掉这些站的更晚出发班次, 使終電/指定到达低估最晚出发时刻。 */
       for (let sj = S.length - 1; sj >= 1; sj--) {
         const p2 = S[sj];
-        if (revPrev[p2] <= -INF) continue;
-        let tmax = revPrev[p2];
+        if (rev[p2] <= -INF) continue;
+        let tmax = rev[p2];
         if (p2 !== dest) tmax -= transferMin(p2);
         const tr = latestArrive(ti, sj, tmax, day, opt.catOff);
         if (!tr) continue;
@@ -1387,10 +1380,9 @@ function raptorRev(orig, dest, tLimit, day, opt) {
       }
     }
     if (!newMarked.length) break;
-    rounds.push([k, Int32Array.from(rev), par.slice()]);
     marked = newMarked;
   }
-  return { rev, par, rounds };
+  return { rev, par };
 }
 
 /* ══════════════════ 方案提取 ══════════════════ */
@@ -1404,76 +1396,53 @@ function finishFwd(rounds, orig, dest) {
     }
     if (bestArr >= INF) continue;
     if (!par[dest] && !fw) continue;
-    /* 逐级回溯: 第 r 段的父指针取自「第 r 轮」的 par 快照。
-       若统一用最终 par, 会因为 par 在后续轮次被覆盖而把多段串联进同一轮,
-       使行程段数超过「乗換上限」(实测 maxK=5 却出现 10 段)。 */
     const legs = [];
-    let cur = fw ? fw[0] : dest, ok = true, r = k;
+    let cur = fw ? fw[0] : dest, ok = true;
     while (cur !== orig) {
-      if (r < 1 || r > rounds.length) { ok = false; break; }
-      const pr = rounds[r - 1][2][cur];
+      const pr = par[cur];
       if (!pr) { ok = false; break; }
       legs.push({ tmap: pr[0], pi: pr[1], ty: pr[2], d0: pr[3], board: pr[4], walkFrom: pr[5], alight: pr[6] });
       cur = pr[5] >= 0 ? pr[5] : TM.T[pr[0]][0][pr[4]];
-      r -= 1;
       if (legs.length > 12) { ok = false; break; }
     }
     if (!ok) continue;
     legs.reverse();
-    const r2 = finalizeLegs(legs, orig, dest, fw);
-    if (r2) { r2.k = k; out.push(r2); }
+    const r = finalizeLegs(legs, orig, dest, fw);
+    if (r) { r.k = k; out.push(r); }
   }
   return out;
 }
 /* 从反向搜索结果回溯出正向行程 */
 function finishRev(res, orig, dest) {
-  const rounds = res.rounds;
-  if (!rounds || !rounds.length) return [];
+  const par = res.par;
   if (res.rev[orig] <= -INF) return [];
-  /* 逐级回溯(与 finishFwd 对称): 第 r 段的父指针取自「第 r 轮」的 par 快照,
-     避免 par 在后续轮次被覆盖而把多段串联, 使行程段数超过「乗換上限」。
-     从最大的轮次开始尝试(rev[orig] 为最晚出发, 对应最终轮)。 */
-  for (let ri = rounds.length - 1; ri >= 0; ri--) {
-    const k = rounds[ri][0];
-    const chain = [];
-    let node = orig, ok = true, r = k;
-    while (node !== dest) {
-      if (r < 1 || r > rounds.length) { ok = false; break; }
-      const pr = rounds[r - 1][2][node];
-      if (!pr) {
-        /* 可能已到「终点的步行邻站」: raptorRev 初始把 dest 的步行邻站 rev 设值但未记 par,
-           行程经此徒步到终点(如 動物園前 —步行7分— 今池)。此处视为正常终止。 */
-        if (walkMin.has(node + ',' + dest)) break;
-        ok = false; break;
-      }
-      chain.push(pr);
-      const nxt = TM.T[pr[0]][0][pr[6]];
-      if (nxt === node) { ok = false; break; }
-      node = nxt; r -= 1;
-      if (chain.length > 14) { ok = false; break; }
-    }
-    if (!ok) continue;
-    if (node !== dest && !walkMin.has(node + ',' + dest)) continue;
-    const legs = chain.map(pr => ({ tmap: pr[0], pi: pr[1], ty: pr[2], d0: pr[3], board: pr[4], walkFrom: pr[5], alight: pr[6] }));
-    /* 末段若为「到邻站后徒步到终点」, 转成 finalWalk */
-    let fw = null;
-    const last = legs[legs.length - 1];
-    if (last) {
-      const lastNode = TM.T[last.tmap][0][last.alight];
-      if (lastNode !== dest) {
-        const m = walkMin.get(lastNode + ',' + dest);
-        if (m) fw = [lastNode, m];
-      }
-    }
-    const rr = finalizeLegs(legs, orig, dest, fw);
-    if (rr) return [rr];
+  const chain = [];
+  let node = orig, guard = 0;
+  while (node !== dest && guard++ < 14) {
+    const pr = par[node];
+    if (!pr) return [];
+    chain.push(pr);
+    const nxt = TM.T[pr[0]][0][pr[6]];
+    if (nxt === node) return [];
+    node = nxt;
   }
-  return [];
+  if (node !== dest) return [];
+  const legs = chain.map(pr => ({ tmap: pr[0], pi: pr[1], ty: pr[2], d0: pr[3], board: pr[4], walkFrom: pr[5], alight: pr[6] }));
+  /* 末段若为「到邻站后徒步到终点」, 转成 finalWalk */
+  let fw = null;
+  const last = legs[legs.length - 1];
+  const lastNode = TM.T[last.tmap][0][last.alight];
+  if (lastNode !== dest) {
+    const m = walkMin.get(lastNode + ',' + dest);
+    if (m) fw = [lastNode, m];
+  }
+  const r = finalizeLegs(legs, orig, dest, fw);
+  return r ? [r] : [];
 }
 /* 补全 leg 字段 + 时序校验 */
 function finalizeLegs(legs, orig, dest, finalWalk) {
   if (!legs.length) return null;
-  let first = true, prevArr = 0, km = 0;
+  let prevArr = -1, km = 0;
   for (const lg of legs) {
     const t = TM.T[lg.tmap], S = t[0];
     const off = patOffsets(lg.tmap, lg.pi);
@@ -1481,20 +1450,11 @@ function finalizeLegs(legs, orig, dest, finalWalk) {
     lg.arr = lg.d0 + off[0][lg.alight];
     lg.fromNode = lg.walkFrom >= 0 ? lg.walkFrom : S[lg.board];
     lg.toNode = S[lg.alight];
-    if (!first && lg.dep < prevArr) return null;
-    first = false;
+    if (prevArr >= 0 && lg.dep < prevArr) return null;
     prevArr = lg.arr;
     for (let i = lg.board; i < lg.alight; i++) km += t[2][i];
     lg.walkMin = lg.walkFrom >= 0 ? (walkMin.get(lg.walkFrom + ',' + S[lg.board]) || 0) : 0;
   }
-  /* 归一化「日框架」: 反向搜索(終電/指定到达)的 d0 可能为负(跨日长途, 如 宿毛→藻琴),
-     会使 dep 与 arr 相差 1440 的倍数, 导致时钟显示为负值(乱码)。
-     仅当 dep 为负时整体上移到 [0,1440)。
-     注意: 正向搜索的 dep 已是绝对分钟(可能 >1440, 表示次日出发), 不可下移,
-     否则会把「次日出发」的合法方案错标成当日(曾导致最快的次日方案被误选)。 */
-  let shift = 0;
-  while (legs[0].dep + shift < 0) shift += 1440;
-  if (shift) for (const lg of legs) { lg.dep += shift; lg.arr += shift; }
   const lastArr = legs[legs.length - 1].arr + (finalWalk ? finalWalk[1] : 0);
   return {
     arr: lastArr, dep: legs[0].dep, xfr: legs.length - 1, legs, finalWalk,
@@ -1562,35 +1522,27 @@ function firstDeparture(orig, day) {
   }
   return best;
 }
-/* 用户「乗換上限」(次数) → RAPTOR 轮数(乘车段数)。选「5 次换乘」应允许 5 次换乘 = 6 段乘车,
-   故轮数 = 次数 + 1(否则会少给一次换乘: 曾出现选 5 却只给 4 次、被迫改走次日方案)。 */
-const FALLBACK_RIDES = 10;                 /* 兜底放宽到 ≤9 次换乘 */
-function rideLimit() { return (state.maxXfr || 7) + 1; }
 /* 无路径兜底(now/dep 模式): ①放宽乗換上限 ②退回当日首班起检索。
    跨日/隔夜等待已由 raptorFwd 的 earliestTrip 处理, 此处不再做整条方案的时间平移。 */
 function noRouteFallback(f, t, tStart, day, opt) {
-  if ((opt.maxK || 5) < FALLBACK_RIDES) {
-    const c = searchRoutes(f, t, tStart, day, { ...opt, maxK: FALLBACK_RIDES });
+  if ((opt.maxK || 5) < 9) {
+    const c = searchRoutes(f, t, tStart, day, { ...opt, maxK: 9 });
     if (c.length) return { cands: c, note: '' };
   }
   const fd = firstDeparture(f, day);
   if (fd != null && fd < tStart) {
-    const c = searchRoutes(f, t, fd, day, { ...opt, maxK: FALLBACK_RIDES });
+    const c = searchRoutes(f, t, fd, day, { ...opt, maxK: 9 });
     if (c.length) return { cands: c, note: T().autoFirst };
   }
   return { cands: [], note: '' };
 }
-/* 終電: 反向搜索起点最晚可出发时刻(当日 24:00 + 4h 的运行窗口内)。
-   rev[orig] 对轮数单调(轮数越多, 最晚出发越晚), 且跨日长途常需更多换乘,
-   故「終電」用充足轮数(不因用户乗換上限而漏掉真正的末班)。 */
+/* 終電: 反向搜索起点最晚可出发时刻(当日 24:00 + 4h 的运行窗口内) */
 function lastDeparture(orig, dest, day, opt) {
-  const mk = Math.max((opt && opt.maxK) || 5, FALLBACK_RIDES);
   for (let limit = 1440 + 300; limit >= 1440 - 120; limit -= 30) {
-    const res = raptorRev(orig, dest, limit, day, { ...(opt || {}), maxK: mk });
+    const res = raptorRev(orig, dest, limit, day, opt || {});
     if (res.rev[orig] > -INF) {
       const legs = finishRev(res, orig, dest);
-      /* dep 用归一化后的 legs[0].dep(跨日长途可能原为负值), 供 doSearch 做正向复检 */
-      if (legs.length) return { dep: legs[0].dep, limit, cands: legs };
+      if (legs.length) return { dep: res.rev[orig], limit, cands: legs };
     }
   }
   return null;
@@ -1659,19 +1611,15 @@ function doSearch() {
   $('rFrom').value = ST.D[f]; $('rTo').value = ST.D[t];
   const day = state.day, mode = state.mode;
   let cands = [], note = '';
-  const opt = { catOff: catOffArr(), maxK: rideLimit(), want: 8 };
+  const opt = { catOff: catOffArr(), maxK: state.maxXfr || 5, want: 8 };
   if (mode === 'first') {
     const fd = firstDeparture(f, day);
     if (fd == null) { toast(T().noRoute); return; }
     cands = searchRoutes(f, t, fd, day, opt);
-    /* 跨日长途(如 宿毛→藻琴)常需更多换乘, 始発也放宽重试 */
-    if (!cands.length && opt.maxK < FALLBACK_RIDES) cands = searchRoutes(f, t, fd, day, { ...opt, maxK: FALLBACK_RIDES });
   } else if (mode === 'last') {
-    /* 終電也放宽乗換上限重试(跨日长途常需更多换乘) */
-    let lr = lastDeparture(f, t, day, opt);
-    if (!lr && opt.maxK < FALLBACK_RIDES) lr = lastDeparture(f, t, day, { ...opt, maxK: FALLBACK_RIDES });
+    const lr = lastDeparture(f, t, day, opt);
     if (!lr) { toast(T().noRoute); return; }
-    cands = searchRoutes(f, t, lr.dep, day, { ...opt, maxK: Math.max(opt.maxK, FALLBACK_RIDES) });
+    cands = searchRoutes(f, t, lr.dep, day, opt);
     if (!cands.length) cands = lr.cands;
     note = T().lastNote;
   } else if (mode === 'arr') {
@@ -1684,7 +1632,7 @@ function doSearch() {
       const fd = firstDeparture(f, day);
       if (fd != null) {
         cands = searchRoutes(f, t, fd, day, opt);
-        if (!cands.length && opt.maxK < FALLBACK_RIDES) cands = searchRoutes(f, t, fd, day, { ...opt, maxK: FALLBACK_RIDES });
+        if (!cands.length && (opt.maxK || 5) < 9) cands = searchRoutes(f, t, fd, day, { ...opt, maxK: 9 });
         if (cands.length) note = T().arrEarliest;
       }
     }
@@ -1746,7 +1694,7 @@ function reRouteWith(legIdx, newTrip, alightNode) {
   /* 从下车站重跑后续 */
   if (nl.toNode !== cur.to) {
     const tStart = nl.arr + transferMin(nl.toNode);
-    const rounds = raptorFwd(nl.toNode, cur.to, tStart, curResult.day, { maxK: Math.max(1, rideLimit() - prefix.length), catOff: catOffArr() });
+    const rounds = raptorFwd(nl.toNode, cur.to, tStart, curResult.day, { maxK: state.maxXfr || 5, catOff: catOffArr() });
     if (rounds && rounds.length) {
       const rest = finishFwd(rounds, nl.toNode, cur.to).sort((a, b) => a.arr - b.arr || a.xfr - b.xfr)[0];
       if (rest) {
@@ -2148,7 +2096,8 @@ function mapNote(msg) {
   el.appendChild(d);
 }
 async function initMap() {
-  if (mapReady || !SEG) return;
+  if (mapReady || mapTried || !SEG) return;
+  mapTried = true;
   let mg;
   try { mg = await import('https://cdn.jsdelivr.net/npm/maplibre-gl@6.12.0/dist/maplibre-gl.mjs'); }
   catch (e) { console.warn('[map] import failed', e); mapNote(T().mapOff); return; }
@@ -2375,7 +2324,7 @@ function stateHash() {
   /* 只在非默认时写入, 保持链接简短 */
   const cb = CAT_KEY.map(k => state.catOn[k] ? '1' : '0').join('');
   if (cb !== '11111') p.set('c', cb);
-  if (state.maxXfr !== 7) p.set('x', state.maxXfr);
+  if (state.maxXfr !== 5) p.set('x', state.maxXfr);
   if (state.mode === 'dep' || state.mode === 'arr') p.set('tm', minToTime(timeToMin($('depTime').value)));
   if (curResult) p.set('i', curResult.idx);
   history.replaceState(null, '', '#mjrj=' + p.toString());

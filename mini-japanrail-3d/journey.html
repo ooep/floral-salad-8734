@@ -767,6 +767,7 @@ let ST = null, LINES = null, TYPES = null, TM = null, TRIPS = null, TRF = null, 
 let node2tmaps = null, nameIndex = null, patCache = null, groupsByDay = null;
 let WALK = null, walkMin = null, tmapLine = null, tmapKm = null, tmapEnd = null;
 let lineColor = null;
+let shinkLineIds = null;               /* 新干线线路 id 集合(名字含「新幹線」) */
 let map = null, mapReady = false, mapTried = false;
 let curResult = null;      /* 当前结果 {cands:[], idx, ...} */
 let openNext = -1;         /* 展开后续班次的 leg 下标 */
@@ -1237,6 +1238,12 @@ function buildTypeFlags() {
     else c = CAT_EXPRESS;            /* 未知种别归入快速类, 默认可见 */
     TYPE_CAT[i] = c;
   }
+  /* 新干线线路 id 集合: 部分在来线列车(寝台/特急/普通)的 tmap 区间标签误带了新干线 id
+     (如 サンライズ瀬戸 的 東京→高松 tmap 中 浜松→姫路 等段被标成 東海道新幹線),
+     按里程推主导线路时会整段显示成新干线。日本在来线定期列车不走新干线轨道,
+     故对非新干线种别的 leg, 主导线路候选一律排除新干线线路。 */
+  shinkLineIds = new Set();
+  for (let i = 0; i < LINES.length; i++) if (LINES[i][0].indexOf('新幹線') >= 0) shinkLineIds.add(i);
 }
 /* state.catOn → 每类是否屏蔽(1=屏蔽)。路由/后续班次共用。 */
 function catOffArr() {
@@ -1569,7 +1576,7 @@ function nextLegTrips(lg, day, n, catOff) {
   const ti = lg.tmap, S = TM.T[ti][0];
   const bNode = S[lg.board], aNode = S[lg.alight];
   const after = lg.dep;
-  const mainLine = legLine(ti, lg.board, lg.alight);
+  const mainLine = legLine(ti, lg.board, lg.alight, lg.ty);
   const out = [];
   const seen = new Set();
   const list = node2tmaps[bNode] || [];
@@ -1577,7 +1584,7 @@ function nextLegTrips(lg, day, n, catOff) {
     const T2 = TM.T[tj], S2 = T2[0];
     const bi = S2.indexOf(bNode); if (bi < 0) continue;
     const ai = S2.indexOf(aNode); if (ai <= bi) continue;
-    if (legLine(tj, bi, ai) !== mainLine) continue;   /* 只保留同一条线路 */
+    if (legLine(tj, bi, ai, g[2]) !== mainLine) continue;   /* 只保留同一条线路 */
     const gs = groupsByDay[day].get(tj);
     if (!gs) continue;
     for (const g of gs) {
@@ -1825,21 +1832,26 @@ function typeZh(ty) { return TYPES[ty] ? TYPES[ty][1] : ''; }
 /* 乘车区间内的「主导线路」= 区间线路众数, 平局取里程大者。
    不能直接用全程众数: 直通运行会把「大船→鎌倉」的横須賀線误标成総武線,
    把「新宿→大船」的湘南新宿ライン误标成高崎線。 */
-function legLine(ti, board, alight) {
+function legLine(ti, board, alight, ty) {
   const t = TM.T[ti], L = t[1], K = t[2];
   const cnt = new Map(), km = new Map();
   let best = -1, bestN = 0, bestK = -1;
+  /* ty: 该 leg 的列车种别索引。非新干线种别(寝台/特急/普通…)排除新干线线路候选——
+     数据里在来线 tmap 的区间标签可能误带新干线 id(如 サンライズ瀬戸 tmap),
+     不排除就会按里程把整段推成新干线。日本在来线定期列车不走新干线轨道。 */
+  const noShink = ty != null && TYPE_CAT && TYPE_CAT[ty] !== CAT_SHINKANSEN;
   for (let i = board; i < alight; i++) {
     const li = L[i];
     if (li < 0) continue;
+    if (noShink && shinkLineIds.has(li)) continue;
     const n = (cnt.get(li) || 0) + 1, k = (km.get(li) || 0) + K[i];
     cnt.set(li, n); km.set(li, k);
     if (n > bestN || (n === bestN && k > bestK)) { bestN = n; bestK = k; best = li; }
   }
   return best >= 0 ? best : tmapLine[ti];
 }
-function lineName(ti, b, a) { const li = (b == null) ? tmapLine[ti] : legLine(ti, b, a); return li >= 0 ? LINES[li] : null; }
-function lineColorOf(ti, b, a) { const li = (b == null) ? tmapLine[ti] : legLine(ti, b, a); return li >= 0 && LINES[li][2] ? LINES[li][2] : '#4f8ef7'; }
+function lineName(ti, b, a, ty) { const li = (b == null) ? tmapLine[ti] : legLine(ti, b, a, ty); return li >= 0 ? LINES[li] : null; }
+function lineColorOf(ti, b, a, ty) { const li = (b == null) ? tmapLine[ti] : legLine(ti, b, a, ty); return li >= 0 && LINES[li][2] ? LINES[li][2] : '#4f8ef7'; }
 /* 列车爱称: tmap 的 TN 表按种别取 */
 function trainName(ti, ty) {
   const TN = TM.T[ti][4];
@@ -1876,7 +1888,7 @@ function renderResult(res) {
       const segs = r.legs.map(lg => {
         let km = 0; const K = TM.T[lg.tmap][2];
         if (K) for (let k = lg.board; k < lg.alight; k++) km += (K[k] || 0);
-        return { c: lineColorOf(lg.tmap, lg.board, lg.alight), km: Math.max(km / 10, 0.2) };
+        return { c: lineColorOf(lg.tmap, lg.board, lg.alight, lg.ty), km: Math.max(km / 10, 0.2) };
       });
       const tot = segs.reduce((a, b) => a + b.km, 0) || 1;
       bar = '<div class="rbar">' + segs.map(s =>
@@ -1910,8 +1922,8 @@ function renderLegs(r) {
   let tl = '<div class="tl">';
   r.legs.forEach((lg, li) => {
     const ti = lg.tmap, S = TM.T[ti][0];
-    const ln = lineName(ti, lg.board, lg.alight);
-    const color = lineColorOf(ti, lg.board, lg.alight);
+    const ln = lineName(ti, lg.board, lg.alight, lg.ty);
+    const color = lineColorOf(ti, lg.board, lg.alight, lg.ty);
     const nm = trainName(ti, lg.ty);
     const dst = ST.D[S[S.length - 1]];
     const nStop = lg.alight - lg.board;
@@ -2213,8 +2225,8 @@ function highlightOnMap(r) {
   addPt(r.from); addPt(r.to);
   for (const lg of r.legs) {
     const ti = lg.tmap, S = TM.T[ti][0], L = TM.T[ti][1];
-    const color = lineColorOf(ti, lg.board, lg.alight);
-    const ln = lineName(ti, lg.board, lg.alight);
+    const color = lineColorOf(ti, lg.board, lg.alight, lg.ty);
+    const ln = lineName(ti, lg.board, lg.alight, lg.ty);
     const lineNameJa = ln ? ln[0] : null;
     if (lg.walkFrom >= 0) walkFeats.push({ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: [ST.S[lg.walkFrom], ST.S[S[lg.board]]] } });
     for (let i = lg.board; i < lg.alight; i++) {

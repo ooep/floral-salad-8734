@@ -1725,7 +1725,7 @@ function normName(s) {
    否则「大宮(京都府)」这类站搜得到却解析不了。 */
 function nodeIdx(nm) {
   nm = normName(nm);
-  if (!nm) return -1;
+  if (!nm || !nameIndex) return -1;   /* nameIndex: 索引建好前(小数据 build 未完)直接返回未命中 */
   let best = -1, bestSc = 99;
   for (const e of nameIndex) {
     let sc = -1;
@@ -1747,7 +1747,7 @@ function doSuggest(which) {
   const input = which === 'from' ? $('rFrom') : $('rTo');
   const q = normName(input.value);
   const box = $('sug');
-  if (!q) { box.style.display = 'none'; sugItems = []; sugWhich = null; return; }
+  if (!q || !nameIndex) { box.style.display = 'none'; sugItems = []; sugWhich = null; return; }   /* 索引未就绪时不联想 */
   const items = [];
   for (const e of nameIndex) {
     let sc = -1;

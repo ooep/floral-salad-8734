@@ -1291,7 +1291,7 @@ function tripName(ic, N, jas, linesN) {
   const sig = tripSig(N, jas, linesN);
   return TOKKYU.nmI[sig + '|' + ic] || TOKKYU.nm[sig] || ICON_NAME[ic] || null;
 }
-/* ---- 併结/分割列车检测:同发车时刻 + 同起点同向 + 共享连续站序 ≥4 站(自始发站起) + 运行窗重叠
+/* ---- 併结/分割列车检测(下行/同起点分割):同发车时刻 + 同起点同向 + 共享连续站序 ≥4 站(自始发站起) + 运行窗重叠
        → 登记併结窗口 [t0,t1]、分割站、伙伴车次。併结区间内两车坐标重合,
          渲染时沿车尾方向错开一个车长(一前一后紧贴),分割后各自运行 ----
        防误判护栏(2026-10-13, 两轮修复):
@@ -1300,6 +1300,9 @@ function tripName(ic, N, jas, linesN) {
        ② 共享段必须从双方始发站开始:併结均在始发站连挂,中途才出现的公共段(やまびこ×はやぶさ 盛冈)是巧合;
        ③ 车种白名单(COUPLE_CLASSES):併结是优等列车专属(新干线/特急/関空快速×紀州路快速 等),
          近郊 快/普/急/準/各/直/区 等不同种别同分钟共长主干只是运行图巧合, 一律不标注 ----
+       上行/异起点併结(はやぶさ×こまち@盛岡 等, 始发站不同、共享段在路线尾部):
+       由构建期 scripts/couplings.py 按併结点白名单预计算, 固化在班次 c 字段,
+       applyJoins() 只做解析挂载——本函数不改, 见 applyJoins 注释。 ----
       */
 const COUPLE_CLASSES = new Set([
   'Hayabusa','Komachi','Yamabiko','Tsubasa','Toki','Tanigawa',
@@ -1347,6 +1350,29 @@ function buildCouplings(trips) {
     }
   }
   if (window.__dbgOn) console.log('[couple] ' + pairs + ' pairs');
+  return trips;
+}
+/* 上行併结（join）：构建期已按併结点白名单预计算好, 固化在班次 c 字段
+   ({p:伙伴train_id, k:'j', sp:併结站, t0/t1:併结窗口, nm:伙伴爱称})。
+   这里只把 tid 解析回活班次对象挂到 cpl（join:1 标记供文案/详情区分）;
+   伙伴不在当日数据(另一日型才有)时静默跳过。pass1 分割不动。 */
+function applyJoins(trips) {
+  const byTid = new Map();
+  for (let i = 0; i < trips.length; i++) byTid.set(trips[i].tid, trips[i]);
+  let joined = 0;
+  for (let i = 0; i < trips.length; i++) {
+    const A = trips[i];
+    const cs = A.c || [];
+    for (let ci = 0; ci < cs.length; ci++) {
+      const c = cs[ci];
+      if (c.k !== 'j') continue;
+      const B = byTid.get(c.p);
+      if (!B || B === A) continue;
+      (A.cpl = A.cpl || []).push({ p: B, t0: c.t0, t1: c.t1, split: c.sp, name: c.nm || '', join: 1 });
+      joined++;
+    }
+  }
+  if (window.__dbgOn) console.log('[join] ' + joined + ' joins');
   return trips;
 }
 /* 日本节假日 2024–2030(固定日 + 春分/秋分),振替休日与国民の休日按规则推导 */
@@ -1401,7 +1427,7 @@ const I18N = {
     stopsTitle:'停靠站', stopsCount:'站', colStop:'站', colArr:'到', colDep:'发',
     running:'运行中', dwelling:'停車中', speed:'速度', kmh:'km/h', firstLast:'全程', track:'轨道 = 官方线路色', legendNote:'列车颜色 = 所属线路色',
     followBtn:'跟随此列车', locateBtn:'定位', stopFollowBtn:'停止跟随', tripId:'班次', viaLines:'途经线路',
-    cplLabel:'併结', cplSplit:'与 {0} 併结，于 {1} 分割', cplView:'查看 {0}',
+    cplLabel:'併结', cplSplit:'与 {0} 併结，于 {1} 分割', cplJoin:'与 {0} 于 {1} 併结', cplView:'查看 {0}',
     wikiLabel:'列车百科', wikiEmpty:'暂无百科数据', wikiLoading:'百科数据加载中…', wikiFail:'百科数据加载失败',
     wikiRetry:'重试', wikiSrc:'数据来源：ressha-wiki', wikiFull:'查看维基百科词条 ↗', wikiOther:'其他车型',
     wikiNoLocal:'暂无中文词条，以下为日文原文', wikiOper:'运营',
@@ -1434,7 +1460,7 @@ const I18N = {
     stopsTitle:'停車駅', stopsCount:'駅', colStop:'駅', colArr:'着', colDep:'発',
     running:'運行中', dwelling:'停車中', speed:'速度', kmh:'km/h', firstLast:'全区間', track:'路線 = 公式路線色', legendNote:'列車色 = 所属路線色',
     followBtn:'列車を追跡', locateBtn:'位置', stopFollowBtn:'追跡停止', tripId:'列車', viaLines:'経由路線',
-    cplLabel:'併結', cplSplit:'{0}と併結、{1}で分割', cplView:'{0}を表示',
+    cplLabel:'併結', cplSplit:'{0}と併結、{1}で分割', cplJoin:'{1}で{0}と併結', cplView:'{0}を表示',
     wikiLabel:'列車百科', wikiEmpty:'百科データなし', wikiLoading:'百科データ読込中…', wikiFail:'百科データの読込に失敗しました',
     wikiRetry:'再試行', wikiSrc:'データ：ressha-wiki', wikiFull:'Wikipedia 記事を見る ↗', wikiOther:'他の車種',
     wikiNoLocal:'日本語版記事がないため他言語版を表示', wikiOper:'運行事業者',
@@ -1467,7 +1493,7 @@ const I18N = {
     stopsTitle:'Stops', stopsCount:'stops', colStop:'Station', colArr:'Arr', colDep:'Dep',
     running:'Running', dwelling:'At station', speed:'Speed', kmh:'km/h', firstLast:'Route', track:'Track = official line color', legendNote:'Train color = line color',
     followBtn:'Follow train', locateBtn:'Locate', stopFollowBtn:'Stop follow', tripId:'Trip', viaLines:'Lines',
-    cplLabel:'Coupled', cplSplit:'Coupled w/ {0}, splits at {1}', cplView:'View {0}',
+    cplLabel:'Coupled', cplSplit:'Coupled w/ {0}, splits at {1}', cplJoin:'Couples w/ {0} at {1}', cplView:'View {0}',
     wikiLabel:'Train encyclopedia', wikiEmpty:'No encyclopedia data', wikiLoading:'Loading encyclopedia…', wikiFail:'Failed to load encyclopedia',
     wikiRetry:'Retry', wikiSrc:'Data: ressha-wiki', wikiFull:'View Wikipedia article ↗', wikiOther:'Other models',
     wikiNoLocal:'No Japanese article — showing another language', wikiOper:'Operator',
@@ -2527,7 +2553,7 @@ function parseTrip(t) {
      在此一并声明以固定对象形状(9.5 万个班次,避免运行时反复触发隐藏类迁移)。
      _k: 上次成功解算得到的线路类型(KINDS 之一),用于让「类型过滤」也走淡入淡出
      _seen: 空间网格查询的帧戳(班次跨多格时去重,避免重复入 eligible) */
-  return { t: t.t, r: t.r, i: t.i || '', g: gradeOf(t.i || ''), _f: 0, _M2: 0, _ok: 0, _fm: 0, _k: null, _seen: 0, nm: tripName(t.i || '', N, jas, linesN), w0, w1, dep, arr, N, jas, jasN, stopC, lines, linesN, lineSet, sStart, sRun, skX, skY, skStop, skCum, skLen, bad, skUp, skDn, color: typeColor(t.i), mx0: mx0 - 0.0005, mx1: mx1 + 0.0005, my0: my0 - 0.0007, my1: my1 + 0.0007 };
+  return { t: t.t, r: t.r, i: t.i || '', g: gradeOf(t.i || ''), _f: 0, _M2: 0, _ok: 0, _fm: 0, _k: null, _seen: 0, nm: tripName(t.i || '', N, jas, linesN), w0, w1, dep, arr, N, jas, jasN, stopC, lines, linesN, lineSet, sStart, sRun, skX, skY, skStop, skCum, skLen, bad, skUp, skDn, color: typeColor(t.i), mx0: mx0 - 0.0005, mx1: mx1 + 0.0005, my0: my0 - 0.0007, my1: my1 + 0.0007, tid: t._ || '', c: t.c || [] };
 }
 
 /* ---------------- 位置引擎 ---------------- */
@@ -3920,6 +3946,7 @@ async function boot() {
     setLoadMsg(T().loading + ' ' + T().loadingPr + ' …');
     tripList = await parseTripsAsync(tj, f => setPhase(IDX_PCT, PRS_PCT, f));
     buildCouplings(tripList); /* 併结/分割列车检测 */
+    applyJoins(tripList); /* 上行併结:消费构建期预计算元数据 */
     totalTripsToday = tj.n || tripList.length;
     dataReady = true;
     $('dBuild').textContent = tj.b || '-';
@@ -4294,6 +4321,7 @@ async function ensureDayFile() {
     trainJSON = tj;
     tripList = await parseTripsAsync(tj);
     buildCouplings(tripList); /* 併结/分割列车检测(跨日重算) */
+    applyJoins(tripList); /* 上行併结(跨日重算) */
     totalTripsToday = tj.n || tripList.length;
     $('dBuild').textContent = tj.b || '-';
     $('bCount').textContent = totalTripsToday.toLocaleString();
@@ -4832,7 +4860,8 @@ function updateDetailLive(t, p, M, rebuild) {
       (t.cpl && t.cpl.length ? '<div class="d-cpl mrow"><span class="lb">' + T().cplLabel + '</span><span class="mv">' + t.cpl.map(c => {
         const si = t.jasN.indexOf(c.split);
         const nm = c.name || '';
-        return '<span>' + T().cplSplit.replace('{0}', nm).replace('{1}', si >= 0 ? t.jas[si] : c.split) + '</span>' +
+        const tpl = c.join ? T().cplJoin : T().cplSplit;
+        return '<span>' + tpl.replace('{0}', nm).replace('{1}', si >= 0 ? t.jas[si] : c.split) + '</span>' +
           (nm ? '<button class="cplbtn" data-ci="' + t.cpl.indexOf(c) + '">' + T().cplView.replace('{0}', nm) + '</button>' : '');
       }).join('<i class="sep">；</i>') + '</span></div>' : '') +
       _wikiBoxHtml() +

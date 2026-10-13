@@ -27,6 +27,9 @@ schs = [dep0, run1, dwell1, run2, dwell2, ...]（长度 2N-2，终点站无停�
 import argparse, datetime, glob, json, os, re, sys
 from collections import Counter
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import couplings
+
 # 参与去重的车种（优等列车/新干线）。同一 tmap 模式的特急/新干线不可能隔
 # ≤1 分钟发两趟真实列车；快速/普通在城市近郊线有真实 1-2 分钟间隔，必须排除。
 # 注意：新增大类（如未来新增併结车型）需同步维护此处。
@@ -179,14 +182,31 @@ def main():
     now = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="minutes").replace("+00:00", " UTC")
     os.makedirs(args.out, exist_ok=True)
     meta = {"b": now, "n": len(recs), "src": os.path.basename(os.path.normpath(src))}
+
+    # 上行併结检测（构建期, 方向D）：按日型分别检测（班次伙伴随日型变化），
+    # 结果附加到当日记录 "c" 字段（join 型）；浏览器 pass1（下行分割）不动。
+    tmaps_path = os.path.join(args.out, "tmaps.json")
+    tokkyu_path = os.path.join(root, "mini-japanrail-3d", "data", "tokkyu.json")
+    tmaps = json.load(open(tmaps_path, encoding="utf-8")) if os.path.exists(tmaps_path) else {}
+    tokkyu = json.load(open(tokkyu_path, encoding="utf-8")) if os.path.exists(tokkyu_path) else None
+    total_join = 0
     for bit, name, label in ((1, "wd", "平日"), (2, "sa", "周六"), (4, "su", "周日·假日")):
-        day_recs = [r for r in recs.values() if r["r"] & bit]
+        day_recs = {tid: r for tid, r in recs.items() if r["r"] & bit}
+        c_by_tid, n_join = couplings.compute_joins(day_recs, tmaps, tokkyu)
+        total_join += n_join
+        out_recs = []
+        for tid, r in day_recs.items():
+            item = dict(r)
+            if tid in c_by_tid:
+                item["c"] = c_by_tid[tid]
+            out_recs.append(item)
         path = os.path.join(args.out, f"trains_{name}.json")
         with open(path, "w", encoding="utf-8") as f:
-            json.dump({"b": now, "n": len(day_recs), "T": day_recs}, f, ensure_ascii=False, separators=(",", ":"))
-        print(f"trains_{name}.json ({label}): {len(day_recs)} 班次 -> {path} ({os.path.getsize(path)/1e6:.1f}MB)")
+            json.dump({"b": now, "n": len(out_recs), "T": out_recs}, f, ensure_ascii=False, separators=(",", ":"))
+        print(f"trains_{name}.json ({label}): {len(out_recs)} 班次 (上行併结 {n_join} 对) -> {path} ({os.path.getsize(path)/1e6:.1f}MB)")
 
     print(f"唯一班次总数: {len(recs)} | 跳过: {skipped} | 负区间钳制: {neg_clamped} | 保守去重合并: {deduped}")
+    print(f"上行併结检测合计: {total_join} 对")
     print(f"完成 @ {now}")
 
 if __name__ == "__main__":

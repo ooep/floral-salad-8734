@@ -111,6 +111,12 @@ jobs:
         run: |
           python3 scripts/prepare_pages_dist.py
 
+      # 主站 sitemap：扫描 dist/ 根级 HTML 自动生成 sitemap.xml + robots.txt，
+      # 写入 dist 根随 Pages 发布，每次部署自动刷新 URL 列表。
+      # （mini-japanrail-3d 子站为独立正式站 jr.suki.ing，自带 sitemap 体系，不重复收录）
+      - name: Generate Pages sitemap & robots
+        run: python3 scripts/gen_pages_sitemap.py
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
 

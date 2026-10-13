@@ -1340,22 +1340,30 @@ function finishRev(res, orig, dest) {
     while (node !== dest) {
       if (r < 1 || r > rounds.length) { ok = false; break; }
       const pr = rounds[r - 1][2][node];
-      if (!pr) { ok = false; break; }
+      if (!pr) {
+        /* 可能已到「终点的步行邻站」: raptorRev 初始把 dest 的步行邻站 rev 设值但未记 par,
+           行程经此徒步到终点(如 動物園前 —步行7分— 今池)。此处视为正常终止。 */
+        if (walkMin.has(node + ',' + dest)) break;
+        ok = false; break;
+      }
       chain.push(pr);
       const nxt = TM.T[pr[0]][0][pr[6]];
       if (nxt === node) { ok = false; break; }
       node = nxt; r -= 1;
       if (chain.length > 14) { ok = false; break; }
     }
-    if (!ok || node !== dest) continue;
+    if (!ok) continue;
+    if (node !== dest && !walkMin.has(node + ',' + dest)) continue;
     const legs = chain.map(pr => ({ tmap: pr[0], pi: pr[1], ty: pr[2], d0: pr[3], board: pr[4], walkFrom: pr[5], alight: pr[6] }));
     /* 末段若为「到邻站后徒步到终点」, 转成 finalWalk */
     let fw = null;
     const last = legs[legs.length - 1];
-    const lastNode = TM.T[last.tmap][0][last.alight];
-    if (lastNode !== dest) {
-      const m = walkMin.get(lastNode + ',' + dest);
-      if (m) fw = [lastNode, m];
+    if (last) {
+      const lastNode = TM.T[last.tmap][0][last.alight];
+      if (lastNode !== dest) {
+        const m = walkMin.get(lastNode + ',' + dest);
+        if (m) fw = [lastNode, m];
+      }
     }
     const rr = finalizeLegs(legs, orig, dest, fw);
     if (rr) return [rr];

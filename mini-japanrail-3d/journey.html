@@ -220,6 +220,54 @@ button,input,select { font-family:inherit; }
 .ochip.on { color:var(--txt); background:var(--acc-soft); border-color:var(--acc-border); }
 .ochip.on::before { background:var(--acc); opacity:1; }
 
+/* ══════════════ 空态: 快速开始(热门路线/最近搜索) ══════════════ */
+#quick { display:none; flex-direction:column; gap:12px; padding:13px 13px 15px; flex:none; }
+#quick.show { display:flex; animation:resIn .32s var(--ease-smooth) both; }
+.q-sec { display:flex; flex-direction:column; gap:7px; }
+.q-lb { display:flex; align-items:center; gap:8px; font-size:9px; font-weight:800; letter-spacing:.8px;
+  color:var(--dim); text-transform:uppercase; }
+#qClear { margin-left:auto; border:0; background:none; color:var(--dim); font-size:9.5px; font-weight:700;
+  cursor:pointer; padding:3px 6px; border-radius:6px; font-family:inherit; letter-spacing:0;
+  transition:color .15s, background .15s; }
+#qClear:hover { color:var(--bad); background:var(--acc-soft); }
+.q-row { display:flex; flex-wrap:wrap; gap:6px; }
+.qchip { display:flex; align-items:center; gap:6px; min-height:30px; padding:0 11px; border-radius:var(--r-pill);
+  border:1px solid var(--glass-edge); background:var(--glass); color:var(--txt); font-size:11.5px; font-weight:700;
+  cursor:pointer; font-family:inherit; max-width:100%;
+  transition:background .15s, border-color .15s, transform .3s var(--ease-spring); }
+.qchip .ar { color:var(--dim); font-weight:800; flex:none; }
+.qchip .nm { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+@media (hover:hover) { .qchip:hover { background:var(--glass-2); border-color:var(--acc-border); } }
+.qchip:active { transform:scale(.94); transition:transform .1s ease-in; }
+.q-note { font-size:9.5px; color:var(--dim); line-height:1.5; opacity:.85; }
+
+/* ══════════════ 主题: 三合一循环按钮(暗→亮→自动) ══════════════ */
+#themeBtn .i-moon, #themeBtn .i-sun, #themeBtn .i-auto { display:none; }
+#themeBtn[data-mode="dark"] .i-moon, #themeBtn[data-mode="light"] .i-sun, #themeBtn[data-mode="auto"] .i-auto { display:block; }
+#themeBtn svg { width:13px; height:13px; flex:none; }
+#themeBtn .tm-lb { font-size:10px; font-weight:700; }
+
+/* ══════════════ 地图玻璃控件(缩放/适配) ══════════════ */
+#mapCtl { position:absolute; right:var(--pad); top:calc(70px + env(safe-area-inset-top)); z-index:8;
+  display:none; flex-direction:column; gap:6px; }
+#mapCtl.show { display:flex; animation:resIn .3s var(--ease-smooth) both; }
+#mapCtl button { width:34px; height:34px; border-radius:11px; border:1px solid var(--glass-edge);
+  background:var(--glass); color:var(--dim); cursor:pointer; display:flex; align-items:center; justify-content:center;
+  padding:0; font-family:inherit;
+  backdrop-filter:blur(14px) saturate(1.4); -webkit-backdrop-filter:blur(14px) saturate(1.4);
+  box-shadow:inset 0 1px 0 var(--glass-hi), inset 0 -1px 2px var(--glass-lo), var(--glass-sh);
+  transition:background .15s, color .15s, transform .3s var(--ease-spring); }
+#mapCtl button svg { width:15px; height:15px; }
+@media (hover:hover) { #mapCtl button:hover { background:var(--glass-2); color:var(--txt); } }
+#mapCtl button:active { transform:scale(.86); transition:transform .1s ease-in; }
+:root[data-theme="light"] #mapCtl button { background:rgba(255,255,255,.6); }
+
+/* ══════════════ 主抽屉首次入场(仅移动端; 桌面侧栏已有 sbIn) ══════════════ */
+@media (max-width:899px) {
+  #sheetMain { animation:sheetIn .46s var(--spring-out) .1s backwards; }
+}
+@keyframes sheetIn { from { opacity:0; transform:translateY(22px); } to { opacity:1; transform:translateY(0); } }
+
 /* ───── 联想面板 ───── */
 #sug { position:absolute; left:12px; right:12px; top:58px; z-index:20; display:none;
   max-height:min(320px, 44dvh); overflow-y:auto; overscroll-behavior:contain;
@@ -269,7 +317,8 @@ button,input,select { font-family:inherit; }
   transition:background .15s, transform .3s var(--ease-spring), border-color .15s, box-shadow .2s; }
 @media (hover:hover) { .rcard:hover { background:var(--glass-2); transform:translateY(-2px); } }
 .rcard:active { transform:scale(.97); }
-.rcard.on { border-color:var(--acc); background:var(--acc-soft); box-shadow:0 2px 10px var(--acc-soft); }
+.rcard.on { border-color:var(--acc); background:var(--acc-soft);
+  box-shadow:0 0 0 3px var(--acc-soft), 0 4px 14px rgba(0,0,0,.18); }
 .rcard .rt { display:flex; align-items:baseline; gap:4px; font-size:14px; font-weight:900; font-variant-numeric:tabular-nums; letter-spacing:-.3px; }
 .rcard .rt .nd { font-size:8.5px; color:var(--warn); font-weight:800; }
 .rcard .rd { font-size:10.5px; font-weight:700; color:var(--dim); margin-top:2px; font-variant-numeric:tabular-nums; }
@@ -280,8 +329,11 @@ button,input,select { font-family:inherit; }
 
 /* 时间轴 */
 #legs { flex:1 1 auto; min-height:0; overflow-y:auto; padding:0 13px 12px; overscroll-behavior:contain;
-  -webkit-overflow-scrolling:touch; scrollbar-width:none; }
-#legs::-webkit-scrollbar { width:0; display:none; }
+  -webkit-overflow-scrolling:touch; scrollbar-width:thin; scrollbar-color:rgba(125,145,180,.4) transparent; }
+#legs::-webkit-scrollbar { width:5px; }
+#legs::-webkit-scrollbar-thumb { background:rgba(125,145,180,.35); border-radius:3px; }
+#legs::-webkit-scrollbar-track { background:transparent; }
+@media (hover:none) { #legs { scrollbar-width:none; } #legs::-webkit-scrollbar { width:0; display:none; } }
 .tl { position:relative; }
 .tl-node { display:flex; align-items:stretch; gap:10px; position:relative; }
 .tl-ic { width:20px; flex:none; display:flex; flex-direction:column; align-items:center; }
@@ -398,6 +450,11 @@ html.perf-low .rcard, html.perf-low .tcard, html.perf-low .stat { backdrop-filte
   #grip, #dgrip { display:none; }
   #detailHead { display:none; }
   #searchCard { padding:14px 14px 12px; }
+  /* 空态: 主抽屉撑满侧栏, 快速开始区垂直居中, 避免半截空白 */
+  #panel.empty #sheetMain { flex:1 1 auto; }
+  #panel.empty #sheetDetail { display:none; }
+  #panel.empty #quick { flex:1 1 auto; justify-content:flex-start; }
+  #panel.empty .q-note { margin-top:auto; }
   #result { flex:none; }
   #legs { flex:1 1 auto; min-height:0; }
   #sug { top:62px; }
@@ -445,7 +502,7 @@ html.perf-low .rcard, html.perf-low .tcard, html.perf-low .stat { backdrop-filte
 .sitem { display:flex; align-items:center; gap:8px; padding:6px 10px 6px 18px; border-top:1px solid var(--line); font-size:11px; }
 .sitem .sn { font-weight:700; color:var(--txt); }
 .sitem .st2 { margin-left:auto; font-variant-numeric:tabular-nums; font-weight:800; color:var(--dim); white-space:nowrap; }
-.sitem .dw { color:var(--dim); opacity:.6; font-weight:600; }
+.sitem .dw { color:var(--dim); opacity:.75; font-weight:600; }
 .sfield input { padding-right:34px; }
 .clr { position:absolute; right:5px; top:50%; transform:translateY(-50%); width:24px; height:24px;
   border:0; border-radius:50%; background:var(--glass-2); color:var(--dim); display:none;
@@ -459,6 +516,11 @@ html.perf-low .rcard, html.perf-low .tcard, html.perf-low .stat { backdrop-filte
 </head>
 <body>
 <div id="map"></div>
+<div id="mapCtl">
+  <button id="mcZin" type="button" title="放大" aria-label="放大"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+  <button id="mcZout" type="button" title="缩小" aria-label="缩小"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
+  <button id="mcFit" type="button" title="适配路线" aria-label="适配路线"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+</div>
 
 <header id="topHud">
   <a id="brand" href="./index.html" title="Mini JapanRail">
@@ -470,9 +532,12 @@ html.perf-low .rcard, html.perf-low .tcard, html.perf-low .stat { backdrop-filte
     <button class="chip" data-lang="ja">日本語</button>
     <button class="chip" data-lang="en">EN</button>
     <span style="width:1px;height:16px;background:var(--line);flex:none"></span>
-    <button class="chip" data-theme="dark">暗</button>
-    <button class="chip" data-theme="light">亮</button>
-    <button class="chip" data-theme="auto">Auto</button>
+    <button id="themeBtn" class="chip" data-mode="auto" title="主题">
+      <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      <svg class="i-auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor" stroke="none"/></svg>
+      <span class="tm-lb" id="themeLb">自动</span>
+    </button>
   </div>
 </header>
 
@@ -538,6 +603,17 @@ html.perf-low .rcard, html.perf-low .tcard, html.perf-low .stat { backdrop-filte
       </div>
     </div>
     <div id="sug"></div>
+  </div>
+  <div id="quick">
+    <div class="q-sec">
+      <div class="q-lb" id="qPopLb">热门路线</div>
+      <div class="q-row" id="qPop"></div>
+    </div>
+    <div class="q-sec" id="qRecSec" style="display:none">
+      <div class="q-lb"><span id="qRecLb">最近</span><button id="qClear" type="button">清除</button></div>
+      <div class="q-row" id="qRec"></div>
+    </div>
+    <div class="q-note" id="qNote"></div>
   </div>
   <div id="result">
     <div id="sumBar"></div>
@@ -612,6 +688,8 @@ const I18N = {
     midStops: '途中 {0} 駅',
     detail: '詳細条件', catAll: '全種別', optLb: '列车种别', catSk: '新幹線', catTk: '特急', catLn: 'Liner', catEx: '急行・快速', catLo: '普通',
     xfrLb: '乗換', xfrFew: '少', xfrStd: '标准', xfrAny: '不限', optTip: '关闭的种别不参与检索', optMin: '至少保留一种列车种别',
+    qPop: '热门路线', qRecent: '最近', qClear: '清除', themeDark: '暗', themeLight: '亮', themeAuto: '自动',
+    mapZin: '放大', mapZout: '缩小', mapFit: '适配路线',
   },
   ja: {
     sub: '乗換案内', from: '出発', to: '到着', go: '検索', swap: '出発/到着を入れ替え',
@@ -637,6 +715,8 @@ const I18N = {
     midStops: '途中{0}駅',
     detail: '詳細条件', catAll: '全種別', optLb: '列車種別', catSk: '新幹線', catTk: '特急', catLn: 'ライナー', catEx: '急行・快速', catLo: '普通',
     xfrLb: '乗換', xfrFew: '少なめ', xfrStd: '標準', xfrAny: '制限なし', optTip: 'オフの種別は検索対象外です', optMin: '列車種別は1つ以上選んでください',
+    qPop: '人気のルート', qRecent: '最近', qClear: '消去', themeDark: '暗い', themeLight: '明るい', themeAuto: '自動',
+    mapZin: '拡大', mapZout: '縮小', mapFit: '全体表示',
   },
   en: {
     sub: 'Route planner', from: 'From', to: 'To', go: 'Search', swap: 'Swap from/to',
@@ -662,6 +742,8 @@ const I18N = {
     midStops: '{0} intermediate stops',
     detail: 'Options', catAll: 'All types', optLb: 'Train type', catSk: 'Shinkansen', catTk: 'Ltd. Exp.', catLn: 'Liner', catEx: 'Rapid', catLo: 'Local',
     xfrLb: 'Changes', xfrFew: 'Few', xfrStd: 'Normal', xfrAny: 'Any', optTip: 'Disabled types are excluded from search', optMin: 'Keep at least one train type',
+    qPop: 'Popular routes', qRecent: 'Recent', qClear: 'Clear', themeDark: 'Dark', themeLight: 'Light', themeAuto: 'Auto',
+    mapZin: 'Zoom in', mapZout: 'Zoom out', mapFit: 'Fit route',
   },
 };
 let lang = localStorage.getItem('mjrj_lang') || (['ja', 'en'].indexOf((navigator.language || '').slice(0, 2)) >= 0 ? navigator.language.slice(0, 2) : 'zh');
@@ -677,11 +759,9 @@ function xfrLabel(n) {
 /* ══════════════════ 全局状态 ══════════════════ */
 const state = {
   from: null, to: null, mode: 'dep', day: 'wd', depTime: 9 * 60,
-  /* 列车种别开关(对应 CAT_KEY) 与乗換回数上限。
-     默认 7(不限): 超长途(如 稚内→鹿児島)在 5 次换乘内往往只能得到「隔日」方案,
-     放宽到 7 才能得到当日/次日较优解; 用户仍可手动选 少(3)/标准(5)。 */
+  /* 列车种别开关(对应 CAT_KEY) 与乗換回数上限 */
   catOn: { shinkansen: true, tokkyu: true, liner: true, express: true, local: true },
-  maxXfr: 7,
+  maxXfr: 5,
 };
 let ST = null, LINES = null, TYPES = null, TM = null, TRIPS = null, TRF = null, SEG = null;
 let node2tmaps = null, nameIndex = null, patCache = null, groupsByDay = null;
@@ -699,15 +779,27 @@ function applyThemeMode() {
   const mode = localStorage.getItem('mjr3d_theme') || 'auto';
   const t = resolveTheme(mode);
   document.documentElement.setAttribute('data-theme', t);
-  document.querySelectorAll('#hudRight .chip[data-theme]').forEach(c => c.classList.toggle('on', c.dataset.theme === mode));
+  /* 主题单按钮: 图标 + 当前模式名 */
+  const tb = $('themeBtn');
+  if (tb) {
+    tb.dataset.mode = mode;
+    const tt = T();
+    const lb = mode === 'dark' ? tt.themeDark : mode === 'light' ? tt.themeLight : tt.themeAuto;
+    $('themeLb').textContent = lb;
+    tb.title = tt.themeTip + ' · ' + lb;
+  }
   const mb = document.querySelector('meta[name=theme-color]');
   if (mb) mb.content = t === 'light' ? '#dfe4ec' : '#0b0f16';
   document.querySelectorAll('.lg img').forEach(im => { im.src = t === 'dark' ? 'logo-dark.png' : 'logo.png'; });
   if (mapReady) { refreshTrackColors(); syncMapTheme(); }
 }
-document.querySelectorAll('#hudRight .chip[data-theme]').forEach(c => c.addEventListener('click', () => {
-  localStorage.setItem('mjr3d_theme', c.dataset.theme); applyThemeMode();
-}));
+/* 主题: 单按钮循环 暗→亮→自动(减少 HUD 占用, 移动端更透气) */
+const THEME_CYCLE = ['dark', 'light', 'auto'];
+$('themeBtn').addEventListener('click', () => {
+  const cur = localStorage.getItem('mjr3d_theme') || 'auto';
+  localStorage.setItem('mjr3d_theme', THEME_CYCLE[(THEME_CYCLE.indexOf(cur) + 1) % THEME_CYCLE.length]);
+  applyThemeMode();
+});
 mqLight.addEventListener('change', () => { if ((localStorage.getItem('mjr3d_theme') || 'auto') === 'auto') applyThemeMode(); });
 applyThemeMode();
 
@@ -745,6 +837,12 @@ function applyI18n() {
   document.documentElement.lang = lang === 'zh' ? 'zh-Hans' : lang;
   /* 语言 chip 同步当前 lang */
   document.querySelectorAll('#hudRight .chip[data-lang]').forEach(x => x.classList.toggle('on', x.dataset.lang === lang));
+  /* 空态 + 地图控件 + 主题按钮(依赖语言) */
+  $('qPopLb').textContent = t.qPop; $('qRecLb').textContent = t.qRecent;
+  $('qClear').textContent = t.qClear; $('qNote').textContent = t.dataNote;
+  $('mcZin').title = t.mapZin; $('mcZout').title = t.mapZout; $('mcFit').title = t.mapFit;
+  $('mcZin').setAttribute('aria-label', t.mapZin); $('mcZout').setAttribute('aria-label', t.mapZout); $('mcFit').setAttribute('aria-label', t.mapFit);
+  applyThemeMode();
 }
 applyI18n();
 
@@ -783,7 +881,7 @@ document.querySelectorAll('#optWrap .ochip').forEach(b => b.addEventListener('cl
   if (state.from != null && state.to != null) doSearch();
 }));
 $('xfrSel').addEventListener('change', () => {
-  state.maxXfr = +$('xfrSel').value || 7;
+  state.maxXfr = +$('xfrSel').value || 5;
   updateOptSum(); saveOpt(); stateHash();
   if (state.from != null && state.to != null) doSearch();
 });
@@ -1160,10 +1258,6 @@ function raptorFwd(orig, dest, tStart, day, opt) {
   const wl0 = WALK.get(orig);
   if (wl0) for (const e of wl0) ow.set(e[0], e[1]);
   for (let k = 1; k <= maxK; k++) {
-    /* 本轮开始前的到达时刻快照。上车(判定)必须基于「上一轮」结果,
-       否则同一轮内会就地串联多段乘车, 使「乗換上限」失效
-       (实测 maxK=5 却出现 10 次换乘的行程)。这是标准 RAPTOR 的轮次语义: 每轮至多增加一段乘车。 */
-    const tauPrev = Int32Array.from(tau);
     const scan = new Set();
     for (let mi = 0; mi < marked.length; mi++) {
       const l = node2tmaps[marked[mi]];
@@ -1184,7 +1278,7 @@ function raptorFwd(orig, dest, tStart, day, opt) {
         if (p === orig && k === 1) tmin = tStart;
         else if (k === 1 && ow.has(p)) { tmin = tStart + ow.get(p); wf = orig; }
         else {
-          if (tauPrev[p] < INF) { tmin = tauPrev[p] + transferMin(p); wf = -1; }
+          if (tau[p] < INF) { tmin = tau[p] + transferMin(p); wf = -1; }
           /* 步行接驳: 从「已到达的邻站」走到本上车点 p —— 即使 p 本身尚未到达。
              原实现把步行边放在 tau[p]<INF 分支内, 只有当 p 已被到达时才考虑,
              导致「异名邻站需步行换乘」的接续永远走不通
@@ -1192,7 +1286,7 @@ function raptorFwd(orig, dest, tStart, day, opt) {
           const wl = WALK.get(p);
           if (wl) for (let wi = 0; wi < wl.length; wi++) {
             const e = wl[wi];
-            if (tauPrev[e[0]] < INF && tauPrev[e[0]] + e[1] < tmin) { tmin = tauPrev[e[0]] + e[1]; wf = e[0]; }
+            if (tau[e[0]] < INF && tau[e[0]] + e[1] < tmin) { tmin = tau[e[0]] + e[1]; wf = e[0]; }
           }
         }
         if (tmin >= INF) continue;
@@ -1237,11 +1331,8 @@ function raptorRev(orig, dest, tLimit, day, opt) {
   /* 终点步行衔接: 到邻站后徒步到终点 */
   const dwl = WALK.get(dest);
   let marked = [dest];
-  const rounds = [];
   if (dwl) for (const e of dwl) { rev[e[0]] = tLimit - e[1]; marked.push(e[0]); }
   for (let k = 1; k <= maxK; k++) {
-    /* 与正向对称: 用「上一轮」快照判定, 避免同轮内串联多段乘车使「乗換上限」失效。 */
-    const revPrev = Int32Array.from(rev);
     const scan = new Set();
     for (let mi = 0; mi < marked.length; mi++) {
       const l = node2tmaps[marked[mi]];
@@ -1257,8 +1348,8 @@ function raptorRev(orig, dest, tLimit, day, opt) {
          只取全局最优会漏掉这些站的更晚出发班次, 使終電/指定到达低估最晚出发时刻。 */
       for (let sj = S.length - 1; sj >= 1; sj--) {
         const p2 = S[sj];
-        if (revPrev[p2] <= -INF) continue;
-        let tmax = revPrev[p2];
+        if (rev[p2] <= -INF) continue;
+        let tmax = rev[p2];
         if (p2 !== dest) tmax -= transferMin(p2);
         const tr = latestArrive(ti, sj, tmax, day, opt.catOff);
         if (!tr) continue;
@@ -1287,10 +1378,9 @@ function raptorRev(orig, dest, tLimit, day, opt) {
       }
     }
     if (!newMarked.length) break;
-    rounds.push([k, Int32Array.from(rev), par.slice()]);
     marked = newMarked;
   }
-  return { rev, par, rounds };
+  return { rev, par };
 }
 
 /* ══════════════════ 方案提取 ══════════════════ */
@@ -1304,76 +1394,53 @@ function finishFwd(rounds, orig, dest) {
     }
     if (bestArr >= INF) continue;
     if (!par[dest] && !fw) continue;
-    /* 逐级回溯: 第 r 段的父指针取自「第 r 轮」的 par 快照。
-       若统一用最终 par, 会因为 par 在后续轮次被覆盖而把多段串联进同一轮,
-       使行程段数超过「乗換上限」(实测 maxK=5 却出现 10 段)。 */
     const legs = [];
-    let cur = fw ? fw[0] : dest, ok = true, r = k;
+    let cur = fw ? fw[0] : dest, ok = true;
     while (cur !== orig) {
-      if (r < 1 || r > rounds.length) { ok = false; break; }
-      const pr = rounds[r - 1][2][cur];
+      const pr = par[cur];
       if (!pr) { ok = false; break; }
       legs.push({ tmap: pr[0], pi: pr[1], ty: pr[2], d0: pr[3], board: pr[4], walkFrom: pr[5], alight: pr[6] });
       cur = pr[5] >= 0 ? pr[5] : TM.T[pr[0]][0][pr[4]];
-      r -= 1;
       if (legs.length > 12) { ok = false; break; }
     }
     if (!ok) continue;
     legs.reverse();
-    const r2 = finalizeLegs(legs, orig, dest, fw);
-    if (r2) { r2.k = k; out.push(r2); }
+    const r = finalizeLegs(legs, orig, dest, fw);
+    if (r) { r.k = k; out.push(r); }
   }
   return out;
 }
 /* 从反向搜索结果回溯出正向行程 */
 function finishRev(res, orig, dest) {
-  const rounds = res.rounds;
-  if (!rounds || !rounds.length) return [];
+  const par = res.par;
   if (res.rev[orig] <= -INF) return [];
-  /* 逐级回溯(与 finishFwd 对称): 第 r 段的父指针取自「第 r 轮」的 par 快照,
-     避免 par 在后续轮次被覆盖而把多段串联, 使行程段数超过「乗換上限」。
-     从最大的轮次开始尝试(rev[orig] 为最晚出发, 对应最终轮)。 */
-  for (let ri = rounds.length - 1; ri >= 0; ri--) {
-    const k = rounds[ri][0];
-    const chain = [];
-    let node = orig, ok = true, r = k;
-    while (node !== dest) {
-      if (r < 1 || r > rounds.length) { ok = false; break; }
-      const pr = rounds[r - 1][2][node];
-      if (!pr) {
-        /* 可能已到「终点的步行邻站」: raptorRev 初始把 dest 的步行邻站 rev 设值但未记 par,
-           行程经此徒步到终点(如 動物園前 —步行7分— 今池)。此处视为正常终止。 */
-        if (walkMin.has(node + ',' + dest)) break;
-        ok = false; break;
-      }
-      chain.push(pr);
-      const nxt = TM.T[pr[0]][0][pr[6]];
-      if (nxt === node) { ok = false; break; }
-      node = nxt; r -= 1;
-      if (chain.length > 14) { ok = false; break; }
-    }
-    if (!ok) continue;
-    if (node !== dest && !walkMin.has(node + ',' + dest)) continue;
-    const legs = chain.map(pr => ({ tmap: pr[0], pi: pr[1], ty: pr[2], d0: pr[3], board: pr[4], walkFrom: pr[5], alight: pr[6] }));
-    /* 末段若为「到邻站后徒步到终点」, 转成 finalWalk */
-    let fw = null;
-    const last = legs[legs.length - 1];
-    if (last) {
-      const lastNode = TM.T[last.tmap][0][last.alight];
-      if (lastNode !== dest) {
-        const m = walkMin.get(lastNode + ',' + dest);
-        if (m) fw = [lastNode, m];
-      }
-    }
-    const rr = finalizeLegs(legs, orig, dest, fw);
-    if (rr) return [rr];
+  const chain = [];
+  let node = orig, guard = 0;
+  while (node !== dest && guard++ < 14) {
+    const pr = par[node];
+    if (!pr) return [];
+    chain.push(pr);
+    const nxt = TM.T[pr[0]][0][pr[6]];
+    if (nxt === node) return [];
+    node = nxt;
   }
-  return [];
+  if (node !== dest) return [];
+  const legs = chain.map(pr => ({ tmap: pr[0], pi: pr[1], ty: pr[2], d0: pr[3], board: pr[4], walkFrom: pr[5], alight: pr[6] }));
+  /* 末段若为「到邻站后徒步到终点」, 转成 finalWalk */
+  let fw = null;
+  const last = legs[legs.length - 1];
+  const lastNode = TM.T[last.tmap][0][last.alight];
+  if (lastNode !== dest) {
+    const m = walkMin.get(lastNode + ',' + dest);
+    if (m) fw = [lastNode, m];
+  }
+  const r = finalizeLegs(legs, orig, dest, fw);
+  return r ? [r] : [];
 }
 /* 补全 leg 字段 + 时序校验 */
 function finalizeLegs(legs, orig, dest, finalWalk) {
   if (!legs.length) return null;
-  let first = true, prevArr = 0, km = 0;
+  let prevArr = -1, km = 0;
   for (const lg of legs) {
     const t = TM.T[lg.tmap], S = t[0];
     const off = patOffsets(lg.tmap, lg.pi);
@@ -1381,20 +1448,11 @@ function finalizeLegs(legs, orig, dest, finalWalk) {
     lg.arr = lg.d0 + off[0][lg.alight];
     lg.fromNode = lg.walkFrom >= 0 ? lg.walkFrom : S[lg.board];
     lg.toNode = S[lg.alight];
-    if (!first && lg.dep < prevArr) return null;
-    first = false;
+    if (prevArr >= 0 && lg.dep < prevArr) return null;
     prevArr = lg.arr;
     for (let i = lg.board; i < lg.alight; i++) km += t[2][i];
     lg.walkMin = lg.walkFrom >= 0 ? (walkMin.get(lg.walkFrom + ',' + S[lg.board]) || 0) : 0;
   }
-  /* 归一化「日框架」: 反向搜索(終電/指定到达)的 d0 可能为负(跨日长途, 如 宿毛→藻琴),
-     会使 dep 与 arr 相差 1440 的倍数, 导致时钟显示为负值(乱码)。
-     仅当 dep 为负时整体上移到 [0,1440)。
-     注意: 正向搜索的 dep 已是绝对分钟(可能 >1440, 表示次日出发), 不可下移,
-     否则会把「次日出发」的合法方案错标成当日(曾导致最快的次日方案被误选)。 */
-  let shift = 0;
-  while (legs[0].dep + shift < 0) shift += 1440;
-  if (shift) for (const lg of legs) { lg.dep += shift; lg.arr += shift; }
   const lastArr = legs[legs.length - 1].arr + (finalWalk ? finalWalk[1] : 0);
   return {
     arr: lastArr, dep: legs[0].dep, xfr: legs.length - 1, legs, finalWalk,
@@ -1462,35 +1520,27 @@ function firstDeparture(orig, day) {
   }
   return best;
 }
-/* 用户「乗換上限」(次数) → RAPTOR 轮数(乘车段数)。选「5 次换乘」应允许 5 次换乘 = 6 段乘车,
-   故轮数 = 次数 + 1(否则会少给一次换乘: 曾出现选 5 却只给 4 次、被迫改走次日方案)。 */
-const FALLBACK_RIDES = 10;                 /* 兜底放宽到 ≤9 次换乘 */
-function rideLimit() { return (state.maxXfr || 7) + 1; }
 /* 无路径兜底(now/dep 模式): ①放宽乗換上限 ②退回当日首班起检索。
    跨日/隔夜等待已由 raptorFwd 的 earliestTrip 处理, 此处不再做整条方案的时间平移。 */
 function noRouteFallback(f, t, tStart, day, opt) {
-  if ((opt.maxK || 5) < FALLBACK_RIDES) {
-    const c = searchRoutes(f, t, tStart, day, { ...opt, maxK: FALLBACK_RIDES });
+  if ((opt.maxK || 5) < 9) {
+    const c = searchRoutes(f, t, tStart, day, { ...opt, maxK: 9 });
     if (c.length) return { cands: c, note: '' };
   }
   const fd = firstDeparture(f, day);
   if (fd != null && fd < tStart) {
-    const c = searchRoutes(f, t, fd, day, { ...opt, maxK: FALLBACK_RIDES });
+    const c = searchRoutes(f, t, fd, day, { ...opt, maxK: 9 });
     if (c.length) return { cands: c, note: T().autoFirst };
   }
   return { cands: [], note: '' };
 }
-/* 終電: 反向搜索起点最晚可出发时刻(当日 24:00 + 4h 的运行窗口内)。
-   rev[orig] 对轮数单调(轮数越多, 最晚出发越晚), 且跨日长途常需更多换乘,
-   故「終電」用充足轮数(不因用户乗換上限而漏掉真正的末班)。 */
+/* 終電: 反向搜索起点最晚可出发时刻(当日 24:00 + 4h 的运行窗口内) */
 function lastDeparture(orig, dest, day, opt) {
-  const mk = Math.max((opt && opt.maxK) || 5, FALLBACK_RIDES);
   for (let limit = 1440 + 300; limit >= 1440 - 120; limit -= 30) {
-    const res = raptorRev(orig, dest, limit, day, { ...(opt || {}), maxK: mk });
+    const res = raptorRev(orig, dest, limit, day, opt || {});
     if (res.rev[orig] > -INF) {
       const legs = finishRev(res, orig, dest);
-      /* dep 用归一化后的 legs[0].dep(跨日长途可能原为负值), 供 doSearch 做正向复检 */
-      if (legs.length) return { dep: legs[0].dep, limit, cands: legs };
+      if (legs.length) return { dep: res.rev[orig], limit, cands: legs };
     }
   }
   return null;
@@ -1559,19 +1609,15 @@ function doSearch() {
   $('rFrom').value = ST.D[f]; $('rTo').value = ST.D[t];
   const day = state.day, mode = state.mode;
   let cands = [], note = '';
-  const opt = { catOff: catOffArr(), maxK: rideLimit(), want: 8 };
+  const opt = { catOff: catOffArr(), maxK: state.maxXfr || 5, want: 8 };
   if (mode === 'first') {
     const fd = firstDeparture(f, day);
     if (fd == null) { toast(T().noRoute); return; }
     cands = searchRoutes(f, t, fd, day, opt);
-    /* 跨日长途(如 宿毛→藻琴)常需更多换乘, 始発也放宽重试 */
-    if (!cands.length && opt.maxK < FALLBACK_RIDES) cands = searchRoutes(f, t, fd, day, { ...opt, maxK: FALLBACK_RIDES });
   } else if (mode === 'last') {
-    /* 終電也放宽乗換上限重试(跨日长途常需更多换乘) */
-    let lr = lastDeparture(f, t, day, opt);
-    if (!lr && opt.maxK < FALLBACK_RIDES) lr = lastDeparture(f, t, day, { ...opt, maxK: FALLBACK_RIDES });
+    const lr = lastDeparture(f, t, day, opt);
     if (!lr) { toast(T().noRoute); return; }
-    cands = searchRoutes(f, t, lr.dep, day, { ...opt, maxK: Math.max(opt.maxK, FALLBACK_RIDES) });
+    cands = searchRoutes(f, t, lr.dep, day, opt);
     if (!cands.length) cands = lr.cands;
     note = T().lastNote;
   } else if (mode === 'arr') {
@@ -1584,7 +1630,7 @@ function doSearch() {
       const fd = firstDeparture(f, day);
       if (fd != null) {
         cands = searchRoutes(f, t, fd, day, opt);
-        if (!cands.length && opt.maxK < FALLBACK_RIDES) cands = searchRoutes(f, t, fd, day, { ...opt, maxK: FALLBACK_RIDES });
+        if (!cands.length && (opt.maxK || 5) < 9) cands = searchRoutes(f, t, fd, day, { ...opt, maxK: 9 });
         if (cands.length) note = T().arrEarliest;
       }
     }
@@ -1595,7 +1641,7 @@ function doSearch() {
        偏远小站/长途(喜多灘→秋田/大阪等)晚间出发时不再直接显示「未找到连通路径」。 */
     if (!cands.length) { const fb = noRouteFallback(f, t, tStart, day, opt); cands = fb.cands; note = fb.note; }
   }
-  if (!cands.length) { toast(T().noRoute); $('result').classList.remove('show'); return; }
+  if (!cands.length) { toast(T().noRoute); $('result').classList.remove('show'); $('quick').classList.add('show'); $('panel').classList.add('empty'); return; }
   const picked = pickRoutes(cands, 4);
   curResult = { cands: picked, all: cands, idx: 0, note, from: f, to: t, day, mode };
   openNext = -1;
@@ -1603,6 +1649,9 @@ function doSearch() {
   highlightOnMap(picked[0].r);
   stateHash();
   $('result').classList.add('show');
+  $('quick').classList.remove('show');
+  pushRecent(f, t); renderQuick();
+  $('panel').classList.remove('empty');
   /* 移动端: 新结果出来时展开抽屉 */
   closeDetail();
   if (isMobileView() && $('sheetMain').classList.contains('collapsed')) setCollapsed(false);
@@ -1643,7 +1692,7 @@ function reRouteWith(legIdx, newTrip, alightNode) {
   /* 从下车站重跑后续 */
   if (nl.toNode !== cur.to) {
     const tStart = nl.arr + transferMin(nl.toNode);
-    const rounds = raptorFwd(nl.toNode, cur.to, tStart, curResult.day, { maxK: Math.max(1, rideLimit() - prefix.length), catOff: catOffArr() });
+    const rounds = raptorFwd(nl.toNode, cur.to, tStart, curResult.day, { maxK: state.maxXfr || 5, catOff: catOffArr() });
     if (rounds && rounds.length) {
       const rest = finishFwd(rounds, nl.toNode, cur.to).sort((a, b) => a.arr - b.arr || a.xfr - b.xfr)[0];
       if (rest) {
@@ -2037,6 +2086,7 @@ function syncMapTheme() {
 function mapNote(msg) {
   const el = $('map');
   if (!el || el.dataset.note) return;
+  $('mapCtl').classList.remove('show');
   el.dataset.note = '1';
   const d = document.createElement('div');
   d.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:20px;text-align:center;font-size:12px;color:var(--dim);background:var(--panel)';
@@ -2058,6 +2108,7 @@ async function initMap() {
   } catch (e) { console.warn('[map] init failed', e); mapNote(T().mapOff); return; }
   map.on('load', () => {
     mapReady = true;
+    $('mapCtl').classList.add('show');
     map.addSource('segs', { type: 'geojson', data: SEG });
     map.addLayer({ id: 'segs-glow', type: 'line', source: 'segs', paint: {
       'line-color': ['get', 'color'], 'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 2, 2.2, 9, 5, 14, 9],
@@ -2204,6 +2255,61 @@ function highlightOnMap(r) {
   }
 }
 
+/* ══════════════════ 空态: 快速开始(热门路线 + 最近搜索) ══════════════════ */
+const POP_ROUTES = [['東京', '京都'], ['新宿', '箱根湯本'], ['大阪', '京都'],
+  ['品川', '熱海'], ['名古屋', '金沢'], ['博多', '長崎']];
+function recentList() {
+  try { return (JSON.parse(localStorage.getItem('mjrj_recent') || '[]') || []).filter(x => x && ST.D[x.f] && ST.D[x.t]); }
+  catch (e) { return []; }
+}
+function pushRecent(f, t) {
+  try {
+    const rec = recentList().filter(x => !(x.f === f && x.t === t));
+    rec.unshift({ f: f, t: t });
+    localStorage.setItem('mjrj_recent', JSON.stringify(rec.slice(0, 4)));
+  } catch (e) { }
+}
+function quickChip(f, t) {
+  return '<button class="qchip" type="button" data-f="' + f + '" data-t="' + t + '">' +
+    '<span class="nm">' + esc(ST.D[f]) + '</span><span class="ar">→</span><span class="nm">' + esc(ST.D[t]) + '</span></button>';
+}
+function renderQuick() {
+  if (!ST.D || !ST.D.length) return;
+  const t = T();
+  $('qPopLb').textContent = t.qPop; $('qRecLb').textContent = t.qRecent;
+  $('qClear').textContent = t.qClear; $('qNote').textContent = t.dataNote;
+  $('qPop').innerHTML = POP_ROUTES.map(([a, b]) => {
+    const ia = nodeIdx(a), ib = nodeIdx(b);
+    return (ia >= 0 && ib >= 0) ? quickChip(ia, ib) : '';
+  }).join('');
+  const rec = recentList().slice(0, 4);
+  $('qRecSec').style.display = rec.length ? '' : 'none';
+  $('qRec').innerHTML = rec.map(x => quickChip(x.f, x.t)).join('');
+  document.querySelectorAll('#quick .qchip').forEach(el => el.addEventListener('click', () => {
+    const f = +el.dataset.f, to = +el.dataset.t;
+    $('rFrom').value = ST.D[f]; $('rTo').value = ST.D[to];
+    state.from = f; state.to = to;
+    syncClr();
+    if (isMobileView()) setCollapsed(false);
+    doSearch();
+  }));
+}
+$('qClear').addEventListener('click', () => {
+  try { localStorage.removeItem('mjrj_recent'); } catch (e) { }
+  renderQuick();
+});
+/* 地图玻璃控件: 缩放/适配(桌面无捏合手势时的入口) */
+function bindMapCtl() {
+  $('mcZin').addEventListener('click', () => { if (mapReady) map.zoomIn({ duration: 260 }); });
+  $('mcZout').addEventListener('click', () => { if (mapReady) map.zoomOut({ duration: 260 }); });
+  $('mcFit').addEventListener('click', () => {
+    if (!mapReady) return;
+    if (curResult) highlightOnMap(curResult.cands[curResult.idx].r);
+    else map.easeTo({ center: [137.2, 36.8], zoom: 3.4, duration: 700 });
+  });
+}
+bindMapCtl();
+
 /* ══════════════════ hash 持久化 + 启动 ══════════════════ */
 function stateHash() {
   if (state.from == null || state.to == null) return;
@@ -2215,7 +2321,7 @@ function stateHash() {
   /* 只在非默认时写入, 保持链接简短 */
   const cb = CAT_KEY.map(k => state.catOn[k] ? '1' : '0').join('');
   if (cb !== '11111') p.set('c', cb);
-  if (state.maxXfr !== 7) p.set('x', state.maxXfr);
+  if (state.maxXfr !== 5) p.set('x', state.maxXfr);
   if (state.mode === 'dep' || state.mode === 'arr') p.set('tm', minToTime(timeToMin($('depTime').value)));
   if (curResult) p.set('i', curResult.idx);
   history.replaceState(null, '', '#mjrj=' + p.toString());
@@ -2255,7 +2361,8 @@ function parseHash() {
     $('depTime').value = minToTime(now5);
     state.depTime = now5;
     syncClr();
-    if (parseHash()) doSearch();
+    renderQuick();
+    if (parseHash()) doSearch(); else { $('quick').classList.add('show'); $('panel').classList.add('empty'); }
     syncClr();
   } catch (e) {
     console.error(e);
@@ -2312,6 +2419,8 @@ document.querySelectorAll('.clr').forEach(b => b.addEventListener('click', () =>
   if (isFrom) state.from = null; else state.to = null;
   syncClr(); el.focus();
   $('result').classList.remove('show');
+  $('quick').classList.add('show');
+  $('panel').classList.add('empty');
   stateHash();
 }));
 

@@ -109,6 +109,15 @@ def main():
     total += 1
     print('[_headers] 1 (CORS on all assets)')
 
+    # 7) robots.txt / healthz —— 纯资产模式(无 Worker 脚本)下改为真实静态文件，
+    #    由平台直接服务，同样不触发 Worker 调用。
+    with open(os.path.join(out, 'robots.txt'), 'w', encoding='utf-8') as f:
+        f.write('User-agent: *\nDisallow: /\n')
+    with open(os.path.join(out, 'healthz'), 'w', encoding='utf-8') as f:
+        f.write('ok\n')
+    total += 2
+    print('[robots.txt / healthz] 2 (static files)')
+
     # 汇总
     size = 0
     for root, _dirs, files in os.walk(out):

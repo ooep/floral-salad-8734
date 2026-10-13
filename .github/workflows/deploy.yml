@@ -83,16 +83,18 @@ jobs:
               print('trains_%s.json: %d 班次 @ %s' % (n, d['n'], d['b']))
           PY
 
-      # 静态 Worker：从仓库源目录组装 assets（含刚生成的 OG 图），部署到 jr-static。
-      # 纯静态 Worker Static Assets，免费档内零计费。令牌缺失时跳过并告警（与 CF Pages 一致）。
-      - name: Deploy static assets worker (jr-static)
+      # 静态资源：组装 assets（含刚生成的 OG 图）部署到 jr-static。
+      # Workers Static Assets「仅资产」模式（无 Worker 脚本）：资产/404/robots/healthz 全部由
+      # CDN 边缘直服，任何请求都不触发 Worker → 零 Worker 调用、零计费。
+      # CORS 由 assets 根 _headers 提供。令牌缺失时跳过并告警（与 CF Pages 一致）。
+      - name: Deploy static assets (jr-static)
         if: ${{ env.CF_API_TOKEN != '' }}
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: c75ed9a498500d7c232d9d59a353341d
         run: |
           python3 scripts/build_static_assets.py
-          npx wrangler@4 deploy --config static-worker/wrangler.toml --outdir /tmp/wr-out 2>&1 | tail -12
+          npx wrangler@4 deploy --config static-worker/wrangler.toml 2>&1 | tail -12
 
       - name: Prepare deploy dir (frontend only)
         run: |

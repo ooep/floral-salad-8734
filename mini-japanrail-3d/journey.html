@@ -677,9 +677,11 @@ function xfrLabel(n) {
 /* ══════════════════ 全局状态 ══════════════════ */
 const state = {
   from: null, to: null, mode: 'dep', day: 'wd', depTime: 9 * 60,
-  /* 列车种别开关(对应 CAT_KEY) 与乗換回数上限 */
+  /* 列车种别开关(对应 CAT_KEY) 与乗換回数上限。
+     默认 7(不限): 超长途(如 稚内→鹿児島)在 5 次换乘内往往只能得到「隔日」方案,
+     放宽到 7 才能得到当日/次日较优解; 用户仍可手动选 少(3)/标准(5)。 */
   catOn: { shinkansen: true, tokkyu: true, liner: true, express: true, local: true },
-  maxXfr: 5,
+  maxXfr: 7,
 };
 let ST = null, LINES = null, TYPES = null, TM = null, TRIPS = null, TRF = null, SEG = null;
 let node2tmaps = null, nameIndex = null, patCache = null, groupsByDay = null;
@@ -781,7 +783,7 @@ document.querySelectorAll('#optWrap .ochip').forEach(b => b.addEventListener('cl
   if (state.from != null && state.to != null) doSearch();
 }));
 $('xfrSel').addEventListener('change', () => {
-  state.maxXfr = +$('xfrSel').value || 5;
+  state.maxXfr = +$('xfrSel').value || 7;
   updateOptSum(); saveOpt(); stateHash();
   if (state.from != null && state.to != null) doSearch();
 });
@@ -1455,7 +1457,7 @@ function firstDeparture(orig, day) {
 /* 用户「乗換上限」(次数) → RAPTOR 轮数(乘车段数)。选「5 次换乘」应允许 5 次换乘 = 6 段乘车,
    故轮数 = 次数 + 1(否则会少给一次换乘: 曾出现选 5 却只给 4 次、被迫改走次日方案)。 */
 const FALLBACK_RIDES = 10;                 /* 兜底放宽到 ≤9 次换乘 */
-function rideLimit() { return (state.maxXfr || 5) + 1; }
+function rideLimit() { return (state.maxXfr || 7) + 1; }
 /* 无路径兜底(now/dep 模式): ①放宽乗換上限 ②退回当日首班起检索。
    跨日/隔夜等待已由 raptorFwd 的 earliestTrip 处理, 此处不再做整条方案的时间平移。 */
 function noRouteFallback(f, t, tStart, day, opt) {
@@ -2205,7 +2207,7 @@ function stateHash() {
   /* 只在非默认时写入, 保持链接简短 */
   const cb = CAT_KEY.map(k => state.catOn[k] ? '1' : '0').join('');
   if (cb !== '11111') p.set('c', cb);
-  if (state.maxXfr !== 5) p.set('x', state.maxXfr);
+  if (state.maxXfr !== 7) p.set('x', state.maxXfr);
   if (state.mode === 'dep' || state.mode === 'arr') p.set('tm', minToTime(timeToMin($('depTime').value)));
   if (curResult) p.set('i', curResult.idx);
   history.replaceState(null, '', '#mjrj=' + p.toString());

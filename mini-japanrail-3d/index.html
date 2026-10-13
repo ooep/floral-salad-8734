@@ -5800,9 +5800,10 @@ $('rGo').addEventListener('click', () => {
   const A = resolveStation($('rFrom').value), B = resolveStation($('rTo').value);
   if (!A || !B) { toast('❌ ' + T().badStation); return; }
   if (A === B) { toast(T().routeSame); return; }
-  const rt = findRoute(A, B);
-  if (!rt) { toast('❌ ' + T().routeNone); return; }
-  renderRoute(rt, A, B);
+  /* 直接跳转完整换乘案内页 journey.html(带时刻表/换乘次数/种别筛选),
+     不再在侧栏里跑粗糙 BFS——侧栏只做输入,结果交给专用页面 */
+  location.href = 'journey.html#mjrj=f=' + encodeURIComponent(dispName(A))
+                + '&t=' + encodeURIComponent(dispName(B)) + '&m=now';
 });
 [$('rFrom'), $('rTo')].forEach(el => el.addEventListener('keydown', e => { if (e.key === 'Enter') $('rGo').click(); }));
 function renderRoute(rt, A, B) {

@@ -690,6 +690,7 @@ const I18N = {
     xfrLb: '乗換', xfrFew: '少', xfrStd: '标准', xfrAny: '不限', optTip: '关闭的种别不参与检索', optMin: '至少保留一种列车种别',
     qPop: '热门路线', qRecent: '最近', qClear: '清除', themeDark: '暗', themeLight: '亮', themeAuto: '自动',
     mapZin: '放大', mapZout: '缩小', mapFit: '适配路线',
+    titleRoute: '{0} → {1} 的路线', titleDefault: '换乘案内',
   },
   ja: {
     sub: '乗換案内', from: '出発', to: '到着', go: '検索', swap: '出発/到着を入れ替え',
@@ -717,6 +718,7 @@ const I18N = {
     xfrLb: '乗換', xfrFew: '少なめ', xfrStd: '標準', xfrAny: '制限なし', optTip: 'オフの種別は検索対象外です', optMin: '列車種別は1つ以上選んでください',
     qPop: '人気のルート', qRecent: '最近', qClear: '消去', themeDark: '暗い', themeLight: '明るい', themeAuto: '自動',
     mapZin: '拡大', mapZout: '縮小', mapFit: '全体表示',
+    titleRoute: '{0} → {1} のルート', titleDefault: '乗換案内',
   },
   en: {
     sub: 'Route planner', from: 'From', to: 'To', go: 'Search', swap: 'Swap from/to',
@@ -744,6 +746,7 @@ const I18N = {
     xfrLb: 'Changes', xfrFew: 'Few', xfrStd: 'Normal', xfrAny: 'Any', optTip: 'Disabled types are excluded from search', optMin: 'Keep at least one train type',
     qPop: 'Popular routes', qRecent: 'Recent', qClear: 'Clear', themeDark: 'Dark', themeLight: 'Light', themeAuto: 'Auto',
     mapZin: 'Zoom in', mapZout: 'Zoom out', mapFit: 'Fit route',
+    titleRoute: '{0} → {1}', titleDefault: 'Route planner',
   },
 };
 let lang = localStorage.getItem('mjrj_lang') || (['ja', 'en'].indexOf((navigator.language || '').slice(0, 2)) >= 0 ? navigator.language.slice(0, 2) : 'zh');
@@ -843,7 +846,18 @@ function applyI18n() {
   $('qClear').textContent = t.qClear; $('qNote').textContent = t.dataNote;
   $('mcZin').title = t.mapZin; $('mcZout').title = t.mapZout; $('mcFit').title = t.mapFit;
   $('mcZin').setAttribute('aria-label', t.mapZin); $('mcZout').setAttribute('aria-label', t.mapZout); $('mcFit').setAttribute('aria-label', t.mapFit);
+  updateDocTitle();
   applyThemeMode();
+}
+/* 浏览器标签标题:有起终点时显示「A → B 的路线」,否则回退到默认站名 */
+function updateDocTitle() {
+  try {
+    if (state.from != null && state.to != null && ST && ST.D) {
+      document.title = tf(T().titleRoute, ST.D[state.from], ST.D[state.to]) + ' · Mini JapanRail';
+    } else {
+      document.title = T().titleDefault + ' · Mini JapanRail';
+    }
+  } catch (e) {}
 }
 applyI18n();
 
@@ -1865,6 +1879,7 @@ function trainName(ti, ty) {
 }
 function renderResult(res) {
   const t = T();
+  updateDocTitle();
   const cur = res.cands[res.idx].r;
   const depS = fmtMin(cur.dep), arrS = fmtMin(cur.arr);
   const durS = fmtDur(cur.arr - cur.dep);

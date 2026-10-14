@@ -1368,7 +1368,7 @@ function buildCouplings(trips) {
 function applyJoins(trips) {
   const byTid = new Map();
   for (let i = 0; i < trips.length; i++) byTid.set(trips[i].tid, trips[i]);
-  let joined = 0;
+  let joined = 0, aligned = 0;
   for (let i = 0; i < trips.length; i++) {
     const A = trips[i];
     const cs = A.c || [];
@@ -1379,9 +1379,22 @@ function applyJoins(trips) {
       if (!B || B === A) continue;
       (A.cpl = A.cpl || []).push({ p: B, t0: c.t0, t1: c.t1, split: c.sp, name: c.nm || '', join: 1 });
       joined++;
+      /* 连挂站发车时刻差仅为 1 分钟时，给"后发车"那趟加时间补偿（分钟），
+         让两车在地图上视觉贴合。偏差≥2 分钟不处理（数据源噪声，保守起见不动）。 */
+      const ia = A.jasN.indexOf(c.sp), ib = B.jasN.indexOf(c.sp);
+      if (ia >= 0 && ib >= 0) {
+        const od = A.dep[ia] - B.dep[ib];
+        if (Math.abs(od) === 1) {
+          const late = od > 0 ? A : B;          // 后发车的那趟（dep 更大）
+          late._coupleOff = Math.abs(od);       // 后车时钟往前拨 N 分钟追上前车
+          late._coupleT0 = c.t0;
+          late._coupleT1 = c.t1;
+          aligned++;
+        }
+      }
     }
   }
-  if (window.__dbgOn) console.log('[join] ' + joined + ' joins');
+  if (window.__dbgOn) console.log('[join] ' + joined + ' joins, ' + aligned + ' offset-aligned');
   return trips;
 }
 /* 日本节假日 2024–2030(固定日 + 春分/秋分),振替休日与国民の休日按规则推导 */
@@ -2569,6 +2582,8 @@ function parseTrip(t) {
 function windowShift(t, M) {
   if (M < t.w0 && M + 1440 <= t.w1) return M + 1440;
   if (M > t.w1 && M - 1440 >= t.w0) return M - 1440;
+  /* 连挂 1 分钟偏移补偿：后发车的那趟在连挂窗口内时钟往前拨，视觉与前车贴合 */
+  if (t._coupleOff && M >= t._coupleT0 && M <= t._coupleT1) return M + t._coupleOff;
   return M;
 }
 /* 无直接轨道段时,仅限本班次自身线路集合内 BFS;失败则交给骨架线(不跨线兜底,避免窜线) */const bfsMemo = new Map();

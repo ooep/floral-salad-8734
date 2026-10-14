@@ -60,7 +60,7 @@ jobs:
         run: python3 scripts/fetch_ra_geometry.py --sleep 2.2
 
       - name: Build station geometry map v2 (official coords + extra tracks)
-        run: python3 scripts/build_station_map_v2.py
+        run: pip install numpy && python3 scripts/build_station_map_v2.py
 
       - name: Commit refreshed data
         # 提交后 push 触发 deploy.yml：重新生成 SEO、重建并部署静态 Worker、部署 Pages

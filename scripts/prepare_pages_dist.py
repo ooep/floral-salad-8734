@@ -27,7 +27,7 @@ KEEP_NAMES = {
     'index.html', 'journey.html', 'privacy.html', 'orm-demo.html',
     'lines', 'stations',
     'sitemap.xml', 'sitemap-lines.xml', 'sitemap-stations.xml', 'sitemap-pages.xml',
-    'robots.txt', '404.html',
+    'robots.txt', '404.html', 'BingSiteAuth.xml',
 }
 # 防御性剔除（即便白名单遗漏也不进 Pages）
 DROP_NAMES = {

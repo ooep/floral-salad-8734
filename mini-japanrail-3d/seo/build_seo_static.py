@@ -50,6 +50,17 @@ DEFAULT_CONFIG = {
 FALLBACK_COLOR = '#4f8ef7'
 FALLBACK_KIND = '鉄道'
 
+# Microsoft Clarity 行为分析（Bing Webmaster 推荐），所有 SEO 静态页统一注入
+CLARITY_SCRIPT = '''<!-- Clarity tracking code for https://jr.suki.ing/ -->
+<script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i+"?ref=bwt";
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "yxc9o63w5s");
+</script>
+'''
+
 
 def load_config(path):
     cfg = dict(DEFAULT_CONFIG)
@@ -990,7 +1001,7 @@ def page_head(cfg, title, desc, url, og_img_url, keywords='', robots='index,foll
               .replace('__BRAND_LOGO_DARK__', STATIC_BASE + '/logo-dark.png'))
     return (
         '<!DOCTYPE html>\n<html lang="zh-Hans">\n<head>\n'
-        '<meta charset="utf-8">\n'
+        '<meta charset="utf-8">\n' + CLARITY_SCRIPT +
         '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
         '<title>' + esc(title) + '</title>\n'
         '<meta name="description" content="' + esc(desc) + '">\n'

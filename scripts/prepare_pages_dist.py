@@ -28,6 +28,7 @@ KEEP_NAMES = {
     'lines', 'stations',
     'sitemap.xml', 'sitemap-lines.xml', 'sitemap-stations.xml', 'sitemap-pages.xml',
     'robots.txt', '404.html', 'BingSiteAuth.xml', 'baidu_verify_codeva-DigR5zzAl8.html',
+    'sogousiteverification.txt', '_redirects',
 }
 # 防御性剔除（即便白名单遗漏也不进 Pages）
 DROP_NAMES = {

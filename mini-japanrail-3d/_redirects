@@ -1,0 +1,3 @@
+# 百度文件验证：Cloudflare Pages Pretty URLs 会把 .html 308 到无扩展名，
+# 百度不接受重定向（验证失败原因:308）。强制该验证文件 200 静默重写。
+/baidu_verify_codeva-DigR5zzAl8.html  /baidu_verify_codeva-DigR5zzAl8.html  200

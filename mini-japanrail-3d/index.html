@@ -2,17 +2,8 @@
 <html lang="zh-Hans">
 <head>
 <meta charset="utf-8">
-<!-- Clarity tracking code for https://jr.suki.ing/ -->
-<script>
-    (function(c,l,a,r,i,t,y){
-        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i+"?ref=bwt";
-        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-    })(window, document, "clarity", "script", "yxc9o63w5s");
-</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Mini JapanRail｜全日本列车实时运行可视化地图・列車走行位置・運行情報 | Japan Train Live Map</title>
-<meta name="baidu-site-verification" content="codeva-DigR5zzAl8" />
 <meta name="description" content="全日本列车实时运行可视化地图（列車走行位置・運行情報）：本地时刻表驱动，实时显示新干线・特急・在来线・地下铁・路面电车的列车走行位置与运行情报，覆盖 600+ 条线路、8,900+ 个车站、4,000+ 列列车，支持 3D 地球投影、时钟回放、路线搜索与车站查询，运行时零数据请求。日本全国の列車走行位置・運行情報がわかるリアルタイム鉄道マップ（走行シミュレーション）。Japan Train Live Map &amp; Real-Time Railway Tracker.">
 <meta name="keywords" content="日本铁路,全日本铁路,日本铁路地图,日本铁路实时地图,日本列车实时位置,日本电车实时位置,日本列车实时追踪,列车运行可视化,列车运行可视化系统,列车运行情报,列车走行位置,列车实时位置,列车运行图,新干线实时位置,新干线地图,日本新干线,日本地铁地图,日本电车地图,日本铁路线路图,日本车站查询,日本列车时刻表,日本铁路3D地图,全日本列车在线,3D铁路地图,列車走行位置,列車運行情報,運行情報,リアルタイム列車位置,鉄道マップ,全国鉄道マップ,路線図,駅一覧,路線一覧,新幹線 走行位置,在来線 走行位置,特急 走行位置,電車 現在位置,鉄道 リアルタイム,走行シミュレーション,3D鉄道マップ,Japan train live map,Japan railway map,real-time train tracker,Japan train tracker,shinkansen live map,shinkansen tracker,Japan rail map,live train map,Japan train positions,Japanese railway map,Japan transit map,Japan 3D train map,Japan train timetable map">
 <meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large,max-video-preview:-1">
@@ -1284,9 +1275,9 @@ function gradeOf(ic) {
 }
 /* 特殊 icon 的兜底名（签名表未命中时使用；签名命中优先） */
 const ICON_NAME = {
-  '関':'関空快速','紀':'紀州路快速','丹':'こうのとり','ミ':'ミュースカイ','フ':'フジサン特急','富':'フジサン特急',
+  '関':'はるか','紀':'くろしお','丹':'こうのとり','ミ':'ミュースカイ','フ':'フジサン特急','富':'フジサン特急',
   '九':'九州横断特急','京':'京王特急','川':'川越特急','Ｔ':'東武特急','Ｓ':'直通特急','Ｎ':'西鉄特急',
-  'ホ':'ホームライナー','拝':'拝島ライナー','ア':'アクセス特急','エ':'アクセス特急','空':'関空快速',
+  'ホ':'ホームライナー','拝':'拝島ライナー','ア':'アクセス特急','エ':'アクセス特急','空':'空港快速',
   '寝':'寝台特急','中':'中央線特急','ラ':'ライナー'
 };
 function tripSig(N, jas, linesN) {
@@ -1368,7 +1359,7 @@ function buildCouplings(trips) {
 function applyJoins(trips) {
   const byTid = new Map();
   for (let i = 0; i < trips.length; i++) byTid.set(trips[i].tid, trips[i]);
-  let joined = 0, aligned = 0;
+  let joined = 0;
   for (let i = 0; i < trips.length; i++) {
     const A = trips[i];
     const cs = A.c || [];
@@ -1379,22 +1370,9 @@ function applyJoins(trips) {
       if (!B || B === A) continue;
       (A.cpl = A.cpl || []).push({ p: B, t0: c.t0, t1: c.t1, split: c.sp, name: c.nm || '', join: 1 });
       joined++;
-      /* 连挂站发车时刻差仅为 1 分钟时，给"后发车"那趟加时间补偿（分钟），
-         让两车在地图上视觉贴合。偏差≥2 分钟不处理（数据源噪声，保守起见不动）。 */
-      const ia = A.jasN.indexOf(c.sp), ib = B.jasN.indexOf(c.sp);
-      if (ia >= 0 && ib >= 0) {
-        const od = A.dep[ia] - B.dep[ib];
-        if (Math.abs(od) === 1) {
-          const late = od > 0 ? A : B;          // 后发车的那趟（dep 更大）
-          late._coupleOff = Math.abs(od);       // 后车时钟往前拨 N 分钟追上前车
-          late._coupleT0 = c.t0;
-          late._coupleT1 = c.t1;
-          aligned++;
-        }
-      }
     }
   }
-  if (window.__dbgOn) console.log('[join] ' + joined + ' joins, ' + aligned + ' offset-aligned');
+  if (window.__dbgOn) console.log('[join] ' + joined + ' joins');
   return trips;
 }
 /* 日本节假日 2024–2030(固定日 + 春分/秋分),振替休日与国民の休日按规则推导 */
@@ -2582,8 +2560,6 @@ function parseTrip(t) {
 function windowShift(t, M) {
   if (M < t.w0 && M + 1440 <= t.w1) return M + 1440;
   if (M > t.w1 && M - 1440 >= t.w0) return M - 1440;
-  /* 连挂 1 分钟偏移补偿：后发车的那趟在连挂窗口内时钟往前拨，视觉与前车贴合 */
-  if (t._coupleOff && M >= t._coupleT0 && M <= t._coupleT1) return M + t._coupleOff;
   return M;
 }
 /* 无直接轨道段时,仅限本班次自身线路集合内 BFS;失败则交给骨架线(不跨线兜底,避免窜线) */const bfsMemo = new Map();
@@ -3290,7 +3266,7 @@ let trainMode = localStorage.getItem('mjr3d_trainmode') || 'icon'; /* '3d' | 'ic
 let iconSet = localStorage.getItem('mjr3d_iconset') || 'default'; /* 图标模式图集: 'default' | 'vector' */
 /* 图集表: default=现有多用途图集 / vector=AI矢量重绘(黑描边) / cute=可爱风(kasu,未覆盖键回退默认图) */
 const ATLAS_SETS = {
-  default: { file: 'https://jr-static.suki.ing/data/train_icons_atlas.json', png: 'https://jr-static.suki.ing/data/train_icons_atlas.png', json: null, img: null, ready: false },
+  default: { file: 'https://jr-static.suki.ing/data/train_icons_atlas.json?v=3', png: 'https://jr-static.suki.ing/data/train_icons_atlas.png?v=3', json: null, img: null, ready: false },
   vector:  { file: 'https://jr-static.suki.ing/data/train_icons_atlas_vec.json', png: 'https://jr-static.suki.ing/data/train_icons_atlas_vec.png', json: null, img: null, ready: false },
   cute:    { file: 'https://jr-static.suki.ing/data/train_icons_atlas_cute.json', png: 'https://jr-static.suki.ing/data/train_icons_atlas_cute.png', json: null, img: null, ready: false },
 };
@@ -4600,10 +4576,6 @@ function showTrainDetail(t) {
  * 修复: JK列车优先命中'根岸線'条目(=300, E233系京滨东北线天蓝车头);
  * 多线路直通列车跳过共享干道(山手線/東海道本線/東北本線)取第一个有图集的具体线路。 */
 const ICON_SKIP_LINES = new Set(['山手線', '東海道本線', '東北本線']);
-/* 山手环 30 站（normName 归一化后形态）：山手線本线列车=运行段起终点均在此环上。
-   山手线不给其他列车行驶；共享轨道段的直通（上野東京線/湘南新宿/相鉄直通等）走并行干道，
-   起终点在环外 → 不会被误判为本线车 */
-const YAMANOTE_RING = new Set(['東京','神田','秋葉原','御徒町','上野','鶯谷','日暮里','西日暮里','田端','駒込','巣鴨','大塚','池袋','目白','高田馬場','新大久保','新宿','代々木','原宿','渋谷','恵比寿','目黒','五反田','大崎','品川','高輪ゲートウェイ','田町','浜松町','新橋','有楽町']);
 /* 直通列车车体所属系统线路: 武藏野线直通(京葉線/中央本線/横須賀線方向)列车车体均为E231武藏野线涂装,
  * 优先用武藏野線图标而非直通对方线路 */
 const ICON_PRIORITY_LINES = new Set(['武蔵野線']);
@@ -4653,11 +4625,6 @@ function isMinamiasoThroughTrip(t) {
 }
 function lineIconFor(t) {
   if (!ATLAS || !t || !t.lines) return -1;
-  /* 山手線本线列车（运行段起终点都在山手环上）统一 E235 绿头：
-     必须在 allSkip→fallback 之前，否则共享段本线车 lines=[東海道,東北,山手] 先命中 E217 兜底 */
-  if (t.lines.includes('山手線') && t.jasN && t.jasN.length >= 2 && YAMANOTE_RING.has(t.jasN[0]) && YAMANOTE_RING.has(t.jasN[t.jasN.length - 1])) {
-    const v = ATLAS.line['山手線']; if (v !== undefined) return v;
-  }
   if (isKeihinTohokuTrip(t)) { const v = ATLAS.line['根岸線']; if (v !== undefined) return v; }
   if (isOsakaMetroChuoTrip(t)) { const v = ATLAS.line['大阪メトロ中央線']; if (v !== undefined) return v; }
   if (isMinamiasoThroughTrip(t)) { const v = ATLAS.line['高森線']; if (v !== undefined) return v; }
@@ -4685,9 +4652,6 @@ function trainIconIdx(t, lineName) {
      直接查会命中 JR 东日本 E233(22);此处强制改判大阪地铁中央线图标 */
   if (isOsakaMetroChuoTrip(t)) { const v = ATLAS.line['大阪メトロ中央線']; if (v !== undefined) return v; }
   if (isMinamiasoThroughTrip(t)) { const v = ATLAS.line['高森線']; if (v !== undefined) return v; }
-  /* 山手線:选中时共享段直通(宇都宮線/東海道線等 lines=[東海道,東北,山手])也统一 E235 绿头,
-     必须在 allSkip→fallback 之前, 否则先命中 E217 湘南色兜底 */
-  if (lineName === '山手線' && ATLAS.line['山手線'] !== undefined) return ATLAS.line['山手線'];
   /* 纯共享干道直通(上野東京線等): 优先E217湘南色兜底, 防止 p[3]='東海道線' 绕过兜底取到西日本W223(143) */
   if (t.lines.length > 1 && t.lines.every(ln => ICON_SKIP_LINES.has(ln)) && ATLAS.fallback !== undefined) return ATLAS.fallback;
   if (lineName && ATLAS.line[lineName] !== undefined) return ATLAS.line[lineName];
@@ -4699,7 +4663,7 @@ function iconStyle(icIdx) {
   if (icIdx < 0 || !ATLAS) return '';
   const sc = 0.75; /* 30px 盒 / 40px 图 */
   const col = icIdx % ATLAS.cols, row = Math.floor(icIdx / ATLAS.cols);
-  const png = ATLAS_KEY === 'cute' ? 'https://jr-static.suki.ing/data/train_icons_atlas_cute.png' : (ATLAS_KEY === 'vector' ? 'https://jr-static.suki.ing/data/train_icons_atlas_vec.png' : 'https://jr-static.suki.ing/data/train_icons_atlas.png');
+  const png = ATLAS_KEY === 'cute' ? 'https://jr-static.suki.ing/data/train_icons_atlas_cute.png' : (ATLAS_KEY === 'vector' ? 'https://jr-static.suki.ing/data/train_icons_atlas_vec.png' : 'https://jr-static.suki.ing/data/train_icons_atlas.png?v=3');
   return 'background-image:url(' + png + ');background-size:' + (ATLAS.size[0] * sc) + 'px ' + (ATLAS.size[1] * sc) + 'px;' +
     'background-position:-' + ((col * ATLAS.cell[0] + 2) * sc) + 'px -' + ((row * ATLAS.cell[1] + 2) * sc) + 'px;';
 }

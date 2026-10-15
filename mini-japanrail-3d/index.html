@@ -3266,7 +3266,7 @@ let trainMode = localStorage.getItem('mjr3d_trainmode') || 'icon'; /* '3d' | 'ic
 let iconSet = localStorage.getItem('mjr3d_iconset') || 'default'; /* 图标模式图集: 'default' | 'vector' */
 /* 图集表: default=现有多用途图集 / vector=AI矢量重绘(黑描边) / cute=可爱风(kasu,未覆盖键回退默认图) */
 const ATLAS_SETS = {
-  default: { file: 'https://jr-static.suki.ing/data/train_icons_atlas.json?v=3', png: 'https://jr-static.suki.ing/data/train_icons_atlas.png?v=3', json: null, img: null, ready: false },
+  default: { file: 'https://jr-static.suki.ing/data/train_icons_atlas.json?v=5', png: 'https://jr-static.suki.ing/data/train_icons_atlas.png?v=5', json: null, img: null, ready: false },
   vector:  { file: 'https://jr-static.suki.ing/data/train_icons_atlas_vec.json', png: 'https://jr-static.suki.ing/data/train_icons_atlas_vec.png', json: null, img: null, ready: false },
   cute:    { file: 'https://jr-static.suki.ing/data/train_icons_atlas_cute.json', png: 'https://jr-static.suki.ing/data/train_icons_atlas_cute.png', json: null, img: null, ready: false },
 };
@@ -3288,7 +3288,7 @@ function loadTrainAtlas() {
       const s = ATLAS_SETS[key];
       let tryN = 0;
       const attempt = () => {
-        fetch(s.file + '?v=3').then(r => r.ok ? r.json() : null).then(j => {
+        fetch(s.file + '?v=5').then(r => r.ok ? r.json() : null).then(j => {
           if (!j) { retry(); return; }
           const im = new Image();
           im.crossOrigin = 'anonymous';   /* 图集跨域(jr-static)：不设则 canvas 被污染,toDataURL/texImage2D 抛 SecurityError */
@@ -3298,7 +3298,7 @@ function loadTrainAtlas() {
             if (key === 'default' && !lmStarted) lmStart(); /* 加载拼图用默认图集 */
           };
           im.onerror = retry;
-          im.src = s.png + '?v=3';
+          im.src = s.png + '?v=5';
         }).catch(retry);
       };
       const retry = () => {
@@ -4663,7 +4663,7 @@ function iconStyle(icIdx) {
   if (icIdx < 0 || !ATLAS) return '';
   const sc = 0.75; /* 30px 盒 / 40px 图 */
   const col = icIdx % ATLAS.cols, row = Math.floor(icIdx / ATLAS.cols);
-  const png = ATLAS_KEY === 'cute' ? 'https://jr-static.suki.ing/data/train_icons_atlas_cute.png' : (ATLAS_KEY === 'vector' ? 'https://jr-static.suki.ing/data/train_icons_atlas_vec.png' : 'https://jr-static.suki.ing/data/train_icons_atlas.png?v=3');
+  const png = ATLAS_KEY === 'cute' ? 'https://jr-static.suki.ing/data/train_icons_atlas_cute.png' : (ATLAS_KEY === 'vector' ? 'https://jr-static.suki.ing/data/train_icons_atlas_vec.png' : 'https://jr-static.suki.ing/data/train_icons_atlas.png?v=5');
   return 'background-image:url(' + png + ');background-size:' + (ATLAS.size[0] * sc) + 'px ' + (ATLAS.size[1] * sc) + 'px;' +
     'background-position:-' + ((col * ATLAS.cell[0] + 2) * sc) + 'px -' + ((row * ATLAS.cell[1] + 2) * sc) + 'px;';
 }

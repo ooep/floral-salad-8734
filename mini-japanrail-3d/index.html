@@ -4676,6 +4676,9 @@ function trainIconIdx(t, lineName) {
      直接查会命中 JR 东日本 E233(22);此处强制改判大阪地铁中央线图标 */
   if (isOsakaMetroChuoTrip(t)) { const v = ATLAS.line['大阪メトロ中央線']; if (v !== undefined) return v; }
   if (isMinamiasoThroughTrip(t)) { const v = ATLAS.line['高森線']; if (v !== undefined) return v; }
+  /* 山手線:选中时共享段直通(宇都宮線/東海道線等 lines=[東海道,東北,山手])也统一 E235 绿头,
+     必须在 allSkip→fallback 之前, 否则先命中 E217 湘南色兜底 */
+  if (lineName === '山手線' && ATLAS.line['山手線'] !== undefined) return ATLAS.line['山手線'];
   /* 纯共享干道直通(上野東京線等): 优先E217湘南色兜底, 防止 p[3]='東海道線' 绕过兜底取到西日本W223(143) */
   if (t.lines.length > 1 && t.lines.every(ln => ICON_SKIP_LINES.has(ln)) && ATLAS.fallback !== undefined) return ATLAS.fallback;
   if (lineName && ATLAS.line[lineName] !== undefined) return ATLAS.line[lineName];

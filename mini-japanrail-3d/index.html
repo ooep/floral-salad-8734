@@ -1286,7 +1286,10 @@ function gradeOf(ic) {
 const ICON_NAME = {
   '関':'関空快速','紀':'紀州路快速','丹':'こうのとり','ミ':'ミュースカイ','フ':'フジサン特急','富':'フジサン特急',
   '九':'九州横断特急','京':'京王特急','川':'川越特急','Ｔ':'東武特急','Ｓ':'直通特急','Ｎ':'西鉄特急',
-  'ホ':'ホームライナー','拝':'拝島ライナー','ア':'アクセス特急','エ':'アクセス特急','空':'関空快速',
+  'ホ':'ホームライナー','拝':'拝島ライナー','ア':'アクセス特急','エ':'アクセス特急',
+  /* '空'=空港快速(東京モノレール羽田空港線 浜松町↔羽田空港第2, 恢复旧值;
+     関空快速由 '関' 承担——'空' 在源数据里不含 JR関空快速, 误指会让东京单轨贴 225系 JR车头) */
+  '空':'空港快速',
   '寝':'寝台特急','中':'中央線特急','ラ':'ライナー'
 };
 function tripSig(N, jas, linesN) {
@@ -1677,7 +1680,7 @@ const DATA_VERSION = '2026-10-15a';   // 静态数据变更必须递增；本次
 // 2026-10-15a: tokkyu.json 修正——関空快速/紀州路快速 的签名不再误标为 はるか/くろしお
 //   （二者为快速级 225系通勤电车，只在阪和線・関西空港線内运行；はるか/くろしお 必経東海道本線）
 //   修正后 t.nm 取到 関空快速/紀州路快速，命中 ATLAS.tokkyu 的通勤电车图标(215)，不再误用特急车头。
-const loadSizes = { 'https://jr-static.suki.ing/data/segments3d.geojson': 11347006, 'https://jr-static.suki.ing/data/stations3d.geojson': 1881446, 'https://jr-static.suki.ing/data/tmaps.json': 3158412, 'https://jr-static.suki.ing/data/station_map.json': 12090306, 'https://jr-static.suki.ing/data/tokkyu.json': 59100, 'https://jr-static.suki.ing/data/names_i18n.json': 482556, 'https://jr-static.suki.ing/data/trains_wd.json': 13494947, 'https://jr-static.suki.ing/data/trains_sa.json': 12228166, 'https://jr-static.suki.ing/data/trains_su.json': 12284312, 'https://jr-static.suki.ing/data/station_overall_footprints.geojson': 6902234, 'https://jr-static.suki.ing/data/station_entrances.geojson': 2787587, 'https://jr-static.suki.ing/data/station_platforms.geojson': 4254264 };
+const loadSizes = { 'https://jr-static.suki.ing/data/segments3d.geojson': 11347006, 'https://jr-static.suki.ing/data/stations3d.geojson': 1881446, 'https://jr-static.suki.ing/data/tmaps.json': 3158412, 'https://jr-static.suki.ing/data/station_map.json': 12090306, 'https://jr-static.suki.ing/data/tokkyu.json': 62335, 'https://jr-static.suki.ing/data/names_i18n.json': 482556, 'https://jr-static.suki.ing/data/trains_wd.json': 13494947, 'https://jr-static.suki.ing/data/trains_sa.json': 12228166, 'https://jr-static.suki.ing/data/trains_su.json': 12284312, 'https://jr-static.suki.ing/data/station_overall_footprints.geojson': 6902234, 'https://jr-static.suki.ing/data/station_entrances.geojson': 2787587, 'https://jr-static.suki.ing/data/station_platforms.geojson': 4254264 };
 let _fileTotal = 8, _fileIdx = 0;
 function nextFileIdx() { return _fileIdx++; }
 function setPct(p) { const pc = Math.min(100, p); lPctEl.textContent = Math.round(pc) + '%';

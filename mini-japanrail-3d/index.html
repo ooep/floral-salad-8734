@@ -4600,6 +4600,10 @@ function showTrainDetail(t) {
  * 修复: JK列车优先命中'根岸線'条目(=300, E233系京滨东北线天蓝车头);
  * 多线路直通列车跳过共享干道(山手線/東海道本線/東北本線)取第一个有图集的具体线路。 */
 const ICON_SKIP_LINES = new Set(['山手線', '東海道本線', '東北本線']);
+/* 山手环 30 站（normName 归一化后形态）：山手線本线列车=运行段起终点均在此环上。
+   山手线不给其他列车行驶；共享轨道段的直通（上野東京線/湘南新宿/相鉄直通等）走并行干道，
+   起终点在环外 → 不会被误判为本线车 */
+const YAMANOTE_RING = new Set(['東京','神田','秋葉原','御徒町','上野','鶯谷','日暮里','西日暮里','田端','駒込','巣鴨','大塚','池袋','目白','高田馬場','新大久保','新宿','代々木','原宿','渋谷','恵比寿','目黒','五反田','大崎','品川','高輪ゲートウェイ','田町','浜松町','新橋','有楽町']);
 /* 直通列车车体所属系统线路: 武藏野线直通(京葉線/中央本線/横須賀線方向)列车车体均为E231武藏野线涂装,
  * 优先用武藏野線图标而非直通对方线路 */
 const ICON_PRIORITY_LINES = new Set(['武蔵野線']);
@@ -4649,6 +4653,11 @@ function isMinamiasoThroughTrip(t) {
 }
 function lineIconFor(t) {
   if (!ATLAS || !t || !t.lines) return -1;
+  /* 山手線本线列车（运行段起终点都在山手环上）统一 E235 绿头：
+     必须在 allSkip→fallback 之前，否则共享段本线车 lines=[東海道,東北,山手] 先命中 E217 兜底 */
+  if (t.lines.includes('山手線') && t.jasN && t.jasN.length >= 2 && YAMANOTE_RING.has(t.jasN[0]) && YAMANOTE_RING.has(t.jasN[t.jasN.length - 1])) {
+    const v = ATLAS.line['山手線']; if (v !== undefined) return v;
+  }
   if (isKeihinTohokuTrip(t)) { const v = ATLAS.line['根岸線']; if (v !== undefined) return v; }
   if (isOsakaMetroChuoTrip(t)) { const v = ATLAS.line['大阪メトロ中央線']; if (v !== undefined) return v; }
   if (isMinamiasoThroughTrip(t)) { const v = ATLAS.line['高森線']; if (v !== undefined) return v; }

@@ -1673,7 +1673,10 @@ function lmStart() {
 const FILES_PCT = 55, IDX_PCT = 78, PRS_PCT = 97;
 /* 数据版本号:segments/stations/station_map 等静态数据每次变更时必须递增,
    否则 IndexedDB 缓存可能让旧数据(如已修的幽灵直线)继续生效 */
-const DATA_VERSION = '2026-10-13d';   // 静态数据变更必须递增；本次修复 etag 重验证后强制全量刷新一次
+const DATA_VERSION = '2026-10-15a';   // 静态数据变更必须递增；本次修复 etag 重验证后强制全量刷新一次
+// 2026-10-15a: tokkyu.json 修正——関空快速/紀州路快速 的签名不再误标为 はるか/くろしお
+//   （二者为快速级 225系通勤电车，只在阪和線・関西空港線内运行；はるか/くろしお 必経東海道本線）
+//   修正后 t.nm 取到 関空快速/紀州路快速，命中 ATLAS.tokkyu 的通勤电车图标(215)，不再误用特急车头。
 const loadSizes = { 'https://jr-static.suki.ing/data/segments3d.geojson': 11347006, 'https://jr-static.suki.ing/data/stations3d.geojson': 1881446, 'https://jr-static.suki.ing/data/tmaps.json': 3158412, 'https://jr-static.suki.ing/data/station_map.json': 12090306, 'https://jr-static.suki.ing/data/tokkyu.json': 59100, 'https://jr-static.suki.ing/data/names_i18n.json': 482556, 'https://jr-static.suki.ing/data/trains_wd.json': 13494947, 'https://jr-static.suki.ing/data/trains_sa.json': 12228166, 'https://jr-static.suki.ing/data/trains_su.json': 12284312, 'https://jr-static.suki.ing/data/station_overall_footprints.geojson': 6902234, 'https://jr-static.suki.ing/data/station_entrances.geojson': 2787587, 'https://jr-static.suki.ing/data/station_platforms.geojson': 4254264 };
 let _fileTotal = 8, _fileIdx = 0;
 function nextFileIdx() { return _fileIdx++; }

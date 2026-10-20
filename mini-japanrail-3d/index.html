@@ -841,7 +841,8 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
   transition:background .12s, transform .18s var(--ease-smooth); }
 .lrow:hover { background:var(--glass-2); transform:translateY(-1px); }
 .lrow:active { transform:scale(.985); }
-.lrow .lb { width:36px; height:32px; border-radius:10px; background:color-mix(in srgb,var(--lc,#4f8ef7) 22%, transparent); color:var(--lc,#4f8ef7); font-weight:900; font-size:14px; display:flex; align-items:center; justify-content:center; flex:none; }
+.lrow .lb { width:36px; height:32px; border-radius:10px; background:color-mix(in srgb,var(--lc,#4f8ef7) 22%, transparent); color:var(--lc,#4f8ef7); font-weight:900; font-size:14px; display:flex; align-items:center; justify-content:center; flex:none; overflow:hidden; }
+.lrow .lb img.lb-ic { width:100%; height:100%; object-fit:contain; display:block; padding:2px; box-sizing:border-box; }
 .lrow .lnm { font-size:17px; font-weight:800; color:var(--lc,#4f8ef7); flex:1; }
 .lrow .lgo { width:30px; height:30px; border-radius:10px; background:rgba(120,140,180,.18); display:flex; align-items:center; justify-content:center; font-size:12px; transition:transform .2s, background .2s; flex:none; }
 .lrow.open .lgo { background:var(--lc,#4f8ef7); color:#fff; transform:rotate(90deg); }
@@ -1231,6 +1232,7 @@ window.addEventListener('unhandledrejection', e => { __pushErr('REJ ' + (e.reaso
 (() => { const oc = console.error; console.error = function () { __pushErr('CERR ' + Array.from(arguments).map(a => (a && a.message) ? a.message : String(a)).join(' ;; ').slice(0, 300)); return oc.apply(console, arguments); }; })();
 </script>
 
+<script src="data/line_icons.js"></script>
 <script type="module">
 /* ================================================================== *
  *  Mini JapanRail｜全日本列车实时运行可视化地图(单文件版)
@@ -5209,7 +5211,8 @@ function dirHtml(L, d, hour) {
 }
 function lineRowHtml(L, hour) {
   const sym = SYM[L.name] || '';
-  let h = '<div class="lrow" style="--lc:' + L.color + '"><span class="lb">' + (sym ? esc(sym) : '●') + '</span><span class="lnm">' + esc(L.name) + '</span><span class="lgo">' + ICO.arrow + '</span></div>';
+  const lic = (window.LINE_ICON || {})[L.name];
+  let h = '<div class="lrow" style="--lc:' + L.color + '"><span class="lb">' + (lic ? '<img class="lb-ic" src="' + lic + '" alt="' + esc(sym) + '" loading="lazy">' : (sym ? esc(sym) : '●')) + '</span><span class="lnm">' + esc(L.name) + '</span><span class="lgo">' + ICO.arrow + '</span></div>';
   h += '<div class="lpanel" style="--lc:' + L.color + '">';
   const dirs = (sheetDepArr === 'arr') ? (L.dirsArr || []) : L.dirs;
   if (!dirs.length) { h += '<div style="padding:10px 12px;color:var(--dim);font-size:11px">' + (sheetDepArr === 'arr' ? '到着列車はありません' : '発車列車はありません') + '</div></div>'; return h; }

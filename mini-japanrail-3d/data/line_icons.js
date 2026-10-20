@@ -1,15 +1,16 @@
-/* 日本铁道线路小图标 URL 映射（395 条，2026-10-20 扩充+补漏）。
+/* 日本铁道线路小图标 URL 映射（403 条，2026-10-20 深度复查补漏）。
  * SVG 按线路名单独切分存储于 jr-static CDN：https://jr-static.suki.ing/data/lines_icons/<线路名>.svg
  * 来源：补充数据集《日本铁道线路图标数据集》(Wikimedia Commons 原始矢量)
  * 选择规则：线路名×运营商一致性校验（op_for_line：LINE_OP_FALLBACK → segments3d → 名称变体）；
- *   名称变体：本線→線、公司前缀剥离(東京メトロ/都営地下鉄/仙台/横浜市営/福岡市営/jr/tkj/ir)、
- *   gallery 侧 N号線 前缀与 N号線（別名）提取、・组合拆分、IR/JR 大小写归一；
+ *   名称变体：本線→線、公司前缀剥离(東京メトロ/都営地下鉄/仙台/横浜市営/のと鉄道/jr/tkj/ir)、
+ *   N号線 前缀与 N号線（別名）提取、・组合拆分、IR/JR 大小写归一、线/ライン 与 羽田/羽田空港 长公共子串兜底；
  *   同名异司线路仅在运营商一致时启用（东西線/南北線/山手線/空港線/本線 等按运营商精确配对）。
  */
 window.LINE_ICON = {
 "1号線東山線":"https://jr-static.suki.ing/data/lines_icons/1%E5%8F%B7%E7%B7%9A%E6%9D%B1%E5%B1%B1%E7%B7%9A.svg",
 "2号線名城線・名港線":"https://jr-static.suki.ing/data/lines_icons/2%E5%8F%B7%E7%B7%9A%E5%90%8D%E5%9F%8E%E7%B7%9A%E3%83%BB%E5%90%8D%E6%B8%AF%E7%B7%9A.svg",
 "3号線鶴舞線":"https://jr-static.suki.ing/data/lines_icons/3%E5%8F%B7%E7%B7%9A%E9%B6%B4%E8%88%9E%E7%B7%9A.svg",
+"4号線名城線":"https://jr-static.suki.ing/data/lines_icons/4%E5%8F%B7%E7%B7%9A%E5%90%8D%E5%9F%8E%E7%B7%9A.svg",
 "6号線桜通線":"https://jr-static.suki.ing/data/lines_icons/6%E5%8F%B7%E7%B7%9A%E6%A1%9C%E9%80%9A%E7%B7%9A.svg",
 "irいしかわ鉄道線":"https://jr-static.suki.ing/data/lines_icons/ir%E3%81%84%E3%81%97%E3%81%8B%E3%82%8F%E9%89%84%E9%81%93%E7%B7%9A.svg",
 "jr七尾線":"https://jr-static.suki.ing/data/lines_icons/jr%E4%B8%83%E5%B0%BE%E7%B7%9A.svg",
@@ -25,6 +26,7 @@ window.LINE_ICON = {
 "おおさか東線":"https://jr-static.suki.ing/data/lines_icons/%E3%81%8A%E3%81%8A%E3%81%95%E3%81%8B%E6%9D%B1%E7%B7%9A.svg",
 "こどもの国線":"https://jr-static.suki.ing/data/lines_icons/%E3%81%93%E3%81%A9%E3%82%82%E3%81%AE%E5%9B%BD%E7%B7%9A.svg",
 "しなの鉄道線":"https://jr-static.suki.ing/data/lines_icons/%E3%81%97%E3%81%AA%E3%81%AE%E9%89%84%E9%81%93%E7%B7%9A.svg",
+"のと鉄道七尾線":"https://jr-static.suki.ing/data/lines_icons/%E3%81%AE%E3%81%A8%E9%89%84%E9%81%93%E4%B8%83%E5%B0%BE%E7%B7%9A.svg",
 "ほくほく線":"https://jr-static.suki.ing/data/lines_icons/%E3%81%BB%E3%81%8F%E3%81%BB%E3%81%8F%E7%B7%9A.svg",
 "みなとみらい21線":"https://jr-static.suki.ing/data/lines_icons/%E3%81%BF%E3%81%AA%E3%81%A8%E3%81%BF%E3%82%89%E3%81%8421%E7%B7%9A.svg",
 "りんかい線":"https://jr-static.suki.ing/data/lines_icons/%E3%82%8A%E3%82%93%E3%81%8B%E3%81%84%E7%B7%9A.svg",
@@ -122,6 +124,7 @@ window.LINE_ICON = {
 "南港ポートタウン線":"https://jr-static.suki.ing/data/lines_icons/%E5%8D%97%E6%B8%AF%E3%83%9D%E3%83%BC%E3%83%88%E3%82%BF%E3%82%A6%E3%83%B3%E7%B7%9A.svg",
 "博多南線":"https://jr-static.suki.ing/data/lines_icons/%E5%8D%9A%E5%A4%9A%E5%8D%97%E7%B7%9A.svg",
 "参宮線":"https://jr-static.suki.ing/data/lines_icons/%E5%8F%82%E5%AE%AE%E7%B7%9A.svg",
+"叡山本線":"https://jr-static.suki.ing/data/lines_icons/%E5%8F%A1%E5%B1%B1%E6%9C%AC%E7%B7%9A.svg",
 "只見線":"https://jr-static.suki.ing/data/lines_icons/%E5%8F%AA%E8%A6%8B%E7%B7%9A.svg",
 "可部線":"https://jr-static.suki.ing/data/lines_icons/%E5%8F%AF%E9%83%A8%E7%B7%9A.svg",
 "各務原線":"https://jr-static.suki.ing/data/lines_icons/%E5%90%84%E5%8B%99%E5%8E%9F%E7%B7%9A.svg",
@@ -136,6 +139,7 @@ window.LINE_ICON = {
 "唐津線":"https://jr-static.suki.ing/data/lines_icons/%E5%94%90%E6%B4%A5%E7%B7%9A.svg",
 "四つ橋線":"https://jr-static.suki.ing/data/lines_icons/%E5%9B%9B%E3%81%A4%E6%A9%8B%E7%B7%9A.svg",
 "因美線":"https://jr-static.suki.ing/data/lines_icons/%E5%9B%A0%E7%BE%8E%E7%B7%9A.svg",
+"国際文化公園都市モノレール線":"https://jr-static.suki.ing/data/lines_icons/%E5%9B%BD%E9%9A%9B%E6%96%87%E5%8C%96%E5%85%AC%E5%9C%92%E9%83%BD%E5%B8%82%E3%83%A2%E3%83%8E%E3%83%AC%E3%83%BC%E3%83%AB%E7%B7%9A.svg",
 "城端線":"https://jr-static.suki.ing/data/lines_icons/%E5%9F%8E%E7%AB%AF%E7%B7%9A.svg",
 "埼玉高速鉄道線":"https://jr-static.suki.ing/data/lines_icons/%E5%9F%BC%E7%8E%89%E9%AB%98%E9%80%9F%E9%89%84%E9%81%93%E7%B7%9A.svg",
 "堺筋線":"https://jr-static.suki.ing/data/lines_icons/%E5%A0%BA%E7%AD%8B%E7%B7%9A.svg",
@@ -233,6 +237,7 @@ window.LINE_ICON = {
 "東京メトロ南北線":"https://jr-static.suki.ing/data/lines_icons/%E6%9D%B1%E4%BA%AC%E3%83%A1%E3%83%88%E3%83%AD%E5%8D%97%E5%8C%97%E7%B7%9A.svg",
 "東京メトロ有楽町線":"https://jr-static.suki.ing/data/lines_icons/%E6%9D%B1%E4%BA%AC%E3%83%A1%E3%83%88%E3%83%AD%E6%9C%89%E6%A5%BD%E7%94%BA%E7%B7%9A.svg",
 "東京メトロ東西線":"https://jr-static.suki.ing/data/lines_icons/%E6%9D%B1%E4%BA%AC%E3%83%A1%E3%83%88%E3%83%AD%E6%9D%B1%E8%A5%BF%E7%B7%9A.svg",
+"東京モノレール羽田空港線":"https://jr-static.suki.ing/data/lines_icons/%E6%9D%B1%E4%BA%AC%E3%83%A2%E3%83%8E%E3%83%AC%E3%83%BC%E3%83%AB%E7%BE%BD%E7%94%B0%E7%A9%BA%E6%B8%AF%E7%B7%9A.svg",
 "東京臨海新交通臨海線":"https://jr-static.suki.ing/data/lines_icons/%E6%9D%B1%E4%BA%AC%E8%87%A8%E6%B5%B7%E6%96%B0%E4%BA%A4%E9%80%9A%E8%87%A8%E6%B5%B7%E7%B7%9A.svg",
 "東北新幹線":"https://jr-static.suki.ing/data/lines_icons/%E6%9D%B1%E5%8C%97%E6%96%B0%E5%B9%B9%E7%B7%9A.svg",
 "東北本線":"https://jr-static.suki.ing/data/lines_icons/%E6%9D%B1%E5%8C%97%E6%9C%AC%E7%B7%9A.svg",
@@ -257,6 +262,8 @@ window.LINE_ICON = {
 "桐生線":"https://jr-static.suki.ing/data/lines_icons/%E6%A1%90%E7%94%9F%E7%B7%9A.svg",
 "桜井線":"https://jr-static.suki.ing/data/lines_icons/%E6%A1%9C%E4%BA%95%E7%B7%9A.svg",
 "桜島線":"https://jr-static.suki.ing/data/lines_icons/%E6%A1%9C%E5%B3%B6%E7%B7%9A.svg",
+"横浜市営地下鉄1号線":"https://jr-static.suki.ing/data/lines_icons/%E6%A8%AA%E6%B5%9C%E5%B8%82%E5%96%B6%E5%9C%B0%E4%B8%8B%E9%89%841%E5%8F%B7%E7%B7%9A.svg",
+"横浜市営地下鉄3号線":"https://jr-static.suki.ing/data/lines_icons/%E6%A8%AA%E6%B5%9C%E5%B8%82%E5%96%B6%E5%9C%B0%E4%B8%8B%E9%89%843%E5%8F%B7%E7%B7%9A.svg",
 "横浜市営地下鉄4号線":"https://jr-static.suki.ing/data/lines_icons/%E6%A8%AA%E6%B5%9C%E5%B8%82%E5%96%B6%E5%9C%B0%E4%B8%8B%E9%89%844%E5%8F%B7%E7%B7%9A.svg",
 "横浜線":"https://jr-static.suki.ing/data/lines_icons/%E6%A8%AA%E6%B5%9C%E7%B7%9A.svg",
 "横須賀線":"https://jr-static.suki.ing/data/lines_icons/%E6%A8%AA%E9%A0%88%E8%B3%80%E7%B7%9A.svg",
@@ -366,6 +373,7 @@ window.LINE_ICON = {
 "都営地下鉄三田線":"https://jr-static.suki.ing/data/lines_icons/%E9%83%BD%E5%96%B6%E5%9C%B0%E4%B8%8B%E9%89%84%E4%B8%89%E7%94%B0%E7%B7%9A.svg",
 "都営地下鉄新宿線":"https://jr-static.suki.ing/data/lines_icons/%E9%83%BD%E5%96%B6%E5%9C%B0%E4%B8%8B%E9%89%84%E6%96%B0%E5%AE%BF%E7%B7%9A.svg",
 "野田線":"https://jr-static.suki.ing/data/lines_icons/%E9%87%8E%E7%94%B0%E7%B7%9A.svg",
+"金沢シーサイド線":"https://jr-static.suki.ing/data/lines_icons/%E9%87%91%E6%B2%A2%E3%82%B7%E3%83%BC%E3%82%B5%E3%82%A4%E3%83%89%E7%B7%9A.svg",
 "金町線":"https://jr-static.suki.ing/data/lines_icons/%E9%87%91%E7%94%BA%E7%B7%9A.svg",
 "釜石線":"https://jr-static.suki.ing/data/lines_icons/%E9%87%9C%E7%9F%B3%E7%B7%9A.svg",
 "釧網本線":"https://jr-static.suki.ing/data/lines_icons/%E9%87%A7%E7%B6%B2%E6%9C%AC%E7%B7%9A.svg",

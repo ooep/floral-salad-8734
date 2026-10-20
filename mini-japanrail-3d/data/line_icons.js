@@ -1,9 +1,9 @@
-/* 日本铁道线路小图标 URL 映射（394 条，2026-10-20 扩充+补漏）。
+/* 日本铁道线路小图标 URL 映射（395 条，2026-10-20 扩充+补漏）。
  * SVG 按线路名单独切分存储于 jr-static CDN：https://jr-static.suki.ing/data/lines_icons/<线路名>.svg
  * 来源：补充数据集《日本铁道线路图标数据集》(Wikimedia Commons 原始矢量)
  * 选择规则：线路名×运营商一致性校验（op_for_line：LINE_OP_FALLBACK → segments3d → 名称变体）；
  *   名称变体：本線→線、公司前缀剥离(東京メトロ/都営地下鉄/仙台/横浜市営/福岡市営/jr/tkj/ir)、
- *   gallery 侧 N号線 前缀与 N号線（別名）提取、・组合拆分、IR 大小写归一；
+ *   gallery 侧 N号線 前缀与 N号線（別名）提取、・组合拆分、IR/JR 大小写归一；
  *   同名异司线路仅在运营商一致时启用（东西線/南北線/山手線/空港線/本線 等按运营商精确配对）。
  */
 window.LINE_ICON = {
@@ -17,6 +17,7 @@ window.LINE_ICON = {
 "jr山口線":"https://jr-static.suki.ing/data/lines_icons/jr%E5%B1%B1%E5%8F%A3%E7%B7%9A.svg",
 "jr山田線":"https://jr-static.suki.ing/data/lines_icons/jr%E5%B1%B1%E7%94%B0%E7%B7%9A.svg",
 "jr日光線":"https://jr-static.suki.ing/data/lines_icons/jr%E6%97%A5%E5%85%89%E7%B7%9A.svg",
+"jr東西線":"https://jr-static.suki.ing/data/lines_icons/jr%E6%9D%B1%E8%A5%BF%E7%B7%9A.svg",
 "tkj城北線":"https://jr-static.suki.ing/data/lines_icons/tkj%E5%9F%8E%E5%8C%97%E7%B7%9A.svg",
 "あいの風とやま鉄道線":"https://jr-static.suki.ing/data/lines_icons/%E3%81%82%E3%81%84%E3%81%AE%E9%A2%A8%E3%81%A8%E3%82%84%E3%81%BE%E9%89%84%E9%81%93%E7%B7%9A.svg",
 "いずみ野線":"https://jr-static.suki.ing/data/lines_icons/%E3%81%84%E3%81%9A%E3%81%BF%E9%87%8E%E7%B7%9A.svg",

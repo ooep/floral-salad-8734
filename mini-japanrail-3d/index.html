@@ -1232,7 +1232,7 @@ window.addEventListener('unhandledrejection', e => { __pushErr('REJ ' + (e.reaso
 (() => { const oc = console.error; console.error = function () { __pushErr('CERR ' + Array.from(arguments).map(a => (a && a.message) ? a.message : String(a)).join(' ;; ').slice(0, 300)); return oc.apply(console, arguments); }; })();
 </script>
 
-<script src="data/line_icons.js"></script>
+<script src="https://jr-static.suki.ing/data/line_icons.js"></script>
 <script type="module">
 /* ================================================================== *
  *  Mini JapanRail｜全日本列车实时运行可视化地图(单文件版)

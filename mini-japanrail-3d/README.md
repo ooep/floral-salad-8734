@@ -13,7 +13,7 @@
 | 🎨 官方线路色轨道 | 双层发光渲染，4,729 段 / 8,532 站，高 zoom 日文站名标签 |
 | 🎯 点击列车 → 详情 + 跟随 | 车种 / 当前线路 / 下一站与到点 / 速度 / 途经线路 / 班次号，相机连续跟踪 |
 | 🚉 点击车站 → 途经线路 | 线路彩色 chip，点击可高亮整线 |
-| 🏷️ 线路小图标 | 车站时刻表面板每条线路显示官方线路记号/标志 SVG（按线路名切分存放 `data/lines_icons/*.svg`，经 jr-static CDN 分发，373 线，Wikimedia Commons 原始矢量） |
+| 🏷️ 线路小图标 | 车站时刻表面板每条线路显示官方线路记号/标志 SVG（按线路名切分存放 `data/lines_icons/*.svg`，经 jr-static CDN 分发，394 线，Wikimedia Commons 原始矢量） |
 | 🔍 搜索 | 站 / 线日文名联想（高亮命中），定位 + 高亮 |
 | 🗺️ 路线搜索 | 起终点最短路（Dijkstra，距离 + 换乘罚），分段按线路色高亮， nationwide 可达 |
 | ⏱️ 时钟控制 | 播放/暂停、时间滑块（任意时刻回放）、0.5×–8× 倍速、回到现在（实时） |
@@ -32,7 +32,7 @@
 - `s` 串解码:首项 = 首站发车分钟,**其后为相对前一站事件的差值**(到站、发车交替,终点只有到站),长度 = 2N-2
 - `tmaps.json`:`{班次id: {s_jas:[停站序列], lines:[途经线路]}}`,班次 id 可被多个 T 行复用(同径不同发车时刻)
 - `orm_tracks.0.geojson` / `orm_tracks.1.geojson`:ORM 线位图层(2 分片,各 <25MB 适配 CF Pages 单文件上限,客户端合并),`properties={color,line,kind,op}`,LineString;由 OSM 全日本数据构建(见下)
-- `line_icons.js`:线路小图标 URL 映射(373 条),`window.LINE_ICON = {线路名: "https://jr-static.suki.ing/data/lines_icons/<线路名>.svg"}`;SVG 按线路名单独切分存放于 `data/lines_icons/`(373 个文件,由 jr-static CDN 分发,浏览器按需并行加载+缓存);来源 Wikimedia Commons 线路记号/标志/新干线图形,经 线路名×运营商 与地图数据一致性校验(同名异司线路仅在运营商一致时启用);无图标线路回退文字记号/●
+- `line_icons.js`:线路小图标 URL 映射(394 条),`window.LINE_ICON = {线路名: "https://jr-static.suki.ing/data/lines_icons/<线路名>.svg"}`;SVG 按线路名单独切分存放于 `data/lines_icons/`(394 个文件,由 jr-static CDN 分发,浏览器按需并行加载+缓存);来源 Wikimedia Commons 线路记号/标志/新干线图形,经 线路名×运营商 与地图数据一致性校验(同名异司线路仅在运营商一致时启用);无图标线路回退文字记号/●
 
 ## 技术要点
 

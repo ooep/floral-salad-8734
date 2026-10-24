@@ -474,30 +474,6 @@ button { font-family:inherit; }
 #detail .d-wiki.na .d-wiki-hd { cursor:default; }
 #detail .d-wiki.na .d-wiki-hd .mv { opacity:.55; font-weight:500; }
 #detail .d-wiki.na .dw-ar { display:none; }
-/* ── 3D 模型入口(百科区旁) ── */
-#detail .d-model { display:flex; align-items:center; gap:9px; margin:2px 2px 10px; padding:10px 12px; border:1px solid var(--glass-edge); border-radius:14px; background:var(--glass); cursor:pointer; -webkit-user-select:none; user-select:none; -webkit-tap-highlight-color:transparent; transition:background .15s, transform .1s; }
-#detail .d-model:hover { background:var(--glass-2); }
-#detail .d-model:active { transform:scale(.97); }
-#detail .d-model .dm-ic { width:30px; height:30px; flex:none; border-radius:9px; background:color-mix(in srgb,var(--acc) 20%,transparent); color:var(--acc-txt); display:flex; align-items:center; justify-content:center; }
-#detail .d-model .dm-tx { flex:1; min-width:0; }
-#detail .d-model .dm-t { font-size:12.5px; font-weight:700; color:var(--txt); }
-#detail .d-model .dm-s { font-size:10.5px; color:var(--dim); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-/* ── 3D 模型全屏查看器抽屉(交互与车站信息抽屉一致:遮罩+关闭) ── */
-#m3dMask { position:fixed; inset:0; background:rgba(4,7,12,.72); z-index:44; opacity:0; visibility:hidden; transition:opacity .28s ease, visibility 0s linear .28s; -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); }
-#m3dMask.open { opacity:1; visibility:visible; transition:opacity .28s ease, visibility 0s linear 0s; }
-#m3dViewer { position:fixed; inset:0; z-index:45; opacity:0; visibility:hidden; pointer-events:none; transition:opacity .26s ease, visibility 0s linear .26s; }
-#m3dViewer.open { opacity:1; visibility:visible; pointer-events:auto; transition:opacity .26s ease, visibility 0s linear 0s; }
-#m3dViewer canvas { position:absolute; inset:0; width:100%; height:100%; display:block; touch-action:none; }
-#m3dViewer .m3d-hd { position:absolute; top:max(10px,env(safe-area-inset-top)); left:0; right:0; display:flex; align-items:center; gap:10px; padding:0 16px; z-index:2; pointer-events:none; }
-#m3dViewer .m3d-tx { flex:1; min-width:0; }
-#m3dViewer .m3d-nm { font-size:15px; font-weight:800; color:var(--txt); text-shadow:0 1px 6px rgba(0,0,0,.6); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-#m3dViewer .m3d-sub { font-size:11px; color:var(--dim); margin-top:2px; text-shadow:0 1px 4px rgba(0,0,0,.6); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-#m3dViewer .m3d-x { pointer-events:auto; width:34px; height:34px; min-width:34px; min-height:34px; padding:0; border-radius:50%; border:1px solid rgba(255,255,255,.16); background:rgba(10,14,22,.55); color:var(--txt); display:flex; align-items:center; justify-content:center; cursor:pointer; -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); }
-#m3dViewer .m3d-x:hover { background:rgba(40,52,72,.72); }
-#m3dViewer .m3d-hint { position:absolute; left:50%; bottom:max(14px,env(safe-area-inset-bottom)); transform:translateX(-50%); z-index:2; font-size:11px; color:var(--dim); background:rgba(8,12,20,.5); border:1px solid rgba(255,255,255,.1); border-radius:999px; padding:6px 14px; pointer-events:none; text-align:center; -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); }
-#m3dViewer .m3d-load { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); z-index:2; color:var(--dim); font-size:12.5px; display:flex; flex-direction:column; align-items:center; gap:10px; pointer-events:none; }
-#m3dViewer .m3d-load .spin { width:26px; height:26px; border-radius:50%; border:2.5px solid rgba(120,150,200,.22); border-top-color:var(--acc-txt); animation:m3dSpin .8s linear infinite; }
-@keyframes m3dSpin { to { transform:rotate(360deg); } }
 #detail .d-wiki-bd { display:grid; grid-template-rows:0fr; transition:grid-template-rows var(--morph-out) var(--spring-out); }
 #detail .d-wiki[data-open="1"] .d-wiki-bd { grid-template-rows:1fr; }
 #detail .d-wiki-bd > .dw-in { min-height:0; overflow:hidden; }
@@ -1129,8 +1105,6 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
         <div class="sw on" id="swFp"><span id="tSw8">车站轮廓</span><span class="trk"></span></div>
         <div class="sw on" id="swEnt"><span id="tSw9">出入口</span><span class="trk"></span></div>
         <div class="sw on" id="swOrm"><span id="tSw10">详细股道</span><span class="trk"></span></div>
-        <div class="sw on" id="swM3d"><span id="tSw13">高倍率 3D 列车模型</span><span class="trk"></span></div>
-        <div class="swnote" id="tSw13Note">地图放大到最大层级时，视口内列车切换为同车型真实 3D 模型（无模型自动回退）</div>
         <div class="sw on" id="swBase"><span id="tSw4">底图瓦片</span><span class="trk"></span></div>
         <div class="sec-t" id="tBase" style="margin-top:12px">底图源</div>
         <div class="frow" id="baseSrcRow">
@@ -1280,8 +1254,6 @@ window.addEventListener('unhandledrejection', e => { __pushErr('REJ ' + (e.reaso
 <script src="https://jr-static.suki.ing/data/line_icons.js"></script>
 <script type="importmap">
 { "imports": {
-    "three": "https://jr-static.suki.ing/vendor/three/three.module.js",
-    "three/addons/": "https://jr-static.suki.ing/vendor/three/jsm/"
 } }
 </script>
 <script type="module">
@@ -1492,8 +1464,7 @@ const I18N = {
     filterT:'线路类型', legendT:'图例', dayT:'运行日', dayAuto:'自动', setT:'设置', dataT:'数据', helpT:'帮助', aboutT:'关于',
     about1:'Mini JapanRail — 全日本列车实时运行可视化地图（列車走行位置・運行情報）。基于本地时刻表在浏览器端实时推算新干线・特急・在来线・地铁・路面电车约 4,000 列列车的走行位置，支持 3D 地球投影、时钟回放与路线搜索。', about2:'收录全国 600+ 条铁路线路、8,900+ 个车站。数据源为日本全国铁路计划时刻表，每周自动刷新；页面运行时零外部请求。', about3:'本站为个人爱好项目，数据仅供学习参考。', about4:'隐私政策',
     about5:'主要功能：实时列车位置・走行位置动画 / 3D 地球投影 / 时钟回放（0.5–32×）/ 起终点路线搜索 / 车站查询与途经线路 / 运行日切换 / 线路类型过滤 / 日・中・英三语。', about6:'浏览静态页面：',
-    sw1:'车站标签', sw2:'轨道光晕', sw3:'车站点', sw4:'底图瓦片', sw5:'列车光晕', sw6:'复制异常车辆', sw7:'列车悬浮提示', sw8:'车站轮廓', sw9:'出入口', sw10:'详细股道', sw12:'车站徽章', sw13:'高倍率 3D 列车模型',
-    m3dNote:'地图放大到最大层级时，视口内列车切换为同车型真实 3D 模型（无模型自动回退）', m3dBtn:'查看 3D 模型', m3dView:'完整编组 3D 查看器', m3dHint:'拖动旋转 · 滚轮缩放', m3dLoadT:'正在加载模型…', m3dNone:'该车型暂无 3D 模型',
+    sw1:'车站标签', sw2:'轨道光晕', sw3:'车站点', sw4:'底图瓦片', sw5:'列车光晕', sw6:'复制异常车辆', sw7:'列车悬浮提示', sw8:'车站轮廓', sw9:'出入口', sw10:'详细股道', sw12:'车站徽章',
     sw11:'性能改善', sw11Note:'低倍率下只渲染新干线・特急，放大后逐级加入快速・普通列车（含地铁・路面电车）；等级切换与进出视野均为淡入淡出，避免列车突然出现或消失',
     modeT:'列车显示', mode3d:'3D', modeIcon:'图标', modeCute:'可爱',
     iconSetT:'图标集', iSetDefault:'默认', iSetVector:'矢量', iconSetNote:'仅"图标"模式生效',
@@ -1526,8 +1497,7 @@ const I18N = {
     filterT:'路線種別', legendT:'凡例', dayT:'運行日', dayAuto:'自動', setT:'設定', dataT:'データ', helpT:'ヘルプ', aboutT:'このサイトについて',
     about1:'ミニ日本鉄道 — 全国鉄道リアルタイム3Dマップ（列車走行位置・運行情報）。ローカル時刻表から新幹線・特急・在来線・地下鉄・路面電車 約 4,000 列の走行位置をブラウザ上でリアルタイムに再現。3D 地球投影・時刻表再生・経路検索に対応。', about2:'全国 600 以上の路線・8,900 以上の駅を収録。データソースは全国鉄道の計画時刻表で、毎週自動更新。ページ実行時の外部リクエストはありません。', about3:'個人の趣味プロジェクトです。データは学習・参考用です。', about4:'プライバシーポリシー',
     about5:'主な機能：リアルタイム列車位置・走行位置アニメーション / 3D 地球投影 / 時刻表再生（0.5〜32倍速）/ 経路検索 / 駅検索と経由路線 / 運行日切替 / 路線種別フィルタ / 日・中・英 3 言語。', about6:'静的ページを見る：',
-    sw1:'駅ラベル', sw2:'軌道グロー', sw3:'駅ドット', sw4:'背景タイル', sw5:'列車グロー', sw6:'異常列車コピー', sw7:'列車ホバーチップ', sw8:'駅舎ポリゴン', sw9:'出入口', sw10:'詳細軌道', sw12:'駅バッジ', sw13:'高倍率 3D 列車モデル',
-    m3dNote:'地図を最大ズームまで拡大すると、視界内の列車が同型の実物 3D モデルに切り替わります（モデルが無い列車は自動的に元の表示へ）', m3dBtn:'3Dモデルを見る', m3dView:'編成全体 3D ビューア', m3dHint:'ドラッグで回転・ホイールでズーム', m3dLoadT:'モデルを読み込み中…', m3dNone:'この車種の3Dモデルはありません',
+    sw1:'駅ラベル', sw2:'軌道グロー', sw3:'駅ドット', sw4:'背景タイル', sw5:'列車グロー', sw6:'異常列車コピー', sw7:'列車ホバーチップ', sw8:'駅舎ポリゴン', sw9:'出入口', sw10:'詳細軌道', sw12:'駅バッジ',
     sw11:'パフォーマンス改善', sw11Note:'低ズームでは新幹線・特急のみ描画し、拡大すると快速・普通列車（地下鉄・路面電車を含む）を段階的に追加。種別の切替や画面への出入りはフェードイン／アウトで行われ、列車が突然現れたり消えたりしません',
     modeT:'列車表示', mode3d:'3D', modeIcon:'アイコン', modeCute:'かわいい',
     iconSetT:'アイコンセット', iSetDefault:'標準', iSetVector:'ベクター', iconSetNote:'「アイコン」モードのみ有効',
@@ -1560,8 +1530,7 @@ const I18N = {
     filterT:'Line types', legendT:'Legend', dayT:'Service day', dayAuto:'Auto', setT:'Settings', dataT:'Data', helpT:'Help', aboutT:'About',
     about1:'Mini JapanRail — a real-time 3D map of all Japan railways (train live positions). Driven by local timetables, it animates the positions of ~4,000 Shinkansen, limited express, local, subway and tram trains, with 3D globe projection, timetable replay and route search.', about2:'Covers 600+ railway lines and 8,900+ stations. Data source: scheduled timetables for all Japan railways, auto-refreshed weekly; zero external requests at runtime.', about3:'A personal hobby project — data provided for reference only.', about4:'Privacy Policy',
     about5:'Key features: live train positions / 3D globe projection / timetable replay (0.5–32×) / route search / station lookup and its lines / service-day switch / line-type filter / Japanese, Chinese and English UI.', about6:'Browse static pages:',
-    sw1:'Station labels', sw2:'Track glow', sw3:'Station dots', sw4:'Basemap tiles', sw5:'Train glow', sw6:'Copy off-rail trains', sw7:'Train hover tooltip', sw8:'Station footprint', sw9:'Station exits', sw10:'Detailed tracks', sw12:'Station badges', sw13:'High-zoom 3D train models',
-    m3dNote:'When zoomed in to the maximum, trains in view switch to real 3D models of the same type (falls back automatically when no model exists)', m3dBtn:'View 3D model', m3dView:'Full-consist 3D viewer', m3dHint:'Drag to rotate · Scroll to zoom', m3dLoadT:'Loading model…', m3dNone:'No 3D model for this type',
+    sw1:'Station labels', sw2:'Track glow', sw3:'Station dots', sw4:'Basemap tiles', sw5:'Train glow', sw6:'Copy off-rail trains', sw7:'Train hover tooltip', sw8:'Station footprint', sw9:'Station exits', sw10:'Detailed tracks', sw12:'Station badges',
     sw11:'Performance boost', sw11Note:'At low zoom only Shinkansen and limited express are drawn; zooming in progressively adds rapid and local trains (incl. subway and tram). Grade switches and entering/leaving the view cross-fade, so trains never pop in or out',
     modeT:'Train display', mode3d:'3D', modeIcon:'Icon', modeCute:'Cute',
     iconSetT:'Icon set', iSetDefault:'Default', iSetVector:'Vector', iconSetNote:'Applies to "Icon" mode only',
@@ -2934,7 +2903,6 @@ function locateSeg(t, M2) {
 const _pos = [0, 0, 0, '', '', 0];
 function trainPosition(t, M) {
   const { dep, arr, N, jas } = t;
-  _pos[7] = null; _pos[8] = null; _pos[9] = 0; _pos[10] = 0; /* 3D 逐车厢采样数据清脏(共享暂存) */
   if (M < dep[0] - 1e-6 || M > arr[N-1] + 1e-6) return null;
   let i = locateSeg(t, M);
   /* 零时长区间前瞻: 下一区间 run=0 且其平滑窗已开始(本站无停车可借时窗口提前到
@@ -2975,7 +2943,6 @@ function trainPosition(t, M) {
           _pos[2] = Math.atan2(co[k][0]-co[0][0], co[k][1]-co[0][1]); }
       }
       _pos[0] = c[0]; _pos[1] = c[1]; _pos[3] = e ? e.line : lineOfPair(t, i); _pos[4] = kindOfPair(t, i); _pos[5] = 0;
-      if (e) { _pos[7] = e.coords; _pos[8] = e.cum; _pos[9] = e.len; _pos[10] = 0; } /* 停车:锚=站中心(arc 0) */
       return _pos;
     }
     /* 无坐标站停车(磐越西線咲花/日出谷等):fallthrough 到已知站对路径定位,列车不消失 */
@@ -3047,7 +3014,6 @@ function trainPosition(t, M) {
     }
   }
   if (coords) {
-    _pos[7] = coords; _pos[8] = cum; _pos[9] = len; _pos[10] = fPos * len; /* 3D 模型逐车厢贴轨采样用 */
     if (len <= 0) { _pos[0] = coords[0][0]; _pos[1] = coords[0][1]; }
     else {
       const target = fPos * len;
@@ -3205,7 +3171,6 @@ function localMatrixFrom(mainM, cx, cy) {
   __localM[15] = mainM[15] + mainM[3] * cx + mainM[7] * cy;
   return __localM;
 }
-let __mvpMain = null, __mvpT = 0; /* maplibre defaultProjectionData.mainMatrix(custom layer render 每帧截获) */
 const trainShaderLayer = {
   id: 'trains-gl', type: 'custom', renderingMode: '2d', shaderMap: new Map(),
   getShader(gl, sd) {
@@ -3312,10 +3277,6 @@ void main() {
     gl.bindVertexArray(null);
   },
   render(gl, args) {
-    /* mainMatrix 截获必须在 visibleCount 早退之前:视野内列车全部被 3D 接管时方盒顶点为 0,
-       若在早退之后才截获,覆盖层会因矩阵过期清屏 → 列车整列消失 */
-    const D0 = args.defaultProjectionData;
-    if (D0 && D0.mainMatrix) { __mvpMain = D0.mainMatrix; __mvpT = performance.now(); }
     if (!visibleCount) return;
     __renderCount++;
     // 始终复用第一个已编译程序(globe prelude 内含 mercator 过渡逻辑,tr=0 时等价),
@@ -3624,9 +3585,6 @@ function updateTrains(M, dtms) {
   const drawGlow = glowOn && z < 9 && !iconMode;
   glowN = 0;                 /* 光晕暂存计数归零(缓冲与 Set 均为模块级复用,不每帧分配) */
   drawnCouple.clear();
-  /* 高倍率 3D 模型门:开关开 + WebGL2 + zoom 达阈值 + 映射表就绪 */
-  const m3dGate = model3dOn && hasWebgl2 && z >= 15.2 && M3D.ready;
-  let m3dQuota = 12;         /* 本帧最多触发 12 个车型加载(防放大瞬间请求风暴) */
 
   /* ── 阶段 1:廉价筛选(等级 → 视口包围盒 → 运行窗口),只做 O(1) 比较,不碰位置解算 ──
      结果写入 eligible,并用 _ok 帧戳标记"本帧应显示"(阶段 2 据此算 alpha 目标值)。
@@ -3778,22 +3736,6 @@ function updateTrains(M, dtms) {
           break;
         }
       }
-    }
-    /* ── 3D 模型接管:门开 + 命中映射 + 模板就绪 → 跳过方盒/图标顶点,由 M3D 覆盖层渲染;
-          未命中/加载中 → 照常走原模式(回退)。visibleTrips 仍登记(拾取/跟随/详情不受影响) ── */
-    if (m3dGate) {
-      const m3dPath = M3D.pathOf(t);
-      if (m3dPath) {
-        if (m3dQuota > 0 && M3D.ensureNew(m3dPath)) m3dQuota--;
-        if (M3D.ok && M3D.covers(m3dPath)) {
-          t._m3d = 1;
-          t._m3dD = { lng, lat, brg: p[2], coords: _pos[7], cum: _pos[8], len: _pos[9], arc: _pos[10] };
-          visibleTrips.push(t); visibleXY[n * 2] = lng; visibleXY[n * 2 + 1] = lat;
-          drawnCouple.add(t); n++;
-          continue;
-        }
-      }
-      t._m3d = 0;
     }
     const mx = (lng + 180) / 360 - cxo;
     const my = ((1 - Math.log(Math.tan(Math.PI/4 + lat * Math.PI/360)) / Math.PI) / 2) - cyo;
@@ -4669,8 +4611,7 @@ function startLoop() {
     const frameStride = zz < 8 ? 3 : (zz < 13 ? 2 : 1);
     const needTrains = viewDirty || followTrip || liveDetailTrip || frameC++ % frameStride === 0;
     viewDirty = false; /* 相机已稳定:本帧重建后清除,恢复暂停态省电 */
-    if (needTrains) { updateTrains(M, dt * 1000); /* dt 传给淡入淡出:按真实帧间隔推进 alpha,掉帧时时长不变 */
-      try { M3D.frame(); } catch (e) { __pushErr('M3D.frame ' + e); } /* 高倍率 3D 模型覆盖层(内部自判门控) */ }
+    if (needTrains) updateTrains(M, dt * 1000); /* dt 传给淡入淡出:按真实帧间隔推进 alpha,掉帧时时长不变 */
     /* 徽标「在途」= 全国此时此刻在途列车数:与 LOD/等级门/视口裁剪无关,
        缩放、开关「性能改善」都不会改变这个数字(它描述事实,不是描述屏幕上画了多少) */
     const act = activeCountAt(M);
@@ -5407,7 +5348,6 @@ function updateDetailLive(t, p, M, rebuild) {
           (nm ? '<button class="cplbtn" data-ci="' + t.cpl.indexOf(c) + '">' + T().cplView.replace('{0}', nm) + '</button>' : '');
       }).join('<i class="sep">；</i>') + '</span></div>' : '') +
       _wikiBoxHtml() +
-      '<div class="d-model" id="dModelBtn" style="display:none"><span class="dm-ic"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17l8-10 8 10"/><path d="M8 21h8M12 17v4"/><rect x="2.5" y="17.5" width="19" height="3.5" rx="1"/></svg></span><span class="dm-tx"><div class="dm-t">' + (T().m3dBtn || '查看 3D 模型') + '</div><div class="dm-s">' + (T().m3dView || '') + '</div></span></div>' +
       '</div>' +
       '<div class="d-sep"></div>' +
       '<div class="d-stops"><div class="st-title">' + T().stopsTitle + '<span class="cnt">' + N + ' ' + T().stopsCount + '</span></div>' +
@@ -5435,8 +5375,6 @@ function updateDetailLive(t, p, M, rebuild) {
       '</div></div>' +
       '<div class="d-act"><button class="btn' + (followTrip === t ? ' on' : '') + '" id="dFollow">' + (followTrip === t ? T().stopFollowBtn : T().followBtn) + '</button>' +
       '<button class="btn" id="dLoc">' + T().locateBtn + '</button></div>';
-    /* 3D 模型入口:命中映射才显示(bindDetail 内部判 pathOf) */
-    try { M3D.bindDetail(t); } catch (e) {}
     /* 立即标记停靠站状态(已过/停靠中/下一站),并滚动时间线到当前站——不依赖下一帧差异检测 */
     t._dI = i;
     const stl0 = detailEl.querySelector('.d-stops');
@@ -6560,17 +6498,6 @@ $('swLabel').addEventListener('click', function () { this.classList.toggle('on')
 $('swGlow').addEventListener('click', function () { this.classList.toggle('on'); map.setLayoutProperty('segs-glow', 'visibility', this.classList.contains('on') ? 'visible' : 'none'); });
 $('swSta').addEventListener('click', function () { this.classList.toggle('on'); map.setLayoutProperty('stas', 'visibility', this.classList.contains('on') ? 'visible' : 'none'); });
 $('swBadge').addEventListener('click', function () { this.classList.toggle('on'); applyBadgeVisible(this.classList.contains('on')); });
-/* 高倍率 3D 列车模型开关(默认开):zoom≥15.2 视口内列车替换真实模型 */
-let model3dOn = (() => { const v = localStorage.getItem('mjr3d_model3d'); return v === null ? true : v === '1'; })();
-$('swM3d').classList.toggle('on', model3dOn);
-$('swM3d').addEventListener('click', function () {
-  model3dOn = !model3dOn;
-  this.classList.toggle('on', model3dOn);
-  localStorage.setItem('mjr3d_model3d', model3dOn ? '1' : '0');
-  viewDirty = true;
-});
-$('m3dX').addEventListener('click', () => M3D.closeViewer());
-$('m3dMask').addEventListener('click', () => M3D.closeViewer());
   /* 车站轮廓开关:默认开,选择持久化(mjr3d_showfp) */
   let fpEnabled = localStorage.getItem('mjr3d_showfp') !== '0';
   $('swFp').classList.toggle('on', fpEnabled);
@@ -6903,7 +6830,6 @@ function applyLang() {
   $('tSw1').textContent = t.sw1; $('tSw2').textContent = t.sw2; $('tSw3').textContent = t.sw3; $('tSw4').textContent = t.sw4; $('tSw5').textContent = t.sw5; $('tSw6').textContent = t.sw6; $('tSw7').textContent = t.sw7; $('tSw8').textContent = t.sw8; $('tSw9').textContent = t.sw9;
   if ($('tSw11')) $('tSw11').textContent = t.sw11; if ($('tSw11Note')) $('tSw11Note').textContent = t.sw11Note;
   if ($('tSw12')) $('tSw12').textContent = t.sw12;
-  if ($('tSw13')) { $('tSw13').textContent = t.sw13; $('tSw13Note').textContent = t.m3dNote; }
   $('tMode').textContent = t.modeT; $('tMode3d').textContent = t.mode3d; $('tModeIcon').textContent = t.modeIcon; if ($('tModeCute')) $('tModeCute').textContent = t.modeCute;
   if ($('tIconSet')) $('tIconSet').textContent = t.iconSetT;
   if ($('iSetDefault')) $('iSetDefault').textContent = t.iSetDefault;
@@ -6995,573 +6921,6 @@ window.__uni = uni;
 window.__shaderMap = trainShaderLayer.shaderMap;
 window.__glState = () => ({ glRef, vao, vbo, visibleCount, bufArr });
 window.__routeTest = (a, b) => { try { const rt = findRoute(a, b); return rt ? { legs: rt.states.length, km: Math.round(rt.cost) } : null; } catch (e) { return 'ERR ' + e.message; } };
-/* ══════════════════════════════════════════════════════════════════════
-   M3D:列车真实外型 3D 模型(DokoRail 迁移重做)
-   ① 列车详情抽屉「百科」旁「模型」入口 → 全屏查看器(OrbitControls 自由旋转)
-   ② 设置「高倍率 3D 列车模型」(默认开):zoom ≥ 15.2 时视口内命中映射的列车
-      由真实 3D 模型渲染(逐车厢沿轨道折线采样贴轨+航向),无模型/加载中回退原模式。
-   资产:jr-static /models/<车型>/(consist.json + glb + ktx2/textures.bin, DokoRail 同源)
-        jr-static /basis/(Basis 转码器)  映射:data/model_map.json {names,lines}
-   加载链两条:A) 内嵌材质 glb(tf2-*:GLTFLoader+Meshopt+KTX2,外部 textures.bin 自动解析)
-             B) 纯几何 glb(e231/e235 系:外部 ktx2 + maps.json 通道 normal/rough/emissive
-                + rough.b 通道镂空 discard + rough.a 通道夜间窗户发光)
-   排布:每节车按长轴检测旋转 → 按 consist 车长标定米制 → 底面贴 y=0 → couple 车钩间距接续。
-   ══════════════════════════════════════════════════════════════════════ */
-const M3D = (() => {
-  const M3D_ZOOM = 15.2, MAX_CACHE = 20, MAX_DRAW = 48;
-  const LOCAL = location.protocol === 'file:' || ['localhost', '127.0.0.1'].includes(location.hostname);
-  const BASE = LOCAL ? '' : 'https://jr-static.suki.ing';
-  const u = p => LOCAL ? p.replace(/^\//, '') : BASE + p;
-  /* 模型路径映射表(model_map.json):/models/<车型>/consist.json */
-  let modelMap = null, mapP = null, avail = null; /* avail: 可用车型目录清单(models/index.json),缺省 null=不过滤 */
-  let m3dOk = true; /* 相机矩阵可用性:frame 每帧更新;不可用时钩子停止接管(方盒/图标回归) */
-  const failedAt = new Map(); /* path → 上次失败时刻(60s 内不重试,防雪崩) */
-  /* ── three 懒加载(importmap 已映射 three / three/addons/) ── */
-  let THREE = null, GLTFLoaderC = null, KTX2LoaderC = null, OrbitControlsC = null, MeshoptDecoder = null, RoomEnvironmentC = null;
-  let libsP = null, ktx2 = null;
-  function libs() {
-    if (libsP) return libsP;
-    libsP = (async () => {
-      THREE = await import('three');
-      const a = 'three/addons/';
-      [GLTFLoaderC, KTX2LoaderC, OrbitControlsC, RoomEnvironmentC] = await Promise.all([
-        import(a + 'loaders/GLTFLoader.js'), import(a + 'loaders/KTX2Loader.js'),
-        import(a + 'controls/OrbitControls.js'), import(a + 'environments/RoomEnvironment.js')]);
-      MeshoptDecoder = (await import(a + 'libs/meshopt_decoder.module.js')).MeshoptDecoder;
-      /* KTX2 支持检测:一次性隐藏渲染器(WebGL2);PMREM 环境贴图由各渲染器各自生成(不跨上下文) */
-      const boot = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'low-power' });
-      ktx2 = new KTX2LoaderC.KTX2Loader().setTranscoderPath(u('/basis/')).detectSupport(boot);
-      ktx2.__boot = boot; /* 持有引用防 GC(1×1 canvas 未挂载) */
-      return THREE;
-    })().catch(e => { libsP = null; __pushErr('M3D.libs ' + (e && e.message || e)); throw e; });
-    return libsP;
-  }
-  /* ── 纹理缓存(url|colorSpace → Promise<Texture>),按 URL 去重 ── */
-  const texCache = new Map();
-  function texGet(url, colorSpace) {
-    const key = url + '|' + (colorSpace || '');
-    if (texCache.has(key)) return texCache.get(key);
-    const p = (async () => {
-      const t = await ktx2.loadAsync(url);
-      if (colorSpace) t.colorSpace = colorSpace;
-      t.anisotropy = 4;
-      return t;
-    })().catch(e => { texCache.delete(key); throw e; });
-    texCache.set(key, p);
-    return p;
-  }
-  /* ── 映射查询:爱称(names) → 途经线路(lines) ── */
-  function pathOf(t) {
-    if (!modelMap) return null;
-    let v = null;
-    if (t.nm && modelMap.names[t.nm]) v = modelMap.names[t.nm];
-    if (!v && t.lines) for (let i = 0; i < t.lines.length; i++) { v = modelMap.lines[t.lines[i]]; if (v) break; }
-    if (v && avail && !avail.has(v.split('/')[2])) return null; /* 首批未同步的车型:直接回退,不发起 404 */
-    return v || null;
-  }
-  /* ── maps.json 材质注入:镂空(rough.b<at discard) + 夜间窗(rough.a 通道 × nightGlow) ── */
-  const nightUniforms = []; /* 全部 nightAmount uniform 对象,setNight 一次驱动 */
-  function injectMask(mat, ch, cfg, roughTex) {
-    const cutAt = (cfg && cfg.alphaCutout != null) ? cfg.alphaCutout : (ch.cutoutCoverage != null ? ch.cutoutCoverage : null);
-    const hasCut = cutAt != null && !!ch.alphaChannel && !!mat.roughnessMap;
-    const night = ch.night || null;
-    if (!hasCut && !night) return;
-    const uni = { cutoutAt: { value: cutAt || 0 }, nightMap: { value: roughTex }, nightGlow: { value: null }, nightAmount: { value: 0 } };
-    nightUniforms.push(uni.nightAmount);
-    mat.customProgramCacheKey = () => 'm3d-cut' + (hasCut ? ch.alphaChannel : '-') + (night ? '-n' + night.channel : '');
-    mat.onBeforeCompile = sh => {
-      Object.assign(sh.uniforms, uni);
-      if (night) uni.nightGlow.value = new THREE.Color(0xffe0a8).multiplyScalar(14.0);
-      /* uniform 声明统一前置(cutout 与 night 任一启用即声明全部,避免 undeclared) */
-      mat.toneMapped = night ? false : mat.toneMapped; /* 夜窗 HDR 直出,避免 ACES 压暗 */
-      const decl = 'uniform float cutoutAt;' + (night ? ' uniform sampler2D nightMap; uniform vec3 nightGlow; uniform float nightAmount;' : '') + '\nvoid main() {';
-      sh.fragmentShader = sh.fragmentShader.replace('void main() {', decl);
-      if (night) sh.fragmentShader = sh.fragmentShader
-        .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n\ttotalEmissiveRadiance = mix( totalEmissiveRadiance, nightGlow * texture2D( nightMap, vMapUv ).' + night.channel + ', nightAmount );');
-      if (hasCut) sh.fragmentShader = sh.fragmentShader
-        .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\n\tif ( texelRoughness.' + ch.alphaChannel + ' < cutoutAt ) discard;');
-    };
-  }
-  /* ── B) 外部贴图材质(e231/e235 系纯几何 glb):MainTex + normal/rough/emissive ── */
-  async function extMaterial(base, texName, maps, cfg) {
-    const ch = maps[texName] || {};
-    const [map, nt, rt, et] = await Promise.all([
-      texGet(base + texName, THREE.SRGBColorSpace),
-      ch.normal ? texGet(base + ch.normal, '').catch(() => null) : null,
-      ch.roughnessMap ? texGet(base + ch.roughnessMap, '').catch(() => null) : null,
-      ch.emissive ? texGet(base + ch.emissive, THREE.SRGBColorSpace).catch(() => null) : null]);
-    const mat = new THREE.MeshStandardMaterial({
-      map, normalMap: nt || null, roughnessMap: rt || null,
-      emissiveMap: et || null, emissive: et ? 0xffffff : 0x000000,
-      metalness: 0, roughness: rt ? 1 : 0.62, side: THREE.DoubleSide });
-    if (ch.normalScale != null) mat.normalScale.setScalar(ch.normalScale);
-    injectMask(mat, ch, cfg, rt);
-    return mat;
-  }
-  /* ── 车厢归一化(参考 DokoRail mn):长轴检测旋转 → lengthM 标定 → 底面 y=0 → couple 米制 ── */
-  function normalizeCar(gScene, car, lenM) {
-    if (car.flip) gScene.rotation.y += Math.PI;
-    gScene.updateMatrixWorld(true);
-    let box = new THREE.Box3().setFromObject(gScene), size = box.getSize(new THREE.Vector3());
-    if (size.x > size.z) gScene.rotation.y += Math.PI / 2; /* 长轴在 X → 转到 Z */
-    gScene.updateMatrixWorld(true);
-    box = new THREE.Box3().setFromObject(gScene); size = box.getSize(new THREE.Vector3());
-    const s = size.z > 1e-6 ? lenM / size.z : 1; /* 标定到真实米制车长 */
-    gScene.scale.multiplyScalar(s);
-    gScene.updateMatrixWorld(true);
-    box = new THREE.Box3().setFromObject(gScene);
-    const c = box.getCenter(new THREE.Vector3());
-    gScene.position.sub(new THREE.Vector3(c.x, box.min.y, c.z)); /* x/z 居中,轮对底贴 y=0 */
-    gScene.updateMatrixWorld(true);
-    let [f, r] = car.couple || [lenM / 2 + 0.05, lenM / 2 + 0.05];
-    if (car.flip) [f, r] = [r, f];
-    return { coupleF: f * s - c.z, coupleR: r * s + c.z, s, off: new THREE.Vector3(c.x, box.min.y, c.z), rotY: gScene.rotation.y };
-  }
-  /* ── 前灯光束(夜行):地面光带几何 + 沿程衰减 shader,参考 DokoRail Un/Wn/Gn ── */
-  const beamGeoCache = new Map(), beamMatCache = new Map();
-  function beamMesh(len, wid, bright, colourHex) {
-    const gk = len + '|' + wid;
-    let geo = beamGeoCache.get(gk);
-    if (!geo) {
-      const pos = [], uv = [], idx = [], N = 8;
-      for (let i = 0; i <= N; i++) {
-        const t = i / N, hw = (2 + (wid - 2) * t) / 2;
-        pos.push(-hw, 0, t * len, hw, 0, t * len); uv.push(0, t, 1, t);
-        if (i > 0) { const e = (i - 1) * 2; idx.push(e, e + 2, e + 1, e + 1, e + 2, e + 3); }
-      }
-      geo = new THREE.BufferGeometry();
-      geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-      geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
-      geo.setIndex(idx);
-      beamGeoCache.set(gk, geo);
-    }
-    const mk = bright + '|' + colourHex;
-    let mat = beamMatCache.get(mk);
-    if (!mat) {
-      mat = new THREE.ShaderMaterial({
-        uniforms: { beamColour: { value: new THREE.Color(colourHex) }, brightness: { value: bright } },
-        vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
-        fragmentShader: 'uniform vec3 beamColour; uniform float brightness; varying vec2 vUv;\nvoid main(){ float along = pow(1.0 - vUv.y, 1.8) * smoothstep(0.0, 0.1, vUv.y); float across = 1.0 - smoothstep(0.3, 1.0, abs(vUv.x * 2.0 - 1.0)); gl_FragColor = vec4(beamColour * brightness * along * across, 1.0); }',
-        transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, toneMapped: false });
-      beamMatCache.set(mk, mat);
-    }
-    const m = new THREE.Mesh(geo, mat);
-    m.name = 'headlight-beam'; m.frustumCulled = false; m.visible = false; m.userData.nightOnly = 1;
-    return m;
-  }
-  /* ── 编组加载:consist.json → 车厢并行加载+归一化 → couple 排布 → 前灯/LED ── */
-  async function loadConsist(path) {
-    await libs();
-    const base = u(path.slice(0, path.lastIndexOf('/') + 1));
-    const [consist, maps] = await Promise.all([
-      fetch(base + 'consist.json').then(r => { if (!r.ok) throw new Error('consist ' + r.status); return r.json(); }),
-      fetch(base + 'maps.json').then(r => r.ok ? r.json() : {}).catch(() => ({}))]);
-    const cfg = consist.material || {};
-    const loader = new GLTFLoaderC.GLTFLoader().setMeshoptDecoder(MeshoptDecoder).setKTX2Loader(ktx2);
-    const cars = consist.cars, n = cars.length;
-    const lenOf = i => (i === 0 || i === n - 1) ? (consist.car_length_m || 20) : (consist.middle_car_length_m || consist.car_length_m || 20);
-    /* 每节车:主 glb + LED 部件 glb 并行 */
-    const loaded = await Promise.all(cars.map(async (car, ci) => {
-      const gltf = await loader.loadAsync(base + car.model);
-      const gScene = gltf.scene;
-      gScene.traverse(o => { if (o.isMesh) o.frustumCulled = false; });
-      const norm = normalizeCar(gScene, car, lenOf(ci));
-      /* B) 纯几何 glb:consist 声明外部贴图 → 整节车统一材质 */
-      if (car.texture) {
-        try {
-          const mat = await extMaterial(base, car.texture, maps, cfg);
-          gScene.traverse(o => { if (o.isMesh) o.material = mat; });
-        } catch (e) { /* 材质失败保留默认(几何仍可见) */ }
-      }
-      const wrap = new THREE.Group();
-      wrap.add(gScene);
-      /* LED 发光部件(kind:glow,与车厢同坐标系导出 → 同一变换链) */
-      for (const part of (car.parts || [])) {
-        if (part.kind !== 'glow') continue;
-        try {
-          const [pg, pt] = await Promise.all([
-            loader.loadAsync(base + part.model),
-            part.texture ? texGet(base + part.texture, THREE.SRGBColorSpace) : null]);
-          const pm = new THREE.MeshBasicMaterial({ map: pt, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide });
-          pm.color.setScalar(1.35);
-          pg.scene.traverse(o => { if (o.isMesh) { o.material = pm; o.frustumCulled = false; } });
-          pg.scene.rotation.y += norm.rotY;
-          pg.scene.scale.multiplyScalar(norm.s);
-          pg.scene.position.sub(norm.off);
-          wrap.add(pg.scene);
-        } catch (e) { /* 部件缺失不影响车体 */ }
-      }
-      return { wrap, coupleF: norm.coupleF, coupleR: norm.coupleR };
-    }));
-    /* couple 排布:车 i 中心 = 前车中心 + 前车 coupleR + gap + 本车 coupleF(钩对钩) */
-    const GAP = 0.03;
-    let z = 0, prevR = 0;
-    for (let i = 0; i < n; i++) {
-      if (i > 0) z += prevR + GAP + loaded[i].coupleF;
-      loaded[i].wrap.position.z = z;
-      prevR = loaded[i].coupleR;
-    }
-    const minZ = -loaded[0].coupleF, maxZ = z + prevR;
-    const cz = (minZ + maxZ) / 2;
-    const group = new THREE.Group();
-    const carNodes = [];
-    for (const c of loaded) {
-      c.wrap.position.z -= cz;
-      c.wrap.userData.m3dCar = 1; c.wrap.userData.m3dZ = c.wrap.position.z; /* 克隆保留:逐车厢采样偏移 */
-      group.add(c.wrap); carNodes.push({ node: c.wrap, z: c.wrap.position.z });
-    }
-    /* 前灯光束:首车前端(车头 +z),仅夜间显示 */
-    try {
-      const bm = beamMesh(32, 14, 3.2, 0xfff3dd);
-      bm.position.set(0, 0.10, loaded[0].coupleF + 0.20);
-      carNodes[0].node.add(bm);
-    } catch (e) {}
-    return { group, cars: carNodes, length: maxZ - minZ, path };
-  }
-  /* ── 模板缓存(LRU,MAX_CACHE 上限,淘汰时释放几何/材质/纹理) ── */
-  const cache = new Map(); /* path → Promise<tmpl> */
-  let cacheOrder = [];
-  function ensure(path) {
-    if (cache.has(path)) {
-      cacheOrder = cacheOrder.filter(x => x !== path); cacheOrder.push(path);
-      return cache.get(path);
-    }
-    /* falls through 到新加载 */
-    const last = failedAt.get(path);
-    if (last && Date.now() - last < 60000) return null; /* 60s 负缓存 */
-    const p = loadConsist(path);
-    p.then(() => { p._ready = true; }).catch(() => {
-      cache.delete(path); cacheOrder = cacheOrder.filter(x => x !== path); failedAt.set(path, Date.now());
-    });
-    cache.set(path, p); cacheOrder.push(path);
-    while (cacheOrder.length > MAX_CACHE) {
-      const ev = cacheOrder.shift();
-      if (ev === path) continue;
-      const gp = cache.get(ev);
-      if (gp) {
-        dropInstances(ev);
-        gp.then(t => { if (t) disposeTmpl(t); }).catch(() => {});
-        cache.delete(ev);
-      }
-    }
-    return p;
-  }
-  function covers(path) { const p = cache.get(path); return !!p && p._ready === true; }
-  /* 新发起加载才返回 true(供配额计数;已缓存/负缓存命中不消耗) */
-  function ensureNew(path) {
-    if (cache.has(path)) { ensure(path); return false; }
-    if (failedAt.has(path)) return false;
-    return !!ensure(path);
-  }
-  function disposeTmpl(t) {
-    const mats = new Set();
-    t.group.traverse(o => {
-      if (o.isMesh) {
-        if (o.geometry) o.geometry.dispose();
-        (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => mats.add(m));
-      }
-    });
-    for (const m of mats) {
-      for (const k of ['map', 'normalMap', 'roughnessMap', 'emissiveMap']) if (m[k]) m[k].dispose();
-      m.dispose();
-    }
-  }
-  /* ── 覆盖层:独立透明 canvas(地图 canvas 之上、控件之下),zoom≥阈值渲染真实模型 ── */
-  let ov = null, ovActive = false;
-  function ensureOv() {
-    if (ov) return ov;
-    const canvas = document.createElement('canvas');
-    canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;';
-    const mc = map.getContainer();
-    const ctrl = mc.querySelector('.maplibregl-control-container');
-    if (ctrl) mc.insertBefore(canvas, ctrl); /* 地图 canvas 之后、控件容器之前 */
-    else mc.appendChild(canvas);
-    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: 'high-performance' });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-    renderer.setClearColor(0x000000, 0);
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.12;
-    const scene = new THREE.Scene();
-    try { const pm = new THREE.PMREMGenerator(renderer); scene.environment = pm.fromScene(new RoomEnvironmentC.RoomEnvironment(), 0.04).texture; pm.dispose(); } catch (e) {}
-    scene.add(new THREE.AmbientLight(0xffffff, 0.38));
-    const d1 = new THREE.DirectionalLight(0xffffff, 1.6); d1.position.set(300, 500, 200); scene.add(d1);
-    const d2 = new THREE.DirectionalLight(0x8899cc, 0.5); d2.position.set(-200, 300, -300); scene.add(d2);
-    const camera = new THREE.PerspectiveCamera(50, 1, 1, 1e7);
-    camera.matrixAutoUpdate = false; camera.matrixWorldAutoUpdate = false;
-    ov = { canvas, renderer, scene, camera, insts: new Map(), mvp: new THREE.Matrix4(), ts: new THREE.Matrix4(), lastW: 0, lastH: 0 };
-    const ro = new ResizeObserver(() => { const w = mc.clientWidth, h = mc.clientHeight; if (w && h) { renderer.setSize(w, h, false); ov.lastW = w; ov.lastH = h; } });
-    ro.observe(mc); ov.ro = ro;
-    return ov;
-  }
-  /* mercator y(0..1,北小南大) */
-  const mercY = lat => (1 - Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360)) / Math.PI) / 2;
-  /* 折线弧长采样:[lng,lat,θ];出界用端切线直线外推(米→度近似) */
-  function sampleAt(coords, cum, len, s) {
-    if (!coords || coords.length < 2 || !cum || len <= 0) return null;
-    const head = () => {
-      const a = coords[0], b = coords[1], th = Math.atan2(b[0] - a[0], b[1] - a[1]);
-      const d = Math.hypot((b[0] - a[0]) * Math.cos((a[1] + b[1]) / 2 * Math.PI / 180) * 111.32, (b[1] - a[1]) * 110.57) * 1000;
-      return [a, b, th, d];
-    };
-    const tail = () => {
-      const a = coords[coords.length - 2], b = coords[coords.length - 1], th = Math.atan2(b[0] - a[0], b[1] - a[1]);
-      const d = Math.hypot((b[0] - a[0]) * Math.cos((a[1] + b[1]) / 2 * Math.PI / 180) * 111.32, (b[1] - a[1]) * 110.57) * 1000;
-      return [a, b, th, d];
-    };
-    if (s <= 0) { const [a, b, th, d] = head(); const k = d > 1e-6 ? -s / d : 0; return [a[0] + (a[0] - b[0]) * k, a[1] + (a[1] - b[1]) * k, th]; }
-    if (s >= len) { const [a, b, th, d] = tail(); const k = d > 1e-6 ? (s - len) / d : 0; return [b[0] + (b[0] - a[0]) * k, b[1] + (b[1] - a[1]) * k, th]; }
-    let lo = 1, hi = cum.length - 1;
-    while (lo < hi) { const mid = (lo + hi) >> 1; if (cum[mid] < s) lo = mid + 1; else hi = mid; }
-    const k = lo, a = coords[k - 1], b = coords[k], segL = cum[k] - cum[k - 1];
-    const f = segL <= 0 ? 0 : (s - cum[k - 1]) / segL;
-    return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, Math.atan2(b[0] - a[0], b[1] - a[1])];
-  }
-  /* ── 每帧:updateTrains 已标记 t._m3d=1 并存 t._m3dD;这里投影渲染 ──
-     相机投影 = maplibre MVP · T(中心世界像素) · S(像素/米,含纬度比例) —— 与 map.project 像素一致。
-     场景坐标:米,x=东,y=南,z=上(相对地图中心);车厢局部 z=车长方向、y=上 → makeRotationZ(θ)。 */
-  let nightAmt = 0;
-  let _rR = null, _rU = null, _rF = null; /* 基向量(惰性,frame 首次调用时 THREE 已就绪) */
-  function frame() {
-    if (!map) return;
-    const gate = model3dOn && hasWebgl2 && map.getZoom() >= M3D_ZOOM;
-    if (!gate) {
-      for (let i = 0; i < visibleTrips.length; i++) if (visibleTrips[i]._m3d) visibleTrips[i]._m3d = 0; /* 清陈旧标记 */
-      if (ov && ovActive) {
-        ovActive = false;
-        ov.renderer.clear();
-        for (const [, rec] of ov.insts) rec.inst.visible = false;
-      }
-      return;
-    }
-    let any = false;
-    for (let i = 0; i < visibleTrips.length; i++) if (visibleTrips[i]._m3d) { any = true; break; }
-    if (!any) { if (ov && ovActive) { ovActive = false; ov.renderer.clear(); } return; }
-    if (!THREE) { libs().catch(() => {}); return; }
-    ensureOv();
-    const o = ov;
-    ovActive = true;
-    const mc = map.getContainer(), w = mc.clientWidth, h = mc.clientHeight;
-    if (!w || !h) return;
-    if (o.lastW !== w || o.lastH !== h) { o.renderer.setSize(w, h, false); o.lastW = w; o.lastH = h; }
-    const mvpArr = __mvpMain || (map.transform && map.transform.modelViewProjectionMatrix) || null;
-    /* 仅「从未捕获到矩阵」才回退方盒。不做时效判定:页面空闲时矩阵虽旧但相机未动、依然正确;
-       相机任何运动必然触发 maplibre 重绘 → render 入口截获刷新。时效误判曾致方盒/模型振荡 */
-    if (!mvpArr) { o.renderer.clear(); m3dOk = false; return; }
-    m3dOk = true;
-    const worldSize = 512 * Math.pow(2, map.getZoom());
-    const c0 = map.getCenter();
-    /* 像素/米:_pixelPerMeter 已含纬度比例(赤道周长/worldSize/cos(lat));缺省时自算 */
-    const tfm = map.transform;
-    const ppm = tfm && tfm._pixelPerMeter ? tfm._pixelPerMeter : worldSize / 40075016.7 / Math.cos(c0.lat * Math.PI / 180); /* _pixelPerMeter 已含纬度比例 */
-    const cx = (c0.lng + 180) / 360 * worldSize, cy = mercY(c0.lat) * worldSize;
-    o.ts.makeScale(ppm, ppm, ppm);
-    o.ts.elements[12] = cx; o.ts.elements[13] = cy; o.ts.elements[14] = 0; o.ts.elements[15] = 1; /* T·S 合并 */
-    o.mvp.fromArray(mvpArr).multiply(o.ts);
-    o.camera.projectionMatrix.copy(o.mvp);
-    o.camera.projectionMatrixInverse.copy(o.mvp).invert();
-    o.camera.matrixWorld.identity();
-    o.camera.matrixWorldInverse.identity();
-    /* 夜间量(JST 小时):17.5–19 渐入,5–6.5 渐出 */
-    if (!_rR) { _rR = new THREE.Vector3(); _rU = new THREE.Vector3(); _rF = new THREE.Vector3(); }
-    const hr = (curMin() / 60) % 24;
-    nightAmt = (hr >= 19 || hr < 5) ? 1 : hr >= 17.5 ? (hr - 17.5) / 1.5 : hr >= 6.5 ? 0 : hr >= 5 ? 1 - (hr - 5) / 1.5 : 1;
-    for (const nu of nightUniforms) nu.value = nightAmt;
-    /* 逐列车逐车厢摆放(视口裁剪已在 updateTrains 完成,此处仅粗判兜底) */
-    let drawn = 0;
-    const activeInsts = new Set();
-    for (let i = 0; i < visibleTrips.length && drawn < MAX_DRAW; i++) {
-      const t = visibleTrips[i];
-      if (!t._m3d || !t._m3dD) continue;
-      const path = pathOf(t);
-      if (!path || !covers(path)) continue;
-      const d = t._m3dD;
-      const ax = (d.lng + 180) / 360 * worldSize, ay = mercY(d.lat) * worldSize;
-      if (Math.abs(ax - cx) > worldSize * 0.25 || Math.abs(ay - cy) > worldSize * 0.25) continue; /* 远离视口粗判 */
-      let rec = o.insts.get(t);
-      if (!rec) {
-        cache.get(path).then(tmpl => {
-          if (!ov || !tmpl) return;
-          const inst = tmpl.group.clone(true);
-          inst.matrixAutoUpdate = false; inst.matrix.identity();
-          inst.traverse(x => { if (x.isMesh) x.frustumCulled = false; });
-          o.scene.add(inst);
-          o.insts.set(t, { inst, path });
-        }).catch(() => {});
-        continue; /* 实例创建中:本帧留白,下一帧补 */
-      }
-      const inst = rec.inst;
-      activeInsts.add(t);
-      inst.visible = true;
-      /* 车厢采样:DokoRail 编组约定 car0=头车、+z 轴指向车尾 → 车 i 弧长 = arc − m3dZ
-         (沿行进反方向展开:头车位于前行进端、鼻端朝前=行进方向;无折线时沿方位角刚性外推) */
-      for (const cw of inst.children) {
-        if (!cw.userData || !cw.userData.m3dCar) continue;
-        const back = cw.userData.m3dZ || 0; /* 相对编组中点的向后偏移(米) */
-        const s = (d.arc || 0) - back;
-        const sp = (d.coords && d.cum && d.len) ? sampleAt(d.coords, d.cum, d.len, s) : null;
-        let lng, lat, th;
-        if (sp) { lng = sp[0]; lat = sp[1]; th = sp[2]; }
-        else { /* 刚性外推:pos = 锚点 + 行进方向 × (−back) */
-          th = d.brg;
-          const dm = -back;
-          lng = d.lng + Math.sin(th) * dm / (111320 * Math.cos(d.lat * Math.PI / 180));
-          lat = d.lat + Math.cos(th) * dm / 110540;
-        }
-        const ex = ((lng + 180) / 360 * worldSize - cx) / ppm; /* 东(米) */
-        const sy = (mercY(lat) * worldSize - cy) / ppm;       /* 南(米) */
-        /* 局部(x=右,y=上,z=车头) → 世界(x=东,y=南,z=天):makeBasis 列向量;
-           方位角 θ(北=0,东=π/2):前=(sinθ,−cosθ,0)、右=(cosθ,sinθ,0)、上=(0,0,1) */
-        _rR.set(Math.cos(th), Math.sin(th), 0);
-        _rU.set(0, 0, 1);
-        _rF.set(Math.sin(th), -Math.cos(th), 0);
-        cw.matrixAutoUpdate = false;
-        cw.matrix.makeBasis(_rR, _rU, _rF);
-        cw.matrix.setPosition(ex, sy, 0);
-        cw.matrixWorldNeedsUpdate = true; /* 渲染器场景遍历据此重算本层并强制传播子节点 */
-        /* 夜间前灯光束 */
-        for (const ch2 of cw.children) if (ch2.userData && ch2.userData.nightOnly) ch2.visible = nightAmt > 0.35;
-      }
-      drawn++;
-    }
-    /* 清理:本帧未激活的实例隐藏;路径已被 LRU 淘汰的实例移除 */
-    for (const [t, rec] of Array.from(o.insts)) {
-      if (!activeInsts.has(t)) {
-        if (!cache.has(rec.path)) { o.scene.remove(rec.inst); o.insts.delete(t); }
-        else rec.inst.visible = false;
-      }
-    }
-    o.renderer.render(o.scene, o.camera);
-  }
-  function dropInstances(path) {
-    if (!ov) return;
-    for (const [t, rec] of Array.from(ov.insts)) if (rec.path === path) { o.scene.remove(rec.inst); o.insts.delete(t); }
-  }
-  function clear() { if (ov) ov.renderer.clear(); }
-
-  /* ── 功能①:全屏 3D 查看器抽屉 ── */
-  let dr = null, drOpen = false;
-  function ensureDr() {
-    if (dr) return dr;
-    const canvas = $('m3dCanvas');
-    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.3;
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x0b0f16);
-    const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 8000);
-    camera.position.set(0, 55, 130);
-    scene.add(camera);
-    try { const pm = new THREE.PMREMGenerator(renderer); scene.environment = pm.fromScene(new RoomEnvironmentC.RoomEnvironment(), 0.04).texture; pm.dispose(); } catch (e) {}
-    scene.add(new THREE.AmbientLight(0xffffff, 0.42));
-    const d1 = new THREE.DirectionalLight(0xffffff, 1.65); d1.position.set(180, 320, 120); scene.add(d1);
-    const d2 = new THREE.DirectionalLight(0x8899cc, 0.5); d2.position.set(-160, 220, -200); scene.add(d2);
-    const d3 = new THREE.DirectionalLight(0x5566aa, 0.28); d3.position.set(0, -90, -160); scene.add(d3);
-    const ground = new THREE.Mesh(new THREE.CircleGeometry(1, 64), new THREE.MeshStandardMaterial({ color: 0x101826, roughness: 0.95, metalness: 0 }));
-    ground.rotation.x = -Math.PI / 2; ground.position.y = -0.04; scene.add(ground);
-    const controls = new OrbitControlsC.OrbitControls(camera, canvas);
-    controls.enableDamping = true; controls.dampingFactor = 0.08;
-    controls.autoRotate = true; controls.autoRotateSpeed = 1.05;
-    controls.minDistance = 8; controls.maxDistance = 900;
-    dr = { canvas, renderer, scene, camera, controls, ground, group: null, raf: 0 };
-    return dr;
-  }
-  function drLoop() {
-    if (!drOpen || !dr) return;
-    dr.controls.update();
-    dr.renderer.render(dr.scene, dr.camera);
-    dr.raf = requestAnimationFrame(drLoop);
-  }
-  async function openViewer(t) {
-    try {
-      await libs();
-      const path = pathOf(t);
-      if (!path) { toast(T().m3dNone || '该车型暂无 3D 模型'); return; }
-      const d = ensureDr();
-      drOpen = true;
-      $('m3dMask').classList.add('open');
-      $('m3dViewer').classList.add('open');
-      $('m3dNm').textContent = t.nm || (t.lines && t.lines[0]) || t.i || '#' + t.t;
-      $('m3dSub').textContent = (t.jas ? t.jas[0] + ' → ' + t.jas[t.jas.length - 1] : '') + ' · ' + path.split('/')[2];
-      $('m3dLoadTx').textContent = T().m3dLoadT || 'Loading…';
-      $('m3dLoad').style.display = 'flex';
-      $('m3dHint').textContent = T().m3dHint || '';
-      const fit = () => {
-        const vw = $('m3dViewer').clientWidth || innerWidth, vh = $('m3dViewer').clientHeight || innerHeight;
-        d.renderer.setSize(vw, vh, false); /* CSS 尺寸基准,dpr 由 setPixelRatio 处理 */
-        d.camera.aspect = vw / vh; d.camera.updateProjectionMatrix();
-      };
-      fit();
-      if (!d.__fit) { d.__fit = fit; addEventListener('resize', fit); }
-      const tmplP = ensure(path);
-      if (!tmplP) throw new Error('model unavailable');
-      const tmpl = await tmplP;
-      if (!drOpen) return;
-      if (d.group) { d.scene.remove(d.group); d.group = null; }
-      const inst = tmpl.group.clone(true);
-      inst.traverse(x => { if (x.isMesh) x.frustumCulled = false; });
-      d.scene.add(inst); d.group = inst;
-      const box = new THREE.Box3().setFromObject(inst), size = box.getSize(new THREE.Vector3()), c = box.getCenter(new THREE.Vector3());
-      const r = Math.max(size.x, size.y, size.z) * 0.5 + 6;
-      d.camera.position.set(c.x, c.y + r * 0.42, c.z + r * 1.25);
-      d.controls.target.copy(c); d.controls.update();
-      d.ground.scale.setScalar(Math.max(size.x, size.z) * 0.62 + 6);
-      d.ground.position.set(c.x, -0.04, c.z);
-      $('m3dLoad').style.display = 'none';
-      cancelAnimationFrame(d.raf);
-      d.raf = requestAnimationFrame(drLoop);
-    } catch (e) {
-      __pushErr('M3D.viewer ' + (e && e.message || e));
-      if ($('m3dLoadTx')) $('m3dLoadTx').textContent = '⚠ ' + (e && e.message || 'load fail');
-    }
-  }
-  function closeViewer() {
-    drOpen = false;
-    $('m3dMask').classList.remove('open');
-    $('m3dViewer').classList.remove('open');
-    if (dr) { cancelAnimationFrame(dr.raf); if (dr.group) { dr.scene.remove(dr.group); dr.group = null; } }
-  }
-  /* 详情抽屉「模型」入口:命中映射才显示 */
-  function bindDetail(t) {
-    const btn = $('dModelBtn');
-    if (!btn) return;
-    const has = !!pathOf(t);
-    btn.style.display = has ? '' : 'none';
-    if (has) btn.onclick = () => openViewer(t);
-  }
-  /* ── init:拉映射表(小文件,加载即取;失败静默禁用) ── */
-  async function init() {
-    if (mapP) return mapP;
-    mapP = fetch(u('/data/model_map.json')).then(r => { if (!r.ok) throw new Error('model_map ' + r.status); return r.json(); })
-      .then(j => { modelMap = j; return j; })
-      .catch(() => { modelMap = {}; });
-    fetch(u('/models/index.json')).then(r => r.ok ? r.json() : null).then(j => {
-      if (j && Array.isArray(j.models)) { avail = new Set(j.models); }
-    }).catch(() => {}); /* 清单缺失时不过滤(向后兼容) */
-    return mapP;
-  }
-  return {
-    init, pathOf, ensure, ensureNew, covers, frame, clear,
-    openViewer, closeViewer, bindDetail,
-    get ready() { return modelMap !== null; },
-    get ok() { return m3dOk; },
-    __dbg: () => ({ cache: [...cache.keys()], night: nightAmt, insts: ov ? ov.insts.size : 0, failed: [...failedAt.keys()] })
-  };
-})();
-M3D.init();
-window.M3D = M3D; /* 调试/自动化暴露(模块作用域不可见于全局) */
-window.__m3dState = () => ({
-  zoom: map ? map.getZoom() : 0,
-  vis: visibleTrips.length,
-  vis3d: visibleTrips.reduce((a, t) => a + (t._m3d ? 1 : 0), 0),
-  dbg: M3D.__dbg(), errs: window.__errs.slice(-8),
-  /* 视口内被接管列车投影(供自动化点击) */
-  picks: visibleTrips.filter(t => t._m3d && t._m3dD).map(t => {
-    const q = map.project([t._m3dD.lng, t._m3dD.lat]);
-    return { x: q.x, y: q.y, nm: t.nm, line: t.lines && t.lines[0], path: M3D.pathOf(t) };
-  }).filter(q => q.x > 40 && q.x < innerWidth - 40 && q.y > 40 && q.y < innerHeight - 40)
-});
-
 window.__graphStats = () => ({ nodes: routeNodes.size, edges: routeGraph.size, stations: stationLinesAt.size });
 window.__flyCheck = (minutesAhead) => {
   const M = curMin(), movers = [];
@@ -7642,15 +7001,5 @@ window.__probe = (lineFilter, limit) => {
 };
 
 </script>
-<div id="m3dMask"></div>
-<div id="m3dViewer">
-  <canvas id="m3dCanvas"></canvas>
-  <div class="m3d-hd">
-    <div class="m3d-tx"><div class="m3d-nm" id="m3dNm"></div><div class="m3d-sub" id="m3dSub"></div></div>
-    <button class="m3d-x" id="m3dX" aria-label="close"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-  </div>
-  <div class="m3d-load" id="m3dLoad"><div class="spin"></div><span id="m3dLoadTx">Loading…</span></div>
-  <div class="m3d-hint" id="m3dHint"></div>
-</div>
 </body>
 </html>

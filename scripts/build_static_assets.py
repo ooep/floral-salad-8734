@@ -14,7 +14,7 @@ build_static_assets.py — 组装 jr-static Worker 的静态资产目录
 用法：python3 scripts/build_static_assets.py [--out DIR]
 输出后打印文件数与总大小用于验证。
 """
-import os, shutil, sys, argparse, json
+import os, shutil, sys, argparse
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MINI = os.path.join(REPO, 'mini-japanrail-3d')
@@ -84,13 +84,9 @@ def main():
     print('[seo/img] %d' % n)
 
     # 4) segments.geojson（根站）
-    seg_src = os.path.join(REPO, 'segments.geojson')
-    if os.path.exists(seg_src):  # 稀疏镜像缺省跳过(CI 全量 checkout 恒存在)
-        shutil.copy2(seg_src, os.path.join(out, 'segments.geojson'))
-        total += 1
-        print('[segments.geojson] 1')
-    else:
-        print('[segments.geojson] SKIP (sparse mirror)')
+    shutil.copy2(os.path.join(REPO, 'segments.geojson'), os.path.join(out, 'segments.geojson'))
+    total += 1
+    print('[segments.geojson] 1')
 
     # 5) 根级图标
     n = 0
@@ -132,29 +128,6 @@ def main():
         print('[vendor] %d' % n)
     else:
         print('[vendor] SKIP (not present)')
-
-    # 5.5) models/ —— 列车真实外型 3D 模型（DokoRail 迁移：consist.json + glb + ktx2/textures.bin，
-    #      按车型目录整体复制；首批 7 车型，后续按需增量）
-    models_src = os.path.join(MINI, 'models')
-    if os.path.isdir(models_src):
-        n = copy_tree(models_src, os.path.join(out, 'models'))
-        # 可用车型清单:前端据此跳过未同步车型(免 404 风暴)
-        _dirs = sorted(x for x in os.listdir(models_src) if os.path.isdir(os.path.join(models_src, x)))
-        with open(os.path.join(out, 'models', 'index.json'), 'w', encoding='utf-8') as f:
-            json.dump({'models': _dirs, 'v': 1}, f, ensure_ascii=False)
-        total += n + 1
-        print('[models] %d (+index.json %d types)' % (n, len(_dirs)))
-    else:
-        print('[models] SKIP (not present)')
-
-    # 5.6) basis/ —— Basis/KTX2 转码器（three KTX2Loader 解压模型贴图用）
-    basis_src = os.path.join(MINI, 'basis')
-    if os.path.isdir(basis_src):
-        n = copy_tree(basis_src, os.path.join(out, 'basis'))
-        total += n
-        print('[basis] %d' % n)
-    else:
-        print('[basis] SKIP (not present)')
 
     # 6) _headers —— Workers Static Assets 边缘直服(不经过 fetch handler)时注入 CORS，
     #    保证浏览器 crossOrigin='anonymous' 加载图集/图标不污染 canvas（toDataURL/texImage2D 可用）。

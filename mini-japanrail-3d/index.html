@@ -4676,6 +4676,8 @@ let viewDirty = false;
 /* 本轮 updateTrains 是否有淡入淡出进行中(alpha 未到目标):tick 据此临时提高重建率,
    保证 260ms 渐变在低空闲帧率下依然平滑(见 tick 的自适应步长) */
 let anyFading = false;
+/* 上次重建列车顶点时的 zoom:tick 判定「纯平移」用(zoom 未变的 viewDirty 无需重建) */
+let lastBuildZoom = -1;
 function startLoop() {
   function tickFollow(M, dt) {
     if (performance.now() - followStartT <= 950) return;
@@ -4746,12 +4748,26 @@ function startLoop() {
        保 260ms 渐变平滑;交互(viewDirty)/跟随/拖动时间轴仍全帧,跟手性不变。
        全国视图(默认落地视野)常驻渲染从 20fps 降到 4fps,GPU/发热约 -80%。 */
     const zz = map.getZoom();
-    let frameStride;
-    if (viewDirty || followTrip || sliderDragging) frameStride = 1;
-    else if (anyFading) frameStride = 4;
-    else frameStride = zz < 5 ? 15 : (zz < 8 ? 6 : 2);
-    const needTrains = frameC++ % frameStride === 0;
-    viewDirty = false; /* 相机已稳定:本帧重建后清除,恢复暂停态省电 */
+    /* ★ 纯平移/旋转免重建(六轮,z<5):列车顶点是世界坐标 + 屏幕尺寸按 zoom 烘焙,
+       平移/旋转只由相机矩阵变换,顶点数据不变;时刻推进的位置误差全国视图 <0.01px/秒。
+       此前全国视图拖动时每帧重建(阶段 1 线性扫描 8.6 万班次 ≈8.5ms/帧,60fps 下占满
+       半个核心 —— 实测数据),现在复用顶点、仅按 4fps 步长补帧,拖动 CPU 降 ~90%。
+       zoom 变化(尺寸/门控依赖 zoom)、渐变中、跟随、拖动时间轴仍逐帧重建。 */
+    const zoomMoved = Math.abs(zz - lastBuildZoom) > 0.005;
+    const panOnly = viewDirty && !zoomMoved && zz < 5 && !anyFading && !followTrip && !sliderDragging;
+    let needTrains;
+    if (panOnly) {
+      needTrains = frameC++ % 15 === 0;
+      viewDirty = false;
+    } else {
+      let frameStride;
+      if (viewDirty || followTrip || sliderDragging) frameStride = 1;
+      else if (anyFading) frameStride = 4;
+      else frameStride = zz < 5 ? 15 : (zz < 8 ? 6 : 2);
+      needTrains = frameC++ % frameStride === 0;
+      viewDirty = false; /* 相机已稳定:本帧重建后清除,恢复暂停态省电 */
+      if (needTrains) lastBuildZoom = zz;
+    }
     if (needTrains) { updateTrains(M, dt * 1000); /* dt 传给淡入淡出:按真实帧间隔推进 alpha,掉帧时时长不变 */
       try { M3D.frame(); } catch (e) { __pushErr('M3D.frame ' + e); } /* 高倍率 3D 模型覆盖层(内部自判门控) */ }
     /* 徽标「在途」= 全国此时此刻在途列车数:与 LOD/等级门/视口裁剪无关,

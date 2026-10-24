@@ -3413,33 +3413,37 @@ function switchAtlas(key) {
 }
 let lmStarted = false;
 function loadTrainAtlas() {
-  /* 并行预载 3 套图集(异步不阻塞主流程);fetch/图片失败自动重试(最多 3 次,间隔 1.5s 起),
-     规避首发未部署时浏览器缓存 404 导致图集永不就绪;默认图集就绪即启动加载拼图 */
-  for (const key in ATLAS_SETS) {
-    (key => {
-      const s = ATLAS_SETS[key];
-      let tryN = 0;
-      const attempt = () => {
-        fetch(s.file).then(r => r.ok ? r.json() : null).then(j => {
-          if (!j) { retry(); return; }
-          const im = new Image();
-          im.crossOrigin = 'anonymous';   /* 图集跨域(jr-static)：不设则 canvas 被污染,toDataURL/texImage2D 抛 SecurityError */
-          im.onload = () => {
-            s.json = j; s.img = im; s.ready = true;
-            if (key === activeAtlasKey()) switchAtlas(key);
-            if (key === 'default' && !lmStarted) lmStart(); /* 加载拼图用默认图集 */
-          };
-          im.onerror = retry;
-          im.src = s.png;
-        }).catch(retry);
+  /* 默认图集启动即载(加载遮罩马赛克 + 默认模式都要用);vector/cute 改为首次切换时
+     ensureAtlas 懒加载 —— 省启动 ~3.3MB PNG 下载/解码与 ~10MB 解码位图内存。
+     未就绪时 switchAtlas 原有降级机制生效(先显示默认图集,就绪回调自动切回)。
+     回访用户 localStorage 记忆为 cute/vector 的,启动同样补拉其目标图集 */
+  ensureAtlas('default');
+  ensureAtlas(activeAtlasKey());
+}
+function ensureAtlas(key) {
+  const s = ATLAS_SETS[key];
+  if (!s || s.json || s.fetching) return;
+  s.fetching = true;
+  let tryN = 0;
+  const attempt = () => {
+    fetch(s.file).then(r => r.ok ? r.json() : null).then(j => {
+      if (!j) { retry(); return; }
+      const im = new Image();
+      im.crossOrigin = 'anonymous';   /* 图集跨域(jr-static)：不设则 canvas 被污染,toDataURL/texImage2D 抛 SecurityError */
+      im.onload = () => {
+        s.json = j; s.img = im; s.ready = true;
+        if (key === activeAtlasKey()) switchAtlas(key);
+        if (key === 'default' && !lmStarted) lmStart(); /* 加载拼图用默认图集 */
       };
-      const retry = () => {
-        if (tryN < 3) { tryN++; setTimeout(attempt, 1500 * tryN); }
-        else if (key === 'default' && !lmStarted) lmStart(); /* 默认图集最终失败也启动拼图(纯 SVG 兜底) */
-      };
-      attempt();
-    })(key);
-  }
+      im.onerror = retry;
+      im.src = s.png;
+    }).catch(retry);
+  };
+  const retry = () => {
+    if (tryN < 3) { tryN++; setTimeout(attempt, 1500 * tryN); }
+    else { s.fetching = false; if (key === 'default' && !lmStarted) lmStart(); /* 默认图集最终失败也启动拼图(纯 SVG 兜底) */ }
+  };
+  attempt();
 }
 const visibleTrips = [], visibleXY = new Float32Array(MAXT * 2);
 let lastQuad = [1, 1]; /* 图标模式方块屏幕尺寸(L,W),shader UV 归一化用 */
@@ -3941,9 +3945,10 @@ function initMap() {
     /* 全局优化(所有设备,不改变功能/体验):
        1) fadeDuration:0 → 图层无淡入淡出,缩放/切换底图时画面更干脆(与主站根页一致);
        2) 新设备 prefetchZoomDelta:2 → 预取相邻 2 级瓦片,缩放不空等灰块
-          (老旧设备网络/显存紧张不预取,保持默认 1 级) */
+          (老旧设备网络/显存紧张不预取,保持默认 1 级;中端档同样 1 级——
+           多预取一级的瓦片解码/显存是持续发热源) */
     fadeDuration: 0,
-    ...(!PERF_LOW ? { prefetchZoomDelta: 2 } : {}),
+    ...(!PERF_LOW ? { prefetchZoomDelta: window.__PERF_MID ? 1 : 2 } : {}),
     /* 老旧设备降载(仅 PERF_LOW 生效;新设备不传这些项,行为与旧版完全一致):
        1) pixelRatio 上限 1.25× → 高分屏渲染像素数降约 60%,GPU 压力大减;
        2) crossSourceCollisions:false → 跳过跨源标签碰撞检测(缩放时最耗 CPU 之一),
@@ -3954,7 +3959,9 @@ function initMap() {
       crossSourceCollisions: false,
       zoomAnimation: false,
     } : (window.__PERF_MID ? {
+      /* 中端档(桌面 3-4 核):渲染分辨率钳 1.5× + 跳过跨源碰撞,其余体验项不动 */
       pixelRatio: Math.min(window.devicePixelRatio || 1, 1.5),
+      crossSourceCollisions: false,
     } : {})),
     /* 瓦片请求治理(修复底图同 URL 反复请求):
        1) refreshExpiredTiles:false → 栅格瓦片改走 <img> 加载(默认 true 走 fetch 读取缓存头,
@@ -4922,11 +4929,29 @@ function onMouseMove(e) {
       '<div class="sg">' + (p ? (p[5] > 0 ? Math.round(p[5]) + ' km/h' : T().dwelling) : '') + '</div>';
   } else tipEl.classList.remove('show');
 }
+/* 屏幕→经纬度的局部雅可比:光标附近投影近似线性(mercator 处处线性,globe 局部近线性),
+   一次拾取只需 4 次投影变换(unproject + 光标/东移/北移 3 次 project),其余列车用
+   经纬度差 × 雅可比系数得到屏幕偏移 —— 免去每车一次 map.project
+   (全国视图 ~9000 车/次拾取,悬停/拖动期间是与渲染争抢主线程的 CPU 大头之一) */
+function pickJacobian(px, py) {
+  const ll = map.unproject([px, py]);
+  const lng0 = ll.lng, lat0 = Math.max(-84, Math.min(84, ll.lat));
+  const p0 = map.project([lng0, lat0]);
+  const dLng = Math.max(1e-6, 2 / (512 * Math.pow(2, map.getZoom()))); /* ≈2px 屏幕对应经度量 */
+  const p1 = map.project([lng0 + dLng, lat0]);
+  const p2 = map.project([lng0, Math.max(-84, Math.min(84, lat0 + dLng))]);
+  let kx = (p1.x - p0.x) / dLng, ky = (p2.y - p0.y) / dLng;
+  if (!isFinite(kx) || Math.abs(kx) < 1e-9) kx = 1e-9;
+  if (!isFinite(ky) || Math.abs(ky) < 1e-9) ky = 1e-9;
+  return { lng0, lat0, kx, ky };
+}
 function pickTrain(px, py, radius) {
   let best = null, bd = radius * radius;
+  const J = pickJacobian(px, py);
   for (let n = 0; n < visibleTrips.length; n++) {
-    const pr = map.project([visibleXY[n * 2], visibleXY[n * 2 + 1]]);
-    const dx = pr.x - px, dy = pr.y - py, d = dx * dx + dy * dy;
+    const sx = (visibleXY[n * 2] - J.lng0) * J.kx;
+    const sy = (visibleXY[n * 2 + 1] - J.lat0) * J.ky;
+    const d = sx * sx + sy * sy;
     if (d < bd) { bd = d; best = visibleTrips[n]; }
   }
   return best;
@@ -4934,9 +4959,11 @@ function pickTrain(px, py, radius) {
 // 收集点击半径内全部列车（按屏幕距离升序），用于叠加弹窗
 function collectTrains(px, py, radius) {
   const out = [], bd = radius * radius;
+  const J = pickJacobian(px, py);
   for (let n = 0; n < visibleTrips.length; n++) {
-    const pr = map.project([visibleXY[n * 2], visibleXY[n * 2 + 1]]);
-    const dx = pr.x - px, dy = pr.y - py, d = dx * dx + dy * dy;
+    const sx = (visibleXY[n * 2] - J.lng0) * J.kx;
+    const sy = (visibleXY[n * 2 + 1] - J.lat0) * J.ky;
+    const d = sx * sx + sy * sy;
     if (d <= bd) out.push({ trip: visibleTrips[n], d2: d });
   }
   out.sort((a, b) => a.d2 - b.d2);
@@ -6699,6 +6726,7 @@ document.querySelectorAll('#trainModeRow .chip').forEach(c => {
     localStorage.setItem('mjr3d_trainmode', trainMode);
     document.querySelectorAll('#trainModeRow .chip').forEach(x => x.classList.toggle('on', x === c));
     switchAtlas(activeAtlasKey()); /* 切换生效图集(可爱=可爱图集;图标=所选图标集;3D=默认) */
+    ensureAtlas(activeAtlasKey()); /* 非默认图集懒加载:未就绪先降级默认,就绪回调自动切回 */
     syncIconSetRow();
   });
 });
@@ -6709,6 +6737,7 @@ document.querySelectorAll('#iconSetRow .chip').forEach(c => {
     localStorage.setItem('mjr3d_iconset', iconSet);
     document.querySelectorAll('#iconSetRow .chip').forEach(x => x.classList.toggle('on', x === c));
     switchAtlas(activeAtlasKey());
+    ensureAtlas(activeAtlasKey());
   });
 });
 syncIconSetRow();/* 异常(游离)车辆检测 + 一键复制 */

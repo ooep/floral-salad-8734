@@ -3632,25 +3632,23 @@ function updateTrains(M, dtms) {
   const m3dGate = model3dOn && hasWebgl2 && z >= 15.2 && M3D.ready;
   let m3dQuota = 12;         /* 本帧最多触发 12 个车型加载(防放大瞬间请求风暴) */
 
-  /* ── 阶段 1:廉价筛选(等级 → 视口包围盒 → 运行窗口),只做 O(1) 比较,不碰位置解算 ──
-     结果写入 eligible,并用 _ok 帧戳标记"本帧应显示"(阶段 2 据此算 alpha 目标值)。
-     ★ 关键:只遍历「本帧开放的等级桶」,未开放的等级(低倍率下的普通/快速列车)
-       连包围盒比较都不做 —— 这才是负载下降的来源。 */
-  const stamp = ++fadeStamp;
+  /* ── 阶段 1:廉价筛选(带缓存,七轮)──
+     eligible 集合只取决于 [整数分钟, 等级门, 视口矩形(z≥5), 纯线模式, 数据档]。
+     全国视图缩放时每帧重建只改顶点尺寸,扫描结果不变 —— 实测全量扫描 8.2ms/帧
+     (86,085 班次),缓存后缩放/空闲帧免扫;5s TTL 兜底班次起终点分钟边界的及时性。
+     ★ 只遍历「本帧开放的等级桶」,未开放的等级连包围盒比较都不做。 */
   if (perfLod) updateTierGate(z);
+  const gatesKey = (tierOn[0] ? 1 : 0) | (tierOn[1] ? 2 : 0) | (tierOn[2] ? 4 : 0) | (tierOn[3] ? 8 : 0);
+  const minuteKey = Math.floor(M);
+  const nowMs = performance.now();
+  let needScan = scanStamp === 0 || minuteKey !== scanMinute || gatesKey !== scanGates ||
+    (pureLine || null) !== scanPure || dayListSrc !== tripList || dayListBit !== dayBit ||
+    !!vp !== scanHasVp || nowMs - scanT0 > 5000;
+  if (!needScan && vp) needScan = vp.mx0 !== scanVp0 || vp.mx1 !== scanVp1 || vp.my0 !== scanVp2 || vp.my1 !== scanVp3;
+  const stamp = needScan ? ++fadeStamp : scanStamp;
   const gate = perfLod ? tierOn : TIER_ALL;
+  if (needScan) {
   eligible.length = 0;
-  /* 跟随 / 详情中的列车强制通过等级门:否则缩到低倍率时相机仍跟着一辆「被 LOD 隐藏」的车,
-     画面里空无一物、详情面板位置却还在动。这两个至多各一辆,成本可忽略。 */
-  if (followTrip || liveDetailTrip) {
-    for (const ft of [followTrip, liveDetailTrip]) {
-      if (!ft || ft.bad || ft._ok === stamp) continue;
-      if (vp && (ft.mx1 < vp.mx0 || ft.mx0 > vp.mx1 || ft.my1 < vp.my0 || ft.my0 > vp.my1)) continue;
-      const M2 = windowShift(ft, M);
-      if (M2 < ft.w0 || M2 > ft.w1) continue;
-      ft._M2 = M2; ft._ok = stamp; ft._seen = stamp; eligible.push(ft);
-    }
-  }
   /* 先估算「网格访问量 vs 线性扫描量」:网格访问量 ≈ 视口覆盖格数 × 每格平均班次数。
      只有明显更省(估算 < 线性量 × GRID_USE_RATIO)才走网格 —— 低/中倍率视口覆盖全国,
      要访问的格子数会爆炸,此时线性扫描更快,自动回退。 */
@@ -3712,6 +3710,22 @@ function updateTrains(M, dtms) {
     if (eligible.length >= MAXT) break;
   }
   }
+  scanStamp = stamp; scanMinute = minuteKey; scanGates = gatesKey; scanPure = pureLine || null;
+  scanHasVp = !!vp;
+  if (vp) { scanVp0 = vp.mx0; scanVp1 = vp.mx1; scanVp2 = vp.my0; scanVp3 = vp.my1; }
+  scanT0 = nowMs;
+  }
+  /* 跟随 / 详情中的列车强制通过等级门(每帧执行,≤2 辆):否则缩到低倍率时相机仍跟着
+     一辆「被 LOD 隐藏」的车,画面里空无一物、详情面板位置却还在动;缓存帧也要补挂。 */
+  if (followTrip || liveDetailTrip) {
+    for (const ft of [followTrip, liveDetailTrip]) {
+      if (!ft || ft.bad || ft._ok === stamp) continue;
+      if (vp && (ft.mx1 < vp.mx0 || ft.mx0 > vp.mx1 || ft.my1 < vp.my0 || ft.my0 > vp.my1)) continue;
+      const M2 = windowShift(ft, M);
+      if (M2 < ft.w0 || M2 > ft.w1) continue;
+      ft._M2 = M2; ft._ok = stamp; ft._seen = stamp; eligible.push(ft);
+    }
+  }
 
   /* ── 阶段 2:与上一帧的显示集合求并,推进 alpha ──
      新进入的班次从 0 起步(下一帧开始淡入),离开的班次衰减到 0 后才真正移出 fadeList,
@@ -3752,7 +3766,8 @@ function updateTrains(M, dtms) {
     const al = t._f;
     if (al < 0.02) continue;                    /* 尚未起步 / 已淡完:不占顶点、不上传 */
     if (n >= MAXT - 1 || vtx * STRIDE + 36 * STRIDE > bufArr.length) { stopped = i; break; }
-    const M2 = (t._ok === stamp) ? t._M2 : windowShift(t, M);
+    /* M2 每帧重算(阶段 1 缓存后 t._M2 可能是 ≤5s 前的扫描值,不能用于位置插值) */
+    const M2 = windowShift(t, M);
     const p = trainPosition(t, M2);
     /* 定位失败(罕见的数据/插值异常):本帧不画,并把 alpha 归零 —— 若只置 _ok=0,
        阶段 1 下一帧会重新标记 _ok,阶段 2 的 alpha 反而继续涨到 1,等定位恢复就"啪"地冒出。
@@ -4678,6 +4693,12 @@ let viewDirty = false;
 let anyFading = false;
 /* 上次重建列车顶点时的 zoom:tick 判定「纯平移」用(zoom 未变的 viewDirty 无需重建) */
 let lastBuildZoom = -1;
+/* 阶段 1 扫描缓存(七轮):eligible 集合只取决于 [整数分钟, 等级门, 视口矩形(z≥5),
+   纯线模式, 数据档]。全国视图缩放时每帧重建只改顶点尺寸,扫描结果不变 —— 实测全量
+   扫描 8.2ms/帧(86,085 班次),缓存后缩放/空闲帧免扫;5s TTL 兜底起终点分钟边界的
+   及时性(班次出现/消失最多迟 5s,与停站展示节奏一致) */
+let scanStamp = 0, scanMinute = -1, scanGates = -1, scanPure = null, scanHasVp = false,
+    scanVp0 = 0, scanVp1 = 0, scanVp2 = 0, scanVp3 = 0, scanT0 = 0;
 function startLoop() {
   function tickFollow(M, dt) {
     if (performance.now() - followStartT <= 950) return;

@@ -128,6 +128,16 @@ def main():
     else:
         print('[badges] SKIP (not present)')
 
+    # 5.3) vendor/ —— 核心库自托管（maplibre-gl 6.12 + three r175 + jsm addons）
+    #      依赖 jsdelivr 等外部 CDN 在部分网络不可达，自托管到 jr-static 保证页面可加载。
+    vendor_src = os.path.join(MINI, 'vendor')
+    if os.path.isdir(vendor_src):
+        n = copy_tree(vendor_src, os.path.join(out, 'vendor'))
+        total += n
+        print('[vendor] %d' % n)
+    else:
+        print('[vendor] SKIP (not present)')
+
     # 6) _headers —— Workers Static Assets 边缘直服(不经过 fetch handler)时注入 CORS，
     #    保证浏览器 crossOrigin='anonymous' 加载图集/图标不污染 canvas（toDataURL/texImage2D 可用）。
     #    注意：此文件必须由脚本生成；rmtree 重建 assets 时手工文件会被清掉。

@@ -47,7 +47,6 @@
 <meta name="twitter:image" content="https://jr-static.suki.ing/og-image.png">
 <meta name="twitter:image:alt" content="Mini JapanRail 全日本列车实时运行可视化地图">
 <meta name="theme-color" content="#0b0f16">
-<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebSite","@id":"https://jr.suki.ing/#website","name":"Mini JapanRail","alternateName":["全日本列车实时运行可视化地图","全日本铁路实时运行地图","全日本列车实时追踪地图","列车运行可视化系统","列车运行情报","列车走行位置","日本铁路实时地图","日本电车实时位置","列車走行位置","列車運行情報","運行情報","リアルタイム列車位置","日本全国鉄道リアルタイムマップ","全国鉄道マップ","鉄道マップ","Japan Train Live Map","Japan Rail Live Map","Real-Time Japan Train Tracker","Japan Railway Map","Shinkansen Live Map"],"url":"https://jr.suki.ing/","description":"全日本列车实时运行可视化地图：本地时刻表驱动，实时显示新干线・特急・在来线・地铁・路面电车的列车走行位置与运行情报，覆盖 600+ 条线路、8,900+ 个车站、4,000+ 列列车。","keywords":"列车实时位置,列车运行可视化,列車走行位置,列車運行情報,運行情報,新幹線,鉄道マップ,路線図,Japan train live map,shinkansen live map","inLanguage":["zh-Hans","ja","en"],"publisher":{"@id":"https://jr.suki.ing/#org"}}
 </script>
@@ -69,7 +68,7 @@
 <link rel="icon" type="image/png" sizes="64x64" href="https://jr-static.suki.ing/favicon.png" id="fav64">
 <link rel="icon" type="image/png" sizes="192x192" href="https://jr-static.suki.ing/icon-192.png">
 <link rel="apple-touch-icon" sizes="180x180" href="https://jr-static.suki.ing/apple-touch-icon.png">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@6.12.0/dist/maplibre-gl.css" crossorigin="anonymous">
+<link rel="stylesheet" href="https://jr-static.suki.ing/vendor/maplibre/maplibre-gl.css">
 <script>
 /* 老旧设备自适应降载判定(内联、首帧前执行,避免闪烁)。
    仅在判定为低端设备时给 <html> 挂 perf-low 类并置 window.__PERF_LOW;
@@ -1273,8 +1272,8 @@ window.addEventListener('unhandledrejection', e => { __pushErr('REJ ' + (e.reaso
 <script src="https://jr-static.suki.ing/data/line_icons.js"></script>
 <script type="importmap">
 { "imports": {
-    "three": "https://cdn.jsdelivr.net/npm/three@0.175.0/build/three.module.js",
-    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.175.0/examples/jsm/"
+    "three": "https://jr-static.suki.ing/vendor/three/three.module.js",
+    "three/addons/": "https://jr-static.suki.ing/vendor/three/jsm/"
 } }
 </script>
 <script type="module">
@@ -1285,7 +1284,7 @@ window.addEventListener('unhandledrejection', e => { __pushErr('REJ ' + (e.reaso
  *  时钟:JST 每帧推算全部在途列车位置,运行时零数据请求
  *  3D:three.js r175(GLTFLoader + KTX2Loader + MeshoptDecoder)渲染 DokoRail 列车模型
  * ================================================================== */
-import * as maplibregl from 'https://cdn.jsdelivr.net/npm/maplibre-gl@6.12.0/dist/maplibre-gl.mjs';
+import * as maplibregl from 'https://jr-static.suki.ing/vendor/maplibre/maplibre-gl.mjs';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { KTX2Loader } from 'three/addons/loaders/KTX2Loader.js';

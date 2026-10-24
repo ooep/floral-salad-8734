@@ -98,6 +98,36 @@ def main():
     total += n
     print('[icons] %d' % n)
 
+    # 5.1) models/ —— 3D 列车模型（DokoRail 迁移：glb + ktx2 + consist.json）
+    #      仅当目录存在时复制（本地开发可直接复制全量；CI 可先同步再构建）。
+    #      basis/ 转码器随 models 一起分发（KTX2Loader.setTranscoderPath 指向 /basis/）。
+    models_src = os.path.join(MINI, 'models')
+    if os.path.isdir(models_src):
+        n = copy_tree(models_src, os.path.join(out, 'models'))
+        total += n
+        print('[models] %d' % n)
+    else:
+        print('[models] SKIP (not present)')
+
+    basis_src = os.path.join(MINI, 'basis')
+    if os.path.isdir(basis_src):
+        n = copy_tree(basis_src, os.path.join(out, 'basis'))
+        total += n
+        print('[basis] %d' % n)
+    else:
+        print('[basis] SKIP (not present)')
+
+    # 5.2) badges/ —— 车站徽章（DokoRail 迁移：123 图集 webp + 11 官方 SVG + map.json）
+    #      徽章按站名映射到图集裁剪坐标，前端运行时裁剪注册为 MapLibre icon；
+    #      无专属徽章的站由前端文字徽章兜底（与 DokoRail 三级体系一致）。
+    badges_src = os.path.join(MINI, 'data', 'badges')
+    if os.path.isdir(badges_src):
+        n = copy_tree(badges_src, os.path.join(out, 'data', 'badges'))
+        total += n
+        print('[badges] %d' % n)
+    else:
+        print('[badges] SKIP (not present)')
+
     # 6) _headers —— Workers Static Assets 边缘直服(不经过 fetch handler)时注入 CORS，
     #    保证浏览器 crossOrigin='anonymous' 加载图集/图标不污染 canvas（toDataURL/texImage2D 可用）。
     #    注意：此文件必须由脚本生成；rmtree 重建 assets 时手工文件会被清掉。

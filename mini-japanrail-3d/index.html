@@ -477,6 +477,30 @@ button { font-family:inherit; }
 #detail .d-wiki.na .dw-ar { display:none; }
 #detail .d-wiki-bd { display:grid; grid-template-rows:0fr; transition:grid-template-rows var(--morph-out) var(--spring-out); }
 #detail .d-wiki[data-open="1"] .d-wiki-bd { grid-template-rows:1fr; }
+/* ── 3D 模型入口（百科旁）── */
+#detail .d-model { display:flex; align-items:center; gap:7px; margin-top:10px; padding:9px 12px; border:1px solid var(--glass-edge); border-radius:14px; background:var(--glass); cursor:pointer; -webkit-user-select:none; user-select:none; transition:background .15s, transform .1s; }
+#detail .d-model:hover { background:var(--glass-2); }
+#detail .d-model:active { transform:scale(.97); }
+#detail .d-model .dm-ic { width:30px; height:30px; flex:none; border-radius:9px; background:color-mix(in srgb,var(--acc) 20%,transparent); color:var(--acc-txt); display:flex; align-items:center; justify-content:center; }
+#detail .d-model .dm-tx { flex:1; min-width:0; }
+#detail .d-model .dm-t { font-size:12.5px; font-weight:700; color:var(--txt); }
+#detail .d-model .dm-s { font-size:10.5px; color:var(--dim); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+/* ── 3D 模型抽屉（全屏查看器）── */
+#m3dMask { position:fixed; inset:0; background:rgba(4,7,12,.72); z-index:44; display:block; opacity:0; visibility:hidden; transition:opacity .28s ease, visibility 0s linear .28s; -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); }
+#m3dMask.open { opacity:1; visibility:visible; transition:opacity .28s ease, visibility 0s linear 0s; }
+#m3dViewer { position:fixed; inset:0; z-index:45; opacity:0; visibility:hidden; pointer-events:none; transition:opacity .26s ease, visibility 0s linear .26s; }
+#m3dViewer.open { opacity:1; visibility:visible; pointer-events:auto; transition:opacity .26s ease, visibility 0s linear 0s; }
+#m3dViewer canvas { position:absolute; inset:0; width:100%; height:100%; display:block; touch-action:none; }
+#m3dViewer .m3d-hd { position:absolute; top:max(10px,env(safe-area-inset-top)); left:0; right:0; display:flex; align-items:center; gap:10px; padding:0 16px; z-index:2; pointer-events:none; }
+#m3dViewer .m3d-hd .m3d-tx { flex:1; min-width:0; }
+#m3dViewer .m3d-hd .m3d-nm { font-size:15px; font-weight:800; color:var(--txt); text-shadow:0 1px 6px rgba(0,0,0,.6); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#m3dViewer .m3d-hd .m3d-sub { font-size:11px; color:var(--dim); margin-top:2px; text-shadow:0 1px 4px rgba(0,0,0,.6); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#m3dViewer .m3d-hd .m3d-x { pointer-events:auto; width:34px; height:34px; min-width:34px; min-height:34px; padding:0; border-radius:50%; border:1px solid rgba(255,255,255,.16); background:rgba(10,14,22,.55); color:var(--txt); display:flex; align-items:center; justify-content:center; cursor:pointer; -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); }
+#m3dViewer .m3d-hd .m3d-x:hover { background:rgba(40,52,72,.72); }
+#m3dViewer .m3d-hint { position:absolute; left:50%; bottom:max(14px,env(safe-area-inset-bottom)); transform:translateX(-50%); z-index:2; font-size:11px; color:var(--dim); background:rgba(8,12,20,.5); border:1px solid rgba(255,255,255,.1); border-radius:999px; padding:6px 14px; pointer-events:none; text-align:center; -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); }
+#m3dViewer .m3d-load { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); z-index:2; color:var(--dim); font-size:12.5px; display:flex; flex-direction:column; align-items:center; gap:10px; pointer-events:none; }
+#m3dViewer .m3d-load .spin { width:26px; height:26px; border-radius:50%; border:2.5px solid rgba(120,150,200,.22); border-top-color:var(--acc-txt); animation:m3dSpin .8s linear infinite; }
+@keyframes m3dSpin { to { transform:rotate(360deg); } }
 #detail .d-wiki-bd > .dw-in { min-height:0; overflow:hidden; }
 #detail .dw-art { max-height:min(300px,42vh); overflow-y:auto; overscroll-behavior:contain; padding:2px 2px 4px; }
 #detail .dw-art .gd-loading { padding:14px 2px; font-size:12px; }
@@ -1083,9 +1107,12 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
         <div class="sec-t" id="tSet">设置</div>
         <div class="sw" id="swPerf"><span id="tSw11">性能改善</span><span class="trk"></span></div>
         <div class="swnote" id="tSw11Note">低倍率只显示新干线・特急，放大后逐级加入快速・普通列车（含地铁・路面电车），切换为淡入淡出</div>
+        <div class="sw on" id="swModel3d"><span id="tModel3d">高倍率 3D 列车模型</span><span class="trk"></span></div>
+        <div class="swnote" id="tModel3dNote">地图放大到最大层级时，视口内列车切换为同车型真实 3D 模型（无模型自动回退）</div>
         <div class="sw on" id="swLabel"><span id="tSw1">车站标签</span><span class="trk"></span></div>
         <div class="sw on" id="swGlow"><span id="tSw2">轨道光晕</span><span class="trk"></span></div>
         <div class="sw on" id="swSta"><span id="tSw3">车站点</span><span class="trk"></span></div>
+        <div class="sw on" id="swBadge"><span id="tSw12">车站徽章</span><span class="trk"></span></div>
         <div class="sw on" id="swFp"><span id="tSw8">车站轮廓</span><span class="trk"></span></div>
         <div class="sw on" id="swEnt"><span id="tSw9">出入口</span><span class="trk"></span></div>
         <div class="sw on" id="swOrm"><span id="tSw10">详细股道</span><span class="trk"></span></div>
@@ -1186,6 +1213,16 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
 <div id="tip"></div>
 <div id="trPick"></div>
 <div id="sheetMask"></div>
+<div id="m3dMask"></div>
+<div id="m3dViewer">
+  <canvas id="m3dCanvas"></canvas>
+  <div class="m3d-hd">
+    <div class="m3d-tx"><div class="m3d-nm" id="m3dNm"></div><div class="m3d-sub" id="m3dSub"></div></div>
+    <button class="m3d-x" id="m3dX"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="m3d-load" id="m3dLoad"><div class="spin"></div><span id="m3dLoadTx">Loading…</span></div>
+  <div class="m3d-hint" id="m3dHint"></div>
+</div>
 <div id="sheet">
   <div class="grab"></div>
   <div class="sh-head">
@@ -1234,14 +1271,27 @@ window.addEventListener('unhandledrejection', e => { __pushErr('REJ ' + (e.reaso
 </script>
 
 <script src="https://jr-static.suki.ing/data/line_icons.js"></script>
+<script type="importmap">
+{ "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.175.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.175.0/examples/jsm/"
+} }
+</script>
 <script type="module">
 /* ================================================================== *
  *  Mini JapanRail｜全日本列车实时运行可视化地图(单文件版)
  *  数据:本地时刻表(trains_*.json + tmaps.json)+ 轨道几何(segments3d/stations3d)
  *  渲染:MapLibre GL JS v6(Globe 投影)+ projectTile 注入自定义 WebGL 列车层
  *  时钟:JST 每帧推算全部在途列车位置,运行时零数据请求
+ *  3D:three.js r175(GLTFLoader + KTX2Loader + MeshoptDecoder)渲染 DokoRail 列车模型
  * ================================================================== */
 import * as maplibregl from 'https://cdn.jsdelivr.net/npm/maplibre-gl@6.12.0/dist/maplibre-gl.mjs';
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { KTX2Loader } from 'three/addons/loaders/KTX2Loader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 /* ---------------- 常量 ---------------- */
 const JST = 9 * 3600 * 1000;
@@ -1442,8 +1492,9 @@ const I18N = {
     filterT:'线路类型', legendT:'图例', dayT:'运行日', dayAuto:'自动', setT:'设置', dataT:'数据', helpT:'帮助', aboutT:'关于',
     about1:'Mini JapanRail — 全日本列车实时运行可视化地图（列車走行位置・運行情報）。基于本地时刻表在浏览器端实时推算新干线・特急・在来线・地铁・路面电车约 4,000 列列车的走行位置，支持 3D 地球投影、时钟回放与路线搜索。', about2:'收录全国 600+ 条铁路线路、8,900+ 个车站。数据源为日本全国铁路计划时刻表，每周自动刷新；页面运行时零外部请求。', about3:'本站为个人爱好项目，数据仅供学习参考。', about4:'隐私政策',
     about5:'主要功能：实时列车位置・走行位置动画 / 3D 地球投影 / 时钟回放（0.5–32×）/ 起终点路线搜索 / 车站查询与途经线路 / 运行日切换 / 线路类型过滤 / 日・中・英三语。', about6:'浏览静态页面：',
-    sw1:'车站标签', sw2:'轨道光晕', sw3:'车站点', sw4:'底图瓦片', sw5:'列车光晕', sw6:'复制异常车辆', sw7:'列车悬浮提示', sw8:'车站轮廓', sw9:'出入口', sw10:'详细股道',
+    sw1:'车站标签', sw2:'轨道光晕', sw3:'车站点', sw4:'底图瓦片', sw5:'列车光晕', sw6:'复制异常车辆', sw7:'列车悬浮提示', sw8:'车站轮廓', sw9:'出入口', sw10:'详细股道', sw12:'车站徽章',
     sw11:'性能改善', sw11Note:'低倍率下只渲染新干线・特急，放大后逐级加入快速・普通列车（含地铁・路面电车）；等级切换与进出视野均为淡入淡出，避免列车突然出现或消失',
+    model3dT:'高倍率 3D 列车模型', model3dNote:'地图放大到最大层级时，视口内列车切换为同车型真实 3D 模型（无模型自动回退）', model3dBtn:'查看 3D 模型', model3dView:'3D 模型查看器', model3dHint:'拖动旋转 · 滚轮缩放', m3dLoadT:'正在加载模型…',
     modeT:'列车显示', mode3d:'3D', modeIcon:'图标', modeCute:'可爱',
     iconSetT:'图标集', iSetDefault:'默认', iSetVector:'矢量', iconSetNote:'仅"图标"模式生效',
     baseT:'底图源', bPale:'淡色', bStd:'标准', bDark:'深色', bSat:'卫星',
@@ -1475,8 +1526,9 @@ const I18N = {
     filterT:'路線種別', legendT:'凡例', dayT:'運行日', dayAuto:'自動', setT:'設定', dataT:'データ', helpT:'ヘルプ', aboutT:'このサイトについて',
     about1:'ミニ日本鉄道 — 全国鉄道リアルタイム3Dマップ（列車走行位置・運行情報）。ローカル時刻表から新幹線・特急・在来線・地下鉄・路面電車 約 4,000 列の走行位置をブラウザ上でリアルタイムに再現。3D 地球投影・時刻表再生・経路検索に対応。', about2:'全国 600 以上の路線・8,900 以上の駅を収録。データソースは全国鉄道の計画時刻表で、毎週自動更新。ページ実行時の外部リクエストはありません。', about3:'個人の趣味プロジェクトです。データは学習・参考用です。', about4:'プライバシーポリシー',
     about5:'主な機能：リアルタイム列車位置・走行位置アニメーション / 3D 地球投影 / 時刻表再生（0.5〜32倍速）/ 経路検索 / 駅検索と経由路線 / 運行日切替 / 路線種別フィルタ / 日・中・英 3 言語。', about6:'静的ページを見る：',
-    sw1:'駅ラベル', sw2:'軌道グロー', sw3:'駅ドット', sw4:'背景タイル', sw5:'列車グロー', sw6:'異常列車コピー', sw7:'列車ホバーチップ', sw8:'駅舎ポリゴン', sw9:'出入口', sw10:'詳細軌道',
+    sw1:'駅ラベル', sw2:'軌道グロー', sw3:'駅ドット', sw4:'背景タイル', sw5:'列車グロー', sw6:'異常列車コピー', sw7:'列車ホバーチップ', sw8:'駅舎ポリゴン', sw9:'出入口', sw10:'詳細軌道', sw12:'駅バッジ',
     sw11:'パフォーマンス改善', sw11Note:'低ズームでは新幹線・特急のみ描画し、拡大すると快速・普通列車（地下鉄・路面電車を含む）を段階的に追加。種別の切替や画面への出入りはフェードイン／アウトで行われ、列車が突然現れたり消えたりしません',
+    model3dT:'高倍率 3D 列車モデル', model3dNote:'地図を最大ズームまで拡大すると、視界内の列車が同型の実物 3D モデルに切り替わります（モデルが無い列車は自動的に元の表示へ）', model3dBtn:'3Dモデルを見る', model3dView:'3Dモデルビューア', model3dHint:'ドラッグで回転・ホイールでズーム', m3dLoadT:'モデルを読み込み中…',
     modeT:'列車表示', mode3d:'3D', modeIcon:'アイコン', modeCute:'かわいい',
     iconSetT:'アイコンセット', iSetDefault:'標準', iSetVector:'ベクター', iconSetNote:'「アイコン」モードのみ有効',
     baseT:'ベースマップ', bPale:'淡色', bStd:'標準', bDark:'ダーク', bSat:'衛星',
@@ -1508,8 +1560,9 @@ const I18N = {
     filterT:'Line types', legendT:'Legend', dayT:'Service day', dayAuto:'Auto', setT:'Settings', dataT:'Data', helpT:'Help', aboutT:'About',
     about1:'Mini JapanRail — a real-time 3D map of all Japan railways (train live positions). Driven by local timetables, it animates the positions of ~4,000 Shinkansen, limited express, local, subway and tram trains, with 3D globe projection, timetable replay and route search.', about2:'Covers 600+ railway lines and 8,900+ stations. Data source: scheduled timetables for all Japan railways, auto-refreshed weekly; zero external requests at runtime.', about3:'A personal hobby project — data provided for reference only.', about4:'Privacy Policy',
     about5:'Key features: live train positions / 3D globe projection / timetable replay (0.5–32×) / route search / station lookup and its lines / service-day switch / line-type filter / Japanese, Chinese and English UI.', about6:'Browse static pages:',
-    sw1:'Station labels', sw2:'Track glow', sw3:'Station dots', sw4:'Basemap tiles', sw5:'Train glow', sw6:'Copy off-rail trains', sw7:'Train hover tooltip', sw8:'Station footprint', sw9:'Station exits', sw10:'Detailed tracks',
+    sw1:'Station labels', sw2:'Track glow', sw3:'Station dots', sw4:'Basemap tiles', sw5:'Train glow', sw6:'Copy off-rail trains', sw7:'Train hover tooltip', sw8:'Station footprint', sw9:'Station exits', sw10:'Detailed tracks', sw12:'Station badges',
     sw11:'Performance boost', sw11Note:'At low zoom only Shinkansen and limited express are drawn; zooming in progressively adds rapid and local trains (incl. subway and tram). Grade switches and entering/leaving the view cross-fade, so trains never pop in or out',
+    model3dT:'High-zoom 3D train models', model3dNote:'When zoomed in to the maximum, trains in view switch to real 3D models of the same type (falls back automatically when no model exists)', model3dBtn:'View 3D model', model3dView:'3D model viewer', model3dHint:'Drag to rotate · Scroll to zoom', m3dLoadT:'Loading model…',
     modeT:'Train display', mode3d:'3D', modeIcon:'Icon', modeCute:'Cute',
     iconSetT:'Icon set', iSetDefault:'Default', iSetVector:'Vector', iconSetNote:'Applies to "Icon" mode only',
     baseT:'Basemap', bPale:'Pale', bStd:'Standard', bDark:'Dark', bSat:'Satellite',
@@ -3507,6 +3560,7 @@ function buildDayIndex() {
 function updateTrains(M, dtms) {
   if (dayList === null || dayListSrc !== tripList || dayListBit !== dayBit) buildDayIndex();
   let n = 0, vtx = 0; // vtx:总顶点数(俯视 6/列车,倾斜 36/列车 + 光晕 6/个)
+  let m3dEnsureQuota = 12; /* 每帧最多发起 12 个新模型加载(视口内优先),避免放大瞬间卡顿 */
   visibleTrips.length = 0;
   const z = map.getZoom();
   /* 高 zoom 精度:mercator 变体顶点改为相对地图中心的偏移(render 同步上传零平移列局部矩阵);
@@ -3715,6 +3769,26 @@ function updateTrains(M, dtms) {
     }
     const mx = (lng + 180) / 360 - cxo;
     const my = ((1 - Math.log(Math.tan(Math.PI/4 + lat * Math.PI/360)) / Math.PI) / 2) - cyo;
+    /* 高倍率 3D 模型接管:zoom 达阈值 + 开关开 + 该班次命中模型映射且模型已加载完成
+       → 跳过 shader 方盒/图标顶点构建,列车由独立 three.js 覆盖层渲染真实模型;
+       未命中/未加载完成 → 照常走原模式(回退)。visibleTrips/visibleXY 仍登记(拾取/跟随/详情可用)。 */
+    /* 高 zoom + 模型映射 → 惰性触发加载(限量,避免一次加载太多车型卡顿);加载完成即接管 */
+    if (model3dOn && z >= 15.2 && hasWebgl2 && window.__M3D) {
+      const mpath = __M3D.pathOf(t);
+      if (mpath) {
+        if (m3dEnsureQuota > 0) { __M3D.ensure(mpath); m3dEnsureQuota--; }
+        if (__M3D.covers(t)) {
+          t._m3d = 1;
+          t._m3dBrg = p[2]; /* 行进方位角(北=0 东=90°,弧度):drawModels 用它对齐模型长轴到轨道方向 */
+          visibleTrips.push(t); visibleXY[n * 2] = lng; visibleXY[n * 2 + 1] = lat;
+          drawnCouple.add(t); /* 併结伙伴可据此错开(即便本车不由 shader 绘制) */
+          n++;
+          continue;
+        }
+      }
+    }
+    t._m3d = 0;
+    t._m3d = 0;
     let dxm = Math.sin(p[2]) * eps, dym = -Math.cos(p[2]) * eps; // mercator y 向南为正,北上取负
     if (p[5] === 0 && p[2] === 0) { dxm = eps; dym = 0; }
     // 底面(俯视/倾斜都画,平面矩形)
@@ -3997,6 +4071,8 @@ async function boot() {
     /* 地图先行:轨道/车站网络先渲染(仅需原始 GeoJSON),索引与时刻表随后分片构建 */
     await mapReadyPromise();
     addMapLayers();
+    /* 车站徽章(DokoRail 迁移):异步加载映射,绑定视野更新;不阻塞主流程 */
+    loadBadgesMap().then(() => { badgesBindView(); updateBadgeIcons(); });
     if (!PERF_LOW) fetchOrmTracks(); /* ORM 线位图层数据:异步拉取(与索引构建并行),不阻塞 dataReady;低配设备按需加载 */
     /* 索引构建/恢复:进度 55→78% */
     setPhase(FILES_PCT, IDX_PCT, 0);
@@ -4037,6 +4113,78 @@ async function boot() {
   } finally { booting = false; }
 }
 $('lRetry').addEventListener('click', () => { boot(); });
+
+/* ---------------- 车站徽章模块(DokoRail 迁移) ----------------
+   三级体系:① 专属徽章(图集裁剪) → ② 线路符号(暂并入文字兜底) → ③ 文字徽章(站名+线路色)。
+   数据: data/badges/map.json — 本站站名 -> {code, url, crop:[x,y,w,h]}
+   资产: jr-static /data/badges/atlas/sha256/*.webp + /data/badges/official/*.svg
+   缩放: z13 起显示(minzoom),与 DokoRail zooms.body=13 一致;按视野按需注册 icon。 */
+let badgesMap = null, badgesIcons = new Set(), badgesSheets = new Map();
+const BADGES_MIN_ZOOM = 13, BADGES_DATA_URL = 'https://jr-static.suki.ing/data/badges/map.json';
+const BADGES_BASE = 'https://jr-static.suki.ing/data/badges';
+
+async function loadBadgesMap() {
+  if (badgesMap) return badgesMap;
+  try {
+    const r = await fetchJSONWithCache(BADGES_DATA_URL, '', 12);
+    if (r && typeof r === 'object') { badgesMap = r; console.log('[badges] map loaded:', Object.keys(r).length, 'stations'); }
+  } catch (e) { console.warn('[badges]', e); }
+  return badgesMap;
+}
+/* 从图集裁剪单个徽章:加载图集(缓存)→ canvas 裁剪 → addImage 注册 */
+async function badgeEnsureIcon(name) {
+  const key = 'bd_' + name;
+  if (badgesIcons.has(key) || !map || !badgesMap) return;
+  const bd = badgesMap[name];
+  if (!bd) return;
+  try {
+    let sheet = badgesSheets.get(bd.url);
+    if (!sheet) {
+      const img = await map.loadImage(BADGES_BASE + bd.url);  /* MapLibre: 返回 {data: ImageBitmap} */
+      if (!img || !img.data) { badgesSheets.set(bd.url, 'bad'); return; }
+      sheet = img.data; badgesSheets.set(bd.url, sheet);
+    }
+    if (sheet === 'bad') return;
+    const [cx, cy, cw, ch] = bd.crop;
+    const c = document.createElement('canvas');
+    c.width = cw; c.height = ch;
+    const ctx = c.getContext('2d');
+    ctx.drawImage(sheet, cx, cy, cw, ch, 0, 0, cw, ch);
+    if (!map.hasImage(key)) map.addImage(key, ctx.getImageData(0, 0, cw, ch));
+    badgesIcons.add(key);
+  } catch (e) { /* 单个徽章失败不影响整体 */ }
+}
+/* 把视野内站的 badgeIcon 属性写回 GeoJSON(懒加载:仅放大后需要时更新) */
+function updateBadgeIcons() {
+  if (!badgesMap || !map || !map.getSource('stas') || map.getZoom() < BADGES_MIN_ZOOM - 0.5) return;
+  /* 直接操作 staFC(模块内源 GeoJSON 引用),避免依赖 MapLibre 内部 _data 格式 */
+  const data = staFC;
+  if (!data || !data.features) return;
+  let changed = false;
+  for (const f of data.features) {
+    const nm = f.properties && f.properties.station;
+    if (!nm) continue;
+    const has = f.properties.badgeIcon;
+    if (!has && badgesMap[nm]) {
+      f.properties.badgeIcon = 'bd_' + nm;
+      badgeEnsureIcon(nm);
+      changed = true;
+    }
+  }
+  if (changed) map.getSource('stas').setData(data);
+}
+function badgesBindView() {
+  if (!map) return;
+  map.on('moveend', () => updateBadgeIcons());
+  map.on('zoomend', () => updateBadgeIcons());
+  map.on('idle', () => { if (map.getZoom() >= BADGES_MIN_ZOOM) updateBadgeIcons(); });
+}
+/* 徽章开关(设置面板 swBadge):默认开;关闭时隐藏徽章层,仅保留灰点 */
+function applyBadgeVisible(v) {
+  if (!map || !map.getLayer('stas-badge')) return;
+  map.setLayoutProperty('stas-badge', 'visibility', v ? 'visible' : 'none');
+}
+
 function addMapLayers() {
   /* ── 站台层(platform):OSM railway=platform 站台面/线,黄色;地铁站无地面站房时的范围表示 ── */
   if (platformsFC && !map.getSource('pl')) {
@@ -4090,6 +4238,14 @@ function addMapLayers() {
     'line-color': ['get', 'color'], 'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 2, 0.7, 9, 1.7, 14, 3.6],
     'line-opacity': 0.92 } });
   if (!map.getSource('stas')) {
+    /* 站徽章属性注入:badgesMap 已加载时为有专属徽章的站预写 badgeIcon(图标键),
+       供 stas-badge 层按需取图;未加载时由 updateBadgeIcons() 于 zoom≥13 后补齐 */
+    if (badgesMap && staFC && staFC.features) {
+      for (const f of staFC.features) {
+        const nm = f.properties && f.properties.station;
+        if (nm && badgesMap[nm] && !f.properties.badgeIcon) f.properties.badgeIcon = 'bd_' + nm;
+      }
+    }
     map.addSource('stas', { type: 'geojson', data: staFC });
     map.addLayer({ id: 'stas', type: 'circle', source: 'stas', paint: {
       'circle-radius': ['interpolate', ['exponential', 1.5], ['zoom'], 3, 1, 9, 1.8, 13, 3.2],
@@ -4099,6 +4255,15 @@ function addMapLayers() {
       'text-font': ['Noto Sans Regular'], 'text-offset': [0, 0.85], 'text-anchor': 'top', 'text-allow-overlap': false, 'text-optional': true },
       paint: { 'text-color': '#a7b4ca', 'text-halo-color': 'rgba(6,8,14,0.9)', 'text-halo-width': 1.3 } });
     map.addLayer(trainShaderLayer, 'stas-label');
+    /* ── 车站徽章层(DokoRail 迁移):放大到 z13 才显示,三级兜底 ──
+       专属徽章(图集裁剪注册为 MapLibre icon) → 线路符号 → 文字徽章(站名+线路色)。
+       徽章数据 data/badges/map.json 按站名映射 {code,url,crop},图集从 jr-static 拉取;
+       z13 以下只显示灰点(stas 层),放大后徽章淡入 —— 与 DokoRail zooms.body=13 一致。 */
+    map.addLayer({ id: 'stas-badge', type: 'symbol', source: 'stas', minzoom: 13, layout: {
+      'icon-image': ['get', 'badgeIcon'], 'icon-size': ['interpolate', ['linear'], ['zoom'], 13, 0.42, 16, 0.75],
+      'icon-allow-overlap': true, 'icon-ignore-placement': true, 'icon-anchor': 'center', 'icon-optional': true },
+      paint: { 'icon-opacity': ['interpolate', ['linear'], ['zoom'], 13, 0, 13.6, 1] } });
+    map.addLayer(trainShaderLayer, 'stas-badge');
   }
   // 高亮层(仅首次创建,避免每帧重复 addSource/addLayer)
   if (!map.getSource('hl')) {
@@ -4210,6 +4375,8 @@ function startLoop() {
     }
     viewDirty = false; /* 相机已稳定:本帧重建后清除,恢复暂停态省电 */
     updateTrains(M, dt * 1000); /* dt 传给淡入淡出:按真实帧间隔推进 alpha,掉帧时时长不变 */
+    /* 高倍率 3D 模型覆盖层:updateTrains 已解算 _m3d 接管标记,这里投影渲染真实模型 */
+    try { if (window.__M3D && model3dOn && map.getZoom() >= 15.2 && hasWebgl2) __M3D.frame(M); else if (window.__M3D) __M3D.clear(); } catch (e) { __pushErr('M3D.frame ' + e); }
     /* 徽标「在途」= 全国此时此刻在途列车数:与 LOD/等级门/视口裁剪无关,
        缩放、开关「性能改善」都不会改变这个数字(它描述事实,不是描述屏幕上画了多少) */
     const act = activeCountAt(M);
@@ -4946,6 +5113,7 @@ function updateDetailLive(t, p, M, rebuild) {
           (nm ? '<button class="cplbtn" data-ci="' + t.cpl.indexOf(c) + '">' + T().cplView.replace('{0}', nm) + '</button>' : '');
       }).join('<i class="sep">；</i>') + '</span></div>' : '') +
       _wikiBoxHtml() +
+      '<div class="d-model" id="dModelBtn" style="display:none"><span class="dm-ic"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17l8-10 8 10"/><path d="M8 21h8M12 17v4"/><rect x="2.5" y="17.5" width="19" height="3.5" rx="1"/></svg></span><span class="dm-tx"><div class="dm-t">' + (T().model3dBtn || '查看 3D 模型') + '</div><div class="dm-s">' + (T().model3dView || '3D 模型查看器') + '</div></span></div>' +
       '</div>' +
       '<div class="d-sep"></div>' +
       '<div class="d-stops"><div class="st-title">' + T().stopsTitle + '<span class="cnt">' + N + ' ' + T().stopsCount + '</span></div>' +
@@ -4990,6 +5158,7 @@ function updateDetailLive(t, p, M, rebuild) {
     $('dClose').onclick = () => { closeDetail(); liveDetailTrip = null; if (followTrip) stopFollow(); };
     $('dFollow').onclick = () => { if (followTrip === t) stopFollow(); else startFollow(t); };
     $('dLoc').onclick = () => { if (p) map.flyTo({ center: [p[0], p[1]], zoom: Math.max(map.getZoom(), 12), pitch: 55, duration: 1200 }); };
+    M3D.bindDetail(t); /* 3D 模型入口:命中映射才显示,点击打开全屏查看器 */
     wikiBoxInit(t); /* 列车百科折叠框:异步载索引/车型数据,与本帧其余逻辑解耦 */
   } else {
     /* 每帧 innerHTML 重写有 GC/排版开销:内容不变时跳过,只写变化行 */
@@ -5986,6 +6155,7 @@ function applyKindFilter() {
 $('swLabel').addEventListener('click', function () { this.classList.toggle('on'); map.setLayoutProperty('stas-label', 'visibility', this.classList.contains('on') ? 'visible' : 'none'); });
 $('swGlow').addEventListener('click', function () { this.classList.toggle('on'); map.setLayoutProperty('segs-glow', 'visibility', this.classList.contains('on') ? 'visible' : 'none'); });
 $('swSta').addEventListener('click', function () { this.classList.toggle('on'); map.setLayoutProperty('stas', 'visibility', this.classList.contains('on') ? 'visible' : 'none'); });
+$('swBadge').addEventListener('click', function () { this.classList.toggle('on'); applyBadgeVisible(this.classList.contains('on')); });
   /* 车站轮廓开关:默认开,选择持久化(mjr3d_showfp) */
   let fpEnabled = localStorage.getItem('mjr3d_showfp') !== '0';
   $('swFp').classList.toggle('on', fpEnabled);
@@ -6043,6 +6213,19 @@ $('swPerf').addEventListener('click', function () {
   viewDirty = true;            /* 暂停态也要重建顶点,让等级变化立刻生效 */
   if (map) map.triggerRepaint();
 });
+/* 高倍率 3D 列车模型开关(默认开):达到最高层级时视口内列车切换为真实 3D 模型 */
+let model3dOn = (() => { const v = localStorage.getItem('mjr3d_model3d'); return v === null ? true : v === '1'; })();
+$('swModel3d').classList.toggle('on', model3dOn);
+$('swModel3d').addEventListener('click', function () {
+  model3dOn = !model3dOn;
+  this.classList.toggle('on', model3dOn);
+  localStorage.setItem('mjr3d_model3d', model3dOn ? '1' : '0');
+  viewDirty = true;
+  if (map) map.triggerRepaint();
+});
+/* 3D 模型抽屉:关闭按钮 + 遮罩点击关闭(与 sheet 交互一致) */
+$('m3dX').addEventListener('click', () => M3D.closeViewer());
+$('m3dMask').addEventListener('click', () => M3D.closeViewer());
 /* 列车悬浮提示:桌面端默认开,移动端默认关 */
 let tipEnabled = (() => {
   const saved = localStorage.getItem('mjr3d_tip');
@@ -6312,6 +6495,8 @@ function applyLang() {
   $('dayAuto').textContent = t.dayAuto;
   $('tSw1').textContent = t.sw1; $('tSw2').textContent = t.sw2; $('tSw3').textContent = t.sw3; $('tSw4').textContent = t.sw4; $('tSw5').textContent = t.sw5; $('tSw6').textContent = t.sw6; $('tSw7').textContent = t.sw7; $('tSw8').textContent = t.sw8; $('tSw9').textContent = t.sw9;
   if ($('tSw11')) $('tSw11').textContent = t.sw11; if ($('tSw11Note')) $('tSw11Note').textContent = t.sw11Note;
+  if ($('tSw12')) $('tSw12').textContent = t.sw12;
+  if ($('tModel3d')) $('tModel3d').textContent = t.model3dT; if ($('tModel3dNote')) $('tModel3dNote').textContent = t.model3dNote;
   $('tMode').textContent = t.modeT; $('tMode3d').textContent = t.mode3d; $('tModeIcon').textContent = t.modeIcon; if ($('tModeCute')) $('tModeCute').textContent = t.modeCute;
   if ($('tIconSet')) $('tIconSet').textContent = t.iconSetT;
   if ($('iSetDefault')) $('iSetDefault').textContent = t.iSetDefault;
@@ -6383,6 +6568,10 @@ window.addEventListener('hashchange', () => {
   }
 });
 window.__dbg = () => ({ map: !!map, dataReady, tripList: tripList.length, dayBit, errs: window.__errs, msg: document.getElementById('lMsg').textContent, active: visibleCount, rc: __renderCount, glErr: __glErr, layer: !!map.getLayer('trains-gl'), variant: __lastArgs && __lastArgs.variant, cache: !!idb, glowAutoOff, stIdx: tripsByStation.size });
+/* 调试钩子:外部(控制台/自动化)获取当前班次表与打开详情。只读,线上零副作用。 */
+Object.defineProperty(window, '__tripList', { get: () => tripList, configurable: true });
+Object.defineProperty(window, '__showTrainDetail', { get: () => showTrainDetail, configurable: true });
+Object.defineProperty(window, '__map', { get: () => map, set: (v) => { map = v; }, configurable: true });
 /* 性能改善诊断:等级门状态 / 各等级实际绘制数 / 淡入淡出中的班次数 / 索引规模 */
 window.__lod = () => {
   const byG = [0, 0, 0, 0];
@@ -6395,7 +6584,6 @@ window.__lod = () => {
            buckets: dayGrade ? dayGrade.map(a => a.length) : null };
 };
 window.__bufSample = () => Array.from(bufArr.slice(0, 36).map(x => +x.toFixed(6)));
-window.__map = map;
 window.__uni = uni;
 window.__shaderMap = trainShaderLayer.shaderMap;
 window.__glState = () => ({ glRef, vao, vbo, visibleCount, bufArr });
@@ -6479,6 +6667,378 @@ window.__probe = (lineFilter, limit) => {
   return out;
 };
 if (!hasWebgl2) { loaderMsg.textContent = '⚠ WebGL2 unavailable'; }
+
+/* ══════════════════════════════════════════════════════════════════
+   3D 列车模型（DokoRail 迁移）:
+   ① 列车详情抽屉「百科」旁新增「模型」入口 → 全屏 3D 查看器
+      （three.js 渲染完整编组:consist 车厢按 couple 排列 + ktx2 PBR 材质 + OrbitControls）
+   ② 设置开关「高倍率 3D 列车模型」(默认开):地图 zoom ≥ M3D_ZOOM 时,
+      视口内命中模型映射的列车由真实 3D 模型渲染;无模型/加载中回退原模式。
+   资产:jr-static.suki.ing/models/<车型>/(glb + ktx2 + consist.json + maps.json)
+        jr-static.suki.ing/basis/(Basis 转码器,KTX2Loader 用)
+   映射:data/model_map.json {names:{爱称→模型}, lines:{本站线路名→模型}}
+   ══════════════════════════════════════════════════════════════════ */
+const M3D = (() => {
+  const M3D_ZOOM = 15.2;                     /* 高 zoom 阈值(maxZoom=16 附近,视口内列车少才划算) */
+  const MAX_CACHE = 20;                       /* 编组缓存上限(按需加载,LRU 淘汰) */
+  const MAX_DRAW = 48;                        /* 单帧最多渲染模型数(高 zoom 视口内通常 <30) */
+  const MODEL_BASE = (location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+    ? '' : 'https://jr-static.suki.ing';
+  /* 资源 URL:线上为绝对地址;本地/子目录部署时退化为相对路径(去掉前导 /),跟随页面所在目录解析 */
+  const m3dUrl = (p) => MODEL_BASE ? MODEL_BASE + p : p.replace(/^\//, '');
+  const BASIS_BASE = m3dUrl('/basis/');
+  let modelMap = null;                        /* {names, lines} 懒加载 */
+  let mapP = null;
+  /* 编组缓存:path → {group, key}。group 为完整编组(consist 全车厢,three 场景单位=米) */
+  const cache = new Map();                    /* path -> Promise<THREE.Group> */
+  let cacheOrder = [];
+  /* 覆盖层(地图高 zoom):独立 canvas + renderer,不污染 MapLibre 的 GL 状态 */
+  let ov = null;                              /* {canvas, renderer, scene, camera, dirty} */
+  /* 抽屉(全屏查看器) */
+  let dr = null;                              /* {canvas, renderer, scene, camera, controls, group, raf} */
+  const _r = (x) => { if (!x) return; x.dispose(); };
+
+  function _tripModel(t) {
+    /* 查询优先级:爱称(names) → 途经线路(lines) 逐条。返回模型相对路径如 /models/xxx/consist.json */
+    if (!modelMap) return null;
+    if (t.nm && modelMap.names[t.nm]) return modelMap.names[t.nm];
+    if (t.lines) {
+      for (let i = 0; i < t.lines.length; i++) {
+        const v = modelMap.lines[t.lines[i]];
+        if (v) return v;
+      }
+    }
+    return null;
+  }
+
+  /* 模型编组加载:consist.json → 每节车厢 glb(+ktx2 材质) → couple 排列。缓存返回 Promise。 */
+  async function _loadConsistGroup(path) {
+    const base = m3dUrl(path.slice(0, path.lastIndexOf('/') + 1));
+    const consRes = await fetch(base + 'consist.json', { cache: 'force-cache' });
+    if (!consRes.ok) throw new Error('consist ' + consRes.status);
+    const consist = await consRes.json();
+    let maps = {};
+    try {
+      const mRes = await fetch(base + 'maps.json', { cache: 'force-cache' });
+      if (mRes.ok) maps = await mRes.json();
+    } catch (e) { /* maps.json 可选 */ }
+    const gltfL = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
+    const ktxL = new KTX2Loader().setTranscoderPath(BASIS_BASE).detectSupport(new THREE.WebGLRenderer({ antialias: false }));
+    gltfL.setKTX2Loader(ktxL); /* 解析 glb 内嵌 KHR_texture_basisu 贴图(texture:null 车型如 E257 依赖此路径) */
+    const group = new THREE.Group();
+    const box = new THREE.Box3();
+    /* ★ 并行加载所有车厢 glb(原串行 9 节车 11.6s → 并行 ~2s),组装仍按顺序计算 couple 连接点 */
+    const glbs = await Promise.all(consist.cars.map(car =>
+      gltfL.loadAsync(base + car.model).catch(e => { console.error('[M3D-glb]', base + car.model, String(e && e.message || e).slice(0, 200)); throw e; })
+    ));
+    let z = 0; /* 沿 z 轴排列(车长方向),couple 连接点相接 */
+    for (let ci = 0; ci < consist.cars.length; ci++) {
+      const car = consist.cars[ci];
+      const carG = glbs[ci].scene;
+      /* 材质:优先保留 glb 内嵌贴图(EXT_meshopt + KHR_texture_basisu,texture:null 车型如 E257 全内嵌);
+         仅当 consist 声明外部 texture 时才用 ktx2 外部贴图覆盖 + maps.json 通道(normal/rough/emissive/night)。 */
+      carG.traverse((o) => {
+        if (!o.isMesh) return;
+        if (!car.texture) { /* 内嵌材质:KTX2Loader 已在 GLTFLoader 内部处理 basisu,无需干预 */ return; }
+        const texName = car.texture;
+        const ch = maps[texName] || {};
+        const mat = new THREE.MeshStandardMaterial({ roughness: 0.72, metalness: 0.05 });
+        (async () => {
+          try {
+            const mainT = await ktxL.loadAsync(base + texName);
+            mainT.colorSpace = THREE.SRGBColorSpace;
+            mat.map = mainT;
+            mat.needsUpdate = true;
+          } catch (e) { console.error('[M3D-main]', base + texName, String(e && e.message || e).slice(0, 200)); }
+          try {
+            if (ch.normal) { const nt = await ktxL.loadAsync(base + ch.normal); mat.normalMap = nt; mat.needsUpdate = true; }
+          } catch (e) { console.error('[M3D-normal]', base + ch.normal, String(e && e.message || e).slice(0, 200)); }
+          try {
+            if (ch.roughnessMap) { const rt = await ktxL.loadAsync(base + ch.roughnessMap); mat.roughnessMap = rt; mat.needsUpdate = true; }
+          } catch (e) { console.error('[M3D-rough]', base + ch.roughnessMap, String(e && e.message || e).slice(0, 200)); }
+          try {
+            if (ch.emissive) { const et = await ktxL.loadAsync(base + ch.emissive); mat.emissiveMap = et; mat.emissive = new THREE.Color(0xffffff); mat.emissiveIntensity = 0.9; mat.needsUpdate = true; }
+          } catch (e) { console.error('[M3D-emis]', base + ch.emissive, String(e && e.message || e).slice(0, 200)); }
+        })();
+        /* cutout:alphaChannel="b" + cutoutCoverage → alphaTest(车窗/格栅镂空) */
+        if (ch.alphaChannel && ch.cutoutCoverage) mat.alphaTest = Math.max(0.1, ch.cutoutCoverage);
+        o.material = mat;
+      });
+      /* couple 连接点(米,沿 z):car[i] 后连接点 + car[i+1] 前连接点相接 */
+      const cp = car.couple || [car_length_of(car, consist), 0];
+      if (ci > 0) {
+        const prev = consist.cars[ci - 1];
+        const pcp = prev.couple || [car_length_of(prev, consist), 0];
+        z += (prev.flip ? pcp[0] : pcp[1]) + (car.flip ? cp[1] : cp[0]);
+      }
+      carG.position.z = z;
+      if (car.flip) carG.rotation.y = Math.PI; /* 反向编组(车尾朝前) */
+      box.expandByObject(carG);
+      group.add(carG);
+    }
+    /* 居中:整体平移到几何中心,便于查看器与地图对齐 */
+    const c = box.getCenter(new THREE.Vector3());
+    group.position.sub(c);
+    return group;
+  }
+  function car_length_of(car, consist) { return consist.car_length_m || 19.96; }
+
+  function _getGroup(path) {
+    if (cache.has(path)) {
+      const p = cache.get(path);
+      cacheOrder = cacheOrder.filter(x => x !== path);
+      cacheOrder.push(path);
+      return p;
+    }
+    const p = _loadConsistGroup(path);
+    /* 加载完成后置 _ready:供 m3dCovers/drawModels 判断接管;失败清除缓存(下次重试) */
+    p.then(() => { p._ready = true; }).catch(() => { cache.delete(path); cacheOrder = cacheOrder.filter(x => x !== path); });
+    cache.set(path, p);
+    cacheOrder.push(path);
+    while (cacheOrder.length > MAX_CACHE) {
+      const ev = cacheOrder.shift();
+      if (ev !== path) { const g = cache.get(ev); if (g) { g.then(gr => gr && _r(gr)); cache.delete(ev); } }
+    }
+    return p;
+  }
+  function m3dCovers(t) {
+    /* 高 zoom + 有模型 + 模型加载完成才接管;未命中/加载中 → 回退原模式 */
+    if (!model3dOn || map.getZoom() < M3D_ZOOM) return false;
+    const path = _tripModel(t);
+    if (!path) return false;
+    const p = cache.get(path);
+    return !!p && p._ready === true;
+  }
+
+  /* ── 地图覆盖层:独立 three.js 渲染真实模型到高 zoom 视口 ── */
+  function _ensureOv() {
+    if (ov) return ov;
+    const canvas = document.createElement('canvas');
+    canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3;';
+    const mc = map.getContainer();
+    mc.appendChild(canvas);
+    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: false, powerPreference: 'high-performance' });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 5000);
+    scene.add(camera);
+    /* 光照:环境 + 主方向光 + 补光,让模型在深色底图上可见 */
+    scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+    const d1 = new THREE.DirectionalLight(0xffffff, 1.1); d1.position.set(300, 500, 200); scene.add(d1);
+    const d2 = new THREE.DirectionalLight(0x8899cc, 0.4); d2.position.set(-200, 300, -300); scene.add(d2);
+    ov = { canvas, renderer, scene, camera, groups: new Map(), order: [], ray: new THREE.Raycaster(), plane: new THREE.Plane(new THREE.Vector3(0, 1, 0), 0) };
+    return ov;
+  }
+  /* 每帧:把视口内已接管的列车从经纬度投影到屏幕,摆放模型(朝向=行进方向,尺寸按 zoom 换算) */
+  function drawModels(M) {
+    _ensureOv(); /* 首次进入高 zoom 时创建覆盖层(惰性) */
+    if (!ov) return;
+    const o = ov;
+    const w = map.getContainer().clientWidth, h = map.getContainer().clientHeight;
+    if (!w || !h) return;
+    o.renderer.setSize(w, h, false);
+    o.camera.aspect = w / h;
+    const z = map.getZoom();
+    /* 米→CSS 像素:mercator 每像素米 ≈ 156543.03392 * cos(lat) / 2^z */
+    const lat0 = map.getCenter().lat * Math.PI / 180;
+    const mpp = 156543.03392 * Math.cos(lat0) / Math.pow(2, z);
+    /* 模型单位=米 → 屏幕:scale = 1/mpp;但 z=15 附近 20m 车长约 340px 过大,
+       加经验系数使列车长度 ≈ L 的 4~6 倍(高 zoom 视觉平衡) */
+    const k = 1 / mpp;
+    const pitch = map.getPitch() * Math.PI / 180;
+    const bear = map.getBearing() * Math.PI / 180;
+    let used = 0;
+    const active = new Set();
+    for (let i = 0; i < visibleTrips.length; i++) {
+      const t = visibleTrips[i];
+      if (!t._m3d) continue;
+      const path = _tripModel(t);
+      if (!path) continue;
+      const gp = cache.get(path);
+      if (!gp || gp._ready !== true) continue;
+      if (used >= MAX_DRAW) break;
+      const lng = visibleXY[i * 2], lat = visibleXY[i * 2 + 1];
+      const pr = map.project([lng, lat]);
+      let grp = o.groups.get(path);
+      if (!grp) {
+        grp = { obj: null, path };
+        o.groups.set(path, grp);
+        o.order.push(path);
+        gp.then(g => {
+          const inst = g.clone(true);
+          grp.obj = inst;
+          o.scene.add(inst);
+        }).catch(() => {});
+      }
+      if (!grp.obj) { used++; continue; } /* 加载中:本帧回退(shader 已跳过,短暂空白可接受,下帧补上) */
+      active.add(path);
+      const obj = grp.obj;
+      /* 屏幕目标点 → 地面(y=0)平面交点:覆盖层相机从俯视模拟 maplibre 透视,
+         射线求交保证模型在屏幕上精确出现在 map.project() 位置(贴轨道),而非近似摆放 */
+      o.ray.setFromCamera(new THREE.Vector3(pr.x / w * 2 - 1, -(pr.y / h) * 2 + 1, 0.5), o.camera);
+      const hit = new THREE.Vector3();
+      if (!o.ray.ray.intersectPlane(o.plane, hit)) { used++; continue; }
+      obj.position.set(hit.x, 0, hit.z);
+      /* 朝向:模型长轴沿场景 +z(南);行进方位角 brg(北=0 东=90°)需旋转
+         π - (brg + bearing) 使长轴指向屏幕上的行进方向:
+         +z 旋转 θ → (sinθ, 0, cosθ),令其等于行进向量 (sinφ, 0, -cosφ),φ=brg+bearing → θ=π-φ */
+      const brg = (t._m3dBrg !== undefined ? t._m3dBrg : 0);
+      const ang = Math.PI - (brg + bear);
+      obj.rotation.y = ang;
+      /* 高度:与地图 3D 倾斜同步(车底贴地,视觉比例 Hpx*?) */
+      obj.position.y = 0;
+      /* 尺寸:车长(米) → 像素;固定比例避免高 zoom 过大 */
+      obj.scale.setScalar(k * 0.55);
+      used++;
+    }
+    /* LRU:淘汰不再可见的编组实例 */
+    for (let i = o.order.length - 1; i >= 0; i--) {
+      const p = o.order[i];
+      if (!active.has(p)) {
+        const grp = o.groups.get(p);
+        if (grp && grp.obj) { o.scene.remove(grp.obj); grp.obj = null; }
+        o.groups.delete(p); o.order.splice(i, 1);
+      }
+    }
+    /* 相机:模拟地图俯视(带 pitch/bearing),模型立在屏幕平面上 */
+    o.camera.position.set(0, Math.tan(pitch + 0.05) * 300 + 60, 300);
+    o.camera.up.set(0, 1, 0);
+    o.camera.lookAt(0, 0, 0);
+    o.renderer.render(o.scene, o.camera);
+  }
+  function clearOv() { if (ov) { ov.scene.clear(); ov.groups.clear(); ov.order.length = 0; ov.renderer.clear(); } }
+
+  /* ── 全屏 3D 查看器抽屉 ── */
+  let drOpen = false, drAnim = null;
+  function _ensureDr() {
+    if (dr) return dr;
+    const canvas = $('m3dCanvas');
+    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0b0f16);
+    const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 5000);
+    camera.position.set(0, 55, 130);
+    scene.add(camera);
+    /* 环境贴图:RoomEnvironment 生成 PMREM,让 MeshStandardMaterial 的金属/粗糙/反射有正确响应
+       (与原版 DokoRail 的 sky 环境同思路;无环境时模型会发灰发暗) */
+    try {
+      const pmrem = new THREE.PMREMGenerator(renderer);
+      scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+      pmrem.dispose();
+    } catch (e) { /* 环境贴图生成失败时降级为下方直射光 */ }
+    const controls = new OrbitControls(camera, canvas);
+    controls.enableDamping = true; controls.dampingFactor = 0.08;
+    controls.autoRotate = true; controls.autoRotateSpeed = 1.1;
+    controls.minDistance = 12; controls.maxDistance = 800;
+    scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+    const d1 = new THREE.DirectionalLight(0xffffff, 1.35); d1.position.set(180, 320, 120); scene.add(d1);
+    const d2 = new THREE.DirectionalLight(0x8899cc, 0.5); d2.position.set(-160, 220, -200); scene.add(d2);
+    const d3 = new THREE.DirectionalLight(0x5566aa, 0.25); d3.position.set(0, -80, -160); scene.add(d3);
+    dr = { canvas, renderer, scene, camera, controls, group: null, raf: 0, nm: '', sub: '' };
+    return dr;
+  }
+  function _fitViewer(group) {
+    const box = new THREE.Box3().setFromObject(group);
+    const size = box.getSize(new THREE.Vector3());
+    const c = box.getCenter(new THREE.Vector3());
+    const r = Math.max(size.x, size.y, size.z) * 0.8 + 6;
+    dr.camera.position.set(c.x, c.y + r * 0.62, c.z + r * 1.5);
+    dr.controls.target.set(c.x, c.y, c.z);
+    dr.controls.update();
+  }
+  function _drLoop() {
+    if (!drOpen || !dr) return;
+    dr.controls.update();
+    dr.renderer.render(dr.scene, dr.camera);
+    dr.raf = requestAnimationFrame(_drLoop);
+  }
+  async function openModelViewer(t) {
+    const d = _ensureDr();
+    const path = _tripModel(t);
+    if (!path) { toast(T().wikiEmpty || '暂无模型'); return; }
+    drOpen = true;
+    $('m3dMask').classList.add('open');
+    $('m3dViewer').classList.add('open');
+    $('m3dNm').textContent = t.nm || (t.lines && t.lines[0]) || t.i || '#' + t.t;
+    $('m3dSub').textContent = (t.jas ? t.jas[0] + ' → ' + t.jas[t.jas.length - 1] : '') + ' · ' + path.slice(0, -14);
+    $('m3dLoadTx').textContent = T().m3dLoadT || '加载模型…';
+    $('m3dLoad').style.display = 'flex';
+    $('m3dHint').textContent = T().model3dHint || '';
+    d.renderer.setSize($('m3dViewer').clientWidth || window.innerWidth, $('m3dViewer').clientHeight || window.innerHeight);
+    d.camera.aspect = ($('m3dViewer').clientWidth || window.innerWidth) / ($('m3dViewer').clientHeight || window.innerHeight);
+    d.camera.updateProjectionMatrix();
+    try {
+      const gp = _getGroup(path);
+      const g = await gp;
+      if (!drOpen) return; /* 已关闭:丢弃 */
+      if (d.group) { d.scene.remove(d.group); d.group = null; }
+      const inst = g.clone(true);
+      d.scene.add(inst);
+      d.group = inst;
+      _fitViewer(inst);
+      $('m3dLoad').style.display = 'none';
+    } catch (e) {
+      $('m3dLoadTx').textContent = '⚠ ' + (e.message || '加载失败');
+    }
+    cancelAnimationFrame(d.raf);
+    d.raf = requestAnimationFrame(_drLoop);
+  }
+  function closeModelViewer() {
+    drOpen = false;
+    $('m3dMask').classList.remove('open');
+    $('m3dViewer').classList.remove('open');
+    if (dr) { cancelAnimationFrame(dr.raf); if (dr.group) { dr.scene.remove(dr.group); dr.group = null; } }
+  }
+
+  /* ── 接线:设置开关变化 / 详情抽屉模型入口 ── */
+  function bindDetailModelBtn(t) {
+    const btn = $('dModelBtn');
+    if (!btn) return;
+    const has = _tripModel(t) !== null;
+    btn.style.display = has ? '' : 'none';
+    btn.onclick = () => openModelViewer(t);
+  }
+
+  return {
+    get ready() { return modelMap !== null; },
+    async init() {
+      if (modelMap) return;
+      try {
+        const res = await fetch(m3dUrl('/data/model_map.json'), { cache: 'force-cache' });
+        if (!res.ok) throw new Error(res.status);
+        modelMap = await res.json();
+        mapP = modelMap;
+        /* 标记已加载完成的编组(供 m3dCovers 判断) */
+        for (const [path, p] of cache) {
+          p.then(g => { p._ready = true; }).catch(() => {});
+        }
+        const gp = _getGroup('/models/e231-500s-10cars/consist.json');
+        gp.then(g => { gp._ready = true; }).catch(() => {});
+      } catch (e) { modelMap = {}; console.warn('model_map 加载失败', e); }
+    },
+    covers: m3dCovers,
+    frame: drawModels,
+    clear: clearOv,
+    openViewer: openModelViewer,
+    closeViewer: closeModelViewer,
+    bindDetail: bindDetailModelBtn,
+    pathOf: _tripModel,
+    groupOf: _getGroup,
+    /* 惰性触发模型加载:cache 未命中时发起加载并注册 _ready(渲染循环调用,幂等) */
+    ensure: function (path) { if (!cache.has(path)) _getGroup(path); },
+  };
+})();
+window.__M3D = M3D; /* 供 updateTrains(模块顶部函数,先于本常量执行)惰性引用 */
+let m3dActive = true; /* 默认开启(受设置开关 model3dOn 控制) */
+/* 主循环挂钩:数据就绪后初始化 model_map;每帧绘制高 zoom 模型 */
+(function () {
+  const orig = window.__pushErr;
+  M3D.init().then(() => {
+    const p0 = M3D.groupOf('/models/e231-500s-10cars/consist.json');
+    p0.then(() => { p0._ready = true; }).catch(() => {});
+  }).catch(e => { if (orig) orig('M3D init: ' + e); });
+})();
 
 </script>
 </body>

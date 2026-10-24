@@ -1590,7 +1590,7 @@ let map = null, trainsLayer = null, dataReady = false, liveOn = false, booting =
 let clockMode = 'live', paused = false, speed = 1, simEpoch = 0, wallT0 = 0;
 let dayMode = 'auto', dayBit = 1, dayBitAuto = 1;
 let followTrip = null, selKind = Object.fromEntries(KINDS.map(k => [k, true]));
-let fps = 0, lastFrameT = 0, rafId = 0;
+let fps = 0, lastFrameT = 0, rafId = 0, frameC = 0; /* frameC:列车顶点隔帧重建的帧计数 */
 let glowAutoOff = false, lowFpsN = 0, frameSkip = false, adaptToastDone = false, followNullT = 0;
 const hasWebgl2 = (() => { try { return !!document.createElement('canvas').getContext('webgl2'); } catch { return false; } })();
 
@@ -4331,8 +4331,16 @@ function startLoop() {
       if (followTrip) tickFollow(M, dt);
       return;
     }
+    /* ★ 渲染管线优化:列车顶点按 zoom 自适应隔帧重建 —— 实时模式列车插值每帧屏幕位移
+       低 zoom(全国/区域视图)远小于 1px、高 zoom 也仅 ~1.4px(z16 新干线 300km/h),因此
+       z<8 隔 2 帧(≈50ms)、z8-13 隔 1 帧(≈33ms)、z≥13 每帧更新:低 zoom 车最多成本最高
+       降频收益最大且视觉无感,高 zoom 车少成本低保持全帧。淡入淡出 alpha 用真实累计帧间隔
+       dt 推进,渐变速率不变。相机变化帧(viewDirty)、跟随/详情模式必须每帧重建,不降频。 */
+    const zz = map.getZoom();
+    const frameStride = zz < 8 ? 3 : (zz < 13 ? 2 : 1);
+    const needTrains = viewDirty || followTrip || liveDetailTrip || frameC++ % frameStride === 0;
     viewDirty = false; /* 相机已稳定:本帧重建后清除,恢复暂停态省电 */
-    updateTrains(M, dt * 1000); /* dt 传给淡入淡出:按真实帧间隔推进 alpha,掉帧时时长不变 */
+    if (needTrains) updateTrains(M, dt * 1000); /* dt 传给淡入淡出:按真实帧间隔推进 alpha,掉帧时时长不变 */
     /* 徽标「在途」= 全国此时此刻在途列车数:与 LOD/等级门/视口裁剪无关,
        缩放、开关「性能改善」都不会改变这个数字(它描述事实,不是描述屏幕上画了多少) */
     const act = activeCountAt(M);

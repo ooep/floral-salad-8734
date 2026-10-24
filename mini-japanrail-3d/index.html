@@ -4119,9 +4119,11 @@ $('lRetry').addEventListener('click', () => { boot(); });
    数据: data/badges/map.json — 本站站名 -> {code, url, crop:[x,y,w,h]}
    资产: jr-static /data/badges/atlas/sha256/*.webp + /data/badges/official/*.svg
    缩放: z13 起显示(minzoom),与 DokoRail zooms.body=13 一致;按视野按需注册 icon。 */
-let badgesMap = null, badgesIcons = new Set(), badgesSheets = new Map();
+let badgesMap = null, badgesIcons = new Set(), badgesSheets = new Map(), badgesFetching = new Map();
 const BADGES_MIN_ZOOM = 13, BADGES_DATA_URL = 'https://jr-static.suki.ing/data/badges/map.json';
 const BADGES_BASE = 'https://jr-static.suki.ing/data/badges';
+const BADGE_FETCH_MAX = 4; /* 图集并发下载上限:避免网络风暴拖垮底图瓦片与页面帧率 */
+let badgeInFlight = 0;
 
 async function loadBadgesMap() {
   if (badgesMap) return badgesMap;
@@ -4131,7 +4133,8 @@ async function loadBadgesMap() {
   } catch (e) { console.warn('[badges]', e); }
   return badgesMap;
 }
-/* 从图集裁剪单个徽章:加载图集(缓存)→ canvas 裁剪 → addImage 注册 */
+/* 从图集裁剪单个徽章:加载图集(缓存+in-flight 去重)→ canvas 裁剪 → addImage 注册。
+   同一图集 URL 全局只发一次请求;并发下载数限制为 BADGE_FETCH_MAX。 */
 async function badgeEnsureIcon(name) {
   const key = 'bd_' + name;
   if (badgesIcons.has(key) || !map || !badgesMap) return;
@@ -4140,11 +4143,21 @@ async function badgeEnsureIcon(name) {
   try {
     let sheet = badgesSheets.get(bd.url);
     if (!sheet) {
-      const img = await map.loadImage(BADGES_BASE + bd.url);  /* MapLibre: 返回 {data: ImageBitmap} */
-      if (!img || !img.data) { badgesSheets.set(bd.url, 'bad'); return; }
-      sheet = img.data; badgesSheets.set(bd.url, sheet);
+      while (badgeInFlight >= BADGE_FETCH_MAX) await new Promise(r => setTimeout(r, 120));
+      badgeInFlight++;
+      try {
+        let p = badgesFetching.get(bd.url);
+        if (!p) {
+          p = map.loadImage(BADGES_BASE + bd.url) /* MapLibre: 返回 {data: ImageBitmap} */
+            .then(img => (img && img.data) ? img.data : 'bad')
+            .catch(() => 'bad');
+          badgesFetching.set(bd.url, p);
+        }
+        sheet = await p;
+      } finally { badgeInFlight--; }
+      if (sheet === 'bad') return;
+      badgesSheets.set(bd.url, sheet);
     }
-    if (sheet === 'bad') return;
     const [cx, cy, cw, ch] = bd.crop;
     const c = document.createElement('canvas');
     c.width = cw; c.height = ch;
@@ -4154,22 +4167,34 @@ async function badgeEnsureIcon(name) {
     badgesIcons.add(key);
   } catch (e) { /* 单个徽章失败不影响整体 */ }
 }
-/* 把视野内站的 badgeIcon 属性写回 GeoJSON(懒加载:仅放大后需要时更新) */
+/* 把「视野内」站的 badgeIcon 写回 GeoJSON 并确保 icon 注册(懒加载:仅放大后按视野补,
+   避免全量 4,669 站一次 addImage + 图集风暴拖垮帧率与底图加载)。
+   注意:badgeIcon 属性可能已由 addMapLayers 预写(全量),但 icon 未注册 —— 因此
+   badgeEnsureIcon 对「属性已有但 image 缺失」的站也必须调用(in-flight 去重保证同一
+   图集只下载一次)。移出视野的站不补注册,再移回时 moveend/idle 自动补。 */
 function updateBadgeIcons() {
   if (!badgesMap || !map || !map.getSource('stas') || map.getZoom() < BADGES_MIN_ZOOM - 0.5) return;
-  /* 直接操作 staFC(模块内源 GeoJSON 引用),避免依赖 MapLibre 内部 _data 格式 */
   const data = staFC;
   if (!data || !data.features) return;
+  const b = map.getBounds();
+  if (!b) return;
+  /* globe 模式下 getBounds 会退化为全世界,导致全量 4,669 站排队注册(限流后东京
+     先注册、远处排队到死) —— 改用 viewport 投影(project)过滤:站投影落点
+     在画布(外扩 400px)内才补注册,globe/2D 均准确 */
+  const cw = map.getCanvas() ? map.getCanvas().clientWidth : 1280;
+  const ch = map.getCanvas() ? map.getCanvas().clientHeight : 800;
+  const pad = 400;
   let changed = false;
   for (const f of data.features) {
     const nm = f.properties && f.properties.station;
-    if (!nm) continue;
-    const has = f.properties.badgeIcon;
-    if (!has && badgesMap[nm]) {
-      f.properties.badgeIcon = 'bd_' + nm;
-      badgeEnsureIcon(nm);
-      changed = true;
-    }
+    if (!nm || !badgesMap[nm]) continue;
+    const g = f.geometry && f.geometry.coordinates;
+    if (!g) continue;
+    let pt = null;
+    try { pt = map.project(g); } catch (e) {}
+    if (!pt || pt.x < -pad || pt.x > cw + pad || pt.y < -pad || pt.y > ch + pad) continue;
+    if (!f.properties.badgeIcon) { f.properties.badgeIcon = 'bd_' + nm; changed = true; }
+    badgeEnsureIcon(nm); /* 属性已有但 image 未注册时同样补注册(内部去重,不重复下载) */
   }
   if (changed) map.getSource('stas').setData(data);
 }
@@ -4260,7 +4285,9 @@ function addMapLayers() {
        徽章数据 data/badges/map.json 按站名映射 {code,url,crop},图集从 jr-static 拉取;
        z13 以下只显示灰点(stas 层),放大后徽章淡入 —— 与 DokoRail zooms.body=13 一致。 */
     map.addLayer({ id: 'stas-badge', type: 'symbol', source: 'stas', minzoom: 13, layout: {
-      'icon-image': ['get', 'badgeIcon'], 'icon-size': ['interpolate', ['linear'], ['zoom'], 13, 0.25, 16, 0.45],
+      'icon-image': ['get', 'badgeIcon'],
+      /* 自适应尺寸:z13 刚出徽章时小小一个(能看一条线几站)→ 随放大渐大 → z19 聚焦车站相对最大 */
+      'icon-size': ['interpolate', ['linear'], ['zoom'], 13, 0.12, 15, 0.20, 17, 0.34, 19, 0.50],
       'icon-allow-overlap': true, 'icon-ignore-placement': true, 'icon-anchor': 'center', 'icon-optional': true },
       paint: { 'icon-opacity': ['interpolate', ['linear'], ['zoom'], 13, 0, 13.6, 1] } });
     map.addLayer(trainShaderLayer, 'stas-badge');
@@ -6728,9 +6755,7 @@ const M3D = (() => {
     const group = new THREE.Group();
     const box = new THREE.Box3();
     /* ★ 并行加载所有车厢 glb(原串行 9 节车 11.6s → 并行 ~2s),组装仍按顺序计算 couple 连接点 */
-    const glbs = await Promise.all(consist.cars.map(car =>
-      gltfL.loadAsync(base + car.model).catch(e => { console.error('[M3D-glb]', base + car.model, String(e && e.message || e).slice(0, 200)); throw e; })
-    ));
+    const glbs = await Promise.all(consist.cars.map(car => gltfL.loadAsync(base + car.model)));
     let z = 0; /* 沿 z 轴排列(车长方向),couple 连接点相接 */
     for (let ci = 0; ci < consist.cars.length; ci++) {
       const car = consist.cars[ci];
@@ -6749,16 +6774,16 @@ const M3D = (() => {
             mainT.colorSpace = THREE.SRGBColorSpace;
             mat.map = mainT;
             mat.needsUpdate = true;
-          } catch (e) { console.error('[M3D-main]', base + texName, String(e && e.message || e).slice(0, 200)); }
+          } catch (e) { /* 主贴图缺失时保持默认材质 */ }
           try {
             if (ch.normal) { const nt = await ktxL.loadAsync(base + ch.normal); mat.normalMap = nt; mat.needsUpdate = true; }
-          } catch (e) { console.error('[M3D-normal]', base + ch.normal, String(e && e.message || e).slice(0, 200)); }
+          } catch (e) { /* 法线贴图可选 */ }
           try {
             if (ch.roughnessMap) { const rt = await ktxL.loadAsync(base + ch.roughnessMap); mat.roughnessMap = rt; mat.needsUpdate = true; }
-          } catch (e) { console.error('[M3D-rough]', base + ch.roughnessMap, String(e && e.message || e).slice(0, 200)); }
+          } catch (e) { /* 粗糙度贴图可选 */ }
           try {
             if (ch.emissive) { const et = await ktxL.loadAsync(base + ch.emissive); mat.emissiveMap = et; mat.emissive = new THREE.Color(0xffffff); mat.emissiveIntensity = 0.9; mat.needsUpdate = true; }
-          } catch (e) { console.error('[M3D-emis]', base + ch.emissive, String(e && e.message || e).slice(0, 200)); }
+          } catch (e) { /* 自发光贴图可选 */ }
         })();
         /* cutout:alphaChannel="b" + cutoutCoverage → alphaTest(车窗/格栅镂空) */
         if (ch.alphaChannel && ch.cutoutCoverage) mat.alphaTest = Math.max(0.1, ch.cutoutCoverage);
@@ -6822,15 +6847,23 @@ const M3D = (() => {
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(36.87, 1, 0.01, 1e9);
     scene.add(camera);
-    /* 光照:环境 + 主方向光 + 补光,让模型在深色底图上可见 */
-    scene.add(new THREE.AmbientLight(0xffffff, 0.55));
-    const d1 = new THREE.DirectionalLight(0xffffff, 1.1); d1.position.set(300, 500, 200); scene.add(d1);
-    const d2 = new THREE.DirectionalLight(0x8899cc, 0.4); d2.position.set(-200, 300, -300); scene.add(d2);
-    ov = { canvas, renderer, scene, camera, groups: new Map(), order: [], ray: new THREE.Raycaster(), plane: new THREE.Plane(new THREE.Vector3(0, 1, 0), 0) };
+    /* 光照:环境贴图(RoomEnvironment PMREM,同查看器方案) + 环境光 + 主方向光,
+       让 MeshStandardMaterial 的涂装贴图正确呈现(无环境光时模型会发灰发暗) */
+    try {
+      const pmrem = new THREE.PMREMGenerator(renderer);
+      scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+      pmrem.dispose();
+    } catch (e) { /* 环境贴图生成失败时降级为下方直射光 */ }
+    scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+    const d1 = new THREE.DirectionalLight(0xffffff, 1.3); d1.position.set(300, 500, 200); scene.add(d1);
+    const d2 = new THREE.DirectionalLight(0x8899cc, 0.5); d2.position.set(-200, 300, -300); scene.add(d2);
+    ov = { canvas, renderer, scene, camera, groups: new Map(), order: [], ray: new THREE.Raycaster(), plane: new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), mvpMat: new THREE.Matrix4(), tmpMat: new THREE.Matrix4() };
     return ov;
   }
   /* 每帧:把视口内已接管的列车摆到 mercator 世界坐标,
-     覆盖层相机直接复刻 maplibre 相机(fov/位置/lookAt)→ 投影与轨道完全一致,模型精确贴轨 */
+     覆盖层相机投影矩阵直接 = maplibre 的 modelViewProjectionMatrix(P·V)
+     并配 T(中心)·S(r) 变换 → 模型与轨道共用同一投影,像素级贴轨
+     (等价于 DokoRail 原版复用 maplibre mainMatrix 渲染) */
   function drawModels(M) {
     _ensureOv(); /* 首次进入高 zoom 时创建覆盖层(惰性) */
     if (!ov) return;
@@ -6838,40 +6871,46 @@ const M3D = (() => {
     const w = map.getContainer().clientWidth, h = map.getContainer().clientHeight;
     if (!w || !h) return;
     o.renderer.setSize(w, h, false);
-    o.camera.aspect = w / h;
     const z = map.getZoom();
-    /* 复刻 maplibre 相机:真实 fov 与相机世界坐标(mercator 像素),模型与轨道同一投影 */
-    const tf = map._camera && map._camera.transform;
-    let camPix = null, fovDeg = 36.87;
-    if (tf) { try { camPix = tf.cameraPosition; fovDeg = tf.fov || fovDeg; } catch (e) {} }
-    if (!camPix || !camPix.length) { camPix = null; }
-    /* mercator 世界像素:lat 0°→y=0.5,北纬<0.5(北在上) */
+    /* mercator 世界像素:lat 0°→y=0.5,北纬<0.5(北在上,y 增向南) */
     const worldSize = 512 * Math.pow(2, z);
     const c0 = map.getCenter();
     const cxp = (c0.lng + 180) / 360 * worldSize;
     const cyp = (1 - Math.log(Math.tan(Math.PI / 4 + c0.lat * Math.PI / 360)) / Math.PI) / 2 * worldSize;
-    /* 场景以中心地面为原点,单位=世界像素;相机若读到就用 maplibre 真实位置,否则退化为俯视 */
-    if (camPix) {
-      o.camera.fov = fovDeg;
-      o.camera.position.set(camPix[0] - cxp, camPix[2], -(camPix[1] - cyp));
-      o.camera.up.set(0, 1, 0);
-      o.camera.lookAt(0, 0, 0);
+    /* 米→世界像素:赤道周长 40075016.7m 对应 worldSize px */
+    const rPxPerM = worldSize / 40075016.7;
+    /* 读 maplibre 每帧投影矩阵(P·V,列主序,输入=世界 mercator 像素) */
+    const tf = map._camera && map._camera.transform;
+    let mvp = null;
+    if (tf) { try { const m = tf.modelViewProjectionMatrix; if (m && m.length === 16) mvp = m; } catch (e) {} }
+    if (mvp) {
+      /* 场景坐标(米,相对中心) → 世界像素 → maplibre P·V 投影:
+         M' = MVP · T(cxp,cyp,0) · S(rPxPerM,rPxPerM,rPxPerM) (列主序连乘) */
+      const A = o.tmpMat, B = o.mvpMat;
+      A.elements[0] = rPxPerM; A.elements[1] = 0; A.elements[2] = 0; A.elements[3] = 0;
+      A.elements[4] = 0; A.elements[5] = rPxPerM; A.elements[6] = 0; A.elements[7] = 0;
+      A.elements[8] = 0; A.elements[9] = 0; A.elements[10] = rPxPerM; A.elements[11] = 0;
+      A.elements[12] = cxp; A.elements[13] = cyp; A.elements[14] = 0; A.elements[15] = 1;
+      B.fromArray(mvp).multiply(A);
+      const cam = o.camera;
+      cam.matrixAutoUpdate = false;
+      cam.matrixWorld.identity();
+      cam.matrixWorldInverse.identity();
+      cam.projectionMatrix.copy(B);
+      cam.projectionMatrixInverse.copy(B).invert();
     } else {
+      /* 兜底:读不到 maplibre 矩阵时退化为俯视相机 */
+      const cam = o.camera;
       const pitch = map.getPitch() * Math.PI / 180;
       const bear = map.getBearing() * Math.PI / 180;
       const dist = 0.5 * worldSize / Math.tan(36.87 * Math.PI / 360);
-      o.camera.fov = 36.87;
-      o.camera.position.set(-Math.sin(bear) * Math.cos(pitch) * dist, Math.sin(pitch) * dist, -Math.cos(bear) * Math.cos(pitch) * dist);
-      o.camera.up.set(0, 1, 0);
-      o.camera.lookAt(0, 0, 0);
+      cam.matrixAutoUpdate = true;
+      cam.fov = 36.87; cam.aspect = w / h;
+      cam.position.set(-Math.sin(bear) * Math.cos(pitch) * dist, Math.sin(pitch) * dist, -Math.cos(bear) * Math.cos(pitch) * dist);
+      cam.up.set(0, 1, 0);
+      cam.lookAt(0, 0, 0);
+      cam.updateProjectionMatrix();
     }
-    o.camera.updateProjectionMatrix();
-    /* 米→世界像素:地球周长 40075016.7m 对应 worldSize px(纬度方向每像素米相同) */
-    const pxPerM = worldSize / 40075016.7;
-    const lat0 = c0.lat * Math.PI / 180;
-    const mpp = 156543.03392 * Math.cos(lat0) / Math.pow(2, z);
-    const k = 1 / mpp; /* 米→CSS 像素 */
-    const scaleF = pxPerM * (k * 0.55 / pxPerM) ; /* = k*0.55,保持原视觉比例 */
     let used = 0;
     const active = new Set();
     for (let i = 0; i < visibleTrips.length; i++) {
@@ -6890,6 +6929,7 @@ const M3D = (() => {
         o.order.push(path);
         gp.then(g => {
           const inst = g.clone(true);
+          inst.traverse(n => { if (n.isMesh) n.frustumCulled = false; });
           grp.obj = inst;
           o.scene.add(inst);
         }).catch(() => {});
@@ -6897,18 +6937,18 @@ const M3D = (() => {
       if (!grp.obj) { used++; continue; } /* 加载中:本帧回退(shader 已跳过,短暂空白可接受,下帧补上) */
       active.add(path);
       const obj = grp.obj;
-      /* 列车经纬度 → mercator 世界像素(相对中心);x 东、z 南(北=-z) */
-      const mx = (lng + 180) / 360 * worldSize - cxp;
-      const my = (1 - Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360)) / Math.PI) / 2 * worldSize - cyp;
-      obj.position.set(mx, 0, my);
-      /* 朝向:模型长轴沿场景 +z(南);行进方位角 brg(北=0 东=90°)→ 世界系方向向量
-         (sin brg, 0, -cos brg);+z 旋转 θ→(sinθ,0,cosθ),θ=π-brg。
-         相机已含地图 bearing,无需额外补偿(与 DokoRail 原版 rotation=π-bearing 一致) */
+      /* 列车经纬度 → mercator 世界像素 → 相对中心米坐标:
+         场景坐标 x=东(米), y=南(米), z=高(米) */
+      const mx = ((lng + 180) / 360 * worldSize - cxp) / rPxPerM;
+      const my = ((1 - Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360)) / Math.PI) / 2 * worldSize - cyp) / rPxPerM;
+      obj.position.set(mx, my, 0);
+      /* 朝向:glb 长轴沿其 +z(车头),绕 x +90° 使 +z→-y(北),+y→+z(上);
+         车头默认朝北,再绕场景 z 旋转 brg(北=0 东=90°):R_z(brg)·(0,-1)=(sin brg,-cos brg)
+         → 欧拉 XYZ:rotation.set(+π/2, 0, brg) = R_z(brg)·R_x(+π/2) */
       const brg = (t._m3dBrg !== undefined ? t._m3dBrg : 0);
-      obj.rotation.y = Math.PI - brg;
-      obj.position.y = 0;
-      /* 尺寸:车长(米) → 世界像素;高 zoom 视觉平衡系数 0.55 */
-      obj.scale.setScalar(scaleF);
+      obj.rotation.set(Math.PI / 2, 0, brg);
+      /* 尺寸:glb 为米制真实尺寸,场景同为米制 → 1:1;高 zoom 视觉平衡系数 */
+      obj.scale.setScalar(1);
       used++;
     }
     /* LRU:淘汰不再可见的编组实例 */

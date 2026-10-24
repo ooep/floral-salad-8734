@@ -4210,6 +4210,19 @@ function badgeEntriesOf(name) {
       } else byKey.set(k, e);
     }
     list = [...byKey.values()];
+    /* 防线②:同站「同码同名」的异图变体(同一块牌的新旧图集版本)也必然重复,按码+名合并;
+       无码条目(路线符号/兜底)不参与,顺序保持重要性降序 */
+    if (list.length > 1) {
+      const seenName = new Map(); const out = [];
+      for (const e of list) {
+        const k = e[1] ? e[1] + '\u001f' + e[0] : null;
+        const prev = k ? seenName.get(k) : null;
+        if (prev) { if (e[0] && !prev[0].includes(e[0])) prev[0] += '・' + e[0]; continue; }
+        if (k) seenName.set(k, e);
+        out.push(e);
+      }
+      list = out;
+    }
   }
   return list;
 }

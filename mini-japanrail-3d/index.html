@@ -980,14 +980,14 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
 #panelInfo .sec-p, #panelInfo .info-row .v, #panelInfo .tl li > span, #panelInfo .nb > span, #panelInfo .dots li { overflow-wrap:anywhere; word-break:break-word; }
 #panelInfo .nb .t { flex:0 1 auto; min-width:0; max-width:100%; overflow-wrap:anywhere; word-break:break-word; }
 #panelInfo .tl li .y { flex:none; }
-/* 车站抽屉：各线路站台参考 */
-#panelInfo .plat-ref { min-height:0; }
-#panelInfo .plat-ref .sec { margin:0; }
-#panelInfo .plat-ref .sec-t { display:flex; align-items:center; gap:7px; }
-#panelInfo .plat-ref .sec-t small { font-size:9.5px; font-weight:600; color:var(--dim); letter-spacing:.2px; }
-#panelInfo .plat-ref .pr-row { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:4.5px 2px; }
-#panelInfo .plat-ref .pr-line { font-size:12px; font-weight:600; color:var(--txt); min-width:0; overflow-wrap:anywhere; word-break:break-word; }
-#panelInfo .plat-ref .vplat { flex:none; font-size:10px; font-weight:700; color:var(--acc); background:var(--acc-soft); border:1px solid color-mix(in srgb, var(--acc) 45%, transparent); border-radius:7px; padding:0 6px; letter-spacing:.3px; font-variant-numeric:tabular-nums; white-space:nowrap; }
+/* 车站抽屉：各线路站台参考（指南 tab 顶部，车站设施类信息） */
+.plat-ref { min-height:0; }
+.plat-ref .sec { margin:0; }
+.plat-ref .sec-t { display:flex; align-items:center; gap:7px; }
+.plat-ref .sec-t small { font-size:9.5px; font-weight:600; color:var(--dim); letter-spacing:.2px; }
+.plat-ref .pr-row { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:4.5px 2px; }
+.plat-ref .pr-line { font-size:12px; font-weight:600; color:var(--txt); min-width:0; overflow-wrap:anywhere; word-break:break-word; }
+.plat-ref .vplat { flex:none; font-size:10px; font-weight:700; color:var(--acc); background:var(--acc-soft); border:1px solid color-mix(in srgb, var(--acc) 45%, transparent); border-radius:7px; padding:0 6px; letter-spacing:.3px; font-variant-numeric:tabular-nums; white-space:nowrap; }
 </style>
 </head>
 <body>
@@ -5712,10 +5712,7 @@ async function buildPlatRefHtml(stName) {
 async function renderInfoTab() {
   const box = $('panelInfo');
   if (_infoKey === sheetStation) return;
-  const platHtml = await buildPlatRefHtml(sheetStation);
-  if (sheetStation !== $('shNm').textContent) return;   // await 期间用户已换站
-  box.innerHTML = '<div class="plat-ref">' + platHtml + '</div><div class="wiki-box"><div class="gd-loading">' + _escTxt(T().wikiLoading || '百科数据加载中…') + '</div></div>';
-  const wbox = box.querySelector('.wiki-box');
+  box.innerHTML = '<div class="gd-loading">' + _escTxt(T().wikiLoading || '百科数据加载中…') + '</div>';
   let st = null, matchedLine = null;
   try {
     const key = await resolveStationKey(sheetStation, sheetCoord);
@@ -5732,8 +5729,8 @@ async function renderInfoTab() {
       st = _findStationInLine(lineJson, sheetStation);
     }
   } catch (e) { st = null; }
-  if (!st) { _renderInfoEmpty(wbox); _infoKey = sheetStation; return; }
-  _renderInfoObject(wbox, _normalizeStation(st, _lineNameOf(matchedLine)));
+  if (!st) { _renderInfoEmpty(box); _infoKey = sheetStation; return; }
+  _renderInfoObject(box, _normalizeStation(st, _lineNameOf(matchedLine)));
   _infoKey = sheetStation;
 }
 
@@ -5782,12 +5779,15 @@ function gdTr(ja) {
 async function renderGuideTab() {
   const box = $('panelGuide');
   if (_guideKey === sheetStation) return;
-  box.innerHTML = '<div class="gd-loading">' + _escTxt(T().gdLoading) + '</div>';
+  const platHtml = await buildPlatRefHtml(sheetStation);
+  if (sheetStation !== $('shNm').textContent) return;   // await 期间用户已换站
+  box.innerHTML = '<div class="plat-ref">' + platHtml + '</div><div class="gd-body"><div class="gd-loading">' + _escTxt(T().gdLoading) + '</div></div>';
+  const body = box.querySelector('.gd-body');
   const data = await _loadGuideData();
   const rec = data[normName(sheetStation)];
   _guideKey = sheetStation;
   if (!rec) {
-    box.innerHTML = '<div class="gd-empty">' + _escTxt(T().gdEmpty) + '</div>';
+    body.innerHTML = '<div class="gd-empty">' + _escTxt(T().gdEmpty) + '</div>';
     return;
   }
   const t = T();
@@ -5842,7 +5842,7 @@ async function renderGuideTab() {
     linkItems.forEach(([t2, u]) => { h += `<a class="gd-link" href="${_escTxt(u)}" target="_blank" rel="noopener">${_escTxt(t2)} ↗</a>`; });
     h += '</div></div>';
   }
-  box.innerHTML = h;
+  box.querySelector('.gd-body').innerHTML = h;
 }
 
 /* ---------------- 搜索 ---------------- */

@@ -1,0 +1,2220 @@
+{
+ "source": "3486878999",
+ "name": "JR East E235-0 Series (11 Car)_Data",
+ "car_length_m": 20.71,
+ "cars": [
+  {
+   "name": "JR East E235-0 Series (11 Car)_Data",
+   "model": "E235-0V2_01_Car1.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.759,
+    9.304
+   ],
+   "lod": {
+    "model": "E235-0V2_01_Car1.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "E235-0V2_LOD_KuHa.obj"
+   },
+   "transform": {
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": [
+     0,
+     -1,
+     0,
+     0
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "E235V2AUVCar1FrontYama",
+     "model": "E235-0V2ADD_FrontDesto.glb",
+     "texture": "MainTex_d3f700d3.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.240234,
+      2,
+      8
+     ],
+     "transform": {
+      "position": [
+       0,
+       0,
+       0
+      ],
+      "rotation": [
+       0,
+       -1,
+       0,
+       0
+      ],
+      "scale": [
+       1,
+       1,
+       1
+      ]
+     }
+    },
+    {
+     "name": "E235V2AUVCar1RearYamaHimawari",
+     "model": "E235-0V2ADD_Himawari.glb",
+     "texture": "MainTex_ad3fd277.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.240234,
+      2,
+      8
+     ],
+     "transform": {
+      "position": [
+       0,
+       0,
+       0
+      ],
+      "rotation": [
+       0,
+       -1,
+       0,
+       0
+      ],
+      "scale": [
+       1,
+       1,
+       1
+      ]
+     }
+    },
+    {
+     "name": "E235V2AUVCar1SideYamaSoto",
+     "model": "E235-0V2ADD_SideDesto.001.glb",
+     "texture": "MainTex_a6ef51d4.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.234375,
+      3,
+      9
+     ],
+     "transform": {
+      "position": [
+       0,
+       1,
+       0
+      ],
+      "rotation": [
+       0,
+       -1,
+       0,
+       0
+      ],
+      "scale": [
+       1,
+       1,
+       1
+      ]
+     }
+    },
+    {
+     "name": "E235V2AUVCar1SideYamaUchi",
+     "model": "E235-0V2ADD_SideDesto.glb",
+     "texture": "MainTex_a6ef51d4.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.234375,
+      3,
+      9
+     ],
+     "transform": {
+      "position": [
+       0,
+       0,
+       0
+      ],
+      "rotation": [
+       0,
+       -1,
+       0,
+       0
+      ],
+      "scale": [
+       1,
+       1,
+       1
+      ]
+     }
+    },
+    {
+     "name": "E235V2ASCar1FrontLights",
+     "model": "AdditiveShader_22_22_100_5_b630a370.glb",
+     "texture": "MainTex_f64a2dd2.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 5
+     }
+    },
+    {
+     "name": "E235V2ASCar1RearLights",
+     "model": "AdditiveShader_22_22_100_2.5_47c2a954.glb",
+     "texture": "MainTex_f64a2dd2.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 2.5
+     }
+    },
+    {
+     "name": "E235V2AUVCar1FrontRun1405G",
+     "model": "AdditiveShader_22_22_100_2.5_2a19f028.glb",
+     "texture": "MainTex_f64a2dd2.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 2.5
+     }
+    },
+    {
+     "name": "E235V2AUVCar1FrontRun1708G",
+     "model": "AdditiveShader_22_22_100_2.5_7901a97c.glb",
+     "texture": "MainTex_f64a2dd2.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 2.5
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      5.84
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      5.84
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.64
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.64
+     ]
+    }
+   ],
+   "lights": [
+    [
+     0.92,
+     3.4,
+     -0.5
+    ],
+    [
+     -0.92,
+     3.4,
+     -0.5
+    ]
+   ],
+   "cab": {
+    "windscreen": {
+     "x": [
+      -1.34275,
+      1.34275
+     ],
+     "y": [
+      2.20754,
+      3.1086
+     ],
+     "z": 9.51977
+    },
+    "depth_m": 1.5
+   }
+  },
+  {
+   "name": "TrailerE2350V211Car0",
+   "model": "E235-0V2_01_Car2_E2350V211Car.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.758,
+    9.303
+   ],
+   "lod": {
+    "model": "E235-0V2_01_Car2_E2350V211Car.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "E235-0V2_LOD_MoHa_E2350V211Car.obj"
+   },
+   "transform": {
+    "position": [
+     -15,
+     0,
+     0
+    ],
+    "rotation": [
+     0,
+     -1,
+     0,
+     0
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "E235V2AUVCar2SideYamaSoto",
+     "model": "E235-0V2ADD_SideDestoTrailerSoto.glb",
+     "texture": "MainTex_a6ef51d4.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.234375,
+      3,
+      9
+     ],
+     "transform": {
+      "position": [
+       25,
+       1,
+       0
+      ],
+      "rotation": [
+       0,
+       -1,
+       0,
+       0
+      ],
+      "scale": [
+       1,
+       1,
+       1
+      ]
+     }
+    },
+    {
+     "name": "E235V2AUVCar2SideYamaUchi",
+     "model": "E235-0V2ADD_SideDestoTrailerUchi.glb",
+     "texture": "MainTex_a6ef51d4.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.234375,
+      3,
+      9
+     ],
+     "transform": {
+      "position": [
+       25,
+       0,
+       0
+      ],
+      "rotation": [
+       0,
+       -1,
+       0,
+       0
+      ],
+      "scale": [
+       1,
+       1,
+       1
+      ]
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.64
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.64
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerE2350V211Car1",
+   "model": "E235-0V2_01_Car3_E2350V211Car.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.758,
+    9.303
+   ],
+   "lod": {
+    "model": "E235-0V2_01_Car3_E2350V211Car.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "E235-0V2_LOD_MoHaPanto_E2350V211Car.obj"
+   },
+   "transform": {
+    "position": [
+     5,
+     0,
+     0
+    ],
+    "rotation": [
+     0,
+     -1,
+     0,
+     0
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "E235V2AUVCar3SideYamaSoto",
+     "model": "E235-0V2ADD_SideDestoTrailerSoto.glb",
+     "texture": "MainTex_a6ef51d4.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.234375,
+      3,
+      9
+     ],
+     "transform": {
+      "position": [
+       25,
+       1,
+       0
+      ],
+      "rotation": [
+       0,
+       -1,
+       0,
+       0
+      ],
+      "scale": [
+       1,
+       1,
+       1
+      ]
+     }
+    },
+    {
+     "name": "E235V2AUVCar3SideYamaUchi",
+     "model": "E235-0V2ADD_SideDestoTrailerUchi.glb",
+     "texture": "MainTex_a6ef51d4.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.234375,
+      3,
+      9
+     ],
+     "transform": {
+      "position": [
+       25,
+       0,
+       0
+      ],
+      "rotation": [
+       0,
+       -1,
+       0,
+       0
+      ],
+      "scale": [
+       1,
+       1,
+       1
+      ]
+     }
+    },
+    {
+     "name": "E235V2ADDCar3",
+     "model": "AdditiveShader_22_22_100_6.5.glb",
+     "texture": "MainTex_f64a2dd2.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 6.5
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.64
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.64
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerE2350V211Car2",
+   "model": "E235-0V2_01_Car4_E2350V211Car.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.758,
+    9.303
+   ],
+   "lod": {
+    "model": "E235-0V2_01_Car4_E2350V211Car.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "E235-0V2_LOD_MoHa.002_E2350V211Car.obj"
+   },
+   "transform": {
+    "position": [
+     25,
+     0,
+     0
+    ],
+    "rotation": [
+     0,
+     -1,
+     0,
+     0
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "E235V2AUVCar4SideYamaSoto",
+     "model": "E235-0V2ADD_SideDestoTrailerSoto.glb",
+     "texture": "MainTex_a6ef51d4.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.234375,
+      3,
+      9
+     ],
+     "transform": {
+      "position": [
+       25,
+       1,
+       0
+      ],
+      "rotation": [
+       0,
+       -1,
+       0,
+       0
+      ],
+      "scale": [
+       1,
+       1,
+       1
+      ]
+     }
+    },
+    {
+     "name": "E235V2AUVCar4SideYamaUchi",
+     "model": "E235-0V2ADD_SideDestoTrailerUchi.glb",
+     "texture": "MainTex_a6ef51d4.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.234375,
+      3,
+      9
+     ],
+     "transform": {
+      "position": [
+       25,
+       0,
+       0
+      ],
+      "rotation": [
+       0,
+       -1,
+       0,
+       0
+      ],
+      "scale": [
+       1,
+       1,
+       1
+      ]
+     }
+    },
+    {
+     "name": "E235V2ADDCar4white",
+     "model": "AdditiveShader_22_22_100_5.glb",
+     "texture": "MainTex_f64a2dd2.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 5
+     }
+    },
+    {
+     "name": "E235V2ADDCar4red",
+     "model": "AdditiveShader_22_22_100_2.5.glb",
+     "texture": "MainTex_f64a2dd2.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 2.5
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.64
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.64
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerE2350V211Car3",
+   "model": "E235-0V2_01_Car5_E2350V211Car.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.758,
+    9.303
+   ],
+   "lod": {
+    "model": "E235-0V2_01_Car2_E2350V211Car.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "E235-0V2_LOD_MoHa_E2350V211Car.obj"
+   },
+   "transform": {
+    "position": [
+     -20,
+     0,
+     0
+    ],
+    "rotation": [
+     0,
+     -1,
+     0,
+     0
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "E235V2AUVCar5SideYamaSoto",
+     "model": "E235-0V2ADD_SideDestoTrailerSoto.glb",
+     "texture": "MainTex_a6ef51d4.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.234375,
+      3,
+      9
+     ],
+     "transform": {
+      "position": [
+       25,
+       1,
+       0
+      ],
+      "rotation": [
+       0,
+       -1,
+       0,
+       0
+      ],
+      "scale": [
+       1,
+       1,
+       1
+      ]
+     }
+    },
+    {
+     "name": "E235V2AUVCar5SideYamaUchi",
+     "model": "E235-0V2ADD_SideDestoTrailerUchi.glb",
+     "texture": "MainTex_a6ef51d4.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.234375,
+      3,
+      9
+     ],
+     "transform": {
+      "position": [
+       25,
+       0,
+       0
+      ],
+      "rotation": [
+       0,
+       -1,
+       0,
+       0
+      ],
+      "scale": [
+       1,
+       1,
+       1
+      ]
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.64
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.64
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerE2350V211Car4",
+   "model": "E235-0V2_01_Car6_E2350V211Car.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.758,
+    9.303
+   ],
+   "lod": {
+    "model": "E235-0V2_01_Car6_E2350V211Car.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "E235-0V2_LOD_MoHaPanto2_E2350V211Car.obj"
+   },
+   "transform": {
+    "position": [
+     10,
+     0,
+     0
+    ],
+    "rotation": [
+     0,
+     -1,
+     0,
+     0
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "E235V2AUVCar6SideYamaSoto",
+     "model": "E235-0V2ADD_SideDestoTrailerSoto.glb",
+     "texture": "MainTex_a6ef51d4.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.234375,
+      3,
+      9
+     ],
+     "transform": {
+      "position": [
+       25,
+       1,
+       0
+      ],
+      "rotation": [
+       0,
+       -1,
+       0,
+       0
+      ],
+      "scale": [
+       1,
+       1,
+       1
+      ]
+     }
+    },
+    {
+     "name": "E235V2AUVCar6SideYamaUchi",
+     "model": "E235-0V2ADD_SideDestoTrailerUchi.glb",
+     "texture": "MainTex_a6ef51d4.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.234375,
+      3,
+      9
+     ],
+     "transform": {
+      "position": [
+       25,
+       0,
+       0
+      ],
+      "rotation": [
+       0,
+       -1,
+       0,
+       0
+      ],
+      "scale": [
+       1,
+       1,
+       1
+      ]
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.64
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.64
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerE2350V211Car5",
+   "model": "E235-0V2_01_Car7_E2350V211Car.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.758,
+    9.303
+   ],
+   "lod": {
+    "model": "E235-0V2_01_Car4_E2350V211Car.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "E235-0V2_LOD_MoHa.002_E2350V211Car.obj"
+   },
+   "transform": {
+    "position": [
+     15,
+     0,
+     0
+    ],
+    "rotation": [
+     0,
+     -1,
+     0,
+     0
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "E235V2AUVCar7SideYamaSoto",
+     "model": "E235-0V2ADD_SideDestoTrailerSoto.glb",
+     "texture": "MainTex_a6ef51d4.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.234375,
+      3,
+      9
+     ],
+     "transform": {
+      "position": [
+       25,
+       1,
+       0
+      ],
+      "rotation": [
+       0,
+       -1,
+       0,
+       0
+      ],
+      "scale": [
+       1,
+       1,
+       1
+      ]
+     }
+    },
+    {
+     "name": "E235V2AUVCar7SideYamaUchi",
+     "model": "E235-0V2ADD_SideDestoTrailerUchi.glb",
+     "texture": "MainTex_a6ef51d4.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.234375,
+      3,
+      9
+     ],
+     "transform": {
+      "position": [
+       25,
+       0,
+       0
+      ],
+      "rotation": [
+       0,
+       -1,
+       0,
+       0
+      ],
+      "scale": [
+       1,
+       1,
+       1
+      ]
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.64
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.64
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerE2350V211Car6",
+   "model": "E235-0V2_01_Car8_E2350V211Car.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.758,
+    9.303
+   ],
+   "lod": {
+    "model": "E235-0V2_01_Car2_E2350V211Car.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "E235-0V2_LOD_MoHa_E2350V211Car.obj"
+   },
+   "transform": {
+    "position": [
+     -25,
+     0,
+     0
+    ],
+    "rotation": [
+     0,
+     -1,
+     0,
+     0
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "E235V2AUVCar8SideYamaSoto",
+     "model": "E235-0V2ADD_SideDestoTrailerSoto.glb",
+     "texture": "MainTex_a6ef51d4.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.234375,
+      3,
+      9
+     ],
+     "transform": {
+      "position": [
+       25,
+       1,
+       0
+      ],
+      "rotation": [
+       0,
+       -1,
+       0,
+       0
+      ],
+      "scale": [
+       1,
+       1,
+       1
+      ]
+     }
+    },
+    {
+     "name": "E235V2AUVCar8SideYamaUchi",
+     "model": "E235-0V2ADD_SideDestoTrailerUchi.glb",
+     "texture": "MainTex_a6ef51d4.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.234375,
+      3,
+      9
+     ],
+     "transform": {
+      "position": [
+       25,
+       0,
+       0
+      ],
+      "rotation": [
+       0,
+       -1,
+       0,
+       0
+      ],
+      "scale": [
+       1,
+       1,
+       1
+      ]
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.64
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.64
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerE2350V211Car7",
+   "model": "E235-0V2_01_Car9_E2350V211Car.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.758,
+    9.303
+   ],
+   "lod": {
+    "model": "E235-0V2_01_Car9_E2350V211Car.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "E235-0V2_LOD_MoHaPanto_E2350V211Car.obj"
+   },
+   "transform": {
+    "position": [
+     -10,
+     0,
+     0
+    ],
+    "rotation": [
+     0,
+     -1,
+     0,
+     0
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "E235V2AUVCar9SideYamaSoto",
+     "model": "E235-0V2ADD_SideDestoTrailerSoto.glb",
+     "texture": "MainTex_a6ef51d4.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.234375,
+      3,
+      9
+     ],
+     "transform": {
+      "position": [
+       25,
+       1,
+       0
+      ],
+      "rotation": [
+       0,
+       -1,
+       0,
+       0
+      ],
+      "scale": [
+       1,
+       1,
+       1
+      ]
+     }
+    },
+    {
+     "name": "E235V2AUVCar9SideYamaUchi",
+     "model": "E235-0V2ADD_SideDestoTrailerUchi.glb",
+     "texture": "MainTex_a6ef51d4.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.234375,
+      3,
+      9
+     ],
+     "transform": {
+      "position": [
+       25,
+       0,
+       0
+      ],
+      "rotation": [
+       0,
+       -1,
+       0,
+       0
+      ],
+      "scale": [
+       1,
+       1,
+       1
+      ]
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.64
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.64
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerE2350V211Car8",
+   "model": "E235-0V2_01_Car10_E2350V211Car.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.758,
+    10.111
+   ],
+   "lod": {
+    "model": "E235-0V2_01_Car10_E2350V211Car.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "E235-0V2_LOD_MoHa.001_E2350V211Car.obj"
+   },
+   "transform": {
+    "position": [
+     20,
+     0,
+     0
+    ],
+    "rotation": [
+     0,
+     -1,
+     0,
+     0
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "E235V2AUVCar10SideYamaSoto",
+     "model": "E235-0V2ADD_SideDestoSotoCar10.glb",
+     "texture": "MainTex_a6ef51d4.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.234375,
+      3,
+      9
+     ],
+     "transform": {
+      "position": [
+       20,
+       0,
+       0
+      ],
+      "rotation": [
+       0,
+       -1,
+       0,
+       0
+      ],
+      "scale": [
+       1,
+       1,
+       1
+      ]
+     }
+    },
+    {
+     "name": "E235V2AUVCar10SideYamaUchi",
+     "model": "E235-0V2ADD_SideDestoUchiCar10.glb",
+     "texture": "MainTex_a6ef51d4.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.234375,
+      3,
+      9
+     ],
+     "transform": {
+      "position": [
+       20,
+       1,
+       0
+      ],
+      "rotation": [
+       0,
+       -1,
+       0,
+       0
+      ],
+      "scale": [
+       1,
+       1,
+       1
+      ]
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.04
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.04
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerE2350V211Car9",
+   "model": "E235-0V2_01_Car11_E2350V211Car.glb",
+   "texture": "MainTex.ktx2",
+   "flip": true,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.48,
+    10.48
+   ],
+   "lod": {
+    "model": "E235-0V2_01_Car11_E2350V211Car.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "E235-0V2_LOD_KuHa_E2350V211Car.obj"
+   },
+   "transform": {
+    "position": [
+     -5,
+     0,
+     0
+    ],
+    "rotation": [
+     0,
+     -1,
+     0,
+     0
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "E235V2AUVCar11FrontYama",
+     "model": "E235-0V2ADD_FrontDesto.glb",
+     "texture": "MainTex_ad3fd277.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.240234,
+      2,
+      8
+     ],
+     "transform": {
+      "position": [
+       0,
+       0,
+       0
+      ],
+      "rotation": [
+       0,
+       -1,
+       0,
+       0
+      ],
+      "scale": [
+       1,
+       1,
+       1
+      ]
+     }
+    },
+    {
+     "name": "E235V2AUVCar11RearYamaHimawari",
+     "model": "E235-0V2ADD_Himawari.glb",
+     "texture": "MainTex_d3f700d3.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.240234,
+      2,
+      8
+     ],
+     "transform": {
+      "position": [
+       0,
+       0,
+       0
+      ],
+      "rotation": [
+       0,
+       -1,
+       0,
+       0
+      ],
+      "scale": [
+       1,
+       1,
+       1
+      ]
+     }
+    },
+    {
+     "name": "E235V2AUVCar11SideYamaSoto",
+     "model": "E235-0V2ADD_SideDestoSoto.glb",
+     "texture": "MainTex_a6ef51d4.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.234375,
+      3,
+      9
+     ],
+     "transform": {
+      "position": [
+       0,
+       1,
+       0
+      ],
+      "rotation": [
+       0,
+       -1,
+       0,
+       0
+      ],
+      "scale": [
+       1,
+       1,
+       1
+      ]
+     }
+    },
+    {
+     "name": "E235V2AUVCar11SideYamaUchi",
+     "model": "E235-0V2ADD_SideDestoUchi.glb",
+     "texture": "MainTex_a6ef51d4.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.234375,
+      3,
+      9
+     ],
+     "transform": {
+      "position": [
+       0,
+       0,
+       0
+      ],
+      "rotation": [
+       0,
+       -1,
+       0,
+       0
+      ],
+      "scale": [
+       1,
+       1,
+       1
+      ]
+     }
+    },
+    {
+     "name": "E235V2ASCar11FrontLights",
+     "model": "AdditiveShader_22_22_100_5_b630a370.glb",
+     "texture": "MainTex_f64a2dd2.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 5
+     }
+    },
+    {
+     "name": "E235V2ASCar11RearLights",
+     "model": "AdditiveShader_22_22_100_2.5_47c2a954.glb",
+     "texture": "MainTex_f64a2dd2.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 2.5
+     }
+    },
+    {
+     "name": "E235V2AUVCar11FrontRun1405G",
+     "model": "AdditiveShader_22_22_100_2.5_2a19f028.glb",
+     "texture": "MainTex_f64a2dd2.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 2.5
+     }
+    },
+    {
+     "name": "E235V2AUVCar11FrontRun1708G",
+     "model": "AdditiveShader_22_22_100_2.5_7901a97c.glb",
+     "texture": "MainTex_f64a2dd2.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 2.5
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      5.84
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.64
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      5.84
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.64
+     ]
+    }
+   ],
+   "lights": [
+    [
+     0.92,
+     3.4,
+     -0.5
+    ],
+    [
+     -0.92,
+     3.4,
+     -0.5
+    ]
+   ]
+  }
+ ],
+ "material": {
+  "brightness": 1.849
+ },
+ "fixed_by": "3486878999"
+}

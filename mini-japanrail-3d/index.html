@@ -3359,7 +3359,7 @@ let trainMode = localStorage.getItem('mjr3d_trainmode') || 'icon'; /* '3d' | 'ic
 let iconSet = localStorage.getItem('mjr3d_iconset') || 'default'; /* 图标模式图集: 'default' | 'vector' */
 /* 图集表: default=现有多用途图集 / vector=AI矢量重绘(黑描边) / cute=可爱风(kasu,未覆盖键回退默认图) */
 const ATLAS_SETS = {
-  default: { file: 'https://jr-static.suki.ing/data/train_icons_atlas.json?v=6', png: 'https://jr-static.suki.ing/data/train_icons_atlas.png?v=6', json: null, img: null, ready: false },
+  default: { file: 'https://jr-static.suki.ing/data/train_icons_atlas.json?v=7', png: 'https://jr-static.suki.ing/data/train_icons_atlas.png?v=7', json: null, img: null, ready: false },
   vector:  { file: 'https://jr-static.suki.ing/data/train_icons_atlas_vec.json?v=5', png: 'https://jr-static.suki.ing/data/train_icons_atlas_vec.png?v=5', json: null, img: null, ready: false },
   cute:    { file: 'https://jr-static.suki.ing/data/train_icons_atlas_cute.json?v=5', png: 'https://jr-static.suki.ing/data/train_icons_atlas_cute.png?v=5', json: null, img: null, ready: false },
 };
@@ -3937,11 +3937,28 @@ function initMap() {
 }
 function mapReadyPromise() {
   return new Promise(res => {
-    if (map.loaded()) return res(); /* 地图早已就绪时直接放行,避免白等 9s */
+    if (map.loaded()) return res(); /* 地图早已就绪时直接放行,避免白等 */
     let done = false;
     const fin = () => { if (!done) { done = true; res(); } };
+    /* style.load:样式 JSON 解析完成(addSource/addLayer 合法化的最小条件,内联样式秒到);
+       load:首帧完整渲染(可能被慢瓦片 CDN 拖到很久)。
+       旧实现只有 load+9s 盲兜底:后台标签页打开(rAF 挂起 → load 永不触发)或瓦片长时间
+       阻塞时,兜底放行后 addMapLayers 在样式未就绪上调 addSource 直接抛
+       「Style is not done loading」→ 整个启动失败。现在 style.load 先到先放行,兜底仅作末路。 */
+    map.once('style.load', fin);
     map.once('load', fin);
-    setTimeout(fin, 9000); // 瓦片 CDN 病理阻塞时兜底
+    setTimeout(fin, 15000); // 瓦片 CDN 病理阻塞时兜底
+  });
+}
+/* 样式真正就绪才继续:mapReadyPromise 放行不保证 style.load 已触发(15s 兜底路径),
+   addSource 前再守一道,杜绝启动期竞态崩溃 */
+function styleReadyPromise() {
+  return new Promise(res => {
+    try { if (map.isStyleLoaded()) return res(); } catch (e) { return res(); }
+    let done = false;
+    const fin = () => { if (!done) { done = true; res(); } };
+    map.once('style.load', fin);
+    setTimeout(fin, 10000);
   });
 }
 /* ---------------- URL 状态持久化(刷新/分享保留视角、投影、语言、主题、实时) ---------------- */
@@ -3980,11 +3997,13 @@ async function boot() {
   if (retryBtn) retryBtn.style.display = 'none';
   loadTrainAtlas(); /* 提前预载图标图集(默认/矢量/可爱 3 套,异步不阻塞主流程;加载遮罩马赛克拼图要用默认图集) */
   try {
-    _fileTotal = 11; _fileIdx = 0;
-    /* 当日时刻表与 7 个静态数据文件并行下载(含 tokkyu 特急爱称表、names_i18n 多语站名表, 原实现串行) */
+    _fileTotal = 8; _fileIdx = 0;
+    /* 当日时刻表与静态核心数据并行下载(tokkyu 特急爱称表、names_i18n 多语站名表等)。
+       站房轮廓/出入口/站台三件(共 14MB,z12+ 才有视觉意义的层)不进关键路径 ——
+       由 bindLazyHeavyData 在首次放大(z≥11.5)或开关打开时按需拉取,启动少下 14MB */
     dayBitAuto = bitOfDate(Date.now());
     dayBit = dayMode === 'auto' ? dayBitAuto : dayMode;
-    const [s, st, tm, lm, sm, tk, ni, tj, fp, en, pl] = await Promise.all([
+    const [s, st, tm, lm, sm, tk, ni, tj] = await Promise.all([
       fetchJSONWithCache('https://jr-static.suki.ing/data/segments3d.geojson', 'loadingSeg', 0),
       fetchJSONWithCache('https://jr-static.suki.ing/data/stations3d.geojson', 'loadingSta', 1),
       fetchJSONWithCache('https://jr-static.suki.ing/data/tmaps.json', 'loadingTm', 2),
@@ -3993,11 +4012,8 @@ async function boot() {
       fetchJSONWithCache('https://jr-static.suki.ing/data/tokkyu.json', '', 5).catch(() => null),
       fetchJSONWithCache('https://jr-static.suki.ing/data/names_i18n.json', '', 6).catch(() => null),
       fetchJSONWithCache(TRAIN_FILES[dayBit], 'loadingTr', 7),
-      fetchJSONWithCache('https://jr-static.suki.ing/data/station_overall_footprints.geojson', 'loadingSta', 8).catch(() => null),
-      fetchJSONWithCache('https://jr-static.suki.ing/data/station_entrances.geojson', 'loadingSta', 9).catch(() => null),
-      fetchJSONWithCache('https://jr-static.suki.ing/data/station_platforms.geojson', 'loadingSta', 10).catch(() => null),
     ]);
-    segFC = s; staFC = st; footprintFC = fp; entrancesFC = en; platformsFC = pl; tmaps = tm; LINES_MAP = lm || {}; stationMap = sm && sm.version === 2 ? sm : null; TOKKYU = tk;
+    segFC = s; staFC = st; tmaps = tm; LINES_MAP = lm || {}; stationMap = sm && sm.version === 2 ? sm : null; TOKKYU = tk;
     /* 新干线图标表以数据为准(时刻表新增列车名时自动纳入 G0 等级) */
     if (tk && tk.sh) for (const k in tk.sh) GRADE_SH.add(k);
     NAME_I18N = ni;
@@ -4020,6 +4036,7 @@ async function boot() {
     }
     /* 地图先行:轨道/车站网络先渲染(仅需原始 GeoJSON),索引与时刻表随后分片构建 */
     await mapReadyPromise();
+    await styleReadyPromise();
     addMapLayers();
     /* 车站徽章(DokoRail 迁移):异步加载映射,绑定视野更新;不阻塞主流程 */
     loadBadgesMap().then(() => { badgesBindView(); updateBadgeIcons(); });
@@ -4027,7 +4044,7 @@ async function boot() {
     fetchJSONWithCache('https://jr-static.suki.ing/data/platform_map.json', '', 11)
       .then(j => { PLATMAP = (j && j.t) ? j : null; })
       .catch(() => { PLATMAP = null; });
-    if (!PERF_LOW) fetchOrmTracks(); /* ORM 线位图层数据:异步拉取(与索引构建并行),不阻塞 dataReady;低配设备按需加载 */
+    bindLazyHeavyData(); /* ORM 44MB + 站房/站台/出入口 14MB:改为按需懒加载(见函数注释) */
     /* 索引构建/恢复:进度 55→78% */
     setPhase(FILES_PCT, IDX_PCT, 0);
     const idxCache = await idbGet(IDX_CACHE_KEY);
@@ -4251,9 +4268,13 @@ function updateBadgeIcons() {
 }
 function badgesBindView() {
   if (!map) return;
-  map.on('moveend', () => updateBadgeIcons());
-  map.on('zoomend', () => updateBadgeIcons());
-  map.on('idle', () => { if (map.getZoom() >= BADGES_MIN_ZOOM) updateBadgeIcons(); });
+  /* 防抖 200ms:平移/缩放连发 moveend+zoomend+idle,每次都全量扫 staFC(8.5k 站 project 投影)
+     并可能整源 setData 重切片 —— 连续拖动时合并为停下后一次 */
+  let t = 0;
+  const run = () => { clearTimeout(t); t = setTimeout(updateBadgeIcons, 200); };
+  map.on('moveend', run);
+  map.on('zoomend', run);
+  map.on('idle', () => { if (map.getZoom() >= BADGES_MIN_ZOOM) run(); });
 }
 /* 徽章开关(设置面板 swBadge):默认开;关闭时隐藏徽章层与兜底色圆层,仅保留灰点 */
 function applyBadgeVisible(v) {
@@ -4291,7 +4312,7 @@ async function renderStationBadges(name) {
   requestAnimationFrame(more);
 }
 
-function addMapLayers() {
+function addDetailLayers() {
   /* ── 站台层(platform):OSM railway=platform 站台面/线,黄色;地铁站无地面站房时的范围表示 ── */
   if (platformsFC && !map.getSource('pl')) {
     map.addSource('pl', { type: 'geojson', data: platformsFC });
@@ -4299,10 +4320,9 @@ function addMapLayers() {
       'fill-color': '#f2c200', 'fill-opacity': 0.32 } });
     map.addLayer({ id: 'pl-line', type: 'line', source: 'pl', paint: {
       'line-color': '#f2c200', 'line-width': 0.9, 'line-opacity': 0.85 } });
-    if (PERF_LOW) { /* 老旧设备降载:站台面/线数千要素在低 zoom 无视觉意义(不足 1px),
-                     限定 z13 起渲染,减轻低缩放时 GPU 填充/顶点处理负担;高 zoom 行为不变 */
-      try { map.setLayerZoomRange('pl-fill', 13, 22); map.setLayerZoomRange('pl-line', 13, 22); } catch (e) {}
-    }
+    /* 站台面/线共约 1.1 万要素,低 zoom 无视觉意义(不足 1px)却每帧参与填充;
+       列车层连续重绘意味着全图层每帧都重画,限定 z13 起渲染对全部设备都是纯收益(原仅 PERF_LOW) */
+    try { map.setLayerZoomRange('pl-fill', 13, 22); map.setLayerZoomRange('pl-line', 13, 22); } catch (e) {}
   }
   /* ── 车站整体轮廓层(footprint):站房轮廓+站台面按站合并(unary_union),按线路代表色渲染 ── */
   if (footprintFC && !map.getSource('fp')) {
@@ -4311,9 +4331,8 @@ function addMapLayers() {
       'fill-color': ['get', 'color'], 'fill-opacity': 0.4 } });
     map.addLayer({ id: 'fp-line', type: 'line', source: 'fp', paint: {
       'line-color': ['get', 'color'], 'line-width': 1.1, 'line-opacity': 0.85 } });
-    if (PERF_LOW) { /* 老旧设备降载:6795 个站房轮廓面在低 zoom 不可辨,限定 z12 起渲染 */
-      try { map.setLayerZoomRange('fp-fill', 12, 22); map.setLayerZoomRange('fp-line', 12, 22); } catch (e) {}
-    }
+    /* 6,795 个站房轮廓面同理,低 zoom 不可辨,限定 z12 起渲染(原仅 PERF_LOW) */
+    try { map.setLayerZoomRange('fp-fill', 12, 22); map.setLayerZoomRange('fp-line', 12, 22); } catch (e) {}
     if (typeof fpVisible === 'function') fpVisible(fpEnabled);
   }
   /* ── 出入口层:重绘的橙色方框箭头图标(原创), zoom>=16(画面只剩车站)才显示 ── */
@@ -4333,6 +4352,10 @@ function addMapLayers() {
       im.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHc4AAAFLUlEQVR4nO2dz08bRxTH3yLXpsovRaHtJYf20N+pUlW2E0iiGLdV/4f0EAwhiXrJL6LkAm3JhSSQH01/kKYh7aGVqv5W7wapCQS85Neh5/4BaQOEYFCB6aH2MjOeWXbt2Z018z7SSOwufm/8fftmnndXOxb5/T1A9BEjhOjug9HEQHEAkkf+6FVqMILYl/f0qLJlLf/2bs1GTBBdRq3BsJZ/faeqDyaP3jRWdBn2pd2+g1FVANzEty/t7vZtsM5IHr15RnbMbxCs5V/e9u742C2h8PbFXWtedBnJY7eEwbAv7vIUCGvJYwBSAvELBgvPkxIEouAhCNbSz9nVjR8fZcQvXGhB4SWkjo8ygShcaHENQoMHgyi+D3h9eP14rKWfWqUHUyfGWPEHmlF8j6ROjLGZMNAszARr6ceM2EDXbVb8/p0ovk9SXbfZIPTvrAjCqkNQ6YMofhV40c1a/GFvxc70yXHn7J84vwPFr5H0yXEnEybO72CyoCIDaPER9fD6NgAhwDSKiXPp7orj2Hy3iXNpdhShjnmaA5DgsBa/3+NspE8VVsb+sykc+xWTPlVYmQvOpnoAPFZBSHDIb8jgnbJgKenbQACAAED6tO0MP+N9ye7yfmzq2nhf0hnW06ftXgKyDMCzPxwIwQBoBctQ/WjLgNi+Uefvxe9aAvcXSXRlAC2+aNskhA9mBfmw1lPvj4k7sm8U/v22OTC/UYTgHKCfaFVBplVfmAH6wQzQCWaAfkKvgtww7VF5ErlLEYYFwOghKL6/oLsLAEDfE6YJ8h6pG2Heq4VSEMK+R8x9X2MzoEy8zdbq3+gMKBNvszEDdBPPTUI8Nxm6XyxDOeK5SVgYeisUX3gxTkKi/U5ovnAOkJBov4NzgG4SHXcD91GXv4QTB+4F2w/aV8ddWPjqzWCMkzq7FJHovB9SRzi/B+7BwrXt6g0TAjHRV9ZVi+ivgeSUgz+vMBAE6mgSbtR09vM0dt7HSVg3jQcfKLNVNxkQNRoPPsAM0Mn81TeU2KmrKigqzA9uU2OIkJXH05n9ATbX/ri0oqovXSPFwW3Kvj8BzADPFL94Xb3RevshVvz8NQAAePqDP8PoTYVf5RACsWAsB4sKQbwGMTDxS9RVBoRN8bNXg3WAZaicwMUvgRkgoPjpK+E4wotxlcyFJT5gGcowd+Xl8J3iHPA/WsQvYXwGzH3yUug+HUzPAK3ilzA2A+YuvxiaLymE4INZOsEHsyKAsUNQJMAM0A9mgE4wA/SDVZBGtFRBswMv+Nq/1tEyB8z2Pw/ru/5ito1E5y1JY0XniFYVZBqReyrCNLAM1Y8107fV2cgMPnRe3jpyuAnfHa2YzOBD593RI4eb8N3RUQDfHa2Lkr5MBowc2uIsr5G5+rd0uT7EP7SetM7uy9liFgQDpavrHJD58h/MAgW46dhACAG6DXduZlb54Y9j899ohjs399DHhBlAB6H12iPMghqg9eNPbgDRKkrlxhuR/R82aas4eQX/Y02feU4evevTzJpXwx2b8MeZR1qvTzPiD3dsEq4l6ToJ8x/ijSJivIoPAGBN9z67usGhGTYT2jdiJkhoHZphxW/f6LqesDXlIQAAAFkuCAAAeQyEQ5YTHgAgv4r4AADW1MfPeHdy47Fwncl8boOxgcjeeCwclvO5Dd7WlPcTAMqpdMFPE4IhEx3Au/BlrKmPmqrrxNezuOoqR75tvS/xAWoIAI3JwahGdBpr6sMtqvoCAADZb56s+WDk96+rSXQa5QFA/PEfOjCukRTL4vIAAAAASUVORK5CYII=';
     }
   }
+}
+
+function addMapLayers() {
+  addDetailLayers(); /* 站台/站房/出入口层:数据未到位时内部守卫自动跳过,懒加载到位后可再调 */
   map.addSource('segs', { type: 'geojson', data: segFC });
   map.addLayer({ id: 'segs-glow', type: 'line', source: 'segs', paint: {
     'line-color': ['get', 'color'], 'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 2, 2.2, 9, 5, 14, 9],
@@ -4457,16 +4480,55 @@ function addOrmLayer() {
 function fetchOrmTracks() {
   if (ormLoaded || ormFetching) return;
   ormFetching = true;
-  /* 数据按 2 分片存储(orm_tracks.0/.1.geojson, 各 <25MB, 适配 Cloudflare Pages 单文件上限) */
-  Promise.all([
-    fetchJSONWithCache('https://jr-static.suki.ing/data/orm_tracks.0.geojson', '', 11, true),
-    fetchJSONWithCache('https://jr-static.suki.ing/data/orm_tracks.1.geojson', '', 11, true),
-  ])
-    .then(([a, b]) => {
+  /* 数据按 2 分片存储(orm_tracks.0/.1.geojson, 各 <25MB, 适配 Cloudflare Pages 单文件上限)。
+     ★ 串行加载:两个 22MB JSON 若同时到达,两次 JSON.parse 连续阻塞主线程 2-4s(地图冻结);
+     串行至少让两个解析之间有喘息,且第二片下载可与第一片解析重叠 */
+  (async () => {
+    try {
+      const a = await fetchJSONWithCache('https://jr-static.suki.ing/data/orm_tracks.0.geojson', '', 11, true);
+      await yieldToUI();
+      const b = await fetchJSONWithCache('https://jr-static.suki.ing/data/orm_tracks.1.geojson', '', 11, true);
       ormFC = { type: 'FeatureCollection', features: (a && a.features || []).concat(b && b.features || []) };
       addOrmLayer();
-    })
-    .catch(e => { console.warn('[orm]', e); });
+    } catch (e) {
+      console.warn('[orm]', e);
+      ormFetching = false; /* 失败允许重试(下次触发再拉) */
+    }
+  })();
+}
+
+/* ---------------- 重数据懒加载(性能优化,2026-10-24) ----------------
+   ORM 全量股道(44MB)与站房三件套(轮廓/出入口/站台,14MB)不再在启动时无条件下载:
+   - 数据每次刷新(ETag 变)后,老用户也要全量重下 —— 启动即 ~90MB 下载 + 连续大 JSON.parse
+     主线程冻结 + IDB 重写,是「启动后一段时间卡死」的主因;
+   - 现在只在两种情况下拉:① 首次放大到城市级视野(z≥11.5,此缩放以下简易轨道层足够);
+     ② 用户打开对应开关。开关打开但数据未到时显示简易轨道,数据到位后无缝切换。
+   全国俯瞰用户(多数访问)从此不再下载这 58MB。 */
+let lazyHeavyBound = false, stationDetailFetched = false;
+function fetchStationDetailData() {
+  if (stationDetailFetched) return;
+  stationDetailFetched = true;
+  /* 三件并行(silent:不占进度条;loader 此时早已隐藏) */
+  Promise.all([
+    fetchJSONWithCache('https://jr-static.suki.ing/data/station_overall_footprints.geojson', '', 11, true).catch(() => null),
+    fetchJSONWithCache('https://jr-static.suki.ing/data/station_entrances.geojson', '', 11, true).catch(() => null),
+    fetchJSONWithCache('https://jr-static.suki.ing/data/station_platforms.geojson', '', 11, true).catch(() => null),
+  ]).then(([fp, en, pl]) => {
+    footprintFC = fp; entrancesFC = en; platformsFC = pl;
+    if (map) addDetailLayers();
+  }).catch(e => { stationDetailFetched = false; console.warn('[detail]', e); });
+}
+function bindLazyHeavyData() {
+  if (lazyHeavyBound || !map) return;
+  lazyHeavyBound = true;
+  const maybeFetch = () => {
+    if (map.getZoom() < 11.5) return;
+    if (ormEnabled && !ormLoaded) fetchOrmTracks();
+    fetchStationDetailData();
+  };
+  map.on('zoomend', maybeFetch);
+  /* 深链直达高倍率(jumpTo 不一定触发 zoomend 语义):启动后立即检查一次 */
+  setTimeout(maybeFetch, 800);
 }
 
 /* ---------------- 渲染循环 ---------------- */
@@ -5070,7 +5132,7 @@ function iconStyle(icIdx) {
   if (icIdx < 0 || !ATLAS) return '';
   const sc = 0.75; /* 30px 盒 / 40px 图 */
   const col = icIdx % ATLAS.cols, row = Math.floor(icIdx / ATLAS.cols);
-  const png = ATLAS_KEY === 'cute' ? 'https://jr-static.suki.ing/data/train_icons_atlas_cute.png' : (ATLAS_KEY === 'vector' ? 'https://jr-static.suki.ing/data/train_icons_atlas_vec.png' : 'https://jr-static.suki.ing/data/train_icons_atlas.png?v=6');
+  const png = ATLAS_KEY === 'cute' ? 'https://jr-static.suki.ing/data/train_icons_atlas_cute.png' : (ATLAS_KEY === 'vector' ? 'https://jr-static.suki.ing/data/train_icons_atlas_vec.png' : 'https://jr-static.suki.ing/data/train_icons_atlas.png?v=7');
   return 'background-image:url(' + png + ');background-size:' + (ATLAS.size[0] * sc) + 'px ' + (ATLAS.size[1] * sc) + 'px;' +
     'background-position:-' + ((col * ATLAS.cell[0] + 2) * sc) + 'px -' + ((row * ATLAS.cell[1] + 2) * sc) + 'px;';
 }
@@ -6434,6 +6496,7 @@ $('swBadge').addEventListener('click', function () { this.classList.toggle('on')
     this.classList.toggle('on', fpEnabled);
     localStorage.setItem('mjr3d_showfp', fpEnabled ? '1' : '0');
     fpVisible(fpEnabled);
+    if (fpEnabled && !footprintFC) fetchStationDetailData(); /* 站房数据懒加载:低倍率下打开开关时即刻拉取 */
   });
   /* 出入口开关:默认开,选择持久化(mjr3d_showent) */
   let entEnabled = localStorage.getItem('mjr3d_showent') !== '0';
@@ -6447,6 +6510,7 @@ $('swBadge').addEventListener('click', function () { this.classList.toggle('on')
     this.classList.toggle('on', entEnabled);
     localStorage.setItem('mjr3d_showent', entEnabled ? '1' : '0');
     entVisible(entEnabled);
+    if (entEnabled && !entrancesFC) fetchStationDetailData(); /* 出入口数据懒加载:同上 */
   });
 $('swBase').addEventListener('click', function () { this.classList.toggle('on'); map.setLayoutProperty('basemap', 'visibility', this.classList.contains('on') ? 'visible' : 'none'); });
 /* 详细股道开关(互斥模式): 开启 = 显示 ORM 全量股道并隐藏原有简易轨道层(segs/segs-glow);
@@ -6456,8 +6520,11 @@ let ormEnabled = PERF_LOW ? false : (localStorage.getItem('mjr3d_showorm') !== '
 $('swOrm').classList.toggle('on', ormEnabled);
 function applyTrackMode() {
   if (!map) return;
-  if (map.getLayer('segs')) map.setLayoutProperty('segs', 'visibility', ormEnabled ? 'none' : 'visible');
-  if (map.getLayer('segs-glow')) map.setLayoutProperty('segs-glow', 'visibility', ormEnabled ? 'none' : ($('swGlow').classList.contains('on') ? 'visible' : 'none'));
+  /* orm 开启但数据未加载完成(懒加载下载中)时保留简易轨道层,避免「轨道凭空消失」;
+     数据到位 → addOrmLayer → applyTrackMode 再切换 */
+  const ormOn = ormEnabled && ormLoaded;
+  if (map.getLayer('segs')) map.setLayoutProperty('segs', 'visibility', ormOn ? 'none' : 'visible');
+  if (map.getLayer('segs-glow')) map.setLayoutProperty('segs-glow', 'visibility', ormOn ? 'none' : ($('swGlow').classList.contains('on') ? 'visible' : 'none'));
   if (map.getLayer('orm')) map.setLayoutProperty('orm', 'visibility', ormEnabled ? 'visible' : 'none');
 }
 applyTrackMode();

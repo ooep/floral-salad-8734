@@ -4182,26 +4182,41 @@ async function loadBadgesMap() {
 /* 站名 -> 徽章条目数组 [[线路名, 站码, 图集url, crop|null], …](已按重要性降序);
    lines.json 有则用(每站每线),否则回退 map.json 单枚。无徽章返回 null。 */
 function badgeEntriesOf(name) {
+  let list = null;
   if (badgesLines && badgesLines.stations) {
     const lst = badgesLines.stations[name];
     if (lst && lst.length) {
-      return lst.map(e => {
+      list = lst.map(e => {
         const sh = typeof e[2] === 'number' ? badgesLines.sheets[e[2]] : e[2];
         return [e[0], e[1], sh, e[3]];
       });
     }
   }
-  const bd = badgesMap && badgesMap[name];
-  if (bd) return [['', bd.code, bd.url, bd.crop]];
-  return null;
-}
-/* 站徽章枚数(供 badgeN 属性,免为数组分配) */
-function badgeCountOf(name) {
-  if (badgesLines && badgesLines.stations) {
-    const l = badgesLines.stations[name];
-    if (l && l.length) return l.length;
+  if (!list) {
+    const bd = badgesMap && badgesMap[name];
+    if (bd) list = [['', bd.code, bd.url, bd.crop]];
   }
-  return (badgesMap && badgesMap[name]) ? 1 : 0;
+  if (!list) return null;
+  /* 同站多线共用同一枚徽章(JR 按走廊分配站号:JU01=宇都宮線/高崎線、JO19=横須賀線/総武快速線、
+     JE01=京葉線/武蔵野線…)——按图集裁剪去重,线路名合并为「A・B」;
+     否则抽屉与地图并排里出现几枚一模一样的重复徽章 */
+  if (list.length > 1) {
+    const byKey = new Map();
+    for (const e of list) {
+      const k = e[2] + '|' + (e[3] ? e[3].join(',') : '');
+      const prev = byKey.get(k);
+      if (prev) {
+        if (e[0] && prev[0] && !prev[0].includes(e[0])) prev[0] += '・' + e[0];
+      } else byKey.set(k, e);
+    }
+    list = [...byKey.values()];
+  }
+  return list;
+}
+/* 站徽章枚数(供 badgeN 密度分级):与显示一致,按去重后的枚数计 */
+function badgeCountOf(name) {
+  const l = badgeEntriesOf(name);
+  return l ? l.length : 0;
 }
 /* 加载单个图集(缓存+in-flight 去重+并发限流),失败返回 null */
 async function badgeSheetOf(url) {

@@ -7344,7 +7344,9 @@ const M3D = (() => {
     if (!w || !h) return;
     if (o.lastW !== w || o.lastH !== h) { o.renderer.setSize(w, h, false); o.lastW = w; o.lastH = h; }
     const mvpArr = __mvpMain || (map.transform && map.transform.modelViewProjectionMatrix) || null;
-    if (!mvpArr || performance.now() - __mvpT > 250) { o.renderer.clear(); m3dOk = false; return; } /* 矩阵缺失/过期:停止接管,方盒回归(杜绝整列消失) */
+    /* 仅「从未捕获到矩阵」才回退方盒。不做时效判定:页面空闲时矩阵虽旧但相机未动、依然正确;
+       相机任何运动必然触发 maplibre 重绘 → render 入口截获刷新。时效误判曾致方盒/模型振荡 */
+    if (!mvpArr) { o.renderer.clear(); m3dOk = false; return; }
     m3dOk = true;
     const worldSize = 512 * Math.pow(2, map.getZoom());
     const c0 = map.getCenter();

@@ -173,6 +173,8 @@ def main():
         f.write('  Cache-Control: public, max-age=300\n')
         f.write('/data/*.geojson\n')
         f.write('  Cache-Control: public, max-age=300\n')
+        f.write('/data/*.js\n')
+        f.write('  Cache-Control: public, max-age=300\n')
         f.write('/data/badges/atlas/sha256/*\n')
         f.write('  Cache-Control: public, max-age=31536000, immutable\n')
     total += 1

@@ -2,13 +2,16 @@
 <html lang="zh-Hans">
 <head>
 <meta charset="utf-8">
-<!-- Clarity tracking code for https://jr.suki.ing/ -->
+<!-- Clarity tracking code for https://jr.suki.ing/ —— 延后到数据就绪后 4s 注入(boot 时不再与
+     核心数据下载/解析抢主线程与带宽;会话录制从启动完成后开始,对分析覆盖影响可忽略) -->
 <script>
+window.__loadClarity = function () {
     (function(c,l,a,r,i,t,y){
         c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
         t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i+"?ref=bwt";
         y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
     })(window, document, "clarity", "script", "yxc9o63w5s");
+};
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Mini JapanRail｜全日本列车实时运行可视化地图・列車走行位置・運行情報 | Japan Train Live Map</title>
@@ -68,7 +71,10 @@
 <link rel="icon" type="image/png" sizes="64x64" href="https://jr-static.suki.ing/favicon.png" id="fav64">
 <link rel="icon" type="image/png" sizes="192x192" href="https://jr-static.suki.ing/icon-192.png">
 <link rel="apple-touch-icon" sizes="180x180" href="https://jr-static.suki.ing/apple-touch-icon.png">
-<link rel="stylesheet" href="https://jr-static.suki.ing/vendor/maplibre/maplibre-gl.css">
+<!-- maplibre CSS 非阻塞加载:启动遮罩/面板样式全部由页内 <style> 提供,地图初始化在数据
+     就绪后(数秒后),届时 CSS 必已就位 —— 省掉首帧渲染被一张跨域样式表阻塞的 1 个 RTT -->
+<link rel="preload" href="https://jr-static.suki.ing/vendor/maplibre/maplibre-gl.css" as="style" onload="this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://jr-static.suki.ing/vendor/maplibre/maplibre-gl.css"></noscript>
 <script>
 /* 老旧设备自适应降载判定(内联、首帧前执行,避免闪烁)。
    仅在判定为低端设备时给 <html> 挂 perf-low 类并置 window.__PERF_LOW;
@@ -1277,7 +1283,9 @@ window.addEventListener('unhandledrejection', e => { __pushErr('REJ ' + (e.reaso
 (() => { const oc = console.error; console.error = function () { __pushErr('CERR ' + Array.from(arguments).map(a => (a && a.message) ? a.message : String(a)).join(' ;; ').slice(0, 300)); return oc.apply(console, arguments); }; })();
 </script>
 
-<script src="https://jr-static.suki.ing/data/line_icons.js"></script>
+<!-- line_icons.js:线路小图标 URL 表,仅车站抽屉时刻表行使用(LINE_ICON 消费处已有缺省兜底)。
+     defer 解除解析阻塞:执行顺序仍在 module 之前,行为不变 -->
+<script defer src="https://jr-static.suki.ing/data/line_icons.js"></script>
 <script type="importmap">
 { "imports": {
     "three": "https://jr-static.suki.ing/vendor/three/three.module.js",
@@ -4169,6 +4177,7 @@ async function boot() {
     setStatus(T().goLive);
     if (!liveOn) setTimeout(() => { if (!liveOn) { setLive(true); } }, 600);
     startLoop();
+    if (window.__loadClarity) setTimeout(window.__loadClarity, 4000); /* 统计脚本延后注入(见 head 注释) */
   } catch (err) {
     console.error(err);
     setLoadMsg('⚠ ' + T().failMsg);

@@ -109,7 +109,17 @@ def main():
     else:
         print('[badges] SKIP (not present)')
 
-    # 5.3) vendor/ —— 核心库自托管（maplibre-gl 6.12）
+    # 5.3) platform_map.json —— 站台编号（DokoRail 迁移：9372 线路车站 pw 数据，
+    #      按 tmap 站序对齐，列车详情「停靠站」显示 Plat. 1/2/3 徽章，车站「信息」tab 显示各线路站台参考）。
+    plat_src = os.path.join(MINI, 'data', 'platform_map.json')
+    if os.path.isfile(plat_src):
+        shutil.copy2(plat_src, os.path.join(out, 'data', 'platform_map.json'))
+        total += 1
+        print('[platform_map] copied')
+    else:
+        print('[platform_map] SKIP (not present)')
+
+    # 5.4) vendor/ —— 核心库自托管（maplibre-gl 6.12）
     #      依赖 jsdelivr 等外部 CDN 在部分网络不可达，自托管到 jr-static 保证页面可加载。
     vendor_src = os.path.join(MINI, 'vendor')
     if os.path.isdir(vendor_src):

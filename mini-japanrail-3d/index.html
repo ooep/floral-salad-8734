@@ -535,10 +535,12 @@ button { font-family:inherit; }
 #detail .vn .vln.up { top:0; height:50%; }
 #detail .vn .vln.dn { bottom:0; height:50%; }
 #detail .vn .dot { position:absolute; left:50%; top:50%; width:10px; height:10px; border-radius:50%; transform:translate(-50%,-50%); z-index:2; box-sizing:border-box; border:2px solid var(--dc, var(--glass-edge)); background:var(--glass-solid); }
-#detail .vc { flex:1; min-width:0; display:flex; align-items:baseline; justify-content:space-between; gap:10px; padding:8.5px 0; }
-#detail .vnm { font-size:13px; font-weight:600; color:var(--txt); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#detail .vc { flex:1; min-width:0; display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8.5px 0; }
+#detail .vnm { flex:1 1 auto; min-width:0; font-size:13px; font-weight:600; color:var(--txt); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#detail .vmeta { flex:0 0 auto; max-width:62%; display:flex; flex-direction:column; align-items:flex-end; gap:2.5px; line-height:1.25; }
 #detail .vtm { font-size:11px; color:var(--dim); font-variant-numeric:tabular-nums; white-space:nowrap; font-weight:600; }
 #detail .vtm .sep { margin:0 5px; opacity:.5; }
+#detail .vplat { font-size:10px; font-weight:700; color:var(--acc); background:var(--acc-soft); border:1px solid color-mix(in srgb, var(--acc) 45%, transparent); border-radius:7px; padding:0 6px; letter-spacing:.3px; font-variant-numeric:tabular-nums; white-space:nowrap; max-width:100%; }
 #detail .dstop.here { background:var(--acc-soft); }
 #detail .dstop.here .dot { background:var(--acc); border-color:var(--acc); box-shadow:0 0 0 4px var(--acc-soft); }
 #detail .dstop.here .vnm { font-weight:700; }
@@ -978,6 +980,14 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
 #panelInfo .sec-p, #panelInfo .info-row .v, #panelInfo .tl li > span, #panelInfo .nb > span, #panelInfo .dots li { overflow-wrap:anywhere; word-break:break-word; }
 #panelInfo .nb .t { flex:0 1 auto; min-width:0; max-width:100%; overflow-wrap:anywhere; word-break:break-word; }
 #panelInfo .tl li .y { flex:none; }
+/* 车站抽屉：各线路站台参考 */
+#panelInfo .plat-ref { min-height:0; }
+#panelInfo .plat-ref .sec { margin:0; }
+#panelInfo .plat-ref .sec-t { display:flex; align-items:center; gap:7px; }
+#panelInfo .plat-ref .sec-t small { font-size:9.5px; font-weight:600; color:var(--dim); letter-spacing:.2px; }
+#panelInfo .plat-ref .pr-row { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:4.5px 2px; }
+#panelInfo .plat-ref .pr-line { font-size:12px; font-weight:600; color:var(--txt); min-width:0; overflow-wrap:anywhere; word-break:break-word; }
+#panelInfo .plat-ref .vplat { flex:none; font-size:10px; font-weight:700; color:var(--acc); background:var(--acc-soft); border:1px solid color-mix(in srgb, var(--acc) 45%, transparent); border-radius:7px; padding:0 6px; letter-spacing:.3px; font-variant-numeric:tabular-nums; white-space:nowrap; }
 </style>
 </head>
 <body>
@@ -1457,7 +1467,7 @@ const I18N = {
     routeSame:'起终点相同', badStation:'找不到车站', h1:'拖动平移 · 滚轮缩放 · 右键旋转/倾斜', h2:'点击列车 = 详情 + 相机跟随 · 点空白取消',
     h3:'点击车站 = 途经线路', h4:'底部时钟:暂停 / 拖动时间 / 0.5–32× 倍速回放', h5:'搜索站名:日文 / 中文(东京·涩谷)/ 英文(Tokyo, Shinjuku)',
     h6:'数据为计划时刻表,不含实际延误', next:'下一站', eta:'约', min:'分', dep:'发车', arr:'到达', status:'状态',
-    stopsTitle:'停靠站', stopsCount:'站', colStop:'站', colArr:'到', colDep:'发',
+    stopsTitle:'停靠站', stopsCount:'站', colStop:'站', colArr:'到', colDep:'发', colPlat:'站台', platRefTitle:'各线路站台参考', platRefTip:'各线路经停本站的站台号参考（数据：dokorail.jp）',
     running:'运行中', dwelling:'停車中', speed:'速度', kmh:'km/h', firstLast:'全程', track:'轨道 = 官方线路色', legendNote:'列车颜色 = 所属线路色',
     followBtn:'跟随此列车', locateBtn:'定位', stopFollowBtn:'停止跟随', tripId:'班次', viaLines:'途经线路',
     cplLabel:'併结', cplSplit:'与 {0} 併结，于 {1} 分割', cplJoin:'与 {0} 于 {1} 併结', cplView:'查看 {0}',
@@ -1490,7 +1500,7 @@ const I18N = {
     routeSame:'同一点', badStation:'駅が見つかりません', h1:'ドラッグ移動 · ホイール拡縮 · 右回転/傾き', h2:'列車クリック = 詳細 + 追跡 · 空白で解除',
     h3:'駅クリック = 経由路線', h4:'下部時計:一時停止 / 時間操作 / 0.5–32× 再生', h5:'駅名検索:日本語 / 中国語 / 英語(Tokyo, Shinjuku)',
     h6:'計画時刻表ベース・遅延は含まない', next:'次駅', eta:'約', min:'分', dep:'発', arr:'着', status:'状態',
-    stopsTitle:'停車駅', stopsCount:'駅', colStop:'駅', colArr:'着', colDep:'発',
+    stopsTitle:'停車駅', stopsCount:'駅', colStop:'駅', colArr:'着', colDep:'発', colPlat:'番線', platRefTitle:'路線別の番線参考', platRefTip:'各線がこの駅で使用する番線（データ：dokorail.jp）',
     running:'運行中', dwelling:'停車中', speed:'速度', kmh:'km/h', firstLast:'全区間', track:'路線 = 公式路線色', legendNote:'列車色 = 所属路線色',
     followBtn:'列車を追跡', locateBtn:'位置', stopFollowBtn:'追跡停止', tripId:'列車', viaLines:'経由路線',
     cplLabel:'併結', cplSplit:'{0}と併結、{1}で分割', cplJoin:'{1}で{0}と併結', cplView:'{0}を表示',
@@ -1523,7 +1533,7 @@ const I18N = {
     routeSame:'Same stations', badStation:'Station not found', h1:'Drag to pan · Scroll to zoom · Right-drag rotate/tilt', h2:'Click train = detail + follow · Blank = cancel',
     h3:'Click station = its lines', h4:'Bottom clock: pause / scrub / 0.5–32× replay', h5:'Search stations: Japanese / Chinese / English (Tokyo, Shinjuku)',
     h6:'Scheduled timetable — no live delays', next:'Next', eta:'~', min:'min', dep:'dep', arr:'arr', status:'Status',
-    stopsTitle:'Stops', stopsCount:'stops', colStop:'Station', colArr:'Arr', colDep:'Dep',
+    stopsTitle:'Stops', stopsCount:'stops', colStop:'Station', colArr:'Arr', colDep:'Dep', colPlat:'Platform', platRefTitle:'Platforms by line', platRefTip:'Platform numbers used by each line at this station (data: dokorail.jp)',
     running:'Running', dwelling:'At station', speed:'Speed', kmh:'km/h', firstLast:'Route', track:'Track = official line color', legendNote:'Train color = line color',
     followBtn:'Follow train', locateBtn:'Locate', stopFollowBtn:'Stop follow', tripId:'Trip', viaLines:'Lines',
     cplLabel:'Coupled', cplSplit:'Coupled w/ {0}, splits at {1}', cplJoin:'Couples w/ {0} at {1}', cplView:'View {0}',
@@ -1574,7 +1584,7 @@ const ICO = {
 /* ---------------- 全局状态 ---------------- */
 /* 老旧设备降载开关(由 <head> 内联脚本判定;false 时仅保留对全设备无害的全局优化,行为与旧版一致) */
 const PERF_LOW = !!window.__PERF_LOW;
-let segFC = null, staFC = null, footprintFC = null, entrancesFC = null, platformsFC = null, tmaps = null, trainJSON = null;
+let segFC = null, staFC = null, footprintFC = null, entrancesFC = null, platformsFC = null, tmaps = null, trainJSON = null, PLATMAP = null;
 /* 官方权威站坐标/区间折线映射 (station_map.json v2, 官方几何构建):
    tmap_stops[t] = 每车次每站 [lng,lat](与 tmaps[t].s_jas 等长等序),
    tmap_lids[t] = 每区间官方线段 ID(符号=方向), segments[id] = 官方折线坐标 */
@@ -4004,6 +4014,10 @@ async function boot() {
     addMapLayers();
     /* 车站徽章(DokoRail 迁移):异步加载映射,绑定视野更新;不阻塞主流程 */
     loadBadgesMap().then(() => { badgesBindView(); updateBadgeIcons(); });
+    /* 站台编号(platform_map, DokoRail 迁移):异步加载,失败降级为不显示徽章 */
+    fetchJSONWithCache('https://jr-static.suki.ing/data/platform_map.json', '', 11)
+      .then(j => { PLATMAP = (j && j.t) ? j : null; })
+      .catch(() => { PLATMAP = null; });
     if (!PERF_LOW) fetchOrmTracks(); /* ORM 线位图层数据:异步拉取(与索引构建并行),不阻塞 dataReady;低配设备按需加载 */
     /* 索引构建/恢复:进度 55→78% */
     setPhase(FILES_PCT, IDX_PCT, 0);
@@ -5094,9 +5108,10 @@ function updateDetailLive(t, p, M, rebuild) {
             (k > 0 ? '<span class="vln up" style="background:' + upCol + '"></span>' : '') +
             '<span class="dot" style="--dc:' + dotCol + '"></span>' +
             (k < N - 1 ? '<span class="vln dn" style="background:' + dnCol + '"></span>' : '') +
-            '</span><span class="vc"><span class="vnm">' + esc(t.jas[k]) + '</span>' +
+            '</span><span class="vc"><span class="vnm">' + esc(t.jas[k]) + '</span><span class="vmeta">' +
+            (PLATMAP && PLATMAP.t && PLATMAP.t[t.t] && PLATMAP.t[t.t][k] ? '<span class="vplat" title="' + T().colPlat + '">' + PLATMAP.t[t.t][k].replace(/;/g, '/') + '</span>' : '') +
             (tm.length ? '<span class="vtm">' + tm.join('<i class="sep">·</i>') + '</span>' : '') +
-            '</span></div>';
+            '</span></span></div>';
         }
         return s;
       })() +
@@ -5465,6 +5480,8 @@ $('tabGuide').addEventListener('click', function () { switchSheetTab('tabGuide')
 $('subDep').addEventListener('click', function () { sheetDepArr = 'dep'; $('subDep').classList.add('on'); $('subArr').classList.remove('on'); renderStationBody(); });
 $('subArr').addEventListener('click', function () { sheetDepArr = 'arr'; $('subArr').classList.add('on'); $('subDep').classList.remove('on'); renderStationBody(); });
 window.showStationDetail = showStationDetail;  // 调试/自动化钩子：供控制台与 E2E 直接打开车站抽屉
+// E2E 钩子：列车详情/站台数据（确定性验证用，只读引用）
+window.__mjr3d = { showTrainDetail, tripList: () => tripList, PLATMAP: () => PLATMAP, tmaps: () => tmaps };
 // E2E 钩子：列车叠加弹窗（确定性验证，不依赖实时列车密度）
 window.__trPick = { n: () => visibleTrips.length, near: (x, y) => collectTrains(x, y, 14).length, open: (x, y) => showTrPick(collectTrains(x, y, 14), x, y) };
 
@@ -5640,10 +5657,65 @@ async function _fetchEkiFile(f) {
   } catch (e) { return null; /* 失败不写入会话缓存:否则「点击重试」会命中缓存的 null,永远拉不回 */ }
 }
 
+/* 车站抽屉：各线路站台参考（platform_map 反查，懒索引一次） */
+let _platIdx = null, _platIdxP = null;
+function _mergePlat(a, b) {
+  if (!a) return b; if (!b) return a;
+  const sa = String(a).split(';').filter(Boolean), sb = String(b).split(';').filter(Boolean);
+  return Array.from(new Set([...sa, ...sb])).join(';');
+}
+function buildPlatIndex() {
+  if (_platIdx) return Promise.resolve(_platIdx);
+  if (_platIdxP) return _platIdxP;
+  _platIdxP = new Promise((res) => {
+    try {
+      const idx = new Map(), tm = tmaps, pm = PLATMAP && PLATMAP.t;
+      if (tm && pm) {
+        for (const tid in pm) {
+          const t = tm[tid]; if (!t || !t.s_jas) continue;
+          const pws = pm[tid], lines = t.lines || [];
+          let ln = lines[0] || '';                                   // 主线路名（避免 lines 标签集合张冠李戴）
+          if (lines.length > 1) {                                    // JR East 新干线班次 lines 首位是系统名：优先取实际线
+            for (const cand of ['北陸新幹線', '上越新幹線', '山形新幹線', '秋田新幹線']) {
+              if (lines.includes(cand)) { ln = cand; break; }
+            }
+          }
+          if (!ln) continue;
+          for (let k = 0; k < t.s_jas.length; k++) {
+            const pw = pws[k]; if (!pw) continue;
+            const nm = normName(t.s_jas[k]); if (!nm) continue;
+            let arr = idx.get(nm); if (!arr) { arr = new Map(); idx.set(nm, arr); }
+            arr.set(ln, _mergePlat(arr.get(ln), pw));
+          }
+        }
+      }
+      _platIdx = idx;
+    } catch (e) { _platIdx = new Map(); }
+    res(_platIdx);
+  });
+  return _platIdxP;
+}
+async function buildPlatRefHtml(stName) {
+  try {
+    const idx = await buildPlatIndex();
+    const arr = idx.get(normName(stName));
+    if (!arr || !arr.size) return '';
+    let h = '<div class="sec plat-ref"><div class="sec-t">' + _escTxt(T().platRefTitle) + '<small title="' + _escTxt(T().platRefTip) + '">dokorail</small></div>';
+    arr.forEach((pw, ln) => {
+      h += '<div class="pr-row"><span class="pr-line">' + _escTxt(ln) + '</span><span class="vplat" title="' + _escTxt(T().colPlat) + '">' + _escTxt(String(pw).replace(/;/g, '/')) + '</span></div>';
+    });
+    h += '</div>';
+    return h;
+  } catch (e) { return ''; }
+}
+
 async function renderInfoTab() {
   const box = $('panelInfo');
   if (_infoKey === sheetStation) return;
-  box.innerHTML = '<div class="gd-loading">百科数据加载中…</div>';
+  const platHtml = await buildPlatRefHtml(sheetStation);
+  if (sheetStation !== $('shNm').textContent) return;   // await 期间用户已换站
+  box.innerHTML = '<div class="plat-ref">' + platHtml + '</div><div class="wiki-box"><div class="gd-loading">' + _escTxt(T().wikiLoading || '百科数据加载中…') + '</div></div>';
+  const wbox = box.querySelector('.wiki-box');
   let st = null, matchedLine = null;
   try {
     const key = await resolveStationKey(sheetStation, sheetCoord);
@@ -5660,8 +5732,8 @@ async function renderInfoTab() {
       st = _findStationInLine(lineJson, sheetStation);
     }
   } catch (e) { st = null; }
-  if (!st) { _renderInfoEmpty(box); _infoKey = sheetStation; return; }
-  _renderInfoObject(box, _normalizeStation(st, _lineNameOf(matchedLine)));
+  if (!st) { _renderInfoEmpty(wbox); _infoKey = sheetStation; return; }
+  _renderInfoObject(wbox, _normalizeStation(st, _lineNameOf(matchedLine)));
   _infoKey = sheetStation;
 }
 

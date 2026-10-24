@@ -8,7 +8,6 @@ scripts/geo/station_map_report.json
 scripts/geo/ra_official/_failed.json
 _backup/
 _shots/
-.3dtest/
 mini-japanrail-3d/data/icons_vec/
 
 # ===== Mini JapanRail 3D SEO 静态化生成产物（部署时由 CI 重新生成，不入库） =====
@@ -41,3 +40,6 @@ node_modules/
 # ===== Pages 发布物组装产物（由 prepare_pages_dist.py 生成，不入库） =====
 dist/
 cf-mj3d/
+
+# 站台验证/工具目录（不入仓库）
+.plat3d/

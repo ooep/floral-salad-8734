@@ -3929,7 +3929,7 @@ function initMap() {
   map = new maplibregl.Map({
     container: 'map', style: baseStyle(),
     center: [137.2, 36.8], zoom: 3.4, pitch: 0, bearing: 0,
-    minZoom: 1.2, maxZoom: 16, maxPitch: 70,
+    minZoom: 1.2, maxZoom: 17.5, maxPitch: 70, /* 17.5:z16 下 200m 编组仅约 200px,提到 17.5 后约 580px,3D 模型可怼脸观察 */
     /* 抗锯齿:新设备保留(线条更平滑);老旧设备关闭(减少 GPU 过绘制,明显提帧) */
     canvasContextAttributes: { antialias: !PERF_LOW, preserveDrawingBuffer: false },
     attributionControl: false,
@@ -5402,7 +5402,7 @@ function updateDetailLive(t, p, M, rebuild) {
           (nm ? '<button class="cplbtn" data-ci="' + t.cpl.indexOf(c) + '">' + T().cplView.replace('{0}', nm) + '</button>' : '');
       }).join('<i class="sep">；</i>') + '</span></div>' : '') +
       _wikiBoxHtml() +
-      '<div class="d-wiki d-model na" id="dModelBtn"><div class="d-wiki-hd"><span class="lb">' + (T().m3dRowL || '模型') + '</span><span class="mv"><span class="dw-v" id="dModelV">' + (T().m3dNone || '该车型暂无 3D 模型') + '</span><span class="dw-ar">' + ICO_CHEV_D + '</span></span></div></div>' +
+      '<div class="d-wiki d-model" id="dModelBtn" style="display:none"><div class="d-wiki-hd"><span class="lb">' + (T().m3dRowL || '模型') + '</span><span class="mv"><span class="dw-v">' + (T().m3dBtn || '查看 3D 模型') + '</span><span class="dw-ar">' + ICO_CHEV_D + '</span></span></div></div>' +
       '</div>' +
       '<div class="d-sep"></div>' +
       '<div class="d-stops"><div class="st-title">' + T().stopsTitle + '<span class="cnt">' + N + ' ' + T().stopsCount + '</span></div>' +
@@ -7293,7 +7293,7 @@ const M3D = (() => {
   }
   function ensureOvInner() {
     const canvas = document.createElement('canvas');
-    canvas.style.cssText = 'position:absolute;left:0;top:0;right:0;bottom:0;width:100%;height:100%;pointer-events:none;';
+    canvas.style.cssText = 'position:absolute;left:0;top:0;right:0;bottom:0;width:100%;height:100%;pointer-events:none;z-index:2;'; /* z-index:2=显式压过地图画布(部分浏览器绝对定位层叠行为不同,否则模型被底图盖住),控件容器 DOM 更后仍在其上 */
     const mc = map.getContainer();
     const ctrl = mc.querySelector('.maplibregl-control-container');
     if (ctrl) mc.insertBefore(canvas, ctrl); /* 地图 canvas 之后、控件容器之前 */
@@ -7552,17 +7552,9 @@ const M3D = (() => {
   function bindDetail(t) {
     const btn = $('dModelBtn');
     if (!btn) return;
-    const path = pathOf(t);
-    const v = $('dModelV');
-    if (path) {
-      btn.classList.remove('na');
-      if (v) v.textContent = T().m3dBtn || '查看 3D 模型';
-      btn.onclick = () => openViewer(t);
-    } else {
-      btn.classList.add('na');
-      if (v) v.textContent = T().m3dNone || '该车型暂无 3D 模型';
-      btn.onclick = null;
-    }
+    const has = !!pathOf(t);
+    btn.style.display = has ? '' : 'none'; /* 无模型车型:不显示入口 */
+    if (has) btn.onclick = () => openViewer(t);
   }
   /* ── init:拉映射表(小文件,加载即取;失败静默禁用) ── */
   async function init() {

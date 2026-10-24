@@ -4068,22 +4068,37 @@ async function boot() {
 }
 $('lRetry').addEventListener('click', () => { boot(); });
 
-/* ---------------- 车站徽章模块(DokoRail 迁移) ----------------
-   三级体系:① 专属徽章(图集裁剪) → ② 线路符号(暂并入文字兜底) → ③ 文字徽章(站名+线路色)。
-   数据: data/badges/map.json — 本站站名 -> {code, url, crop:[x,y,w,h]}
+/* ---------------- 车站徽章模块(DokoRail 迁移 + 多线站并排 + 全站兜底) ----------------
+   三级体系:① 专属徽章(lines.json 每站每线 / map.json 单枚兜底) → ② 线路符号(routes 数据
+   仅 705 条,暂并入专属映射) → ③ 线路色圆兜底(stas-fb-dot 层:无专属徽章的站以该站首条
+   线路官方色画圆+白描边,JR 四社约 30% 覆盖外的 ~3,500 站由此获得线路色标记)。
+   数据: data/badges/map.json  — 站名 -> {code, url, crop}(单徽章兜底,4,669 站)
+         data/badges/lines.json — 站名 -> [[线路名, 站码, 图集idx|svg路径, crop|null], …]
+         (每站每线一枚,按线路重要性降序;多线站地图上最多并排 BADGE_MAX_ONMAP 枚,
+          完整列表在车站抽屉顶部横排展示 —— 对齐 DokoRail 多线站行为)
    资产: jr-static /data/badges/atlas/sha256/*.webp + /data/badges/official/*.svg
    缩放: z13 起显示(minzoom),与 DokoRail zooms.body=13 一致;按视野按需注册 icon。 */
-let badgesMap = null, badgesIcons = new Set(), badgesSheets = new Map(), badgesFetching = new Map();
+let badgesMap = null, badgesIcons = new Set(), badgesSheets = new Map(), badgesFetching = new Map(), badgesBusy = new Set(), badgesSvgs = new Map();
 const BADGES_MIN_ZOOM = 13, BADGES_DATA_URL = 'https://jr-static.suki.ing/data/badges/map.json';
+const BADGES_LINES_URL = 'https://jr-static.suki.ing/data/badges/lines.json';
 const BADGES_BASE = 'https://jr-static.suki.ing/data/badges';
 const BADGE_FETCH_MAX = 4; /* 图集并发下载上限:避免网络风暴拖垮底图瓦片与页面帧率 */
-let badgeInFlight = 0;
+const BADGE_MAX_ONMAP = 3; /* 多线站地图上最多并排徽章数(其余进抽屉完整列表) */
+let badgeInFlight = 0, badgesLines = null;
 
 async function loadBadgesMap() {
   if (badgesMap) return badgesMap;
   try {
-    const r = await fetchJSONWithCache(BADGES_DATA_URL, '', 12);
+    const all = await Promise.all([
+      fetchJSONWithCache(BADGES_DATA_URL, '', 12),
+      fetchJSONWithCache(BADGES_LINES_URL, '', 12).catch(() => null), /* 新文件缺失/未部署时静默降级单徽章 */
+    ]);
+    const r = all[0], l = all[1];
     if (r && typeof r === 'object') { badgesMap = r; console.log('[badges] map loaded:', Object.keys(r).length, 'stations'); }
+    if (l && l.stations && Array.isArray(l.sheets)) {
+      badgesLines = l;
+      console.log('[badges] lines loaded:', Object.keys(l.stations).length, 'stations,', l.sheets.length, 'sheets');
+    }
   } catch (e) { console.warn('[badges]', e); }
   return badgesMap;
 }
@@ -4221,11 +4236,15 @@ function updateBadgeIcons() {
     try { pt = map.project(g); } catch (e) {}
     if (!pt || pt.x < -pad || pt.x > cw + pad || pt.y < -pad || pt.y > ch + pad) continue;
     if (seen.has(nm)) { /* 同站后续 feature:清掉可能残留的 icon 属性(旧版数据/热更新) */
-      if (f.properties.badgeIcon) { delete f.properties.badgeIcon; delete f.properties.badgeN; changed = true; }
+      if (f.properties.badgeIcon || f.properties.fbBadge) { delete f.properties.badgeIcon; delete f.properties.badgeN; delete f.properties.fbBadge; changed = true; }
       continue;
     }
     seen.add(nm);
-    if (!f.properties.badgeIcon) { f.properties.badgeIcon = 'bd_' + nm; f.properties.badgeN = badgeCountOf(nm); changed = true; }
+    if (!f.properties.badgeIcon) {
+      f.properties.badgeIcon = 'bd_' + nm; f.properties.badgeN = badgeCountOf(nm);
+      delete f.properties.fbBadge; /* 从兜底色圆升级为专属徽章(addMapLayers 预写时 map 未就绪的场景) */
+      changed = true;
+    }
     badgeEnsureIcon(nm); /* 属性已有但 image 未注册时同样补注册(内部去重,不重复下载) */
   }
   if (changed) map.getSource('stas').setData(data);
@@ -4236,10 +4255,11 @@ function badgesBindView() {
   map.on('zoomend', () => updateBadgeIcons());
   map.on('idle', () => { if (map.getZoom() >= BADGES_MIN_ZOOM) updateBadgeIcons(); });
 }
-/* 徽章开关(设置面板 swBadge):默认开;关闭时隐藏徽章层,仅保留灰点 */
+/* 徽章开关(设置面板 swBadge):默认开;关闭时隐藏徽章层与兜底色圆层,仅保留灰点 */
 function applyBadgeVisible(v) {
-  if (!map || !map.getLayer('stas-badge')) return;
-  map.setLayoutProperty('stas-badge', 'visibility', v ? 'visible' : 'none');
+  if (!map) return;
+  if (map.getLayer('stas-badge')) map.setLayoutProperty('stas-badge', 'visibility', v ? 'visible' : 'none');
+  if (map.getLayer('stas-fb-dot')) map.setLayoutProperty('stas-fb-dot', 'visibility', v ? 'visible' : 'none');
 }
 /* 车站抽屉顶部徽章条:该站全部线路徽章完整排列(不限地图上的 3 枚上限),
    每枚 title=「线路名 站码」;无徽章数据时整条隐藏。数据未就绪时等加载完再渲染。 */
@@ -4324,22 +4344,38 @@ function addMapLayers() {
     'line-color': ['get', 'color'], 'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 2, 0.7, 9, 1.7, 14, 3.6],
     'line-opacity': 0.92 } });
   if (!map.getSource('stas')) {
-    /* 站徽章属性注入:badgesMap 已加载时为有专属徽章的站预写 badgeIcon(图标键),
-       供 stas-badge 层按需取图;未加载时由 updateBadgeIcons() 于 zoom≥13 后补齐 */
-    /* 站徽章属性注入:badgesMap 已加载时为有徽章的站预写 badgeIcon(图标键)+badgeN(枚数,
-       供层的 icon-size/淡入分级表达式);同站多 feature(stations3d 每站每线一个点)只写第一个,
-       其余不挂 icon —— 否则同一合成图在同名坐标重复渲染 N 次,符号碰撞白算;
-       未加载时由 updateBadgeIcons() 于 zoom≥13 后补齐 */
-    if (badgesMap && staFC && staFC.features) {
+    /* 站徽章属性注入 + 无徽章站线路色标记(一次写全,静态属性):
+       ① 有专属徽章的站(map.json/lines.json):第一个 feature 写 badgeIcon(图标键)+badgeN(枚数,
+          供层的 icon-size/淡入分级表达式);同站多 feature(stations3d 每站每线一个点)只写第一个,
+          其余不挂 icon —— 否则同一合成图在同名坐标重复渲染 N 次,符号碰撞白算;
+          badgesMap 未就绪时等 loadBadgesMap 完成再写(避免整站误判为无徽章)。
+       ② 无专属徽章的站(约 3,500 站,JR 地方线等):第一个 feature 写 fbBadge=1+fbColor(该站
+          首条线路官方色)——stas-fb-dot 层据此画「线路色圆+白描边」,与专属徽章同 z13 淡入,
+          全站皆有线路色标记(对齐 DokoRail 全站徽章观感);updateBadgeIcons 补写时同步清 fbBadge */
+    const writeBadgeProps = () => {
+      if (!staFC || !staFC.features) return;
+      const lineColorQ = new Map();
+      if (segFC && segFC.features) for (const g of segFC.features) {
+        const p = g.properties;
+        if (p && p.line && p.color && !lineColorQ.has(p.line)) lineColorQ.set(p.line, p.color);
+      }
       const seen = new Set();
       for (const f of staFC.features) {
         const nm = f.properties && f.properties.station;
-        if (!nm || seen.has(nm) || !(badgesMap[nm] || (badgesLines && badgesLines.stations[nm]))) continue;
+        if (!nm || seen.has(nm)) continue;
         seen.add(nm);
-        f.properties.badgeIcon = 'bd_' + nm;
-        f.properties.badgeN = badgeCountOf(nm);
+        if (badgesMap && (badgesMap[nm] || (badgesLines && badgesLines.stations[nm]))) {
+          f.properties.badgeIcon = 'bd_' + nm;
+          f.properties.badgeN = badgeCountOf(nm);
+        } else if (!f.properties.badgeIcon) {
+          f.properties.fbBadge = 1;
+          f.properties.fbColor = lineColorQ.get(f.properties.line) || '#5b6572';
+        }
       }
-    }
+      if (map.getSource('stas')) map.getSource('stas').setData(staFC);
+    };
+    if (badgesMap || badgesLines) writeBadgeProps();
+    else loadBadgesMap().then(writeBadgeProps).catch(() => writeBadgeProps());
     map.addSource('stas', { type: 'geojson', data: staFC });
     map.addLayer({ id: 'stas', type: 'circle', source: 'stas', paint: {
       'circle-radius': ['interpolate', ['exponential', 1.5], ['zoom'], 3, 1, 9, 1.8, 13, 3.2],
@@ -4370,6 +4406,17 @@ function addMapLayers() {
         ['interpolate', ['linear'], ['zoom'], 14, 0, 14.6, 1],
         ['interpolate', ['linear'], ['zoom'], 13, 0, 13.6, 1]] } });
     map.addLayer(trainShaderLayer, 'stas-badge');
+    /* ── 无专属徽章站兜底:线路色圆+白描边(该站首条线路官方色,属性 fbBadge/fbColor 由
+       writeBadgeProps 静态写入)。DokoRail 徽章数据对 JR 四社仅覆盖约 30%(都市圈),其余
+       约 3,500 站在原站走文字徽章兜底;我们以线路色圆对齐「全站皆有徽章」的观感,
+       与专属徽章同 z13 淡入、比例同步放大,零 ImageData/零网络(矢量圆) ── */
+    map.addLayer({ id: 'stas-fb-dot', type: 'circle', source: 'stas', minzoom: 13,
+      filter: ['==', ['get', 'fbBadge'], 1], paint: {
+        'circle-radius': ['interpolate', ['linear'], ['zoom'], 13, 6, 15, 9, 17, 14, 19, 22],
+        'circle-color': ['get', 'fbColor'],
+        'circle-stroke-color': '#f5f7fa',
+        'circle-stroke-width': ['interpolate', ['linear'], ['zoom'], 13, 1.2, 15, 1.6, 17, 2, 19, 2.4],
+        'circle-opacity': ['interpolate', ['linear'], ['zoom'], 13, 0, 13.6, 0.96] } });
   }
   // 高亮层(仅首次创建,避免每帧重复 addSource/addLayer)
   if (!map.getSource('hl')) {

@@ -1498,7 +1498,7 @@ const I18N = {
     routeSame:'起终点相同', badStation:'找不到车站', h1:'拖动平移 · 滚轮缩放 · 右键旋转/倾斜', h2:'点击列车 = 详情 + 相机跟随 · 点空白取消',
     h3:'点击车站 = 途经线路', h4:'底部时钟:暂停 / 拖动时间 / 0.5–32× 倍速回放', h5:'搜索站名:日文 / 中文(东京·涩谷)/ 英文(Tokyo, Shinjuku)',
     h6:'数据为计划时刻表,不含实际延误', next:'下一站', eta:'约', min:'分', dep:'发车', arr:'到达', status:'状态',
-    stopsTitle:'停靠站', stopsCount:'站', colStop:'站', colArr:'到', colDep:'发', colPlat:'站台', platRefTitle:'各线路站台参考', platRefTip:'各线路经停本站的站台号参考（数据：dokorail.jp）',
+    stopsTitle:'停靠站', stopsCount:'站', colStop:'站', colArr:'到', colDep:'发', colPlat:'站台', platRefTitle:'各线路站台参考', platRefTip:'各线路经停本站的站台号参考',
     running:'运行中', dwelling:'停車中', speed:'速度', kmh:'km/h', firstLast:'全程', track:'轨道 = 官方线路色', legendNote:'列车颜色 = 所属线路色',
     followBtn:'跟随此列车', locateBtn:'定位', stopFollowBtn:'停止跟随', tripId:'班次', viaLines:'途经线路',
     cplLabel:'併结', cplSplit:'与 {0} 併结，于 {1} 分割', cplJoin:'与 {0} 于 {1} 併结', cplView:'查看 {0}',
@@ -1532,7 +1532,7 @@ const I18N = {
     routeSame:'同一点', badStation:'駅が見つかりません', h1:'ドラッグ移動 · ホイール拡縮 · 右回転/傾き', h2:'列車クリック = 詳細 + 追跡 · 空白で解除',
     h3:'駅クリック = 経由路線', h4:'下部時計:一時停止 / 時間操作 / 0.5–32× 再生', h5:'駅名検索:日本語 / 中国語 / 英語(Tokyo, Shinjuku)',
     h6:'計画時刻表ベース・遅延は含まない', next:'次駅', eta:'約', min:'分', dep:'発', arr:'着', status:'状態',
-    stopsTitle:'停車駅', stopsCount:'駅', colStop:'駅', colArr:'着', colDep:'発', colPlat:'番線', platRefTitle:'路線別の番線参考', platRefTip:'各線がこの駅で使用する番線（データ：dokorail.jp）',
+    stopsTitle:'停車駅', stopsCount:'駅', colStop:'駅', colArr:'着', colDep:'発', colPlat:'番線', platRefTitle:'路線別の番線参考', platRefTip:'各線がこの駅で使用する番線',
     running:'運行中', dwelling:'停車中', speed:'速度', kmh:'km/h', firstLast:'全区間', track:'路線 = 公式路線色', legendNote:'列車色 = 所属路線色',
     followBtn:'列車を追跡', locateBtn:'位置', stopFollowBtn:'追跡停止', tripId:'列車', viaLines:'経由路線',
     cplLabel:'併結', cplSplit:'{0}と併結、{1}で分割', cplJoin:'{1}で{0}と併結', cplView:'{0}を表示',
@@ -1566,7 +1566,7 @@ const I18N = {
     routeSame:'Same stations', badStation:'Station not found', h1:'Drag to pan · Scroll to zoom · Right-drag rotate/tilt', h2:'Click train = detail + follow · Blank = cancel',
     h3:'Click station = its lines', h4:'Bottom clock: pause / scrub / 0.5–32× replay', h5:'Search stations: Japanese / Chinese / English (Tokyo, Shinjuku)',
     h6:'Scheduled timetable — no live delays', next:'Next', eta:'~', min:'min', dep:'dep', arr:'arr', status:'Status',
-    stopsTitle:'Stops', stopsCount:'stops', colStop:'Station', colArr:'Arr', colDep:'Dep', colPlat:'Platform', platRefTitle:'Platforms by line', platRefTip:'Platform numbers used by each line at this station (data: dokorail.jp)',
+    stopsTitle:'Stops', stopsCount:'stops', colStop:'Station', colArr:'Arr', colDep:'Dep', colPlat:'Platform', platRefTitle:'Platforms by line', platRefTip:'Platform numbers used by each line at this station',
     running:'Running', dwelling:'At station', speed:'Speed', kmh:'km/h', firstLast:'Route', track:'Track = official line color', legendNote:'Train color = line color',
     followBtn:'Follow train', locateBtn:'Locate', stopFollowBtn:'Stop follow', tripId:'Trip', viaLines:'Lines',
     cplLabel:'Coupled', cplSplit:'Coupled w/ {0}, splits at {1}', cplJoin:'Couples w/ {0} at {1}', cplView:'View {0}',
@@ -6078,7 +6078,7 @@ async function buildPlatRefHtml(stName) {
       else if (STATION_ALIAS[stName]) arr = idx.get(platKey(STATION_ALIAS[stName]));
     }
     if (!arr || !arr.size) return '';
-    let h = '<div class="sec plat-ref"><div class="sec-t">' + _escTxt(T().platRefTitle) + '<small title="' + _escTxt(T().platRefTip) + '">dokorail</small></div>';
+    let h = '<div class="sec plat-ref"><div class="sec-t">' + _escTxt(T().platRefTitle) + '</div>';
     arr.forEach((pw, ln) => {
       h += '<div class="pr-row"><span class="pr-line">' + _escTxt(ln) + '</span><span class="vplat" title="' + _escTxt(T().colPlat) + '">' + _escTxt(String(pw).replace(/;/g, '/')) + '</span></div>';
     });

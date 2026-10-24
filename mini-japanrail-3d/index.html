@@ -846,12 +846,12 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
 #sheet .sh-tabs button { flex:1; max-width:120px; padding:12px 0; background:none; border:0; color:var(--dim); font-size:13.5px; font-weight:700; cursor:pointer; border-bottom:2px solid transparent; transition:color .12s, border-color .12s; white-space:nowrap; }
 #sheet .sh-tabs button:hover { color:var(--txt); }
 #sheet .sh-tabs button.on { color:var(--txt); border-bottom-color:var(--acc); }
-/* 车站徽章条:抽屉头部与 tabs 之间,该站全部线路徽章完整横排(可横滚) */
-#sheet .sh-badges { display:flex; gap:7px; padding:7px 14px 0; overflow-x:auto; flex:none; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+/* 车站徽章:抽屉头部站名右侧,小尺寸完整排列(可横滚);关闭按钮保持最右 */
+#sheet .sh-badges { display:flex; gap:5px; flex:1 1 0; min-width:0; margin-left:10px; align-self:center; overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
 #sheet .sh-badges::-webkit-scrollbar { display:none; }
-#sheet .sh-badges img { height:37px; width:auto; flex:none; background:rgba(120,140,180,.10); user-select:none; }
+#sheet .sh-badges img { height:22px; width:auto; flex:none; user-select:none; }
 /* 多线大站徽章超宽时:右缘渐隐,提示可继续横滑 */
-#sheet .sh-badges.has-more::after { content:''; position:sticky; right:-14px; top:0; flex:none; width:26px; margin-left:-26px; align-self:stretch; pointer-events:none; background:linear-gradient(to right, transparent, var(--panel)); }
+#sheet .sh-badges.has-more::after { content:''; position:sticky; right:0; top:0; flex:none; width:16px; margin-left:-16px; align-self:stretch; pointer-events:none; background:linear-gradient(to right, transparent, var(--panel)); }
 @media (max-width:420px){ #sheet .sh-tabs button { font-size:12.5px; padding:11px 0; } }
 #sheet .sh-subtabs { display:flex; gap:6px; padding:8px 14px 0; flex:none; }
 #sheet .sh-subtabs.hidden { display:none; }
@@ -1228,9 +1228,9 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
   <div class="grab"></div>
   <div class="sh-head">
     <div><div class="sh-nm" id="shNm">駅名</div><div class="sh-sub" id="shSub"></div></div>
+    <div class="sh-badges" id="shBadges" hidden></div>
     <button class="btn icon sh-x" id="shX"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
   </div>
-  <div class="sh-badges" id="shBadges" hidden></div>
   <div class="sh-tabs"><button id="tabList">列表</button><button id="tabGrid" class="on">一览</button><button id="tabInfo">信息</button><button id="tabGuide">指南</button></div>
   <div class="sh-subtabs" id="shSubTabs"><button id="subDep" class="on">出发</button><button id="subArr">到达</button></div>
   <div class="sh-body" id="shBody"><div class="empty">時刻表を読込中…</div></div>

@@ -3347,7 +3347,7 @@ void main() {
     gl.disable(gl.DEPTH_TEST);
     gl.depthMask(false);
     // 图标模式:首次就绪时上传当前图集纹理;每帧绑定 + 设置 atlas uniforms
-    if (!ATLAS.tex && ATLAS_IMG) {
+    if (ATLAS && !ATLAS.tex && ATLAS_IMG) {
       ATLAS.tex = gl.createTexture();
       gl.bindTexture(gl.TEXTURE_2D, ATLAS.tex);
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, ATLAS_IMG);

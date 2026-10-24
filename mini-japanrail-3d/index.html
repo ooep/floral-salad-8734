@@ -5402,7 +5402,7 @@ function updateDetailLive(t, p, M, rebuild) {
           (nm ? '<button class="cplbtn" data-ci="' + t.cpl.indexOf(c) + '">' + T().cplView.replace('{0}', nm) + '</button>' : '');
       }).join('<i class="sep">；</i>') + '</span></div>' : '') +
       _wikiBoxHtml() +
-      '<div class="d-wiki d-model" id="dModelBtn" style="display:none"><div class="d-wiki-hd"><span class="lb">' + (T().m3dRowL || '模型') + '</span><span class="mv"><span class="dw-v">' + (T().m3dBtn || '查看 3D 模型') + '</span><span class="dw-ar">' + ICO_CHEV_D + '</span></span></div></div>' +
+      '<div class="d-wiki d-model na" id="dModelBtn"><div class="d-wiki-hd"><span class="lb">' + (T().m3dRowL || '模型') + '</span><span class="mv"><span class="dw-v" id="dModelV">' + (T().m3dNone || '该车型暂无 3D 模型') + '</span><span class="dw-ar">' + ICO_CHEV_D + '</span></span></div></div>' +
       '</div>' +
       '<div class="d-sep"></div>' +
       '<div class="d-stops"><div class="st-title">' + T().stopsTitle + '<span class="cnt">' + N + ' ' + T().stopsCount + '</span></div>' +
@@ -7170,6 +7170,11 @@ const M3D = (() => {
     const [consist, maps] = await Promise.all([
       fetch(base + 'consist.json').then(r => { if (!r.ok) throw new Error('consist ' + r.status); return r.json(); }),
       fetch(base + 'maps.json').then(r => r.ok ? r.json() : {}).catch(() => ({}))]);
+    /* 车序约定修正:个别车型(tf2-n700s)按 尾→头 倒序导出,统一反转为 头车在首位 */
+    const _dir = path.split('/')[2];
+    if (modelMap && modelMap.models && modelMap.models[_dir] && modelMap.models[_dir].reverse && Array.isArray(consist.cars)) {
+      consist.cars = consist.cars.slice().reverse();
+    }
     const cfg = consist.material || {};
     const loader = new GLTFLoaderC.GLTFLoader().setMeshoptDecoder(MeshoptDecoder).setKTX2Loader(ktx2);
     const cars = consist.cars, n = cars.length;
@@ -7284,8 +7289,11 @@ const M3D = (() => {
   let ov = null, ovActive = false;
   function ensureOv() {
     if (ov) return ov;
+    try { return ensureOvInner(); } catch (e) { __pushErr('M3D.ov ' + (e && e.message || e)); m3dOk = false; return null; } /* WebGL 覆盖层创建失败:永久回退方盒/图标 */
+  }
+  function ensureOvInner() {
     const canvas = document.createElement('canvas');
-    canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;';
+    canvas.style.cssText = 'position:absolute;left:0;top:0;right:0;bottom:0;width:100%;height:100%;pointer-events:none;';
     const mc = map.getContainer();
     const ctrl = mc.querySelector('.maplibregl-control-container');
     if (ctrl) mc.insertBefore(canvas, ctrl); /* 地图 canvas 之后、控件容器之前 */
@@ -7302,7 +7310,7 @@ const M3D = (() => {
     const d2 = new THREE.DirectionalLight(0x8899cc, 0.5); d2.position.set(-200, 300, -300); scene.add(d2);
     const camera = new THREE.PerspectiveCamera(50, 1, 1, 1e7);
     camera.matrixAutoUpdate = false; camera.matrixWorldAutoUpdate = false;
-    ov = { canvas, renderer, scene, camera, insts: new Map(), mvp: new THREE.Matrix4(), ts: new THREE.Matrix4(), lastW: 0, lastH: 0 };
+    ov = { canvas, renderer, scene, camera, insts: new Map(), mvp: new THREE.Matrix4(), ts: new THREE.Matrix4(), lastW: 0, lastH: 0, zeroN: 0 };
     const ro = new ResizeObserver(() => { const w = mc.clientWidth, h = mc.clientHeight; if (w && h) { renderer.setSize(w, h, false); ov.lastW = w; ov.lastH = h; } });
     ro.observe(mc); ov.ro = ro;
     return ov;
@@ -7351,7 +7359,7 @@ const M3D = (() => {
     for (let i = 0; i < visibleTrips.length; i++) if (visibleTrips[i]._m3d) { any = true; break; }
     if (!any) { if (ov && ovActive) { ovActive = false; ov.renderer.clear(); } return; }
     if (!THREE) { libs().catch(() => {}); return; }
-    ensureOv();
+    if (!ensureOv()) return; /* 覆盖层创建失败(m3dOk 已置 false):回退方盒/图标 */
     const o = ov;
     ovActive = true;
     const mc = map.getContainer(), w = mc.clientWidth, h = mc.clientHeight;
@@ -7445,6 +7453,11 @@ const M3D = (() => {
       }
     }
     o.renderer.render(o.scene, o.camera);
+    /* 看门狗:接管状态下覆盖层连续 ~1.5s 渲染零三角形 → 判定该设备覆盖层不可用,
+       停止接管(方盒/图标回归),杜绝"图标消失又没有模型"的空窗 */
+    if (o.renderer.info.render.triangles === 0) {
+      if (++o.zeroN > 90) { m3dOk = false; console.warn('[M3D] overlay blank on this device — fallback to icons'); }
+    } else o.zeroN = 0;
   }
   function dropInstances(path) {
     if (!ov) return;
@@ -7539,9 +7552,17 @@ const M3D = (() => {
   function bindDetail(t) {
     const btn = $('dModelBtn');
     if (!btn) return;
-    const has = !!pathOf(t);
-    btn.style.display = has ? '' : 'none';
-    if (has) btn.onclick = () => openViewer(t);
+    const path = pathOf(t);
+    const v = $('dModelV');
+    if (path) {
+      btn.classList.remove('na');
+      if (v) v.textContent = T().m3dBtn || '查看 3D 模型';
+      btn.onclick = () => openViewer(t);
+    } else {
+      btn.classList.add('na');
+      if (v) v.textContent = T().m3dNone || '该车型暂无 3D 模型';
+      btn.onclick = null;
+    }
   }
   /* ── init:拉映射表(小文件,加载即取;失败静默禁用) ── */
   async function init() {

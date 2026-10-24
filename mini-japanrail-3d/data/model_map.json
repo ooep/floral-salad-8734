@@ -106,5 +106,11 @@
    ],
    "model": "/models/jr-east-e235-1000-series/consist.json"
   }
- ]
+ ],
+ "models": {
+  "tf2-n700s-16car": {
+   "reverse": true,
+   "comment": "该车型 consist 按 16→01 倒序导出,需反转车厢顺序(其余车型均为头车在首位的正序)"
+  }
+ }
 }

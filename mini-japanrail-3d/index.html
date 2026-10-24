@@ -4118,11 +4118,7 @@ async function boot() {
     addMapLayers();
     /* 车站徽章(DokoRail 迁移):异步加载映射,绑定视野更新;不阻塞主流程 */
     loadBadgesMap().then(() => { badgesBindView(); updateBadgeIcons(); });
-    /* 站台编号(platform_map, DokoRail 迁移):异步加载,失败降级为不显示徽章 */
-    fetchJSONWithCache('https://jr-static.suki.ing/data/platform_map.json', '', 11)
-      .then(j => { PLATMAP = (j && j.t) ? j : null; })
-      .catch(() => { PLATMAP = null; });
-    bindLazyHeavyData(); /* ORM 44MB + 站房/站台/出入口 14MB:改为按需懒加载(见函数注释) */
+    bindLazyHeavyData(); /* ORM 44MB + 站房/站台/出入口 14MB + platform_map 3.3MB:全部延后到启动空闲期(见函数注释) */
     /* 索引构建/恢复:进度 55→78% */
     setPhase(FILES_PCT, IDX_PCT, 0);
     const idxCache = await idbGet(IDX_CACHE_KEY);
@@ -4614,17 +4610,29 @@ function fetchOrmTracks() {
   })();
 }
 
-/* ---------------- 重数据懒加载(性能优化,2026-10-24) ----------------
-   ORM 全量股道(44MB)与站房三件套(轮廓/出入口/站台,14MB)不再在启动时无条件下载:
+/* ---------------- 重数据懒加载(性能优化,2026-10-24/25) ----------------
+   ORM 全量股道(44MB)、站房三件套(轮廓/出入口/站台,14MB)与站台编号表(platform_map,
+   3.3MB)不再在启动时无条件下载:
    - 数据每次刷新(ETag 变)后,老用户也要全量重下 —— 启动即 ~90MB 下载 + 连续大 JSON.parse
      主线程冻结 + IDB 重写,是「启动后一段时间卡死」的主因;
-   - 现在只在两种情况下拉:① 首次放大到城市级视野(z≥11.5,此缩放以下简易轨道层足够);
+   - platform_map 只服务列车详情 Plat. 徽章与车站信息站台参考,为 null 本就优雅降级,
+     延后到启动空闲期拉取,启动关键期(8 个核心文件并行 + 索引构建 + 时刻表解析)不再抢带宽;
+   - ORM/站房只在两种情况下拉:① 首次放大到城市级视野(z≥11.5,此缩放以下简易轨道层足够)
+     —— 且延后 3s 并复验缩放,让 ~100ms 级的 JSON.parse/IDB 写避开缩放刚结束的交互窗口;
      ② 用户打开对应开关。开关打开但数据未到时显示简易轨道,数据到位后无缝切换。
    全国俯瞰用户(多数访问)从此不再下载这 58MB。 */
-let lazyHeavyBound = false, stationDetailFetched = false;
+let lazyHeavyBound = false, stationDetailFetched = false, platmapFetched = false;
+function fetchPlatmap() {
+  if (platmapFetched) return;
+  platmapFetched = true;
+  fetchJSONWithCache('https://jr-static.suki.ing/data/platform_map.json', '', 11)
+    .then(j => { PLATMAP = (j && j.t) ? j : null; })
+    .catch(() => { PLATMAP = null; });
+}
 function fetchStationDetailData() {
   if (stationDetailFetched) return;
   stationDetailFetched = true;
+  fetchPlatmap(); /* 站台编号与站房同批,一并延后 */
   /* 三件并行(silent:不占进度条;loader 此时早已隐藏) */
   Promise.all([
     fetchJSONWithCache('https://jr-static.suki.ing/data/station_overall_footprints.geojson', '', 11, true).catch(() => null),
@@ -4638,10 +4646,21 @@ function fetchStationDetailData() {
 function bindLazyHeavyData() {
   if (lazyHeavyBound || !map) return;
   lazyHeavyBound = true;
-  const maybeFetch = () => {
+  /* 启动空闲期:platform_map 无视野条件,等启动完全就绪(dataReady)再补拉 */
+  const platWhenReady = () => { if (dataReady) fetchPlatmap(); else setTimeout(platWhenReady, 1500); };
+  setTimeout(platWhenReady, 4000);
+  /* 延迟执行体:启动未完成则自续 2s 重试(深链场景),完成后校验缩放再拉重数据 */
+  const deferredFetch = () => {
+    if (!dataReady) { setTimeout(deferredFetch, 2000); return; }
     if (map.getZoom() < 11.5) return;
     if (ormEnabled && !ormLoaded) fetchOrmTracks();
     fetchStationDetailData();
+  };
+  const maybeFetch = () => {
+    if (map.getZoom() < 11.5) return;
+    /* 缩放刚结束时用户往往继续交互:延后 3s(并复验)再触发 44MB+14MB 的
+       下载/解析(各 ~100ms 主线程),把冻结挪出交互窗口;多条链幂等无害 */
+    setTimeout(deferredFetch, 3000);
   };
   map.on('zoomend', maybeFetch);
   /* 深链直达高倍率(jumpTo 不一定触发 zoomend 语义):启动后立即检查一次 */

@@ -4260,7 +4260,7 @@ function addMapLayers() {
        徽章数据 data/badges/map.json 按站名映射 {code,url,crop},图集从 jr-static 拉取;
        z13 以下只显示灰点(stas 层),放大后徽章淡入 —— 与 DokoRail zooms.body=13 一致。 */
     map.addLayer({ id: 'stas-badge', type: 'symbol', source: 'stas', minzoom: 13, layout: {
-      'icon-image': ['get', 'badgeIcon'], 'icon-size': ['interpolate', ['linear'], ['zoom'], 13, 0.42, 16, 0.75],
+      'icon-image': ['get', 'badgeIcon'], 'icon-size': ['interpolate', ['linear'], ['zoom'], 13, 0.25, 16, 0.45],
       'icon-allow-overlap': true, 'icon-ignore-placement': true, 'icon-anchor': 'center', 'icon-optional': true },
       paint: { 'icon-opacity': ['interpolate', ['linear'], ['zoom'], 13, 0, 13.6, 1] } });
     map.addLayer(trainShaderLayer, 'stas-badge');
@@ -6820,7 +6820,7 @@ const M3D = (() => {
     const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: false, powerPreference: 'high-performance' });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 5000);
+    const camera = new THREE.PerspectiveCamera(36.87, 1, 0.01, 1e9);
     scene.add(camera);
     /* 光照:环境 + 主方向光 + 补光,让模型在深色底图上可见 */
     scene.add(new THREE.AmbientLight(0xffffff, 0.55));
@@ -6829,7 +6829,8 @@ const M3D = (() => {
     ov = { canvas, renderer, scene, camera, groups: new Map(), order: [], ray: new THREE.Raycaster(), plane: new THREE.Plane(new THREE.Vector3(0, 1, 0), 0) };
     return ov;
   }
-  /* 每帧:把视口内已接管的列车从经纬度投影到屏幕,摆放模型(朝向=行进方向,尺寸按 zoom 换算) */
+  /* 每帧:把视口内已接管的列车摆到 mercator 世界坐标,
+     覆盖层相机直接复刻 maplibre 相机(fov/位置/lookAt)→ 投影与轨道完全一致,模型精确贴轨 */
   function drawModels(M) {
     _ensureOv(); /* 首次进入高 zoom 时创建覆盖层(惰性) */
     if (!ov) return;
@@ -6839,14 +6840,38 @@ const M3D = (() => {
     o.renderer.setSize(w, h, false);
     o.camera.aspect = w / h;
     const z = map.getZoom();
-    /* 米→CSS 像素:mercator 每像素米 ≈ 156543.03392 * cos(lat) / 2^z */
-    const lat0 = map.getCenter().lat * Math.PI / 180;
+    /* 复刻 maplibre 相机:真实 fov 与相机世界坐标(mercator 像素),模型与轨道同一投影 */
+    const tf = map._camera && map._camera.transform;
+    let camPix = null, fovDeg = 36.87;
+    if (tf) { try { camPix = tf.cameraPosition; fovDeg = tf.fov || fovDeg; } catch (e) {} }
+    if (!camPix || !camPix.length) { camPix = null; }
+    /* mercator 世界像素:lat 0°→y=0.5,北纬<0.5(北在上) */
+    const worldSize = 512 * Math.pow(2, z);
+    const c0 = map.getCenter();
+    const cxp = (c0.lng + 180) / 360 * worldSize;
+    const cyp = (1 - Math.log(Math.tan(Math.PI / 4 + c0.lat * Math.PI / 360)) / Math.PI) / 2 * worldSize;
+    /* 场景以中心地面为原点,单位=世界像素;相机若读到就用 maplibre 真实位置,否则退化为俯视 */
+    if (camPix) {
+      o.camera.fov = fovDeg;
+      o.camera.position.set(camPix[0] - cxp, camPix[2], -(camPix[1] - cyp));
+      o.camera.up.set(0, 1, 0);
+      o.camera.lookAt(0, 0, 0);
+    } else {
+      const pitch = map.getPitch() * Math.PI / 180;
+      const bear = map.getBearing() * Math.PI / 180;
+      const dist = 0.5 * worldSize / Math.tan(36.87 * Math.PI / 360);
+      o.camera.fov = 36.87;
+      o.camera.position.set(-Math.sin(bear) * Math.cos(pitch) * dist, Math.sin(pitch) * dist, -Math.cos(bear) * Math.cos(pitch) * dist);
+      o.camera.up.set(0, 1, 0);
+      o.camera.lookAt(0, 0, 0);
+    }
+    o.camera.updateProjectionMatrix();
+    /* 米→世界像素:地球周长 40075016.7m 对应 worldSize px(纬度方向每像素米相同) */
+    const pxPerM = worldSize / 40075016.7;
+    const lat0 = c0.lat * Math.PI / 180;
     const mpp = 156543.03392 * Math.cos(lat0) / Math.pow(2, z);
-    /* 模型单位=米 → 屏幕:scale = 1/mpp;但 z=15 附近 20m 车长约 340px 过大,
-       加经验系数使列车长度 ≈ L 的 4~6 倍(高 zoom 视觉平衡) */
-    const k = 1 / mpp;
-    const pitch = map.getPitch() * Math.PI / 180;
-    const bear = map.getBearing() * Math.PI / 180;
+    const k = 1 / mpp; /* 米→CSS 像素 */
+    const scaleF = pxPerM * (k * 0.55 / pxPerM) ; /* = k*0.55,保持原视觉比例 */
     let used = 0;
     const active = new Set();
     for (let i = 0; i < visibleTrips.length; i++) {
@@ -6858,7 +6883,6 @@ const M3D = (() => {
       if (!gp || gp._ready !== true) continue;
       if (used >= MAX_DRAW) break;
       const lng = visibleXY[i * 2], lat = visibleXY[i * 2 + 1];
-      const pr = map.project([lng, lat]);
       let grp = o.groups.get(path);
       if (!grp) {
         grp = { obj: null, path };
@@ -6873,22 +6897,18 @@ const M3D = (() => {
       if (!grp.obj) { used++; continue; } /* 加载中:本帧回退(shader 已跳过,短暂空白可接受,下帧补上) */
       active.add(path);
       const obj = grp.obj;
-      /* 屏幕目标点 → 地面(y=0)平面交点:覆盖层相机从俯视模拟 maplibre 透视,
-         射线求交保证模型在屏幕上精确出现在 map.project() 位置(贴轨道),而非近似摆放 */
-      o.ray.setFromCamera(new THREE.Vector3(pr.x / w * 2 - 1, -(pr.y / h) * 2 + 1, 0.5), o.camera);
-      const hit = new THREE.Vector3();
-      if (!o.ray.ray.intersectPlane(o.plane, hit)) { used++; continue; }
-      obj.position.set(hit.x, 0, hit.z);
-      /* 朝向:模型长轴沿场景 +z(南);行进方位角 brg(北=0 东=90°)需旋转
-         π - (brg + bearing) 使长轴指向屏幕上的行进方向:
-         +z 旋转 θ → (sinθ, 0, cosθ),令其等于行进向量 (sinφ, 0, -cosφ),φ=brg+bearing → θ=π-φ */
+      /* 列车经纬度 → mercator 世界像素(相对中心);x 东、z 南(北=-z) */
+      const mx = (lng + 180) / 360 * worldSize - cxp;
+      const my = (1 - Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360)) / Math.PI) / 2 * worldSize - cyp;
+      obj.position.set(mx, 0, my);
+      /* 朝向:模型长轴沿场景 +z(南);行进方位角 brg(北=0 东=90°)→ 世界系方向向量
+         (sin brg, 0, -cos brg);+z 旋转 θ→(sinθ,0,cosθ),θ=π-brg。
+         相机已含地图 bearing,无需额外补偿(与 DokoRail 原版 rotation=π-bearing 一致) */
       const brg = (t._m3dBrg !== undefined ? t._m3dBrg : 0);
-      const ang = Math.PI - (brg + bear);
-      obj.rotation.y = ang;
-      /* 高度:与地图 3D 倾斜同步(车底贴地,视觉比例 Hpx*?) */
+      obj.rotation.y = Math.PI - brg;
       obj.position.y = 0;
-      /* 尺寸:车长(米) → 像素;固定比例避免高 zoom 过大 */
-      obj.scale.setScalar(k * 0.55);
+      /* 尺寸:车长(米) → 世界像素;高 zoom 视觉平衡系数 0.55 */
+      obj.scale.setScalar(scaleF);
       used++;
     }
     /* LRU:淘汰不再可见的编组实例 */
@@ -6900,10 +6920,6 @@ const M3D = (() => {
         o.groups.delete(p); o.order.splice(i, 1);
       }
     }
-    /* 相机:模拟地图俯视(带 pitch/bearing),模型立在屏幕平面上 */
-    o.camera.position.set(0, Math.tan(pitch + 0.05) * 300 + 60, 300);
-    o.camera.up.set(0, 1, 0);
-    o.camera.lookAt(0, 0, 0);
     o.renderer.render(o.scene, o.camera);
   }
   function clearOv() { if (ov) { ov.scene.clear(); ov.groups.clear(); ov.order.length = 0; ov.renderer.clear(); } }

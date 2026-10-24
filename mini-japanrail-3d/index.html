@@ -827,6 +827,10 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
 #sheet .sh-tabs button { flex:1; max-width:120px; padding:12px 0; background:none; border:0; color:var(--dim); font-size:13.5px; font-weight:700; cursor:pointer; border-bottom:2px solid transparent; transition:color .12s, border-color .12s; white-space:nowrap; }
 #sheet .sh-tabs button:hover { color:var(--txt); }
 #sheet .sh-tabs button.on { color:var(--txt); border-bottom-color:var(--acc); }
+/* 车站徽章条:抽屉头部与 tabs 之间,该站全部线路徽章完整横排(可横滚) */
+#sheet .sh-badges { display:flex; gap:7px; padding:7px 14px 0; overflow-x:auto; flex:none; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+#sheet .sh-badges::-webkit-scrollbar { display:none; }
+#sheet .sh-badges img { height:37px; width:auto; flex:none; border-radius:5px; box-shadow:0 2px 6px rgba(0,0,0,.32); background:rgba(120,140,180,.10); user-select:none; }
 @media (max-width:420px){ #sheet .sh-tabs button { font-size:12.5px; padding:11px 0; } }
 #sheet .sh-subtabs { display:flex; gap:6px; padding:8px 14px 0; flex:none; }
 #sheet .sh-subtabs.hidden { display:none; }
@@ -1203,6 +1207,7 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
     <div><div class="sh-nm" id="shNm">駅名</div><div class="sh-sub" id="shSub"></div></div>
     <button class="btn icon sh-x" id="shX"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
   </div>
+  <div class="sh-badges" id="shBadges" hidden></div>
   <div class="sh-tabs"><button id="tabList">列表</button><button id="tabGrid" class="on">一览</button><button id="tabInfo">信息</button><button id="tabGuide">指南</button></div>
   <div class="sh-subtabs" id="shSubTabs"><button id="subDep" class="on">出发</button><button id="subArr">到达</button></div>
   <div class="sh-body" id="shBody"><div class="empty">時刻表を読込中…</div></div>
@@ -4080,39 +4085,111 @@ async function loadBadgesMap() {
   } catch (e) { console.warn('[badges]', e); }
   return badgesMap;
 }
-/* 从图集裁剪单个徽章:加载图集(缓存+in-flight 去重)→ canvas 裁剪 → addImage 注册。
-   同一图集 URL 全局只发一次请求;并发下载数限制为 BADGE_FETCH_MAX。 */
+/* 站名 -> 徽章条目数组 [[线路名, 站码, 图集url, crop|null], …](已按重要性降序);
+   lines.json 有则用(每站每线),否则回退 map.json 单枚。无徽章返回 null。 */
+function badgeEntriesOf(name) {
+  if (badgesLines && badgesLines.stations) {
+    const lst = badgesLines.stations[name];
+    if (lst && lst.length) {
+      return lst.map(e => {
+        const sh = typeof e[2] === 'number' ? badgesLines.sheets[e[2]] : e[2];
+        return [e[0], e[1], sh, e[3]];
+      });
+    }
+  }
+  const bd = badgesMap && badgesMap[name];
+  if (bd) return [['', bd.code, bd.url, bd.crop]];
+  return null;
+}
+/* 站徽章枚数(供 badgeN 属性,免为数组分配) */
+function badgeCountOf(name) {
+  if (badgesLines && badgesLines.stations) {
+    const l = badgesLines.stations[name];
+    if (l && l.length) return l.length;
+  }
+  return (badgesMap && badgesMap[name]) ? 1 : 0;
+}
+/* 加载单个图集(缓存+in-flight 去重+并发限流),失败返回 null */
+async function badgeSheetOf(url) {
+  let sheet = badgesSheets.get(url);
+  if (sheet) return sheet === 'bad' ? null : sheet;
+  while (badgeInFlight >= BADGE_FETCH_MAX) await new Promise(r => setTimeout(r, 120));
+  badgeInFlight++;
+  try {
+    let p = badgesFetching.get(url);
+    if (!p) {
+      p = map.loadImage(BADGES_BASE + url) /* MapLibre: 返回 {data: ImageBitmap} */
+        .then(img => (img && img.data) ? img.data : 'bad')
+        .catch(() => 'bad');
+      badgesFetching.set(url, p);
+    }
+    sheet = await p;
+  } finally { badgeInFlight--; }
+  badgesSheets.set(url, sheet);
+  return sheet === 'bad' ? null : sheet;
+}
+/* 加载官方 SVG 徽章(Image 光栅化,缓存),失败返回 null */
+function badgeSvgOf(url) {
+  let p = badgesSvgs.get(url);
+  if (p) return p;
+  p = new Promise(res => {
+    const im = new Image();
+    im.crossOrigin = 'anonymous';
+    im.onload = () => res(im);
+    im.onerror = () => res(null);
+    im.src = BADGES_BASE + url;
+  });
+  badgesSvgs.set(url, p);
+  return p;
+}
+/* 单枚徽章 → 裁剪画布(保持 crop 原始宽高比,如 193×232 的 JR 线路徽章;
+   SVG 等比缩放至最长边 160 居中),失败返回 null */
+async function badgeCanvas(e) {
+  const c = document.createElement('canvas');
+  const ctx = c.getContext('2d');
+  ctx.imageSmoothingQuality = 'high';
+  if (e[3]) { /* 图集裁剪 */
+    const sheet = await badgeSheetOf(e[2]);
+    if (!sheet) return null;
+    const [cx, cy, cw, ch] = e[3];
+    c.width = cw; c.height = ch;
+    ctx.drawImage(sheet, cx, cy, cw, ch, 0, 0, cw, ch);
+    return c;
+  }
+  if (typeof e[2] === 'string' && e[2].endsWith('.svg')) {
+    const im = await badgeSvgOf(e[2]);
+    if (!im) return null;
+    const s = 160 / Math.max(im.naturalWidth, im.naturalHeight);
+    const w = Math.max(1, Math.round(im.naturalWidth * s)), h = Math.max(1, Math.round(im.naturalHeight * s));
+    c.width = w; c.height = h;
+    ctx.drawImage(im, 0, 0, w, h);
+    return c;
+  }
+  return null;
+}
+/* 站徽章 icon 注册:取前 BADGE_MAX_ONMAP 枚并排合成一张 canvas(间 6px,垂直居中)→ addImage。
+   各枚保持原始宽高比;单枚站输出与旧版一致(直接裁剪尺寸)。 */
 async function badgeEnsureIcon(name) {
   const key = 'bd_' + name;
-  if (badgesIcons.has(key) || !map || !badgesMap) return;
-  const bd = badgesMap[name];
-  if (!bd) return;
+  if (badgesIcons.has(key) || badgesBusy.has(key) || !map || !badgesMap) return;
+  const entries = badgeEntriesOf(name);
+  if (!entries) return;
+  badgesBusy.add(key);
   try {
-    let sheet = badgesSheets.get(bd.url);
-    if (!sheet) {
-      while (badgeInFlight >= BADGE_FETCH_MAX) await new Promise(r => setTimeout(r, 120));
-      badgeInFlight++;
-      try {
-        let p = badgesFetching.get(bd.url);
-        if (!p) {
-          p = map.loadImage(BADGES_BASE + bd.url) /* MapLibre: 返回 {data: ImageBitmap} */
-            .then(img => (img && img.data) ? img.data : 'bad')
-            .catch(() => 'bad');
-          badgesFetching.set(bd.url, p);
-        }
-        sheet = await p;
-      } finally { badgeInFlight--; }
-      if (sheet === 'bad') return;
-      badgesSheets.set(bd.url, sheet);
-    }
-    const [cx, cy, cw, ch] = bd.crop;
+    const picks = entries.slice(0, BADGE_MAX_ONMAP);
+    const cs = (await Promise.all(picks.map(badgeCanvas))).filter(Boolean);
+    if (!cs.length) return;
+    const GAP = cs.length > 1 ? 6 : 0;
     const c = document.createElement('canvas');
-    c.width = cw; c.height = ch;
+    c.width = cs.reduce((a, one) => a + one.width, 0) + GAP * (cs.length - 1);
+    c.height = Math.max(...cs.map(one => one.height));
     const ctx = c.getContext('2d');
-    ctx.drawImage(sheet, cx, cy, cw, ch, 0, 0, cw, ch);
-    if (!map.hasImage(key)) map.addImage(key, ctx.getImageData(0, 0, cw, ch));
+    let x = 0;
+    for (const one of cs) { ctx.drawImage(one, x, (c.height - one.height) / 2); x += one.width + GAP; }
+    if (!map.hasImage(key)) map.addImage(key, ctx.getImageData(0, 0, c.width, c.height));
     badgesIcons.add(key);
   } catch (e) { /* 单个徽章失败不影响整体 */ }
+  finally { badgesBusy.delete(key); }
 }
 /* 把「视野内」站的 badgeIcon 写回 GeoJSON 并确保 icon 注册(懒加载:仅放大后按视野补,
    避免全量 4,669 站一次 addImage + 图集风暴拖垮帧率与底图加载)。
@@ -4134,7 +4211,7 @@ function updateBadgeIcons() {
   let changed = false;
   for (const f of data.features) {
     const nm = f.properties && f.properties.station;
-    if (!nm || !badgesMap[nm]) continue;
+    if (!nm || !(badgesMap[nm] || (badgesLines && badgesLines.stations[nm]))) continue;
     const g = f.geometry && f.geometry.coordinates;
     if (!g) continue;
     let pt = null;
@@ -4155,6 +4232,29 @@ function badgesBindView() {
 function applyBadgeVisible(v) {
   if (!map || !map.getLayer('stas-badge')) return;
   map.setLayoutProperty('stas-badge', 'visibility', v ? 'visible' : 'none');
+}
+/* 车站抽屉顶部徽章条:该站全部线路徽章完整排列(不限地图上的 3 枚上限),
+   每枚 title=「线路名 站码」;无徽章数据时整条隐藏。数据未就绪时等加载完再渲染。 */
+async function renderStationBadges(name) {
+  const box = $('shBadges');
+  if (!box) return;
+  if (!badgesMap) {
+    loadBadgesMap().then(() => { if (sheetStation === name && $('sheet').classList.contains('open')) renderStationBadges(name); });
+    return;
+  }
+  const entries = badgeEntriesOf(name);
+  if (!entries || !entries.length) { box.hidden = true; box.innerHTML = ''; return; }
+  box.hidden = false;
+  box.innerHTML = '';
+  const pairs = (await Promise.all(entries.map(async e => {
+    try { const c = await badgeCanvas(e); return c ? [e, c] : null; } catch (_) { return null; }
+  }))).filter(Boolean);
+  if (sheetStation !== name) return; /* 抽屉已切到别的站,丢弃过期渲染 */
+  if (!pairs.length) { box.hidden = true; return; }
+  box.innerHTML = pairs.map(([e, c]) => {
+    const tip = (e[0] ? e[0] + ' ' : '') + (e[1] || '');
+    return '<img alt="' + esc(tip) + '" title="' + esc(tip) + '" draggable="false" src="' + c.toDataURL() + '">';
+  }).join('');
 }
 
 function addMapLayers() {
@@ -4215,7 +4315,7 @@ function addMapLayers() {
     if (badgesMap && staFC && staFC.features) {
       for (const f of staFC.features) {
         const nm = f.properties && f.properties.station;
-        if (nm && badgesMap[nm] && !f.properties.badgeIcon) f.properties.badgeIcon = 'bd_' + nm;
+        if (nm && (badgesMap[nm] || (badgesLines && badgesLines.stations[nm])) && !f.properties.badgeIcon) f.properties.badgeIcon = 'bd_' + nm;
       }
     }
     map.addSource('stas', { type: 'geojson', data: staFC });
@@ -5471,6 +5571,7 @@ function showStationDetail(name, coord) {
   $('sheetMask').classList.add('open');
   closeDetail();
   if (tripList && tripList.length) renderStationBody();
+  renderStationBadges(name);
   if (c) map.flyTo({ center: c, zoom: Math.max(map.getZoom(), 12), pitch: Math.min(map.getPitch(), 55), duration: 1200 });
 }
 document.getElementById('shX').addEventListener('click', closeSheet);

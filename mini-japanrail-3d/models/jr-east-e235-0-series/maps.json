@@ -1,0 +1,287 @@
+{
+ "E235V2AUVCar10SideYamaSoto_lod_Diffuse.ktx2": {
+  "roughnessMap": "E235V2AUVCar10SideYamaSoto_lod_Diffuse.rough.ktx2",
+  "night": {
+   "file": "E235V2AUVCar10SideYamaSoto_lod_Diffuse.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.5,
+  "nightCoverage": 0.5
+ },
+ "E235V2AUVCar10SideYamaUchi_lod_Diffuse.ktx2": {
+  "roughnessMap": "E235V2AUVCar10SideYamaUchi_lod_Diffuse.rough.ktx2",
+  "night": {
+   "file": "E235V2AUVCar10SideYamaUchi_lod_Diffuse.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.5,
+  "nightCoverage": 0.5
+ },
+ "E235V2AUVCar11FrontYama_lod_Diffuse.ktx2": {
+  "roughness": 0.35
+ },
+ "E235V2AUVCar11RearYamaHimawari_lod_Diffuse.ktx2": {
+  "roughness": 0.35
+ },
+ "E235V2AUVCar11SideYamaSoto_lod_Diffuse.ktx2": {
+  "roughnessMap": "E235V2AUVCar11SideYamaSoto_lod_Diffuse.rough.ktx2",
+  "night": {
+   "file": "E235V2AUVCar11SideYamaSoto_lod_Diffuse.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.5,
+  "nightCoverage": 0.5
+ },
+ "E235V2AUVCar11SideYamaUchi_lod_Diffuse.ktx2": {
+  "roughnessMap": "E235V2AUVCar11SideYamaUchi_lod_Diffuse.rough.ktx2",
+  "night": {
+   "file": "E235V2AUVCar11SideYamaUchi_lod_Diffuse.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.5,
+  "nightCoverage": 0.5
+ },
+ "E235V2AUVCar1FrontYama_lod_Diffuse.ktx2": {
+  "roughness": 0.35
+ },
+ "E235V2AUVCar1RearYamaHimawari_lod_Diffuse.ktx2": {
+  "roughness": 0.35
+ },
+ "E235V2AUVCar1SideYamaSoto_lod_Diffuse.ktx2": {
+  "roughnessMap": "E235V2AUVCar1SideYamaSoto_lod_Diffuse.rough.ktx2",
+  "night": {
+   "file": "E235V2AUVCar1SideYamaSoto_lod_Diffuse.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.5,
+  "nightCoverage": 0.5
+ },
+ "E235V2AUVCar1SideYamaUchi_lod_Diffuse.ktx2": {
+  "roughnessMap": "E235V2AUVCar1SideYamaUchi_lod_Diffuse.rough.ktx2",
+  "night": {
+   "file": "E235V2AUVCar1SideYamaUchi_lod_Diffuse.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.5,
+  "nightCoverage": 0.5
+ },
+ "E235V2AUVCar2SideYamaSoto_lod_Diffuse.ktx2": {
+  "roughnessMap": "E235V2AUVCar2SideYamaSoto_lod_Diffuse.rough.ktx2",
+  "night": {
+   "file": "E235V2AUVCar2SideYamaSoto_lod_Diffuse.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.5,
+  "nightCoverage": 0.5
+ },
+ "E235V2AUVCar2SideYamaUchi_lod_Diffuse.ktx2": {
+  "roughnessMap": "E235V2AUVCar2SideYamaUchi_lod_Diffuse.rough.ktx2",
+  "night": {
+   "file": "E235V2AUVCar2SideYamaUchi_lod_Diffuse.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.5,
+  "nightCoverage": 0.5
+ },
+ "E235V2AUVCar3SideYamaSoto_lod_Diffuse.ktx2": {
+  "roughnessMap": "E235V2AUVCar3SideYamaSoto_lod_Diffuse.rough.ktx2",
+  "night": {
+   "file": "E235V2AUVCar3SideYamaSoto_lod_Diffuse.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.5,
+  "nightCoverage": 0.5
+ },
+ "E235V2AUVCar3SideYamaUchi_lod_Diffuse.ktx2": {
+  "roughnessMap": "E235V2AUVCar3SideYamaUchi_lod_Diffuse.rough.ktx2",
+  "night": {
+   "file": "E235V2AUVCar3SideYamaUchi_lod_Diffuse.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.5,
+  "nightCoverage": 0.5
+ },
+ "E235V2AUVCar4SideYamaSoto_lod_Diffuse.ktx2": {
+  "roughnessMap": "E235V2AUVCar4SideYamaSoto_lod_Diffuse.rough.ktx2",
+  "night": {
+   "file": "E235V2AUVCar4SideYamaSoto_lod_Diffuse.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.5,
+  "nightCoverage": 0.5
+ },
+ "E235V2AUVCar4SideYamaUchi_lod_Diffuse.ktx2": {
+  "roughnessMap": "E235V2AUVCar4SideYamaUchi_lod_Diffuse.rough.ktx2",
+  "night": {
+   "file": "E235V2AUVCar4SideYamaUchi_lod_Diffuse.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.5,
+  "nightCoverage": 0.5
+ },
+ "E235V2AUVCar5SideYamaSoto_lod_Diffuse.ktx2": {
+  "roughnessMap": "E235V2AUVCar5SideYamaSoto_lod_Diffuse.rough.ktx2",
+  "night": {
+   "file": "E235V2AUVCar5SideYamaSoto_lod_Diffuse.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.5,
+  "nightCoverage": 0.5
+ },
+ "E235V2AUVCar5SideYamaUchi_lod_Diffuse.ktx2": {
+  "roughnessMap": "E235V2AUVCar5SideYamaUchi_lod_Diffuse.rough.ktx2",
+  "night": {
+   "file": "E235V2AUVCar5SideYamaUchi_lod_Diffuse.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.5,
+  "nightCoverage": 0.5
+ },
+ "E235V2AUVCar6SideYamaSoto_lod_Diffuse.ktx2": {
+  "roughnessMap": "E235V2AUVCar6SideYamaSoto_lod_Diffuse.rough.ktx2",
+  "night": {
+   "file": "E235V2AUVCar6SideYamaSoto_lod_Diffuse.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.5,
+  "nightCoverage": 0.5
+ },
+ "E235V2AUVCar6SideYamaUchi_lod_Diffuse.ktx2": {
+  "roughnessMap": "E235V2AUVCar6SideYamaUchi_lod_Diffuse.rough.ktx2",
+  "night": {
+   "file": "E235V2AUVCar6SideYamaUchi_lod_Diffuse.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.5,
+  "nightCoverage": 0.5
+ },
+ "E235V2AUVCar7SideYamaSoto_lod_Diffuse.ktx2": {
+  "roughnessMap": "E235V2AUVCar7SideYamaSoto_lod_Diffuse.rough.ktx2",
+  "night": {
+   "file": "E235V2AUVCar7SideYamaSoto_lod_Diffuse.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.5,
+  "nightCoverage": 0.5
+ },
+ "E235V2AUVCar7SideYamaUchi_lod_Diffuse.ktx2": {
+  "roughnessMap": "E235V2AUVCar7SideYamaUchi_lod_Diffuse.rough.ktx2",
+  "night": {
+   "file": "E235V2AUVCar7SideYamaUchi_lod_Diffuse.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.5,
+  "nightCoverage": 0.5
+ },
+ "E235V2AUVCar8SideYamaSoto_lod_Diffuse.ktx2": {
+  "roughnessMap": "E235V2AUVCar8SideYamaSoto_lod_Diffuse.rough.ktx2",
+  "night": {
+   "file": "E235V2AUVCar8SideYamaSoto_lod_Diffuse.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.5,
+  "nightCoverage": 0.5
+ },
+ "E235V2AUVCar8SideYamaUchi_lod_Diffuse.ktx2": {
+  "roughnessMap": "E235V2AUVCar8SideYamaUchi_lod_Diffuse.rough.ktx2",
+  "night": {
+   "file": "E235V2AUVCar8SideYamaUchi_lod_Diffuse.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.5,
+  "nightCoverage": 0.5
+ },
+ "E235V2AUVCar9SideYamaSoto_lod_Diffuse.ktx2": {
+  "roughnessMap": "E235V2AUVCar9SideYamaSoto_lod_Diffuse.rough.ktx2",
+  "night": {
+   "file": "E235V2AUVCar9SideYamaSoto_lod_Diffuse.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.5,
+  "nightCoverage": 0.5
+ },
+ "E235V2AUVCar9SideYamaUchi_lod_Diffuse.ktx2": {
+  "roughnessMap": "E235V2AUVCar9SideYamaUchi_lod_Diffuse.rough.ktx2",
+  "night": {
+   "file": "E235V2AUVCar9SideYamaUchi_lod_Diffuse.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.5,
+  "nightCoverage": 0.5
+ },
+ "MainTex.ktx2": {
+  "normal": "MainTex.normal.ktx2",
+  "roughnessMap": "MainTex.rough.ktx2",
+  "night": {
+   "file": "MainTex.rough.ktx2",
+   "channel": "a"
+  },
+  "nightCoverage": 0.0386
+ },
+ "MainTex_a6ef51d4.ktx2": {
+  "roughness": 0.85
+ },
+ "MainTex_ad3fd277.ktx2": {
+  "roughness": 0.85
+ },
+ "MainTex_d3f700d3.ktx2": {
+  "roughness": 0.85
+ },
+ "asset.ktx2": {
+  "roughness": 0.85,
+  "night": {
+   "file": "asset.night.ktx2",
+   "channel": "r"
+  },
+  "nightCoverage": 0.074
+ },
+ "asset_0b68880f.ktx2": {
+  "roughness": 0.85,
+  "night": {
+   "file": "asset_0b68880f.night.ktx2",
+   "channel": "r"
+  },
+  "nightCoverage": 0.0514
+ },
+ "asset_a9a1a98d.ktx2": {
+  "roughness": 0.85,
+  "night": {
+   "file": "asset_a9a1a98d.night.ktx2",
+   "channel": "r"
+  },
+  "nightCoverage": 0.074
+ },
+ "stand-ins.ktx2": {
+  "roughnessMap": "stand-ins.rough.ktx2",
+  "normal": "stand-ins.normal.ktx2",
+  "normalScale": 1,
+  "night": {
+   "file": "stand-ins.rough.ktx2",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutAt": 0.5
+ }
+}

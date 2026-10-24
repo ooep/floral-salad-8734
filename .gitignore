@@ -8,6 +8,7 @@ scripts/geo/station_map_report.json
 scripts/geo/ra_official/_failed.json
 _backup/
 _shots/
+.3dtest/
 mini-japanrail-3d/data/icons_vec/
 
 # ===== Mini JapanRail 3D SEO 静态化生成产物（部署时由 CI 重新生成，不入库） =====

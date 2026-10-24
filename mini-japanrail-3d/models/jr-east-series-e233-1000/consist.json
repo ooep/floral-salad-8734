@@ -1,0 +1,1299 @@
+{
+ "source": "1650038711",
+ "name": "JR East series E233-1000 (10 Cars)_Data",
+ "car_length_m": 20.13,
+ "cars": [
+  {
+   "name": "JR East series E233-1000 (10 Cars)_Data",
+   "model": "obj1JR_East_series_E233-1000JR_East_E233-1000_10_Cars.glb",
+   "texture": "MainTex_acc27298.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.065,
+    10.065
+   ],
+   "lod": {
+    "model": "obj1JR_East_series_E233-1000JR_East_E233-1000_10_Cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "obj1JR_East_series_E233-1000JR_East_E233-1000_10_Cars_8e95f78a.obj"
+   },
+   "transform": {
+    "position": [
+     0.0231,
+     1.6499,
+     2.3783
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.4
+     ]
+    }
+   ],
+   "lights": [
+    [
+     0.93,
+     3.4,
+     -0.4
+    ],
+    [
+     -0.93,
+     3.4,
+     -0.4
+    ]
+   ]
+  },
+  {
+   "name": "TrailerJR East series E233-1000 (10 Cars)0",
+   "model": "obj1JR_East_series_E233-1000JR_East_series_E233-1000JR_East_E233-1000_10_Cars_JR_East_series_E233-1000_10_Cars.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10,
+    10
+   ],
+   "lod": {
+    "model": "obj1JR_East_series_E233-1000JR_East_series_E233-1000JR_East_E233-1000_10_Cars_JR_East_series_E233-1000_10_Cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "obj1JR_East_series_E233-1000JR_East_series_E233-1000JR_East_E233-1000_10_Cars_JR_East_series_E233-1000_10_Cars_d88a06e3.obj"
+   },
+   "transform": {
+    "position": [
+     -0.011,
+     1.3622,
+     -0.5555
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.4
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJR East series E233-1000 (10 Cars)1",
+   "model": "obj1JR_East_series_E233-1000JR_East_series_E233-1000JR_East_E233-1000_10_Cars_JR_East_series_E233-1000_10_Cars_25950b60.glb",
+   "texture": "MainTex_b1361c94.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10,
+    10
+   ],
+   "lod": {
+    "model": "obj1JR_East_series_E233-1000JR_East_series_E233-1000JR_East_E233-1000_10_Cars_JR_East_series_E233-1000_10_Cars_25950b60.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "obj1JR_East_series_E233-1000JR_East_series_E233-1000JR_East_E233-1000_10_Cars_JR_East_series_E233-1000_10_Cars_d88a06e3.obj"
+   },
+   "transform": {
+    "position": [
+     0.0127,
+     2.2529,
+     1.9189
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.4
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJR East series E233-1000 (10 Cars)0",
+   "model": "obj1JR_East_series_E233-1000JR_East_series_E233-1000JR_East_E233-1000_10_Cars_JR_East_series_E233-1000_10_Cars.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10,
+    10
+   ],
+   "lod": {
+    "model": "obj1JR_East_series_E233-1000JR_East_series_E233-1000JR_East_E233-1000_10_Cars_JR_East_series_E233-1000_10_Cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "obj1JR_East_series_E233-1000JR_East_series_E233-1000JR_East_E233-1000_10_Cars_JR_East_series_E233-1000_10_Cars_d88a06e3.obj"
+   },
+   "transform": {
+    "position": [
+     -0.011,
+     1.3622,
+     -0.5555
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.4
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJR East series E233-1000 (10 Cars)2",
+   "model": "obj1JR_East_series_E233-1000JR_East_series_E233-1000JR_East_E233-1000_10_Cars_JR_East_series_E233-1000_10_Cars_a0e763be.glb",
+   "texture": "MainTex_08a06122.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10,
+    10
+   ],
+   "lod": {
+    "model": "obj1JR_East_series_E233-1000JR_East_series_E233-1000JR_East_E233-1000_10_Cars_JR_East_series_E233-1000_10_Cars_a0e763be.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "obj1JR_East_series_E233-1000JR_East_series_E233-1000JR_East_E233-1000_10_Cars_JR_East_series_E233-1000_10_Cars_d88a06e3.obj"
+   },
+   "transform": {
+    "position": [
+     0,
+     2.6503,
+     0.0428
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.4
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJR East series E233-1000 (10 Cars)3",
+   "model": "obj1JR_East_E233-1000_10_Cars_JR_East_series_E233-1000_10_Cars.glb",
+   "texture": "MainTex_744ccc03.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10,
+    10
+   ],
+   "lod": {
+    "model": "obj1JR_East_E233-1000_10_Cars_JR_East_series_E233-1000_10_Cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "obj1JR_East_E233-1000_10_Cars_JR_East_series_E233-1000_10_Cars_b4cb064e.obj"
+   },
+   "transform": {
+    "position": [
+     -0.011,
+     1.3622,
+     -0.5555
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.4
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJR East series E233-1000 (10 Cars)0",
+   "model": "obj1JR_East_series_E233-1000JR_East_series_E233-1000JR_East_E233-1000_10_Cars_JR_East_series_E233-1000_10_Cars.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10,
+    10
+   ],
+   "lod": {
+    "model": "obj1JR_East_series_E233-1000JR_East_series_E233-1000JR_East_E233-1000_10_Cars_JR_East_series_E233-1000_10_Cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "obj1JR_East_series_E233-1000JR_East_series_E233-1000JR_East_E233-1000_10_Cars_JR_East_series_E233-1000_10_Cars_d88a06e3.obj"
+   },
+   "transform": {
+    "position": [
+     -0.011,
+     1.3622,
+     -0.5555
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.4
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJR East series E233-1000 (10 Cars)1",
+   "model": "obj1JR_East_series_E233-1000JR_East_series_E233-1000JR_East_E233-1000_10_Cars_JR_East_series_E233-1000_10_Cars_25950b60.glb",
+   "texture": "MainTex_b1361c94.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10,
+    10
+   ],
+   "lod": {
+    "model": "obj1JR_East_series_E233-1000JR_East_series_E233-1000JR_East_E233-1000_10_Cars_JR_East_series_E233-1000_10_Cars_25950b60.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "obj1JR_East_series_E233-1000JR_East_series_E233-1000JR_East_E233-1000_10_Cars_JR_East_series_E233-1000_10_Cars_d88a06e3.obj"
+   },
+   "transform": {
+    "position": [
+     0.0127,
+     2.2529,
+     1.9189
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.4
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJR East series E233-1000 (10 Cars)4",
+   "model": "obj1JR_East_E233-1000_10_Cars_JR_East_series_E233-1000_10_Cars.glb",
+   "texture": "MainTex_2c9233ae.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10,
+    10
+   ],
+   "lod": {
+    "model": "obj1JR_East_E233-1000_10_Cars_JR_East_series_E233-1000_10_Cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "obj1JR_East_E233-1000_10_Cars_JR_East_series_E233-1000_10_Cars_b4cb064e.obj"
+   },
+   "transform": {
+    "position": [
+     -0.011,
+     1.3622,
+     -0.5555
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.4
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJR East series E233-1000 (10 Cars)5",
+   "model": "obj1JR_East_series_E233-1000JR_East_E233-1000_10_Cars_JR_East_series_E233-1000_10_Cars.glb",
+   "texture": "MainTex_acc27298.ktx2",
+   "flip": true,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.065,
+    10.065
+   ],
+   "lod": {
+    "model": "obj1JR_East_series_E233-1000JR_East_E233-1000_10_Cars_JR_East_series_E233-1000_10_Cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "obj1JR_East_series_E233-1000JR_East_E233-1000_10_Cars_JR_East_series_E233-1000_10_Cars_ccf57398.obj"
+   },
+   "transform": {
+    "position": [
+     0.0231,
+     1.6499,
+     2.3783
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.4
+     ]
+    }
+   ],
+   "lights": [
+    [
+     0.93,
+     3.4,
+     -0.4
+    ],
+    [
+     -0.93,
+     3.4,
+     -0.4
+    ]
+   ]
+  }
+ ],
+ "material": {
+  "brightness": 1.723
+ },
+ "fixed_by": "1650038711"
+}

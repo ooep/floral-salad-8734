@@ -980,10 +980,8 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
 #panelInfo .sec-p, #panelInfo .info-row .v, #panelInfo .tl li > span, #panelInfo .nb > span, #panelInfo .dots li { overflow-wrap:anywhere; word-break:break-word; }
 #panelInfo .nb .t { flex:0 1 auto; min-width:0; max-width:100%; overflow-wrap:anywhere; word-break:break-word; }
 #panelInfo .tl li .y { flex:none; }
-/* 车站抽屉：各线路站台参考（头部站名下方，全局可见） */
+/* 车站抽屉：各线路站台参考（指南 tab，站名/运营商下方） */
 .plat-ref { min-height:0; }
-#shPlatRef { padding: 2px 18px 7px; margin: 0; border-bottom: 1px solid var(--line); }
-#shPlatRef:empty { display: none; border-bottom: none; padding: 0; }
 .plat-ref .sec { margin:0; }
 .plat-ref .sec-t { display:flex; align-items:center; gap:7px; }
 .plat-ref .sec-t small { font-size:9.5px; font-weight:600; color:var(--dim); letter-spacing:.2px; }
@@ -1205,7 +1203,6 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
     <div><div class="sh-nm" id="shNm">駅名</div><div class="sh-sub" id="shSub"></div></div>
     <button class="btn icon sh-x" id="shX"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
   </div>
-  <div class="plat-ref" id="shPlatRef"></div>
   <div class="sh-tabs"><button id="tabList">列表</button><button id="tabGrid" class="on">一览</button><button id="tabInfo">信息</button><button id="tabGuide">指南</button></div>
   <div class="sh-subtabs" id="shSubTabs"><button id="subDep" class="on">出发</button><button id="subArr">到达</button></div>
   <div class="sh-body" id="shBody"><div class="empty">時刻表を読込中…</div></div>
@@ -5460,10 +5457,6 @@ function showStationDetail(name, coord) {
   if (c) setHighlight([], c);
   sheetStation = name; sheetCoord = coord || null; sheetFlat = false;
   $('shNm').textContent = name;
-  // 站台参考：头部站名下方，全局可见（换站失效防抖）
-  _platRefKey = null;
-  $('shPlatRef').innerHTML = '';
-  _renderShPlatRef(name);
   // 新站打开：默认切回「一览」，隐藏信息面板并使懒渲染缓存失效
   sheetTab = 'tabGrid';
   ['tabList','tabGrid','tabInfo','tabGuide'].forEach(id => $(id).classList.remove('on'));
@@ -5716,17 +5709,6 @@ async function buildPlatRefHtml(stName) {
   } catch (e) { return ''; }
 }
 
-/* 抽屉头部站台参考：站名下方全局渲染（异步懒索引，换站防抖） */
-let _platRefKey = null;
-async function _renderShPlatRef(name) {
-  const el = $('shPlatRef');
-  if (_platRefKey === name) return;
-  const html = await buildPlatRefHtml(name);
-  if (name !== $('shNm').textContent) return;   // await 期间用户已换站
-  el.innerHTML = html;
-  _platRefKey = name;
-}
-
 async function renderInfoTab() {
   const box = $('panelInfo');
   if (_infoKey === sheetStation) return;
@@ -5797,6 +5779,8 @@ function gdTr(ja) {
 async function renderGuideTab() {
   const box = $('panelGuide');
   if (_guideKey === sheetStation) return;
+  const platHtml = await buildPlatRefHtml(sheetStation);
+  if (sheetStation !== $('shNm').textContent) return;   // await 期间用户已换站
   box.innerHTML = '<div class="gd-loading">' + _escTxt(T().gdLoading) + '</div>';
   const data = await _loadGuideData();
   const rec = data[normName(sheetStation)];
@@ -5808,6 +5792,8 @@ async function renderGuideTab() {
   const t = T();
   let h = '';
   h += `<div class="gd-head"><div class="gd-title">${_escTxt(rec.name || sheetStation)}</div><div class="gd-sub">${_escTxt(rec.operator || '')}</div></div>`;
+  // 各线路站台参考：站名/运营商下方
+  if (platHtml) h += platHtml;
   const b = rec.basic || {};
   if (b.address || b.tel || b.opened) {
     h += '<div class="gd-sec"><div class="gd-sec-t">' + _escTxt(t.gdBasic) + '</div>';

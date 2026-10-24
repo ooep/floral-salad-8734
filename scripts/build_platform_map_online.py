@@ -2,22 +2,22 @@
 # -*- coding: utf-8 -*-
 """
 build_platform_map_online.py —— 从 dokorail.jp【线上】拉取最新时刻表数据，
-提取站台编号（pw 主数据 + pf 里程区间补充），与主站 tmaps 对齐，
-生成 mini-japanrail-3d/data/platform_map.json（version 4）。
+提取站台编号（pw 主数据 + pf 里程区间补充 + pat.json platformEdges OSM 番线），
+与主站 tmaps 对齐，生成 mini-japanrail-3d/data/platform_map.json（version 5）。
 
 线上端点（已实测可用）:
   index : https://dokorail.jp/rail/timetables/startup-v3-index.json?b=<build>
   bundle: https://tiles.dokorail.jp/timetables/v3/sha256/<sha>.json
 
-v4 相对 v3 的改进（实测: UI 口径站位覆盖 47.2% → 66.6%, tmap 8747 → 9338）:
+v5 相对 v4 的改进（实测: UI 口径站位覆盖 47.2% → 66.6% → 67.0%, 具体单值 22890 → 23725, tmap 8747 → 9338 → 9341）:
   1. 全量线路:v3 构建时网络抖动只成功 ~379/557 条 bundle → 大量线路整体缺失;
      v4 对拉取失败重试 4 次,并用 /tmp/dkr_online 做持久缓存(可断点续跑)
   2. 坐标救援:站名对不上的停靠站,用 station_key_index.json 坐标在 250m 内
      找 doko 站（优先本班次已匹配 ≥2 站的线路;全局唯一近邻才允许跨线）,
      doko bundle 自带 lng/lat
-  3. pf 唯一判定:pw 为空或多值时,若 pf 里程区间覆盖该站 m 的站台号唯一,
-     给出具体番线（替代集合,提升「这一班车停在几番线」的准确性;
-     多区间覆盖不同号时仍回退 pw 全集）
+  3. 取值回退链(v5):pw 单值 → pf 里程区间唯一值 → pat.json platformEdges
+     (OSM 番线挂轨道边,与 pw/pf 互补,如山手線 pw 仅 3/32 而 platformEdges 31/32)
+     单值 → pw 多值 → pe 多值。严格单调,不并集稀释具体单值
   4. 渲染端 platOk 括号区域校验保持不变（本脚本不再重复该过滤）
 
 站台取值口径: pw = 车站级该线路站台全集（与 dokorail 站窗一致）;
@@ -108,7 +108,30 @@ def load_railways_online():
             stations.append({
                 "ja": ja, "pw": st.get("pw") or "", "pf": st.get("pf"),
                 "m": st.get("m"), "lng": st.get("lng"), "lat": st.get("lat"),
+                "pe": "",
             })
+        # pat.json platformEdges:OSM 站台番线挂轨道边(按站序索引),与 pw 互补
+        # (山手線 bundle pw 仅 3/32 站有值,platformEdges 31/32)
+        if v.get("patterns") and v.get("operator"):
+            pfp = os.path.join(CACHE, f"{rid}.pat.json")
+            if fetch(f"https://dokorail.jp/rail/{v['operator']}/{rid}.pat.json", pfp):
+                try:
+                    pd = json.load(open(pfp, encoding="utf-8"))
+                    pe = pd.get("platformEdges") or {}
+                    per = defaultdict(set)
+                    for k, edges in pe.items():
+                        try:
+                            ki = int(k)
+                        except Exception:
+                            continue
+                        for e in edges.values():
+                            if isinstance(e, dict) and re.fullmatch(r"\d+", str(e.get("number") or "")):
+                                per[ki].add(str(e["number"]))
+                    for ki, nums in per.items():
+                        if 0 <= ki < len(stations):
+                            stations[ki]["pe"] = ";".join(sorted(nums, key=lambda x: int(x)))
+                except Exception:
+                    pass
         if stations:
             railways[rid] = {"name": rw_name, "stations": stations, "idx": {}, "by_ja": {}}
             for k, st in enumerate(stations):
@@ -129,7 +152,9 @@ def dist_m(a, b):
 
 
 def plat_value(st):
-    """pw 优先;pw 为空或多值且 pf 覆盖站里程的唯一站台号存在时,给具体号"""
+    """严格单调回退链(不并集,防止把具体单值稀释成集合):
+    pw 单值 → pf 里程区间唯一值 → platformEdges(OSM) 单值 → pw 多值 → pe 多值。
+    pe 只在 v4 完全无值时兜底(山手線 pw 仅 3/32、pf 唯一 30/32、pe 31/32,三源高度重叠)"""
     pw = st.get("pw") or ""
     if pw and ";" not in pw:
         return pw
@@ -143,7 +168,12 @@ def plat_value(st):
                 hits.append(str(r[2]))
         if len(set(hits)) == 1:
             return hits[0]
-    return pw
+    pe = st.get("pe") or ""
+    if pe and ";" not in pe:
+        return pe
+    if pw:
+        return pw
+    return pe
 
 
 def main():
@@ -265,7 +295,7 @@ def main():
             out_t[tid] = filtered
 
     print(f"匹配统计: 站位命中 {total}(单值 {single}, 坐标救援 {rescued}), 有站台数据的 tmap {tmaps_with}/{len(tm)}")
-    result = {"version": 4, "source": "dokorail.jp 线上", "t": out_t}
+    result = {"version": 5, "source": "dokorail.jp 线上", "t": out_t}
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     json.dump(result, open(OUT, "w", encoding="utf-8"), ensure_ascii=False)
     print("写出:", OUT, "大小:", os.path.getsize(OUT))

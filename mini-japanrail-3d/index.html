@@ -1785,7 +1785,10 @@ function idbPut(key, val) {
   });
 }
 /* 带缓存读取:首次下载解析并写入 IDB;之后若服务端 Last-Modified 未变(304)直接用缓存(秒开),
-   变化则下载新数据并回写;服务端无 Last-Modified 时以 DATA_VERSION 为准 */
+   变化则下载新数据并回写;服务端无 Last-Modified 时以 DATA_VERSION 为准。
+   5 分钟新鲜度(与服务端 max-age=300 缓存头对齐):窗口内直接用 IDB 数据,零网络零解析;
+   否则若无窗口(旧条目)走 ETag/304,有新响应则全量解析并回写。 */
+const IDB_FRESH_MS = 300000;
 async function fetchJSONWithCache(url, phaseKey, fileIdx, silent) {
   const key = DATA_VERSION + '|' + url;
   const fIdx = fileIdx != null ? fileIdx : nextFileIdx();
@@ -1793,17 +1796,18 @@ async function fetchJSONWithCache(url, phaseKey, fileIdx, silent) {
     if (!idb) idb = await openIDB();
     const cached = await idbGet(key);
     if (cached && cached.v === DATA_VERSION && cached.j != null) {
+      if (cached.t0 && Date.now() - cached.t0 < IDB_FRESH_MS) { if (!silent) updateBar(fIdx, 1, 1); return cached.j; }
       const lm = cached.lm, etag = cached.etag;
       if (lm || etag) {
         const hdrs = {};
         if (lm) hdrs['If-Modified-Since'] = lm;
         if (etag) hdrs['If-None-Match'] = etag;   /* jr-static 不返回 Last-Modified 且忽略 IMS,但 If-None-Match(ETag) 正确返回 304 */
         const res = await fetch(url, { headers: hdrs });
-        if (res.status === 304) { if (!silent) updateBar(fIdx, 1, 1); return cached.j; }
+        if (res.status === 304) { if (!silent) updateBar(fIdx, 1, 1); cached.t0 = Date.now(); try { if (idb) await idbPut(key, cached); } catch (e) {} return cached.j; }
         if (res.ok) {
           const j = await res.json();
           if (!silent) updateBar(fIdx, 1, 1);
-          await idbPut(key, { v: DATA_VERSION, j, lm: res.headers.get('Last-Modified') || lm, etag: res.headers.get('ETag') || etag });
+          await idbPut(key, { v: DATA_VERSION, j, lm: res.headers.get('Last-Modified') || lm, etag: res.headers.get('ETag') || etag, t0: Date.now() });
           return j;
         }
       } else { if (!silent) updateBar(fIdx, 1, 1); return cached.j; }
@@ -1829,7 +1833,7 @@ async function fetchJSONWithCache(url, phaseKey, fileIdx, silent) {
     j = JSON.parse(buf);
     if (!silent) updateBar(fIdx, 1, 1);
   }
-  try { if (idb) await idbPut(key, { v: DATA_VERSION, j, lm: res.headers.get('Last-Modified') || '', etag: res.headers.get('ETag') || '' }); } catch (e) {}
+  try { if (idb) await idbPut(key, { v: DATA_VERSION, j, lm: res.headers.get('Last-Modified') || '', etag: res.headers.get('ETag') || '', t0: Date.now() }); } catch (e) {}
   return j;
 }
 function yieldToUI() { return new Promise(r => setTimeout(r, 0)); }

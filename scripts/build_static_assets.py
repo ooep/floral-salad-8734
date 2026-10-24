@@ -164,8 +164,19 @@ def main():
         f.write('/*\n')
         f.write('  Access-Control-Allow-Origin: *\n')
         f.write('  Access-Control-Expose-Headers: ETag, Last-Modified, Content-Length, Content-Type\n')
+        # HTTP 缓存策略(性能,2026-10-25):此前全部资产 max-age=0 must-revalidate(平台默认),
+        # 每次启动 ~15 个数据文件逐个条件请求,慢网络下 RTT 累积拖慢 boot。
+        #  - 数据 JSON/GeoJSON:5 分钟浏览器缓存 —— 数据集按日/周刷新,5 分钟陈旧无感;
+        #    5 分钟内重复启动零网络请求,超时后照旧走 ETag/304 增量验证
+        #  - 徽章图集:文件名即内容 sha256(内容寻址,永不变化)→ 缓存 1 年 + immutable
+        f.write('/data/*.json\n')
+        f.write('  Cache-Control: public, max-age=300\n')
+        f.write('/data/*.geojson\n')
+        f.write('  Cache-Control: public, max-age=300\n')
+        f.write('/data/badges/atlas/sha256/*\n')
+        f.write('  Cache-Control: public, max-age=31536000, immutable\n')
     total += 1
-    print('[_headers] 1 (CORS on all assets)')
+    print('[_headers] 1 (CORS + data 5min cache + badge-atlas 1y immutable)')
 
     # 7) robots.txt / healthz —— 纯资产模式(无 Worker 脚本)下改为真实静态文件，
     #    由平台直接服务，同样不触发 Worker 调用。

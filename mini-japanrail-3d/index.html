@@ -831,6 +831,8 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
 #sheet .sh-badges { display:flex; gap:7px; padding:7px 14px 0; overflow-x:auto; flex:none; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
 #sheet .sh-badges::-webkit-scrollbar { display:none; }
 #sheet .sh-badges img { height:37px; width:auto; flex:none; border-radius:5px; box-shadow:0 2px 6px rgba(0,0,0,.32); background:rgba(120,140,180,.10); user-select:none; }
+/* 多线大站徽章超宽时:右缘渐隐,提示可继续横滑 */
+#sheet .sh-badges.has-more::after { content:''; position:sticky; right:-14px; top:0; flex:none; width:26px; margin-left:-26px; align-self:stretch; pointer-events:none; background:linear-gradient(to right, transparent, var(--panel)); }
 @media (max-width:420px){ #sheet .sh-tabs button { font-size:12.5px; padding:11px 0; } }
 #sheet .sh-subtabs { display:flex; gap:6px; padding:8px 14px 0; flex:none; }
 #sheet .sh-subtabs.hidden { display:none; }
@@ -4209,6 +4211,7 @@ function updateBadgeIcons() {
   const ch = map.getCanvas() ? map.getCanvas().clientHeight : 800;
   const pad = 400;
   let changed = false;
+  const seen = new Set(); /* 同站多 feature:仅第一个挂 icon(预写/历史 setData 可能漏挂或多挂) */
   for (const f of data.features) {
     const nm = f.properties && f.properties.station;
     if (!nm || !(badgesMap[nm] || (badgesLines && badgesLines.stations[nm]))) continue;
@@ -4217,7 +4220,12 @@ function updateBadgeIcons() {
     let pt = null;
     try { pt = map.project(g); } catch (e) {}
     if (!pt || pt.x < -pad || pt.x > cw + pad || pt.y < -pad || pt.y > ch + pad) continue;
-    if (!f.properties.badgeIcon) { f.properties.badgeIcon = 'bd_' + nm; changed = true; }
+    if (seen.has(nm)) { /* 同站后续 feature:清掉可能残留的 icon 属性(旧版数据/热更新) */
+      if (f.properties.badgeIcon) { delete f.properties.badgeIcon; delete f.properties.badgeN; changed = true; }
+      continue;
+    }
+    seen.add(nm);
+    if (!f.properties.badgeIcon) { f.properties.badgeIcon = 'bd_' + nm; f.properties.badgeN = badgeCountOf(nm); changed = true; }
     badgeEnsureIcon(nm); /* 属性已有但 image 未注册时同样补注册(内部去重,不重复下载) */
   }
   if (changed) map.getSource('stas').setData(data);
@@ -4249,12 +4257,18 @@ async function renderStationBadges(name) {
   const pairs = (await Promise.all(entries.map(async e => {
     try { const c = await badgeCanvas(e); return c ? [e, c] : null; } catch (_) { return null; }
   }))).filter(Boolean);
-  if (sheetStation !== name) return; /* 抽屉已切到别的站,丢弃过期渲染 */
+  /* await 期间抽屉可能已关闭或切到别的站:双条件校验,过期渲染直接丢弃 */
+  if (sheetStation !== name || !$('sheet').classList.contains('open')) return;
   if (!pairs.length) { box.hidden = true; return; }
   box.innerHTML = pairs.map(([e, c]) => {
     const tip = (e[0] ? e[0] + ' ' : '') + (e[1] || '');
     return '<img alt="' + esc(tip) + '" title="' + esc(tip) + '" draggable="false" src="' + c.toDataURL() + '">';
   }).join('');
+  /* 切站重置横滚;徽章超宽时挂 has-more 显示右缘渐隐(滑到底自动收起) */
+  box.scrollLeft = 0;
+  const more = () => box.classList.toggle('has-more', box.scrollWidth > box.clientWidth + 4 && box.scrollLeft + box.clientWidth < box.scrollWidth - 4);
+  box.onscroll = more;
+  requestAnimationFrame(more);
 }
 
 function addMapLayers() {
@@ -4312,10 +4326,18 @@ function addMapLayers() {
   if (!map.getSource('stas')) {
     /* 站徽章属性注入:badgesMap 已加载时为有专属徽章的站预写 badgeIcon(图标键),
        供 stas-badge 层按需取图;未加载时由 updateBadgeIcons() 于 zoom≥13 后补齐 */
+    /* 站徽章属性注入:badgesMap 已加载时为有徽章的站预写 badgeIcon(图标键)+badgeN(枚数,
+       供层的 icon-size/淡入分级表达式);同站多 feature(stations3d 每站每线一个点)只写第一个,
+       其余不挂 icon —— 否则同一合成图在同名坐标重复渲染 N 次,符号碰撞白算;
+       未加载时由 updateBadgeIcons() 于 zoom≥13 后补齐 */
     if (badgesMap && staFC && staFC.features) {
+      const seen = new Set();
       for (const f of staFC.features) {
         const nm = f.properties && f.properties.station;
-        if (nm && (badgesMap[nm] || (badgesLines && badgesLines.stations[nm])) && !f.properties.badgeIcon) f.properties.badgeIcon = 'bd_' + nm;
+        if (!nm || seen.has(nm) || !(badgesMap[nm] || (badgesLines && badgesLines.stations[nm]))) continue;
+        seen.add(nm);
+        f.properties.badgeIcon = 'bd_' + nm;
+        f.properties.badgeN = badgeCountOf(nm);
       }
     }
     map.addSource('stas', { type: 'geojson', data: staFC });
@@ -4333,10 +4355,20 @@ function addMapLayers() {
        z13 以下只显示灰点(stas 层),放大后徽章淡入 —— 与 DokoRail zooms.body=13 一致。 */
     map.addLayer({ id: 'stas-badge', type: 'symbol', source: 'stas', minzoom: 13, layout: {
       'icon-image': ['get', 'badgeIcon'],
-      /* 自适应尺寸:z13 刚出徽章时小小一个(能看一条线几站)→ 随放大渐大 → z19 聚焦车站相对最大 */
-      'icon-size': ['interpolate', ['linear'], ['zoom'], 13, 0.12, 15, 0.20, 17, 0.34, 19, 0.50],
+      /* 自适应尺寸:z13 刚出徽章时小小一个(能看一条线几站)→ 随放大渐大 → z19 聚焦车站相对最大。
+         多枚并排站按枚数微缩(2 枚 ×0.92 / 3 枚 ×0.85 / ≥4 枚 ×0.78)——合成图宽度随枚数倍增,
+         不微缩的话密集城区(新宿/東京一屏数枚)糊成一片;单枚站保持原值不变 */
+      'icon-size': ['match', ['coalesce', ['get', 'badgeN'], 1],
+        1, ['interpolate', ['linear'], ['zoom'], 13, 0.12, 15, 0.20, 17, 0.34, 19, 0.50],
+        2, ['interpolate', ['linear'], ['zoom'], 13, 0.11, 15, 0.18, 17, 0.31, 19, 0.46],
+        3, ['interpolate', ['linear'], ['zoom'], 13, 0.10, 15, 0.17, 17, 0.29, 19, 0.42],
+        ['interpolate', ['linear'], ['zoom'], 13, 0.09, 15, 0.16, 17, 0.27, 19, 0.39]],
       'icon-allow-overlap': true, 'icon-ignore-placement': true, 'icon-anchor': 'center', 'icon-optional': true },
-      paint: { 'icon-opacity': ['interpolate', ['linear'], ['zoom'], 13, 0, 13.6, 1] } });
+      /* 密度分级(对齐 DokoRail zooms.lines4=13/lines7=15 的思路):≥4 枚的大站推迟到 z14 才淡入,
+         z13 全景时大城市中心几十个多线站不糊屏;1–3 枚保持 z13 淡入 */
+      paint: { 'icon-opacity': ['case', ['>=', ['coalesce', ['get', 'badgeN'], 1], 4],
+        ['interpolate', ['linear'], ['zoom'], 14, 0, 14.6, 1],
+        ['interpolate', ['linear'], ['zoom'], 13, 0, 13.6, 1]] } });
     map.addLayer(trainShaderLayer, 'stas-badge');
   }
   // 高亮层(仅首次创建,避免每帧重复 addSource/addLayer)

@@ -1845,6 +1845,8 @@ function normName(n) { return String(n).replace(/\([^)]*\)/g, '').replace(/[ケ�
    ① 子串匹配+坐标≤0.15km+目标有班次(20站); ② 异体字/符号归一+坐标+班次复核(9站,含難波→なんば、広電西広島（己斐）→広電西広島・己斐、ディズニーリゾートライン半角·站名等);
    value 为 tmaps 站名经 normName 后的索引 key。 */
 const STATION_ALIAS = {
+  '高松': '高松(香川県)',
+  '松山': '松山(愛媛県)',
   '伝馬町': '熱田神宮伝馬町',
   '神宮西': '熱田神宮西',
   '大手町駅前': '大手町',
@@ -5109,7 +5111,7 @@ function updateDetailLive(t, p, M, rebuild) {
             '<span class="dot" style="--dc:' + dotCol + '"></span>' +
             (k < N - 1 ? '<span class="vln dn" style="background:' + dnCol + '"></span>' : '') +
             '</span><span class="vc"><span class="vnm">' + esc(t.jas[k]) + '</span><span class="vmeta">' +
-            (PLATMAP && PLATMAP.t && PLATMAP.t[t.t] && PLATMAP.t[t.t][k] ? '<span class="vplat" title="' + T().colPlat + '">' + PLATMAP.t[t.t][k].replace(/;/g, '/') + '</span>' : '') +
+            (_platAt(PLATMAP && PLATMAP.t && PLATMAP.t[t.t], k) ? '<span class="vplat" title="' + T().colPlat + '">' + _platAt(PLATMAP && PLATMAP.t && PLATMAP.t[t.t], k).replace(/;/g, '/') + '</span>' : '') +
             (tm.length ? '<span class="vtm">' + tm.join('<i class="sep">·</i>') + '</span>' : '') +
             '</span></span></div>';
         }
@@ -5664,6 +5666,48 @@ function _mergePlat(a, b) {
   const sa = String(a).split(';').filter(Boolean), sb = String(b).split(';').filter(Boolean);
   return Array.from(new Set([...sa, ...sb])).join(';');
 }
+/* 站台聚合站名 key：仅去空格/ケヶ/駅，保留括号消歧（高松(石川県) vs 高松） */
+function platKey(n) { return String(n).replace(/[ケヶ]/g, 'ヶ').replace(/駅$/, '').trim(); }
+/* 括号站名区域校验：括号内容与线路名区域强相关才保留，拦截 norm 同名站串线（高松(石川県)↔予讃線） */
+const PLAT_REGION_RE = /(?:石川|いしかわ|IR|七尾|あいの風|ハピライン|北陸|能登|のと|富山|福井|東京|都電|モノレール|モノ|山手|中央|総武|京王|小田急|京急|西武|東武|メトロ|地下鉄|都営|愛知|名古屋|名鉄|近鉄|大阪|阪神|阪急|兵庫|神戸|京都|奈良|滋賀|和歌山|三重|岐阜|静岡|山梨|長野|新潟|群馬|栃木|茨城|埼玉|千葉|神奈川|横浜|北海道|札幌|函館|青森|岩手|宮城|仙台|秋田|山形|福島|広島|山口|島根|鳥取|岡山|香川|徳島|愛媛|松山|高知|福岡|北九州|佐賀|長崎|熊本|大分|宮崎|鹿児島|沖縄|飯田|アルピコ|軌道|市営|阪堺|南海|嵐山|京福|京阪|神鉄|加古川|福知山|日豊|指宿|讃|徳|琴平|伊予|土讃|今治|東海道|東北本線|常磐|京浜|根岸|埼京|川越|八高|武蔵野|京葉|京成|都営|ゆりかもめ|りんかい|みなとみらい|多摩|青梅|五日市|篠ノ井|信越|上越|羽越|米坂|只見|磐越|大湊|山田|八戸|いわて銀河|青い森|津軽|五能|男鹿|花輪|北上|釜石|三陸|大船渡|気仙沼|石巻|仙石|仙山|水郡|水戸|鹿島|成田|内房|外房|久留里|東金|房総|南武|鶴見|相鉄|江ノ島|東急|田園都市|大井町|池上|多摩川|目黒|井の頭|北総|新京成|東葉|芝山|羽田|湘南|伊東|御殿場|身延|太多|高山|紀勢|参宮|名松|阪和|関西|大阪環状|桜島|大和路線|おおさか東|山陰|播但|姫新|宇野|瀬戸大橋|伯備|芸備|福塩|呉|可部|岩徳|山口|美祢|境|赤穂|津山|因美|木次|三江|舞鶴|小浜|越美北|えちごトキめき|湖西|北陸新幹線|信越本線|上越新幹線|東北新幹線|山形新幹線|秋田新幹線|北海道新幹線|室蘭|千歳|根室|釧路|石北|宗谷|留萌|日高|胆振|富良野|札沼|学園都市|函館市電|札幌市営|南北線|東西線|東豊線|空港|快速エアポート)/;
+/* 括号站名区域校验：zone→必须词（高松三站等已知 norm 串线组），其余 zone 用区域正则放宽 */
+const PLAT_ZONE_MUST = {
+  '石川県': ['石川','いしかわ','IR','七尾','あいの風','ハピライン','北陸','能登','のと','金沢'],
+  '東京都': ['東京','都','モノ','山手','中央','総武','京王','小田急','京急','西武','東武','メトロ','地下鉄','都営','京成','多摩','青梅','武蔵野','京葉','常磐','京浜','根岸','埼京','川越','八高','五日市'],
+  '香川県': ['香川','讃','徳','琴平','多度津','土讃','高松','四国','瀬戸'],
+  '愛媛県': ['愛媛','讃','伊予','今治','松山','内子','宇和島','高浜'],
+  '福井県': ['福井','ハピライン','えちご','北陸','越美北','小浜','敦賀','三国','九頭竜'],
+  '富山県': ['富山','あいの風','北陸','城端','氷見','高岡','黒部','万葉','地鉄','アルプス','射水','富山港'],
+  '新潟県': ['新潟','越後','上越','信越','羽越','米坂','磐越','白新','えちご','北越','弥彦','妙高','飯山'],
+  '宮城県': ['宮城','仙台','仙石','仙山','常磐','東北本線','石巻','気仙沼','阿武隈','南北','東西','東豊'],
+  '広島県': ['広島','芸備','可部','呉','福塩','山陽','宇品','アストラム','宮島'],
+  '福岡県': ['福岡','筑豊','日田彦山','香椎','鹿児島本線','博多','貝塚','西鉄','甘木','福北','箱崎'],
+  '長野県': ['長野','信越','篠ノ井','飯山','大糸','北しなの','上田','小海','松本','アルピコ','えちご','飯田'],
+  '北海道': ['北海道','札幌','函館','室蘭','千歳','根室','釧路','石北','宗谷','留萌','日高','胆振','富良野','札沼','学園','空港'],
+  '大阪府': ['大阪','阪','おおさか','関西','大和','阪和','関空','なにわ','梅田','環状','堺'],
+  '兵庫県': ['兵庫','神戸','阪','山陽','姫','播但','加古川','福知山','篠山','三田','有馬','神鉄','北神','ポート','六甲','和田岬'],
+  '京都府': ['京都','山陰','奈良','近鉄','京阪','嵯峨','嵐山','宇治','湖西','琵琶湖','嵯峨野'],
+  '愛知県': ['愛知','名古屋','名鉄','東海道','中央本線','関西本線','近鉄','豊橋','蒲郡','三河','知多','名古屋市営','あおなみ','リニモ','ゆとりーと'],
+};
+function platOk(nm, ln) {
+  const m = String(nm).match(/[（(]([^)）]+)[)）]/);
+  if (!m) return true;
+  const zone = m[1];
+  const must = PLAT_ZONE_MUST[zone];
+  if (must) return must.some(w => ln.indexOf(w) >= 0);
+  if (PLAT_REGION_RE.test(zone)) return PLAT_REGION_RE.test(ln);
+  return true;
+}
+/* v3：byRid={线路名:[plat|null,...]} 取 k 站全部线路站台并集（详情徽章用，pw 全集对齐 doko） */
+function _platAt(byRid, k) {
+  if (!byRid) return '';
+  let s = '';
+  for (const rid in byRid) {
+    const p = byRid[rid][k];
+    if (p && s.indexOf(p) < 0) s = s ? s + ';' + p : p;
+  }
+  return s;
+}
 function buildPlatIndex() {
   if (_platIdx) return Promise.resolve(_platIdx);
   if (_platIdxP) return _platIdxP;
@@ -5673,19 +5717,16 @@ function buildPlatIndex() {
       if (tm && pm) {
         for (const tid in pm) {
           const t = tm[tid]; if (!t || !t.s_jas) continue;
-          const pws = pm[tid], lines = t.lines || [];
-          let ln = lines[0] || '';                                   // 主线路名（避免 lines 标签集合张冠李戴）
-          if (lines.length > 1) {                                    // JR East 新干线班次 lines 首位是系统名：优先取实际线
-            for (const cand of ['北陸新幹線', '上越新幹線', '山形新幹線', '秋田新幹線']) {
-              if (lines.includes(cand)) { ln = cand; break; }
+          const byRid = pm[tid];
+          for (const ln in byRid) {                       // ln = doko 真实运营线名（已消歧，非 lines 标签）
+            const pws = byRid[ln];
+            for (let k = 0; k < t.s_jas.length; k++) {
+              const pw = pws[k]; if (!pw) continue;
+              const nm = platKey(t.s_jas[k]); if (!nm) continue;
+              if (!platOk(t.s_jas[k], ln)) continue;       // 括号站区域校验，防 norm 同名串线
+              let arr = idx.get(nm); if (!arr) { arr = new Map(); idx.set(nm, arr); }
+              arr.set(ln, _mergePlat(arr.get(ln), pw));
             }
-          }
-          if (!ln) continue;
-          for (let k = 0; k < t.s_jas.length; k++) {
-            const pw = pws[k]; if (!pw) continue;
-            const nm = normName(t.s_jas[k]); if (!nm) continue;
-            let arr = idx.get(nm); if (!arr) { arr = new Map(); idx.set(nm, arr); }
-            arr.set(ln, _mergePlat(arr.get(ln), pw));
           }
         }
       }
@@ -5698,7 +5739,16 @@ function buildPlatIndex() {
 async function buildPlatRefHtml(stName) {
   try {
     const idx = await buildPlatIndex();
-    const arr = idx.get(normName(stName));
+    let key = platKey(stName);
+    let arr = idx.get(key);
+    if (!arr) {
+      // 括号站兜底：地图名可能不带括号（高松→高松(香川県)），norm 反查唯一候选或别名
+      const normN = normName(stName);
+      let cands = [];
+      for (const k of idx.keys()) { if (normName(k) === normN) cands.push(k); }
+      if (cands.length === 1) arr = idx.get(cands[0]);
+      else if (STATION_ALIAS[stName]) arr = idx.get(platKey(STATION_ALIAS[stName]));
+    }
     if (!arr || !arr.size) return '';
     let h = '<div class="sec plat-ref"><div class="sec-t">' + _escTxt(T().platRefTitle) + '<small title="' + _escTxt(T().platRefTip) + '">dokorail</small></div>';
     arr.forEach((pw, ln) => {
@@ -5784,12 +5834,13 @@ async function renderGuideTab() {
   box.innerHTML = '<div class="gd-loading">' + _escTxt(T().gdLoading) + '</div>';
   const data = await _loadGuideData();
   const rec = data[normName(sheetStation)];
+  const t = T();
   _guideKey = sheetStation;
   if (!rec) {
-    box.innerHTML = '<div class="gd-empty">' + _escTxt(T().gdEmpty) + '</div>';
+    // wiki 数据缺失时仍显示站台参考（站台数据与百科独立）
+    box.innerHTML = (platHtml || '') + '<div class="gd-empty">' + _escTxt(t.gdEmpty) + '</div>';
     return;
   }
-  const t = T();
   let h = '';
   h += `<div class="gd-head"><div class="gd-title">${_escTxt(rec.name || sheetStation)}</div><div class="gd-sub">${_escTxt(rec.operator || '')}</div></div>`;
   // 各线路站台参考：站名/运营商下方

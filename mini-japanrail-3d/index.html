@@ -91,6 +91,11 @@
     if (soft || (mobile && (cores <= 4 || mem <= 3)) || (!mobile && cores <= 2 && mem <= 2)) {
       document.documentElement.classList.add('perf-low');
       window.__PERF_LOW = true;
+    } else if (!mobile && cores <= 4) {
+      /* 中端档(桌面 3-4 核):保持全部功能与画质设置,仅把渲染分辨率钳到 1.5×。
+         全视网膜(2×)渲染像素数是 1.5× 的 1.8 倍,叠加 MSAA 后是持续发热大头;
+         视觉差异仅线条稍软,几乎不可感。高端设备不受影响。 */
+      window.__PERF_MID = true;
     }
   } catch (e) {}
 })();
@@ -3948,7 +3953,9 @@ function initMap() {
       pixelRatio: Math.min(window.devicePixelRatio || 1, 1.25),
       crossSourceCollisions: false,
       zoomAnimation: false,
-    } : {}),
+    } : (window.__PERF_MID ? {
+      pixelRatio: Math.min(window.devicePixelRatio || 1, 1.5),
+    } : {})),
     /* 瓦片请求治理(修复底图同 URL 反复请求):
        1) refreshExpiredTiles:false → 栅格瓦片改走 <img> 加载(默认 true 走 fetch 读取缓存头,
           但 GSI 不返回 Cache-Control/Expires,反而让同 URL 的重复请求每次都真实走网络);
@@ -4683,14 +4690,21 @@ function startLoop() {
       if (followTrip) tickFollow(M, dt);
       return;
     }
-    /* ★ 渲染管线优化:列车顶点按 zoom 自适应隔帧重建 —— 实时模式列车插值每帧屏幕位移
-       低 zoom(全国/区域视图)远小于 1px、高 zoom 也仅 ~1.4px(z16 新干线 300km/h),因此
-       z<8 隔 2 帧(≈50ms)、z8-13 隔 1 帧(≈33ms)、z≥13 每帧更新:低 zoom 车最多成本最高
-       降频收益最大且视觉无感,高 zoom 车少成本低保持全帧。淡入淡出 alpha 用真实累计帧间隔
-       dt 推进,渐变速率不变。相机变化帧(viewDirty)、跟随/详情模式必须每帧重建,不降频。 */
+    /* ★ 渲染管线优化(2026-10 二轮,降帧耗/发热):
+       1) 顶点重建隔帧:实时列车屏幕位移低 zoom 远小于 1px/帧、高 zoom 也仅 ~1.4px
+          (60fps 下),z<8 隔 2 帧(20fps)、z≥8 隔 1 帧(30fps)重建——同速直线运动
+          肉眼无差,淡入淡出 alpha 用真实 dt 推进渐变速率不变;
+       2) z≥13 不再例外全帧:街景级是 GPU 最贵档(瓦片最多/填充最大/MSAA 全开),
+          30fps 下新干线位移 2.8px/帧,视觉等效,GPU 时间直接减半;
+       3) 详情面板不再强制全帧:面板 DOM 有变化守卫、每 tick 独立更新,单列车顶点
+          无需 60Hz 重建(相机不锁定;跟随模式仍全帧);
+       4) 整幅渲染随重建节流:跳过帧的渲染输出与上一帧逐像素相同(缓冲/相机未变),
+          原先仍全量重绘栅瓦片+线层+标签+列车 GL,纯发热。现在仅重建帧调度重绘,
+          交互(viewDirty)/跟随/瓦片加载帧 MapLibre 自行渲染,跟手性不变;
+          玻璃面板 backdrop-filter 的重模糊频率随地图重绘同步下降。 */
     const zz = map.getZoom();
-    const frameStride = zz < 8 ? 3 : (zz < 13 ? 2 : 1);
-    const needTrains = viewDirty || followTrip || liveDetailTrip || frameC++ % frameStride === 0;
+    const frameStride = zz < 8 ? 3 : 2;   /* 重建率:z<8 ≈20fps,z≥8 ≈30fps */
+    const needTrains = viewDirty || followTrip || frameC++ % frameStride === 0;
     viewDirty = false; /* 相机已稳定:本帧重建后清除,恢复暂停态省电 */
     if (needTrains) { updateTrains(M, dt * 1000); /* dt 传给淡入淡出:按真实帧间隔推进 alpha,掉帧时时长不变 */
       try { M3D.frame(); } catch (e) { __pushErr('M3D.frame ' + e); } /* 高倍率 3D 模型覆盖层(内部自判门控) */ }
@@ -4706,7 +4720,9 @@ function startLoop() {
     }
     /* 跟随列车名称标签已按 MC 要求停用(名牌贴在图标上难看)——保持隐藏,不再显示 */
     trTagEl.style.display = 'none';
-    map.triggerRepaint(); /* 每帧调度一次渲染即可(原先重复调用无附加作用,徒增调度开销) */
+    /* ★ 仅在重建帧调度整幅重绘(渲染节流,见上方管线优化注释)。
+       交互帧 MapLibre 因相机变化自行渲染;瓦片到达也自行触发,不受此影响 */
+    if (needTrains) map.triggerRepaint();
   };
   rafId = requestAnimationFrame(tick);
   /* 页面隐藏时彻底停渲染循环省电,可见时恢复 */
@@ -4727,8 +4743,7 @@ function refreshClockUI(M) {
   const effBit = dayMode === 'auto' ? bitOfDate(simNow()) : dayMode;
   const label = DAY_LABEL[effBit];
   const ds = (clockMode === 'live' ? '● ' : '⏵ ') + (label ? label[lang] : '') + ' ' + pad(p.m) + '/' + pad(p.d);
-  if (ds !== lastDayStr) { cDayEl.textContent = ds; lastDayStr = ds; }
-  cDayEl.title = (label ? label[lang] : '') + ' · ' + T().dayT;
+  if (ds !== lastDayStr) { cDayEl.textContent = ds; cDayEl.title = (label ? label[lang] : '') + ' · ' + T().dayT; lastDayStr = ds; }
   const sv = Math.floor(M);
   if (!sliderDragging && clockMode === 'live' && sv !== lastSliderVal) {
     sliderEl.value = sv; lastSliderVal = sv;

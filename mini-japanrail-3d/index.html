@@ -257,7 +257,7 @@ button { font-family:inherit; }
 .gcircle svg { position:relative; z-index:1; transition:transform .38s var(--ease-spring); }
 .btn { min-width:32px; min-height:32px; padding:0 11px; border:1px solid var(--line); border-radius:var(--r-sm); background:transparent;
   color:var(--txt); font-size:12px; font-weight:600; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;
-  backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); box-shadow:none; user-select:none; -webkit-user-select:none; transition:background .12s,border-color .12s,transform .3s var(--ease-spring); }
+  box-shadow:none; user-select:none; -webkit-user-select:none; transition:background .12s,border-color .12s,transform .3s var(--ease-spring); } /* 无嵌套模糊:父容器(时钟/详情/侧栏)已 blur */
 .btn:hover { border-color:var(--acc-border); background:var(--acc-soft); }
 .btn:active { transform:scale(.94); transition:transform .1s ease-in; }
 .btn:focus-visible { outline:2px solid var(--acc); outline-offset:1px; }
@@ -498,9 +498,9 @@ button { font-family:inherit; }
 #m3dViewer .m3d-tx { flex:1; min-width:0; }
 #m3dViewer .m3d-nm { font-size:15px; font-weight:800; color:var(--txt); text-shadow:0 1px 6px rgba(0,0,0,.6); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 #m3dViewer .m3d-sub { font-size:11px; color:var(--dim); margin-top:2px; text-shadow:0 1px 4px rgba(0,0,0,.6); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-#m3dViewer .m3d-x { pointer-events:auto; width:34px; height:34px; min-width:34px; min-height:34px; padding:0; border-radius:50%; border:1px solid rgba(255,255,255,.16); background:rgba(10,14,22,.55); color:var(--txt); display:flex; align-items:center; justify-content:center; cursor:pointer; -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); }
+#m3dViewer .m3d-x { pointer-events:auto; width:34px; height:34px; min-width:34px; min-height:34px; padding:0; border-radius:50%; border:1px solid rgba(255,255,255,.16); background:rgba(10,14,22,.55); color:var(--txt); display:flex; align-items:center; justify-content:center; cursor:pointer; } /* 无嵌套模糊:#m3dMask 已 blur */
 #m3dViewer .m3d-x:hover { background:rgba(40,52,72,.72); }
-#m3dViewer .m3d-hint { position:absolute; left:50%; bottom:max(14px,env(safe-area-inset-bottom)); transform:translateX(-50%); z-index:2; font-size:11px; color:var(--dim); background:rgba(8,12,20,.5); border:1px solid rgba(255,255,255,.1); border-radius:999px; padding:6px 14px; pointer-events:none; text-align:center; -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); }
+#m3dViewer .m3d-hint { position:absolute; left:50%; bottom:max(14px,env(safe-area-inset-bottom)); transform:translateX(-50%); z-index:2; font-size:11px; color:var(--dim); background:rgba(8,12,20,.5); border:1px solid rgba(255,255,255,.1); border-radius:999px; padding:6px 14px; pointer-events:none; text-align:center; } /* 无嵌套模糊:#m3dMask 已 blur */
 #m3dViewer .m3d-load { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); z-index:2; color:var(--dim); font-size:12.5px; display:flex; flex-direction:column; align-items:center; gap:10px; pointer-events:none; }
 #m3dViewer .m3d-load .spin { width:26px; height:26px; border-radius:50%; border:2.5px solid rgba(120,150,200,.22); border-top-color:var(--acc-txt); animation:m3dSpin .8s linear infinite; }
 @keyframes m3dSpin { to { transform:rotate(360deg); } }
@@ -540,8 +540,7 @@ button { font-family:inherit; }
 #detail .d-act { display:flex; gap:7px; margin-top:12px; }
 #detail .d-act .btn { min-height:40px; font-size:12.5px; font-weight:600; flex:1; padding:0 12px; border-radius:var(--r-pill);
   border:1px solid var(--glass-edge); background:var(--glass); color:var(--txt);
-  backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
-  box-shadow:inset 0 1px 0 var(--glass-hi), 0 2px 8px var(--glass-lo); }
+  box-shadow:inset 0 1px 0 var(--glass-hi), 0 2px 8px var(--glass-lo); } /* 无嵌套模糊:#detail 已 blur */
 #detail .d-act .btn:hover { background:var(--glass-2); border-color:var(--glass-hi); }
 #detail .d-act .btn:active { transform:scale(.96); }
 #detail .d-act .btn.on { background:var(--acc); border-color:var(--acc); color:#fff; box-shadow:0 4px 14px var(--acc-soft), inset 0 1px 0 rgba(255,255,255,.3); }
@@ -549,8 +548,7 @@ button { font-family:inherit; }
 #detail .d-x, #sheet .sh-x { margin-left:auto; flex:none; width:32px; height:32px; min-width:32px; min-height:32px; padding:0;
   border-radius:50%; border:1px solid var(--glass-edge); background:rgba(120,140,180,.22); color:var(--dim);
   display:flex; align-items:center; justify-content:center;
-  backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
-  transition:background .15s,color .15s,transform .3s var(--ease-spring); }
+  transition:background .15s,color .15s,transform .3s var(--ease-spring); } /* 无嵌套模糊:#detail/#sheet 已 blur */
 #detail .d-x:hover, #sheet .sh-x:hover { background:rgba(120,140,180,.42); color:var(--txt); }
 #detail .d-x:active, #sheet .sh-x:active { transform:scale(.86); transition:transform .1s ease-in; }
 /* 停靠站时间线(去外框,内嵌高亮行) */
@@ -873,8 +871,7 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
 #sheet .grp-op .op-logo { max-height:22px; max-width:72px; width:auto; height:auto; object-fit:contain; background:#fff; border-radius:4px; padding:2px 5px; flex:none; }
 #sheet .grp-op .op-ic { min-width:22px; height:22px; padding:0 4px; border-radius:6px; background:#1a853c; color:#fff; font-size:10px; font-weight:900; display:flex; align-items:center; justify-content:center; }
 .lrow { display:flex; align-items:center; gap:12px; padding:13px 14px; margin:8px 0; border:1px solid var(--glass-edge); border-radius:16px; background:var(--glass); cursor:pointer; user-select:none; -webkit-user-select:none;
-  backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
-  box-shadow:inset 0 1px 0 var(--glass-hi), 0 2px 8px var(--glass-lo);
+  box-shadow:inset 0 1px 0 var(--glass-hi), 0 2px 8px var(--glass-lo); /* 无嵌套模糊:#sheet 已 blur */
   transition:background .12s, transform .18s var(--ease-smooth); }
 .lrow:hover { background:var(--glass-2); transform:translateY(-1px); }
 .lrow:active { transform:scale(.985); }
@@ -887,11 +884,11 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
 .lpanel { margin:2px 0 12px; border-left:3px solid var(--lc,#4f8ef7); padding:0 0 0 12px; display:none; }
 .lpanel.open { display:block; }
 .type-chips { display:flex; gap:6px; padding:6px 0 10px; flex-wrap:wrap; }
-.type-chips .tc { padding:5px 15px; border-radius:var(--r-pill); font-size:12.5px; font-weight:700; cursor:pointer; background:rgba(120,140,180,.15); color:var(--dim); border:1px solid var(--glass-edge); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); transition:background .15s,color .15s,transform .1s; }
+.type-chips .tc { padding:5px 15px; border-radius:var(--r-pill); font-size:12.5px; font-weight:700; cursor:pointer; background:rgba(120,140,180,.15); color:var(--dim); border:1px solid var(--glass-edge); transition:background .15s,color .15s,transform .1s; } /* 无嵌套模糊:#sheet/#detail 已 blur */
 .type-chips .tc:hover { background:rgba(120,140,180,.24); color:var(--txt); }
 .type-chips .tc:active { transform:scale(.94); }
 .type-chips .tc.on { background:var(--acc); color:#fff; border-color:var(--acc); box-shadow:0 2px 8px var(--acc-soft); }
-.dir { margin:10px 0; border-radius:16px; overflow:hidden; border:1px solid color-mix(in srgb,var(--lc,#4f8ef7) 40%, transparent); background:color-mix(in srgb,var(--lc,#4f8ef7) 8%, transparent); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); }
+.dir { margin:10px 0; border-radius:16px; overflow:hidden; border:1px solid color-mix(in srgb,var(--lc,#4f8ef7) 40%, transparent); background:color-mix(in srgb,var(--lc,#4f8ef7) 8%, transparent); } /* 无嵌套模糊:宿主抽屉已 blur */
 .dir .d-head { display:flex; align-items:center; padding:12px 14px; gap:8px; }
 .dir .d-to { font-size:15.5px; font-weight:800; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .dir .d-more { font-size:12px; color:#ffd9a0; cursor:pointer; white-space:nowrap; padding:4px 8px; border-radius:6px; background:rgba(255,255,255,.08); }

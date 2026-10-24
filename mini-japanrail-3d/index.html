@@ -3717,7 +3717,7 @@ function updateTrains(M, dtms) {
      新进入的班次从 0 起步(下一帧开始淡入),离开的班次衰减到 0 后才真正移出 fadeList,
      因此缩放/平移时列车是渐显渐隐,不会突然出现或消失。 */
   const step = (dtms > 0 ? dtms : 16.7) / FADE_MS;
-  let w = 0;
+  let w = 0, fadingNow = false;
   for (let i = 0; i < fadeList.length; i++) {
     const t = fadeList[i];
     /* 目标 alpha = 本帧应显示(_ok) 且 未被类型过滤(_k 为上次解算得到的线路类型)。
@@ -3727,6 +3727,8 @@ function updateTrains(M, dtms) {
     t._fm = stamp;
     if (t._f < tgt) t._f = Math.min(tgt, t._f + step);
     else if (t._f > tgt) t._f = Math.max(tgt, t._f - step);
+    /* 渐变未到目标(含刚起步的 0):标记本轮有淡入淡出,tick 升帧保平滑 */
+    if (t._f < 0.985) fadingNow = true;
     if (tgt === 0 && t._f <= 0.005) continue;   /* 淡出完毕 → 移出集合 */
     fadeList[w++] = t;
   }
@@ -3739,7 +3741,9 @@ function updateTrains(M, dtms) {
     if (t._k !== null && !selKind[t._k]) continue;
     t._f = 0;                                   /* 新进入:从全透明起淡入 */
     fadeList.push(t);
+    fadingNow = true;
   }
+  anyFading = fadingNow;
 
   /* ── 阶段 3:位置解算 + 顶点构建(只对 alpha>0 的班次,即真正画到屏幕上的那一批) ── */
   let stopped = -1;
@@ -4349,16 +4353,20 @@ function updateBadgeIcons() {
   for (const f of data.features) {
     const nm = f.properties && f.properties.station;
     if (!nm || !(badgesMap[nm] || (badgesLines && badgesLines.stations[nm]))) continue;
-    const g = f.geometry && f.geometry.coordinates;
-    if (!g) continue;
-    let pt = null;
-    try { pt = map.project(g); } catch (e) {}
-    if (!pt || pt.x < -pad || pt.x > cw + pad || pt.y < -pad || pt.y > ch + pad) continue;
     if (seen.has(nm)) { /* 同站后续 feature:清掉可能残留的 icon 属性(旧版数据/热更新) */
       if (f.properties.badgeIcon || f.properties.fbBadge) { delete f.properties.badgeIcon; delete f.properties.badgeN; delete f.properties.fbBadge; changed = true; }
       continue;
     }
     seen.add(nm);
+    /* 稳态快速通道:属性已写且 icon 已注册 → 什么都不用做。
+       此前 project 在最前,z13+ 驻留时每 200ms 对 ~4k 站全量投影(常驻 ~2% CPU),
+       现在稳态只剩属性字符串比较,零投影 */
+    if (f.properties.badgeIcon && badgesIcons.has(f.properties.badgeIcon)) continue;
+    const g = f.geometry && f.geometry.coordinates;
+    if (!g) continue;
+    let pt = null;
+    try { pt = map.project(g); } catch (e) {}
+    if (!pt || pt.x < -pad || pt.x > cw + pad || pt.y < -pad || pt.y > ch + pad) continue;
     if (!f.properties.badgeIcon) {
       f.properties.badgeIcon = 'bd_' + nm; f.properties.badgeN = badgeCountOf(nm);
       delete f.properties.fbBadge; /* 从兜底色圆升级为专属徽章(addMapLayers 预写时 map 未就绪的场景) */
@@ -4646,6 +4654,9 @@ let lastActiveN = -1, lastFpsSec = -1;
    必须据此重建列车顶点 —— 否则图元停留在旧视口与旧 zoom:缩小后只剩旧区域附近几辆车、
    图标按旧 zoom 被放大,直到再次交互时间轴才恢复。 */
 let viewDirty = false;
+/* 本轮 updateTrains 是否有淡入淡出进行中(alpha 未到目标):tick 据此临时提高重建率,
+   保证 260ms 渐变在低空闲帧率下依然平滑(见 tick 的自适应步长) */
+let anyFading = false;
 function startLoop() {
   function tickFollow(M, dt) {
     if (performance.now() - followStartT <= 950) return;
@@ -4709,9 +4720,18 @@ function startLoop() {
           原先仍全量重绘栅瓦片+线层+标签+列车 GL,纯发热。现在仅重建帧调度重绘,
           交互(viewDirty)/跟随/瓦片加载帧 MapLibre 自行渲染,跟手性不变;
           玻璃面板 backdrop-filter 的重模糊频率随地图重绘同步下降。 */
+    /* ★ 重建率按「画面内容变化速度」自适应(四轮,降发热):
+       实时列车屏幕位移极慢 —— z<5 每秒 <0.1px(全国视图 0.01px/s 量级),z≥8 也仅
+       ~1px/帧(30fps)—— 静态时重建/重绘频率只需跟上人眼可感知的变化:
+       z<5 4fps、z5-8 10fps、z≥8 30fps;淡入淡出进行中(anyFading)临时升 15fps
+       保 260ms 渐变平滑;交互(viewDirty)/跟随/拖动时间轴仍全帧,跟手性不变。
+       全国视图(默认落地视野)常驻渲染从 20fps 降到 4fps,GPU/发热约 -80%。 */
     const zz = map.getZoom();
-    const frameStride = zz < 8 ? 3 : 2;   /* 重建率:z<8 ≈20fps,z≥8 ≈30fps */
-    const needTrains = viewDirty || followTrip || frameC++ % frameStride === 0;
+    let frameStride;
+    if (viewDirty || followTrip || sliderDragging) frameStride = 1;
+    else if (anyFading) frameStride = 4;
+    else frameStride = zz < 5 ? 15 : (zz < 8 ? 6 : 2);
+    const needTrains = frameC++ % frameStride === 0;
     viewDirty = false; /* 相机已稳定:本帧重建后清除,恢复暂停态省电 */
     if (needTrains) { updateTrains(M, dt * 1000); /* dt 传给淡入淡出:按真实帧间隔推进 alpha,掉帧时时长不变 */
       try { M3D.frame(); } catch (e) { __pushErr('M3D.frame ' + e); } /* 高倍率 3D 模型覆盖层(内部自判门控) */ }

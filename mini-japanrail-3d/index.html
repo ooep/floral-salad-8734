@@ -3771,6 +3771,15 @@ function updateTrains(M, dtms) {
   }
   anyFading = fadingNow;
 
+  /* 扫描视口矩形 → 经纬度(阶段 3「视口外免写」判定用;每帧仅 2 次三角换算)。
+     mercator Y 随纬度增大而减小:my1 是南边(纬度小),my0 是北边(纬度大) */
+  let vpLng0 = 0, vpLng1 = 0, vpLat0 = 0, vpLat1 = 0;
+  if (vp) {
+    vpLng0 = vp.mx0 * 360 - 180; vpLng1 = vp.mx1 * 360 - 180;
+    vpLat0 = Math.atan(Math.sinh(Math.PI * (1 - 2 * vp.my1))) * 180 / Math.PI;
+    vpLat1 = Math.atan(Math.sinh(Math.PI * (1 - 2 * vp.my0))) * 180 / Math.PI;
+  }
+
   /* ── 阶段 3:位置解算 + 顶点构建(只对 alpha>0 的班次,即真正画到屏幕上的那一批) ── */
   let stopped = -1;
   for (let i = 0; i < fadeList.length; i++) {
@@ -3785,6 +3794,12 @@ function updateTrains(M, dtms) {
        阶段 1 下一帧会重新标记 _ok,阶段 2 的 alpha 反而继续涨到 1,等定位恢复就"啪"地冒出。
        归零后定位恢复时会从 0 淡入。 */
     if (!p) { t._ok = 0; t._f = 0; continue; }
+    /* 视口外免写(十轮):bbox 级 eligible 在城市级含大量「线路穿过视口但车在远处」的班次
+       (实测正午 z14 東京合格 9402 ≈ 屏内 ~500 的 19 倍)。解算位置在扫描视口缓冲外 →
+       本帧不写顶点:GL 本来就会裁掉,视觉零差异;顶点流/GPU 处理量与颜色/图标解算同省。
+       班次仍在 fadeList(alpha 保持 1),驶入缓冲即恢复写出,边缘无闪现。
+       z<5(全国,globe)无 vp 不裁 —— 全国视图所有在途班次都可能出现在屏内。 */
+    if (vp && (p[0] < vpLng0 || p[0] > vpLng1 || p[1] < vpLat0 || p[1] > vpLat1)) continue;
     /* 记录本帧线路类型,供下一帧阶段 2 判断是否被类型过滤(被过滤时目标 alpha=0,渐隐) */
     t._k = p[4];
     let color = t.color;

@@ -3312,6 +3312,10 @@ void main() {
     gl.bindVertexArray(null);
   },
   render(gl, args) {
+    /* mainMatrix 截获必须在 visibleCount 早退之前:视野内列车全部被 3D 接管时方盒顶点为 0,
+       若在早退之后才截获,覆盖层会因矩阵过期清屏 → 列车整列消失 */
+    const D0 = args.defaultProjectionData;
+    if (D0 && D0.mainMatrix) { __mvpMain = D0.mainMatrix; __mvpT = performance.now(); }
     if (!visibleCount) return;
     __renderCount++;
     // 始终复用第一个已编译程序(globe prelude 内含 mercator 过渡逻辑,tr=0 时等价),
@@ -3325,7 +3329,6 @@ void main() {
     gl.disable(gl.SCISSOR_TEST);
     gl.disable(gl.STENCIL_TEST);
     const D = args.defaultProjectionData;
-    if (D && D.mainMatrix) { __mvpMain = D.mainMatrix; __mvpT = performance.now(); } /* 3D 覆盖层共用本矩阵:与方盒层同源同帧,贴轨一致 */
     __lastArgs = { variant: args.shaderData && args.shaderData.variantName };
     __frameMerc = args.shaderData && args.shaderData.variantName === 'mercator';
     gl.uniformMatrix4fv(U.u_fb, false, D.fallbackMatrix);
@@ -3782,7 +3785,7 @@ function updateTrains(M, dtms) {
       const m3dPath = M3D.pathOf(t);
       if (m3dPath) {
         if (m3dQuota > 0 && M3D.ensureNew(m3dPath)) m3dQuota--;
-        if (M3D.covers(m3dPath)) {
+        if (M3D.ok && M3D.covers(m3dPath)) {
           t._m3d = 1;
           t._m3dD = { lng, lat, brg: p[2], coords: _pos[7], cum: _pos[8], len: _pos[9], arc: _pos[10] };
           visibleTrips.push(t); visibleXY[n * 2] = lng; visibleXY[n * 2 + 1] = lat;
@@ -7011,6 +7014,7 @@ const M3D = (() => {
   const u = p => LOCAL ? p.replace(/^\//, '') : BASE + p;
   /* 模型路径映射表(model_map.json):/models/<车型>/consist.json */
   let modelMap = null, mapP = null, avail = null; /* avail: 可用车型目录清单(models/index.json),缺省 null=不过滤 */
+  let m3dOk = true; /* 相机矩阵可用性:frame 每帧更新;不可用时钩子停止接管(方盒/图标回归) */
   const failedAt = new Map(); /* path → 上次失败时刻(60s 内不重试,防雪崩) */
   /* ── three 懒加载(importmap 已映射 three / three/addons/) ── */
   let THREE = null, GLTFLoaderC = null, KTX2LoaderC = null, OrbitControlsC = null, MeshoptDecoder = null, RoomEnvironmentC = null;
@@ -7340,7 +7344,8 @@ const M3D = (() => {
     if (!w || !h) return;
     if (o.lastW !== w || o.lastH !== h) { o.renderer.setSize(w, h, false); o.lastW = w; o.lastH = h; }
     const mvpArr = __mvpMain || (map.transform && map.transform.modelViewProjectionMatrix) || null;
-    if (!mvpArr || performance.now() - __mvpT > 250) { o.renderer.clear(); return; } /* 矩阵缺失/过期(地图未重绘)跳过 */
+    if (!mvpArr || performance.now() - __mvpT > 250) { o.renderer.clear(); m3dOk = false; return; } /* 矩阵缺失/过期:停止接管,方盒回归(杜绝整列消失) */
+    m3dOk = true;
     const worldSize = 512 * Math.pow(2, map.getZoom());
     const c0 = map.getCenter();
     /* 像素/米:_pixelPerMeter 已含纬度比例(赤道周长/worldSize/cos(lat));缺省时自算 */
@@ -7385,12 +7390,21 @@ const M3D = (() => {
       const inst = rec.inst;
       activeInsts.add(t);
       inst.visible = true;
-      /* 车厢采样:车 i 弧长 = arc + m3dZ(沿行进方向;无折线时整体刚性摆放) */
+      /* 车厢采样:DokoRail 编组约定 car0=头车、+z 轴指向车尾 → 车 i 弧长 = arc − m3dZ
+         (沿行进反方向展开:头车位于前行进端、鼻端朝前=行进方向;无折线时沿方位角刚性外推) */
       for (const cw of inst.children) {
         if (!cw.userData || !cw.userData.m3dCar) continue;
-        const s = (d.arc || 0) + (cw.userData.m3dZ || 0);
+        const back = cw.userData.m3dZ || 0; /* 相对编组中点的向后偏移(米) */
+        const s = (d.arc || 0) - back;
         const sp = (d.coords && d.cum && d.len) ? sampleAt(d.coords, d.cum, d.len, s) : null;
-        const lng = sp ? sp[0] : d.lng, lat = sp ? sp[1] : d.lat, th = sp ? sp[2] : d.brg;
+        let lng, lat, th;
+        if (sp) { lng = sp[0]; lat = sp[1]; th = sp[2]; }
+        else { /* 刚性外推:pos = 锚点 + 行进方向 × (−back) */
+          th = d.brg;
+          const dm = -back;
+          lng = d.lng + Math.sin(th) * dm / (111320 * Math.cos(d.lat * Math.PI / 180));
+          lat = d.lat + Math.cos(th) * dm / 110540;
+        }
         const ex = ((lng + 180) / 360 * worldSize - cx) / ppm; /* 东(米) */
         const sy = (mercY(lat) * worldSize - cy) / ppm;       /* 南(米) */
         /* 局部(x=右,y=上,z=车头) → 世界(x=东,y=南,z=天):makeBasis 列向量;
@@ -7528,6 +7542,7 @@ const M3D = (() => {
     init, pathOf, ensure, ensureNew, covers, frame, clear,
     openViewer, closeViewer, bindDetail,
     get ready() { return modelMap !== null; },
+    get ok() { return m3dOk; },
     __dbg: () => ({ cache: [...cache.keys()], night: nightAmt, insts: ov ? ov.insts.size : 0, failed: [...failedAt.keys()] })
   };
 })();

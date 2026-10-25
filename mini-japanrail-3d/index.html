@@ -563,6 +563,10 @@ button { font-family:inherit; }
 #detail .vn .vln.up { top:0; height:50%; }
 #detail .vn .vln.dn { bottom:0; height:50%; }
 #detail .vn .dot { position:absolute; left:50%; top:50%; width:10px; height:10px; border-radius:50%; transform:translate(-50%,-50%); z-index:2; box-sizing:border-box; border:2px solid var(--dc, var(--glass-edge)); background:var(--glass-solid); }
+#detail .vn .dst-ic { position:absolute; left:50%; top:50%; width:20px; height:20px; transform:translate(-50%,-50%); z-index:2; object-fit:contain; display:block; border-radius:50%; background:var(--glass-solid); box-shadow:0 0 0 1.5px rgba(8,12,20,.55); transition:filter .3s, box-shadow .3s; }
+#detail .dstop.here .dst-ic { box-shadow:0 0 0 2px var(--acc), 0 0 0 5px var(--acc-soft); }
+#detail .dstop.next .dst-ic { box-shadow:0 0 0 2px var(--acc); }
+#detail .dstop.done .dst-ic { filter:grayscale(.9); opacity:.6; }
 #detail .vc { flex:1; min-width:0; display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8.5px 0; }
 #detail .vnm { flex:1 1 auto; min-width:0; font-size:13px; font-weight:600; color:var(--txt); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 #detail .vmeta { flex:0 0 auto; max-width:62%; display:flex; flex-direction:column; align-items:flex-end; gap:2.5px; line-height:1.25; }
@@ -5682,16 +5686,20 @@ function updateDetailLive(t, p, M, rebuild) {
       '<div class="st-list">' +
       (function () {
         let s = '';
+        const _LIC = window.LINE_ICON || {};
         for (let k = 0; k < N; k++) {
           const upCol = (k > 0) ? (lineColor.get(lineOfPair(t, k - 1)) || '#8899aa') : '';
           const dnCol = (k < N - 1) ? (lineColor.get(lineOfPair(t, k)) || '#8899aa') : '';
           const dotCol = upCol || dnCol;
+          /* 站点徽章:对应线路有官方记号 SVG 时替代圆点;优先列车即将驶入的下段线路,其次到达段 */
+          const dstIc = (k < N - 1 && _LIC[lineOfPair(t, k)]) || (k > 0 && _LIC[lineOfPair(t, k - 1)]) || '';
+          const midHtml = dstIc ? '<img class="dst-ic" src="' + dstIc + '" alt="" loading="lazy">' : '<span class="dot" style="--dc:' + dotCol + '"></span>';
           const tm = [];
           if (k > 0) tm.push('<span class="t-arr">' + T().colArr + fmtHm(t.arr[k]) + '</span>');
           if (k < N - 1) tm.push('<span class="t-dep">' + T().colDep + fmtHm(t.dep[k]) + '</span>');
           s += '<div class="dstop" data-i="' + k + '"><span class="vn">' +
             (k > 0 ? '<span class="vln up" style="background:' + upCol + '"></span>' : '') +
-            '<span class="dot" style="--dc:' + dotCol + '"></span>' +
+            midHtml +
             (k < N - 1 ? '<span class="vln dn" style="background:' + dnCol + '"></span>' : '') +
             '</span><span class="vc"><span class="vnm">' + esc(t.jas[k]) + '</span><span class="vmeta">' +
             (_platAt(PLATMAP && PLATMAP.t && PLATMAP.t[t.t], k) ? '<span class="vplat" title="' + T().colPlat + '">' + _platAt(PLATMAP && PLATMAP.t && PLATMAP.t[t.t], k).replace(/;/g, '/') + '</span>' : '') +

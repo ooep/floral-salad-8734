@@ -563,7 +563,7 @@ button { font-family:inherit; }
 #detail .vn .vln.up { top:0; height:50%; }
 #detail .vn .vln.dn { bottom:0; height:50%; }
 #detail .vn .dot { position:absolute; left:50%; top:50%; width:10px; height:10px; border-radius:50%; transform:translate(-50%,-50%); z-index:2; box-sizing:border-box; border:2px solid var(--dc, var(--glass-edge)); background:var(--glass-solid); }
-#detail .vn .dst-ic { position:absolute; left:50%; top:50%; width:20px; height:20px; transform:translate(-50%,-50%); z-index:2; object-fit:contain; display:block; border-radius:50%; background:var(--glass-solid); box-shadow:0 0 0 1.5px rgba(8,12,20,.55); transition:filter .3s, box-shadow .3s; }
+#detail .vn .dst-ic { position:absolute; left:50%; top:50%; width:20px; height:20px; transform:translate(-50%,-50%); z-index:2; object-fit:contain; display:block; border-radius:4.5px; background:rgba(255,255,255,.94); box-shadow:0 0 0 1px rgba(8,12,20,.32), 0 1px 3px rgba(0,0,0,.32); transition:filter .3s, box-shadow .3s; }   /* 浅色底牌+小圆角:圆/方/盾形记号都完整显示,不裁形状 */
 #detail .dstop.here .dst-ic { box-shadow:0 0 0 2px var(--acc), 0 0 0 5px var(--acc-soft); }
 #detail .dstop.next .dst-ic { box-shadow:0 0 0 2px var(--acc); }
 #detail .dstop.done .dst-ic { filter:grayscale(.9); opacity:.6; }
@@ -4076,8 +4076,12 @@ function initMap() {
     container: 'map', style: baseStyle(),
     center: [137.2, 36.8], zoom: 3.4, pitch: 0, bearing: 0,
     minZoom: 1.2, maxZoom: 17.5, maxPitch: 70, /* 17.5:z16 下 200m 编组仅约 200px,提到 17.5 后约 580px,3D 模型可怼脸观察 */
-    /* 抗锯齿:新设备保留(线条更平滑);老旧设备关闭(减少 GPU 过绘制,明显提帧) */
-    canvasContextAttributes: { antialias: !PERF_LOW, preserveDrawingBuffer: false },
+    /* 抗锯齿:新设备保留(线条更平滑);老旧设备关闭(减少 GPU 过绘制,明显提帧)。
+       powerPreference:'low-power':双 GPU 笔记本(独显+核显)默认抓独显渲染整个地图,
+       风扇/发热显著;十五轮降载后 GPU 负载已是零头(嵌套模糊剥离、顶点 -92%、
+       4-30fps 自适应),核显完全够用 —— 观感零变化,单 GPU 设备(含 M 系列)无感。
+       M3D 查看器渲染器同款设置(既有先例);低帧仍有 glowAutoOff/frameSkip 兜底 */
+    canvasContextAttributes: { antialias: !PERF_LOW, preserveDrawingBuffer: false, powerPreference: 'low-power' },
     attributionControl: false,
     /* 全局优化(所有设备,不改变功能/体验):
        1) fadeDuration:0 → 图层无淡入淡出,缩放/切换底图时画面更干脆(与主站根页一致);

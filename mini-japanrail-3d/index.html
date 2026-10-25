@@ -1844,7 +1844,25 @@ async function fetchJSONWithCache(url, phaseKey, fileIdx, silent) {
           await idbPut(key, { v: DATA_VERSION, j, lm: res.headers.get('Last-Modified') || lm, etag: res.headers.get('ETag') || etag, t0: Date.now() });
           return j;
         }
-      } else { if (!silent) updateBar(fIdx, 1, 1); return cached.j; }
+      } else {
+        /* 无校验头(ETag/Last-Modified 皆无)的条目:原先永不重验证 —— 数据已更新仍钉死旧版,
+           是 2026-10-25 乱飞事故的帮凶之一(部分文件曾以无校验头状态被缓存)。
+           改为 24h 后强制重取;离线/失败回退旧缓存并再续 24h(保住离线可用性,不逐次重试) */
+        if (!cached.t0 || Date.now() - cached.t0 < 86400000) { if (!silent) updateBar(fIdx, 1, 1); return cached.j; }
+        try {
+          const res2 = await fetch(url);
+          if (res2.ok) {
+            const j2 = await res2.json();
+            if (!silent) updateBar(fIdx, 1, 1);
+            await idbPut(key, { v: DATA_VERSION, j: j2, lm: res2.headers.get('Last-Modified') || '', etag: res2.headers.get('ETag') || '', t0: Date.now() });
+            return j2;
+          }
+        } catch (e) {}
+        if (!silent) updateBar(fIdx, 1, 1);
+        cached.t0 = Date.now();
+        try { if (idb) await idbPut(key, cached); } catch (e) {}
+        return cached.j;
+      }
     }
   } catch (e) { console.warn('[cache]', e); }
   const res = await fetch(url);
@@ -1874,8 +1892,21 @@ function yieldToUI() { return new Promise(r => setTimeout(r, 0)); }
 /* 索引缓存:静态数据(segments/stations/tmaps/station_map)未变时,二次访问直接从 IDB 恢复,
    跳过 ~8s 的索引构建(segment 网格/焊接/寻路图/搜索索引等) */
 const IDX_CACHE_KEY = 'idx|' + DATA_VERSION;
+function idxFingerprint() {
+  /* 索引输入指纹:静态输入的内容签名。与 DATA_VERSION 双保险 —— 版本号靠纪律,
+     指纹靠内容:数据换了而版本没递增时(如自动刷新遗漏),指纹不匹配 → 自动重建,
+     杜绝「旧索引 × 新数据」错配(2026-10-25 乱飞事故的根治层)。
+     seg/sta/tmaps 为冻结数据取要素数;周更的 station_map 取生成时刻+补缺数 */
+  try {
+    return [segFC ? segFC.features.length : -1, staFC ? staFC.features.length : -1,
+      tmaps ? Object.keys(tmaps).length : -1,
+      stationMap ? (stationMap.generated_at || '') + '/' +
+        (Array.isArray(stationMap.extra_stations) ? stationMap.extra_stations.length : -1) : 'none',
+      stationMap && Array.isArray(stationMap.extra_segments) ? stationMap.extra_segments.length : -1].join('|');
+  } catch (e) { return ''; }
+}
 function saveIndexes() {
-  try { if (idb) idbPut(IDX_CACHE_KEY, { v: DATA_VERSION, stationCoord, stationCoordLine, stationLines, endCoord, nameOf, segIndex, adj, stationCands, segGrid, weldInfo, seqCoordsCache, seqIdx, routeNodes, routeGraph, stationLinesAt, searchIndex, lineIndex, lineColor, lineKind }); } catch (e) { console.warn('[idx-cache]', e); }
+  try { if (idb) idbPut(IDX_CACHE_KEY, { v: DATA_VERSION, fp: idxFingerprint(), stationCoord, stationCoordLine, stationLines, endCoord, nameOf, segIndex, adj, stationCands, segGrid, weldInfo, seqCoordsCache, seqIdx, routeNodes, routeGraph, stationLinesAt, searchIndex, lineIndex, lineColor, lineKind }); } catch (e) { console.warn('[idx-cache]', e); }
 }
 function restoreIndexes(c) {
   stationCoord = c.stationCoord; stationCoordLine = c.stationCoordLine; stationLines = c.stationLines;
@@ -4233,10 +4264,10 @@ async function boot() {
     /* 车站徽章(DokoRail 迁移):异步加载映射,绑定视野更新;不阻塞主流程 */
     loadBadgesMap().then(() => { badgesBindView(); updateBadgeIcons(); });
     bindLazyHeavyData(); /* ORM 44MB + 站房/站台/出入口 14MB + platform_map 3.3MB:全部延后到启动空闲期(见函数注释) */
-    /* 索引构建/恢复:进度 55→78% */
+    /* 索引构建/恢复:进度 55→78%(fp 指纹不匹配 = 输入数据变了但版本没递增 → 重建) */
     setPhase(FILES_PCT, IDX_PCT, 0);
     const idxCache = await idbGet(IDX_CACHE_KEY);
-    if (idxCache && idxCache.v === DATA_VERSION && idxCache.segIndex) {
+    if (idxCache && idxCache.v === DATA_VERSION && idxCache.segIndex && idxCache.fp === idxFingerprint()) {
       restoreIndexes(idxCache); /* 二次访问:直接恢复索引,秒过 */
       setPhase(FILES_PCT, IDX_PCT, 1);
     } else {

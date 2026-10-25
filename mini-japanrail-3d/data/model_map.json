@@ -1,8 +1,8 @@
 {
  "_meta": {
-  "v": 4,
+  "v": 5,
   "generated": "2026-10-25",
-  "principle": "车型目录直接取自 DokoRail 車両コレクション作者目录(odpt.Railway 184 线 + 爱称 15 组),ja 线名对齐本站 tmaps 实体;跨公司区段(東海道/山陽本線)与东京圈共线实体用规则消歧;判不了的回退图标",
+  "principle": "车型目录直接取自 DokoRail 車両コレクション作者目录(odpt.Railway 184 线 + 爱称 15 组),ja 线名对齐本站 tmaps 实体;跨公司区段(東海道/山陽本線)与东京圈共线实体用规则消歧;判不了的回退图标;v5 补齐 29 条借用/别名义线路(取自 DokoRail 收藏页 stockRailways 与运营者层级映射)",
   "rules_engine": "names → lines → rules(exact/all/none/hasStop/firstStopIn/stopsIn)",
   "models": {
    "tf2-n700s-16car": {
@@ -219,7 +219,36 @@
   "千日前線": "/models/om25000/consist.json",
   "堺筋線": "/models/om66r/consist.json",
   "今里筋線": "/models/osaka-metro-80-series/consist.json",
-  "大井川鐵道": "/models/osaka-metro-80-series/consist.json"
+  "大井川鐵道": "/models/osaka-metro-80-series/consist.json",
+  "千葉都市モノレール2号線": "/models/urban-flyer-2cars/consist.json",
+  "江ノ島電鉄線": "/models/enoden305/consist.json",
+  "富士急行線": "/models/jr-east-series-e233-0/consist.json",
+  "阪急嵐山本線": "/models/hankyu-6300-series/consist.json",
+  "阪神なんば線": "/models/hanshin-series-1000/consist.json",
+  "北総線": "/models/hokso7503/consist.json",
+  "伊豆急行線": "/models/izukyu-8000-series-2970424931-izukyu-8000-series-crp-3cf55604/consist.json",
+  "紀勢本線": "/models/jrw227-1000-wloc-2-2cars/consist.json",
+  "大洗鹿島線": "/models/krt6000-2cars/consist.json",
+  "交野線": "/models/keihan-series-13000/consist.json",
+  "久里浜線": "/models/keikyu-n1000-al-6c/consist.json",
+  "成田スカイアクセス線": "/models/keisei3055/consist.json",
+  "湯の山線": "/models/kintetsu1010-3cars-l/consist.json",
+  "北大阪急行線": "/models/om31000/consist.json",
+  "北神線": "/models/tf2-kobe-6000-6car/consist.json",
+  "名鉄空港線": "/models/meitetsu-9500-series/consist.json",
+  "みなとみらい21線": "/models/tokyu5050-8cars/consist.json",
+  "泉北線": "/models/tf2-nankai-8300-4car/consist.json",
+  "箱根登山鉄道線": "/models/3000-10cars/consist.json",
+  "長堀鶴見緑地線": "/models/osaka-metro-80-series/consist.json",
+  "埼玉高速鉄道線": "/models/tokyo-metro-9000series-5th/consist.json",
+  "芝山鉄道線": "/models/keisei3700-6cars/consist.json",
+  "湘南モノレール線": "/models/shonanmono-5601f-series5000/consist.json",
+  "相鉄新横浜線": "/models/20000series-10cars-train/consist.json",
+  "りんかい線": "/models/twr-70-000-series/consist.json",
+  "荒川線": "/models/toden-8900-blue-tram-ver/consist.json",
+  "副都心線": "/models/tokyo-metro-7000-series/consist.json",
+  "東京モノレール羽田空港線": "/models/tokyo-monorail-10000-series/consist.json",
+  "東葉高速線": "/models/tokyo-metro-15000-series/consist.json"
  },
  "rules": [
   {

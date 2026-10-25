@@ -25,6 +25,67 @@ def norm_ok(s):
     """s 字段为纯数字逗号串"""
     return bool(re.fullmatch(r"-?\d+(,-?\d+)*", s))
 
+def _norm_name(n):
+    """与页面 normName 一致:去括号注记、ケ→ヶ、去尾部「駅」"""
+    return re.sub(r"\([^)]*\)", "", str(n)).replace("ケ", "ヶ").rstrip("駅").strip()
+
+def check_tram_coverage(out, tmaps, live):
+    """市电网络站对覆盖契约。返回 True=失败。网络归属判定:班次 ≥60% 停站命中
+    该网络 extras 的站名集合(避开「東山本線」等跨城同名线路前缀误判)。"""
+    def load_json(p):
+        try:
+            with open(p, encoding="utf-8") as f: return json.load(f)
+        except Exception:
+            return None
+    man = load_json(os.path.join(os.path.dirname(os.path.abspath(__file__)), "geo", "manual_extras.json")) or {}
+    smap = load_json(os.path.join(out, "station_map.json")) or {}
+    seg3 = load_json(os.path.join(out, "segments3d.geojson")) or {}
+    segs = list(man.get("extra_segments", [])) + list(smap.get("extra_segments", []))
+    if not segs:
+        print("  [WARN] 无市电 extras 可校验,跳过覆盖契约")
+        return False
+    # 站对全集 = extras(manual+pipeline) ∪ segments3d(页面解析可命中的所有几何)
+    allpairs = set()
+    nets = {}
+    for e in segs:
+        n = nets.setdefault(e["line"], {"pairs": set(), "stops": set()})
+        a, b = _norm_name(e["from"]), _norm_name(e["to"])
+        n["pairs"].add((a, b)); n["pairs"].add((b, a))
+        n["stops"].add(a); n["stops"].add(b)
+        allpairs |= n["pairs"]
+    for f in seg3.get("features", []):
+        p = f.get("properties") or {}
+        if p.get("from") and p.get("to"):
+            allpairs.add((_norm_name(p["from"]), _norm_name(p["to"])))
+            allpairs.add((_norm_name(p["to"]), _norm_name(p["from"])))
+    # 在用模板(trains 引用的 t id)
+    used = set()
+    for name in ("wd", "sa", "su"):
+        j = load_json(os.path.join(live, f"trains_{name}.json"))
+        if j:
+            for row in j.get("T", []): used.add(str(row.get("t")))
+    failed = False
+    for net, info in sorted(nets.items()):
+        tot = hit = 0
+        for tid, mi in tmaps.items():
+            if str(tid) not in used: continue
+            jas = mi.get("s_jas") or []
+            if len(jas) < 2: continue
+            nm = [_norm_name(x) for x in jas]
+            belong = sum(1 for x in nm if x in info["stops"])
+            if belong < len(nm) * 0.6: continue
+            for i in range(len(nm) - 1):
+                tot += 1
+                if (nm[i], nm[i+1]) in allpairs: hit += 1
+        pct = hit / tot * 100 if tot else 100
+        ok = pct >= 90
+        print(f"  市电覆盖 {net}: {hit}/{tot} = {pct:.1f}% {'✓' if ok else '✗ <90%'}")
+        if not ok:
+            failed = True
+            print(f"    → 停站名疑似变更:请按 PERF.md 方法从新 tmap_lids 重新推导,"
+                  f"把新站对并入 scripts/geo/manual_extras.json")
+    return failed
+
 def check_file(name, path, tmaps):
     """返回 (错误数, 班次数)"""
     with open(path, encoding="utf-8") as f:
@@ -96,6 +157,15 @@ def main():
     print(f"合计: {total_n} 班次, 错误 {total_err}")
     if total_err:
         print("校验未通过——中止提交/部署，旧数据保持不变。")
+        sys.exit(1)
+
+    # 5. 市电轨道覆盖契约(2026-10-25 鹿児島洗掉事故后增设):manual_extras + station_map
+    #    的市电站对必须持续覆盖在用市电班次的区间。时刻表源若改写停站名(改名/加注),
+    #    站对失配 → 市电落回兜底弦线(视觉串线)。任一网络覆盖 <90% → 失败中止,
+    #    提示把新站对补进 scripts/geo/manual_extras.json 并重新推导。
+    tram_err = check_tram_coverage(out, tmaps, live)
+    if tram_err:
+        print("市电轨道覆盖校验未通过——中止提交/部署。")
         sys.exit(1)
 
     # 校验通过 -> 同步到 3D 子站

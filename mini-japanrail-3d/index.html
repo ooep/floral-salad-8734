@@ -3408,7 +3408,7 @@ void main() {
   // z 固定 0:projectTile 的 z 在 mercator 变体下超出视景体会被 GPU 图元裁剪整段剪掉
   gl_Position = vec4((c2 + off) * c.w, 0.0, c.w);
   v_uv = a_corner;
-  v_h = abs(a_corner) * (a_glow > 2.5 ? 1.0 : (a_glow > 0.5 ? 1.0 / 2.6 : 1.0)); // 光晕 quad 是车体 2.6 倍恢复半宽;延误光环(3)角点即光环尺寸
+  v_h = abs(a_corner) * (a_glow > 0.5 ? 1.0 / 2.6 : 1.0); // 光晕 quad 是车体的 2.6 倍,v_h 恢复为车体半宽
   v_color = a_color; v_glow = a_glow;
   v_uvIdx = a_uv; // 图标模式:图集索引;-1 = 颜色方盒
 }`;
@@ -3434,14 +3434,42 @@ void main() {
     fragColor = vec4(tex.rgb * ia, ia);
     return;
   }
-  float a;
   if (v_glow > 2.5) {
-    // 延误光环(二十三轮.b):晚点列车车体轮廓外的橙色软光,L×1.6/W×3.0 小范围,
-    // 只画轮廓外(不染色车体/图标),随车淡入淡出;图标/方盒/3D 模式通用
-    float dd = sdBox(v_uv, v_h / vec2(1.6, 3.0));
-    float outer = max(v_h.x, v_h.y);
-    a = 0.42 * v_color.a * smoothstep(0.0, 2.0, dd) * (1.0 - smoothstep(outer * 0.45, outer, dd));
-  } else if (v_glow > 1.5) {
+    // 延误描边环(二十三轮.e):沿图标 alpha 轮廓 / 车体矩形边缘的一圈橙色细描边
+    // (取代旧大面积软光晕)。环宽 ~2.2 屏幕像素,随车淡入淡出;图标/方盒/3D 通用。
+    float a = 0.0;
+    if (v_uvIdx >= -0.5) {
+      // 图标模式:中心透明、邻域(±2.2px 换算到图集纹素)有像素 → 轮廓描边。
+      // 采样钳制在图集 cell 内(cell 有 2px padding,邻域采样不越格)
+      float col = mod(v_uvIdx, u_cols);
+      float row = floor(v_uvIdx / u_cols);
+      vec2 uv01 = vec2((v_uv.y / u_quadSize.y) * 0.5 + 0.5, (v_uv.x / u_quadSize.x) * 0.5 + 0.5);
+      vec2 cb = vec2(col, row) * u_cell;
+      vec2 tc = clamp((cb + uv01 * u_img + 2.0) / u_atlasSize, (cb + 0.6) / u_atlasSize, (cb + u_cell - 0.6) / u_atlasSize);
+      float ac = texture(u_atlas, tc).a;
+      vec2 to = (1.1 / u_quadSize) * (u_img / u_atlasSize);  // 2.2px 环宽 → uv01 偏移 1.1/尺寸
+      float s = 0.0;
+      s = max(s, texture(u_atlas, tc + vec2( to.x, 0.0)).a);
+      s = max(s, texture(u_atlas, tc - vec2( to.x, 0.0)).a);
+      s = max(s, texture(u_atlas, tc + vec2(0.0,  to.y)).a);
+      s = max(s, texture(u_atlas, tc - vec2(0.0,  to.y)).a);
+      s = max(s, texture(u_atlas, tc + to).a);
+      s = max(s, texture(u_atlas, tc + vec2( to.x, -to.y)).a);
+      s = max(s, texture(u_atlas, tc + vec2(-to.x,  to.y)).a);
+      s = max(s, texture(u_atlas, tc - to).a);
+      float ring = smoothstep(0.25, 0.6, s) * (1.0 - smoothstep(0.25, 0.6, ac));
+      a = 0.95 * v_color.a * ring;
+    } else {
+      // 方盒模式:车体矩形外 ~2.2px 描边带(d∈[0, 3])
+      float d = sdBox(v_uv, u_quadSize);
+      a = 0.95 * v_color.a * smoothstep(-0.4, 0.9, d) * (1.0 - smoothstep(2.2, 3.2, d));
+    }
+    if (a < 0.004) discard;
+    fragColor = vec4(v_color.rgb * a, a);
+    return;
+  }
+  float a;
+  if (v_glow > 1.5) {
     // 侧面墙:四边形本身即墙面(sdBox 会把它判成盒轮廓边缘 → alpha 仅 0.1 近透明),
     // 直出暗色,构成立体盒侧壁(随车体一起淡入淡出)
     a = v_color.a;
@@ -4153,16 +4181,16 @@ function updateTrains(M, dtms) {
     const my = ((1 - Math.log(Math.tan(Math.PI/4 + lat * Math.PI/360)) / Math.PI) / 2) - cyo;
     let dxm = Math.sin(p[2]) * eps, dym = -Math.cos(p[2]) * eps; // mercator y 向南为正,北上取负
     if (p[5] === 0 && p[2] === 0) { dxm = eps; dym = 0; }
-    /* 延误光环:晚点列车车身外橙色软光环(先画,车体四边形覆盖其中心) */
+    /* 延误描边环:晚点列车沿图标/车体边缘的橙色一圈(先画,车体覆盖其内侧) */
     if (t.dly > 0) {
       let ho = vtx * STRIDE;
       for (let q = 0; q < 6; q++) {
         bufArr[ho++] = mx; bufArr[ho++] = my;
         bufArr[ho++] = dxm; bufArr[ho++] = dym;
-        bufArr[ho++] = QUADX[q] * L * 1.6; bufArr[ho++] = QUADY[q] * W * 3.0;
+        bufArr[ho++] = QUADX[q] * (L + 5); bufArr[ho++] = QUADY[q] * (W + 5);
         bufArr[ho++] = 1.0; bufArr[ho++] = 0.573; bufArr[ho++] = 0.235; bufArr[ho++] = al; // 橙 #ff923c
-        bufArr[ho++] = 3; bufArr[ho++] = 0; // glow=3 延误光环 + h=0
-        bufArr[ho++] = -1;
+        bufArr[ho++] = 3; bufArr[ho++] = 0; // glow=3 延误描边环 + h=0
+        bufArr[ho++] = uvIdx; // 图标模式带图集索引(沿贴图轮廓描边);方盒为 -1
       }
       vtx += 6;
     }

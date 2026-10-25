@@ -4187,8 +4187,12 @@ function stateHash() {
   try {
     const c = map.getCenter();
     const h = { c: [+c.lng.toFixed(4), +c.lat.toFixed(4)], z: +map.getZoom().toFixed(2), p: +map.getPitch().toFixed(1), b: +map.getBearing().toFixed(1), j: map.getProjection().type, l: lang, m: localStorage.getItem('mjr3d_theme') || 'auto', v: liveOn ? 1 : 0, s: baseKey };
-    location.hash = 'mjr3d=' + btoa(unescape(encodeURIComponent(JSON.stringify(h))));
-    lastWrittenHash = location.hash;
+    /* replaceState 而非 location.hash 赋值:后者每次值变化压一条浏览器历史 —— 平移几分钟后
+       返回键要连按几十次才能离开页面。replaceState 原地替换当前条目:URL 照常可分享/刷新,
+       不触发 hashchange(本页自写本就不该触发);外部粘贴深链仍走 hashchange 正常生效 */
+    const h2 = '#mjr3d=' + btoa(unescape(encodeURIComponent(JSON.stringify(h))));
+    history.replaceState(null, '', h2);
+    lastWrittenHash = h2;
   } catch (e) {}
 }
 function applyUrlState() {

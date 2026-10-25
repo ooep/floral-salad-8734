@@ -248,7 +248,8 @@
   "荒川線": "/models/toden-8900-blue-tram-ver/consist.json",
   "副都心線": "/models/tokyo-metro-7000-series/consist.json",
   "東京モノレール羽田空港線": "/models/tokyo-monorail-10000-series/consist.json",
-  "東葉高速線": "/models/tokyo-metro-15000-series/consist.json"
+  "東葉高速線": "/models/tokyo-metro-15000-series/consist.json",
+  "東京臨海新交通臨海線": "/models/yurikamome/consist.json"
  },
  "rules": [
   {

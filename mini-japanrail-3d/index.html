@@ -1376,7 +1376,11 @@ function tripName(ic, N, jas, linesN) {
          不同系统的列车同分钟发车恰共享 3 站(かがやき×つばさ、かがやき×はくたか 等),并非併结;
        ② 共享段必须从双方始发站开始:併结均在始发站连挂,中途才出现的公共段(やまびこ×はやぶさ 盛冈)是巧合;
        ③ 车种白名单(COUPLE_CLASSES):併结是优等列车专属(新干线/特急/関空快速×紀州路快速 等),
-         近郊 快/普/急/準/各/直/区 等不同种别同分钟共长主干只是运行图巧合, 一律不标注 ----
+         近郊 快/普/急/準/各/直/区 等不同种别同分钟共长主干只是运行图巧合, 一律不标注;
+       ④(2026-10-25) 同起点多候选唯一化:一班车同分钟配出多个候选伙伴时,只认共享段最深的一条,
+         且须双方互认——嵌套取长(こまち 真伙伴はやぶさ@盛岡 5 站, 压过同时刻仙台止はやぶさ@仙台 4 站),
+         并列取先(同分钟重复班次数据双录)。修复详情卡同车出现两条矛盾併结行(仙台+盛冈);
+       ⑤(2026-10-25) 构建期白名单已认定的上行併结班次(c 字段 k:'j')不参与运行时配对,权威优先 ----
        上行/异起点併结(はやぶさ×こまち@盛岡 等, 始发站不同、共享段在路线尾部):
        由构建期 scripts/couplings.py 按併结点白名单预计算, 固化在班次 c 字段,
        applyJoins() 只做解析挂载——本函数不改, 见 applyJoins 注释。 ----
@@ -1386,15 +1390,20 @@ const COUPLE_CLASSES = new Set([
   'Sakura','Tsubame','特','新','関','紀','寝', /* 寝=寝台特急(サンライズ瀬戸×出雲) */
 ]);
 function buildCouplings(trips) {
+  const joined = new Set(); /* 护栏⑤:构建期白名单认定的上行併结班次,运行时不再另配伙伴 */
+  for (let i = 0; i < trips.length; i++) {
+    const cs = trips[i].c || [];
+    for (let j = 0; j < cs.length; j++) if (cs[j].k === 'j') { joined.add(trips[i]); break; }
+  }
   const byDep = new Map();
   for (let i = 0; i < trips.length; i++) {
     const t = trips[i];
-    if (t.bad || t.N < 4) continue;
+    if (t.bad || t.N < 4 || joined.has(t)) continue;
     const k = t.dep[0];
     let b = byDep.get(k); if (!b) byDep.set(k, b = []);
     b.push(t);
   }
-  let pairs = 0;
+  const cands = [];
   for (const bucket of byDep.values()) {
     if (bucket.length < 2) continue;
     for (let a = 0; a < bucket.length; a++) for (let b = a + 1; b < bucket.length; b++) {
@@ -1419,12 +1428,26 @@ function buildCouplings(trips) {
       const t1 = Math.min(A.dep[endA], B.dep[endB]);             // 离开分割站(发车)
       const w0 = Math.max(A.w0, B.w0), w1 = Math.min(A.w1, B.w1);
       if (t0 > w1 || t1 < w0) continue;                          // 运行窗无交集
-      const c0 = Math.max(t0, w0), c1 = Math.min(t1, w1);
-      const split = A.jasN[endA];
-      (A.cpl = A.cpl || []).push({ p: B, t0: c0, t1: c1, split, name: nb || B.i || '' });
-      (B.cpl = B.cpl || []).push({ p: A, t0: c0, t1: c1, split, name: na || A.i || '' });
-      pairs++;
+      cands.push({ A, B, t0: Math.max(t0, w0), t1: Math.min(t1, w1), split: A.jasN[endA], endA, endB });
     }
+  }
+  /* 护栏④:同车多候选 → 只认共享段最深的一条(嵌套取长;并列=同分钟重复班次取先),
+     且须双方互认才成立——单方另有更深候选的对一律作废(如 こまち×仙台止はやぶさ) */
+  const bestOf = new Map();
+  for (let ci = 0; ci < cands.length; ci++) {
+    const c = cands[ci];
+    let m = bestOf.get(c.A);
+    if (!m || c.endA > m.end) bestOf.set(c.A, { c: c, end: c.endA });
+    m = bestOf.get(c.B);
+    if (!m || c.endB > m.end) bestOf.set(c.B, { c: c, end: c.endB });
+  }
+  let pairs = 0;
+  for (let ci = 0; ci < cands.length; ci++) {
+    const c = cands[ci];
+    if (bestOf.get(c.A).c !== c || bestOf.get(c.B).c !== c) continue;
+    (c.A.cpl = c.A.cpl || []).push({ p: c.B, t0: c.t0, t1: c.t1, split: c.split, name: c.B.nm || c.B.i || '' });
+    (c.B.cpl = c.B.cpl || []).push({ p: c.A, t0: c.t0, t1: c.t1, split: c.split, name: c.A.nm || c.A.i || '' });
+    pairs++;
   }
   if (window.__dbgOn) console.log('[couple] ' + pairs + ' pairs');
   return trips;

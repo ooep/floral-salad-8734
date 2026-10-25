@@ -3826,6 +3826,7 @@ async function delayFetchOnce() {
     }
     if (best) { delayGenMs = bestGen; delayApplyData(best, bestGen); }  /* 全源失败:保留现状,由 45min 过期兜底清空 */
     delayLastFetch = Date.now();
+    delayUiNote();  /* 数据龄随每次拉取刷新(定时/回前台补拉路径同样更新,不依赖开关/语言切换) */
   } finally { delayBusy = false; }
 }
 function delayUiNote() {

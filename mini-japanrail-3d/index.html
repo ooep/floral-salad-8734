@@ -3406,7 +3406,7 @@ void main() {
   // z 固定 0:projectTile 的 z 在 mercator 变体下超出视景体会被 GPU 图元裁剪整段剪掉
   gl_Position = vec4((c2 + off) * c.w, 0.0, c.w);
   v_uv = a_corner;
-  v_h = abs(a_corner) * (a_glow > 0.5 ? 1.0 / 2.6 : 1.0); // 光晕 quad 是车体的 2.6 倍,v_h 恢复为车体半宽
+  v_h = abs(a_corner) * (a_glow > 2.5 ? 1.0 : (a_glow > 0.5 ? 1.0 / 2.6 : 1.0)); // 光晕 quad 是车体 2.6 倍恢复半宽;延误光环(3)角点即光环尺寸
   v_color = a_color; v_glow = a_glow;
   v_uvIdx = a_uv; // 图标模式:图集索引;-1 = 颜色方盒
 }`;
@@ -3433,7 +3433,13 @@ void main() {
     return;
   }
   float a;
-  if (v_glow > 1.5) {
+  if (v_glow > 2.5) {
+    // 延误光环(二十三轮.b):晚点列车车体轮廓外的橙色软光,L×1.6/W×3.0 小范围,
+    // 只画轮廓外(不染色车体/图标),随车淡入淡出;图标/方盒/3D 模式通用
+    float dd = sdBox(v_uv, v_h / vec2(1.6, 3.0));
+    float outer = max(v_h.x, v_h.y);
+    a = 0.42 * v_color.a * smoothstep(0.0, 2.0, dd) * (1.0 - smoothstep(outer * 0.45, outer, dd));
+  } else if (v_glow > 1.5) {
     // 侧面墙:四边形本身即墙面(sdBox 会把它判成盒轮廓边缘 → alpha 仅 0.1 近透明),
     // 直出暗色,构成立体盒侧壁(随车体一起淡入淡出)
     a = v_color.a;
@@ -4084,7 +4090,7 @@ function updateTrains(M, dtms) {
     const t = fadeList[i];
     const al = t._f;
     if (al < 0.02) continue;                    /* 尚未起步 / 已淡完:不占顶点、不上传 */
-    if (n >= MAXT - 1 || vtx * STRIDE + 36 * STRIDE > bufArr.length) { stopped = i; break; }
+    if (n >= MAXT - 1 || vtx * STRIDE + (t.dly > 0 ? 42 : 36) * STRIDE > bufArr.length) { stopped = i; break; }
     /* 二十轮:屏外远车跳过解算 —— 上次解算位置在写矩形外 ~6.7km 且非本帧强制刷新
        (每班次每 8 个重建帧强制解算一次,防位置永久陈旧)时,本帧不解算不写出。
        M 跳变 >1.5 分钟(拖动时间轴/暂停恢复/倍速)自动全量解算;屏内/近界列车
@@ -4139,6 +4145,19 @@ function updateTrains(M, dtms) {
     const my = ((1 - Math.log(Math.tan(Math.PI/4 + lat * Math.PI/360)) / Math.PI) / 2) - cyo;
     let dxm = Math.sin(p[2]) * eps, dym = -Math.cos(p[2]) * eps; // mercator y 向南为正,北上取负
     if (p[5] === 0 && p[2] === 0) { dxm = eps; dym = 0; }
+    /* 延误光环:晚点列车车身外橙色软光环(先画,车体四边形覆盖其中心) */
+    if (t.dly > 0) {
+      let ho = vtx * STRIDE;
+      for (let q = 0; q < 6; q++) {
+        bufArr[ho++] = mx; bufArr[ho++] = my;
+        bufArr[ho++] = dxm; bufArr[ho++] = dym;
+        bufArr[ho++] = QUADX[q] * L * 1.6; bufArr[ho++] = QUADY[q] * W * 3.0;
+        bufArr[ho++] = 1.0; bufArr[ho++] = 0.573; bufArr[ho++] = 0.235; bufArr[ho++] = al; // 橙 #ff923c
+        bufArr[ho++] = 3; bufArr[ho++] = 0; // glow=3 延误光环 + h=0
+        bufArr[ho++] = -1;
+      }
+      vtx += 6;
+    }
     // 底面(俯视/倾斜都画,平面矩形)
     let o = vtx * STRIDE;
     for (let q = 0; q < 6; q++) {

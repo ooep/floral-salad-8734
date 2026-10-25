@@ -308,6 +308,26 @@ for e in extra_segments:
             _extra_sta[key] = {'name': nm, 'coord': coord, 'line': e['line']}
 extra_stations = list(_extra_sta.values())
 
+# ---------- 5c. 手工补充源合并(管道防洗) ----------
+# 周更再生成会重建 extra_*:手工修复若只改 station_map.json,下次再生成即被洗掉
+# (2026-10-14 事故:d875312 的鹿児島市電 74 段真实轨道被洗,串线复发)。
+# 手工网络统一维护在 scripts/geo/manual_extras.json,再生成后自动并回。
+_manual_path = os.path.join(ROOT, 'scripts', 'geo', 'manual_extras.json')
+if os.path.exists(_manual_path):
+    _man = json.load(open(_manual_path, encoding='utf-8'))
+    _have_seg = {(e['from'], e['to'], e['line']) for e in extra_segments}
+    _added = 0
+    for e in _man.get('extra_segments', []):
+        k = (e['from'], e['to'], e['line'])
+        if k in _have_seg: continue
+        extra_segments.append(e); _have_seg.add(k); _added += 1
+    _have_sta = {(s['name'], round(s['coord'][0], 3), round(s['coord'][1], 3)) for s in extra_stations}
+    for s in _man.get('extra_stations', []):
+        k = (s['name'], round(s['coord'][0], 3), round(s['coord'][1], 3))
+        if k in _have_sta: continue
+        extra_stations.append(s); _have_sta.add(k); _added += 1
+    print(f'manual_extras merged: +{_added} (segs={len(extra_segments)}, stations={len(extra_stations)})')
+
 for c in stations.values(): c.pop('obs', None)
 out = {'version': 2,
        'generated_at': datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))).isoformat(timespec='seconds'),

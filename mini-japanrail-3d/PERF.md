@@ -73,6 +73,13 @@ globe 模式拾取半径(10-14px)内误差 ~0.2px。**勿改回逐车 map.projec
   浏览器缓存;徽章图集 `sha256/*.webp` 内容寻址 → 1y immutable。
 - **IDB 新鲜度**:`fetchJSONWithCache` 的 `t0` 与服务端 5min 对齐 —— 窗口内零网络
   零解析;**勿删除**(否则浏览器缓存 200 走全量重解析,反而劣化)。
+- **DATA_VERSION 必须随任何数据内容变更递增**(2026-10-25 乱飞事故根因):索引缓存
+  (`idx|<版本>`)与数据文件缓存(`<版本>|<url>`)都以它为键。周更流水线(refresh.yml)
+  刷新 trains/station_map/tokkyu 却不递增 → 10-18 起 extra_stations 5→9 等变更
+  落不进老访客的缓存,旧索引×新时刻表错配出「线路外乱飞」(如 長崎電気軌道 #10782
+  21073km/h)。refresh.yml 已改为自动递增;另有已知缺陷:无 ETag/Last-Modified 的
+  数据条目永不重验证(`else return cached.j`)——递增版本换键可中和,改语义需评估
+  离线可用性,暂不动。
 - 图集:default 启动即载(加载拼图),vector/cute 首次切换懒加载(`ensureAtlas`)。
 - Clarity 延后 dataReady+4s;maplibre CSS 非阻塞(preload+onload);line_icons.js defer。
 

@@ -6914,7 +6914,7 @@ function applyLang() {
     $('tM3dVpL').textContent = t.m3dVpL; $('tM3dMdL').textContent = t.m3dMdL;
     const vr = $('m3dViewRow'), mr = $('m3dModeRow');
     if (vr) vr.querySelectorAll('[data-vp]').forEach((b, i) => b.textContent = t.m3dVp[i]);
-    if (mr) { mr.querySelector('[data-md=all]').textContent = t.m3dMdAll; mr.querySelector('[data-md=head]').textContent = t.m3dMdHead; mr.querySelector('[data-md=auto]').textContent = t.m3dMdAuto; }
+    if (mr) { const a = mr.querySelector('#m3dAll'); if (a) a.textContent = t.m3dMdAll; const au = mr.querySelector('#m3dAuto'); if (au) au.textContent = t.m3dMdAuto; }
   }
   if ($('tSw13')) { $('tSw13').textContent = t.sw13; $('tSw13Note').textContent = t.m3dNote; }
   $('tMode').textContent = t.modeT; $('tMode3d').textContent = t.mode3d; $('tModeIcon').textContent = t.modeIcon; if ($('tModeCute')) $('tModeCute').textContent = t.modeCute;
@@ -7191,6 +7191,8 @@ const M3D = (() => {
     const cfg = consist.material || {};
     const loader = new GLTFLoaderC.GLTFLoader().setMeshoptDecoder(MeshoptDecoder).setKTX2Loader(ktx2);
     const cars = consist.cars, n = cars.length;
+    let progN = 0;
+    const progTick = () => { progN++; const el = $('m3dLoadTx'); if (el && $('m3dLoad').style.display !== 'none') el.textContent = (T().m3dLoadT || 'Loading…') + ' ' + progN + '/' + n; };
     const lenOf = i => (i === 0 || i === n - 1) ? (consist.car_length_m || 20) : (consist.middle_car_length_m || consist.car_length_m || 20);
     /* 每节车:主 glb + LED 部件 glb 并行 */
     /* 鼻端方向检测:沿长轴切 12 片统计最大半宽,收窄端=鼻端(车头斜面/流线型截面变小)。
@@ -7220,7 +7222,7 @@ const M3D = (() => {
       } catch (e) { return null; }
     }
     const loaded = await Promise.all(cars.map(async (car, ci) => {
-      const gltf = await loader.loadAsync(base + car.model);
+      const gltf = await loader.loadAsync(base + car.model).then(r => { progTick(); return r; });
       const gScene = gltf.scene;
       gScene.traverse(o => { if (o.isMesh) o.frustumCulled = false; });
       /* 端车鼻端朝外修正:首车需朝 -z、末车需朝 +z;翻转会同步对调 couple(见 normalizeCar) */
@@ -7531,6 +7533,13 @@ const M3D = (() => {
   }
   function drLoop() {
     if (!drOpen || !dr) return;
+    if (dr.tween) {
+      const tw = dr.tween, k0 = Math.min(1, (performance.now() - tw.t0) / tw.dur);
+      const k = k0 < 0.5 ? 2 * k0 * k0 : 1 - Math.pow(-2 * k0 + 2, 2) / 2; /* easeInOutQuad */
+      dr.camera.position.lerpVectors(tw.fromPos, tw.toPos, k);
+      dr.controls.target.lerpVectors(tw.fromTg, tw.toTg, k);
+      if (k0 >= 1) dr.tween = null;
+    }
     dr.controls.update();
     dr.renderer.render(dr.scene, dr.camera);
     dr.raf = requestAnimationFrame(drLoop);
@@ -7568,6 +7577,8 @@ const M3D = (() => {
       const r = Math.max(size.x, size.y, size.z) * 0.5 + 6;
       d.camera.position.set(c.x, c.y + r * 0.42, c.z + r * 1.25);
       d.controls.target.copy(c); d.controls.update();
+      d.controls.minDistance = 6;
+      d.controls.maxDistance = Math.max(120, Math.max(size.x, size.z) * 2.2); /* 按编组长自适配,长编组也能拉远看全 */
       d.ground.scale.setScalar(Math.max(size.x, size.z) * 0.62 + 6);
       d.ground.position.set(c.x, -0.04, c.z);
       drBindPanel(t, tmpl, inst, c, r);
@@ -7579,7 +7590,7 @@ const M3D = (() => {
       if ($('m3dLoadTx')) $('m3dLoadTx').textContent = '⚠ ' + (e && e.message || 'load fail');
     }
   }
-  /* ── 查看器控制面板:昼夜 / 视点 / 编组 / 详情 ── */
+  /* ── 查看器控制面板:昼夜 / 视点(飞行过渡) / 车厢聚焦 / 详情 ── */
   let drPanelBound = false;
   const DR_DAY = { bg: 0x0b0f16, amb: 0.42, d1: 1.65, d2: 0.5, d3: 0.28 }, DR_NIGHT = { bg: 0x04060b, amb: 0.10, d1: 0.22, d2: 0.12, d3: 0.06 };
   function drSetNight(on) {
@@ -7591,17 +7602,39 @@ const M3D = (() => {
     if (dr.group) dr.group.traverse(o => { if (o.userData && o.userData.nightOnly) o.visible = on; });
     $('m3dDay').setAttribute('aria-pressed', on ? 'false' : 'true');
     $('m3dNight').setAttribute('aria-pressed', on ? 'true' : 'false');
+    try { localStorage.setItem('mjr3d_viewer_night', on ? '1' : '0'); } catch (e) {}
   }
+  /* 相机飞行(easeInOutQuad 补间,drLoop 每帧推进) */
+  function drFlyTo(pos, tg, dur) {
+    if (!dr) return;
+    dr.controls.autoRotate = false;
+    const ab = $('m3dAuto'); if (ab) ab.classList.remove('on');
+    dr.tween = { t0: performance.now(), dur: dur || 620, fromPos: dr.camera.position.clone(), toPos: pos.clone(), fromTg: dr.controls.target.clone(), toTg: tg.clone() };
+  }
+  const DR_OFF = [[0.62, 0.5, -0.85], [1.25, 0.1, 0], [0.06, 0.12, -1.3], [0, 1.45, 0.02]];
   function drView(i, c, r) {
     if (!dr) return;
-    const off = [[0.62, 0.5, -0.85], [1.25, 0.1, 0], [0.06, 0.12, -1.3], [0, 1.45, 0.02]][i];
-    dr.camera.position.set(c.x + off[0] * r, c.y + off[1] * r, c.z + off[2] * r);
-    dr.controls.target.copy(c); dr.controls.update();
+    const off = DR_OFF[i];
+    drFlyTo(new THREE.Vector3(c.x + off[0] * r, c.y + off[1] * r, c.z + off[2] * r), new THREE.Vector3(c.x, c.y, c.z));
   }
-  function drSetMode(md, inst) {
-    let head = null;
-    for (const ch of inst.children) { if (ch.userData && ch.userData.m3dCar) { if (!head || ch.userData.m3dZ < head.userData.m3dZ) head = ch; } }
-    for (const ch of inst.children) if (ch.userData && ch.userData.m3dCar) ch.visible = (md === 'all' || ch === head);
+  function drShowAll(inst) { for (const ch of inst.children) if (ch.userData && ch.userData.m3dCar) ch.visible = true; }
+  function drFocusCar(inst, i) {
+    /* 隔离第 i 节并飞到特写 */
+    let n = 0;
+    for (const ch of inst.children) {
+      if (!ch.userData || !ch.userData.m3dCar) continue;
+      ch.visible = (n === i); n++;
+    }
+    const node = inst.children[i];
+    const box = new THREE.Box3().setFromObject(node);
+    const c = box.getCenter(new THREE.Vector3()), s = box.getSize(new THREE.Vector3());
+    const r = Math.max(s.x, s.y, s.z) * 1.05 + 4;
+    drFlyTo(new THREE.Vector3(c.x + r * 0.85, c.y + r * 0.4, c.z + r * 1.15), c);
+  }
+  function drOverview() {
+    const inst = dr.__inst, c = dr.__c, r = dr.__r;
+    drShowAll(inst);
+    drFlyTo(new THREE.Vector3(c.x + DR_OFF[0][0] * r, c.y + DR_OFF[0][1] * r, c.z + DR_OFF[0][2] * r), new THREE.Vector3(c.x, c.y, c.z));
   }
   function drBindPanel(t, tmpl, inst, c, r) {
     if (!drPanelBound) {
@@ -7614,20 +7647,43 @@ const M3D = (() => {
         drView(+b.dataset.vp, dr.__c || c, dr.__r || r);
       });
       $('m3dModeRow').addEventListener('click', e => {
+        const car = e.target.closest('[data-car]');
+        if (car) {
+          $('m3dModeRow').querySelectorAll('[data-md]').forEach(x => x.classList.toggle('on', x.id === 'm3dAuto' && x.classList.contains('on')));
+          $('m3dModeRow').querySelectorAll('[data-car]').forEach(x => x.classList.toggle('on', x === car));
+          drFocusCar(dr.__inst, +car.dataset.car);
+          return;
+        }
         const b = e.target.closest('[data-md]'); if (!b) return;
-        const md = b.dataset.md;
-        if (md === 'auto') { b.classList.toggle('on'); dr.controls.autoRotate = b.classList.contains('on'); return; }
-        $('m3dModeRow').querySelectorAll('[data-md]').forEach(x => { if (x.dataset.md !== 'auto') x.classList.toggle('on', x === b); });
-        drSetMode(md, dr.__inst || inst);
+        if (b.id === 'm3dAuto') { b.classList.toggle('on'); dr.controls.autoRotate = b.classList.contains('on'); return; }
+        if (b.id === 'm3dAll') {
+          $('m3dModeRow').querySelectorAll('.mchip').forEach(x => x.classList.remove('on'));
+          b.classList.add('on');
+          const ab = $('m3dAuto'); if (ab) ab.classList.add('on');
+          dr.controls.autoRotate = true;
+          drOverview();
+        }
       });
+      document.addEventListener('keydown', e => { if (e.key === 'Escape' && drOpen) closeViewer(); });
+      dr.canvas.addEventListener('dblclick', () => drOverview());
     }
     dr.__c = c; dr.__r = r; dr.__inst = inst;
-    drSetNight(false);
+    /* 每次打开重置:记忆的昼夜 / 全编成 / 斜视 / 自动回转开 */
+    drSetNight((() => { try { return localStorage.getItem('mjr3d_viewer_night') === '1'; } catch (e) { return false; } })());
     dr.controls.autoRotate = true;
-    const autoBtn = $('m3dModeRow').querySelector('[data-md="auto"]'); if (autoBtn) autoBtn.classList.add('on');
-    const allBtn = $('m3dModeRow').querySelector('[data-md="all"]'); if (allBtn) allBtn.classList.add('on');
-    drSetMode('all', inst);
-    const diag = $('m3dViewRow').querySelector('[data-vp="0"]'); if (diag) diag.classList.add('on');
+    const allBtn = $('m3dAll'); if (allBtn) allBtn.classList.add('on');
+    const autoBtn = $('m3dAuto'); if (autoBtn) autoBtn.classList.add('on');
+    $('m3dModeRow').querySelectorAll('[data-car]').forEach(x => x.classList.remove('on'));
+    drShowAll(inst);
+    const chips = $('m3dCarChips');
+    if (chips) {
+      chips.innerHTML = '';
+      for (let i = 0; i < tmpl.cars.length; i++) {
+        const b = document.createElement('button');
+        b.className = 'mchip'; b.dataset.car = i; b.textContent = i + 1;
+        chips.appendChild(b);
+      }
+    }
     drView(0, c, r);
     let dims = '';
     try {
@@ -7796,7 +7852,7 @@ window.__probe = (lineFilter, limit) => {
     </div>
     <div class="m3d-row" id="m3dModeRow">
       <span class="m3d-lb" id="tM3dMdL">編成</span>
-      <button class="mchip on" data-md="all">全編成</button><button class="mchip" data-md="head">先頭車</button><button class="mchip on" data-md="auto">自動回転</button>
+      <button class="mchip on" data-md="all" id="m3dAll">全編成</button><span id="m3dCarChips" style="display:contents"></span><button class="mchip on" data-md="auto" id="m3dAuto">自動回転</button>
     </div>
     <div class="m3d-detail" id="m3dDetail"></div>
     <div class="m3d-hint" id="m3dHint"></div>

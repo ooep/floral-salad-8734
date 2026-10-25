@@ -1048,10 +1048,6 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
 .tc-media { --lrail:#3d7bf0; position:relative; height:46px; margin:2px 8px 11px; overflow:hidden; }
 .tc-media .tc-rail { position:absolute; left:0; right:0; bottom:7px; height:2px; border-radius:2px;
   background:linear-gradient(90deg, transparent, color-mix(in srgb, var(--lrail) 60%, transparent) 16%, color-mix(in srgb, var(--lrail) 60%, transparent) 84%, transparent); }
-.tc-media .tc-rail::before, .tc-media .tc-rail::after { content:''; position:absolute; top:-2px; width:6px; height:6px; border-radius:50%;
-  background:color-mix(in srgb, var(--lrail) 80%, #fff); box-shadow:0 0 7px color-mix(in srgb, var(--lrail) 65%, transparent); }
-.tc-media .tc-rail::before { left:3px; }
-.tc-media .tc-rail::after { right:3px; }
 .tc-media .tc-train { position:absolute; left:50%; bottom:6px; margin-left:-22px; animation:tcRide 3.6s cubic-bezier(.42,.08,.58,.92) infinite; }
 @keyframes tcRide { 0% { transform:translateX(-66px); opacity:0; } 16% { opacity:1; } 52% { transform:translateX(66px); opacity:1; } 66% { transform:translateX(92px); opacity:0; } 100% { transform:translateX(-66px); opacity:0; } }
 .tc-head { display:flex; align-items:center; gap:9px; }

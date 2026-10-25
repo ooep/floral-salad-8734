@@ -1,8 +1,8 @@
 {
  "_meta": {
-  "v": 5,
+  "v": 6,
   "generated": "2026-10-25",
-  "principle": "车型目录直接取自 DokoRail 車両コレクション作者目录(odpt.Railway 184 线 + 爱称 15 组),ja 线名对齐本站 tmaps 实体;跨公司区段(東海道/山陽本線)与东京圈共线实体用规则消歧;判不了的回退图标;v5 补齐 29 条借用/别名义线路(取自 DokoRail 收藏页 stockRailways 与运营者层级映射)",
+  "principle": "车型目录直接取自 DokoRail 車両コレクション作者目录(odpt.Railway 184 线 + 爱称 15 组),ja 线名对齐本站 tmaps 实体;跨公司区段(東海道/山陽本線)与东京圈共线实体用规则消歧;判不了的回退图标;v5 补齐 29 条借用/别名义线路(取自 DokoRail 收藏页 stockRailways 与运营者层级映射);v6 修复关西私铁/JR西短实体名前缀错位并回补 JR 东日本地方线",
   "rules_engine": "names → lines → rules(exact/all/none/hasStop/firstStopIn/stopsIn)",
   "models": {
    "tf2-n700s-16car": {
@@ -249,7 +249,36 @@
   "副都心線": "/models/tokyo-metro-7000-series/consist.json",
   "東京モノレール羽田空港線": "/models/tokyo-monorail-10000-series/consist.json",
   "東葉高速線": "/models/tokyo-metro-15000-series/consist.json",
-  "東京臨海新交通臨海線": "/models/yurikamome/consist.json"
+  "東京臨海新交通臨海線": "/models/yurikamome/consist.json",
+  "宝塚本線": "/models/hankyu9003/consist.json",
+  "神戸本線": "/models/hankyu9000/consist.json",
+  "千里線": "/models/hankyu1305/consist.json",
+  "嵐山本線": "/models/hankyu-6300-series/consist.json",
+  "阪神本線": "/models/hanshin-series-1000/consist.json",
+  "名古屋本線": "/models/meitetsu-3300-series/consist.json",
+  "常滑線": "/models/meitetsu-3300-series/consist.json",
+  "犬山線": "/models/meitetsu-9500-series/consist.json",
+  "大阪線": "/models/tf2-kintetsu-1a-4car/consist.json",
+  "橿原線": "/models/tf2-kintetsu-8a-4car/consist.json",
+  "難波線": "/models/9820-hutu-amagasaki-6cars/consist.json",
+  "京阪本線": "/models/tf2-keihan-13000-8car/consist.json",
+  "鴨東線": "/models/tf2-keihan-13000-8car/consist.json",
+  "中之島線": "/models/keihan-series-13000/consist.json",
+  "宇治線": "/models/keihan-series-13000/consist.json",
+  "大阪環状線": "/models/jrw323-oloc-8cars/consist.json",
+  "阪和線": "/models/jrw225-100-aaloc-4cars/consist.json",
+  "関西本線": "/models/221-4/consist.json",
+  "桜井線": "/models/jrw227-1000-uloc-2cars/consist.json",
+  "和歌山線": "/models/jrw227-1000-wloc-2-2cars/consist.json",
+  "片町線": "/models/jrw321-aaloc-7cars/consist.json",
+  "赤穂線": "/models/jrw225-100-aaloc-4cars/consist.json",
+  "福知山線": "/models/jrw207n-haloc-4-3-cars/consist.json",
+  "近鉄京都線": "/models/tf2-kintetsu-8a-4car/consist.json",
+  "近鉄奈良線": "/models/9820-hutu-amagasaki-6cars/consist.json",
+  "狭山線": "/models/tokyu5050-8cars/consist.json",
+  "豊島線": "/models/tokyu5050-8cars/consist.json",
+  "西武秩父線": "/models/tokyu5050-8cars/consist.json",
+  "西武有楽町線": "/models/tokyu5050-8cars/consist.json"
  },
  "rules": [
   {

@@ -563,6 +563,10 @@ button { font-family:inherit; }
 #detail .vn .vln.up { top:0; height:50%; }
 #detail .vn .vln.dn { bottom:0; height:50%; }
 #detail .vn .dot { position:absolute; left:50%; top:50%; width:10px; height:10px; border-radius:50%; transform:translate(-50%,-50%); z-index:2; box-sizing:border-box; border:2px solid var(--dc, var(--glass-edge)); background:var(--glass-solid); }
+#detail .vn .dst-ic { position:absolute; left:50%; top:50%; width:20px; height:20px; transform:translate(-50%,-50%); z-index:2; object-fit:contain; display:block; border-radius:4.5px; background:rgba(255,255,255,.94); box-shadow:0 0 0 1px rgba(8,12,20,.32), 0 1px 3px rgba(0,0,0,.32); transition:filter .3s, box-shadow .3s; }   /* 浅色底牌+小圆角:圆/方/盾形记号都完整显示,不裁形状 */
+#detail .dstop.here .dst-ic { box-shadow:0 0 0 2px var(--acc), 0 0 0 5px var(--acc-soft); }
+#detail .dstop.next .dst-ic { box-shadow:0 0 0 2px var(--acc); }
+#detail .dstop.done .dst-ic { filter:grayscale(.9); opacity:.6; }
 #detail .vc { flex:1; min-width:0; display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8.5px 0; }
 #detail .vnm { flex:1 1 auto; min-width:0; font-size:13px; font-weight:600; color:var(--txt); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 #detail .vmeta { flex:0 0 auto; max-width:62%; display:flex; flex-direction:column; align-items:flex-end; gap:2.5px; line-height:1.25; }
@@ -4075,8 +4079,12 @@ function initMap() {
     container: 'map', style: baseStyle(),
     center: [137.2, 36.8], zoom: 3.4, pitch: 0, bearing: 0,
     minZoom: 1.2, maxZoom: 17.5, maxPitch: 70, /* 17.5:z16 下 200m 编组仅约 200px,提到 17.5 后约 580px,3D 模型可怼脸观察 */
-    /* 抗锯齿:新设备保留(线条更平滑);老旧设备关闭(减少 GPU 过绘制,明显提帧) */
-    canvasContextAttributes: { antialias: !PERF_LOW, preserveDrawingBuffer: false },
+    /* 抗锯齿:新设备保留(线条更平滑);老旧设备关闭(减少 GPU 过绘制,明显提帧)。
+       powerPreference:'low-power':双 GPU 笔记本(独显+核显)默认抓独显渲染整个地图,
+       风扇/发热显著;十五轮降载后 GPU 负载已是零头(嵌套模糊剥离、顶点 -92%、
+       4-30fps 自适应),核显完全够用 —— 观感零变化,单 GPU 设备(含 M 系列)无感。
+       M3D 查看器渲染器同款设置(既有先例);低帧仍有 glowAutoOff/frameSkip 兜底 */
+    canvasContextAttributes: { antialias: !PERF_LOW, preserveDrawingBuffer: false, powerPreference: 'low-power' },
     attributionControl: false,
     /* 全局优化(所有设备,不改变功能/体验):
        1) fadeDuration:0 → 图层无淡入淡出,缩放/切换底图时画面更干脆(与主站根页一致);
@@ -4190,8 +4198,12 @@ function stateHash() {
   try {
     const c = map.getCenter();
     const h = { c: [+c.lng.toFixed(4), +c.lat.toFixed(4)], z: +map.getZoom().toFixed(2), p: +map.getPitch().toFixed(1), b: +map.getBearing().toFixed(1), j: map.getProjection().type, l: lang, m: localStorage.getItem('mjr3d_theme') || 'auto', v: liveOn ? 1 : 0, s: baseKey };
-    location.hash = 'mjr3d=' + btoa(unescape(encodeURIComponent(JSON.stringify(h))));
-    lastWrittenHash = location.hash;
+    /* replaceState 而非 location.hash 赋值:后者每次值变化压一条浏览器历史 —— 平移几分钟后
+       返回键要连按几十次才能离开页面。replaceState 原地替换当前条目:URL 照常可分享/刷新,
+       不触发 hashchange(本页自写本就不该触发);外部粘贴深链仍走 hashchange 正常生效 */
+    const h2 = '#mjr3d=' + btoa(unescape(encodeURIComponent(JSON.stringify(h))));
+    history.replaceState(null, '', h2);
+    lastWrittenHash = h2;
   } catch (e) {}
 }
 function applyUrlState() {
@@ -5681,16 +5693,46 @@ function updateDetailLive(t, p, M, rebuild) {
       '<div class="st-list">' +
       (function () {
         let s = '';
+        const _LIC = window.LINE_ICON || {};
+        /* 记号查找:直接键 → 名称变体兜底(本線→線、公司前缀剥离,与 line_icons.js 生成规则对齐),提升段名覆盖率 */
+        const _licOf = n => {
+          if (!n) return '';
+          if (_LIC[n]) return _LIC[n];
+          const v1 = n.replace(/本線$/, '線');
+          if (v1 !== n && _LIC[v1]) return _LIC[v1];
+          const v2 = n.replace(/^(東京メトロ|都営地下鉄|京都市営地下鉄|大阪メトロ|横浜市営|札幌市営|名古屋市営|福岡市営|仙台市営|JR|jr)/, '');
+          return (v2 !== n) ? _licOf(v2) : '';
+        };
+        /* 本班次途经线路(全名)的可用徽章:段名可能是短名/复合名/建设名(如'東西線'、'京王線・高尾線・相模原線'、'10号線新宿線'),需多级匹配 */
+        const _tripLics = [];
+        for (const ln of (t.lines || [])) { const u = _licOf(ln) || _LIC[ln] || ''; if (u) _tripLics.push({ n: ln, u }); }
+        const _tripMatch = s => { for (const x of _tripLics) { if (x.n === s || x.n.endsWith(s) || s.endsWith(x.n)) return x.u; } return ''; };
+        const _segLic = seg => {
+          if (!seg) return '';
+          const d0 = _licOf(seg);
+          if (d0) return d0;
+          const t0 = _tripMatch(seg);
+          if (t0) return t0;
+          if (seg.includes('・')) {   /* 复合线路名:'京王線・高尾線・相模原線' → 逐段查 */
+            for (const p of seg.split('・')) { const d = _licOf(p) || _tripMatch(p); if (d) return d; }
+          }
+          const noN = seg.replace(/^\d+号線/, '');   /* 建设名前缀:'10号線新宿線' → '新宿線' */
+          if (noN !== seg) { const d = _licOf(noN) || _tripMatch(noN); if (d) return d; }
+          return '';
+        };
         for (let k = 0; k < N; k++) {
           const upCol = (k > 0) ? (lineColor.get(lineOfPair(t, k - 1)) || '#8899aa') : '';
           const dnCol = (k < N - 1) ? (lineColor.get(lineOfPair(t, k)) || '#8899aa') : '';
           const dotCol = upCol || dnCol;
+          /* 站点徽章:对应线路有官方记号 SVG 时替代圆点;优先列车即将驶入的下段线路,其次到达段 */
+          const dstIc = (k < N - 1 && _segLic(lineOfPair(t, k))) || (k > 0 && _segLic(lineOfPair(t, k - 1))) || '';
+          const midHtml = dstIc ? '<img class="dst-ic" src="' + dstIc + '" alt="" loading="lazy">' : '<span class="dot" style="--dc:' + dotCol + '"></span>';
           const tm = [];
           if (k > 0) tm.push('<span class="t-arr">' + T().colArr + fmtHm(t.arr[k]) + '</span>');
           if (k < N - 1) tm.push('<span class="t-dep">' + T().colDep + fmtHm(t.dep[k]) + '</span>');
           s += '<div class="dstop" data-i="' + k + '"><span class="vn">' +
             (k > 0 ? '<span class="vln up" style="background:' + upCol + '"></span>' : '') +
-            '<span class="dot" style="--dc:' + dotCol + '"></span>' +
+            midHtml +
             (k < N - 1 ? '<span class="vln dn" style="background:' + dnCol + '"></span>' : '') +
             '</span><span class="vc"><span class="vnm">' + esc(t.jas[k]) + '</span><span class="vmeta">' +
             (_platAt(PLATMAP && PLATMAP.t && PLATMAP.t[t.t], k) ? '<span class="vplat" title="' + T().colPlat + '">' + _platAt(PLATMAP && PLATMAP.t && PLATMAP.t[t.t], k).replace(/;/g, '/') + '</span>' : '') +

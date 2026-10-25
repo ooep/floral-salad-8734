@@ -3436,17 +3436,23 @@ void main() {
       /* 环宽:屏幕 ~2.2px(uv01 偏移 1.1/轴尺寸),但下限 ~0.9 图集纹素 ——
          低倍率图标很小时(1 纹素≈3px)采样若落在同纹素内 s≈ac 环会消失,取两者较大 */
       vec2 to = max(vec2(1.1) / u_quadSize, vec2(0.9) / u_img) * (u_img / u_atlasSize);
+      /* 每个邻域采样点都钳回 cell 内:低倍率下采样半径(≥8 纹素)远超 cell 的
+         2px padding,不钳会采到相邻格的图标 alpha → 整圈实心方块(串色方块根因) */
+      vec2 cbMin = (cb + 0.5) / u_atlasSize, cbMax = (cb + u_cell - 0.5) / u_atlasSize;
       float s = 0.0;
-      s = max(s, texture(u_atlas, tc + vec2( to.x, 0.0)).a);
-      s = max(s, texture(u_atlas, tc - vec2( to.x, 0.0)).a);
-      s = max(s, texture(u_atlas, tc + vec2(0.0,  to.y)).a);
-      s = max(s, texture(u_atlas, tc - vec2(0.0,  to.y)).a);
-      s = max(s, texture(u_atlas, tc + to).a);
-      s = max(s, texture(u_atlas, tc + vec2( to.x, -to.y)).a);
-      s = max(s, texture(u_atlas, tc + vec2(-to.x,  to.y)).a);
-      s = max(s, texture(u_atlas, tc - to).a);
+      s = max(s, texture(u_atlas, clamp(tc + vec2( to.x, 0.0), cbMin, cbMax)).a);
+      s = max(s, texture(u_atlas, clamp(tc - vec2( to.x, 0.0), cbMin, cbMax)).a);
+      s = max(s, texture(u_atlas, clamp(tc + vec2(0.0,  to.y), cbMin, cbMax)).a);
+      s = max(s, texture(u_atlas, clamp(tc - vec2(0.0,  to.y), cbMin, cbMax)).a);
+      s = max(s, texture(u_atlas, clamp(tc + to, cbMin, cbMax)).a);
+      s = max(s, texture(u_atlas, clamp(tc + vec2( to.x, -to.y), cbMin, cbMax)).a);
+      s = max(s, texture(u_atlas, clamp(tc + vec2(-to.x,  to.y), cbMin, cbMax)).a);
+      s = max(s, texture(u_atlas, clamp(tc - to, cbMin, cbMax)).a);
       float ring = smoothstep(0.25, 0.6, s) * (1.0 - smoothstep(0.25, 0.6, ac));
-      a = 0.95 * v_color.a * ring;
+      /* 边缘渐变:离图标矩形边(sdBox,屏幕像素)越远越淡,到 quad 边(±5px)归零 ——
+         高倍率=贴边亮线+微弱裙边;低倍率=柔和光晕而非方块 */
+      float dOut = max(sdBox(v_uv, u_quadSize), 0.0);
+      a = 0.95 * v_color.a * ring * (1.0 - smoothstep(0.5, 5.2, dOut));
     } else {
       // 方盒模式:车体矩形外 ~2.2px 描边带(d∈[0, 3])
       float d = sdBox(v_uv, u_quadSize);

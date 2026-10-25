@@ -1,0 +1,1137 @@
+{
+ "source": "3175265721",
+ "name": "JRW207N-HALoc-4+3(L)Cars_Data",
+ "car_length_m": 20.15,
+ "cars": [
+  {
+   "name": "JRW207N-HALoc-4+3(L)Cars_Data",
+   "model": "Tc207-0.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.146,
+    9.646
+   ],
+   "lod": {
+    "model": "Tc207-0.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "asset_fcf22ca8.obj"
+   },
+   "parts": [
+    {
+     "name": "HA_up(859AEEC6)",
+     "model": "makuf.glb",
+     "texture": "MainTex_56a9bff1.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "HA_ups(1186E2FD)",
+     "model": "makus.glb",
+     "texture": "MainTex_56a9bff1.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "HA_down(41F7986F)",
+     "model": "makuf_856a7810.glb",
+     "texture": "MainTex_56a9bff1.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "HA_downs(F528469E)",
+     "model": "makus_ceca0a3e.glb",
+     "texture": "MainTex_56a9bff1.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "207Light(7F4D389B)",
+     "model": "AdditiveShader_0_0_10_20_fcad693b.glb",
+     "texture": "asset_8d579140.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 10,
+      "intensity": 20
+     }
+    },
+    {
+     "name": "207LightE(428FB760)",
+     "model": "AdditiveShader_0_0_10_20_f6bf1593.glb",
+     "texture": "asset_8d579140.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 10,
+      "intensity": 20
+     }
+    },
+    {
+     "name": "H2(3F8D27C5)",
+     "model": "unban.glb",
+     "texture": "MainTex_d063470e.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default"
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.5,
+      1,
+      7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1,
+      7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -2.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -2.4
+     ]
+    }
+   ],
+   "lights": [
+    [
+     0.8,
+     1.45,
+     -0.3
+    ],
+    [
+     -0.8,
+     1.45,
+     -0.3
+    ]
+   ]
+  },
+  {
+   "name": "TrailerJRW207N-HALoc-4+3(L)Cars0",
+   "model": "M207-500JRW207N-HALoc-4_3_L_Cars.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.146,
+    9.646
+   ],
+   "lod": {
+    "model": "M207-500JRW207N-HALoc-4_3_L_Cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "JRW207N-HALoc-4_3_L_Cars.obj"
+   },
+   "parts": [
+    {
+     "name": "HA_ups(61E36407)",
+     "model": "makus_Instance.glb",
+     "texture": "asset.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "HA_downs(70FD0686)",
+     "model": "makus_Instance_613a37ca.glb",
+     "texture": "asset.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -2.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -2.4
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJRW207N-HALoc-4+3(L)Cars1",
+   "model": "M206-1500JRW207N-HALoc-4_3_L_Cars.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.146,
+    9.796
+   ],
+   "lod": {
+    "model": "M206-1500JRW207N-HALoc-4_3_L_Cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "JRW207N-HALoc-4_3_L_Cars_482cee25.obj"
+   },
+   "parts": [
+    {
+     "name": "HA_ups(04477863)",
+     "model": "makus_Instance.glb",
+     "texture": "asset.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "HA_downs(B801A8AF)",
+     "model": "makus_Instance_613a37ca.glb",
+     "texture": "asset.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -2.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -2.4
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJRW207N-HALoc-4+3(L)Cars2",
+   "model": "Tc206-100JRW207N-HALoc-4_3_L_Cars.glb",
+   "texture": "MainTex.ktx2",
+   "flip": true,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.346,
+    10.146
+   ],
+   "lod": {
+    "model": "Tc206-100JRW207N-HALoc-4_3_L_Cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "JRW207N-HALoc-4_3_L_Cars_a8411539.obj"
+   },
+   "parts": [
+    {
+     "name": "HA_up(A4D599AA)",
+     "model": "makuf.glb",
+     "texture": "MainTex_56a9bff1.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "HA_ups(79224F0C)",
+     "model": "makus.glb",
+     "texture": "MainTex_56a9bff1.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "HA_down(03C27991)",
+     "model": "makuf_856a7810.glb",
+     "texture": "MainTex_56a9bff1.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "HA_downs(016A924D)",
+     "model": "makus_ceca0a3e.glb",
+     "texture": "MainTex_56a9bff1.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "H2(8C9D8252)",
+     "model": "unban.glb",
+     "texture": "MainTex_d063470e.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default"
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -2.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -2.4
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJRW207N-HALoc-4+3(L)Cars3",
+   "model": "Mc207-1000.003JRW207N-HALoc-4_3_L_Cars.glb",
+   "texture": "MainTex_1c709fc5.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.146,
+    9.646
+   ],
+   "lod": {
+    "model": "Mc207-1000.003JRW207N-HALoc-4_3_L_Cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "JRW207N-HALoc-4_3_L_Cars_d718b77c.obj"
+   },
+   "parts": [
+    {
+     "name": "HAL_up(4D23B686)",
+     "model": "makuf_Instance.glb",
+     "texture": "asset_2ffa8878.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "HAL_ups(C71F2BC4)",
+     "model": "makus_Instance.glb",
+     "texture": "asset_2ffa8878.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "HAL_down(E67398BB)",
+     "model": "makuf_Instance_45f4ac80.glb",
+     "texture": "asset_2ffa8878.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "HAL_downs(1995FE7B)",
+     "model": "makus_Instance_613a37ca.glb",
+     "texture": "asset_2ffa8878.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "S36(AA9E1CF8)",
+     "model": "Hensei_Instance.glb",
+     "texture": "asset_35f8908b.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default"
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -2.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -2.4
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJRW207N-HALoc-4+3(L)Cars4",
+   "model": "T207-1100.002JRW207N-HALoc-4_3_L_Cars.glb",
+   "texture": "MainTex_b253c8fa.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.146,
+    9.796
+   ],
+   "lod": {
+    "model": "T207-1100.002JRW207N-HALoc-4_3_L_Cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "JRW207N-HALoc-4_3_L_Cars_c5ce4d4f.obj"
+   },
+   "parts": [
+    {
+     "name": "HAL_ups(81A69767)",
+     "model": "makus_Instance_Instance.glb",
+     "texture": "asset_2ffa8878.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "HAL_downs(081416DC)",
+     "model": "makus_Instance_Instance_a7e7dd8b.glb",
+     "texture": "asset_2ffa8878.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -2.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -2.4
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJRW207N-HALoc-4+3(L)Cars5",
+   "model": "Tc206-1000.003JRW207N-HALoc-4_3_L_Cars.glb",
+   "texture": "MainTex_b253c8fa.ktx2",
+   "flip": true,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.146,
+    10.146
+   ],
+   "lod": {
+    "model": "Tc206-1000.003JRW207N-HALoc-4_3_L_Cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "JRW207N-HALoc-4_3_L_Cars_ac1904df.obj"
+   },
+   "parts": [
+    {
+     "name": "HAL_up(102518C9)",
+     "model": "makuf.glb",
+     "texture": "MainTex_6f2a3106.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "HAL_ups(C489E34D)",
+     "model": "makus.glb",
+     "texture": "MainTex_6f2a3106.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "HAL_down(5DA6C7E9)",
+     "model": "makuf_856a7810.glb",
+     "texture": "MainTex_6f2a3106.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "HAL_downs(D093151F)",
+     "model": "makus_ceca0a3e.glb",
+     "texture": "MainTex_6f2a3106.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "207LLight(31D3C4ED)",
+     "model": "AdditiveShader_0_0_10_20.glb",
+     "texture": "asset_8d579140.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 10,
+      "intensity": 20
+     }
+    },
+    {
+     "name": "207LLightE(E4DECA75)",
+     "model": "AdditiveShader_0_0_10_20_ba7ecc08.glb",
+     "texture": "asset_8d579140.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 10,
+      "intensity": 20
+     }
+    },
+    {
+     "name": "S36(BB585D42)",
+     "model": "Hensei.glb",
+     "texture": "MainTex_d063470e.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default"
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -2.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -2.4
+     ]
+    }
+   ],
+   "lights": [
+    [
+     -0.8,
+     1.45,
+     -0.3
+    ],
+    [
+     0.8,
+     1.45,
+     -0.3
+    ]
+   ]
+  }
+ ]
+}

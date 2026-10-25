@@ -1,0 +1,1725 @@
+{
+ "source": "1683535411",
+ "name": "JR East E259 Series N'EX(12)_Data",
+ "car_length_m": 20.97,
+ "cars": [
+  {
+   "name": "JR East E259 Series N'EX(12)_Data",
+   "model": "Cube.000.glb",
+   "texture": "MainTex_5216158d.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.797,
+    10.197
+   ],
+   "lod": {
+    "model": "Cube.000.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Cube.000_Instance.obj"
+   },
+   "transform": {
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": [
+     0,
+     -1,
+     0,
+     0
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "E259 NEX Car NR. 6 Front Light(Clone)",
+     "model": "AdditiveShader_0_24_20_8_Instance.glb",
+     "texture": "asset_89a672b2.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ],
+      "required": [
+       "Spawned"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 20,
+      "intensity": 8
+     }
+    },
+    {
+     "name": "E259 NEX Car NR. 6 Rear Light(Clone)",
+     "model": "AdditiveShader_0_24_20_5_Instance.glb",
+     "texture": "asset_89a672b2.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Spawned",
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 20,
+      "intensity": 5
+     }
+    },
+    {
+     "name": "E259 NEX Car NR. 6 Submesh LED Board(Clone)",
+     "model": "AdditiveShader_0_24_20_2_Instance.glb",
+     "texture": "asset_3affdfbe.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Spawned"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 20,
+      "intensity": 2
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7
+     ]
+    }
+   ],
+   "lights": [
+    [
+     0.99,
+     2.49,
+     -0.24
+    ],
+    [
+     -1.06,
+     2.49,
+     -0.24
+    ]
+   ]
+  },
+  {
+   "name": "TrailerJR_East_E259_Series_NEX(12)1",
+   "model": "Cube.000JR_East_E259_Series_NEX_12.glb",
+   "texture": "MainTex_24c0936e.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.223,
+    10.223
+   ],
+   "lod": {
+    "model": "Cube.000JR_East_E259_Series_NEX_12.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Cube.001JR_East_E259_Series_NEX_12.obj"
+   },
+   "transform": {
+    "position": [
+     0,
+     -0.0429,
+     0.0036
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "E259 NEX Car NR. 2 tm 5 Submesh LED Board",
+     "model": "AdditiveShader_0_24_20_2.glb",
+     "texture": "MainTex_b3238cf8.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Spawned"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 20,
+      "intensity": 2
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      9.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -9.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      9.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -9.3
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJR_East_E259_Series_NEX(12)2",
+   "model": "Cube.000JR_East_E259_Series_NEX_12_a331c523.glb",
+   "texture": "MainTex_02d29860.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.222,
+    10.222
+   ],
+   "lod": {
+    "model": "Cube.000JR_East_E259_Series_NEX_12_a331c523.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Cube.001JR_East_E259_Series_NEX_12.obj"
+   },
+   "parts": [
+    {
+     "name": "E259 NEX Car NR. 2 tm 5 Submesh LED Board",
+     "model": "AdditiveShader_0_24_20_2.glb",
+     "texture": "MainTex_b3238cf8.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Spawned"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 20,
+      "intensity": 2
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      9.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -9.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      9.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -9.3
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJR_East_E259_Series_NEX(12)3",
+   "model": "Cube.000JR_East_E259_Series_NEX_12_4b207155.glb",
+   "texture": "MainTex_5f82fccd.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.202,
+    10.202
+   ],
+   "lod": {
+    "model": "Cube.000JR_East_E259_Series_NEX_12_4b207155.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Cube.001JR_East_E259_Series_NEX_12.obj"
+   },
+   "parts": [
+    {
+     "name": "E259 NEX Car NR. 2 tm 5 Submesh LED Board",
+     "model": "AdditiveShader_0_24_20_2.glb",
+     "texture": "MainTex_b3238cf8.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Spawned"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 20,
+      "intensity": 2
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      9.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -9.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      9.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -9.3
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJR_East_E259_Series_NEX(12)4",
+   "model": "Cube.000JR_East_E259_Series_NEX_12_a331c523.glb",
+   "texture": "MainTex_1cb36a7f.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.222,
+    10.222
+   ],
+   "lod": {
+    "model": "Cube.000JR_East_E259_Series_NEX_12_a331c523.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Cube.001JR_East_E259_Series_NEX_12.obj"
+   },
+   "parts": [
+    {
+     "name": "E259 NEX Car NR. 2 tm 5 Submesh LED Board",
+     "model": "AdditiveShader_0_24_20_2.glb",
+     "texture": "MainTex_b3238cf8.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Spawned"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 20,
+      "intensity": 2
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      9.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -9.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      9.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -9.3
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJR_East_E259_Series_NEX(12)5",
+   "model": "Cube.005JR_East_E259_Series_NEX_12.glb",
+   "texture": "MainTex_8c11c497.ktx2",
+   "flip": true,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.858,
+    10.208
+   ],
+   "lod": {
+    "model": "Cube.005JR_East_E259_Series_NEX_12.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Cube.000JR_East_E259_Series_NEX_12_1a8f7f7b.obj"
+   },
+   "transform": {
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": [
+     0,
+     -1,
+     0,
+     0
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "E259 NEX Car NR. 1 Submesh LED Board",
+     "model": "AdditiveShader_0_24_20_2_a5ceb132.glb",
+     "texture": "MainTex_b3238cf8.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Spawned"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 20,
+      "intensity": 2
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.6
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJR_East_E259_Series_NEX(12)7",
+   "model": "Cube.000JR_East_E259_Series_NEX_12_c78668d1.glb",
+   "texture": "MainTex_5dd6422a.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.797,
+    10.197
+   ],
+   "lod": {
+    "model": "Cube.000JR_East_E259_Series_NEX_12_c78668d1.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Cube.000JR_East_E259_Series_NEX_12_24e21ae9.obj"
+   },
+   "transform": {
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": [
+     0,
+     -1,
+     0,
+     0
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "E259 NEX Car NR. 6 Submesh LED Board",
+     "model": "AdditiveShader_0_24_20_2_f10f66ac.glb",
+     "texture": "MainTex_b3238cf8.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Spawned"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 20,
+      "intensity": 2
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJR_East_E259_Series_NEX(12)1",
+   "model": "Cube.000JR_East_E259_Series_NEX_12.glb",
+   "texture": "MainTex_24c0936e.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.223,
+    10.223
+   ],
+   "lod": {
+    "model": "Cube.000JR_East_E259_Series_NEX_12.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Cube.001JR_East_E259_Series_NEX_12.obj"
+   },
+   "transform": {
+    "position": [
+     0,
+     -0.0429,
+     0.0036
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "E259 NEX Car NR. 2 tm 5 Submesh LED Board",
+     "model": "AdditiveShader_0_24_20_2.glb",
+     "texture": "MainTex_b3238cf8.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Spawned"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 20,
+      "intensity": 2
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      9.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -9.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      9.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -9.3
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJR_East_E259_Series_NEX(12)2",
+   "model": "Cube.000JR_East_E259_Series_NEX_12_a331c523.glb",
+   "texture": "MainTex_02d29860.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.222,
+    10.222
+   ],
+   "lod": {
+    "model": "Cube.000JR_East_E259_Series_NEX_12_a331c523.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Cube.001JR_East_E259_Series_NEX_12.obj"
+   },
+   "parts": [
+    {
+     "name": "E259 NEX Car NR. 2 tm 5 Submesh LED Board",
+     "model": "AdditiveShader_0_24_20_2.glb",
+     "texture": "MainTex_b3238cf8.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Spawned"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 20,
+      "intensity": 2
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      9.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -9.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      9.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -9.3
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJR_East_E259_Series_NEX(12)3",
+   "model": "Cube.000JR_East_E259_Series_NEX_12_4b207155.glb",
+   "texture": "MainTex_5f82fccd.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.202,
+    10.202
+   ],
+   "lod": {
+    "model": "Cube.000JR_East_E259_Series_NEX_12_4b207155.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Cube.001JR_East_E259_Series_NEX_12.obj"
+   },
+   "parts": [
+    {
+     "name": "E259 NEX Car NR. 2 tm 5 Submesh LED Board",
+     "model": "AdditiveShader_0_24_20_2.glb",
+     "texture": "MainTex_b3238cf8.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Spawned"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 20,
+      "intensity": 2
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      9.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -9.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      9.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -9.3
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJR_East_E259_Series_NEX(12)4",
+   "model": "Cube.000JR_East_E259_Series_NEX_12_a331c523.glb",
+   "texture": "MainTex_1cb36a7f.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.222,
+    10.222
+   ],
+   "lod": {
+    "model": "Cube.000JR_East_E259_Series_NEX_12_a331c523.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Cube.001JR_East_E259_Series_NEX_12.obj"
+   },
+   "parts": [
+    {
+     "name": "E259 NEX Car NR. 2 tm 5 Submesh LED Board",
+     "model": "AdditiveShader_0_24_20_2.glb",
+     "texture": "MainTex_b3238cf8.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Spawned"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 20,
+      "intensity": 2
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      9.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -9.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      9.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -9.3
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJR_East_E259_Series_NEX(12)8",
+   "model": "Cube.004JR_East_E259_Series_NEX_12.glb",
+   "texture": "MainTex_9cd0a020.ktx2",
+   "flip": true,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.858,
+    10.208
+   ],
+   "lod": {
+    "model": "Cube.004JR_East_E259_Series_NEX_12.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Cube.000JR_East_E259_Series_NEX_12_1a8f7f7b.obj"
+   },
+   "transform": {
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": [
+     0,
+     -1,
+     0,
+     0
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "E259 NEX Car NR. 1 Front Light",
+     "model": "AdditiveShader_0_24_20_8.glb",
+     "texture": "MainTex_c3dfadc2.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Spawned",
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 20,
+      "intensity": 8
+     }
+    },
+    {
+     "name": "E259 NEX Car NR. 1 Rear Light",
+     "model": "AdditiveShader_0_24_20_5.glb",
+     "texture": "MainTex_c3dfadc2.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ],
+      "required": [
+       "Spawned"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 20,
+      "intensity": 5
+     }
+    },
+    {
+     "name": "E259 NEX Car NR. 1 Submesh LED Board",
+     "model": "AdditiveShader_0_24_20_2_a5ceb132.glb",
+     "texture": "MainTex_b3238cf8.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Spawned"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 20,
+      "intensity": 2
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.6
+     ]
+    }
+   ],
+   "lights": [
+    [
+     0.99,
+     2.49,
+     -0.25
+    ],
+    [
+     -1.055,
+     2.49,
+     -0.25
+    ]
+   ]
+  }
+ ],
+ "connectors": [
+  {
+   "name": "TrailerJR_East_E259_Series_NEX(12)0",
+   "model": "Plane.001JR_East_E259_Series_NEX_12.glb",
+   "texture": "MainTex.ktx2",
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    0.101,
+    0.101
+   ],
+   "lod": {
+    "model": "Plane.001JR_East_E259_Series_NEX_12.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Plane.001JR_East_E259_Series_NEX_12_453ac1f4.obj"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "after": 0
+  },
+  {
+   "name": "TrailerJR_East_E259_Series_NEX(12)0",
+   "model": "Plane.001JR_East_E259_Series_NEX_12.glb",
+   "texture": "MainTex.ktx2",
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    0.101,
+    0.101
+   ],
+   "lod": {
+    "model": "Plane.001JR_East_E259_Series_NEX_12.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Plane.001JR_East_E259_Series_NEX_12_453ac1f4.obj"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "after": 1
+  },
+  {
+   "name": "TrailerJR_East_E259_Series_NEX(12)0",
+   "model": "Plane.001JR_East_E259_Series_NEX_12.glb",
+   "texture": "MainTex.ktx2",
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    0.101,
+    0.101
+   ],
+   "lod": {
+    "model": "Plane.001JR_East_E259_Series_NEX_12.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Plane.001JR_East_E259_Series_NEX_12_453ac1f4.obj"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "after": 2
+  },
+  {
+   "name": "TrailerJR_East_E259_Series_NEX(12)0",
+   "model": "Plane.001JR_East_E259_Series_NEX_12.glb",
+   "texture": "MainTex.ktx2",
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    0.101,
+    0.101
+   ],
+   "lod": {
+    "model": "Plane.001JR_East_E259_Series_NEX_12.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Plane.001JR_East_E259_Series_NEX_12_453ac1f4.obj"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "after": 3
+  },
+  {
+   "name": "TrailerJR_East_E259_Series_NEX(12)0",
+   "model": "Plane.001JR_East_E259_Series_NEX_12.glb",
+   "texture": "MainTex.ktx2",
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    0.101,
+    0.101
+   ],
+   "lod": {
+    "model": "Plane.001JR_East_E259_Series_NEX_12.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Plane.001JR_East_E259_Series_NEX_12_453ac1f4.obj"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "after": 4
+  },
+  {
+   "name": "TrailerJR_East_E259_Series_NEX(12)6",
+   "model": "Plane.001JR_East_E259_Series_NEX_12_9e2f629a.glb",
+   "texture": "MainTex.ktx2",
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    0.153,
+    0.153
+   ],
+   "lod": {
+    "model": "Plane.001JR_East_E259_Series_NEX_12_9e2f629a.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Plane.001JR_East_E259_Series_NEX_12_11027426.obj"
+   },
+   "transform": {
+    "position": [
+     -1,
+     0,
+     0
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "after": 5
+  },
+  {
+   "name": "TrailerJR_East_E259_Series_NEX(12)0",
+   "model": "Plane.001JR_East_E259_Series_NEX_12.glb",
+   "texture": "MainTex.ktx2",
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    0.101,
+    0.101
+   ],
+   "lod": {
+    "model": "Plane.001JR_East_E259_Series_NEX_12.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Plane.001JR_East_E259_Series_NEX_12_453ac1f4.obj"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "after": 6
+  },
+  {
+   "name": "TrailerJR_East_E259_Series_NEX(12)0",
+   "model": "Plane.001JR_East_E259_Series_NEX_12.glb",
+   "texture": "MainTex.ktx2",
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    0.101,
+    0.101
+   ],
+   "lod": {
+    "model": "Plane.001JR_East_E259_Series_NEX_12.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Plane.001JR_East_E259_Series_NEX_12_453ac1f4.obj"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "after": 7
+  },
+  {
+   "name": "TrailerJR_East_E259_Series_NEX(12)0",
+   "model": "Plane.001JR_East_E259_Series_NEX_12.glb",
+   "texture": "MainTex.ktx2",
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    0.101,
+    0.101
+   ],
+   "lod": {
+    "model": "Plane.001JR_East_E259_Series_NEX_12.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Plane.001JR_East_E259_Series_NEX_12_453ac1f4.obj"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "after": 8
+  },
+  {
+   "name": "TrailerJR_East_E259_Series_NEX(12)0",
+   "model": "Plane.001JR_East_E259_Series_NEX_12.glb",
+   "texture": "MainTex.ktx2",
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    0.101,
+    0.101
+   ],
+   "lod": {
+    "model": "Plane.001JR_East_E259_Series_NEX_12.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Plane.001JR_East_E259_Series_NEX_12_453ac1f4.obj"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "after": 9
+  },
+  {
+   "name": "TrailerJR_East_E259_Series_NEX(12)0",
+   "model": "Plane.001JR_East_E259_Series_NEX_12.glb",
+   "texture": "MainTex.ktx2",
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    0.101,
+    0.101
+   ],
+   "lod": {
+    "model": "Plane.001JR_East_E259_Series_NEX_12.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Plane.001JR_East_E259_Series_NEX_12_453ac1f4.obj"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "after": 10
+  }
+ ],
+ "material": {
+  "brightness": 0.729
+ },
+ "fixed_by": "1683535411"
+}

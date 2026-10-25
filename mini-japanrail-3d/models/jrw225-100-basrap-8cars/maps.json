@@ -1,0 +1,102 @@
+{
+ "M224-100_lod_Diffuse.ktx2": {
+  "normal": "M224-100_lod_Diffuse.normal.ktx2",
+  "roughnessMap": "M224-100_lod_Diffuse.rough.ktx2",
+  "night": {
+   "file": "M224-100_lod_Diffuse.rough.ktx2",
+   "channel": "a"
+  },
+  "nightCoverage": 0.0708
+ },
+ "M225-100W_lod_Diffuse.ktx2": {
+  "normal": "M225-100W_lod_Diffuse.normal.ktx2",
+  "roughnessMap": "M225-100W_lod_Diffuse.rough.ktx2",
+  "night": {
+   "file": "M225-100W_lod_Diffuse.rough.ktx2",
+   "channel": "a"
+  },
+  "nightCoverage": 0.0703
+ },
+ "M225-100_lod_Diffuse.ktx2": {
+  "normal": "M225-100_lod_Diffuse.normal.ktx2",
+  "roughnessMap": "M225-100_lod_Diffuse.rough.ktx2",
+  "night": {
+   "file": "M225-100_lod_Diffuse.rough.ktx2",
+   "channel": "a"
+  },
+  "nightCoverage": 0.0704
+ },
+ "MainTex.ktx2": {
+  "normal": "MainTex.normal.ktx2",
+  "roughnessMap": "MainTex.rough.ktx2",
+  "night": {
+   "file": "MainTex.rough.ktx2",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.0652,
+  "emissive": "MainTex.emissive.ktx2",
+  "nightCoverage": 0.1019,
+  "cutoutShell": 0
+ },
+ "MainTex_0848d509.ktx2": {
+  "roughness": 0.554
+ },
+ "MainTex_4c9d5752.ktx2": {
+  "normal": "MainTex_4c9d5752.normal.ktx2",
+  "roughnessMap": "MainTex_4c9d5752.rough.ktx2",
+  "night": {
+   "file": "MainTex_4c9d5752.rough.ktx2",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.0652,
+  "emissive": "MainTex_4c9d5752.emissive.ktx2",
+  "nightCoverage": 0.1019,
+  "cutoutShell": 0.0006
+ },
+ "MainTex_902cb2da.ktx2": {
+  "roughness": 0.554
+ },
+ "Mc224-100H_lod_Diffuse.ktx2": {
+  "normal": "Mc224-100H_lod_Diffuse.normal.ktx2",
+  "roughnessMap": "Mc224-100H_lod_Diffuse.rough.ktx2",
+  "night": {
+   "file": "Mc224-100H_lod_Diffuse.rough.ktx2",
+   "channel": "a"
+  },
+  "emissive": "Mc224-100H_lod_Diffuse.emissive.ktx2",
+  "nightCoverage": 0.041
+ },
+ "Mc225-100H_lod_Diffuse.ktx2": {
+  "normal": "Mc225-100H_lod_Diffuse.normal.ktx2",
+  "roughnessMap": "Mc225-100H_lod_Diffuse.rough.ktx2",
+  "night": {
+   "file": "Mc225-100H_lod_Diffuse.rough.ktx2",
+   "channel": "a"
+  },
+  "emissive": "Mc225-100H_lod_Diffuse.emissive.ktx2",
+  "nightCoverage": 0.0376
+ },
+ "asset.ktx2": {
+  "roughness": 0.554
+ },
+ "asset_6fee186d.ktx2": {
+  "roughness": 0.554
+ },
+ "asset_e0b45270.ktx2": {
+  "roughness": 0.554
+ },
+ "stand-ins.ktx2": {
+  "roughnessMap": "stand-ins.rough.ktx2",
+  "normal": "stand-ins.normal.ktx2",
+  "normalScale": 1,
+  "night": {
+   "file": "stand-ins.rough.ktx2",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutAt": 0.5,
+  "emissive": "stand-ins.emissive.ktx2"
+ }
+}

@@ -1,0 +1,80 @@
+{
+ "M322F_lod_Diffuse.webp": {
+  "normal": "M322F_lod_Diffuse.normal.webp",
+  "roughnessMap": "M322F_lod_Diffuse.rough.webp",
+  "night": {
+   "file": "M322F_lod_Diffuse.rough.webp",
+   "channel": "a"
+  },
+  "nightCoverage": 0.0933
+ },
+ "M322_lod_Diffuse.webp": {
+  "normal": "M322_lod_Diffuse.normal.webp",
+  "roughnessMap": "M322_lod_Diffuse.rough.webp",
+  "night": {
+   "file": "M322_lod_Diffuse.rough.webp",
+   "channel": "a"
+  },
+  "nightCoverage": 0.0913
+ },
+ "M323W_lod_Diffuse.webp": {
+  "normal": "M323W_lod_Diffuse.normal.webp",
+  "roughnessMap": "M323W_lod_Diffuse.rough.webp",
+  "night": {
+   "file": "M323W_lod_Diffuse.rough.webp",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.0,
+  "nightCoverage": 0.0905
+ },
+ "M323_lod_Diffuse.webp": {
+  "normal": "M323_lod_Diffuse.normal.webp",
+  "roughnessMap": "M323_lod_Diffuse.rough.webp",
+  "night": {
+   "file": "M323_lod_Diffuse.rough.webp",
+   "channel": "a"
+  },
+  "nightCoverage": 0.0902
+ },
+ "MainTex.webp": {
+  "normal": "MainTex.normal.webp",
+  "roughnessMap": "MainTex.rough.webp",
+  "night": {
+   "file": "MainTex.rough.webp",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.1314,
+  "emissive": "MainTex.emissive.webp",
+  "nightCoverage": 0.1136
+ },
+ "Mc322_lod_Diffuse.webp": {
+  "normal": "Mc322_lod_Diffuse.normal.webp",
+  "roughnessMap": "Mc322_lod_Diffuse.rough.webp",
+  "night": {
+   "file": "Mc322_lod_Diffuse.rough.webp",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.0,
+  "emissive": "Mc322_lod_Diffuse.emissive.webp",
+  "nightCoverage": 0.0615
+ },
+ "Mc323_lod_Diffuse.webp": {
+  "normal": "Mc323_lod_Diffuse.normal.webp",
+  "roughnessMap": "Mc323_lod_Diffuse.rough.webp",
+  "night": {
+   "file": "Mc323_lod_Diffuse.rough.webp",
+   "channel": "a"
+  },
+  "emissive": "Mc323_lod_Diffuse.emissive.webp",
+  "nightCoverage": 0.0592
+ },
+ "asset.webp": {
+  "roughness": 0.554
+ },
+ "asset_77bcbcbd.webp": {
+  "roughness": 0.554
+ }
+}

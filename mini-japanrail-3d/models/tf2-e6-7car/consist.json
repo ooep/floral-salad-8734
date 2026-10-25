@@ -1,0 +1,110 @@
+{
+ "source": "2870828435/e6_7car",
+ "name": "e6_7car",
+ "car_length_m": 22.94,
+ "middle_car_length_m": 20.26,
+ "cars": [
+  {
+   "name": "e621",
+   "model": "e621.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "e621_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    12.36,
+    10.0
+   ]
+  },
+  {
+   "name": "e625p",
+   "model": "e625p.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "e625p_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    10.0,
+    10.0
+   ]
+  },
+  {
+   "name": "e627",
+   "model": "e627.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "e627_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    10.0,
+    10.0
+   ]
+  },
+  {
+   "name": "e625",
+   "model": "e625.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "e625_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    10.0,
+    10.0
+   ]
+  },
+  {
+   "name": "e625",
+   "model": "e625.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "e625_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    10.0,
+    10.0
+   ]
+  },
+  {
+   "name": "e628p",
+   "model": "e628p.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "e628p_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    10.0,
+    10.0
+   ]
+  },
+  {
+   "name": "e611",
+   "model": "e611.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "e611_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    10.0,
+    12.36
+   ]
+  }
+ ],
+ "material": {
+  "brightness": 0.987
+ },
+ "fixed_by": "tf2-e6-7car"
+}

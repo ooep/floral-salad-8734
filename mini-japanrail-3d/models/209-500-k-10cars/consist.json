@@ -1,0 +1,1044 @@
+{
+ "source": "2499481099",
+ "name": "209_500_K_10Cars_Data",
+ "car_length_m": 19.96,
+ "cars": [
+  {
+   "name": "209_500_K_10Cars_Data",
+   "model": "Cube.018209_500_K_10Cars.glb",
+   "texture": "MainTex_5db53e36.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.926,
+    9.926
+   ],
+   "lod": {
+    "model": "Cube.018209_500_K_10Cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Cube209_500_K_10Cars_c2960209.obj"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.53
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.53
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7
+     ]
+    }
+   ],
+   "lights": [
+    [
+     0.75,
+     1.35,
+     -0.4
+    ],
+    [
+     -0.75,
+     1.35,
+     -0.4
+    ]
+   ]
+  },
+  {
+   "name": "Trailer209_500_K_10Cars0",
+   "model": "Cube.025209_500_K_10Cars.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.982,
+    9.982
+   ],
+   "lod": {
+    "model": "Cube.007209_500_K_10Cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Plane.006209_500_K_10Cars.obj"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.55
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.55
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7.4
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Trailer209_500_K_10Cars1",
+   "model": "Plane.031209_500_K_10Cars.glb",
+   "texture": "MainTex_f0aba170.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.982,
+    9.982
+   ],
+   "lod": {
+    "model": "Plane.031209_500_K_10Cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Cube209_500_K_10Cars.obj"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.55
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.55
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7.4
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Trailer209_500_K_10Cars2",
+   "model": "Cube.007209_500_K_10Cars.glb",
+   "texture": "MainTex_a244f5ea.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.982,
+    9.982
+   ],
+   "lod": {
+    "model": "Cube.007209_500_K_10Cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Plane.006209_500_K_10Cars.obj"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.55
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.55
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7.4
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Trailer209_500_K_10Cars0",
+   "model": "Cube.025209_500_K_10Cars.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.982,
+    9.982
+   ],
+   "lod": {
+    "model": "Cube.007209_500_K_10Cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Plane.006209_500_K_10Cars.obj"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.55
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.55
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7.4
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Trailer209_500_K_10Cars0",
+   "model": "Cube.025209_500_K_10Cars.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.982,
+    9.982
+   ],
+   "lod": {
+    "model": "Cube.007209_500_K_10Cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Plane.006209_500_K_10Cars.obj"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.55
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.55
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7.4
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Trailer209_500_K_10Cars3",
+   "model": "Cube.007209_500_K_10Cars_acfbcb85.glb",
+   "texture": "MainTex_aceba00c.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.982,
+    9.982
+   ],
+   "lod": {
+    "model": "Cube.007209_500_K_10Cars_acfbcb85.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Cube.006209_500_K_10Cars.obj"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.55
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.55
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7.4
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Trailer209_500_K_10Cars1",
+   "model": "Plane.031209_500_K_10Cars.glb",
+   "texture": "MainTex_f0aba170.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.982,
+    9.982
+   ],
+   "lod": {
+    "model": "Plane.031209_500_K_10Cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Cube209_500_K_10Cars.obj"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.55
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.55
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7.4
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Trailer209_500_K_10Cars2",
+   "model": "Cube.007209_500_K_10Cars.glb",
+   "texture": "MainTex_a244f5ea.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.982,
+    9.982
+   ],
+   "lod": {
+    "model": "Cube.007209_500_K_10Cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Plane.006209_500_K_10Cars.obj"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.55
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.55
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7.4
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Trailer209_500_K_10Cars4",
+   "model": "Cube.018209_500_K_10Cars.glb",
+   "texture": "MainTex_5db53e36.ktx2",
+   "flip": true,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.926,
+    9.926
+   ],
+   "lod": {
+    "model": "Cube.018209_500_K_10Cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Cube209_500_K_10Cars_c2960209.obj"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.53
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.53
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7
+     ]
+    }
+   ],
+   "lights": [
+    [
+     0.75,
+     1.35,
+     -0.4
+    ],
+    [
+     -0.75,
+     1.35,
+     -0.4
+    ]
+   ]
+  }
+ ],
+ "material": {
+  "brightness": 2.667,
+  "alphaCutout": 0.5,
+  "steel": {
+   "skin": 77,
+   "gain": 1.41
+  }
+ },
+ "fixed_by": "2499481099"
+}

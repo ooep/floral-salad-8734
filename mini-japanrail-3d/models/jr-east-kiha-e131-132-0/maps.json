@@ -1,0 +1,55 @@
+{
+ "MainTex.ktx2": {
+  "roughnessMap": "MainTex.rough.ktx2",
+  "night": {
+   "file": "MainTex.rough.ktx2",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.0027,
+  "nightCoverage": 0.0579,
+  "cutoutShell": 0
+ },
+ "MainTex_40d8e2d9.ktx2": {
+  "roughnessMap": "MainTex_40d8e2d9.rough.ktx2",
+  "night": {
+   "file": "MainTex_40d8e2d9.rough.ktx2",
+   "channel": "a"
+  },
+  "nightCoverage": 0.0531
+ },
+ "asset_615398ba.ktx2": {
+  "roughness": 0.85,
+  "night": {
+   "file": "asset_615398ba.night.ktx2",
+   "channel": "r"
+  },
+  "nightCoverage": 0.0864
+ },
+ "asset_fed27205.ktx2": {
+  "roughness": 0.85,
+  "night": {
+   "file": "asset_fed27205.night.ktx2",
+   "channel": "r"
+  },
+  "nightCoverage": 0.0793
+ },
+ "kiha_E131-0_tank_lod_Diffuse.ktx2": {
+  "roughness": 0.35
+ },
+ "kiha_E132-0_horo_lod_Diffuse.ktx2": {
+  "normal": "kiha_E132-0_horo_lod_Diffuse.normal.ktx2",
+  "roughness": 0.85
+ },
+ "stand-ins.ktx2": {
+  "roughnessMap": "stand-ins.rough.ktx2",
+  "normal": "stand-ins.normal.ktx2",
+  "normalScale": 1,
+  "night": {
+   "file": "stand-ins.rough.ktx2",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutAt": 0.5
+ }
+}

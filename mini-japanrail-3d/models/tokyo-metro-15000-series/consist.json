@@ -1,0 +1,729 @@
+{
+ "source": "1375859006",
+ "name": "Tokyo Metro 15000 Series_Data",
+ "car_length_m": 18.43,
+ "cars": [
+  {
+   "name": "Tokyo Metro 15000 Series_Data",
+   "model": "Group_010.glb",
+   "texture": "MainTex_54e198b7.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.217,
+    9.217
+   ],
+   "lod": {
+    "model": "Group_010.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Group_016.obj"
+   },
+   "transform": {
+    "position": [
+     6.7968,
+     -0.059,
+     -0.6316
+    ],
+    "rotation": [
+     -0.7071,
+     0,
+     0,
+     0.7071
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Metro Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -6.53
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -6.53
+     ]
+    }
+   ],
+   "lights": [
+    [
+     0.85,
+     1.5,
+     -0.4
+    ],
+    [
+     -0.85,
+     1.5,
+     -0.4
+    ]
+   ]
+  },
+  {
+   "name": "TrailerTokyoMetro15000Series0",
+   "model": "Group_028TokyoMetro15000Series.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.157,
+    9.157
+   ],
+   "lod": {
+    "model": "Group_028TokyoMetro15000Series.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Group_019TokyoMetro15000Series.obj"
+   },
+   "transform": {
+    "position": [
+     15.4404,
+     1.8719,
+     -1.2509
+    ],
+    "rotation": [
+     -0.7071,
+     0,
+     0,
+     0.7071
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -2.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -2.2
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerTokyoMetro15000Series1",
+   "model": "Group_028TokyoMetro15000Series_c98d09a8.glb",
+   "texture": "MainTex_7fd2c318.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.157,
+    9.157
+   ],
+   "lod": {
+    "model": "Group_028TokyoMetro15000Series.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Group_019TokyoMetro15000Series.obj"
+   },
+   "transform": {
+    "position": [
+     15.4404,
+     1.8719,
+     -1.2509
+    ],
+    "rotation": [
+     -0.7071,
+     0,
+     0,
+     0.7071
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -2.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -2.2
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerTokyoMetro15000Series1",
+   "model": "Group_028TokyoMetro15000Series_c98d09a8.glb",
+   "texture": "MainTex_7fd2c318.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.157,
+    9.157
+   ],
+   "lod": {
+    "model": "Group_028TokyoMetro15000Series.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Group_019TokyoMetro15000Series.obj"
+   },
+   "transform": {
+    "position": [
+     15.4404,
+     1.8719,
+     -1.2509
+    ],
+    "rotation": [
+     -0.7071,
+     0,
+     0,
+     0.7071
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -2.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -2.2
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerTokyoMetro15000Series0",
+   "model": "Group_028TokyoMetro15000Series.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.157,
+    9.157
+   ],
+   "lod": {
+    "model": "Group_028TokyoMetro15000Series.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Group_019TokyoMetro15000Series.obj"
+   },
+   "transform": {
+    "position": [
+     15.4404,
+     1.8719,
+     -1.2509
+    ],
+    "rotation": [
+     -0.7071,
+     0,
+     0,
+     0.7071
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -2.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -2.2
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerTokyoMetro15000Series2",
+   "model": "Group_010TokyoMetro15000Series.glb",
+   "texture": "MainTex_54e198b7.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.217,
+    9.217
+   ],
+   "lod": {
+    "model": "Group_010TokyoMetro15000Series.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Group_016TokyoMetro15000Series.obj"
+   },
+   "transform": {
+    "position": [
+     6.7968,
+     -0.059,
+     -0.6316
+    ],
+    "rotation": [
+     -0.7071,
+     0,
+     0,
+     0.7071
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -2
+     ]
+    }
+   ]
+  }
+ ],
+ "material": {
+  "brightness": 0.6,
+  "steel": {
+   "skin": 234,
+   "gain": 0.646
+  }
+ },
+ "fixed_by": "1375859006"
+}

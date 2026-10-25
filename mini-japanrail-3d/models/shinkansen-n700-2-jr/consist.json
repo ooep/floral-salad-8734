@@ -1,0 +1,1321 @@
+{
+ "source": "1781005608",
+ "name": "Shinkansen N700.2 JR (16)_Data",
+ "car_length_m": 28.26,
+ "cars": [
+  {
+   "name": "Shinkansen N700.2 JR (16)_Data",
+   "model": "N700JR_1_.012.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    14.15,
+    14.15
+   ],
+   "lod": {
+    "model": "N700JR_1_.012.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "N700JR_1_.013.obj"
+   },
+   "transform": {
+    "position": [
+     -64,
+     0,
+     7.9986
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    }
+   ],
+   "lights": [
+    [
+     -1,
+     1.39,
+     -1.27
+    ],
+    [
+     1,
+     1.39,
+     -1.27
+    ]
+   ]
+  },
+  {
+   "name": "Trailern700-jrc-160",
+   "model": "N700JR_2.009n700-jrc-16n700-jrc-12n700-jrc-8n700-jrc-16.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    12.257,
+    12.257
+   ],
+   "lod": {
+    "model": "N700JR_2.009n700-jrc-16n700-jrc-12n700-jrc-8n700-jrc-16.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "N700JR_2.001n700-jrc-16n700-jrc-12n700-jrc-8n700-jrc-16.obj"
+   },
+   "transform": {
+    "position": [
+     -64,
+     0,
+     -18.4088
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.5,
+      1.1,
+      -11.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1.1,
+      -11.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.5,
+      1.1,
+      11.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1.1,
+      11.4
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Trailern700-jrc-161",
+   "model": "N700JR_3.014n700-jrc-16n700-jrc-12n700-jrc-16.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    12.161,
+    12.201
+   ],
+   "lod": {
+    "model": "N700JR_3.014n700-jrc-16n700-jrc-12n700-jrc-16.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "N700JR_3.001n700-jrc-16n700-jrc-12n700-jrc-16.obj"
+   },
+   "transform": {
+    "position": [
+     -64,
+     0,
+     -42.8138
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.5,
+      1.1,
+      -8.7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1.1,
+      -8.8
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.5,
+      1.1,
+      10.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1.1,
+      10.3
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Trailern700-jrc-162",
+   "model": "N700JR_5.009n700-jrc-16n700-jrc-12n700-jrc-4n700-jrc-16.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    12.235,
+    12.235
+   ],
+   "lod": {
+    "model": "N700JR_5.009n700-jrc-16n700-jrc-12n700-jrc-4n700-jrc-16.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "N700JR_5.001n700-jrc-16n700-jrc-12n700-jrc-4n700-jrc-16.obj"
+   },
+   "transform": {
+    "position": [
+     -64,
+     0,
+     -91.7431
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.5,
+      1.1,
+      -11.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1.1,
+      -11.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.5,
+      1.1,
+      11.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1.1,
+      11.4
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Trailern700-jrc-163",
+   "model": "N700JR_4.022n700-jrc-16n700-jrc-12n700-jrc-8n700-jrc-6n700-jrc-4n700-jrc-16.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    12.26,
+    12.2
+   ],
+   "lod": {
+    "model": "N700JR_4.022n700-jrc-16n700-jrc-12n700-jrc-8n700-jrc-6n700-jrc-4n700-jrc-16.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "N700JR_4.001n700-jrc-16n700-jrc-12n700-jrc-8n700-jrc-6n700-jrc-4n700-jrc-16.obj"
+   },
+   "transform": {
+    "position": [
+     -64,
+     0,
+     -67.3134
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.5,
+      1.1,
+      -11.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1.1,
+      -11.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.5,
+      1.1,
+      11.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1.1,
+      11.4
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Trailern700-jrc-162",
+   "model": "N700JR_5.009n700-jrc-16n700-jrc-12n700-jrc-4n700-jrc-16.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    12.235,
+    12.235
+   ],
+   "lod": {
+    "model": "N700JR_5.009n700-jrc-16n700-jrc-12n700-jrc-4n700-jrc-16.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "N700JR_5.001n700-jrc-16n700-jrc-12n700-jrc-4n700-jrc-16.obj"
+   },
+   "transform": {
+    "position": [
+     -64,
+     0,
+     -91.7431
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.5,
+      1.1,
+      -11.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1.1,
+      -11.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.5,
+      1.1,
+      11.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1.1,
+      11.4
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Trailern700-jrc-164",
+   "model": "N700JR_6.009n700-jrc-16n700-jrc-12n700-jrc-16.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    12.245,
+    12.245
+   ],
+   "lod": {
+    "model": "N700JR_6.009n700-jrc-16n700-jrc-12n700-jrc-16.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "N700JR_6.001n700-jrc-16n700-jrc-12n700-jrc-16.obj"
+   },
+   "transform": {
+    "position": [
+     -64,
+     0,
+     -116.2171
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.5,
+      1.1,
+      -8.7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1.1,
+      -8.8
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.5,
+      1.1,
+      11.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1.1,
+      11.3
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Trailern700-jrc-165",
+   "model": "N700JR_7.009n700-jrc-16n700-jrc-12n700-jrc-8n700-jrc-6n700-jrc-16.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    12.244,
+    12.194
+   ],
+   "lod": {
+    "model": "N700JR_7.009n700-jrc-16n700-jrc-12n700-jrc-8n700-jrc-6n700-jrc-16.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "N700JR_7.001n700-jrc-16n700-jrc-12n700-jrc-8n700-jrc-6n700-jrc-16.obj"
+   },
+   "transform": {
+    "position": [
+     -64,
+     0,
+     -140.6768
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.5,
+      1.1,
+      -11.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1.1,
+      -11.4
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Trailern700-jrc-166",
+   "model": "N700JR_3.016n700-jrc-16n700-jrc-12n700-jrc-8n700-jrc-6n700-jrc-16.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    12.161,
+    12.201
+   ],
+   "lod": {
+    "model": "N700JR_3.016n700-jrc-16n700-jrc-12n700-jrc-8n700-jrc-6n700-jrc-16.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "N700JR_3.015n700-jrc-16n700-jrc-12n700-jrc-8n700-jrc-6n700-jrc-16.obj"
+   },
+   "transform": {
+    "position": [
+     -64,
+     0,
+     -170.8138
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.5,
+      1.1,
+      -8.7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1.1,
+      -8.8
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.5,
+      1.1,
+      10.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1.1,
+      10.3
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Trailern700-jrc-162",
+   "model": "N700JR_5.009n700-jrc-16n700-jrc-12n700-jrc-4n700-jrc-16.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    12.235,
+    12.235
+   ],
+   "lod": {
+    "model": "N700JR_5.009n700-jrc-16n700-jrc-12n700-jrc-4n700-jrc-16.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "N700JR_5.001n700-jrc-16n700-jrc-12n700-jrc-4n700-jrc-16.obj"
+   },
+   "transform": {
+    "position": [
+     -64,
+     0,
+     -91.7431
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.5,
+      1.1,
+      -11.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1.1,
+      -11.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.5,
+      1.1,
+      11.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1.1,
+      11.4
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Trailern700-jrc-162",
+   "model": "N700JR_5.009n700-jrc-16n700-jrc-12n700-jrc-4n700-jrc-16.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    12.235,
+    12.235
+   ],
+   "lod": {
+    "model": "N700JR_5.009n700-jrc-16n700-jrc-12n700-jrc-4n700-jrc-16.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "N700JR_5.001n700-jrc-16n700-jrc-12n700-jrc-4n700-jrc-16.obj"
+   },
+   "transform": {
+    "position": [
+     -64,
+     0,
+     -91.7431
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.5,
+      1.1,
+      -11.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1.1,
+      -11.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.5,
+      1.1,
+      11.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1.1,
+      11.4
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Trailern700-jrc-163",
+   "model": "N700JR_4.022n700-jrc-16n700-jrc-12n700-jrc-8n700-jrc-6n700-jrc-4n700-jrc-16.glb",
+   "texture": "MainTex.ktx2",
+   "flip": true,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    12.26,
+    12.2
+   ],
+   "lod": {
+    "model": "N700JR_4.022n700-jrc-16n700-jrc-12n700-jrc-8n700-jrc-6n700-jrc-4n700-jrc-16.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "N700JR_4.001n700-jrc-16n700-jrc-12n700-jrc-8n700-jrc-6n700-jrc-4n700-jrc-16.obj"
+   },
+   "transform": {
+    "position": [
+     -64,
+     0,
+     -67.3134
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.5,
+      1.1,
+      -11.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1.1,
+      -11.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.5,
+      1.1,
+      11.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1.1,
+      11.4
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Trailern700-jrc-161",
+   "model": "N700JR_3.014n700-jrc-16n700-jrc-12n700-jrc-16.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    12.161,
+    12.201
+   ],
+   "lod": {
+    "model": "N700JR_3.014n700-jrc-16n700-jrc-12n700-jrc-16.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "N700JR_3.001n700-jrc-16n700-jrc-12n700-jrc-16.obj"
+   },
+   "transform": {
+    "position": [
+     -64,
+     0,
+     -42.8138
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.5,
+      1.1,
+      -8.7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1.1,
+      -8.8
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.5,
+      1.1,
+      10.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1.1,
+      10.3
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Trailern700-jrc-162",
+   "model": "N700JR_5.009n700-jrc-16n700-jrc-12n700-jrc-4n700-jrc-16.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    12.235,
+    12.235
+   ],
+   "lod": {
+    "model": "N700JR_5.009n700-jrc-16n700-jrc-12n700-jrc-4n700-jrc-16.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "N700JR_5.001n700-jrc-16n700-jrc-12n700-jrc-4n700-jrc-16.obj"
+   },
+   "transform": {
+    "position": [
+     -64,
+     0,
+     -91.7431
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.5,
+      1.1,
+      -11.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1.1,
+      -11.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.5,
+      1.1,
+      11.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1.1,
+      11.4
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Trailern700-jrc-167",
+   "model": "N700JR_6.010n700-jrc-16n700-jrc-12n700-jrc-8n700-jrc-16.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    12.165,
+    12.205
+   ],
+   "lod": {
+    "model": "N700JR_6.010n700-jrc-16n700-jrc-12n700-jrc-8n700-jrc-16.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "N700JR_6.011n700-jrc-16n700-jrc-12n700-jrc-8n700-jrc-16.obj"
+   },
+   "transform": {
+    "position": [
+     -64,
+     0,
+     -196.2171
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.5,
+      1.1,
+      -8.7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1.1,
+      -8.8
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.5,
+      1.1,
+      11.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1.1,
+      11.3
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Trailern700-jrc-168",
+   "model": "N700JR_1_.015n700-jrc-16n700-jrc-12n700-jrc-8n700-jrc-6n700-jrc-4n700-jrc-16.glb",
+   "texture": "MainTex.ktx2",
+   "flip": true,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    14.15,
+    14.15
+   ],
+   "lod": {
+    "model": "N700JR_1_.015n700-jrc-16n700-jrc-12n700-jrc-8n700-jrc-6n700-jrc-4n700-jrc-16.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "N700JR_1_.014n700-jrc-16n700-jrc-12n700-jrc-8n700-jrc-6n700-jrc-4n700-jrc-16.obj"
+   },
+   "transform": {
+    "position": [
+     -64,
+     0,
+     39.9986
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.5,
+      1.1,
+      -13.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1.1,
+      -13.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.5,
+      1.1,
+      4.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1.1,
+      4.4
+     ]
+    }
+   ],
+   "lights": [
+    [
+     -1,
+     1.39,
+     -1.27
+    ],
+    [
+     1,
+     1.39,
+     -1.27
+    ]
+   ]
+  }
+ ],
+ "material": {
+  "brightness": 2.667,
+  "steel": {
+   "skin": 122,
+   "gain": 1.078
+  }
+ },
+ "fixed_by": "1781005608"
+}

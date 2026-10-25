@@ -1,0 +1,1544 @@
+{
+ "source": "3265809403",
+ "name": "JR East E231-0 Musashino Line (8 Car)_Data",
+ "car_length_m": 20.71,
+ "cars": [
+  {
+   "name": "JR East E231-0 Musashino Line (8 Car)_Data",
+   "model": "E231-0_MU_Car_1.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.759,
+    9.304
+   ],
+   "lod": {
+    "model": "E231-0_MU_Car_1.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "E231JobanDrivingLOD1.001.obj"
+   },
+   "transform": {
+    "position": [
+     5,
+     0,
+     0
+    ],
+    "rotation": [
+     0,
+     -1,
+     0,
+     0
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "E2310MUAnUVFuchuhommachi",
+     "model": "E2310MUAnUVFuchu.glb",
+     "texture": "MainTex_5cecd9ed.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.205078,
+      2,
+      10
+     ],
+     "transform": {
+      "position": [
+       5,
+       2,
+       0
+      ],
+      "rotation": [
+       0,
+       -1,
+       0,
+       0
+      ],
+      "scale": [
+       1,
+       1,
+       1
+      ]
+     }
+    },
+    {
+     "name": "E2310MUAnUVTokyo",
+     "model": "E2310MUAnUVTokyo.glb",
+     "texture": "MainTex_5cecd9ed.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.205078,
+      2,
+      10
+     ],
+     "transform": {
+      "position": [
+       5,
+       0,
+       0
+      ],
+      "rotation": [
+       0,
+       -1,
+       0,
+       0
+      ],
+      "scale": [
+       1,
+       1,
+       1
+      ]
+     }
+    },
+    {
+     "name": "E2310MUADDFrontLight",
+     "model": "AdditiveShader_22_22_100_5.glb",
+     "texture": "MainTex_abbaa917.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 5
+     }
+    },
+    {
+     "name": "E2310MUADDRearLight",
+     "model": "AdditiveShader_22_22_100_2.5.glb",
+     "texture": "MainTex_abbaa917.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 2.5
+     }
+    },
+    {
+     "name": "E2310MUADDRNumb1451E",
+     "model": "AdditiveShader_22_22_100_2.5_35bd029c.glb",
+     "texture": "MainTex_5568c21f.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 2.5
+     }
+    },
+    {
+     "name": "E2310MUADDRNumb1564E",
+     "model": "AdditiveShader_22_22_100_2.5_35bd029c.glb",
+     "texture": "MainTex_995e05e4.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 2.5
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      6.54
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      6.54
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.74
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.74
+     ]
+    }
+   ],
+   "lights": [
+    [
+     0.75,
+     1.35,
+     -0.49
+    ],
+    [
+     -0.75,
+     1.35,
+     -0.49
+    ]
+   ]
+  },
+  {
+   "name": "TrailerJREastE2310MU8Car0",
+   "model": "E231-0_MU_Car_2_JREastE2310MU8Car.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.759,
+    9.304
+   ],
+   "lod": {
+    "model": "E231-0_MU_Car_2_JREastE2310MU8Car.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "E231500SobuPantoLOD.002_JREastE2310MU8Car.obj"
+   },
+   "transform": {
+    "position": [
+     10,
+     0,
+     0
+    ],
+    "rotation": [
+     0,
+     -1,
+     0,
+     0
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "E2310MUAnUVFuchuhommachi",
+     "model": "E2310MUAnUVFuchu.glb",
+     "texture": "MainTex_5cecd9ed.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.205078,
+      2,
+      10
+     ],
+     "transform": {
+      "position": [
+       5,
+       2,
+       0
+      ],
+      "rotation": [
+       0,
+       -1,
+       0,
+       0
+      ],
+      "scale": [
+       1,
+       1,
+       1
+      ]
+     }
+    },
+    {
+     "name": "E2310MUAnUVTokyo",
+     "model": "E2310MUAnUVTokyo.glb",
+     "texture": "MainTex_5cecd9ed.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.205078,
+      2,
+      10
+     ],
+     "transform": {
+      "position": [
+       5,
+       0,
+       0
+      ],
+      "rotation": [
+       0,
+       -1,
+       0,
+       0
+      ],
+      "scale": [
+       1,
+       1,
+       1
+      ]
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.64
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.64
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJREastE2310MU8Car1",
+   "model": "E231-0_MU_Car_3_JREastE2310MU8Car.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.759,
+    9.304
+   ],
+   "lod": {
+    "model": "E231-0_MU_Car_3_JREastE2310MU8Car.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "E231500SobuMotorLOD.002_JREastE2310MU8Car.obj"
+   },
+   "transform": {
+    "position": [
+     15,
+     0,
+     0
+    ],
+    "rotation": [
+     0,
+     -1,
+     0,
+     0
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "E2310MUAnUVFuchuhommachi",
+     "model": "E2310MUAnUVFuchu.glb",
+     "texture": "MainTex_5cecd9ed.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.205078,
+      2,
+      10
+     ],
+     "transform": {
+      "position": [
+       5,
+       2,
+       0
+      ],
+      "rotation": [
+       0,
+       -1,
+       0,
+       0
+      ],
+      "scale": [
+       1,
+       1,
+       1
+      ]
+     }
+    },
+    {
+     "name": "E2310MUAnUVTokyo",
+     "model": "E2310MUAnUVTokyo.glb",
+     "texture": "MainTex_5cecd9ed.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.205078,
+      2,
+      10
+     ],
+     "transform": {
+      "position": [
+       5,
+       0,
+       0
+      ],
+      "rotation": [
+       0,
+       -1,
+       0,
+       0
+      ],
+      "scale": [
+       1,
+       1,
+       1
+      ]
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.64
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.64
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJREastE2310MU8Car2",
+   "model": "E231-0_MU_Car_4_JREastE2310MU8Car.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.759,
+    9.304
+   ],
+   "lod": {
+    "model": "E231-0_MU_Car_3_JREastE2310MU8Car.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "E231500SobuMotorLOD.002_JREastE2310MU8Car.obj"
+   },
+   "transform": {
+    "position": [
+     15,
+     0,
+     -25
+    ],
+    "rotation": [
+     0,
+     -1,
+     0,
+     0
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "E2310MUAnUVFuchuhommachi",
+     "model": "E2310MUAnUVFuchu.glb",
+     "texture": "MainTex_5cecd9ed.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.205078,
+      2,
+      10
+     ],
+     "transform": {
+      "position": [
+       5,
+       2,
+       0
+      ],
+      "rotation": [
+       0,
+       -1,
+       0,
+       0
+      ],
+      "scale": [
+       1,
+       1,
+       1
+      ]
+     }
+    },
+    {
+     "name": "E2310MUAnUVTokyo",
+     "model": "E2310MUAnUVTokyo.glb",
+     "texture": "MainTex_5cecd9ed.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.205078,
+      2,
+      10
+     ],
+     "transform": {
+      "position": [
+       5,
+       0,
+       0
+      ],
+      "rotation": [
+       0,
+       -1,
+       0,
+       0
+      ],
+      "scale": [
+       1,
+       1,
+       1
+      ]
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.64
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.64
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJREastE2310MU8Car3",
+   "model": "E231-0_MU_Car_5_JREastE2310MU8Car.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.759,
+    9.304
+   ],
+   "lod": {
+    "model": "E231-0_MU_Car_3_JREastE2310MU8Car.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "E231500SobuMotorLOD.002_JREastE2310MU8Car.obj"
+   },
+   "transform": {
+    "position": [
+     10,
+     0,
+     -25
+    ],
+    "rotation": [
+     0,
+     -1,
+     0,
+     0
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "E2310MUAnUVFuchuhommachi",
+     "model": "E2310MUAnUVFuchu.glb",
+     "texture": "MainTex_5cecd9ed.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.205078,
+      2,
+      10
+     ],
+     "transform": {
+      "position": [
+       5,
+       2,
+       0
+      ],
+      "rotation": [
+       0,
+       -1,
+       0,
+       0
+      ],
+      "scale": [
+       1,
+       1,
+       1
+      ]
+     }
+    },
+    {
+     "name": "E2310MUAnUVTokyo",
+     "model": "E2310MUAnUVTokyo.glb",
+     "texture": "MainTex_5cecd9ed.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.205078,
+      2,
+      10
+     ],
+     "transform": {
+      "position": [
+       5,
+       0,
+       0
+      ],
+      "rotation": [
+       0,
+       -1,
+       0,
+       0
+      ],
+      "scale": [
+       1,
+       1,
+       1
+      ]
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.64
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.64
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJREastE2310MU8Car4",
+   "model": "E231-0_MU_Car_6_JREastE2310MU8Car.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.759,
+    9.304
+   ],
+   "lod": {
+    "model": "E231-0_MU_Car_2_JREastE2310MU8Car.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "E231500SobuPantoLOD.002_JREastE2310MU8Car.obj"
+   },
+   "transform": {
+    "position": [
+     10,
+     0,
+     -25
+    ],
+    "rotation": [
+     0,
+     -1,
+     0,
+     0
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "E2310MUAnUVFuchuhommachi",
+     "model": "E2310MUAnUVFuchu.glb",
+     "texture": "MainTex_5cecd9ed.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.205078,
+      2,
+      10
+     ],
+     "transform": {
+      "position": [
+       5,
+       2,
+       0
+      ],
+      "rotation": [
+       0,
+       -1,
+       0,
+       0
+      ],
+      "scale": [
+       1,
+       1,
+       1
+      ]
+     }
+    },
+    {
+     "name": "E2310MUAnUVTokyo",
+     "model": "E2310MUAnUVTokyo.glb",
+     "texture": "MainTex_5cecd9ed.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.205078,
+      2,
+      10
+     ],
+     "transform": {
+      "position": [
+       5,
+       0,
+       0
+      ],
+      "rotation": [
+       0,
+       -1,
+       0,
+       0
+      ],
+      "scale": [
+       1,
+       1,
+       1
+      ]
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.64
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.64
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJREastE2310MU8Car5",
+   "model": "E231-0_MU_Car_7_JREastE2310MU8Car.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.759,
+    10.112
+   ],
+   "lod": {
+    "model": "E231-0_MU_Car_3_JREastE2310MU8Car.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "E231500SobuMotorLOD.002_JREastE2310MU8Car.obj"
+   },
+   "transform": {
+    "position": [
+     15,
+     0,
+     -25
+    ],
+    "rotation": [
+     0,
+     -1,
+     0,
+     0
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "E2310MUAnUVFuchuhommachi",
+     "model": "E2310MUAnUVFuchu.glb",
+     "texture": "MainTex_5cecd9ed.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.205078,
+      2,
+      10
+     ],
+     "transform": {
+      "position": [
+       5,
+       2,
+       0
+      ],
+      "rotation": [
+       0,
+       -1,
+       0,
+       0
+      ],
+      "scale": [
+       1,
+       1,
+       1
+      ]
+     }
+    },
+    {
+     "name": "E2310MUAnUVTokyo",
+     "model": "E2310MUAnUVTokyo.glb",
+     "texture": "MainTex_5cecd9ed.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.205078,
+      2,
+      10
+     ],
+     "transform": {
+      "position": [
+       5,
+       0,
+       0
+      ],
+      "rotation": [
+       0,
+       -1,
+       0,
+       0
+      ],
+      "scale": [
+       1,
+       1,
+       1
+      ]
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.64
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.64
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJREastE2310MU8Car6",
+   "model": "E231-0_MU_Car_8_JREastE2310MU8Car.glb",
+   "texture": "MainTex.ktx2",
+   "flip": true,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.48,
+    10.48
+   ],
+   "lod": {
+    "model": "E231-0_MU_Car_8_JREastE2310MU8Car.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "E231JobanDrivingLOD1.001_JREastE2310MU8Car.obj"
+   },
+   "transform": {
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": [
+     0,
+     -1,
+     0,
+     0
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "E2310MUAnUVFuchuhommachi",
+     "model": "E2310MUAnUVFuchu.glb",
+     "texture": "MainTex_5cecd9ed.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.205078,
+      2,
+      10
+     ],
+     "transform": {
+      "position": [
+       5,
+       2,
+       0
+      ],
+      "rotation": [
+       0,
+       -1,
+       0,
+       0
+      ],
+      "scale": [
+       1,
+       1,
+       1
+      ]
+     }
+    },
+    {
+     "name": "E2310MUAnUVTokyo",
+     "model": "E2310MUAnUVTokyo.glb",
+     "texture": "MainTex_5cecd9ed.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.205078,
+      2,
+      10
+     ],
+     "transform": {
+      "position": [
+       5,
+       0,
+       0
+      ],
+      "rotation": [
+       0,
+       -1,
+       0,
+       0
+      ],
+      "scale": [
+       1,
+       1,
+       1
+      ]
+     }
+    },
+    {
+     "name": "E2310MUADDFrontLight",
+     "model": "AdditiveShader_22_22_100_5.glb",
+     "texture": "MainTex_abbaa917.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 5
+     }
+    },
+    {
+     "name": "E2310MUADDRearLight",
+     "model": "AdditiveShader_22_22_100_2.5.glb",
+     "texture": "MainTex_abbaa917.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 2.5
+     }
+    },
+    {
+     "name": "E2310MUADDRNumb1451E",
+     "model": "AdditiveShader_22_22_100_2.5_35bd029c.glb",
+     "texture": "MainTex_5568c21f.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 2.5
+     }
+    },
+    {
+     "name": "E2310MUADDRNumb1564E",
+     "model": "AdditiveShader_22_22_100_2.5_35bd029c.glb",
+     "texture": "MainTex_995e05e4.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 2.5
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      6.54
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.74
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      6.54
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.74
+     ]
+    }
+   ],
+   "lights": [
+    [
+     0.76,
+     1.35,
+     -0.49
+    ],
+    [
+     -0.76,
+     1.35,
+     -0.49
+    ]
+   ]
+  }
+ ],
+ "material": {
+  "brightness": 1.612,
+  "lodBrightness": 1.808
+ },
+ "fixed_by": "3265809403"
+}

@@ -1,0 +1,566 @@
+{
+ "source": "476291849",
+ "name": "JR East series E233-2000_Data",
+ "car_length_m": 20.15,
+ "cars": [
+  {
+   "name": "JR East series E233-2000_Data",
+   "model": "obj1_Instance_9b416a9b.glb",
+   "texture": "MainTex_6c95df59.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.075,
+    10.075
+   ],
+   "lod": {
+    "model": "obj1_Instance_9b416a9b.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "obj1_33c715ce.obj"
+   },
+   "transform": {
+    "position": [
+     -0.0273,
+     1.7206,
+     2.6241
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -6.53
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -6.53
+     ]
+    }
+   ],
+   "lights": [
+    [
+     0.9,
+     1.65,
+     -0.4
+    ],
+    [
+     -0.9,
+     1.65,
+     -0.4
+    ]
+   ]
+  },
+  {
+   "name": "Trailer0",
+   "model": "obj1_Instance.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.02,
+    10.02
+   ],
+   "lod": {
+    "model": "obj1_Instance.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "obj1.obj"
+   },
+   "transform": {
+    "position": [
+     -0.0042,
+     1.3362,
+     -0.7574
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -6.44
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Trailer1",
+   "model": "obj1_Instance_aa410d7e.glb",
+   "texture": "MainTex_fafcaee9.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.02,
+    10.02
+   ],
+   "lod": {
+    "model": "obj1_Instance_aa410d7e.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "obj1.obj"
+   },
+   "transform": {
+    "position": [
+     0.0137,
+     2.3293,
+     2.0873
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -6.44
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Trailer0",
+   "model": "obj1_Instance.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.02,
+    10.02
+   ],
+   "lod": {
+    "model": "obj1_Instance.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "obj1.obj"
+   },
+   "transform": {
+    "position": [
+     -0.0042,
+     1.3362,
+     -0.7574
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -6.44
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Trailer1",
+   "model": "obj1_Instance_aa410d7e.glb",
+   "texture": "MainTex_fafcaee9.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.02,
+    10.02
+   ],
+   "lod": {
+    "model": "obj1_Instance_aa410d7e.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "obj1.obj"
+   },
+   "transform": {
+    "position": [
+     0.0137,
+     2.3293,
+     2.0873
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -6.44
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Trailer2",
+   "model": "obj1_Instance_017d52f2.glb",
+   "texture": "MainTex_89ad2d0c.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.075,
+    10.075
+   ],
+   "lod": {
+    "model": "obj1_Instance_017d52f2.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "obj1_b1ecd5df.obj"
+   },
+   "transform": {
+    "position": [
+     -0.0273,
+     1.7206,
+     2.6241
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -6.44
+     ]
+    }
+   ]
+  }
+ ],
+ "material": {
+  "brightness": 0.701,
+  "lodBrightness": 0.752
+ },
+ "fixed_by": "476291849"
+}

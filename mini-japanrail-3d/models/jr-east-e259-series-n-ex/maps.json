@@ -1,0 +1,162 @@
+{
+ "MainTex.ktx2": {
+  "normal": "MainTex.normal.ktx2",
+  "roughnessMap": "MainTex.rough.ktx2",
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.9282,
+  "emissive": "MainTex.emissive.ktx2"
+ },
+ "MainTex_02d29860.ktx2": {
+  "normal": "MainTex_02d29860.normal.ktx2",
+  "roughnessMap": "MainTex_02d29860.rough.ktx2",
+  "night": {
+   "file": "MainTex_02d29860.rough.ktx2",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.3882,
+  "emissive": "MainTex_02d29860.emissive.ktx2",
+  "nightCoverage": 0.0621,
+  "cutoutShell": 0.0074
+ },
+ "MainTex_1cb36a7f.ktx2": {
+  "normal": "MainTex_1cb36a7f.normal.ktx2",
+  "roughnessMap": "MainTex_1cb36a7f.rough.ktx2",
+  "night": {
+   "file": "MainTex_1cb36a7f.rough.ktx2",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.3882,
+  "emissive": "MainTex_1cb36a7f.emissive.ktx2",
+  "nightCoverage": 0.0621,
+  "cutoutShell": 0.0074
+ },
+ "MainTex_24c0936e.ktx2": {
+  "normal": "MainTex_24c0936e.normal.ktx2",
+  "roughnessMap": "MainTex_24c0936e.rough.ktx2",
+  "night": {
+   "file": "MainTex_24c0936e.rough.ktx2",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.3803,
+  "emissive": "MainTex_24c0936e.emissive.ktx2",
+  "nightCoverage": 0.0621,
+  "cutoutShell": 0.0075
+ },
+ "MainTex_5f82fccd.ktx2": {
+  "normal": "MainTex_5f82fccd.normal.ktx2",
+  "roughnessMap": "MainTex_5f82fccd.rough.ktx2",
+  "night": {
+   "file": "MainTex_5f82fccd.rough.ktx2",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.3867,
+  "emissive": "MainTex_5f82fccd.emissive.ktx2",
+  "nightCoverage": 0.0621,
+  "cutoutShell": 0.0098
+ },
+ "MainTex_8da7f890.ktx2": {
+  "normal": "MainTex_8da7f890.normal.ktx2",
+  "roughnessMap": "MainTex_8da7f890.rough.ktx2",
+  "night": {
+   "file": "MainTex_8da7f890.rough.ktx2",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.2908,
+  "emissive": "MainTex_8da7f890.emissive.ktx2",
+  "nightCoverage": 0.0443,
+  "cutoutShell": 0
+ },
+ "MainTex_9cd0a020.ktx2": {
+  "normal": "MainTex_9cd0a020.normal.ktx2",
+  "roughnessMap": "MainTex_9cd0a020.rough.ktx2",
+  "night": {
+   "file": "MainTex_9cd0a020.rough.ktx2",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.2906,
+  "emissive": "MainTex_9cd0a020.emissive.ktx2",
+  "nightCoverage": 0.0513,
+  "cutoutShell": 0.0322
+ },
+ "asset.ktx2": {
+  "normal": "asset.normal.ktx2",
+  "roughness": 0.85,
+  "emissive": "asset.emissive.ktx2"
+ },
+ "asset_2ebc5672.ktx2": {
+  "normal": "asset_2ebc5672.normal.ktx2",
+  "roughnessMap": "asset_2ebc5672.rough.ktx2",
+  "night": {
+   "file": "asset_2ebc5672.rough.ktx2",
+   "channel": "a"
+  },
+  "emissive": "asset_2ebc5672.emissive.ktx2",
+  "nightCoverage": 0.0686
+ },
+ "asset_42ffeb79.ktx2": {
+  "normal": "asset_42ffeb79.normal.ktx2",
+  "roughnessMap": "asset_42ffeb79.rough.ktx2",
+  "night": {
+   "file": "asset_42ffeb79.rough.ktx2",
+   "channel": "a"
+  },
+  "emissive": "asset_42ffeb79.emissive.ktx2",
+  "nightCoverage": 0.0686
+ },
+ "asset_63bf2a18.ktx2": {
+  "normal": "asset_63bf2a18.normal.ktx2",
+  "roughnessMap": "asset_63bf2a18.rough.ktx2",
+  "night": {
+   "file": "asset_63bf2a18.rough.ktx2",
+   "channel": "a"
+  },
+  "emissive": "asset_63bf2a18.emissive.ktx2",
+  "nightCoverage": 0.0471
+ },
+ "asset_63d2a266.ktx2": {
+  "normal": "asset_63d2a266.normal.ktx2",
+  "roughnessMap": "asset_63d2a266.rough.ktx2",
+  "night": {
+   "file": "asset_63d2a266.rough.ktx2",
+   "channel": "a"
+  },
+  "emissive": "asset_63d2a266.emissive.ktx2",
+  "nightCoverage": 0.0577
+ },
+ "asset_c49bbacd.ktx2": {
+  "normal": "asset_c49bbacd.normal.ktx2",
+  "roughnessMap": "asset_c49bbacd.rough.ktx2",
+  "night": {
+   "file": "asset_c49bbacd.rough.ktx2",
+   "channel": "a"
+  },
+  "emissive": "asset_c49bbacd.emissive.ktx2",
+  "nightCoverage": 0.0686
+ },
+ "asset_c97b5a4c.ktx2": {
+  "normal": "asset_c97b5a4c.normal.ktx2",
+  "roughnessMap": "asset_c97b5a4c.rough.ktx2",
+  "night": {
+   "file": "asset_c97b5a4c.rough.ktx2",
+   "channel": "a"
+  },
+  "emissive": "asset_c97b5a4c.emissive.ktx2",
+  "nightCoverage": 0.0686
+ },
+ "stand-ins.ktx2": {
+  "roughnessMap": "stand-ins.rough.ktx2",
+  "normal": "stand-ins.normal.ktx2",
+  "normalScale": 1,
+  "night": {
+   "file": "stand-ins.rough.ktx2",
+   "channel": "a"
+  },
+  "emissive": "stand-ins.emissive.ktx2"
+ }
+}

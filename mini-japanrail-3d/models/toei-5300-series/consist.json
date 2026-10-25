@@ -1,0 +1,731 @@
+{
+ "source": "1624700026",
+ "name": "Toei 5300 series (Early Gen.)_Data",
+ "car_length_m": 18,
+ "cars": [
+  {
+   "name": "Toei 5300 series (Early Gen.)_Data",
+   "model": "front1.bmpToei_5300_series_early_gen_Toei_5300_series_Early_Gen.glb",
+   "texture": "MainTex_6620414f.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9,
+    9
+   ],
+   "lod": {
+    "model": "front1.bmpToei_5300_series_early_gen_Toei_5300_series_Early_Gen.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "front1.bmpToei_5300_series_early_gen_Toei_5300_series_Early_Gen_b20296d3.obj"
+   },
+   "transform": {
+    "position": [
+     0.0012,
+     1.5292,
+     2.4706
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      5.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -5.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      5.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -5.4
+     ]
+    }
+   ],
+   "lights": [
+    [
+     0.98,
+     1.89,
+     -0.5
+    ],
+    [
+     -0.98,
+     1.89,
+     -0.5
+    ]
+   ]
+  },
+  {
+   "name": "TrailerToei 5300 series (Early Gen)0",
+   "model": "back.bmpToei_5300_seriesToei_5300_seriesToei_5300_series_early_gen_Toei_5300_series_Early_Gen_Toei_5300_series_Early_Gen.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9,
+    9
+   ],
+   "lod": {
+    "model": "back.bmpToei_5300_seriesToei_5300_seriesToei_5300_series_early_gen_Toei_5300_series_Early_Gen_Toei_5300_series_Early_Gen.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "back.bmpToei_5300_seriesToei_5300_seriesToei_5300_series_early_gen_Toei_5300_series_Early_Gen_Toei_5300_series__9d8e7ae1.obj"
+   },
+   "transform": {
+    "position": [
+     -0.0118,
+     2.8479,
+     0.0281
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      5.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      0.8,
+      -5.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      5.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -5.4
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerToei 5300 series (Early Gen)1",
+   "model": "back.bmpToei_5300_seriesToei_5300_seriesToei_5300_series_early_gen_Toei_5300_series_Early_Gen_Toei_5300_series__83ba1e81.glb",
+   "texture": "MainTex_421ee6e2.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9,
+    9
+   ],
+   "lod": {
+    "model": "back.bmpToei_5300_seriesToei_5300_seriesToei_5300_series_early_gen_Toei_5300_series_Early_Gen_Toei_5300_series__83ba1e81.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "back.bmpToei_5300_seriesToei_5300_seriesToei_5300_series_early_gen_Toei_5300_series_Early_Gen_Toei_5300_series__9d8e7ae1.obj"
+   },
+   "transform": {
+    "position": [
+     0,
+     1.0424,
+     0.0527
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      5.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -5.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      5.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -5.4
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerToei 5300 series (Early Gen)1",
+   "model": "back.bmpToei_5300_seriesToei_5300_seriesToei_5300_series_early_gen_Toei_5300_series_Early_Gen_Toei_5300_series__83ba1e81.glb",
+   "texture": "MainTex_421ee6e2.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9,
+    9
+   ],
+   "lod": {
+    "model": "back.bmpToei_5300_seriesToei_5300_seriesToei_5300_series_early_gen_Toei_5300_series_Early_Gen_Toei_5300_series__83ba1e81.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "back.bmpToei_5300_seriesToei_5300_seriesToei_5300_series_early_gen_Toei_5300_series_Early_Gen_Toei_5300_series__9d8e7ae1.obj"
+   },
+   "transform": {
+    "position": [
+     0,
+     1.0424,
+     0.0527
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      5.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -5.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      5.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -5.4
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerToei 5300 series (Early Gen)0",
+   "model": "back.bmpToei_5300_seriesToei_5300_seriesToei_5300_series_early_gen_Toei_5300_series_Early_Gen_Toei_5300_series_Early_Gen.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9,
+    9
+   ],
+   "lod": {
+    "model": "back.bmpToei_5300_seriesToei_5300_seriesToei_5300_series_early_gen_Toei_5300_series_Early_Gen_Toei_5300_series_Early_Gen.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "back.bmpToei_5300_seriesToei_5300_seriesToei_5300_series_early_gen_Toei_5300_series_Early_Gen_Toei_5300_series__9d8e7ae1.obj"
+   },
+   "transform": {
+    "position": [
+     -0.0118,
+     2.8479,
+     0.0281
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      5.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      0.8,
+      -5.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      5.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -5.4
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerToei 5300 series (Early Gen)2",
+   "model": "front1.bmpToei_5300_series_early_gen_Toei_5300_series_Early_Gen_Toei_5300_series_Early_Gen.glb",
+   "texture": "MainTex_6620414f.ktx2",
+   "flip": true,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9,
+    9
+   ],
+   "lod": {
+    "model": "front1.bmpToei_5300_series_early_gen_Toei_5300_series_Early_Gen_Toei_5300_series_Early_Gen.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "front1.bmpToei_5300_series_early_gen_Toei_5300_series_Early_Gen_Toei_5300_series_Early_Gen_20d16f59.obj"
+   },
+   "transform": {
+    "position": [
+     0.0012,
+     1.5292,
+     2.4706
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      5.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -5.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      5.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -5.4
+     ]
+    }
+   ],
+   "lights": [
+    [
+     0.98,
+     1.89,
+     -0.5
+    ],
+    [
+     -0.98,
+     1.89,
+     -0.5
+    ]
+   ]
+  }
+ ],
+ "material": {
+  "brightness": 0.608
+ },
+ "fixed_by": "1624700026"
+}

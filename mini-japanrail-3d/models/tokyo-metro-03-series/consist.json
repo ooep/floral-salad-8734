@@ -1,0 +1,516 @@
+{
+ "source": "835687304",
+ "name": "Tokyo Metro 03 Series_Data",
+ "car_length_m": 16.01,
+ "cars": [
+  {
+   "name": "Tokyo Metro 03 Series_Data",
+   "model": "Object002_Instance_3a89e5b3.glb",
+   "texture": "MainTex_4bf3aa5c.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    8.005,
+    8.005
+   ],
+   "lod": {
+    "model": "Object002_Instance_3a89e5b3.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "asset_65d19c6d.obj"
+   },
+   "transform": {
+    "position": [
+     12.6116,
+     0.9385,
+     -1.0577
+    ],
+    "rotation": [
+     -0.7071,
+     0,
+     0,
+     0.7071
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Metro Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -6.53
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -6.53
+     ]
+    }
+   ],
+   "lights": [
+    [
+     -0.05,
+     0.975,
+     -0.4
+    ],
+    [
+     -0.95,
+     0.975,
+     -0.4
+    ]
+   ]
+  },
+  {
+   "name": "Trailer0",
+   "model": "Object003_Instance.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    7.997,
+    7.997
+   ],
+   "lod": {
+    "model": "Object003_Instance.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "asset.obj"
+   },
+   "transform": {
+    "position": [
+     12.6116,
+     0.9385,
+     -1.0577
+    ],
+    "rotation": [
+     -0.7071,
+     0,
+     0,
+     0.7071
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -6.44
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Trailer1",
+   "model": "Object002_Instance.glb",
+   "texture": "MainTex_2994a73c.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    8.003,
+    8.003
+   ],
+   "lod": {
+    "model": "Object002_Instance.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "asset_d3402a21.obj"
+   },
+   "transform": {
+    "position": [
+     12.6116,
+     0.9385,
+     -1.0577
+    ],
+    "rotation": [
+     -0.7071,
+     0,
+     0,
+     0.7071
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -6.44
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Trailer1",
+   "model": "Object002_Instance.glb",
+   "texture": "MainTex_2994a73c.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    8.003,
+    8.003
+   ],
+   "lod": {
+    "model": "Object002_Instance.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "asset_d3402a21.obj"
+   },
+   "transform": {
+    "position": [
+     12.6116,
+     0.9385,
+     -1.0577
+    ],
+    "rotation": [
+     -0.7071,
+     0,
+     0,
+     0.7071
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -6.44
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Trailer0",
+   "model": "Object003_Instance.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    7.997,
+    7.997
+   ],
+   "lod": {
+    "model": "Object003_Instance.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "asset.obj"
+   },
+   "transform": {
+    "position": [
+     12.6116,
+     0.9385,
+     -1.0577
+    ],
+    "rotation": [
+     -0.7071,
+     0,
+     0,
+     0.7071
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -6.44
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Trailer2",
+   "model": "Object002_Instance_822e0139.glb",
+   "texture": "MainTex_4bf3aa5c.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    8.005,
+    8.005
+   ],
+   "lod": {
+    "model": "Object002_Instance_822e0139.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "asset_62a7cd67.obj"
+   },
+   "transform": {
+    "position": [
+     12.6116,
+     0.9385,
+     -1.0577
+    ],
+    "rotation": [
+     -0.7071,
+     0,
+     0,
+     0.7071
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -6.44
+     ]
+    }
+   ]
+  }
+ ],
+ "material": {
+  "brightness": 1.076,
+  "lodBrightness": 0.987
+ },
+ "fixed_by": "835687304"
+}

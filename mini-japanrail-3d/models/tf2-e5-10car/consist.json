@@ -1,0 +1,152 @@
+{
+ "source": "2870828435/e5_10car",
+ "name": "e5_10car",
+ "car_length_m": 26.51,
+ "middle_car_length_m": 25.26,
+ "cars": [
+  {
+   "name": "e514",
+   "model": "e514.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "e514_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    13.5,
+    12.5
+   ]
+  },
+  {
+   "name": "e515",
+   "model": "e515.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "e515_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    12.5,
+    12.5
+   ]
+  },
+  {
+   "name": "e526",
+   "model": "e526.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "e526_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    12.5,
+    12.5
+   ]
+  },
+  {
+   "name": "e525p",
+   "model": "e525p.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "e525p_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    12.5,
+    12.5
+   ]
+  },
+  {
+   "name": "e526",
+   "model": "e526.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "e526_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    12.5,
+    12.5
+   ]
+  },
+  {
+   "name": "e525",
+   "model": "e525.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "e525_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    12.5,
+    12.5
+   ]
+  },
+  {
+   "name": "e526",
+   "model": "e526.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "e526_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    12.5,
+    12.5
+   ]
+  },
+  {
+   "name": "e525p",
+   "model": "e525p.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "e525p_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    12.5,
+    12.5
+   ]
+  },
+  {
+   "name": "e526",
+   "model": "e526.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "e526_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    12.5,
+    12.5
+   ]
+  },
+  {
+   "name": "e523R",
+   "model": "e523R.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "e523R_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    12.5,
+    13.5
+   ]
+  }
+ ],
+ "material": {
+  "brightness": 0.975
+ },
+ "fixed_by": "tf2-e5-10car"
+}

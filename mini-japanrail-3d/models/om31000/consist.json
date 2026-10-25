@@ -1,0 +1,1591 @@
+{
+ "source": "2908048465",
+ "name": "OM31000_Data",
+ "car_length_m": 18.86,
+ "cars": [
+  {
+   "name": "OM31000_Data",
+   "model": "31600.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.486,
+    8.886
+   ],
+   "lod": {
+    "model": "31600.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "asset_c0eb9a97.obj"
+   },
+   "parts": [
+    {
+     "name": "om30Mu(884C32BE)",
+     "model": "AdditiveShader_0_0_20_3_3779241f.glb",
+     "texture": "asset_99a4cafa.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    },
+    {
+     "name": "om30Mus(D2D4D920)",
+     "model": "AdditiveShader_0_0_20_3.glb",
+     "texture": "asset.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    },
+    {
+     "name": "om30Md(A12C4382)",
+     "model": "AdditiveShader_0_0_20_3_2ba14c9d.glb",
+     "texture": "asset_99a4cafa.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    },
+    {
+     "name": "om30Mds(79099EC7)",
+     "model": "AdditiveShader_0_0_20_3_245ec90b.glb",
+     "texture": "asset.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    },
+    {
+     "name": "om30light(ADAC738E)",
+     "model": "AdditiveShader_0_0_10_20.glb",
+     "texture": "asset_2bbca4c2.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 10,
+      "intensity": 20
+     }
+    },
+    {
+     "name": "om30light2(7074F931)",
+     "model": "AdditiveShader_0_0_10_20_060d14b2.glb",
+     "texture": "asset_2bbca4c2.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 10,
+      "intensity": 20
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -6.53
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -6.53
+     ]
+    }
+   ],
+   "lights": [
+    [
+     0.99,
+     3.21,
+     -0.4
+    ],
+    [
+     -0.99,
+     3.21,
+     -0.4
+    ]
+   ]
+  },
+  {
+   "name": "TrailerOM310000",
+   "model": "31000OM31000.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.486,
+    8.886
+   ],
+   "lod": {
+    "model": "31000OM31000.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "OM31000.obj"
+   },
+   "parts": [
+    {
+     "name": "om30Mus(DAC4E6A9)",
+     "model": "AdditiveShader_0_0_20_3.glb",
+     "texture": "asset.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    },
+    {
+     "name": "om30Mds(1BAB1F04)",
+     "model": "AdditiveShader_0_0_20_3_245ec90b.glb",
+     "texture": "asset.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.2,
+      1.2,
+      6.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.2,
+      1.2,
+      6.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.2,
+      1.2,
+      2.05
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.2,
+      1.2,
+      2.05
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.2,
+      1.2,
+      -2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.2,
+      1.2,
+      -2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.2,
+      1.2,
+      -6.8
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.2,
+      1.2,
+      -6.8
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerOM310001",
+   "model": "31100OM31000.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.486,
+    8.886
+   ],
+   "lod": {
+    "model": "31000OM31000.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "OM31000.obj"
+   },
+   "parts": [
+    {
+     "name": "om30Mus(C87EF533)",
+     "model": "AdditiveShader_0_0_20_3.glb",
+     "texture": "asset.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    },
+    {
+     "name": "om30Mds(E48A7741)",
+     "model": "AdditiveShader_0_0_20_3_245ec90b.glb",
+     "texture": "asset.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.2,
+      1.2,
+      6.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.2,
+      1.2,
+      6.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.2,
+      1.2,
+      2.05
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.2,
+      1.2,
+      2.05
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.2,
+      1.2,
+      -2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.2,
+      1.2,
+      -2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.2,
+      1.2,
+      -6.8
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.2,
+      1.2,
+      -6.8
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerOM310002",
+   "model": "31700OM31000.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.486,
+    8.886
+   ],
+   "lod": {
+    "model": "31700OM31000.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "OM31000_6bbf555b.obj"
+   },
+   "parts": [
+    {
+     "name": "om30Mus(00FF7B7F)",
+     "model": "AdditiveShader_0_0_20_3.glb",
+     "texture": "asset.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    },
+    {
+     "name": "om30Mds(021A9B33)",
+     "model": "AdditiveShader_0_0_20_3_245ec90b.glb",
+     "texture": "asset.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.2,
+      1.2,
+      6.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.2,
+      1.2,
+      6.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.2,
+      1.2,
+      2.05
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.2,
+      1.2,
+      2.05
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.2,
+      1.2,
+      -2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.2,
+      1.2,
+      -2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.2,
+      1.2,
+      -6.8
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.2,
+      1.2,
+      -6.8
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerOM310003",
+   "model": "31400OM31000.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.486,
+    8.886
+   ],
+   "lod": {
+    "model": "31200OM31000.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "OM31000_6d9ff55a.obj"
+   },
+   "parts": [
+    {
+     "name": "om30Mus(63E61325)",
+     "model": "AdditiveShader_0_0_20_3.glb",
+     "texture": "asset.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    },
+    {
+     "name": "om30Mds(1F53410A)",
+     "model": "AdditiveShader_0_0_20_3_245ec90b.glb",
+     "texture": "asset.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.2,
+      1.2,
+      6.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.2,
+      1.2,
+      6.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.2,
+      1.2,
+      2.05
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.2,
+      1.2,
+      2.05
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.2,
+      1.2,
+      -2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.2,
+      1.2,
+      -2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.2,
+      1.2,
+      -6.8
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.2,
+      1.2,
+      -6.8
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerOM310004",
+   "model": "31800OM31000.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.486,
+    8.886
+   ],
+   "lod": {
+    "model": "31500OM31000.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "OM31000_7cc1f041.obj"
+   },
+   "parts": [
+    {
+     "name": "om30Mus(49379991)",
+     "model": "AdditiveShader_0_0_20_3.glb",
+     "texture": "asset.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    },
+    {
+     "name": "om30Mds(6851A1DF)",
+     "model": "AdditiveShader_0_0_20_3_245ec90b.glb",
+     "texture": "asset.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.2,
+      1.2,
+      6.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.2,
+      1.2,
+      6.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.2,
+      1.2,
+      2.05
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.2,
+      1.2,
+      2.05
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.2,
+      1.2,
+      -2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.2,
+      1.2,
+      -2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.2,
+      1.2,
+      -6.8
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.2,
+      1.2,
+      -6.8
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerOM310005",
+   "model": "31500OM31000.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.486,
+    8.886
+   ],
+   "lod": {
+    "model": "31500OM31000.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "OM31000_7cc1f041.obj"
+   },
+   "parts": [
+    {
+     "name": "om30Mus(3C7DD61E)",
+     "model": "AdditiveShader_0_0_20_3.glb",
+     "texture": "asset.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    },
+    {
+     "name": "om30Mds(97F64CC8)",
+     "model": "AdditiveShader_0_0_20_3_245ec90b.glb",
+     "texture": "asset.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.2,
+      1.2,
+      6.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.2,
+      1.2,
+      6.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.2,
+      1.2,
+      2.05
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.2,
+      1.2,
+      2.05
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.2,
+      1.2,
+      -2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.2,
+      1.2,
+      -2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.2,
+      1.2,
+      -6.8
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.2,
+      1.2,
+      -6.8
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerOM310006",
+   "model": "31300OM31000.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.486,
+    8.886
+   ],
+   "lod": {
+    "model": "31200OM31000.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "OM31000_6d9ff55a.obj"
+   },
+   "parts": [
+    {
+     "name": "om30Mus(B1E4BC69)",
+     "model": "AdditiveShader_0_0_20_3.glb",
+     "texture": "asset.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    },
+    {
+     "name": "om30Mds(C4A7C8F6)",
+     "model": "AdditiveShader_0_0_20_3_245ec90b.glb",
+     "texture": "asset.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.2,
+      1.2,
+      6.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.2,
+      1.2,
+      6.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.2,
+      1.2,
+      2.05
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.2,
+      1.2,
+      2.05
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.2,
+      1.2,
+      -2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.2,
+      1.2,
+      -2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.2,
+      1.2,
+      -6.8
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.2,
+      1.2,
+      -6.8
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerOM310007",
+   "model": "31200OM31000.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.486,
+    9.286
+   ],
+   "lod": {
+    "model": "31200OM31000.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "OM31000_6d9ff55a.obj"
+   },
+   "parts": [
+    {
+     "name": "om30Mus(F261E637)",
+     "model": "AdditiveShader_0_0_20_3.glb",
+     "texture": "asset.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    },
+    {
+     "name": "om30Mds(B39F4ECE)",
+     "model": "AdditiveShader_0_0_20_3_245ec90b.glb",
+     "texture": "asset.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.2,
+      1.2,
+      6.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.2,
+      1.2,
+      6.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.2,
+      1.2,
+      2.05
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.2,
+      1.2,
+      2.05
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.2,
+      1.2,
+      -2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.2,
+      1.2,
+      -2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.2,
+      1.2,
+      -6.8
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.2,
+      1.2,
+      -6.8
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerOM310008",
+   "model": "31900OM31000.glb",
+   "texture": "MainTex.ktx2",
+   "flip": true,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.486,
+    9.486
+   ],
+   "lod": {
+    "model": "31900OM31000.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "OM31000_e96f4538.obj"
+   },
+   "parts": [
+    {
+     "name": "om30Mu(F47CBA2C)",
+     "model": "AdditiveShader_0_0_20_3_3779241f.glb",
+     "texture": "asset_99a4cafa.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    },
+    {
+     "name": "om30Mus(D71F4148)",
+     "model": "AdditiveShader_0_0_20_3.glb",
+     "texture": "asset.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    },
+    {
+     "name": "om30Md(4CF887C6)",
+     "model": "AdditiveShader_0_0_20_3_2ba14c9d.glb",
+     "texture": "asset_99a4cafa.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    },
+    {
+     "name": "om30Mds(50CAEA8F)",
+     "model": "AdditiveShader_0_0_20_3_245ec90b.glb",
+     "texture": "asset.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    },
+    {
+     "name": "om30light(770D73CF)",
+     "model": "AdditiveShader_0_0_10_20.glb",
+     "texture": "asset_2bbca4c2.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 10,
+      "intensity": 20
+     }
+    },
+    {
+     "name": "om30light2(0408463C)",
+     "model": "AdditiveShader_0_0_10_20_060d14b2.glb",
+     "texture": "asset_2bbca4c2.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 10,
+      "intensity": 20
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.2,
+      1.2,
+      6.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.2,
+      1.2,
+      6.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.2,
+      1.2,
+      2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.2,
+      1.2,
+      2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.2,
+      1.2,
+      -2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.2,
+      1.2,
+      -2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.2,
+      1.2,
+      -6.8
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.2,
+      1.2,
+      -6.8
+     ]
+    }
+   ],
+   "lights": [
+    [
+     0.99,
+     3.21,
+     -0.4
+    ],
+    [
+     -0.99,
+     3.21,
+     -0.4
+    ]
+   ]
+  }
+ ]
+}

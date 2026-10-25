@@ -1,0 +1,459 @@
+{
+ "source": "1385617945",
+ "name": "Hankyu 6300 series (4 Cars)_Data",
+ "car_length_m": 19.04,
+ "cars": [
+  {
+   "name": "Hankyu 6300 series (4 Cars)_Data",
+   "model": "front1.bmp.glb",
+   "texture": "MainTex_9e90fe2b.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.52,
+    9.52
+   ],
+   "lod": {
+    "model": "front1.bmp.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "front1.bmp_290ff336.obj"
+   },
+   "transform": {
+    "position": [
+     -0.0009,
+     1.2003,
+     2.2046
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      5.8
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      5.8
+     ]
+    }
+   ],
+   "lights": [
+    [
+     0.12,
+     3.48,
+     -0.3
+    ],
+    [
+     -0.123,
+     3.48,
+     -0.3
+    ]
+   ]
+  },
+  {
+   "name": "TrailerHankyu 6300 series (4 cars)0",
+   "model": "back.bmpHankyu_6300_series_4_cars_Hankyu_6300_series_4_cars.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.5,
+    9.5
+   ],
+   "lod": {
+    "model": "back.bmpHankyu_6300_series_4_cars_Hankyu_6300_series_4_cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "back.bmpHankyu_6300_series_4_cars_Hankyu_6300_series_4_cars_73a86853.obj"
+   },
+   "transform": {
+    "position": [
+     -0.0016,
+     2.727,
+     0.3546
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.6
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerHankyu 6300 series (4 cars)1",
+   "model": "back.bmpHankyu_6300_series_4_cars_Hankyu_6300_series_4_cars_c0671cbc.glb",
+   "texture": "MainTex_7490a20b.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.5,
+    9.5
+   ],
+   "lod": {
+    "model": "back.bmpHankyu_6300_series_4_cars_Hankyu_6300_series_4_cars_c0671cbc.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "back.bmpHankyu_6300_series_4_cars_Hankyu_6300_series_4_cars_73a86853.obj"
+   },
+   "transform": {
+    "position": [
+     0,
+     1.0841,
+     -0.0615
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.6
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerHankyu 6300 series (4 cars)2",
+   "model": "front1.bmpHankyu_6300_series_4_cars_Hankyu_6300_series_4_cars.glb",
+   "texture": "MainTex_d55b9249.ktx2",
+   "flip": true,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.52,
+    9.52
+   ],
+   "lod": {
+    "model": "front1.bmpHankyu_6300_series_4_cars_Hankyu_6300_series_4_cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "front1.bmpHankyu_6300_series_4_cars_Hankyu_6300_series_4_cars_917a8648.obj"
+   },
+   "transform": {
+    "position": [
+     -0.0009,
+     1.2003,
+     2.2046
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      5.8
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      5.8
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.6
+     ]
+    }
+   ],
+   "lights": [
+    [
+     0.12,
+     3.48,
+     -0.3
+    ],
+    [
+     -0.12,
+     3.48,
+     -0.3
+    ]
+   ]
+  }
+ ]
+}

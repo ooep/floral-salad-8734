@@ -1,0 +1,92 @@
+{
+ "MainTex.ktx2": {
+  "roughnessMap": "MainTex.rough.ktx2",
+  "night": {
+   "file": "MainTex.rough.ktx2",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.0054,
+  "nightCoverage": 0.0501,
+  "cutoutShell": 0.0025
+ },
+ "MainTex_a3cb1d31.ktx2": {
+  "roughnessMap": "MainTex_a3cb1d31.rough.ktx2",
+  "night": {
+   "file": "MainTex_a3cb1d31.rough.ktx2",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.0062,
+  "nightCoverage": 0.0474,
+  "cutoutShell": 0.0047
+ },
+ "MainTex_bc6de4ec.ktx2": {
+  "roughnessMap": "MainTex_bc6de4ec.rough.ktx2",
+  "night": {
+   "file": "MainTex_bc6de4ec.rough.ktx2",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.0054,
+  "nightCoverage": 0.0539,
+  "cutoutShell": 0.003
+ },
+ "MainTex_bed27c09.ktx2": {
+  "roughnessMap": "MainTex_bed27c09.rough.ktx2",
+  "night": {
+   "file": "MainTex_bed27c09.rough.ktx2",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.0062,
+  "nightCoverage": 0.0474,
+  "cutoutShell": 0.0047
+ },
+ "MainTex_ecd44588.ktx2": {
+  "roughnessMap": "MainTex_ecd44588.rough.ktx2",
+  "night": {
+   "file": "MainTex_ecd44588.rough.ktx2",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.0058,
+  "nightCoverage": 0.0538,
+  "cutoutShell": 0.003
+ },
+ "asset_58214cd6.ktx2": {
+  "roughness": 0.85,
+  "night": {
+   "file": "asset_58214cd6.night.ktx2",
+   "channel": "r"
+  },
+  "nightCoverage": 0.0638
+ },
+ "asset_815e5761.ktx2": {
+  "roughness": 0.85,
+  "night": {
+   "file": "asset_815e5761.night.ktx2",
+   "channel": "r"
+  },
+  "nightCoverage": 0.0703
+ },
+ "asset_bb03c2a3.ktx2": {
+  "roughness": 0.85,
+  "night": {
+   "file": "asset_bb03c2a3.night.ktx2",
+   "channel": "r"
+  },
+  "nightCoverage": 0.0703
+ },
+ "stand-ins.ktx2": {
+  "roughnessMap": "stand-ins.rough.ktx2",
+  "normal": "stand-ins.normal.ktx2",
+  "normalScale": 1,
+  "night": {
+   "file": "stand-ins.rough.ktx2",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutAt": 0.5
+ }
+}

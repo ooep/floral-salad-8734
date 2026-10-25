@@ -1,0 +1,434 @@
+{
+ "source": "2870251170",
+ "name": "JR East Kiha E130-100 (2 Cars)_Data",
+ "car_length_m": 20.38,
+ "cars": [
+  {
+   "name": "JR East Kiha E130-100 (2 Cars)_Data",
+   "model": "front1_d4ecc60f.glb",
+   "texture": "MainTex_e05785a8.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.19,
+    10.19
+   ],
+   "lod": {
+    "model": "front1_d4ecc60f.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "front1_e0bdede6.obj"
+   },
+   "transform": {
+    "position": [
+     -0.034,
+     1.2655,
+     -0.3074
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "kiha E130-100_headlight1",
+     "model": "AdditiveShader_0_0_20_2_17f45cb9.glb",
+     "texture": "MainTex_b0c1fc0f.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 2
+     }
+    },
+    {
+     "name": "kiha E130-100_taillight1",
+     "model": "AdditiveShader_0_0_20_1_66bc1b31.glb",
+     "texture": "MainTex_a7e36b4b.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 1
+     }
+    },
+    {
+     "name": "kiha E130-100_LED1",
+     "model": "AdditiveShader_0_0_20_2_925ee743.glb",
+     "texture": "MainTex_88786cec.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 2
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      0
+     ]
+    }
+   ],
+   "lights": [
+    [
+     0.12,
+     3.37,
+     -0.3
+    ],
+    [
+     -0.12,
+     3.37,
+     -0.3
+    ]
+   ]
+  },
+  {
+   "name": "TrailerJR East Kiha E130-100 (2 Cars)0",
+   "model": "front1JR_East_Kiha_E130-100_2Cars_JR_East_Kiha_E130-100_2Cars_JR_East_Kiha_E130-100_2_Cars.glb",
+   "texture": "MainTex.ktx2",
+   "flip": true,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.13,
+    9.75
+   ],
+   "lod": {
+    "model": "front1JR_East_Kiha_E130-100_2Cars_JR_East_Kiha_E130-100_2Cars_JR_East_Kiha_E130-100_2_Cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "front1JR_East_Kiha_E130-100_2Cars_JR_East_Kiha_E130-100_2Cars_JR_East_Kiha_E130-100_2_Cars_b9a34166.obj"
+   },
+   "transform": {
+    "position": [
+     -0.034,
+     1.2655,
+     -0.2937
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "kiha E130-100_headlight2",
+     "model": "AdditiveShader_0_0_20_2.glb",
+     "texture": "MainTex_b0c1fc0f.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 2
+     }
+    },
+    {
+     "name": "kiha E130-100_taillight2",
+     "model": "AdditiveShader_0_0_20_1.glb",
+     "texture": "MainTex_39271a65.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 1
+     }
+    },
+    {
+     "name": "kiha E130-100_LED2",
+     "model": "AdditiveShader_0_0_20_2_1ac1f091.glb",
+     "texture": "MainTex_64e35310.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 2
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      0
+     ]
+    }
+   ],
+   "lights": [
+    [
+     0.12,
+     3.37,
+     -0.3
+    ],
+    [
+     -0.12,
+     3.37,
+     -0.3
+    ]
+   ]
+  }
+ ],
+ "material": {
+  "brightness": 2,
+  "alphaCutout": 0.5,
+  "steel": {
+   "skin": 86,
+   "gain": 1.593
+  },
+  "lodSteel": {
+   "skin": 84,
+   "gain": 1.641
+  }
+ },
+ "fixed_by": "2870251170"
+}

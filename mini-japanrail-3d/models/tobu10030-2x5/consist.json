@@ -1,0 +1,1220 @@
+{
+ "source": "2543257329",
+ "name": "Tobu10030_2x5_Data",
+ "car_length_m": 20.62,
+ "cars": [
+  {
+   "name": "Tobu10030_2x5_Data",
+   "model": "11254.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.338,
+    10.338
+   ],
+   "lod": {
+    "model": "11254.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "asset_72135e31.obj"
+   },
+   "parts": [
+    {
+     "name": "asakusa",
+     "model": "asset.glb",
+     "texture": "MainTex_24cfc4b0.ktx2",
+     "kind": "part",
+     "shader": "Custom/Vehicles/Vehicle/Default",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "tatebayasi",
+     "model": "asset.glb",
+     "texture": "MainTex_517d0ee7.ktx2",
+     "kind": "part",
+     "shader": "Custom/Vehicles/Vehicle/Default",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "FrontLight",
+     "model": "asset_a65490d8.glb",
+     "texture": "MainTex_f65ff2fe.ktx2",
+     "kind": "part",
+     "shader": "Custom/Vehicles/Vehicle/Default",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "BackLight",
+     "model": "asset_2e4a9814.glb",
+     "texture": "MainTex_f65ff2fe.ktx2",
+     "kind": "part",
+     "shader": "Custom/Vehicles/Vehicle/Default",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -2.7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -2.7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      2.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      2.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      7.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      7.1
+     ]
+    }
+   ],
+   "lights": [
+    [
+     1.1,
+     1.725,
+     -0.6
+    ],
+    [
+     -1.1,
+     1.725,
+     -0.6
+    ]
+   ]
+  },
+  {
+   "name": "TrailerTobu10030_2x50",
+   "model": "12250-2Toubu10030_2x2Toubu10030_2x3Toubu10030_2x4Toubu10030_2x5Tobu10030_2x5.glb",
+   "texture": "MainTex.ktx2",
+   "flip": true,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.138,
+    10.338
+   ],
+   "lod": {
+    "model": "12250-2Toubu10030_2x2Toubu10030_2x3Toubu10030_2x4Toubu10030_2x5Tobu10030_2x5.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Toubu10030_2x2Toubu10030_2x3Toubu10030_2x4Toubu10030_2x5Tobu10030_2x5.obj"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      7.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      7.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      2.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -2.7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      2.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -2.7
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerTobu10030_2x51",
+   "model": "11250-2Toubu10030_2x2Toubu10030_2x3Toubu10030_2x4Toubu10030_2x5Tobu10030_2x5.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.138,
+    10.338
+   ],
+   "lod": {
+    "model": "11250-2Toubu10030_2x2Toubu10030_2x3Toubu10030_2x4Toubu10030_2x5Tobu10030_2x5.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Toubu10030_2x2Toubu10030_2x3Toubu10030_2x4Toubu10030_2x5Tobu10030_2x5_a446d81b.obj"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      7.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      7.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      2.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -2.7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      2.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -2.7
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerTobu10030_2x50",
+   "model": "12250-2Toubu10030_2x2Toubu10030_2x3Toubu10030_2x4Toubu10030_2x5Tobu10030_2x5.glb",
+   "texture": "MainTex.ktx2",
+   "flip": true,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.138,
+    10.338
+   ],
+   "lod": {
+    "model": "12250-2Toubu10030_2x2Toubu10030_2x3Toubu10030_2x4Toubu10030_2x5Tobu10030_2x5.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Toubu10030_2x2Toubu10030_2x3Toubu10030_2x4Toubu10030_2x5Tobu10030_2x5.obj"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      7.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      7.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      2.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -2.7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      2.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -2.7
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerTobu10030_2x51",
+   "model": "11250-2Toubu10030_2x2Toubu10030_2x3Toubu10030_2x4Toubu10030_2x5Tobu10030_2x5.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.138,
+    10.338
+   ],
+   "lod": {
+    "model": "11250-2Toubu10030_2x2Toubu10030_2x3Toubu10030_2x4Toubu10030_2x5Tobu10030_2x5.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Toubu10030_2x2Toubu10030_2x3Toubu10030_2x4Toubu10030_2x5Tobu10030_2x5_a446d81b.obj"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      7.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      7.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      2.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -2.7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      2.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -2.7
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerTobu10030_2x50",
+   "model": "12250-2Toubu10030_2x2Toubu10030_2x3Toubu10030_2x4Toubu10030_2x5Tobu10030_2x5.glb",
+   "texture": "MainTex.ktx2",
+   "flip": true,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.138,
+    10.338
+   ],
+   "lod": {
+    "model": "12250-2Toubu10030_2x2Toubu10030_2x3Toubu10030_2x4Toubu10030_2x5Tobu10030_2x5.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Toubu10030_2x2Toubu10030_2x3Toubu10030_2x4Toubu10030_2x5Tobu10030_2x5.obj"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      7.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      7.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      2.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -2.7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      2.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -2.7
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerTobu10030_2x51",
+   "model": "11250-2Toubu10030_2x2Toubu10030_2x3Toubu10030_2x4Toubu10030_2x5Tobu10030_2x5.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.138,
+    10.338
+   ],
+   "lod": {
+    "model": "11250-2Toubu10030_2x2Toubu10030_2x3Toubu10030_2x4Toubu10030_2x5Tobu10030_2x5.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Toubu10030_2x2Toubu10030_2x3Toubu10030_2x4Toubu10030_2x5Tobu10030_2x5_a446d81b.obj"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      7.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      7.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      2.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -2.7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      2.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -2.7
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerTobu10030_2x50",
+   "model": "12250-2Toubu10030_2x2Toubu10030_2x3Toubu10030_2x4Toubu10030_2x5Tobu10030_2x5.glb",
+   "texture": "MainTex.ktx2",
+   "flip": true,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.138,
+    10.338
+   ],
+   "lod": {
+    "model": "12250-2Toubu10030_2x2Toubu10030_2x3Toubu10030_2x4Toubu10030_2x5Tobu10030_2x5.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Toubu10030_2x2Toubu10030_2x3Toubu10030_2x4Toubu10030_2x5Tobu10030_2x5.obj"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      7.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      7.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      2.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -2.7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      2.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -2.7
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerTobu10030_2x51",
+   "model": "11250-2Toubu10030_2x2Toubu10030_2x3Toubu10030_2x4Toubu10030_2x5Tobu10030_2x5.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.138,
+    10.338
+   ],
+   "lod": {
+    "model": "11250-2Toubu10030_2x2Toubu10030_2x3Toubu10030_2x4Toubu10030_2x5Tobu10030_2x5.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Toubu10030_2x2Toubu10030_2x3Toubu10030_2x4Toubu10030_2x5Tobu10030_2x5_a446d81b.obj"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      7.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      7.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      2.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -2.7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      2.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -2.7
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerTobu10030_2x52",
+   "model": "12254Toubu10030_2x3Toubu10030_2x4Toubu10030_2x5Tobu10030_2x5.glb",
+   "texture": "MainTex.ktx2",
+   "flip": true,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.338,
+    10.338
+   ],
+   "lod": {
+    "model": "12254Toubu10030_2x3Toubu10030_2x4Toubu10030_2x5Tobu10030_2x5.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Toubu10030_2x3Toubu10030_2x4Toubu10030_2x5Tobu10030_2x5.obj"
+   },
+   "parts": [
+    {
+     "name": "asakusa",
+     "model": "asset.glb",
+     "texture": "MainTex_24cfc4b0.ktx2",
+     "kind": "part",
+     "shader": "Custom/Vehicles/Vehicle/Default",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "tatebayasi",
+     "model": "asset.glb",
+     "texture": "MainTex_517d0ee7.ktx2",
+     "kind": "part",
+     "shader": "Custom/Vehicles/Vehicle/Default",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "FrontLight",
+     "model": "asset_a65490d8.glb",
+     "texture": "MainTex_f65ff2fe.ktx2",
+     "kind": "part",
+     "shader": "Custom/Vehicles/Vehicle/Default",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "BackLight",
+     "model": "asset_2e4a9814.glb",
+     "texture": "MainTex_f65ff2fe.ktx2",
+     "kind": "part",
+     "shader": "Custom/Vehicles/Vehicle/Default",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      2.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -2.7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      2.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -2.7
+     ]
+    }
+   ],
+   "lights": [
+    [
+     -1.1,
+     1.725,
+     -0.6
+    ],
+    [
+     1.1,
+     1.725,
+     -0.6
+    ]
+   ]
+  }
+ ],
+ "tint": "none",
+ "material": {
+  "brightness": 1.584
+ },
+ "fixed_by": "2543257329"
+}

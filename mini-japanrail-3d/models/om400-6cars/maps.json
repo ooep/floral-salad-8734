@@ -1,0 +1,83 @@
+{
+ "MainTex.webp": {
+  "normal": "MainTex.normal.webp",
+  "roughnessMap": "MainTex.rough.webp",
+  "night": {
+   "file": "MainTex.rough.webp",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.0458,
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.1859,
+  "nightCoverage": 0.0382
+ },
+ "om401-01_lod_Diffuse.webp": {
+  "normal": "om401-01_lod_Diffuse.normal.webp",
+  "roughnessMap": "om401-01_lod_Diffuse.rough.webp",
+  "night": {
+   "file": "om401-01_lod_Diffuse.rough.webp",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.025,
+  "nightCoverage": 0.0813
+ },
+ "om402-01_lod_Diffuse.webp": {
+  "normal": "om402-01_lod_Diffuse.normal.webp",
+  "roughnessMap": "om402-01_lod_Diffuse.rough.webp",
+  "night": {
+   "file": "om402-01_lod_Diffuse.rough.webp",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.0252,
+  "nightCoverage": 0.0813
+ },
+ "om403-01_lod_Diffuse.webp": {
+  "normal": "om403-01_lod_Diffuse.normal.webp",
+  "roughnessMap": "om403-01_lod_Diffuse.rough.webp",
+  "night": {
+   "file": "om403-01_lod_Diffuse.rough.webp",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.0248,
+  "nightCoverage": 0.081
+ },
+ "om406-01_lod_Diffuse.webp": {
+  "roughnessMap": "om406-01_lod_Diffuse.rough.webp",
+  "night": {
+   "file": "om406-01_lod_Diffuse.rough.webp",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.0491,
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.0023,
+  "nightCoverage": 0.0516
+ },
+ "om408-01_lod_Diffuse.webp": {
+  "normal": "om408-01_lod_Diffuse.normal.webp",
+  "roughnessMap": "om408-01_lod_Diffuse.rough.webp",
+  "night": {
+   "file": "om408-01_lod_Diffuse.rough.webp",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.0,
+  "nightCoverage": 0.0826
+ },
+ "om409-01_lod_Diffuse.webp": {
+  "roughnessMap": "om409-01_lod_Diffuse.rough.webp",
+  "night": {
+   "file": "om409-01_lod_Diffuse.rough.webp",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.058,
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.0006,
+  "nightCoverage": 0.0519
+ }
+}

@@ -1,0 +1,92 @@
+{
+ "MainTex.webp": {
+  "normal": "MainTex.normal.webp",
+  "roughnessMap": "MainTex.rough.webp",
+  "night": {
+   "file": "MainTex.rough.webp",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.0474,
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.2178,
+  "emissive": "MainTex.emissive.webp",
+  "nightCoverage": 0.0381
+ },
+ "om32100_lod_Diffuse.webp": {
+  "normal": "om32100_lod_Diffuse.normal.webp",
+  "roughnessMap": "om32100_lod_Diffuse.rough.webp",
+  "night": {
+   "file": "om32100_lod_Diffuse.rough.webp",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.0211,
+  "emissive": "om32100_lod_Diffuse.emissive.webp",
+  "nightCoverage": 0.0921
+ },
+ "om32200_lod_Diffuse.webp": {
+  "normal": "om32200_lod_Diffuse.normal.webp",
+  "roughnessMap": "om32200_lod_Diffuse.rough.webp",
+  "night": {
+   "file": "om32200_lod_Diffuse.rough.webp",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.0211,
+  "emissive": "om32200_lod_Diffuse.emissive.webp",
+  "nightCoverage": 0.0918
+ },
+ "om32300_lod_Diffuse.webp": {
+  "normal": "om32300_lod_Diffuse.normal.webp",
+  "roughnessMap": "om32300_lod_Diffuse.rough.webp",
+  "night": {
+   "file": "om32300_lod_Diffuse.rough.webp",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.021,
+  "emissive": "om32300_lod_Diffuse.emissive.webp",
+  "nightCoverage": 0.092
+ },
+ "om32600_lod_Diffuse.webp": {
+  "normal": "om32600_lod_Diffuse.normal.webp",
+  "roughnessMap": "om32600_lod_Diffuse.rough.webp",
+  "night": {
+   "file": "om32600_lod_Diffuse.rough.webp",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.0348,
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.0,
+  "emissive": "om32600_lod_Diffuse.emissive.webp",
+  "nightCoverage": 0.0643
+ },
+ "om32800_lod_Diffuse.webp": {
+  "normal": "om32800_lod_Diffuse.normal.webp",
+  "roughnessMap": "om32800_lod_Diffuse.rough.webp",
+  "night": {
+   "file": "om32800_lod_Diffuse.rough.webp",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.019,
+  "emissive": "om32800_lod_Diffuse.emissive.webp",
+  "nightCoverage": 0.0902
+ },
+ "om32900_lod_Diffuse.webp": {
+  "normal": "om32900_lod_Diffuse.normal.webp",
+  "roughnessMap": "om32900_lod_Diffuse.rough.webp",
+  "night": {
+   "file": "om32900_lod_Diffuse.rough.webp",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.0395,
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.0003,
+  "emissive": "om32900_lod_Diffuse.emissive.webp",
+  "nightCoverage": 0.0637
+ }
+}

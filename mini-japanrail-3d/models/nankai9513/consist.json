@@ -1,0 +1,1039 @@
+{
+ "source": "2878714071",
+ "name": "Nankai9513_Data",
+ "car_length_m": 20.17,
+ "cars": [
+  {
+   "name": "Nankai9513_Data",
+   "model": "nk9513.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.262,
+    9.612
+   ],
+   "lod": {
+    "model": "nk9513.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "asset_439eef50.obj"
+   },
+   "parts": [
+    {
+     "name": "1_4(45883369)",
+     "model": "AdditiveShader_0_0_20_3_b27a0901.glb",
+     "texture": "asset_9895705d.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    },
+    {
+     "name": "1_4s(D779A44D)",
+     "model": "AdditiveShader_0_0_20_3_dabc80d8.glb",
+     "texture": "asset.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    },
+    {
+     "name": "1_3(6E5BF353)",
+     "model": "AdditiveShader_0_0_20_3_865633b9.glb",
+     "texture": "asset_9895705d.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    },
+    {
+     "name": "1_3s(C46A8874)",
+     "model": "AdditiveShader_0_0_20_3.glb",
+     "texture": "asset.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    },
+    {
+     "name": "light_1_2(F61A8BBE)",
+     "model": "AdditiveShader_0_0_20_3_d1eccaef.glb",
+     "texture": "asset_524ebf59.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    },
+    {
+     "name": "light_1_End(668702AE)",
+     "model": "AdditiveShader_0_0_20_3_343b4982.glb",
+     "texture": "asset_524ebf59.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      5.9
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      5.9
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      1.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      1.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -2.9
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -2.9
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.3
+     ]
+    }
+   ],
+   "lights": [
+    [
+     1,
+     1.8,
+     -0.3
+    ],
+    [
+     -1,
+     1.8,
+     -0.3
+    ]
+   ]
+  },
+  {
+   "name": "TrailerNankai95130",
+   "model": "nk9015Nankai9513.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.262,
+    9.712
+   ],
+   "lod": {
+    "model": "nk9015Nankai9513.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Nankai9513.obj"
+   },
+   "parts": [
+    {
+     "name": "1_3s(A1403798)",
+     "model": "AdditiveShader_0_0_20_3.glb",
+     "texture": "asset.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    },
+    {
+     "name": "1_4s(497DFDAD)",
+     "model": "AdditiveShader_0_0_20_3_dabc80d8.glb",
+     "texture": "asset.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      6.9
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      6.9
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -1.9
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -1.9
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -6.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -6.3
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerNankai95131",
+   "model": "nk9816Nankai9513.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.262,
+    9.712
+   ],
+   "lod": {
+    "model": "nk9816Nankai9513.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Nankai9513_f9d334a5.obj"
+   },
+   "parts": [
+    {
+     "name": "1_3s(B3E48D68)",
+     "model": "AdditiveShader_0_0_20_3.glb",
+     "texture": "asset.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    },
+    {
+     "name": "1_4s(8BCA3238)",
+     "model": "AdditiveShader_0_0_20_3_dabc80d8.glb",
+     "texture": "asset.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      6.9
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      6.9
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -1.9
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -1.9
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -6.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -6.3
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerNankai95132",
+   "model": "nk9017Nankai9513.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.262,
+    9.712
+   ],
+   "lod": {
+    "model": "nk9017Nankai9513.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Nankai9513.obj"
+   },
+   "parts": [
+    {
+     "name": "1_3s(269D1BA5)",
+     "model": "AdditiveShader_0_0_20_3.glb",
+     "texture": "asset.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    },
+    {
+     "name": "1_4s(BE39FED4)",
+     "model": "AdditiveShader_0_0_20_3_dabc80d8.glb",
+     "texture": "asset.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      6.9
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      6.9
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -1.9
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -1.9
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -6.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -6.3
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerNankai95133",
+   "model": "nk9018Nankai9513.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.262,
+    10.012
+   ],
+   "lod": {
+    "model": "nk9018Nankai9513.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Nankai9513_5e1d62cc.obj"
+   },
+   "parts": [
+    {
+     "name": "1_3s(A76A4F5C)",
+     "model": "AdditiveShader_0_0_20_3.glb",
+     "texture": "asset.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    },
+    {
+     "name": "1_4s(30278842)",
+     "model": "AdditiveShader_0_0_20_3_dabc80d8.glb",
+     "texture": "asset.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      6.9
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      6.9
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -1.9
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -1.9
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -6.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -6.3
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerNankai95134",
+   "model": "nk9514Nankai9513.glb",
+   "texture": "MainTex.ktx2",
+   "flip": true,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.262,
+    10.262
+   ],
+   "lod": {
+    "model": "nk9514Nankai9513.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Nankai9513_1a10dcee.obj"
+   },
+   "parts": [
+    {
+     "name": "1_3(1D0C1F7F)",
+     "model": "AdditiveShader_0_0_20_3_865633b9.glb",
+     "texture": "asset_9895705d.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    },
+    {
+     "name": "1_3s(6A1BC3C7)",
+     "model": "AdditiveShader_0_0_20_3.glb",
+     "texture": "asset.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    },
+    {
+     "name": "1_4(4131AD8E)",
+     "model": "AdditiveShader_0_0_20_3_b27a0901.glb",
+     "texture": "asset_9895705d.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    },
+    {
+     "name": "1_4s(59C69232)",
+     "model": "AdditiveShader_0_0_20_3_dabc80d8.glb",
+     "texture": "asset.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    },
+    {
+     "name": "light_1_2(CAFA6B1D)",
+     "model": "AdditiveShader_0_0_20_3_d1eccaef.glb",
+     "texture": "asset_524ebf59.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    },
+    {
+     "name": "light_1_End(532EE048)",
+     "model": "AdditiveShader_0_0_20_3_343b4982.glb",
+     "texture": "asset_524ebf59.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      5.9
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      1.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      5.9
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      1.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -2.9
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -2.9
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.3
+     ]
+    }
+   ],
+   "lights": [
+    [
+     -1,
+     1.8,
+     -0.3
+    ],
+    [
+     1,
+     1.8,
+     -0.3
+    ]
+   ]
+  }
+ ]
+}

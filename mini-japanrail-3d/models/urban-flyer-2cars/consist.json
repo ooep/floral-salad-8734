@@ -1,0 +1,371 @@
+{
+ "source": "2451381828",
+ "name": "Urban Flyer_2Cars_Data",
+ "car_length_m": 15.45,
+ "cars": [
+  {
+   "name": "Urban Flyer_2Cars_Data",
+   "model": "Cube.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Props/Prop/Default",
+   "couple": [
+    7.745,
+    7.745
+   ],
+   "lod": {
+    "model": "Cube.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "asset_02bcaf1b.obj"
+   },
+   "parts": [
+    {
+     "name": "parts01",
+     "model": "AdditiveShader_0_24_8_3.glb",
+     "texture": "MainTex_c0dd2236.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 8,
+      "intensity": 3
+     }
+    },
+    {
+     "name": "parts02",
+     "model": "AdditiveShader_0_24_8_3.glb",
+     "texture": "MainTex_e189be60.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 8,
+      "intensity": 3
+     }
+    },
+    {
+     "name": "parts03",
+     "model": "AdditiveShader_0_24_8_3_04ff8144.glb",
+     "texture": "MainTex_de4b1704.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 8,
+      "intensity": 3
+     }
+    },
+    {
+     "name": "parts04",
+     "model": "Cube.001.glb",
+     "texture": "MainTex_e723a100.ktx2",
+     "kind": "part",
+     "shader": "Custom/Vehicles/Vehicle/Default"
+    }
+   ],
+   "effects": [
+    {
+     "name": "Monorail Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.3,
+      -0.1,
+      3.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.3,
+      -0.1,
+      3.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.3,
+      -0.1,
+      -3.7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.3,
+      -0.1,
+      -3.7
+     ]
+    }
+   ],
+   "lights": [
+    [
+     0.91,
+     2.52,
+     -0.45
+    ],
+    [
+     -0.91,
+     2.52,
+     -0.45
+    ]
+   ]
+  },
+  {
+   "name": "TrailerUrban Flyer_2Cars0",
+   "model": "CubeUrban_Flyer_2CarsUrban_Flyer_2CarsUrban_Flyer_2Cars.glb",
+   "texture": "MainTex.ktx2",
+   "flip": true,
+   "shader": "Custom/Props/Prop/Default",
+   "couple": [
+    7.745,
+    7.645
+   ],
+   "lod": {
+    "model": "CubeUrban_Flyer_2CarsUrban_Flyer_2CarsUrban_Flyer_2Cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Urban_Flyer_2CarsUrban_Flyer_2CarsUrban_Flyer_2Cars.obj"
+   },
+   "parts": [
+    {
+     "name": "parts01",
+     "model": "AdditiveShader_0_24_8_3.glb",
+     "texture": "MainTex_c0dd2236.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 8,
+      "intensity": 3
+     }
+    },
+    {
+     "name": "parts02",
+     "model": "AdditiveShader_0_24_8_3.glb",
+     "texture": "MainTex_e189be60.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 8,
+      "intensity": 3
+     }
+    },
+    {
+     "name": "parts03",
+     "model": "AdditiveShader_0_24_8_3_04ff8144.glb",
+     "texture": "MainTex_de4b1704.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 8,
+      "intensity": 3
+     }
+    },
+    {
+     "name": "parts05",
+     "model": "Cube.001.glb",
+     "texture": "MainTex_abb0aaf0.ktx2",
+     "kind": "part",
+     "shader": "Custom/Vehicles/Vehicle/Default"
+    }
+   ],
+   "effects": [
+    {
+     "name": "Monorail Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      1.3,
+      -0.1,
+      3.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.3,
+      -0.1,
+      3.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.3,
+      -0.1,
+      -3.7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.3,
+      -0.1,
+      -3.7
+     ]
+    }
+   ],
+   "lights": [
+    [
+     0.91,
+     2.52,
+     -0.45
+    ],
+    [
+     -0.91,
+     2.52,
+     -0.45
+    ]
+   ]
+  }
+ ],
+ "material": {
+  "brightness": 1.601
+ },
+ "fixed_by": "2451381828"
+}

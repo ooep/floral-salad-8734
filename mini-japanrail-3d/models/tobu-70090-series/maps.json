@@ -1,0 +1,107 @@
+{
+ "Clone.ktx2": {
+  "roughness": 0.85
+ },
+ "Clone_23ea04ad.ktx2": {
+  "normal": "Clone_23ea04ad.normal.ktx2",
+  "roughnessMap": "Clone_23ea04ad.rough.ktx2",
+  "night": {
+   "file": "Clone_23ea04ad.rough.ktx2",
+   "channel": "a"
+  },
+  "nightCoverage": 0.1953
+ },
+ "MainTex.ktx2": {
+  "roughness": 0.85
+ },
+ "MainTex_52e205e8.ktx2": {
+  "normal": "MainTex_52e205e8.normal.ktx2",
+  "roughnessMap": "MainTex_52e205e8.rough.ktx2",
+  "night": {
+   "file": "MainTex_52e205e8.rough.ktx2",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.0945,
+  "nightCoverage": 0.0097,
+  "cutoutShell": 0.0015
+ },
+ "MainTex_fa699ec3.ktx2": {
+  "normal": "MainTex_fa699ec3.normal.ktx2",
+  "roughnessMap": "MainTex_fa699ec3.rough.ktx2",
+  "night": {
+   "file": "MainTex_fa699ec3.rough.ktx2",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.0945,
+  "nightCoverage": 0.0097,
+  "cutoutShell": 0.0016
+ },
+ "asset_c7941277.ktx2": {
+  "normal": "asset_c7941277.normal.ktx2",
+  "roughnessMap": "asset_c7941277.rough.ktx2",
+  "night": {
+   "file": "asset_c7941277.rough.ktx2",
+   "channel": "a"
+  },
+  "nightCoverage": 0.1953
+ },
+ "tb71793_side2_lod_Diffuse.ktx2": {
+  "roughness": 0.35
+ },
+ "tb71793_side_lod_Diffuse.ktx2": {
+  "roughness": 0.35
+ },
+ "tb72793_side2_lod_Diffuse.ktx2": {
+  "roughness": 0.35
+ },
+ "tb72793_side_lod_Diffuse.ktx2": {
+  "roughness": 0.35
+ },
+ "tb73793_side2_lod_Diffuse.ktx2": {
+  "roughness": 0.35
+ },
+ "tb73793_side_lod_Diffuse.ktx2": {
+  "roughness": 0.35
+ },
+ "tb74793_side2_lod_Diffuse.ktx2": {
+  "roughness": 0.35
+ },
+ "tb74793_side_lod_Diffuse.ktx2": {
+  "roughness": 0.35
+ },
+ "tb75793_side2_lod_Diffuse.ktx2": {
+  "roughness": 0.35
+ },
+ "tb75793_side_lod_Diffuse.ktx2": {
+  "roughness": 0.35
+ },
+ "tb76793_side2_lod_Diffuse.ktx2": {
+  "roughness": 0.35
+ },
+ "tb76793_side_lod_Diffuse.ktx2": {
+  "roughness": 0.35
+ },
+ "tb77793_side2_lod_Diffuse.ktx2": {
+  "roughness": 0.35
+ },
+ "tb77793_side_lod_Diffuse.ktx2": {
+  "roughness": 0.35
+ },
+ "tb77793_taillight_lod_Diffuse.ktx2": {
+  "normal": "tb77793_taillight_lod_Diffuse.normal.ktx2",
+  "roughness": 0.85
+ },
+ "stand-ins.ktx2": {
+  "roughnessMap": "stand-ins.rough.ktx2",
+  "normal": "stand-ins.normal.ktx2",
+  "normalScale": 1,
+  "night": {
+   "file": "stand-ins.rough.ktx2",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutAt": 0.5
+ }
+}

@@ -1,0 +1,674 @@
+{
+ "source": "2854642751",
+ "name": "Meitetsu 2000 series_Data",
+ "car_length_m": 19.51,
+ "cars": [
+  {
+   "name": "Meitetsu 2000 series_Data",
+   "model": "front.glb",
+   "texture": "MainTex_1e172f97.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.754,
+    9.754
+   ],
+   "lod": {
+    "model": "front.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "front_e1ba0937.obj"
+   },
+   "transform": {
+    "position": [
+     0.0157,
+     1.3276,
+     1.4083
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "meitetsu2000Mc_LCD",
+     "model": "AdditiveShader_0_0_20_1.2_e357e867.glb",
+     "texture": "MainTex_8c93eebc.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 1.2
+     }
+    },
+    {
+     "name": "meitetsu2000_car4",
+     "model": "AdditiveShader_0_0_20_2_d48a987a.glb",
+     "texture": "MainTex_d218cf0c.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 2
+     }
+    },
+    {
+     "name": "meitetsu2000_headlight",
+     "model": "AdditiveShader_0_0_20_2_6fb69dc3.glb",
+     "texture": "MainTex_74de5e81.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 2
+     }
+    },
+    {
+     "name": "meitetsu2000_taillight",
+     "model": "AdditiveShader_0_0_15_1.glb",
+     "texture": "MainTex_39531cf2.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 15,
+      "intensity": 1
+     }
+    },
+    {
+     "name": "meitetsu2000_LCD glass",
+     "model": "AdditiveShader_0_0_0.2_10.glb",
+     "texture": "MainTex_6294c81a.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 0.2,
+      "intensity": 10
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -8.45
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -8.45
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      6.45
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      6.45
+     ]
+    }
+   ],
+   "lights": [
+    [
+     -0.72,
+     1.435,
+     -0.26
+    ],
+    [
+     0.72,
+     1.435,
+     -0.26
+    ]
+   ]
+  },
+  {
+   "name": "TrailerMeitetsu 2000 series0",
+   "model": "rearMeitetsu_2000_series.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.7,
+    9.7
+   ],
+   "lod": {
+    "model": "rearMeitetsu_2000_series.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "frontMeitetsu_2000_series.obj"
+   },
+   "transform": {
+    "position": [
+     0.0209,
+     1.2213,
+     -0.7339
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "meitetsu2000M1_LCD",
+     "model": "AdditiveShader_0_0_20_1.2.glb",
+     "texture": "MainTex_c0040d8b.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 1.2
+     }
+    },
+    {
+     "name": "meitetsu2000_car3",
+     "model": "AdditiveShader_0_0_20_2.glb",
+     "texture": "MainTex_d0352796.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 2
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      8
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -8.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      8
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -8.4
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerMeitetsu 2000 series1",
+   "model": "rearMeitetsu_2000_series_05db3460.glb",
+   "texture": "MainTex_028a91dc.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.7,
+    9.7
+   ],
+   "lod": {
+    "model": "rearMeitetsu_2000_series_05db3460.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "frontMeitetsu_2000_series_15a462a6.obj"
+   },
+   "transform": {
+    "position": [
+     -0.0155,
+     1.0068,
+     0.2545
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "meitetsu2000M_LCD",
+     "model": "AdditiveShader_0_0_20_1.2_36ba6a4f.glb",
+     "texture": "MainTex_cc4d2a10.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 1.2
+     }
+    },
+    {
+     "name": "meitetsu2000_car2",
+     "model": "AdditiveShader_0_0_20_2_edc66b00.glb",
+     "texture": "MainTex_10e976a4.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 2
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      6.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -8.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      6.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -8.4
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerMeitetsu 2000 series2",
+   "model": "frontMeitetsu_2000_series_fee8ce5c.glb",
+   "texture": "MainTex_645cf189.ktx2",
+   "flip": true,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.754,
+    9.754
+   ],
+   "lod": {
+    "model": "frontMeitetsu_2000_series_fee8ce5c.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "frontMeitetsu_2000_series_8f6cfa18.obj"
+   },
+   "transform": {
+    "position": [
+     0.0234,
+     1.0323,
+     2.2174
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "meitetsu2000Tc_LCD",
+     "model": "AdditiveShader_0_0_20_1.2_e357e867.glb",
+     "texture": "MainTex_8c93eebc.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 1.2
+     }
+    },
+    {
+     "name": "meitetsu2000_car1",
+     "model": "AdditiveShader_0_0_20_2_d48a987a.glb",
+     "texture": "MainTex_4eaa5b98.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 2
+     }
+    },
+    {
+     "name": "meitetsu2000_headlight2",
+     "model": "AdditiveShader_0_0_20_2_6fb69dc3.glb",
+     "texture": "MainTex_74de5e81.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 2
+     }
+    },
+    {
+     "name": "meitetsu2000_taillight2",
+     "model": "AdditiveShader_0_0_15_1.glb",
+     "texture": "MainTex_39531cf2.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 15,
+      "intensity": 1
+     }
+    },
+    {
+     "name": "meitetsu2000_LCD glass2",
+     "model": "AdditiveShader_0_0_0.2_10.glb",
+     "texture": "MainTex_6294c81a.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 0.2,
+      "intensity": 10
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -8.45
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      6.45
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -8.45
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      6.45
+     ]
+    }
+   ],
+   "lights": [
+    [
+     -0.72,
+     1.435,
+     -0.26
+    ],
+    [
+     0.72,
+     1.435,
+     -0.26
+    ]
+   ]
+  }
+ ],
+ "tint": "none",
+ "material": {
+  "brightness": 1.304
+ },
+ "fixed_by": "2854642751"
+}

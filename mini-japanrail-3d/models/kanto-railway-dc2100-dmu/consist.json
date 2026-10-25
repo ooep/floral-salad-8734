@@ -1,0 +1,229 @@
+{
+ "source": "741432966",
+ "name": "Kanto Railway DC2100 DMU_Data",
+ "car_length_m": 18.41,
+ "cars": [
+  {
+   "name": "Kanto Railway DC2100 DMU_Data",
+   "model": "Object002_Instance_602f55cc.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.206,
+    9.206
+   ],
+   "lod": {
+    "model": "Object002_Instance_602f55cc.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "asset_d66b5937.obj"
+   },
+   "transform": {
+    "position": [
+     4.6088,
+     0.9274,
+     -1.0577
+    ],
+    "rotation": [
+     -0.7071,
+     0,
+     0,
+     0.7071
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -6.53
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -6.53
+     ]
+    }
+   ],
+   "lights": [
+    [
+     0.84,
+     1.64,
+     -0.4
+    ],
+    [
+     -0.85,
+     1.64,
+     -0.4
+    ]
+   ]
+  },
+  {
+   "name": "DC2100Rear_Data",
+   "model": "Object002_Instance.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.206,
+    9.206
+   ],
+   "lod": {
+    "model": "Object002_Instance.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "asset.obj"
+   },
+   "transform": {
+    "position": [
+     4.6088,
+     0.9274,
+     -1.0577
+    ],
+    "rotation": [
+     -0.7071,
+     0,
+     0,
+     0.7071
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -6.44
+     ]
+    }
+   ]
+  }
+ ],
+ "material": {
+  "brightness": 2.667,
+  "steel": {
+   "skin": 111,
+   "gain": 1.184
+  },
+  "lodSteel": {
+   "skin": 110,
+   "gain": 1.21
+  }
+ },
+ "fixed_by": "741432966"
+}

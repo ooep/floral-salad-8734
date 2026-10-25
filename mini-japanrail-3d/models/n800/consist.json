@@ -1,0 +1,704 @@
+{
+ "source": "2797127924",
+ "name": "N800_Data",
+ "car_length_m": 18.52,
+ "cars": [
+  {
+   "name": "N800_Data",
+   "model": "3000-1.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.271,
+    9.271
+   ],
+   "lod": {
+    "model": "3000-1.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Cube.obj"
+   },
+   "parts": [
+    {
+     "name": "N800_taillight",
+     "model": "AdditiveShader_0_0_20_4.glb",
+     "texture": "MainTex_7688c10d.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 4
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -5.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -5.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      5.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      5.3
+     ]
+    }
+   ],
+   "lights": [
+    [
+     1,
+     3.2,
+     -0.5
+    ],
+    [
+     -1,
+     3.2,
+     -0.5
+    ]
+   ]
+  },
+  {
+   "name": "TrailerN8000",
+   "model": "3000-2_N800.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.25,
+    9.25
+   ],
+   "skins": [
+    {
+     "shader": "Custom/Vehicles/Vehicle/Train",
+     "texture": "MainTex.ktx2"
+    },
+    {
+     "shader": "Custom/Vehicles/Vehicle/Train",
+     "texture": "MainTex.ktx2"
+    },
+    {
+     "shader": "Custom/Vehicles/Vehicle/Train",
+     "texture": "MainTex.ktx2"
+    }
+   ],
+   "lod": {
+    "model": "3000-2_N800.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Cube_InstanceN800.obj"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -5.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -5.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      5.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      5.3
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerN8001",
+   "model": "3000-3_N800.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.25,
+    9.25
+   ],
+   "skins": [
+    {
+     "shader": "Custom/Vehicles/Vehicle/Train",
+     "texture": "MainTex.ktx2"
+    },
+    {
+     "shader": "Custom/Vehicles/Vehicle/Train",
+     "texture": "MainTex.ktx2"
+    }
+   ],
+   "lod": {
+    "model": "3000-3_N800.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Cube_InstanceN800.obj"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -5.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -5.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      5.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      5.3
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerN8002",
+   "model": "3000-6_N800.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.25,
+    9.25
+   ],
+   "skins": [
+    {
+     "shader": "Custom/Vehicles/Vehicle/Train",
+     "texture": "MainTex.ktx2"
+    },
+    {
+     "shader": "Custom/Vehicles/Vehicle/Train",
+     "texture": "MainTex.ktx2"
+    }
+   ],
+   "lod": {
+    "model": "3000-6_N800.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Cube_InstanceN800.obj"
+   },
+   "transform": {
+    "position": [
+     -0.0046,
+     -0.035,
+     0.0016
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -5.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -5.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      5.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      5.3
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerN8003",
+   "model": "3000-7_N800.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.25,
+    9.25
+   ],
+   "skins": [
+    {
+     "shader": "Custom/Vehicles/Vehicle/Train",
+     "texture": "MainTex.ktx2"
+    },
+    {
+     "shader": "Custom/Vehicles/Vehicle/Train",
+     "texture": "MainTex.ktx2"
+    }
+   ],
+   "lod": {
+    "model": "3000-7_N800.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Cube_InstanceN800.obj"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -5.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -5.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      5.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      5.3
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerN8004",
+   "model": "3000-8_N800.glb",
+   "texture": "MainTex.ktx2",
+   "flip": true,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.271,
+    9.271
+   ],
+   "lod": {
+    "model": "3000-8_N800.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "CubeN800.obj"
+   },
+   "transform": {
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": [
+     0,
+     -1,
+     0,
+     0
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "N800_taillight(Clone)(Clone)(Clone)",
+     "model": "AdditiveShader_0_0_20_4.glb",
+     "texture": "asset_2944160f.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 4
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -5.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -5.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      5.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      5.3
+     ]
+    }
+   ],
+   "lights": [
+    [
+     1,
+     3.2,
+     -0.5
+    ],
+    [
+     -1,
+     3.2,
+     -0.5
+    ]
+   ]
+  }
+ ],
+ "material": {
+  "brightness": 1.645,
+  "lodBrightness": 1.817
+ },
+ "fixed_by": "2797127924"
+}

@@ -1,0 +1,139 @@
+{
+ "MainTex.webp": {
+  "normal": "MainTex.normal.webp",
+  "roughnessMap": "MainTex.rough.webp",
+  "night": {
+   "file": "MainTex.rough.webp",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.0459,
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.2178,
+  "emissive": "MainTex.emissive.webp",
+  "nightCoverage": 0.0381
+ },
+ "om31000_lod_Diffuse.webp": {
+  "normal": "om31000_lod_Diffuse.normal.webp",
+  "roughnessMap": "om31000_lod_Diffuse.rough.webp",
+  "night": {
+   "file": "om31000_lod_Diffuse.rough.webp",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.0211,
+  "emissive": "om31000_lod_Diffuse.emissive.webp",
+  "nightCoverage": 0.0919
+ },
+ "om31100_lod_Diffuse.webp": {
+  "normal": "om31100_lod_Diffuse.normal.webp",
+  "roughnessMap": "om31100_lod_Diffuse.rough.webp",
+  "night": {
+   "file": "om31100_lod_Diffuse.rough.webp",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.021,
+  "emissive": "om31100_lod_Diffuse.emissive.webp",
+  "nightCoverage": 0.0917
+ },
+ "om31200_lod_Diffuse.webp": {
+  "normal": "om31200_lod_Diffuse.normal.webp",
+  "roughnessMap": "om31200_lod_Diffuse.rough.webp",
+  "night": {
+   "file": "om31200_lod_Diffuse.rough.webp",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.0211,
+  "emissive": "om31200_lod_Diffuse.emissive.webp",
+  "nightCoverage": 0.092
+ },
+ "om31300_lod_Diffuse.webp": {
+  "normal": "om31300_lod_Diffuse.normal.webp",
+  "roughnessMap": "om31300_lod_Diffuse.rough.webp",
+  "night": {
+   "file": "om31300_lod_Diffuse.rough.webp",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.0212,
+  "emissive": "om31300_lod_Diffuse.emissive.webp",
+  "nightCoverage": 0.0919
+ },
+ "om31400_lod_Diffuse.webp": {
+  "normal": "om31400_lod_Diffuse.normal.webp",
+  "roughnessMap": "om31400_lod_Diffuse.rough.webp",
+  "night": {
+   "file": "om31400_lod_Diffuse.rough.webp",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.0203,
+  "emissive": "om31400_lod_Diffuse.emissive.webp",
+  "nightCoverage": 0.0922
+ },
+ "om31500_lod_Diffuse.webp": {
+  "normal": "om31500_lod_Diffuse.normal.webp",
+  "roughnessMap": "om31500_lod_Diffuse.rough.webp",
+  "night": {
+   "file": "om31500_lod_Diffuse.rough.webp",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.0195,
+  "emissive": "om31500_lod_Diffuse.emissive.webp",
+  "nightCoverage": 0.0913
+ },
+ "om31600_lod_Diffuse.webp": {
+  "normal": "om31600_lod_Diffuse.normal.webp",
+  "roughnessMap": "om31600_lod_Diffuse.rough.webp",
+  "night": {
+   "file": "om31600_lod_Diffuse.rough.webp",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.0333,
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.0,
+  "emissive": "om31600_lod_Diffuse.emissive.webp",
+  "nightCoverage": 0.0635
+ },
+ "om31700_lod_Diffuse.webp": {
+  "roughnessMap": "om31700_lod_Diffuse.rough.webp",
+  "night": {
+   "file": "om31700_lod_Diffuse.rough.webp",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.0214,
+  "emissive": "om31700_lod_Diffuse.emissive.webp",
+  "nightCoverage": 0.091
+ },
+ "om31800_lod_Diffuse.webp": {
+  "normal": "om31800_lod_Diffuse.normal.webp",
+  "roughnessMap": "om31800_lod_Diffuse.rough.webp",
+  "night": {
+   "file": "om31800_lod_Diffuse.rough.webp",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.0195,
+  "emissive": "om31800_lod_Diffuse.emissive.webp",
+  "nightCoverage": 0.0899
+ },
+ "om31900_lod_Diffuse.webp": {
+  "normal": "om31900_lod_Diffuse.normal.webp",
+  "roughnessMap": "om31900_lod_Diffuse.rough.webp",
+  "night": {
+   "file": "om31900_lod_Diffuse.rough.webp",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.0371,
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.0003,
+  "emissive": "om31900_lod_Diffuse.emissive.webp",
+  "nightCoverage": 0.0637
+ }
+}

@@ -1,0 +1,80 @@
+{
+ "M320_lod_Diffuse.webp": {
+  "normal": "M320_lod_Diffuse.normal.webp",
+  "roughnessMap": "M320_lod_Diffuse.rough.webp",
+  "night": {
+   "file": "M320_lod_Diffuse.rough.webp",
+   "channel": "a"
+  },
+  "emissive": "M320_lod_Diffuse.emissive.webp",
+  "nightCoverage": 0.0767
+ },
+ "M321F_lod_Diffuse.webp": {
+  "normal": "M321F_lod_Diffuse.normal.webp",
+  "roughnessMap": "M321F_lod_Diffuse.rough.webp",
+  "night": {
+   "file": "M321F_lod_Diffuse.rough.webp",
+   "channel": "a"
+  },
+  "emissive": "M321F_lod_Diffuse.emissive.webp",
+  "nightCoverage": 0.0777
+ },
+ "M321_lod_Diffuse.webp": {
+  "normal": "M321_lod_Diffuse.normal.webp",
+  "roughnessMap": "M321_lod_Diffuse.rough.webp",
+  "night": {
+   "file": "M321_lod_Diffuse.rough.webp",
+   "channel": "a"
+  },
+  "emissive": "M321_lod_Diffuse.emissive.webp",
+  "nightCoverage": 0.0777
+ },
+ "MainTex.webp": {
+  "normal": "MainTex.normal.webp",
+  "roughnessMap": "MainTex.rough.webp",
+  "night": {
+   "file": "MainTex.rough.webp",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.049,
+  "emissive": "MainTex.emissive.webp",
+  "nightCoverage": 0.1128
+ },
+ "MainTex_0d766169.webp": {
+  "roughness": 0.554
+ },
+ "Mc320_lod_Diffuse.webp": {
+  "normal": "Mc320_lod_Diffuse.normal.webp",
+  "roughnessMap": "Mc320_lod_Diffuse.rough.webp",
+  "night": {
+   "file": "Mc320_lod_Diffuse.rough.webp",
+   "channel": "a"
+  },
+  "emissive": "Mc320_lod_Diffuse.emissive.webp",
+  "nightCoverage": 0.0701
+ },
+ "Mc321_lod_Diffuse.webp": {
+  "normal": "Mc321_lod_Diffuse.normal.webp",
+  "roughnessMap": "Mc321_lod_Diffuse.rough.webp",
+  "night": {
+   "file": "Mc321_lod_Diffuse.rough.webp",
+   "channel": "a"
+  },
+  "emissive": "Mc321_lod_Diffuse.emissive.webp",
+  "nightCoverage": 0.0709
+ },
+ "T321_lod_Diffuse.webp": {
+  "normal": "T321_lod_Diffuse.normal.webp",
+  "roughnessMap": "T321_lod_Diffuse.rough.webp",
+  "night": {
+   "file": "T321_lod_Diffuse.rough.webp",
+   "channel": "a"
+  },
+  "emissive": "T321_lod_Diffuse.emissive.webp",
+  "nightCoverage": 0.0766
+ },
+ "asset.webp": {
+  "roughness": 0.554
+ }
+}

@@ -1,0 +1,125 @@
+{
+ "source": "2958853218/asia/2100_Nomal",
+ "name": "asia/2100_Nomal",
+ "car_length_m": 19.2,
+ "middle_car_length_m": 18.9,
+ "cars": [
+  {
+   "name": "KK2100_Mc_ver001",
+   "model": "KK2100_Mc_ver001.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "KK2100_Mc_ver001_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    9.0,
+    9.17
+   ]
+  },
+  {
+   "name": "KK2100_T'_ver001",
+   "model": "KK2100_T'_ver001.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "KK2100_T'_ver001_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    9.0,
+    9.0
+   ]
+  },
+  {
+   "name": "KK2100_T_ver001",
+   "model": "KK2100_T_ver001.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "KK2100_T_ver001_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    9.0,
+    9.0
+   ]
+  },
+  {
+   "name": "KK2100_M_ver001",
+   "model": "KK2100_M_ver001.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "KK2100_M_ver001_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    9.0,
+    9.0
+   ]
+  },
+  {
+   "name": "KK2100_M'_ver001",
+   "model": "KK2100_M'_ver001.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "KK2100_M'_ver001_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    9.0,
+    9.0
+   ]
+  },
+  {
+   "name": "KK2100_T'_ver001",
+   "model": "KK2100_T'_ver001.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "KK2100_T'_ver001_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    9.0,
+    9.0
+   ]
+  },
+  {
+   "name": "KK2100_T_ver001",
+   "model": "KK2100_T_ver001.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "KK2100_T_ver001_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    9.0,
+    9.0
+   ]
+  },
+  {
+   "name": "KK2100_M'c_ver001",
+   "model": "KK2100_M'c_ver001.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "KK2100_M'c_ver001_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    9.175,
+    9.0
+   ]
+  }
+ ],
+ "material": {
+  "brightness": 1.432,
+  "lodBrightness": 1.331
+ },
+ "fixed_by": "tf2-keikyu-2100-8car"
+}

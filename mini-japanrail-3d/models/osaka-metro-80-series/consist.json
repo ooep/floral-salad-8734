@@ -1,0 +1,469 @@
+{
+ "source": "1889221754",
+ "name": "Osaka Metro 80 Series_Data",
+ "car_length_m": 14.87,
+ "cars": [
+  {
+   "name": "Osaka Metro 80 Series_Data",
+   "model": "Group_003.glb",
+   "texture": "MainTex_2c95fc5a.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    7.435,
+    7.435
+   ],
+   "lod": {
+    "model": "Group_003.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Group_026.obj"
+   },
+   "transform": {
+    "position": [
+     1.8258,
+     1.3017,
+     -0.3861
+    ],
+    "rotation": [
+     -0.7071,
+     0,
+     0,
+     0.7071
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -4.33
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -4.33
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -0.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -0.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      4
+     ]
+    }
+   ],
+   "lights": [
+    [
+     0.72,
+     2.985,
+     -0.8
+    ],
+    [
+     -0.75,
+     2.99,
+     -0.8
+    ]
+   ]
+  },
+  {
+   "name": "TrailerOsakaMetro80Series0",
+   "model": "Group_018OsakaMetro80Series.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    7.388,
+    7.388
+   ],
+   "lod": {
+    "model": "Group_018OsakaMetro80Series.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Group_027OsakaMetro80Series.obj"
+   },
+   "transform": {
+    "position": [
+     7.3795,
+     -0.0829,
+     -0.2096
+    ],
+    "rotation": [
+     -0.7071,
+     0,
+     0,
+     0.7071
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      4.24
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -4.24
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      4.24
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -4.24
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerOsakaMetro80Series0",
+   "model": "Group_018OsakaMetro80Series.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    7.388,
+    7.388
+   ],
+   "lod": {
+    "model": "Group_018OsakaMetro80Series.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Group_027OsakaMetro80Series.obj"
+   },
+   "transform": {
+    "position": [
+     7.3795,
+     -0.0829,
+     -0.2096
+    ],
+    "rotation": [
+     -0.7071,
+     0,
+     0,
+     0.7071
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      4.24
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -4.24
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      4.24
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -4.24
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerOsakaMetro80Series1",
+   "model": "Group_003OsakaMetro80Series.glb",
+   "texture": "MainTex_2c95fc5a.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    7.435,
+    7.435
+   ],
+   "lod": {
+    "model": "Group_003OsakaMetro80Series.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Group_026OsakaMetro80Series.obj"
+   },
+   "transform": {
+    "position": [
+     1.8258,
+     1.3017,
+     -0.3861
+    ],
+    "rotation": [
+     -0.7071,
+     0,
+     0,
+     0.7071
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      4.24
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -4.04
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      4.24
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -4.04
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      0
+     ]
+    }
+   ]
+  }
+ ]
+}

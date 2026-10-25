@@ -1,0 +1,427 @@
+{
+ "source": "1127754297",
+ "name": "Kintetsu 50000 Series_Data",
+ "car_length_m": 20.6,
+ "cars": [
+  {
+   "name": "Kintetsu 50000 Series_Data",
+   "model": "skirt2.002.glb",
+   "texture": "MainTex_72917bfa.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.3,
+    10.22
+   ],
+   "lod": {
+    "model": "skirt2.002.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "asset_16bcafb7.obj"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.23
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.23
+     ]
+    }
+   ],
+   "lights": [
+    [
+     -1.05,
+     1.8,
+     -0.7
+    ],
+    [
+     1.05,
+     1.8,
+     -0.7
+    ]
+   ]
+  },
+  {
+   "name": "TrailerKintetsu 50000 Series0",
+   "model": "bodyKintetsu_50000_Series.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.22,
+    10.22
+   ],
+   "lod": {
+    "model": "bodyKintetsu_50000_Series.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Kintetsu_50000_Series.obj"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      5.64
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      5.64
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerKintetsu 50000 Series1",
+   "model": "bodyKintetsu_50000_Series_648b9b82.glb",
+   "texture": "MainTex_afe177b6.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.22,
+    10.22
+   ],
+   "lod": {
+    "model": "bodyKintetsu_50000_Series_648b9b82.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Kintetsu_50000_Series_dd0bd460.obj"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      0.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      0.4
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerKintetsu 50000 Series2",
+   "model": "Trailer_bottomKintetsu_50000_Series.glb",
+   "texture": "MainTex_a48c10e8.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.22,
+    10.22
+   ],
+   "lod": {
+    "model": "Trailer_bottomKintetsu_50000_Series.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Kintetsu_50000_Series_4859c8a5.obj"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -9.34
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -8.74
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerKintetsu 50000 Series3",
+   "model": "bodyKintetsu_50000_Series_aa2b248c.glb",
+   "texture": "MainTex_0d47442b.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.22,
+    10.22
+   ],
+   "lod": {
+    "model": "bodyKintetsu_50000_Series_aa2b248c.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Kintetsu_50000_Series.obj"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -5.74
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerKintetsu 50000 Series4",
+   "model": "skirt2.002Kintetsu_50000_Series.glb",
+   "texture": "MainTex_8919cb80.ktx2",
+   "flip": true,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.3,
+    10.22
+   ],
+   "lod": {
+    "model": "skirt2.002Kintetsu_50000_Series.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Kintetsu_50000_Series_3e767b60.obj"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.24
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.24
+     ]
+    }
+   ],
+   "lights": [
+    [
+     -1.05,
+     1.8,
+     -0.7
+    ],
+    [
+     1.05,
+     1.8,
+     -0.7
+    ]
+   ]
+  }
+ ]
+}

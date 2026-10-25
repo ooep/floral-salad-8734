@@ -1,0 +1,191 @@
+{
+ "source": "2960509140",
+ "name": "KRT6000(normal)2Cars_Data",
+ "car_length_m": 21.61,
+ "cars": [
+  {
+   "name": "KRT6000(normal)2Cars_Data",
+   "model": "Cube.002.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    12.197,
+    12.197
+   ],
+   "lod": {
+    "model": "Cube.002.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": ".017.obj"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created",
+       "Stopped",
+       "Leaving",
+       "Arriving"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.3,
+      -9.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.3,
+      -9.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.3,
+      6.9
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.3,
+      6.9
+     ]
+    }
+   ],
+   "lights": [
+    [
+     0.8,
+     1.865,
+     -0.3
+    ],
+    [
+     -0.8,
+     1.865,
+     -0.3
+    ]
+   ]
+  },
+  {
+   "name": "TrailerKRT6000(normal)2Cars0",
+   "model": "Cube.002KRT6000_normal_2Cars.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.247,
+    12.197
+   ],
+   "lod": {
+    "model": "Cube.002KRT6000_normal_2Cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": ".017KRT6000_normal_2Cars.obj"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created",
+       "Stopped",
+       "Leaving",
+       "Arriving"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.3,
+      -9.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.3,
+      -9.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.3,
+      6.9
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.3,
+      6.9
+     ]
+    }
+   ]
+  }
+ ],
+ "material": {
+  "brightness": 2.667
+ },
+ "fixed_by": "2960509140"
+}

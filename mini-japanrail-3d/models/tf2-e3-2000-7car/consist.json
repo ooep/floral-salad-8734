@@ -1,0 +1,106 @@
+{
+ "source": "2855857829/E3_T2_2000_7car",
+ "name": "E3_T2_2000_7car",
+ "car_length_m": 22.63,
+ "middle_car_length_m": 20.45,
+ "cars": [
+  {
+   "name": "2000_17",
+   "model": "2000_17.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "2000_17_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    12.0,
+    10.0
+   ]
+  },
+  {
+   "name": "2000_16",
+   "model": "2000_16.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "2000_16_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    10.0,
+    10.0
+   ]
+  },
+  {
+   "name": "2000_15",
+   "model": "2000_15.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "2000_15_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    10.0,
+    10.0
+   ]
+  },
+  {
+   "name": "2000_12",
+   "model": "2000_12.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "2000_12_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    10.0,
+    10.0
+   ]
+  },
+  {
+   "name": "2000_13",
+   "model": "2000_13.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "2000_13_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    10.0,
+    10.0
+   ]
+  },
+  {
+   "name": "2000_12",
+   "model": "2000_12.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "2000_12_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    10.0,
+    10.0
+   ]
+  },
+  {
+   "name": "2000_11",
+   "model": "2000_11.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "2000_11_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    10.0,
+    12.0
+   ]
+  }
+ ]
+}

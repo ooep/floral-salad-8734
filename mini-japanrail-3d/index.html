@@ -7324,7 +7324,7 @@ const M3D = (() => {
   }
   /* ── 映射查询:爱称(names) → 途经线路(lines) ── */
   /* 映射 v2:爱称(names) → 单线(lines) → 组合规则(rules)。
-     规则字段:exact(线路集合完全相等) / all(全部包含) / none(任一包含即排除) /
+     规则字段:exact(线路集合完全相等) / all(全部包含) / none(任一包含即排除) / hasStop(停站含任一) /
      stopsIn(停站全部∈给定站集,用于实体标记被直通污染的线,如山手) /
      firstStopIn(首站∈集合)。顺序敏感:先匹配先得。宁缺毋滥:判不了的回退图标。 */
   function pathOf(t) {
@@ -7343,6 +7343,7 @@ const M3D = (() => {
           const ok2 = t.jas.every(s => r.stopsIn.includes(s));
           if (!ok2) continue;
         }
+        if (r.hasStop && (!t.jas || !r.hasStop.some(s => t.jas.includes(s)))) continue;
         if (r.firstStopIn && (!t.jas || !r.firstStopIn.includes(t.jas[0]))) continue;
         v = r.model; break outer;
       }

@@ -1,0 +1,1039 @@
+{
+ "source": "2333585362",
+ "name": "JR East E657 Series (10)_Data",
+ "car_length_m": 21.76,
+ "cars": [
+  {
+   "name": "JR East E657 Series (10)_Data",
+   "model": "Cube.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    11.426,
+    10.376
+   ],
+   "lod": {
+    "model": "Cube.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Cube.022.obj"
+   },
+   "parts": [
+    {
+     "name": "LED Front",
+     "model": "AdditiveShader_0_24_20_3_71a38934.glb",
+     "texture": "MainTex_ebc8372f.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 20,
+      "intensity": 3
+     }
+    },
+    {
+     "name": "FL1",
+     "model": "AdditiveShader_0_24_20_3_9d5c573d.glb",
+     "texture": "MainTex_ebc8372f.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 20,
+      "intensity": 3
+     }
+    },
+    {
+     "name": "RL1",
+     "model": "AdditiveShader_0_24_20_3_c09631ef.glb",
+     "texture": "MainTex_ebc8372f.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 20,
+      "intensity": 3
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      6.7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      6.7
+     ]
+    }
+   ],
+   "lights": [
+    [
+     0.9,
+     2.6,
+     -1.5
+    ],
+    [
+     -0.9,
+     2.6,
+     -1.5
+    ]
+   ]
+  },
+  {
+   "name": "TrailerJRE_E657_100",
+   "model": "Cube.014JRE_E657_10JRE_E657_10.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.319,
+    10.319
+   ],
+   "lod": {
+    "model": "Cube.014JRE_E657_10JRE_E657_10.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Cube.019JRE_E657_10JRE_E657_10.obj"
+   },
+   "transform": {
+    "position": [
+     10,
+     0,
+     -50
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "LED Motor",
+     "model": "AdditiveShader_0_24_20_3.glb",
+     "texture": "MainTex_ebc8372f.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 20,
+      "intensity": 3
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJRE_E657_101",
+   "model": "Cube.006JRE_E657_10.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.319,
+    10.319
+   ],
+   "lod": {
+    "model": "Cube.003JRE_E657_10.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Cube.013JRE_E657_10.obj"
+   },
+   "transform": {
+    "position": [
+     10,
+     0,
+     -25
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "LED Pantho",
+     "model": "AdditiveShader_0_24_20_3_e5928d08.glb",
+     "texture": "MainTex_ebc8372f.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 20,
+      "intensity": 3
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7.95
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7.95
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJRE_E657_102",
+   "model": "Cube.010JRE_E657_10.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.319,
+    10.319
+   ],
+   "lod": {
+    "model": "Cube.002JRE_E657_10.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Cube.019JRE_E657_10.obj"
+   },
+   "transform": {
+    "position": [
+     5,
+     0,
+     -50
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "LED Motor",
+     "model": "AdditiveShader_0_24_20_3.glb",
+     "texture": "MainTex_ebc8372f.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 20,
+      "intensity": 3
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJRE_E657_103",
+   "model": "Cube.003JRE_E657_10.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.319,
+    10.319
+   ],
+   "lod": {
+    "model": "Cube.003JRE_E657_10.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Cube.013JRE_E657_10.obj"
+   },
+   "transform": {
+    "position": [
+     5,
+     0,
+     -25
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "LED Pantho",
+     "model": "AdditiveShader_0_24_20_3_e5928d08.glb",
+     "texture": "MainTex_ebc8372f.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 20,
+      "intensity": 3
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7.95
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7.95
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJRE_E657_104",
+   "model": "Cube.008JRE_E657_10.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.319,
+    10.319
+   ],
+   "lod": {
+    "model": "Cube.008JRE_E657_10.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Cube.015JRE_E657_10.obj"
+   },
+   "transform": {
+    "position": [
+     0,
+     0,
+     -75
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "LED Green",
+     "model": "AdditiveShader_0_24_20_3_74362b35.glb",
+     "texture": "MainTex_ebc8372f.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 20,
+      "intensity": 3
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      6.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      6.3
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJRE_E657_105",
+   "model": "Cube.001JRE_E657_10.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.319,
+    10.319
+   ],
+   "lod": {
+    "model": "Cube.001JRE_E657_10.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Cube.021JRE_E657_10.obj"
+   },
+   "transform": {
+    "position": [
+     0,
+     0,
+     -100
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "LED Normal",
+     "model": "AdditiveShader_0_24_20_3_361746e7.glb",
+     "texture": "MainTex_ebc8372f.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 20,
+      "intensity": 3
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      9.45
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      9.45
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJRE_E657_106",
+   "model": "Cube.002JRE_E657_10.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.319,
+    10.319
+   ],
+   "lod": {
+    "model": "Cube.002JRE_E657_10.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Cube.019JRE_E657_10.obj"
+   },
+   "transform": {
+    "position": [
+     0,
+     0,
+     -50
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "LED Motor",
+     "model": "AdditiveShader_0_24_20_3.glb",
+     "texture": "MainTex_ebc8372f.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 20,
+      "intensity": 3
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJRE_E657_107",
+   "model": "Cube.007JRE_E657_10.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.319,
+    10.319
+   ],
+   "lod": {
+    "model": "Cube.003JRE_E657_10.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Cube.013JRE_E657_10.obj"
+   },
+   "transform": {
+    "position": [
+     0,
+     0,
+     -25
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "LED Pantho",
+     "model": "AdditiveShader_0_24_20_3_e5928d08.glb",
+     "texture": "MainTex_ebc8372f.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 20,
+      "intensity": 3
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7.95
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7.95
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJRE_E657_108",
+   "model": "Cube.005JRE_E657_6JRE_E657_6JRE_E657_10JRE_E657_10.glb",
+   "texture": "MainTex.ktx2",
+   "flip": true,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    11.426,
+    10.276
+   ],
+   "lod": {
+    "model": "Cube.005JRE_E657_6JRE_E657_6JRE_E657_10JRE_E657_10.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Cube.020JRE_E657_6JRE_E657_6JRE_E657_10JRE_E657_10.obj"
+   },
+   "transform": {
+    "position": [
+     0,
+     0,
+     -125
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "LED Front",
+     "model": "AdditiveShader_0_24_20_3_71a38934.glb",
+     "texture": "MainTex_ebc8372f.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 20,
+      "intensity": 3
+     }
+    },
+    {
+     "name": "FL2",
+     "model": "AdditiveShader_0_24_20_3_9d5c573d.glb",
+     "texture": "MainTex_ebc8372f.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 20,
+      "intensity": 3
+     }
+    },
+    {
+     "name": "RL2",
+     "model": "AdditiveShader_0_24_20_3_c09631ef.glb",
+     "texture": "MainTex_ebc8372f.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 20,
+      "intensity": 3
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      6.73
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      6.73
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -6.85
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -6.85
+     ]
+    }
+   ],
+   "lights": [
+    [
+     -0.9,
+     2.6,
+     -1.5
+    ],
+    [
+     0.9,
+     2.6,
+     -1.5
+    ]
+   ]
+  }
+ ],
+ "material": {
+  "brightness": 2.595
+ },
+ "fixed_by": "2333585362"
+}

@@ -1,0 +1,82 @@
+{
+ "source": "2931659908/257/257_500_wk_5car",
+ "name": "257/257_500_wk_5car",
+ "car_length_m": 20.95,
+ "middle_car_length_m": 20.45,
+ "cars": [
+  {
+   "name": "kuhae257t",
+   "model": "kuhae257t.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "kuhae257t_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    10.5,
+    10.0
+   ]
+  },
+  {
+   "name": "mohae257",
+   "model": "mohae257.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "mohae257_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    10.0,
+    10.0
+   ]
+  },
+  {
+   "name": "mohae256",
+   "model": "mohae256.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "mohae256_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    10.0,
+    10.0
+   ]
+  },
+  {
+   "name": "mohae257",
+   "model": "mohae257.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "mohae257_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    10.0,
+    10.0
+   ]
+  },
+  {
+   "name": "kuhae256t",
+   "model": "kuhae256t.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "kuhae256t_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    10.0,
+    10.5
+   ]
+  }
+ ],
+ "material": {
+  "brightness": 0.967
+ },
+ "fixed_by": "tf2-e257-500-5car"
+}

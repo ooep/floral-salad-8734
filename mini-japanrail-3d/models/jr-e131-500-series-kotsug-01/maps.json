@@ -1,0 +1,124 @@
+{
+ "131_fan2_lod_Diffuse.ktx2": {
+  "roughness": 0.35
+ },
+ "131_fan_lod_Diffuse.ktx2": {
+  "roughness": 0.35
+ },
+ "131_g1_1_LED2_lod_Diffuse.ktx2": {
+  "roughness": 0.35
+ },
+ "131_g1_1_LED_lod_Diffuse.ktx2": {
+  "roughness": 0.35
+ },
+ "131_g1_1_frontLED2_lod_Diffuse.ktx2": {
+  "roughness": 0.35
+ },
+ "131_g1_1_frontLED2_lod_Diffuse_118de335.ktx2": {
+  "roughness": 0.35
+ },
+ "131_g1_1_frontLED_lod_Diffuse.ktx2": {
+  "roughness": 0.35
+ },
+ "131_g1_1_frontLED_lod_Diffuse_ed0e16ed.ktx2": {
+  "roughness": 0.35
+ },
+ "131_g1_1_number2_lod_Diffuse.ktx2": {
+  "roughness": 0.85
+ },
+ "131_g1_1_number_lod_Diffuse.ktx2": {
+  "roughness": 0.85
+ },
+ "131_g1_2_LED2_lod_Diffuse.ktx2": {
+  "roughness": 0.35
+ },
+ "131_g1_2_LED_lod_Diffuse.ktx2": {
+  "roughness": 0.35
+ },
+ "Clone.ktx2": {
+  "normal": "Clone.normal.ktx2",
+  "roughnessMap": "Clone.rough.ktx2",
+  "night": {
+   "file": "Clone.rough.ktx2",
+   "channel": "a"
+  },
+  "nightCoverage": 0.1758
+ },
+ "Clone_Clone_Clone_Clone.ktx2": {
+  "roughness": 0.85
+ },
+ "Clone_e4c2244a.ktx2": {
+  "roughness": 0.35
+ },
+ "MainTex.ktx2": {
+  "roughnessMap": "MainTex.rough.ktx2",
+  "night": {
+   "file": "MainTex.rough.ktx2",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.1865,
+  "nightCoverage": 0.0097
+ },
+ "MainTex_1e151a2f.ktx2": {
+  "normal": "MainTex_1e151a2f.normal.ktx2",
+  "roughnessMap": "MainTex_1e151a2f.rough.ktx2",
+  "night": {
+   "file": "MainTex_1e151a2f.rough.ktx2",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.2561,
+  "nightCoverage": 0.0097,
+  "cutoutShell": 0.0019,
+  "cutoutGrille": 0.3724
+ },
+ "MainTex_26172ac2.ktx2": {
+  "normal": "MainTex_26172ac2.normal.ktx2",
+  "roughnessMap": "MainTex_26172ac2.rough.ktx2",
+  "night": {
+   "file": "MainTex_26172ac2.rough.ktx2",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.2561,
+  "nightCoverage": 0.0097,
+  "cutoutShell": 0.0032,
+  "cutoutGrille": 0.3598
+ },
+ "asset_0898d6bd.ktx2": {
+  "roughness": 0.85
+ },
+ "asset_3f56ea08.ktx2": {
+  "roughness": 0.85
+ },
+ "asset_6a43c637.ktx2": {
+  "normal": "asset_6a43c637.normal.ktx2",
+  "roughnessMap": "asset_6a43c637.rough.ktx2",
+  "night": {
+   "file": "asset_6a43c637.rough.ktx2",
+   "channel": "a"
+  },
+  "nightCoverage": 0.1758
+ },
+ "asset_d91c6a95.ktx2": {
+  "normal": "asset_d91c6a95.normal.ktx2",
+  "roughnessMap": "asset_d91c6a95.rough.ktx2",
+  "night": {
+   "file": "asset_d91c6a95.rough.ktx2",
+   "channel": "a"
+  },
+  "nightCoverage": 0.1758
+ },
+ "stand-ins.ktx2": {
+  "roughnessMap": "stand-ins.rough.ktx2",
+  "normal": "stand-ins.normal.ktx2",
+  "normalScale": 1,
+  "night": {
+   "file": "stand-ins.rough.ktx2",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutAt": 0.5
+ }
+}

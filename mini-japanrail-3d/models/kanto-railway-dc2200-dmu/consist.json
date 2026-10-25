@@ -1,0 +1,143 @@
+{
+ "source": "741433201",
+ "name": "Kanto Railway DC2200 DMU_Data",
+ "car_length_m": 18.41,
+ "cars": [
+  {
+   "name": "Kanto Railway DC2200 DMU_Data",
+   "model": "Object002_Instance.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.206,
+    9.206
+   ],
+   "lod": {
+    "model": "Object002_Instance.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "asset.obj"
+   },
+   "transform": {
+    "position": [
+     4.6088,
+     0.9274,
+     -1.0577
+    ],
+    "rotation": [
+     -0.7071,
+     0,
+     0,
+     0.7071
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -6.53
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -6.53
+     ]
+    }
+   ],
+   "lights": [
+    [
+     0.86,
+     1.64,
+     -0.4
+    ],
+    [
+     -0.91,
+     1.64,
+     -0.4
+    ]
+   ]
+  }
+ ],
+ "material": {
+  "brightness": 2.667,
+  "steel": {
+   "skin": 111,
+   "gain": 1.183
+  },
+  "lodSteel": {
+   "skin": 108,
+   "gain": 1.26
+  }
+ },
+ "fixed_by": "741433201"
+}

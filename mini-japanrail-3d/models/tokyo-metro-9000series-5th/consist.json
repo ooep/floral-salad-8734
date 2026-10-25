@@ -1,0 +1,547 @@
+{
+ "source": "1305660519",
+ "name": "Tokyo Metro 9000Series 5th_Data",
+ "car_length_m": 21.28,
+ "cars": [
+  {
+   "name": "Tokyo Metro 9000Series 5th_Data",
+   "model": "CT1.glb",
+   "texture": "MainTex_83629f4d.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    11.031,
+    11.031
+   ],
+   "lod": {
+    "model": "CT1.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "asset.obj"
+   },
+   "transform": {
+    "position": [
+     -4,
+     0,
+     0
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -6.53
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -6.53
+     ]
+    }
+   ],
+   "lights": [
+    [
+     0.95,
+     1.6,
+     -0.45
+    ],
+    [
+     -0.95,
+     1.6,
+     -0.45
+    ]
+   ]
+  },
+  {
+   "name": "TrailerTokyo Metro 9000Series 5th Batch0",
+   "model": "M1_Tokyo_Metro_9000Series_5th_Batch.glb",
+   "texture": "MainTex.ktx2",
+   "flip": true,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.25,
+    9.45
+   ],
+   "lod": {
+    "model": "M1Tokyo_Metro_9000Series_5th_Batch.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Tokyo_Metro_9000Series_5th_Batch.obj"
+   },
+   "transform": {
+    "position": [
+     12,
+     0,
+     0
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -6.44
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerTokyo Metro 9000Series 5th Batch1",
+   "model": "TTokyo_Metro_9000Series_5th_Batch.glb",
+   "texture": "MainTex.ktx2",
+   "flip": true,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.25,
+    10.25
+   ],
+   "lod": {
+    "model": "TTokyo_Metro_9000Series_5th_Batch.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Tokyo_Metro_9000Series_5th_Batch_bf2cbf74.obj"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -6.44
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerTokyo Metro 9000Series 5th Batch2",
+   "model": "M1Tokyo_Metro_9000Series_5th_Batch.glb",
+   "texture": "MainTex.ktx2",
+   "flip": true,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.25,
+    10.25
+   ],
+   "lod": {
+    "model": "M1Tokyo_Metro_9000Series_5th_Batch.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Tokyo_Metro_9000Series_5th_Batch.obj"
+   },
+   "transform": {
+    "position": [
+     8,
+     0,
+     0
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -6.44
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerTokyo Metro 9000Series 5th Batch3",
+   "model": "M2Tokyo_Metro_9000Series_5th_Batch.glb",
+   "texture": "MainTex.ktx2",
+   "flip": true,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.25,
+    10.25
+   ],
+   "lod": {
+    "model": "M2Tokyo_Metro_9000Series_5th_Batch.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Tokyo_Metro_9000Series_5th_Batch_967d65c8.obj"
+   },
+   "transform": {
+    "position": [
+     4,
+     0,
+     0
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -6.44
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerTokyo Metro 9000Series 5th Batch4",
+   "model": "CT2Tokyo_Metro_9000Series_5th_Batch.glb",
+   "texture": "MainTex_83629f4d.ktx2",
+   "flip": true,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    11.031,
+    10.231
+   ],
+   "lod": {
+    "model": "CT2Tokyo_Metro_9000Series_5th_Batch.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Tokyo_Metro_9000Series_5th_Batch_0cc2674a.obj"
+   },
+   "transform": {
+    "position": [
+     -8,
+     0,
+     0
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -6.44
+     ]
+    }
+   ]
+  }
+ ],
+ "material": {
+  "brightness": 0.506
+ },
+ "fixed_by": "1305660519"
+}

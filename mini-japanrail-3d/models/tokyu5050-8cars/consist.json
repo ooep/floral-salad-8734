@@ -1,0 +1,1086 @@
+{
+ "source": "2500419290",
+ "name": "Tokyu5050_8Cars_Data",
+ "car_length_m": 20.58,
+ "cars": [
+  {
+   "name": "Tokyu5050_8Cars_Data",
+   "model": "Cube.002Tokyu5050_8Cars.glb",
+   "texture": "MainTex_75008069.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.371,
+    10.211
+   ],
+   "lod": {
+    "model": "Cube.002Tokyu5050_8Cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "CubeTokyu5050_8Cars_b36c4633.obj"
+   },
+   "parts": [
+    {
+     "name": "front",
+     "model": "AdditiveShader_0_24_8_3_8eca2a89.glb",
+     "texture": "MainTex_185eaa45.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Spawned"
+      ],
+      "required": [
+       "Spawned"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 8,
+      "intensity": 3
+     }
+    },
+    {
+     "name": "side",
+     "model": "AdditiveShader_0_24_8_3_4746bbf7.glb",
+     "texture": "MainTex_2b68e373.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Spawned"
+      ],
+      "required": [
+       "Spawned"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 8,
+      "intensity": 3
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.33
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.33
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7.5
+     ]
+    }
+   ],
+   "lights": [
+    [
+     1.1,
+     3.1,
+     -0.4
+    ],
+    [
+     -1.1,
+     3.1,
+     -0.4
+    ]
+   ]
+  },
+  {
+   "name": "TrailerTokyu5050_8Cars0",
+   "model": "Plane.032Tokyu5050_8Cars.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.75,
+    10.21
+   ],
+   "lod": {
+    "model": "Plane.032Tokyu5050_8Cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "CubeTokyu5050_8Cars.obj"
+   },
+   "parts": [
+    {
+     "name": "side2",
+     "model": "AdditiveShader_0_24_8_3.glb",
+     "texture": "MainTex_2b68e373.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Spawned"
+      ],
+      "required": [
+       "Spawned"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 8,
+      "intensity": 3
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -2.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -2.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7.1
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerTokyu5050_8Cars1",
+   "model": "CubeTokyu5050_8Cars_76d472bb.glb",
+   "texture": "MainTex_772a1c62.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.75,
+    10.21
+   ],
+   "lod": {
+    "model": "CubeTokyu5050_8Cars_6e35d1f0.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "CubeTokyu5050_8Cars_5340f4da.obj"
+   },
+   "parts": [
+    {
+     "name": "side2",
+     "model": "AdditiveShader_0_24_8_3.glb",
+     "texture": "MainTex_2b68e373.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Spawned"
+      ],
+      "required": [
+       "Spawned"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 8,
+      "intensity": 3
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -2.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -2.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7.1
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerTokyu5050_8Cars2",
+   "model": "CubeTokyu5050_8Cars_6e35d1f0.glb",
+   "texture": "MainTex_ae666bc0.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.75,
+    10.21
+   ],
+   "lod": {
+    "model": "CubeTokyu5050_8Cars_6e35d1f0.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "CubeTokyu5050_8Cars_5340f4da.obj"
+   },
+   "parts": [
+    {
+     "name": "side2",
+     "model": "AdditiveShader_0_24_8_3.glb",
+     "texture": "MainTex_2b68e373.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Spawned"
+      ],
+      "required": [
+       "Spawned"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 8,
+      "intensity": 3
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -2.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -2.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7.1
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerTokyu5050_8Cars3",
+   "model": "CubeTokyu5050_8Cars_6e35d1f0.glb",
+   "texture": "MainTex_2b938744.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.75,
+    10.21
+   ],
+   "lod": {
+    "model": "CubeTokyu5050_8Cars_6e35d1f0.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "CubeTokyu5050_8Cars_5340f4da.obj"
+   },
+   "parts": [
+    {
+     "name": "side2",
+     "model": "AdditiveShader_0_24_8_3.glb",
+     "texture": "MainTex_2b68e373.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Spawned"
+      ],
+      "required": [
+       "Spawned"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 8,
+      "intensity": 3
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -2.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -2.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7.1
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerTokyu5050_8Cars0",
+   "model": "Plane.032Tokyu5050_8Cars.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.75,
+    10.21
+   ],
+   "lod": {
+    "model": "Plane.032Tokyu5050_8Cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "CubeTokyu5050_8Cars.obj"
+   },
+   "parts": [
+    {
+     "name": "side2",
+     "model": "AdditiveShader_0_24_8_3.glb",
+     "texture": "MainTex_2b68e373.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Spawned"
+      ],
+      "required": [
+       "Spawned"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 8,
+      "intensity": 3
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -2.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -2.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7.1
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerTokyu5050_8Cars4",
+   "model": "CubeTokyu5050_8Cars_76d472bb.glb",
+   "texture": "MainTex_45a70c5c.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.75,
+    10.21
+   ],
+   "lod": {
+    "model": "CubeTokyu5050_8Cars_6e35d1f0.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "CubeTokyu5050_8Cars_5340f4da.obj"
+   },
+   "parts": [
+    {
+     "name": "side2",
+     "model": "AdditiveShader_0_24_8_3.glb",
+     "texture": "MainTex_2b68e373.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Spawned"
+      ],
+      "required": [
+       "Spawned"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 8,
+      "intensity": 3
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -2.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -2.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7.1
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerTokyu5050_8Cars5",
+   "model": "Cube.002Tokyu5050_8Cars.glb",
+   "texture": "MainTex_75008069.ktx2",
+   "flip": true,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.371,
+    10.211
+   ],
+   "lod": {
+    "model": "Cube.002Tokyu5050_8Cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "CubeTokyu5050_8Cars_b36c4633.obj"
+   },
+   "parts": [
+    {
+     "name": "front",
+     "model": "AdditiveShader_0_24_8_3_8eca2a89.glb",
+     "texture": "MainTex_185eaa45.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Spawned"
+      ],
+      "required": [
+       "Spawned"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 8,
+      "intensity": 3
+     }
+    },
+    {
+     "name": "side",
+     "model": "AdditiveShader_0_24_8_3_4746bbf7.glb",
+     "texture": "MainTex_2b68e373.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Spawned"
+      ],
+      "required": [
+       "Spawned"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 8,
+      "intensity": 3
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.33
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.33
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7.5
+     ]
+    }
+   ],
+   "lights": [
+    [
+     1.1,
+     3.1,
+     -0.4
+    ],
+    [
+     -1.1,
+     3.1,
+     -0.4
+    ]
+   ]
+  }
+ ],
+ "material": {
+  "brightness": 2.667,
+  "steel": {
+   "skin": 66,
+   "gain": 1.942
+  },
+  "lodBrightness": 2.353
+ },
+ "fixed_by": "2500419290"
+}

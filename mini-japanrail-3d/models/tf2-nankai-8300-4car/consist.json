@@ -1,0 +1,70 @@
+{
+ "source": "2716857967/nan83004set",
+ "name": "nan83004set",
+ "car_length_m": 20.96,
+ "middle_car_length_m": 20.84,
+ "cars": [
+  {
+   "name": "nanmc18300",
+   "model": "nanmc18300.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "nanmc18300_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    10.356,
+    10.387
+   ]
+  },
+  {
+   "name": "nant8300",
+   "model": "nant8300.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "nant8300_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    10.236,
+    10.387
+   ]
+  },
+  {
+   "name": "nant8300",
+   "model": "nant8300.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "nant8300_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    10.236,
+    10.387
+   ]
+  },
+  {
+   "name": "nanmc28300",
+   "model": "nanmc28300.glb",
+   "texture": null,
+   "flip": true,
+   "lod": {
+    "model": "nanmc28300_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    10.356,
+    10.387
+   ]
+  }
+ ],
+ "tint": "none",
+ "material": {
+  "brightness": 0.693,
+  "lodBrightness": 0.604
+ },
+ "fixed_by": "tf2-nankai-8300-4car"
+}

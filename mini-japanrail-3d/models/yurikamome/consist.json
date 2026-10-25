@@ -1,0 +1,527 @@
+{
+ "source": "1763118412",
+ "name": "YURIKAMOME_Data",
+ "car_length_m": 9.35,
+ "cars": [
+  {
+   "name": "YURIKAMOME_Data",
+   "model": "defaultyurikamome.glb",
+   "texture": "MainTex_479118bb.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    4.673,
+    4.673
+   ],
+   "lod": {
+    "model": "defaultyurikamome.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "0_Instanceyurikamome.obj"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.3,
+      1.2,
+      2.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.3,
+      1.2,
+      2.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.3,
+      1.2,
+      -2.35
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.3,
+      1.2,
+      -2.35
+     ]
+    }
+   ],
+   "lights": [
+    [
+     0.65,
+     1.35,
+     -0.3
+    ],
+    [
+     -0.65,
+     1.35,
+     -0.3
+    ]
+   ]
+  },
+  {
+   "name": "Traileryurikamome0",
+   "model": "Cube_Instance_0yurikamome.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    4.602,
+    4.602
+   ],
+   "lod": {
+    "model": "Cube_Instance_0yurikamome.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "0yurikamome.obj"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.3,
+      1.2,
+      2.25
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.3,
+      1.2,
+      -2.35
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.3,
+      1.2,
+      2.25
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.3,
+      1.2,
+      -2.35
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Traileryurikamome1",
+   "model": "Cube_Instance_0yurikamome.glb",
+   "texture": "MainTex_605ea398.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    4.602,
+    4.602
+   ],
+   "lod": {
+    "model": "Cube_Instance_0yurikamome.stand-in-2.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "0yurikamome.obj"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.3,
+      1.2,
+      2.25
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.3,
+      1.2,
+      -2.35
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.3,
+      1.2,
+      2.25
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.3,
+      1.2,
+      -2.35
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Traileryurikamome1",
+   "model": "Cube_Instance_0yurikamome.glb",
+   "texture": "MainTex_605ea398.ktx2",
+   "flip": true,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    4.602,
+    4.602
+   ],
+   "lod": {
+    "model": "Cube_Instance_0yurikamome.stand-in-2.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "0yurikamome.obj"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.3,
+      1.2,
+      2.25
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.3,
+      1.2,
+      -2.35
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.3,
+      1.2,
+      2.25
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.3,
+      1.2,
+      -2.35
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Traileryurikamome0",
+   "model": "Cube_Instance_0yurikamome.glb",
+   "texture": "MainTex.ktx2",
+   "flip": true,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    4.602,
+    4.602
+   ],
+   "lod": {
+    "model": "Cube_Instance_0yurikamome.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "0yurikamome.obj"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.3,
+      1.2,
+      2.25
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.3,
+      1.2,
+      -2.35
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.3,
+      1.2,
+      2.25
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.3,
+      1.2,
+      -2.35
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Traileryurikamome2",
+   "model": "defaultyurikamome.glb",
+   "texture": "MainTex_479118bb.ktx2",
+   "flip": true,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    4.673,
+    4.673
+   ],
+   "lod": {
+    "model": "defaultyurikamome.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "0_Instanceyurikamome.obj"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.3,
+      1.2,
+      2.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.3,
+      1.2,
+      2.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.3,
+      1.2,
+      -2.35
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.3,
+      1.2,
+      -2.35
+     ]
+    }
+   ],
+   "lights": [
+    [
+     0.65,
+     1.35,
+     -0.3
+    ],
+    [
+     -0.65,
+     1.35,
+     -0.3
+    ]
+   ]
+  }
+ ],
+ "material": {
+  "brightness": 2.14
+ },
+ "fixed_by": "1763118412"
+}

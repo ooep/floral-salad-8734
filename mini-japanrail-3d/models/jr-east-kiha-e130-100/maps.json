@@ -1,0 +1,41 @@
+{
+ "MainTex.ktx2": {
+  "roughnessMap": "MainTex.rough.ktx2",
+  "night": {
+   "file": "MainTex.rough.ktx2",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.0019,
+  "nightCoverage": 0.0509,
+  "cutoutShell": 0
+ },
+ "MainTex_e05785a8.ktx2": {
+  "roughnessMap": "MainTex_e05785a8.rough.ktx2",
+  "night": {
+   "file": "MainTex_e05785a8.rough.ktx2",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.0019,
+  "nightCoverage": 0.0509,
+  "cutoutShell": 0
+ },
+ "asset.ktx2": {
+  "roughness": 0.85,
+  "night": {
+   "file": "asset.night.ktx2",
+   "channel": "r"
+  },
+  "nightCoverage": 0.0764
+ },
+ "stand-ins.ktx2": {
+  "roughnessMap": "stand-ins.rough.ktx2",
+  "normal": "stand-ins.normal.ktx2",
+  "normalScale": 1,
+  "night": {
+   "file": "stand-ins.rough.ktx2",
+   "channel": "a"
+  }
+ }
+}

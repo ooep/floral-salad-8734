@@ -1,0 +1,1597 @@
+{
+ "source": "1966196820",
+ "name": "TWR 70-000 series (10 Cars)_Data",
+ "car_length_m": 20.36,
+ "cars": [
+  {
+   "name": "TWR 70-000 series (10 Cars)_Data",
+   "model": "front1.glb",
+   "texture": "MainTex_a3cb1d31.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.18,
+    10.18
+   ],
+   "lod": {
+    "model": "front1.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "front1_337eb518.obj"
+   },
+   "transform": {
+    "position": [
+     0.0062,
+     1.1603,
+     1.1982
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "TWR70-000_add side2",
+     "model": "AdditiveShader_0_0_20_2_c4a738ac.glb",
+     "texture": "MainTex_e8f86ef2.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 2
+     }
+    },
+    {
+     "name": "TWR70-000_add front1",
+     "model": "AdditiveShader_0_0_20_1.5.glb",
+     "texture": "MainTex_b2b781c0.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 1.5
+     }
+    },
+    {
+     "name": "TWR70-000_add head light",
+     "model": "AdditiveShader_0_0_20_4.glb",
+     "texture": "MainTex_f414a79f.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 4
+     }
+    },
+    {
+     "name": "TWR70-000_add tail light",
+     "model": "AdditiveShader_0_0_20_2_73e3435f.glb",
+     "texture": "MainTex_b8e580f3.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 2
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -2.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -2.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.5
+     ]
+    }
+   ],
+   "lights": [
+    [
+     0.76,
+     1.48,
+     -0.35
+    ],
+    [
+     -0.76,
+     1.48,
+     -0.35
+    ]
+   ]
+  },
+  {
+   "name": "TrailerTWR 70-000 series (10 Cars)0",
+   "model": "rearTWR_70-000_series_6_Cars_TWR_70-000_series_10_Cars_TWR_70-000_series_10_Cars.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10,
+    10
+   ],
+   "lod": {
+    "model": "rearTWR_70-000_series_6_Cars_TWR_70-000_series_10_Cars_TWR_70-000_series_10_Cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "rearTWR_70-000_series_6_Cars_TWR_70-000_series_10_Cars_TWR_70-000_series_10_Cars_743d1482.obj"
+   },
+   "transform": {
+    "position": [
+     0.0171,
+     1.639,
+     -1.5593
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "TWR70-000_add side1(Clone)(Clone)",
+     "model": "AdditiveShader_0_0_20_2.glb",
+     "texture": "asset.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 2
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.5
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerTWR 70-000 series (10 Cars)1",
+   "model": "rearTWR_70-000_series_6_Cars_TWR_70-000_series_6_Cars_TWR_70-000_series_10_Cars_TWR_70-000_series_10_Cars.glb",
+   "texture": "MainTex_ecd44588.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10,
+    10
+   ],
+   "lod": {
+    "model": "rearTWR_70-000_series_6_Cars_TWR_70-000_series_6_Cars_TWR_70-000_series_10_Cars_TWR_70-000_series_10_Cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "rearTWR_70-000_series_6_Cars_TWR_70-000_series_6_Cars_TWR_70-000_series_10_Cars_TWR_70-000_series_10_Cars_bcaca9c9.obj"
+   },
+   "transform": {
+    "position": [
+     0,
+     0.8143,
+     0.1222
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "TWR70-000_add side1(Clone)",
+     "model": "AdditiveShader_0_0_20_2.glb",
+     "texture": "asset.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 2
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.5
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerTWR 70-000 series (10 Cars)2",
+   "model": "rearTWR_70-000_series_10_Cars_TWR_70-000_series_10_Cars.glb",
+   "texture": "MainTex_bc6de4ec.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10,
+    10
+   ],
+   "lod": {
+    "model": "rearTWR_70-000_series_10_Cars_TWR_70-000_series_10_Cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "rearTWR_70-000_series_10_Cars_TWR_70-000_series_10_Cars_0367edcf.obj"
+   },
+   "transform": {
+    "position": [
+     0.0004,
+     0.8131,
+     0.1082
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "TWR70-000_add side1(Clone)(Clone)",
+     "model": "AdditiveShader_0_0_20_2.glb",
+     "texture": "asset.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 2
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.5
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerTWR 70-000 series (10 Cars)0",
+   "model": "rearTWR_70-000_series_6_Cars_TWR_70-000_series_10_Cars_TWR_70-000_series_10_Cars.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10,
+    10
+   ],
+   "lod": {
+    "model": "rearTWR_70-000_series_6_Cars_TWR_70-000_series_10_Cars_TWR_70-000_series_10_Cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "rearTWR_70-000_series_6_Cars_TWR_70-000_series_10_Cars_TWR_70-000_series_10_Cars_743d1482.obj"
+   },
+   "transform": {
+    "position": [
+     0.0171,
+     1.639,
+     -1.5593
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "TWR70-000_add side1(Clone)(Clone)",
+     "model": "AdditiveShader_0_0_20_2.glb",
+     "texture": "asset.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 2
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.5
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerTWR 70-000 series (10 Cars)1",
+   "model": "rearTWR_70-000_series_6_Cars_TWR_70-000_series_6_Cars_TWR_70-000_series_10_Cars_TWR_70-000_series_10_Cars.glb",
+   "texture": "MainTex_ecd44588.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10,
+    10
+   ],
+   "lod": {
+    "model": "rearTWR_70-000_series_6_Cars_TWR_70-000_series_6_Cars_TWR_70-000_series_10_Cars_TWR_70-000_series_10_Cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "rearTWR_70-000_series_6_Cars_TWR_70-000_series_6_Cars_TWR_70-000_series_10_Cars_TWR_70-000_series_10_Cars_bcaca9c9.obj"
+   },
+   "transform": {
+    "position": [
+     0,
+     0.8143,
+     0.1222
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "TWR70-000_add side1(Clone)",
+     "model": "AdditiveShader_0_0_20_2.glb",
+     "texture": "asset.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 2
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.5
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerTWR 70-000 series (10 Cars)2",
+   "model": "rearTWR_70-000_series_10_Cars_TWR_70-000_series_10_Cars.glb",
+   "texture": "MainTex_bc6de4ec.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10,
+    10
+   ],
+   "lod": {
+    "model": "rearTWR_70-000_series_10_Cars_TWR_70-000_series_10_Cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "rearTWR_70-000_series_10_Cars_TWR_70-000_series_10_Cars_0367edcf.obj"
+   },
+   "transform": {
+    "position": [
+     0.0004,
+     0.8131,
+     0.1082
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "TWR70-000_add side1(Clone)(Clone)",
+     "model": "AdditiveShader_0_0_20_2.glb",
+     "texture": "asset.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 2
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.5
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerTWR 70-000 series (10 Cars)0",
+   "model": "rearTWR_70-000_series_6_Cars_TWR_70-000_series_10_Cars_TWR_70-000_series_10_Cars.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10,
+    10
+   ],
+   "lod": {
+    "model": "rearTWR_70-000_series_6_Cars_TWR_70-000_series_10_Cars_TWR_70-000_series_10_Cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "rearTWR_70-000_series_6_Cars_TWR_70-000_series_10_Cars_TWR_70-000_series_10_Cars_743d1482.obj"
+   },
+   "transform": {
+    "position": [
+     0.0171,
+     1.639,
+     -1.5593
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "TWR70-000_add side1(Clone)(Clone)",
+     "model": "AdditiveShader_0_0_20_2.glb",
+     "texture": "asset.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 2
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.5
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerTWR 70-000 series (10 Cars)1",
+   "model": "rearTWR_70-000_series_6_Cars_TWR_70-000_series_6_Cars_TWR_70-000_series_10_Cars_TWR_70-000_series_10_Cars.glb",
+   "texture": "MainTex_ecd44588.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10,
+    10
+   ],
+   "lod": {
+    "model": "rearTWR_70-000_series_6_Cars_TWR_70-000_series_6_Cars_TWR_70-000_series_10_Cars_TWR_70-000_series_10_Cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "rearTWR_70-000_series_6_Cars_TWR_70-000_series_6_Cars_TWR_70-000_series_10_Cars_TWR_70-000_series_10_Cars_bcaca9c9.obj"
+   },
+   "transform": {
+    "position": [
+     0,
+     0.8143,
+     0.1222
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "TWR70-000_add side1(Clone)",
+     "model": "AdditiveShader_0_0_20_2.glb",
+     "texture": "asset.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 2
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.5
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerTWR 70-000 series (10 Cars)3",
+   "model": "front1TWR_70-000_series_6_Cars_TWR_70-000_series_6_Cars_TWR_70-000_series_10_Cars_TWR_70-000_series_10_Cars.glb",
+   "texture": "MainTex_bed27c09.ktx2",
+   "flip": true,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.18,
+    10.18
+   ],
+   "lod": {
+    "model": "front1TWR_70-000_series_6_Cars_TWR_70-000_series_6_Cars_TWR_70-000_series_10_Cars_TWR_70-000_series_10_Cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "front1TWR_70-000_series_6_Cars_TWR_70-000_series_6_Cars_TWR_70-000_series_10_Cars_TWR_70-000_series_10_Cars_322f1bf1.obj"
+   },
+   "transform": {
+    "position": [
+     0.0062,
+     1.1603,
+     1.1982
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "TWR70-000_add side2(Clone)",
+     "model": "AdditiveShader_0_0_20_2_c4a738ac.glb",
+     "texture": "asset_fbd0337e.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 2
+     }
+    },
+    {
+     "name": "TWR70-000_add front1(Clone)",
+     "model": "AdditiveShader_0_0_20_1.5.glb",
+     "texture": "asset_f432cd11.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 1.5
+     }
+    },
+    {
+     "name": "TWR70-000_add head light(Clone)",
+     "model": "AdditiveShader_0_0_20_4.glb",
+     "texture": "asset_502f9458.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 4
+     }
+    },
+    {
+     "name": "TWR70-000_add tail light(Clone)",
+     "model": "AdditiveShader_0_0_20_2_73e3435f.glb",
+     "texture": "asset_12842923.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 2
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -2.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -2.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.5
+     ]
+    }
+   ],
+   "lights": [
+    [
+     -0.76,
+     1.48,
+     -0.35
+    ],
+    [
+     0.76,
+     1.48,
+     -0.35
+    ]
+   ]
+  }
+ ],
+ "material": {
+  "brightness": 1.745
+ },
+ "fixed_by": "1966196820"
+}

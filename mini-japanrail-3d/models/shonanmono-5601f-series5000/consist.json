@@ -1,0 +1,364 @@
+{
+ "source": "3568531954",
+ "name": "ShonanMono-5601F Series5000_Data",
+ "car_length_m": 13.57,
+ "cars": [
+  {
+   "name": "ShonanMono-5601F Series5000_Data",
+   "model": "5603-1ofuna.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Buildings/Building/Default",
+   "couple": [
+    6.836,
+    6.836
+   ],
+   "lod": {
+    "model": "engine_lod.glb",
+    "texture": "SM5000-1_lod_Diffuse.ktx2"
+   },
+   "parts": [
+    {
+     "name": "SM5000-1-head(Clone)",
+     "model": "5000head_Instance.glb",
+     "texture": "asset.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "SM5000-1-tail(Clone)",
+     "model": "5000tail_Instance.glb",
+     "texture": "asset.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Monorail Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.2,
+      0,
+      3.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.2,
+      0,
+      3.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.2,
+      0,
+      -4.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.2,
+      0,
+      -4.6
+     ]
+    }
+   ],
+   "lights": [
+    [
+     0.745,
+     0.14,
+     6.15
+    ],
+    [
+     -0.745,
+     0.14,
+     6.15
+    ]
+   ]
+  },
+  {
+   "name": "TrailerShonanMono-5601F Series50000",
+   "model": "5603-2_ShonanMono-5601F_Series5000.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Buildings/Building/Default",
+   "couple": [
+    6.433,
+    6.433
+   ],
+   "lod": {
+    "model": "passenger_lod_ShonanMono-5601F_Series5000.glb",
+    "texture": "SM5000-2_lod_Diffuse.ktx2"
+   },
+   "effects": [
+    {
+     "name": "Monorail Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.2,
+      0,
+      4.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.2,
+      0,
+      4.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.2,
+      0,
+      -4.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.2,
+      0,
+      -4.6
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerShonanMono-5601F Series50001",
+   "model": "5603-3_ShonanMono-5601F_Series5000.glb",
+   "texture": "MainTex.ktx2",
+   "flip": true,
+   "shader": "Custom/Buildings/Building/Default",
+   "couple": [
+    6.836,
+    6.836
+   ],
+   "lod": {
+    "model": "engine_lod_ShonanMono-5601F_Series5000.glb",
+    "texture": "SM5000-3_lod_Diffuse.ktx2"
+   },
+   "parts": [
+    {
+     "name": "SM5000-3-head(Clone)(Clone)",
+     "model": "5000head_Instance_Instance.glb",
+     "texture": "asset.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "SM5000-3-tail(Clone)(Clone)",
+     "model": "5000tail_Instance_Instance.glb",
+     "texture": "asset.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Monorail Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.2,
+      0,
+      3.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.2,
+      0,
+      3.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.2,
+      0,
+      -4.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.2,
+      0,
+      -4.6
+     ]
+    }
+   ],
+   "lights": [
+    [
+     0.745,
+     0.14,
+     6.15
+    ],
+    [
+     -0.745,
+     0.14,
+     6.15
+    ]
+   ]
+  }
+ ],
+ "material": {
+  "brightness": 2.667,
+  "steel": {
+   "skin": 92,
+   "gain": 1.331
+  },
+  "lodSteel": {
+   "skin": 92,
+   "gain": 1.331
+  }
+ },
+ "fixed_by": "3568531954"
+}

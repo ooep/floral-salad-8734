@@ -1,0 +1,1432 @@
+{
+ "source": "2881463717",
+ "name": "JR East E231-0 (Joban) 10 Car_Data",
+ "car_length_m": 20.43,
+ "cars": [
+  {
+   "name": "JR East E231-0 (Joban) 10 Car_Data",
+   "model": "E231-0_Joban_Car_1.glb",
+   "texture": "MainTex_db3b2096.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.48,
+    9.58
+   ],
+   "lod": {
+    "model": "E231-0_Joban_Car_1.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "E231JobanDrivingLOD1.obj"
+   },
+   "transform": {
+    "position": [
+     5,
+     0,
+     0
+    ],
+    "rotation": [
+     0,
+     -1,
+     0,
+     0
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "E2310JFrontLightCar101ADD",
+     "model": "AdditiveShader_22_22_100_5.glb",
+     "texture": "MainTex_30210c20.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 5
+     }
+    },
+    {
+     "name": "E2310JRearLightCar101ADD",
+     "model": "AdditiveShader_22_22_100_2.5_04c99131.glb",
+     "texture": "MainTex_30210c20.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 2.5
+     }
+    },
+    {
+     "name": "E2310Toride10ADDCar1",
+     "model": "AdditiveShader_22_22_100_2.5_86abba23.glb",
+     "texture": "MainTex_24443188.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 2.5
+     }
+    },
+    {
+     "name": "E2310Ueno10ADDCar101",
+     "model": "AdditiveShader_22_22_100_2.5_86abba23.glb",
+     "texture": "MainTex_c09eaadb.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 2.5
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      6.54
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      6.54
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.64
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.64
+     ]
+    }
+   ],
+   "lights": [
+    [
+     0.75,
+     1.35,
+     -0.5
+    ],
+    [
+     -0.75,
+     1.35,
+     -0.5
+    ]
+   ]
+  },
+  {
+   "name": "TrailerJREastE231Joban100",
+   "model": "E231-0_Joban_Car_2JREastE231Joban10.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.48,
+    9.58
+   ],
+   "lod": {
+    "model": "E231-0_Joban_Car_2JREastE231Joban10.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "E231JobanTrailerLODJREastE231Joban10.obj"
+   },
+   "transform": {
+    "position": [
+     20,
+     0,
+     25
+    ],
+    "rotation": [
+     0,
+     -1,
+     0,
+     0
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "E2310Toride10ADDSIDECar2",
+     "model": "AdditiveShader_22_22_100_2.5.glb",
+     "texture": "MainTex_24443188.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 2.5
+     }
+    },
+    {
+     "name": "E2310Ueno10ADDSIDECar2",
+     "model": "AdditiveShader_22_22_100_2.5.glb",
+     "texture": "MainTex_c09eaadb.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 2.5
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.64
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.64
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJREastE231Joban101",
+   "model": "E231-0_Joban_Car_3JREastE231Joban10.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.48,
+    9.58
+   ],
+   "lod": {
+    "model": "E231-0_Joban_Car_3JREastE231Joban10.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "E231JobanTrailerLODJREastE231Joban10.obj"
+   },
+   "transform": {
+    "position": [
+     5,
+     0,
+     25
+    ],
+    "rotation": [
+     0,
+     -1,
+     0,
+     0
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "E2310Toride10ADDSIDECar3",
+     "model": "AdditiveShader_22_22_100_2.5.glb",
+     "texture": "MainTex_24443188.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 2.5
+     }
+    },
+    {
+     "name": "E2310Ueno10ADDSIDECar3",
+     "model": "AdditiveShader_22_22_100_2.5.glb",
+     "texture": "MainTex_c09eaadb.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 2.5
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.64
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.64
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJREastE231Joban102",
+   "model": "E231-0_Joban_Car_4JREastE231Joban10.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.48,
+    9.58
+   ],
+   "lod": {
+    "model": "E231-0_Joban_Car_2JREastE231Joban10.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "E231JobanTrailerLODJREastE231Joban10.obj"
+   },
+   "transform": {
+    "position": [
+     0,
+     0,
+     25
+    ],
+    "rotation": [
+     0,
+     -1,
+     0,
+     0
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "E2310Toride10ADDSIDECar4",
+     "model": "AdditiveShader_22_22_100_2.5.glb",
+     "texture": "MainTex_24443188.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 2.5
+     }
+    },
+    {
+     "name": "E2310Ueno10ADDSIDECar4",
+     "model": "AdditiveShader_22_22_100_2.5.glb",
+     "texture": "MainTex_c09eaadb.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 2.5
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.64
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.64
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJREastE231Joban103",
+   "model": "E231-0_Joban_Car_5JREastE231Joban10.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.48,
+    9.58
+   ],
+   "lod": {
+    "model": "E231-0_Joban_Car_2JREastE231Joban10.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "E231JobanTrailerLODJREastE231Joban10.obj"
+   },
+   "transform": {
+    "position": [
+     -5,
+     0,
+     25
+    ],
+    "rotation": [
+     0,
+     -1,
+     0,
+     0
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "E2310Toride10ADDSIDECar5",
+     "model": "AdditiveShader_22_22_100_2.5.glb",
+     "texture": "MainTex_24443188.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 2.5
+     }
+    },
+    {
+     "name": "E2310Ueno10ADDSIDECar5",
+     "model": "AdditiveShader_22_22_100_2.5.glb",
+     "texture": "MainTex_c09eaadb.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 2.5
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.64
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.64
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJREastE231Joban104",
+   "model": "E231-0_Joban_Car_6JREastE231Joban10.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.48,
+    9.58
+   ],
+   "lod": {
+    "model": "E231-0_Joban_Car_2JREastE231Joban10.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "E231JobanTrailerLODJREastE231Joban10.obj"
+   },
+   "transform": {
+    "position": [
+     -15,
+     0,
+     25
+    ],
+    "rotation": [
+     0,
+     -1,
+     0,
+     0
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "E2310Toride10ADDSIDECar6",
+     "model": "AdditiveShader_22_22_100_2.5.glb",
+     "texture": "MainTex_24443188.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 2.5
+     }
+    },
+    {
+     "name": "E2310Ueno10ADDSIDECar6",
+     "model": "AdditiveShader_22_22_100_2.5.glb",
+     "texture": "MainTex_c09eaadb.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 2.5
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.64
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.64
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJREastE231Joban105",
+   "model": "E231-0_Joban_Car_7JREastE231Joban10.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.48,
+    9.58
+   ],
+   "lod": {
+    "model": "E231-0_Joban_Car_2JREastE231Joban10.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "E231JobanTrailerLODJREastE231Joban10.obj"
+   },
+   "transform": {
+    "position": [
+     15,
+     0,
+     25
+    ],
+    "rotation": [
+     0,
+     -1,
+     0,
+     0
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "E2310Toride10ADDSIDECar7",
+     "model": "AdditiveShader_22_22_100_2.5.glb",
+     "texture": "MainTex_24443188.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 2.5
+     }
+    },
+    {
+     "name": "E2310Ueno10ADDSIDECar7",
+     "model": "AdditiveShader_22_22_100_2.5.glb",
+     "texture": "MainTex_c09eaadb.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 2.5
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.64
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.64
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJREastE231Joban106",
+   "model": "E231-0_Joban_Car_8JREastE231Joban10.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.48,
+    9.58
+   ],
+   "lod": {
+    "model": "E231-0_Joban_Car_3JREastE231Joban10.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "E231JobanTrailerLODJREastE231Joban10.obj"
+   },
+   "transform": {
+    "position": [
+     10,
+     0,
+     25
+    ],
+    "rotation": [
+     0,
+     -1,
+     0,
+     0
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "E2310Toride10ADDSIDECar8",
+     "model": "AdditiveShader_22_22_100_2.5.glb",
+     "texture": "MainTex_24443188.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 2.5
+     }
+    },
+    {
+     "name": "E2310Ueno10ADDSIDECar8",
+     "model": "AdditiveShader_22_22_100_2.5.glb",
+     "texture": "MainTex_c09eaadb.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 2.5
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.64
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.64
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJREastE231Joban107",
+   "model": "E231-0_Joban_Car_9JREastE231Joban10.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.48,
+    10.11
+   ],
+   "lod": {
+    "model": "E231-0_Joban_Car_2JREastE231Joban10.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "E231JobanTrailerLODJREastE231Joban10.obj"
+   },
+   "transform": {
+    "position": [
+     -10,
+     0,
+     25
+    ],
+    "rotation": [
+     0,
+     -1,
+     0,
+     0
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "E2310Toride10ADDSIDECar9",
+     "model": "AdditiveShader_22_22_100_2.5.glb",
+     "texture": "MainTex_24443188.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 2.5
+     }
+    },
+    {
+     "name": "E2310Ueno10ADDSIDECar9",
+     "model": "AdditiveShader_22_22_100_2.5.glb",
+     "texture": "MainTex_c09eaadb.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 2.5
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.64
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.64
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJREastE231Joban108",
+   "model": "E231-0_Joban_Car_10JREastE231Joban10.glb",
+   "texture": "MainTex_db3b2096.ktx2",
+   "flip": true,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.48,
+    10.48
+   ],
+   "lod": {
+    "model": "E231-0_Joban_Car_10JREastE231Joban10.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "E231JobanDrivingLOD2JREastE231Joban10.obj"
+   },
+   "transform": {
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": [
+     0,
+     -1,
+     0,
+     0
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "E2310JFrontLightCar10ADD",
+     "model": "AdditiveShader_22_22_100_5.glb",
+     "texture": "MainTex_30210c20.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 5
+     }
+    },
+    {
+     "name": "E2310JRearLightCar10ADD",
+     "model": "AdditiveShader_22_22_100_2.5_04c99131.glb",
+     "texture": "MainTex_30210c20.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 2.5
+     }
+    },
+    {
+     "name": "E2310Toride10ADDCar1",
+     "model": "AdditiveShader_22_22_100_2.5_86abba23.glb",
+     "texture": "MainTex_24443188.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 2.5
+     }
+    },
+    {
+     "name": "E2310Ueno10ADDCar10",
+     "model": "AdditiveShader_22_22_100_2.5_86abba23.glb",
+     "texture": "MainTex_c09eaadb.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 2.5
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      6.54
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.64
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      6.54
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.64
+     ]
+    }
+   ],
+   "lights": [
+    [
+     0.75,
+     1.35,
+     -0.5
+    ],
+    [
+     -0.75,
+     1.35,
+     -0.5
+    ]
+   ]
+  }
+ ],
+ "material": {
+  "brightness": 1.629,
+  "alphaCutout": 0.5
+ },
+ "fixed_by": "2881463717"
+}

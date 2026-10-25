@@ -1,0 +1,383 @@
+{
+ "source": "929917291",
+ "name": "Tokyo Monorail 10000 Series_Data",
+ "car_length_m": 13.1,
+ "cars": [
+  {
+   "name": "Tokyo Monorail 10000 Series_Data",
+   "model": "Layer0_001.glb",
+   "texture": "MainTex_5c9d6827.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Ship",
+   "couple": [
+    7.166,
+    7.166
+   ],
+   "lod": {
+    "model": "Layer0_001.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "asset.obj"
+   },
+   "transform": {
+    "position": [
+     4.0529,
+     0.6397,
+     -0.9952
+    ],
+    "rotation": [
+     -0.7071,
+     0,
+     0,
+     0.7071
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Monorail Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.2,
+      0.5,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.2,
+      0.5,
+      0
+     ]
+    }
+   ],
+   "lights": [
+    [
+     0.9,
+     0.4,
+     -0.15
+    ],
+    [
+     -0.9,
+     0.4,
+     -0.15
+    ]
+   ]
+  },
+  {
+   "name": "TrailerTokyoMonorail10000Series0",
+   "model": "Layer0_001TokyoMonorail10000Series.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Ship",
+   "couple": [
+    4.933,
+    7.373
+   ],
+   "lod": {
+    "model": "Layer0_001TokyoMonorail10000Series.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "TokyoMonorail10000Series.obj"
+   },
+   "transform": {
+    "position": [
+     10.1076,
+     0.6167,
+     -0.9952
+    ],
+    "rotation": [
+     -0.7071,
+     0,
+     0,
+     0.7071
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Monorail Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.2,
+      0.5,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.2,
+      0.5,
+      0
+     ]
+    }
+   ],
+   "lights": [
+    [
+     0.9,
+     1.25,
+     -0.4
+    ],
+    [
+     -0.9,
+     1.25,
+     -0.4
+    ]
+   ]
+  },
+  {
+   "name": "TrailerTokyoMonorail10000Series0",
+   "model": "Layer0_001TokyoMonorail10000Series.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Ship",
+   "couple": [
+    4.933,
+    7.373
+   ],
+   "lod": {
+    "model": "Layer0_001TokyoMonorail10000Series.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "TokyoMonorail10000Series.obj"
+   },
+   "transform": {
+    "position": [
+     10.1076,
+     0.6167,
+     -0.9952
+    ],
+    "rotation": [
+     -0.7071,
+     0,
+     0,
+     0.7071
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Monorail Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.2,
+      0.5,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.2,
+      0.5,
+      0
+     ]
+    }
+   ],
+   "lights": [
+    [
+     0.9,
+     1.25,
+     -0.4
+    ],
+    [
+     -0.9,
+     1.25,
+     -0.4
+    ]
+   ]
+  },
+  {
+   "name": "TrailerTokyoMonorail10000Series1",
+   "model": "Layer0_001TokyoMonorail10000Series_661aca01.glb",
+   "texture": "MainTex_5c9d6827.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Ship",
+   "couple": [
+    4.706,
+    6.586
+   ],
+   "lod": {
+    "model": "Layer0_001TokyoMonorail10000Series_661aca01.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "TokyoMonorail10000Series_fb4aaa17.obj"
+   },
+   "transform": {
+    "position": [
+     4.0529,
+     0.6397,
+     -0.9952
+    ],
+    "rotation": [
+     -0.7071,
+     0,
+     0,
+     0.7071
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Monorail Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.2,
+      0.5,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.2,
+      0.5,
+      0
+     ]
+    }
+   ],
+   "lights": [
+    [
+     0.9,
+     1.25,
+     -0.4
+    ],
+    [
+     -0.9,
+     1.25,
+     -0.4
+    ]
+   ]
+  }
+ ],
+ "tint": "none",
+ "material": {
+  "brightness": 0.454,
+  "lodBrightness": 0.485
+ },
+ "fixed_by": "929917291"
+}

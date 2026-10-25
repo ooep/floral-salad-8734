@@ -1,0 +1,92 @@
+{
+ "source": "2972690434/asia/kb6000_6car",
+ "name": "asia/kb6000_6car",
+ "car_length_m": 18.97,
+ "middle_car_length_m": 18.97,
+ "cars": [
+  {
+   "name": "ciina_kb6000type1",
+   "model": "ciina_kb6000type1.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "ciina_kb6000type1_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    9.341,
+    9.588
+   ]
+  },
+  {
+   "name": "ciina_kb6000type2",
+   "model": "ciina_kb6000type2.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "ciina_kb6000type2_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    9.386,
+    9.588
+   ]
+  },
+  {
+   "name": "ciina_kb6000type3",
+   "model": "ciina_kb6000type3.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "ciina_kb6000type3_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    9.386,
+    9.588
+   ]
+  },
+  {
+   "name": "ciina_kb6000type3",
+   "model": "ciina_kb6000type3.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "ciina_kb6000type3_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    9.386,
+    9.588
+   ]
+  },
+  {
+   "name": "ciina_kb6000type2",
+   "model": "ciina_kb6000type2.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "ciina_kb6000type2_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    9.386,
+    9.588
+   ]
+  },
+  {
+   "name": "ciina_kb6000type4",
+   "model": "ciina_kb6000type4.glb",
+   "texture": null,
+   "flip": true,
+   "lod": {
+    "model": "ciina_kb6000type4_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    9.341,
+    9.588
+   ]
+  }
+ ]
+}

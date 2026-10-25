@@ -1,0 +1,876 @@
+{
+ "source": "3047599508",
+ "name": "JR East E531 Series (5 Car)_Data",
+ "car_length_m": 20.71,
+ "cars": [
+  {
+   "name": "JR East E531 Series (5 Car)_Data",
+   "model": "E531_5_Car_11.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.759,
+    9.299
+   ],
+   "lod": {
+    "model": "E531_5_Car_11.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "E231500YamaDrivingLOD.obj"
+   },
+   "transform": {
+    "position": [
+     25,
+     0,
+     -25
+    ],
+    "rotation": [
+     0,
+     -1,
+     0,
+     0
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "E531ADDFrontLight",
+     "model": "AdditiveShader_22_22_100_5.glb",
+     "texture": "MainTex_3e49067b.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 5
+     }
+    },
+    {
+     "name": "E531ADDRearLight",
+     "model": "AdditiveShader_22_22_100_2.5_1a32c85c.glb",
+     "texture": "MainTex_3e49067b.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 2.5
+     }
+    },
+    {
+     "name": "E531ADD5FrontDestoMito",
+     "model": "AdditiveShader_22_22_100_2.5_ca4c758c.glb",
+     "texture": "MainTex_3aacc2a0.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 2.5
+     }
+    },
+    {
+     "name": "E531ADD5FrontDestoTakahagi",
+     "model": "AdditiveShader_22_22_100_2.5_ca4c758c.glb",
+     "texture": "MainTex_b30c4da9.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 2.5
+     }
+    },
+    {
+     "name": "E531ADDFrontGlass",
+     "model": "AdditiveShader_22_22_10_0.5_885b0af8.glb",
+     "texture": "MainTex_3e49067b.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 10,
+      "intensity": 0.5
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      5.84
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      5.84
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.74
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.24
+     ]
+    }
+   ],
+   "lights": [
+    [
+     0.945,
+     3.27,
+     -0.345
+    ],
+    [
+     -0.945,
+     3.27,
+     -0.345
+    ]
+   ]
+  },
+  {
+   "name": "TrailerJREastE531Series5Car0",
+   "model": "E531_5_Car_12_JREastE531Series5Car.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.759,
+    9.299
+   ],
+   "lod": {
+    "model": "E531_5_Car_12_JREastE531Series5Car.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "E231500YamaMotorLOD_JREastE531Series5Car.obj"
+   },
+   "transform": {
+    "position": [
+     25,
+     0,
+     -50
+    ],
+    "rotation": [
+     0,
+     -1,
+     0,
+     0
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "E531ADD5SideDestoMito",
+     "model": "AdditiveShader_22_22_100_2.5.glb",
+     "texture": "MainTex_3aacc2a0.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 2.5
+     }
+    },
+    {
+     "name": "E531ADD5SideDestoTakahagi",
+     "model": "AdditiveShader_22_22_100_2.5.glb",
+     "texture": "MainTex_b30c4da9.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 2.5
+     }
+    },
+    {
+     "name": "E531ADDSideGlass",
+     "model": "AdditiveShader_22_22_10_0.5.glb",
+     "texture": "MainTex_3e49067b.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 10,
+      "intensity": 0.5
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      7.24
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.74
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      7.24
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.74
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJREastE531Series5Car1",
+   "model": "E531_5_Car_13_JREastE531Series5Car.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.759,
+    9.299
+   ],
+   "lod": {
+    "model": "E531_5_Car_13_JREastE531Series5Car.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "E231500YamaPantoLOD.001_JREastE531Series5Car.obj"
+   },
+   "transform": {
+    "position": [
+     30,
+     0,
+     -50
+    ],
+    "rotation": [
+     0,
+     -1,
+     0,
+     0
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "E531ADD5SideDestoMito",
+     "model": "AdditiveShader_22_22_100_2.5.glb",
+     "texture": "MainTex_3aacc2a0.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 2.5
+     }
+    },
+    {
+     "name": "E531ADD5SideDestoTakahagi",
+     "model": "AdditiveShader_22_22_100_2.5.glb",
+     "texture": "MainTex_b30c4da9.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 2.5
+     }
+    },
+    {
+     "name": "E531ADDSideGlass",
+     "model": "AdditiveShader_22_22_10_0.5.glb",
+     "texture": "MainTex_3e49067b.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 10,
+      "intensity": 0.5
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      7.24
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.74
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      7.24
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.74
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJREastE531Series5Car2",
+   "model": "E531_5_Car_14_JREastE531Series5Car.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.759,
+    10.109
+   ],
+   "lod": {
+    "model": "E531_5_Car_14_JREastE531Series5Car.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "E231500YamaMotorLOD_JREastE531Series5Car.obj"
+   },
+   "transform": {
+    "position": [
+     20,
+     0,
+     -50
+    ],
+    "rotation": [
+     0,
+     -1,
+     0,
+     0
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "E531ADD5SideDestoMito",
+     "model": "AdditiveShader_22_22_100_2.5.glb",
+     "texture": "MainTex_3aacc2a0.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 2.5
+     }
+    },
+    {
+     "name": "E531ADD5SideDestoTakahagi",
+     "model": "AdditiveShader_22_22_100_2.5.glb",
+     "texture": "MainTex_b30c4da9.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 2.5
+     }
+    },
+    {
+     "name": "E531ADDSideGlass",
+     "model": "AdditiveShader_22_22_10_0.5.glb",
+     "texture": "MainTex_3e49067b.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 10,
+      "intensity": 0.5
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      7.24
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.74
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      7.24
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.74
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJREastE531Series5Car3",
+   "model": "E531_5_Car_15_JREastE531Series5Car.glb",
+   "texture": "MainTex.ktx2",
+   "flip": true,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.48,
+    10.48
+   ],
+   "lod": {
+    "model": "E531_5_Car_15_JREastE531Series5Car.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "E231500YamaDrivingLOD_JREastE531Series5Car.obj"
+   },
+   "transform": {
+    "position": [
+     20,
+     0,
+     -25
+    ],
+    "rotation": [
+     0,
+     -1,
+     0,
+     0
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "E531ADDFrontLight",
+     "model": "AdditiveShader_22_22_100_5.glb",
+     "texture": "MainTex_3e49067b.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 5
+     }
+    },
+    {
+     "name": "E531ADDRearLight",
+     "model": "AdditiveShader_22_22_100_2.5_1a32c85c.glb",
+     "texture": "MainTex_3e49067b.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 2.5
+     }
+    },
+    {
+     "name": "E531ADD5FrontDestoMito",
+     "model": "AdditiveShader_22_22_100_2.5_ca4c758c.glb",
+     "texture": "MainTex_3aacc2a0.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 2.5
+     }
+    },
+    {
+     "name": "E531ADD5FrontDestoTakahagi",
+     "model": "AdditiveShader_22_22_100_2.5_ca4c758c.glb",
+     "texture": "MainTex_b30c4da9.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 100,
+      "intensity": 2.5
+     }
+    },
+    {
+     "name": "E531ADDFrontGlass",
+     "model": "AdditiveShader_22_22_10_0.5_885b0af8.glb",
+     "texture": "MainTex_3e49067b.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "glow": {
+      "on": 22,
+      "off": 22,
+      "fade": 10,
+      "intensity": 0.5
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      5.84
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.74
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      5.84
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.74
+     ]
+    }
+   ],
+   "lights": [
+    [
+     0.945,
+     3.27,
+     -0.345
+    ],
+    [
+     -0.945,
+     3.27,
+     -0.345
+    ]
+   ]
+  }
+ ],
+ "material": {
+  "brightness": 1.649
+ },
+ "fixed_by": "jr-east-e531-series-3047599508-jreaste531series5car-crp-2e5cdec0"
+}

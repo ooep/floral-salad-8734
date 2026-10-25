@@ -3846,6 +3846,8 @@ function delayStart() {
     if (!document.hidden && delayOn && Date.now() - delayLastFetch > DELAY_FETCH_MS) delayFetchOnce();
   });
   delayFetchOnce();
+  /* 冷加载首拉易被 10s 超时掐断(页面并发拉资源):30s 后仍无数据补试一次 */
+  setTimeout(() => { if (delayOn && !delayGenMs) delayFetchOnce(); }, 30000);
 }
 function delayOnDayRebuild() {  /* 数据加载/换日重建:按当日 dayList 重建索引并重匹配 */
   delayTmapIdx = new Map();

@@ -175,6 +175,14 @@ def main():
         f.write('  Cache-Control: public, max-age=300\n')
         f.write('/data/*.js\n')
         f.write('  Cache-Control: public, max-age=300\n')
+        # 3D 模型(2026-10-25 十七轮):/models/<车型>/ 下 consist.json+glb+ktx2+bin,
+        # 打开查看器一次拉几十个文件,此前平台默认逐个条件请求(RTT 累积);
+        # 5 分钟内重复打开零网络。/basis/ 为 KTX2 转码器(会话内一次)同策略。
+        # 资产按目录整体刷新(model_map v 递增),5 分钟陈旧窗口与数据一致可接受
+        f.write('/models/*\n')
+        f.write('  Cache-Control: public, max-age=300\n')
+        f.write('/basis/*\n')
+        f.write('  Cache-Control: public, max-age=300\n')
         f.write('/data/badges/atlas/sha256/*\n')
         f.write('  Cache-Control: public, max-age=31536000, immutable\n')
     total += 1

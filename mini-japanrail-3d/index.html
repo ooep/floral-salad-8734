@@ -3708,9 +3708,21 @@ function updateTrains(M, dtms) {
   const gatesKey = (tierOn[0] ? 1 : 0) | (tierOn[1] ? 2 : 0) | (tierOn[2] ? 4 : 0) | (tierOn[3] ? 8 : 0);
   const minuteKey = Math.floor(M);
   const nowMs = performance.now();
+  /* 十九轮.b:容忍式视口键 —— 放大(视口缩小)时冻结集合是后续帧的超集,不必重扫:
+     当前视口仍被扫描时矩形包含且面积未缩至 1/16(≈2 级)→ 视为未变化。
+     放大出界/平移出界/面积增长(缩小视口)→ 重扫(有界:每次重扫后重新冻结)。
+     实测:正午放大 z5→8 的逐帧扫描 6-10ms → 手势期间免除,写矩形兜底屏外剔除 */
+  let vpChanged = !!vp !== scanHasVp;
+  if (!vpChanged && vp && scanHasVp) {
+    if (!(vp.mx0 >= scanVp0 && vp.mx1 <= scanVp1 && vp.my0 >= scanVp2 && vp.my1 <= scanVp3)) vpChanged = true;
+    else {
+      const areaNow = (vp.mx1 - vp.mx0) * (vp.my1 - vp.my0);
+      const areaScan = Math.max(1e-12, (scanVp1 - scanVp0) * (scanVp3 - scanVp2));
+      if (areaNow < areaScan * 0.0625) vpChanged = true; /* 深度放大(面积 1/16)刷新一次 */
+    }
+  }
   const inputChanged = minuteKey !== scanMinute || gatesKey !== scanGates ||
-    (pureLine || null) !== scanPure || dayListSrc !== tripList || dayListBit !== dayBit ||
-    !!vp !== scanHasVp || (vp && (vp.mx0 !== scanVp0 || vp.mx1 !== scanVp1 || vp.my0 !== scanVp2 || vp.my1 !== scanVp3));
+    (pureLine || null) !== scanPure || dayListSrc !== tripList || dayListBit !== dayBit || vpChanged;
   let needScan = scanStamp === 0 || nowMs - scanT0 > 5000 ||
     (inputChanged && nowMs - scanT0 >= 33);   /* 扫描 30Hz 上限 */
   const stamp = needScan ? ++fadeStamp : scanStamp;
@@ -3842,6 +3854,14 @@ function updateTrains(M, dtms) {
     const al = t._f;
     if (al < 0.02) continue;                    /* 尚未起步 / 已淡完:不占顶点、不上传 */
     if (n >= MAXT - 1 || vtx * STRIDE + 36 * STRIDE > bufArr.length) { stopped = i; break; }
+    /* 二十轮:屏外远车跳过解算 —— 上次解算位置在写矩形外 ~6.7km 且非本帧强制刷新
+       (每班次每 8 个重建帧强制解算一次,防位置永久陈旧)时,本帧不解算不写出。
+       M 跳变 >1.5 分钟(拖动时间轴/暂停恢复/倍速)自动全量解算;屏内/近界列车
+       每帧照常解算(走十九轮快径),可见运动零影响。 */
+    const forceSolve = (frameC + t.t) % 8 === 0 || t === followTrip || t === liveDetailTrip ||
+      (t._lpxM !== undefined && Math.abs(M - t._lpxM) >= 1.5);
+    if (!forceSolve && wRect && t._lpx !== undefined &&
+        (t._lpx < vpLng0 - 0.06 || t._lpx > vpLng1 + 0.06 || t._lpy < vpLat0 - 0.06 || t._lpy > vpLat1 + 0.06)) continue;
     /* M2 每帧重算(阶段 1 缓存后 t._M2 可能是 ≤5s 前的扫描值,不能用于位置插值) */
     const M2 = windowShift(t, M);
     const p = trainPosition(t, M2);
@@ -3849,6 +3869,7 @@ function updateTrains(M, dtms) {
        阶段 1 下一帧会重新标记 _ok,阶段 2 的 alpha 反而继续涨到 1,等定位恢复就"啪"地冒出。
        归零后定位恢复时会从 0 淡入。 */
     if (!p) { t._ok = 0; t._f = 0; continue; }
+    t._lpx = p[0]; t._lpy = p[1]; t._lpxM = M2; /* 位置缓存(屏外远车跳过判定用) */
     /* 视口外免写(十轮/十四轮):bbox 级 eligible 含大量「线路穿过视口但车在远处」的班次。
        解算位置在写矩形(视锥+64px)外 → 本帧不写顶点:GL 本来就会裁掉,视觉零差异;
        顶点流/GPU 处理量与颜色/图标解算同省。班次仍在 fadeList(alpha 保持),

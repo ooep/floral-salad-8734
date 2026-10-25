@@ -7564,11 +7564,12 @@ const M3D = (() => {
     m3dOk = true;
     const worldSize = 512 * Math.pow(2, map.getZoom());
     const c0 = map.getCenter();
-    /* 像素/米:_pixelPerMeter 已含纬度比例(赤道周长/worldSize/cos(lat));缺省时自算 */
-    const tfm = map.transform;
-    const ppm = tfm && tfm._pixelPerMeter ? tfm._pixelPerMeter : worldSize / 40075016.7 / Math.cos(c0.lat * Math.PI / 180); /* _pixelPerMeter 已含纬度比例 */
-    const cx = (c0.lng + 180) / 360 * worldSize, cy = mercY(c0.lat) * worldSize;
-    o.ts.makeScale(ppm, ppm, ppm);
+    /* ★ mainMatrix 定义域 = 归一化 mercator 坐标(0..1),高度同为归一化单位(米/(赤道周长·cosφ))。
+       覆盖层场景单位=米,经 T(地图中心的归一化 mercator)·S(米→归一化,含纬度 mercator 拉伸)映射进 mainMatrix。
+       (此前误用世界像素域,顶点全部爆出剪裁空间 —— 模型从未可见的根因) */
+    const sNorm = 1 / (40075016.7 * Math.cos(c0.lat * Math.PI / 180)); /* 每米的归一化 mercator 单位 */
+    const cx = (c0.lng + 180) / 360, cy = mercY(c0.lat);
+    o.ts.makeScale(sNorm, sNorm, sNorm);
     o.ts.elements[12] = cx; o.ts.elements[13] = cy; o.ts.elements[14] = 0; o.ts.elements[15] = 1; /* T·S 合并 */
     o.mvp.fromArray(mvpArr).multiply(o.ts);
     o.camera.projectionMatrix.copy(o.mvp);
@@ -7589,8 +7590,7 @@ const M3D = (() => {
       const path = pathOf(t);
       if (!path || !covers(path)) continue;
       const d = t._m3dD;
-      const ax = (d.lng + 180) / 360 * worldSize, ay = mercY(d.lat) * worldSize;
-      if (Math.abs(ax - cx) > worldSize * 0.25 || Math.abs(ay - cy) > worldSize * 0.25) continue; /* 远离视口粗判 */
+      if (Math.abs((d.lng + 180) / 360 - cx) > 8000 * sNorm || Math.abs(mercY(d.lat) - cy) > 8000 * sNorm) continue; /* 远离视口(>8km)粗判 */
       let rec = o.insts.get(t);
       if (!rec) {
         cache.get(path).then(tmpl => {
@@ -7621,8 +7621,8 @@ const M3D = (() => {
           lng = d.lng + Math.sin(th) * dm / (111320 * Math.cos(d.lat * Math.PI / 180));
           lat = d.lat + Math.cos(th) * dm / 110540;
         }
-        const ex = ((lng + 180) / 360 * worldSize - cx) / ppm; /* 东(米) */
-        const sy = (mercY(lat) * worldSize - cy) / ppm;       /* 南(米) */
+        const ex = ((lng + 180) / 360 - cx) / sNorm; /* 东(米,相对地图中心) */
+        const sy = (mercY(lat) - cy) / sNorm;        /* 南(米) */
         /* 局部(x=右,y=上,z=车头) → 世界(x=东,y=南,z=天):makeBasis 列向量;
            方位角 θ(北=0,东=π/2):前=(sinθ,−cosθ,0)、右=(cosθ,sinθ,0)、上=(0,0,1) */
         _rR.set(Math.cos(th), Math.sin(th), 0);

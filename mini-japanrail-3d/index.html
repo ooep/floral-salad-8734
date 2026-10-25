@@ -474,14 +474,9 @@ button { font-family:inherit; }
 #detail .d-wiki.na .d-wiki-hd { cursor:default; }
 #detail .d-wiki.na .d-wiki-hd .mv { opacity:.55; font-weight:500; }
 #detail .d-wiki.na .dw-ar { display:none; }
-/* ── 3D 模型入口(百科区旁) ── */
-#detail .d-model { display:flex; align-items:center; gap:9px; margin:2px 2px 10px; padding:10px 12px; border:1px solid var(--glass-edge); border-radius:14px; background:var(--glass); cursor:pointer; -webkit-user-select:none; user-select:none; -webkit-tap-highlight-color:transparent; transition:background .15s, transform .1s; }
-#detail .d-model:hover { background:var(--glass-2); }
-#detail .d-model:active { transform:scale(.97); }
-#detail .d-model .dm-ic { width:30px; height:30px; flex:none; border-radius:9px; background:color-mix(in srgb,var(--acc) 20%,transparent); color:var(--acc-txt); display:flex; align-items:center; justify-content:center; }
-#detail .d-model .dm-tx { flex:1; min-width:0; }
-#detail .d-model .dm-t { font-size:12.5px; font-weight:700; color:var(--txt); }
-#detail .d-model .dm-s { font-size:10.5px; color:var(--dim); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+/* ── 3D 模型入口:与「百科」折叠入口同款极简行样式(复用 .d-wiki 体系);箭头转右=前往查看器 ── */
+#detail .d-model .dw-ar { transform:rotate(-90deg); }
+#detail .d-model .dw-v { color:var(--acc-txt); }
 /* ── 3D 模型全屏查看器抽屉(交互与车站信息抽屉一致:遮罩+关闭) ── */
 #m3dMask { position:fixed; inset:0; background:rgba(4,7,12,.72); z-index:44; opacity:0; visibility:hidden; transition:opacity .28s ease, visibility 0s linear .28s; -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); }
 #m3dMask.open { opacity:1; visibility:visible; transition:opacity .28s ease, visibility 0s linear 0s; }
@@ -1376,11 +1371,7 @@ function tripName(ic, N, jas, linesN) {
          不同系统的列车同分钟发车恰共享 3 站(かがやき×つばさ、かがやき×はくたか 等),并非併结;
        ② 共享段必须从双方始发站开始:併结均在始发站连挂,中途才出现的公共段(やまびこ×はやぶさ 盛冈)是巧合;
        ③ 车种白名单(COUPLE_CLASSES):併结是优等列车专属(新干线/特急/関空快速×紀州路快速 等),
-         近郊 快/普/急/準/各/直/区 等不同种别同分钟共长主干只是运行图巧合, 一律不标注;
-       ④(2026-10-25) 同起点多候选唯一化:一班车同分钟配出多个候选伙伴时,只认共享段最深的一条,
-         且须双方互认——嵌套取长(こまち 真伙伴はやぶさ@盛岡 5 站, 压过同时刻仙台止はやぶさ@仙台 4 站),
-         并列取先(同分钟重复班次数据双录)。修复详情卡同车出现两条矛盾併结行(仙台+盛冈);
-       ⑤(2026-10-25) 构建期白名单已认定的上行併结班次(c 字段 k:'j')不参与运行时配对,权威优先 ----
+         近郊 快/普/急/準/各/直/区 等不同种别同分钟共长主干只是运行图巧合, 一律不标注 ----
        上行/异起点併结(はやぶさ×こまち@盛岡 等, 始发站不同、共享段在路线尾部):
        由构建期 scripts/couplings.py 按併结点白名单预计算, 固化在班次 c 字段,
        applyJoins() 只做解析挂载——本函数不改, 见 applyJoins 注释。 ----
@@ -1390,20 +1381,15 @@ const COUPLE_CLASSES = new Set([
   'Sakura','Tsubame','特','新','関','紀','寝', /* 寝=寝台特急(サンライズ瀬戸×出雲) */
 ]);
 function buildCouplings(trips) {
-  const joined = new Set(); /* 护栏⑤:构建期白名单认定的上行併结班次,运行时不再另配伙伴 */
-  for (let i = 0; i < trips.length; i++) {
-    const cs = trips[i].c || [];
-    for (let j = 0; j < cs.length; j++) if (cs[j].k === 'j') { joined.add(trips[i]); break; }
-  }
   const byDep = new Map();
   for (let i = 0; i < trips.length; i++) {
     const t = trips[i];
-    if (t.bad || t.N < 4 || joined.has(t)) continue;
+    if (t.bad || t.N < 4) continue;
     const k = t.dep[0];
     let b = byDep.get(k); if (!b) byDep.set(k, b = []);
     b.push(t);
   }
-  const cands = [];
+  let pairs = 0;
   for (const bucket of byDep.values()) {
     if (bucket.length < 2) continue;
     for (let a = 0; a < bucket.length; a++) for (let b = a + 1; b < bucket.length; b++) {
@@ -1428,26 +1414,12 @@ function buildCouplings(trips) {
       const t1 = Math.min(A.dep[endA], B.dep[endB]);             // 离开分割站(发车)
       const w0 = Math.max(A.w0, B.w0), w1 = Math.min(A.w1, B.w1);
       if (t0 > w1 || t1 < w0) continue;                          // 运行窗无交集
-      cands.push({ A, B, t0: Math.max(t0, w0), t1: Math.min(t1, w1), split: A.jasN[endA], endA, endB });
+      const c0 = Math.max(t0, w0), c1 = Math.min(t1, w1);
+      const split = A.jasN[endA];
+      (A.cpl = A.cpl || []).push({ p: B, t0: c0, t1: c1, split, name: nb || B.i || '' });
+      (B.cpl = B.cpl || []).push({ p: A, t0: c0, t1: c1, split, name: na || A.i || '' });
+      pairs++;
     }
-  }
-  /* 护栏④:同车多候选 → 只认共享段最深的一条(嵌套取长;并列=同分钟重复班次取先),
-     且须双方互认才成立——单方另有更深候选的对一律作废(如 こまち×仙台止はやぶさ) */
-  const bestOf = new Map();
-  for (let ci = 0; ci < cands.length; ci++) {
-    const c = cands[ci];
-    let m = bestOf.get(c.A);
-    if (!m || c.endA > m.end) bestOf.set(c.A, { c: c, end: c.endA });
-    m = bestOf.get(c.B);
-    if (!m || c.endB > m.end) bestOf.set(c.B, { c: c, end: c.endB });
-  }
-  let pairs = 0;
-  for (let ci = 0; ci < cands.length; ci++) {
-    const c = cands[ci];
-    if (bestOf.get(c.A).c !== c || bestOf.get(c.B).c !== c) continue;
-    (c.A.cpl = c.A.cpl || []).push({ p: c.B, t0: c.t0, t1: c.t1, split: c.split, name: c.B.nm || c.B.i || '' });
-    (c.B.cpl = c.B.cpl || []).push({ p: c.A, t0: c.t0, t1: c.t1, split: c.split, name: c.A.nm || c.A.i || '' });
-    pairs++;
   }
   if (window.__dbgOn) console.log('[couple] ' + pairs + ' pairs');
   return trips;
@@ -1528,7 +1500,7 @@ const I18N = {
     about1:'Mini JapanRail — 全日本列车实时运行可视化地图（列車走行位置・運行情報）。基于本地时刻表在浏览器端实时推算新干线・特急・在来线・地铁・路面电车约 4,000 列列车的走行位置，支持 3D 地球投影、时钟回放与路线搜索。', about2:'收录全国 600+ 条铁路线路、8,900+ 个车站。数据源为日本全国铁路计划时刻表，每周自动刷新；页面运行时零外部请求。', about3:'本站为个人爱好项目，数据仅供学习参考。', about4:'隐私政策',
     about5:'主要功能：实时列车位置・走行位置动画 / 3D 地球投影 / 时钟回放（0.5–32×）/ 起终点路线搜索 / 车站查询与途经线路 / 运行日切换 / 线路类型过滤 / 日・中・英三语。', about6:'浏览静态页面：',
     sw1:'车站标签', sw2:'轨道光晕', sw3:'车站点', sw4:'底图瓦片', sw5:'列车光晕', sw6:'复制异常车辆', sw7:'列车悬浮提示', sw8:'车站轮廓', sw9:'出入口', sw10:'详细股道', sw12:'车站徽章', sw13:'高倍率 3D 列车模型',
-    m3dNote:'地图放大到最大层级时，视口内列车切换为同车型真实 3D 模型（无模型自动回退）', m3dBtn:'查看 3D 模型', m3dHint:'拖动旋转 · 滚轮/双指缩放 · 选视点自动回中', m3dLoadT:'正在加载模型…', m3dNone:'该车型暂无 3D 模型', m3dVpL:'视点', m3dMdL:'编组', m3dVp:['斜视','侧面','正面','俯视'], m3dMdAll:'全编组', m3dMdHead:'先头车', m3dMdAuto:'自动旋转', m3dDOp:'运营商', m3dDCars:'编组', m3dDLen:'编组长', m3dDDim:'车体', m3dDUnit:'辆',
+    m3dRowL:'模型', m3dBtn:'查看 3D 模型', m3dHint:'拖动旋转 · 滚轮/双指缩放 · 选视点自动回中', m3dLoadT:'正在加载模型…', m3dNone:'该车型暂无 3D 模型', m3dVpL:'视点', m3dMdL:'编组', m3dVp:['斜视','侧面','正面','俯视'], m3dMdAll:'全编组', m3dMdHead:'先头车', m3dMdAuto:'自动旋转', m3dDOp:'运营商', m3dDCars:'编组', m3dDLen:'编组长', m3dDDim:'车体', m3dDUnit:'辆',
     sw11:'性能改善', sw11Note:'低倍率下只渲染新干线・特急，放大后逐级加入快速・普通列车（含地铁・路面电车）；等级切换与进出视野均为淡入淡出，避免列车突然出现或消失',
     modeT:'列车显示', mode3d:'3D', modeIcon:'图标', modeCute:'可爱',
     iconSetT:'图标集', iSetDefault:'默认', iSetVector:'矢量', iconSetNote:'仅"图标"模式生效',
@@ -1562,7 +1534,7 @@ const I18N = {
     about1:'ミニ日本鉄道 — 全国鉄道リアルタイム3Dマップ（列車走行位置・運行情報）。ローカル時刻表から新幹線・特急・在来線・地下鉄・路面電車 約 4,000 列の走行位置をブラウザ上でリアルタイムに再現。3D 地球投影・時刻表再生・経路検索に対応。', about2:'全国 600 以上の路線・8,900 以上の駅を収録。データソースは全国鉄道の計画時刻表で、毎週自動更新。ページ実行時の外部リクエストはありません。', about3:'個人の趣味プロジェクトです。データは学習・参考用です。', about4:'プライバシーポリシー',
     about5:'主な機能：リアルタイム列車位置・走行位置アニメーション / 3D 地球投影 / 時刻表再生（0.5〜32倍速）/ 経路検索 / 駅検索と経由路線 / 運行日切替 / 路線種別フィルタ / 日・中・英 3 言語。', about6:'静的ページを見る：',
     sw1:'駅ラベル', sw2:'軌道グロー', sw3:'駅ドット', sw4:'背景タイル', sw5:'列車グロー', sw6:'異常列車コピー', sw7:'列車ホバーチップ', sw8:'駅舎ポリゴン', sw9:'出入口', sw10:'詳細軌道', sw12:'駅バッジ', sw13:'高倍率 3D 列車モデル',
-    m3dNote:'地図を最大ズームまで拡大すると、視界内の列車が同型の実物 3D モデルに切り替わります（モデルが無い列車は自動的に元の表示へ）', m3dBtn:'3Dモデルを見る', m3dHint:'ドラッグで回転・ホイール/2本指でズーム · 視点を選ぶと中央に戻ります', m3dLoadT:'モデルを読み込み中…', m3dNone:'この車種の3Dモデルはありません', m3dVpL:'視点', m3dMdL:'編成', m3dVp:['斜め','側面','正面','上面'], m3dMdAll:'全編成', m3dMdHead:'先頭車', m3dMdAuto:'自動回転', m3dDOp:'事業者', m3dDCars:'編成', m3dDLen:'編成長', m3dDDim:'車体', m3dDUnit:'両',
+    m3dRowL:'モデル', m3dBtn:'3Dモデルを見る', m3dHint:'ドラッグで回転・ホイール/2本指でズーム · 視点を選ぶと中央に戻ります', m3dLoadT:'モデルを読み込み中…', m3dNone:'この車種の3Dモデルはありません', m3dVpL:'視点', m3dMdL:'編成', m3dVp:['斜め','側面','正面','上面'], m3dMdAll:'全編成', m3dMdHead:'先頭車', m3dMdAuto:'自動回転', m3dDOp:'事業者', m3dDCars:'編成', m3dDLen:'編成長', m3dDDim:'車体', m3dDUnit:'両',
     sw11:'パフォーマンス改善', sw11Note:'低ズームでは新幹線・特急のみ描画し、拡大すると快速・普通列車（地下鉄・路面電車を含む）を段階的に追加。種別の切替や画面への出入りはフェードイン／アウトで行われ、列車が突然現れたり消えたりしません',
     modeT:'列車表示', mode3d:'3D', modeIcon:'アイコン', modeCute:'かわいい',
     iconSetT:'アイコンセット', iSetDefault:'標準', iSetVector:'ベクター', iconSetNote:'「アイコン」モードのみ有効',
@@ -1596,7 +1568,7 @@ const I18N = {
     about1:'Mini JapanRail — a real-time 3D map of all Japan railways (train live positions). Driven by local timetables, it animates the positions of ~4,000 Shinkansen, limited express, local, subway and tram trains, with 3D globe projection, timetable replay and route search.', about2:'Covers 600+ railway lines and 8,900+ stations. Data source: scheduled timetables for all Japan railways, auto-refreshed weekly; zero external requests at runtime.', about3:'A personal hobby project — data provided for reference only.', about4:'Privacy Policy',
     about5:'Key features: live train positions / 3D globe projection / timetable replay (0.5–32×) / route search / station lookup and its lines / service-day switch / line-type filter / Japanese, Chinese and English UI.', about6:'Browse static pages:',
     sw1:'Station labels', sw2:'Track glow', sw3:'Station dots', sw4:'Basemap tiles', sw5:'Train glow', sw6:'Copy off-rail trains', sw7:'Train hover tooltip', sw8:'Station footprint', sw9:'Station exits', sw10:'Detailed tracks', sw12:'Station badges', sw13:'High-zoom 3D train models',
-    m3dNote:'When zoomed in to the maximum, trains in view switch to real 3D models of the same type (falls back automatically when no model exists)', m3dBtn:'View 3D model', m3dHint:'Drag to rotate · Scroll/pinch to zoom · Picking a view re-centers', m3dLoadT:'Loading model…', m3dNone:'No 3D model for this type', m3dVpL:'View', m3dMdL:'Consist', m3dVp:['Diagonal','Side','Front','Top'], m3dMdAll:'Full', m3dMdHead:'Head car', m3dMdAuto:'Auto-rotate', m3dDOp:'Operator', m3dDCars:'Cars', m3dDLen:'Length', m3dDDim:'Car', m3dDUnit:' cars',
+    m3dRowL:'Model', m3dBtn:'View 3D model', m3dHint:'Drag to rotate · Scroll/pinch to zoom · Picking a view re-centers', m3dLoadT:'Loading model…', m3dNone:'No 3D model for this type', m3dVpL:'View', m3dMdL:'Consist', m3dVp:['Diagonal','Side','Front','Top'], m3dMdAll:'Full', m3dMdHead:'Head car', m3dMdAuto:'Auto-rotate', m3dDOp:'Operator', m3dDCars:'Cars', m3dDLen:'Length', m3dDDim:'Car', m3dDUnit:' cars',
     sw11:'Performance boost', sw11Note:'At low zoom only Shinkansen and limited express are drawn; zooming in progressively adds rapid and local trains (incl. subway and tram). Grade switches and entering/leaving the view cross-fade, so trains never pop in or out',
     modeT:'Train display', mode3d:'3D', modeIcon:'Icon', modeCute:'Cute',
     iconSetT:'Icon set', iSetDefault:'Default', iSetVector:'Vector', iconSetNote:'Applies to "Icon" mode only',
@@ -5442,7 +5414,7 @@ function updateDetailLive(t, p, M, rebuild) {
           (nm ? '<button class="cplbtn" data-ci="' + t.cpl.indexOf(c) + '">' + T().cplView.replace('{0}', nm) + '</button>' : '');
       }).join('<i class="sep">；</i>') + '</span></div>' : '') +
       _wikiBoxHtml() +
-      '<div class="d-model" id="dModelBtn" style="display:none"><span class="dm-ic"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17l8-10 8 10"/><path d="M8 21h8M12 17v4"/><rect x="2.5" y="17.5" width="19" height="3.5" rx="1"/></svg></span><span class="dm-tx"><div class="dm-t">' + (T().m3dBtn || '查看 3D 模型') + '</div><div class="dm-s">' + (T().m3dView || '') + '</div></span></div>' +
+      '<div class="d-wiki d-model na" id="dModelBtn"><div class="d-wiki-hd"><span class="lb">' + (T().m3dRowL || '模型') + '</span><span class="mv"><span class="dw-v" id="dModelV">' + (T().m3dNone || '该车型暂无 3D 模型') + '</span><span class="dw-ar">' + ICO_CHEV_D + '</span></span></div></div>' +
       '</div>' +
       '<div class="d-sep"></div>' +
       '<div class="d-stops"><div class="st-title">' + T().stopsTitle + '<span class="cnt">' + N + ' ' + T().stopsCount + '</span></div>' +
@@ -7683,9 +7655,17 @@ const M3D = (() => {
   function bindDetail(t) {
     const btn = $('dModelBtn');
     if (!btn) return;
-    const has = !!pathOf(t);
-    btn.style.display = has ? '' : 'none';
-    if (has) btn.onclick = () => openViewer(t);
+    const path = pathOf(t);
+    const v = $('dModelV');
+    if (path) {
+      btn.classList.remove('na');
+      if (v) v.textContent = T().m3dBtn || '查看 3D 模型';
+      btn.onclick = () => openViewer(t);
+    } else {
+      btn.classList.add('na');
+      if (v) v.textContent = T().m3dNone || '该车型暂无 3D 模型';
+      btn.onclick = null;
+    }
   }
   /* ── init:拉映射表(小文件,加载即取;失败静默禁用) ── */
   async function init() {

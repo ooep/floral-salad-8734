@@ -3615,6 +3615,15 @@ function updateTrains(M, dtms) {
     const my0 = Math.max(0, myN - vm * 1.35);
     const my1 = Math.min(1, myS + vm * 1.35);
     vp = { mx0, mx1, my0, my1 };
+    /* 十四轮:写矩形(视口外免写判定用)= 当前视锥 + 64px 车身/光晕余量,远小于
+       扫描缓冲 vm(高 zoom 下 ~14km)。写出只关心「本帧在不在屏内」,屏缘出现
+       即可见、无淡入突变;扫描仍用大缓冲保证 bbox 命中,两层矩形各司其职 */
+    const wPx = 64 / (512 * Math.pow(2, z));
+    wRect = { lng0: w - wPx * 360, lng1: e + wPx * 360,
+      lat0: Math.atan(Math.sinh(Math.PI * (1 - 2 * Math.min(1, myS + wPx)))) * 180 / Math.PI,
+      lat1: Math.atan(Math.sinh(Math.PI * (1 - 2 * Math.max(0, myN - wPx)))) * 180 / Math.PI };
+  } else {
+    wRect = null; /* 全国视图(z<5):所有在途班次都可能入屏,不裁切 */
   }
   let L, W;
   // 尺寸曲线(以 CSS 像素计,配合 dpr 补偿):国家/区域视图(低 zoom)小巧不遮挡,
@@ -3772,13 +3781,12 @@ function updateTrains(M, dtms) {
   }
   anyFading = fadingNow;
 
-  /* 扫描视口矩形 → 经纬度(阶段 3「视口外免写」判定用;每帧仅 2 次三角换算)。
-     mercator Y 随纬度增大而减小:my1 是南边(纬度小),my0 是北边(纬度大) */
+  /* 写矩形(wRect,十四轮)→ 经纬度(阶段 3「视口外免写」判定用):
+     当前视锥 + 64px 余量,远小于扫描缓冲 vm —— 写出只关心本帧在不在屏内 */
   let vpLng0 = 0, vpLng1 = 0, vpLat0 = 0, vpLat1 = 0;
-  if (vp) {
-    vpLng0 = vp.mx0 * 360 - 180; vpLng1 = vp.mx1 * 360 - 180;
-    vpLat0 = Math.atan(Math.sinh(Math.PI * (1 - 2 * vp.my1))) * 180 / Math.PI;
-    vpLat1 = Math.atan(Math.sinh(Math.PI * (1 - 2 * vp.my0))) * 180 / Math.PI;
+  if (wRect) {
+    vpLng0 = wRect.lng0; vpLng1 = wRect.lng1;
+    vpLat0 = wRect.lat0; vpLat1 = wRect.lat1;
   }
 
   /* ── 阶段 3:位置解算 + 顶点构建(只对 alpha>0 的班次,即真正画到屏幕上的那一批) ── */
@@ -3795,12 +3803,11 @@ function updateTrains(M, dtms) {
        阶段 1 下一帧会重新标记 _ok,阶段 2 的 alpha 反而继续涨到 1,等定位恢复就"啪"地冒出。
        归零后定位恢复时会从 0 淡入。 */
     if (!p) { t._ok = 0; t._f = 0; continue; }
-    /* 视口外免写(十轮):bbox 级 eligible 在城市级含大量「线路穿过视口但车在远处」的班次
-       (实测正午 z14 東京合格 9402 ≈ 屏内 ~500 的 19 倍)。解算位置在扫描视口缓冲外 →
-       本帧不写顶点:GL 本来就会裁掉,视觉零差异;顶点流/GPU 处理量与颜色/图标解算同省。
-       班次仍在 fadeList(alpha 保持 1),驶入缓冲即恢复写出,边缘无闪现。
-       z<5(全国,globe)无 vp 不裁 —— 全国视图所有在途班次都可能出现在屏内。 */
-    if (vp && (p[0] < vpLng0 || p[0] > vpLng1 || p[1] < vpLat0 || p[1] > vpLat1)) continue;
+    /* 视口外免写(十轮/十四轮):bbox 级 eligible 含大量「线路穿过视口但车在远处」的班次。
+       解算位置在写矩形(视锥+64px)外 → 本帧不写顶点:GL 本来就会裁掉,视觉零差异;
+       顶点流/GPU 处理量与颜色/图标解算同省。班次仍在 fadeList(alpha 保持),
+       驶入视锥即恢复写出(屏缘出现,无淡入突变)。z<5 全国无裁切。 */
+    if (wRect && (p[0] < vpLng0 || p[0] > vpLng1 || p[1] < vpLat0 || p[1] > vpLat1)) continue;
     /* 记录本帧线路类型,供下一帧阶段 2 判断是否被类型过滤(被过滤时目标 alpha=0,渐隐) */
     t._k = p[4];
     let color = t.color;
@@ -4734,6 +4741,8 @@ let lastBuildZoom = -1;
    及时性(班次出现/消失最多迟 5s,与停站展示节奏一致) */
 let scanStamp = 0, scanMinute = -1, scanGates = -1, scanPure = null, scanHasVp = false,
     scanVp0 = 0, scanVp1 = 0, scanVp2 = 0, scanVp3 = 0, scanT0 = 0;
+/* 写矩形(z≥5 时按当前视锥+64px 余量填充;z<5 为 null 不裁切) */
+let wRect = null;
 function startLoop() {
   function tickFollow(M, dt) {
     if (performance.now() - followStartT <= 950) return;

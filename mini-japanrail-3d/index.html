@@ -3420,20 +3420,6 @@ uniform vec2 u_quadSize; /* 方块屏幕尺寸(L,W):a_corner 存的是尺寸值,
 out vec4 fragColor;
 float sdBox(vec2 p, vec2 b) { vec2 q = abs(p) - b; return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0); }
 void main() {
-  if (v_uvIdx >= -0.5) {
-    // 图标模式:车头小贴图(图集格子内 40×48,2px padding 防 bleed)
-    float col = mod(v_uvIdx, u_cols);
-    float row = floor(v_uvIdx / u_cols);
-    vec2 uv01 = vec2((v_uv.y / u_quadSize.y) * 0.5 + 0.5, (v_uv.x / u_quadSize.x) * 0.5 + 0.5); // a_corner 带尺寸,除 L,W 回归一化;转置让图高48沿行驶方向、图宽40沿横向,比例不变
-    vec2 tc = (vec2(col, row) * u_cell + uv01 * u_img + 2.0) / u_atlasSize;
-    vec4 tex = texture(u_atlas, tc);
-    if (tex.a < 0.004) discard;
-    /* v_color.a = 该列车的淡入淡出 alpha(性能改善:等级切换/进出视野时渐变,不硬跳) */
-    float ia = tex.a * v_color.a;
-    if (ia < 0.004) discard;
-    fragColor = vec4(tex.rgb * ia, ia);
-    return;
-  }
   if (v_glow > 2.5) {
     // 延误描边环(二十三轮.e):沿图标 alpha 轮廓 / 车体矩形边缘的一圈橙色细描边
     // (取代旧大面积软光晕)。环宽 ~2.2 屏幕像素,随车淡入淡出;图标/方盒/3D 通用。
@@ -3447,7 +3433,9 @@ void main() {
       vec2 cb = vec2(col, row) * u_cell;
       vec2 tc = clamp((cb + uv01 * u_img + 2.0) / u_atlasSize, (cb + 0.6) / u_atlasSize, (cb + u_cell - 0.6) / u_atlasSize);
       float ac = texture(u_atlas, tc).a;
-      vec2 to = (1.1 / u_quadSize) * (u_img / u_atlasSize);  // 2.2px 环宽 → uv01 偏移 1.1/尺寸
+      /* 环宽:屏幕 ~2.2px(uv01 偏移 1.1/轴尺寸),但下限 ~0.9 图集纹素 ——
+         低倍率图标很小时(1 纹素≈3px)采样若落在同纹素内 s≈ac 环会消失,取两者较大 */
+      vec2 to = max(vec2(1.1) / u_quadSize, vec2(0.9) / u_img) * (u_img / u_atlasSize);
       float s = 0.0;
       s = max(s, texture(u_atlas, tc + vec2( to.x, 0.0)).a);
       s = max(s, texture(u_atlas, tc - vec2( to.x, 0.0)).a);
@@ -3466,6 +3454,20 @@ void main() {
     }
     if (a < 0.004) discard;
     fragColor = vec4(v_color.rgb * a, a);
+    return;
+  }
+  if (v_uvIdx >= -0.5) {
+    // 图标模式:车头小贴图(图集格子内 40×48,2px padding 防 bleed)
+    float col = mod(v_uvIdx, u_cols);
+    float row = floor(v_uvIdx / u_cols);
+    vec2 uv01 = vec2((v_uv.y / u_quadSize.y) * 0.5 + 0.5, (v_uv.x / u_quadSize.x) * 0.5 + 0.5); // a_corner 带尺寸,除 L,W 回归一化;转置让图高48沿行驶方向、图宽40沿横向,比例不变
+    vec2 tc = (vec2(col, row) * u_cell + uv01 * u_img + 2.0) / u_atlasSize;
+    vec4 tex = texture(u_atlas, tc);
+    if (tex.a < 0.004) discard;
+    /* v_color.a = 该列车的淡入淡出 alpha(性能改善:等级切换/进出视野时渐变,不硬跳) */
+    float ia = tex.a * v_color.a;
+    if (ia < 0.004) discard;
+    fragColor = vec4(tex.rgb * ia, ia);
     return;
   }
   float a;

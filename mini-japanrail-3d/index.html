@@ -3762,7 +3762,7 @@ const DELAY_URLS = [
 const DELAY_FETCH_MS = 5 * 60 * 1000, DELAY_MAX_AGE_MS = 45 * 60 * 1000, DELAY_STALE_MS = 20 * 60 * 1000;
 let delayOn = (() => { const v = localStorage.getItem('mjr3d_delay'); return v === null ? true : v === '1'; })();
 const delayedSet = new Set();
-let delayTmapIdx = null, delayLastFetch = 0, delayTimer = null, delayGenMs = 0, delayBusy = false;
+let delayTmapIdx = null, delayLastFetch = 0, delayTimer = null, delayGenMs = 0, delayBusy = false, delayPending = false;
 function delayClear() {
   if (!delayedSet.size) return;
   for (const t of delayedSet) { t.dly = 0; t._fk = null; }
@@ -3779,6 +3779,12 @@ function delayHm(s) {  /* "20:23"/"24:02" → 分钟,可 >1439,与 w0/dep[0] 同
 }
 function delayApplyData(d, genMs) {
   if (!d || !(genMs > 0) || Date.now() - genMs > DELAY_MAX_AGE_MS) { delayClear(); return 0; }
+  /* 日型/日期双门(二十三轮.d):延误是「今天」的实时数据 —— 仅当 feed.date == 今日(JST)
+     且当前载入的数据集日型 == 今日真实日型时才应用。手动切平日/土/休、回放跨日、
+     午夜换日期间自动清空,防止今天的延误错配到其他日型的班次上(同模式同分发车的
+     周六班次会被误标)。午夜后至 feed 滚日的 ~10 分钟空窗是可接受代价,宁可短暂
+     无延误也不错日应用。 */
+  if (d.date !== jstDateParts(Date.now()).key || dayBit !== bitOfDate(Date.now())) { delayClear(); return 0; }
   const list = Array.isArray(d.trains) ? d.trains : null;
   if (!list || list.length > 3000) { delayClear(); return 0; }
   const bit = dayBit, next = new Set();
@@ -3815,7 +3821,7 @@ function delayApplyData(d, genMs) {
   return next.size;
 }
 async function delayFetchOnce() {
-  if (delayBusy) return; delayBusy = true;
+  if (delayBusy) { delayPending = true; return; } delayBusy = true;
   try {
     let best = null, bestGen = 0;
     for (let i = 0; i < DELAY_URLS.length; i++) {
@@ -3835,7 +3841,7 @@ async function delayFetchOnce() {
     if (best) { delayGenMs = bestGen; delayApplyData(best, bestGen); }  /* 全源失败:保留现状,由 45min 过期兜底清空 */
     delayLastFetch = Date.now();
     delayUiNote();  /* 数据龄随每次拉取刷新(定时/回前台补拉路径同样更新,不依赖开关/语言切换) */
-  } finally { delayBusy = false; }
+  } finally { delayBusy = false; if (delayPending) { delayPending = false; delayFetchOnce(); } }
 }
 function delayUiNote() {
   const el = $('tSw14Note');
@@ -5384,7 +5390,7 @@ function showTrPick(list, px, py) {
       : '<span class="tp-ic tp-ic-fb" style="color:' + col + ';background:' + col + '22">' + ICO.train + '</span>';
     const title = t.nm || ln || t.i || '#' + t.t;
     const sub = (t.jas ? t.jas[0] + ' → ' + t.jas[t.jas.length - 1] : '') + ' · ' + fmtHm(t.dep[0]) + '–' + fmtHm(t.arr[t.arr.length - 1]);
-    return '<div class="tp-it" data-i="' + i + '">' + icHtml + '<span class="tp-tx"><div class="tp-t">' + esc(title) + '</div><div class="tp-s">' + esc(sub) + '</div></span></div>';
+    return '<div class="tp-it" data-i="' + i + '">' + icHtml + '<span class="tp-tx"><div class="tp-t">' + esc(title) + (t.dly > 0 ? '<span class="sbdly">+' + Math.round(t.dly) + '</span>' : '') + '</div><div class="tp-s">' + esc(sub) + '</div></span></div>';
   }).join('');
   trPickEl.innerHTML = '<div class="tp-hd"><span class="tp-q">您想查看的是哪一辆？</span><button class="tp-x" title="关闭">×</button></div>' + rows;
   trPickEl.classList.add('show');

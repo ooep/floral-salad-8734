@@ -3373,8 +3373,6 @@ void main() {
     gl.bindVertexArray(null);
   },
   render(gl, args) {
-    /* mainMatrix 截获必须在 visibleCount 早退之前:视野内列车全部被 3D 接管时方盒顶点为 0,
-       若在早退之后才截获,覆盖层会因矩阵过期清屏 → 列车整列消失 */
     if (!visibleCount) return;
     __renderCount++;
     // 始终复用第一个已编译程序(globe prelude 内含 mercator 过渡逻辑,tr=0 时等价),

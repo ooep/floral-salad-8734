@@ -5722,6 +5722,10 @@ function updateDetailLive(t, p, M, rebuild) {
           }
           const noN = seg.replace(/^\d+号線/, '');   /* 建设名前缀:'10号線新宿線' → '新宿線' */
           if (noN !== seg) { const d = _licOf(noN) || _tripMatch(noN); if (d) return d; }
+          if (/線$/.test(seg) && !/本線$/.test(seg)) {   /* JR 爱称短名补全:'東海道線'→'東海道本線'、'山陽線'→'山陽本線' */
+            const d = _licOf(seg.replace(/線$/, '本線')) || _tripMatch(seg.replace(/線$/, '本線'));
+            if (d) return d;
+          }
           return '';
         };
         for (let k = 0; k < N; k++) {

@@ -1059,8 +1059,6 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
   background:var(--acc-soft); border:1px solid color-mix(in srgb, var(--acc) 38%, transparent); }
 :root[data-theme="light"] .tc-ico { color:var(--acc); }
 .tc-title { flex:1; min-width:0; margin:0; font-size:14px; font-weight:650; letter-spacing:.2px; }
-.tc-x { flex:none; width:24px; height:24px; margin-right:-4px; display:grid; place-items:center; border:0; border-radius:8px; background:transparent; color:var(--dim); cursor:pointer; transition:background .15s, color .15s; }
-.tc-x:hover { background:var(--glass-2); color:var(--txt); }
 .tc-body { margin:6px 0 0; font-size:12px; line-height:1.75; color:var(--dim); }
 .tc-foot { display:flex; align-items:center; gap:8px; margin-top:12px; }
 .tc-dots { flex:1; min-width:0; display:flex; align-items:center; gap:5px; }
@@ -1081,8 +1079,11 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
 .tc-back { background:transparent; color:var(--dim); padding:7px 10px; }
 .tc-back:hover { background:var(--glass-2); color:var(--txt); }
 .tc-back[hidden] { display:none; }
+.tc-skip { background:transparent; color:var(--dim); padding:7px 10px; }
+.tc-skip:hover { background:var(--glass-2); color:var(--txt); }
+.tc-skip[hidden] { display:none; }
 .tc-back svg { margin-left:-3px; }
-.tc-btn:focus-visible, .tc-x:focus-visible, .tc-dot:focus-visible { outline:2px solid var(--acc); outline-offset:1px; }
+.tc-btn:focus-visible, .tc-skip:focus-visible, .tc-dot:focus-visible { outline:2px solid var(--acc); outline-offset:1px; }
 .tc-replay { margin-top:10px; display:inline-flex; align-items:center; gap:6px; background:var(--glass-2); color:var(--txt); border:1px solid var(--line); }
 .tc-replay:hover { border-color:var(--acc-border); background:var(--acc-soft); }
 @media (prefers-reduced-motion: reduce) { #tourHole, #tourCard, .tc-dot { transition:none; } .tc-media .tc-train, #tourHole::after, #tourCard .tc-in { animation:none; } }
@@ -1331,12 +1332,12 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
     <div class="tc-head">
       <span class="tc-ico" id="tourIco" aria-hidden="true"></span>
       <p class="tc-title" id="tourTitle"></p>
-      <button class="tc-x" id="tourSkip" type="button"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     </div>
     <p class="tc-body" id="tourBody"></p>
     <div class="tc-foot">
       <span class="tc-dots" id="tourDots" aria-hidden="true"></span>
       <button class="tc-btn tc-back" id="tourBack" type="button" hidden>Back</button>
+      <button class="tc-btn tc-skip" id="tourSkip" type="button" hidden>Skip</button>
       <button class="tc-btn tc-next" id="tourNext" type="button">Next</button>
     </div>
   </div></section>
@@ -7782,8 +7783,8 @@ function tourTexts() {
   tourNextBtn.innerHTML = '<span>' + (s.last ? tt.start : tt.next) + '</span>' + _CHEV_R;
   tourBackBtn.innerHTML = _CHEV_L + '<span>' + tt.back + '</span>';
   tourBackBtn.hidden = tourStep === 0;
-  tourSkipBtn.setAttribute('aria-label', tt.skip);
-  tourSkipBtn.title = tt.skip;
+  tourSkipBtn.textContent = tt.skip;
+  tourSkipBtn.hidden = tourStep !== 0;   /* 跳过只在欢迎步显示,进入后续步骤即隐藏 */
   /* 圆点:可点击直达任意步;tabindex=-1 不进 Tab 序列(纯视觉导航辅助,容器保持 aria-hidden) */
   tourDotsEl.innerHTML = TOUR_DEF.map((st, i) =>
     '<button type="button" tabindex="-1" class="tc-dot' + (i < tourStep ? ' past' : i === tourStep ? ' on' : '') + '" data-i="' + i + '" aria-label="' + (i + 1) + '/' + TOUR_DEF.length + ' ' + tt[st.key + 'T'] + '"></button>').join('');

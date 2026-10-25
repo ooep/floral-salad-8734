@@ -3003,6 +3003,35 @@ function locateSeg(t, M2) {
 }
 /* 主入口:返回 [lng, lat, heading(rad), lineName, kind, kmh] 或 null */
 const _pos = [0, 0, 0, '', '', 0];
+/* 二十三轮「整区间反向行驶」修复:segIndex 存在键为 A|B 但坐标实为 B→A 的反向注册段
+   (宝殿|曽根、香取|佐原 等,列车整区间倒行、终点停在出发站)。主路径 pickSeg 后按
+   stopC[i] 定向:尾端更近本站 → 换用惰性反向孪生(cum 反演 newCum[j]=len-oldCum[N-j],
+   零拷贝共享 coords 原始条目不改动)。与 fallback 路径的「方向对齐」同一口径。 */
+function revSegEntry(e) {
+  let r = e._rev;
+  if (!r) {
+    const co = e.coords.slice().reverse();
+    const L = e.cum[e.cum.length - 1];
+    const cum = new Array(e.cum.length);
+    for (let j = 0; j < cum.length; j++) cum[j] = L - e.cum[e.cum.length - 1 - j];
+    r = e._rev = { coords: co, cum, len: e.len, line: e.line, kind: e.kind };
+  }
+  return r;
+}
+function orientSeg(t, i, e) {
+  if (!e) return e;
+  const a = t.stopC && t.stopC[i], b = t.stopC && t.stopC[i+1];
+  if (!a || !b) return e;
+  const co = e.coords;
+  /* 双端校验:正确条目的首尾就是 A/B 站(允许反向注册)。任一端距两站都 >1.5km
+     → 键名与几何不符的错段(氷川台|平和台 实为千川→池袋段、鴫野|放出 实为北向段),
+     整段弃用,主路径落空后由 officialPath 官方几何接管 */
+  const dH = Math.min(geoKm(a, co[0]), geoKm(b, co[0]));
+  const dT = Math.min(geoKm(a, co[co.length - 1]), geoKm(b, co[co.length - 1]));
+  if (dH > 1.5 || dT > 1.5) return null;
+  if (geoKm(a, co[co.length - 1]) + 0.05 < geoKm(a, co[0])) return revSegEntry(e);
+  return e;
+}
 function trainPosition(t, M) {
   const { dep, arr, N, jas } = t;
   /* 段内线性快径(十九轮):缓存上次解算的(时间窗 m0/m1、折线子段 kLo/kSpan、
@@ -3060,10 +3089,18 @@ function trainPosition(t, M) {
     if (c) {
       let e;
       if (t._seg && t._seg[i] !== undefined) e = t._seg[i];
-      else { e = pickSeg(t, A, B, t.stopC[i]) || null; (t._seg = t._seg || [])[i] = e; }
+      else { e = orientSeg(t, i, pickSeg(t, A, B, t.stopC[i]) || null); (t._seg = t._seg || [])[i] = e; }
       if (e) {
+        /* 停站朝向前瞻化(二十三轮):整段弦是大弯段的平均方向,与出站实际切线可差 110°+
+           (新大阪→法隆寺/下今市→東武WS),停站期间指错向、发车瞬间跳变。
+           orientSeg 保证 e 为 A→B 向,co[0] 即本站 → 沿线前瞻 ~60m 取向 */
         const co = e.coords;
-        _pos[2] = Math.atan2(co[co.length-1][0] - co[0][0], co[co.length-1][1] - co[0][1]);
+        let acc = 0, j = 1;
+        while (j < co.length && acc < 0.06) { acc += geoKm(co[j-1], co[j]); j++; }
+        const pk = co[Math.min(j, co.length - 1)];
+        _pos[2] = (Math.abs(pk[0]-co[0][0]) + Math.abs(pk[1]-co[0][1])) > 1e-6
+          ? Math.atan2(pk[0]-co[0][0], pk[1]-co[0][1])
+          : Math.atan2(co[co.length-1][0] - co[0][0], co[co.length-1][1] - co[0][1]);
       } else {
         const op = officialPath(t, i); // 自有几何无该站对段时, 朝向取官方区间折线
         if (op) { const co = op.coords, k = Math.min(2, co.length - 1);
@@ -3077,7 +3114,7 @@ function trainPosition(t, M) {
   let segEntry;
   if (t._seg && t._seg[i] !== undefined) segEntry = t._seg[i];
   else {
-    segEntry = pickSeg(t, A, B, t.stopC[i]) || null;
+    segEntry = orientSeg(t, i, pickSeg(t, A, B, t.stopC[i]) || null);
     (t._seg = t._seg || [])[i] = segEntry;
   }
   let coords = null, cum = null, len = 0, line = '', kind = '';
@@ -3099,7 +3136,10 @@ function trainPosition(t, M) {
       if (cA && cB && geoKm(cA, cB) > 300) cB = null;
       let a2 = -1, b2 = -1, m0 = 0, m1 = 1;
       if (cA && cB) {
-        path = segSubPath(A, B, cA, cB, lsT) || officialPath(t, i) || findPathOnLines(A, B, lsT, t.jas[i], t.jas[i+1]) || bridgePath(A, B, lsT, t.jas[i], t.jas[i+1]) || routeByStops(A, B, lsT);
+        /* 二十三轮链序对调:officialPath(逐区间官方折线,端点=时刻表站对,方向带负lid反转)权威优先;
+           segSubPath 邻段投影截取退居其次 —— 市区短站距下错误邻段端点可同时落入端点容差
+           (七隈線 六本松→桜坂 被 別所|六本松 段截反),官方几何在场时不应被其遮蔽 */
+        path = officialPath(t, i) || segSubPath(A, B, cA, cB, lsT) || findPathOnLines(A, B, lsT, t.jas[i], t.jas[i+1]) || bridgePath(A, B, lsT, t.jas[i], t.jas[i+1]) || routeByStops(A, B, lsT);
         m0 = t.dep[i]; m1 = Math.max(t.arr[i+1], m0 + 1);
       } else {
         /* 区间站无坐标:用上下游最近已知站对重建轨道路径(磐越西線五泉→津川 真实几何),时间映射到该站对 */
@@ -3117,10 +3157,18 @@ function trainPosition(t, M) {
         if (geoKm(t.stopC[i], c1) < geoKm(t.stopC[i], c0)) path = withLen(path.coords.slice().reverse());
       }
       fb = { coords: path ? path.coords : null, cum: path ? path.cum : null, len: path ? path.len : 0, line: '', kind: '', m0, m1, clamp: false };
+      /* 站锚定判定(二十三轮):officialPath/segSubPath 的路径首尾即站坐标(≤2.5km)。
+         直通运行的班次名义线路 ≠ 实际走行线(相鉄直通 海老名→大和 名义東海道本線),
+         锚定路径若再按名义 lineSet 钳制,会被整段拽到名义线路上 = 串线。锚定 → 信任路径跳过钳制。 */
+      let anchored = false;
+      if (fb.coords && cA && cB) {
+        const hh = fb.coords[0], tt = fb.coords[fb.coords.length - 1];
+        anchored = Math.min(geoKm(cA, hh), geoKm(cB, hh)) <= 2.5 && Math.min(geoKm(cA, tt), geoKm(cB, tt)) <= 2.5;
+      }
       /* 钳制预检(生成时一次):路径中点若偏离途经线路 >8km → 直接把路径替换为
          投影段的几何(保证全程在线), 渲染帧零钳制开销 —— 避免每帧 distToLineSet+projToTrack
          网格全扫(大阪等密段区单次 ~10ms, 是卡顿元凶) */
-      if (fb.coords && fb.coords.length > 1 && lsT.size) {
+      if (!anchored && fb.coords && fb.coords.length > 1 && lsT.size) {
         const mid = fb.coords[fb.coords.length >> 1];
         if (distToLineSet(mid[0], mid[1], lsT) > 8) {
           const pp = projToTrack(mid, lsT);
@@ -3132,6 +3180,14 @@ function trainPosition(t, M) {
             fb.coords = w.coords; fb.cum = w.cum; fb.len = w.len;
           } else fb.clamp = true; /* 投影失败(离线>10km 无段): 保持原路径, 渲染帧不再尝试钳制 */
         }
+      }
+      /* 终点校验:fb 首尾应落在 cA/cB 附近(合法链源端点均为站坐标)。
+         同名站错配(有楽町→豊洲 解析到 11km 外)产出远地路径 → 弃用,末段落回骨架线插值 */
+      if (fb.coords && cA && cB) {
+        const h = fb.coords[0], tl = fb.coords[fb.coords.length - 1];
+        const dH2 = Math.min(geoKm(cA, h), geoKm(cB, h));
+        const dT2 = Math.min(geoKm(cA, tl), geoKm(cB, tl));
+        if (dH2 > 2.5 || dT2 > 2.5) { fb.coords = null; fb.cum = null; fb.len = 0; }
       }
       fc[i] = fb;
     }

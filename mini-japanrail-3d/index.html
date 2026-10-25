@@ -567,6 +567,8 @@ button { font-family:inherit; }
 .st-badge { display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:5px; vertical-align:1.5px; }
 .st-badge.run { background:#34d399; box-shadow:0 0 0 3px rgba(52,211,153,.18); }
 .st-badge.dwell { background:#fbbf24; box-shadow:0 0 0 3px rgba(251,191,36,.18); }
+.dly-chip { display:inline-block; margin-left:8px; padding:1px 7px; border-radius:8px; background:rgba(251,113,133,.16); color:#fb7185; font-weight:600; font-size:11px; vertical-align:1px; white-space:nowrap; }
+#detail .vtm .dlyn { color:#fb7185; font-weight:600; margin-left:2px; white-space:nowrap; }
 #detail .d-sep { height:1px; margin:12px 0 0; background:linear-gradient(90deg, transparent, var(--glass-edge) 18%, var(--glass-edge) 82%, transparent); }
 #detail .d-act { display:flex; gap:7px; margin-top:12px; }
 #detail .d-act .btn { min-height:40px; font-size:12.5px; font-weight:600; flex:1; padding:0 12px; border-radius:var(--r-pill);
@@ -1174,6 +1176,8 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
         <div class="sw on" id="swTrail"><span id="tSw5">列车光晕</span><span class="trk"></span></div>
         <div class="sw" id="swCopyBad"><span id="tSw6">复制异常车辆</span><span class="trk"></span></div>
         <div class="sw on" id="swTip"><span id="tSw7">列车悬浮提示</span><span class="trk"></span></div>
+        <div class="sw on" id="swDelay"><span id="tSw14">实时列车延误</span><span class="trk"></span></div>
+        <div class="swnote" id="tSw14Note">来自 jr-delay 的实时晚点,每 5 分钟自动更新;晚点列车按实际运行显示,时刻表加注 +分钟</div>
         <div class="sec-t" id="tMode" style="margin-top:12px">列车显示</div>
         <div class="frow" id="trainModeRow">
           <button class="chip" data-mode="3d" id="tMode3d">3D</button>
@@ -1526,7 +1530,7 @@ const I18N = {
     filterT:'线路类型', legendT:'图例', dayT:'运行日', dayAuto:'自动', setT:'设置', dataT:'数据', helpT:'帮助', aboutT:'关于',
     about1:'Mini JapanRail — 全日本列车实时运行可视化地图（列車走行位置・運行情報）。基于本地时刻表在浏览器端实时推算新干线・特急・在来线・地铁・路面电车约 4,000 列列车的走行位置，支持 3D 地球投影、时钟回放与路线搜索。', about2:'收录全国 600+ 条铁路线路、8,900+ 个车站。数据源为日本全国铁路计划时刻表，每周自动刷新；页面运行时零外部请求。', about3:'本站为个人爱好项目，数据仅供学习参考。', about4:'隐私政策',
     about5:'主要功能：实时列车位置・走行位置动画 / 3D 地球投影 / 时钟回放（0.5–32×）/ 起终点路线搜索 / 车站查询与途经线路 / 运行日切换 / 线路类型过滤 / 日・中・英三语。', about6:'浏览静态页面：',
-    sw1:'车站标签', sw2:'轨道光晕', sw3:'车站点', sw4:'底图瓦片', sw5:'列车光晕', sw6:'复制异常车辆', sw7:'列车悬浮提示', sw8:'车站轮廓', sw9:'出入口', sw10:'详细股道', sw12:'车站徽章', sw13:'高倍率 3D 列车模型',
+    sw1:'车站标签', sw2:'轨道光晕', sw3:'车站点', sw4:'底图瓦片', sw5:'列车光晕', sw6:'复制异常车辆', sw7:'列车悬浮提示', sw8:'车站轮廓', sw9:'出入口', sw10:'详细股道', sw12:'车站徽章', sw13:'高倍率 3D 列车模型', sw14:'实时列车延误', sw14Note:'来自 jr-delay 的实时晚点,每 5 分钟自动更新;晚点列车按实际运行显示,时刻表加注 +分钟', dlyAgo:'数据 {0} 分钟前',
     m3dRowL:'模型', m3dBtn:'查看 3D 模型', m3dHint:'拖动旋转 · 滚轮/双指缩放 · 选视点自动回中', m3dLoadT:'正在加载模型…', m3dNone:'该车型暂无 3D 模型', m3dVpL:'视点', m3dMdL:'编组', m3dVp:['斜视','侧面','正面','俯视'], m3dMdAll:'全编组', m3dMdHead:'先头车', m3dMdAuto:'自动旋转', m3dDOp:'运营商', m3dDCars:'编组', m3dDLen:'编组长', m3dDDim:'车体', m3dDUnit:'辆', m3dSaved:'已保存截图',
     sw11:'性能改善', sw11Note:'低倍率下只渲染新干线・特急，放大后逐级加入快速・普通列车（含地铁・路面电车）；等级切换与进出视野均为淡入淡出，避免列车突然出现或消失',
     modeT:'列车显示', mode3d:'3D', modeIcon:'图标', modeCute:'可爱',
@@ -1536,7 +1540,7 @@ const I18N = {
     now:'回到现在', station:'车站', line:'线路', stops:'站', transfers:'换乘', routeMile:'里程', routeNone:'未找到连通路径(请检查站名)',
     routeSame:'起终点相同', badStation:'找不到车站', h1:'拖动平移 · 滚轮缩放 · 右键旋转/倾斜', h2:'点击列车 = 详情 + 相机跟随 · 点空白取消',
     h3:'点击车站 = 途经线路', h4:'底部时钟:暂停 / 拖动时间 / 0.5–32× 倍速回放', h5:'搜索站名:日文 / 中文(东京·涩谷)/ 英文(Tokyo, Shinjuku)',
-    h6:'数据为计划时刻表,不含实际延误', next:'下一站', eta:'约', min:'分', dep:'发车', arr:'到达', status:'状态',
+    h6:'基于计划时刻表,可在设置中开启实时延误', next:'下一站', eta:'约', min:'分', dep:'发车', arr:'到达', status:'状态',
     stopsTitle:'停靠站', stopsCount:'站', colStop:'站', colArr:'到', colDep:'发', colPlat:'站台', platRefTitle:'各线路站台参考', platRefTip:'各线路经停本站的站台号参考（数据：dokorail.jp）',
     running:'运行中', dwelling:'停車中', speed:'速度', kmh:'km/h', firstLast:'全程', track:'轨道 = 官方线路色', legendNote:'列车颜色 = 所属线路色',
     followBtn:'跟随此列车', locateBtn:'定位', stopFollowBtn:'停止跟随', tripId:'班次', viaLines:'途经线路',
@@ -1560,7 +1564,7 @@ const I18N = {
     filterT:'路線種別', legendT:'凡例', dayT:'運行日', dayAuto:'自動', setT:'設定', dataT:'データ', helpT:'ヘルプ', aboutT:'このサイトについて',
     about1:'ミニ日本鉄道 — 全国鉄道リアルタイム3Dマップ（列車走行位置・運行情報）。ローカル時刻表から新幹線・特急・在来線・地下鉄・路面電車 約 4,000 列の走行位置をブラウザ上でリアルタイムに再現。3D 地球投影・時刻表再生・経路検索に対応。', about2:'全国 600 以上の路線・8,900 以上の駅を収録。データソースは全国鉄道の計画時刻表で、毎週自動更新。ページ実行時の外部リクエストはありません。', about3:'個人の趣味プロジェクトです。データは学習・参考用です。', about4:'プライバシーポリシー',
     about5:'主な機能：リアルタイム列車位置・走行位置アニメーション / 3D 地球投影 / 時刻表再生（0.5〜32倍速）/ 経路検索 / 駅検索と経由路線 / 運行日切替 / 路線種別フィルタ / 日・中・英 3 言語。', about6:'静的ページを見る：',
-    sw1:'駅ラベル', sw2:'軌道グロー', sw3:'駅ドット', sw4:'背景タイル', sw5:'列車グロー', sw6:'異常列車コピー', sw7:'列車ホバーチップ', sw8:'駅舎ポリゴン', sw9:'出入口', sw10:'詳細軌道', sw12:'駅バッジ', sw13:'高倍率 3D 列車モデル',
+    sw1:'駅ラベル', sw2:'軌道グロー', sw3:'駅ドット', sw4:'背景タイル', sw5:'列車グロー', sw6:'異常列車コピー', sw7:'列車ホバーチップ', sw8:'駅舎ポリゴン', sw9:'出入口', sw10:'詳細軌道', sw12:'駅バッジ', sw13:'高倍率 3D 列車モデル', sw14:'リアルタイム列車遅延', sw14Note:'jr-delay のリアルタイム遅延(5分毎に自動更新)。遅延列車は実際の運行で表示し、時刻表に+分を注記', dlyAgo:'データ {0} 分前',
     m3dRowL:'モデル', m3dBtn:'3Dモデルを見る', m3dHint:'ドラッグで回転・ホイール/2本指でズーム · 視点を選ぶと中央に戻ります', m3dLoadT:'モデルを読み込み中…', m3dNone:'この車種の3Dモデルはありません', m3dVpL:'視点', m3dMdL:'編成', m3dVp:['斜め','側面','正面','上面'], m3dMdAll:'全編成', m3dMdHead:'先頭車', m3dMdAuto:'自動回転', m3dDOp:'事業者', m3dDCars:'編成', m3dDLen:'編成長', m3dDDim:'車体', m3dDUnit:'両', m3dSaved:'スクリーンショットを保存しました',
     sw11:'パフォーマンス改善', sw11Note:'低ズームでは新幹線・特急のみ描画し、拡大すると快速・普通列車（地下鉄・路面電車を含む）を段階的に追加。種別の切替や画面への出入りはフェードイン／アウトで行われ、列車が突然現れたり消えたりしません',
     modeT:'列車表示', mode3d:'3D', modeIcon:'アイコン', modeCute:'かわいい',
@@ -1570,7 +1574,7 @@ const I18N = {
     now:'現在に戻る', station:'駅', line:'路線', stops:'駅', transfers:'乗換', routeMile:'距離', routeNone:'連絡経路なし(駅名確認)',
     routeSame:'同一点', badStation:'駅が見つかりません', h1:'ドラッグ移動 · ホイール拡縮 · 右回転/傾き', h2:'列車クリック = 詳細 + 追跡 · 空白で解除',
     h3:'駅クリック = 経由路線', h4:'下部時計:一時停止 / 時間操作 / 0.5–32× 再生', h5:'駅名検索:日本語 / 中国語 / 英語(Tokyo, Shinjuku)',
-    h6:'計画時刻表ベース・遅延は含まない', next:'次駅', eta:'約', min:'分', dep:'発', arr:'着', status:'状態',
+    h6:'計画時刻表ベース(設定でリアルタイム遅延に対応)', next:'次駅', eta:'約', min:'分', dep:'発', arr:'着', status:'状態',
     stopsTitle:'停車駅', stopsCount:'駅', colStop:'駅', colArr:'着', colDep:'発', colPlat:'番線', platRefTitle:'路線別の番線参考', platRefTip:'各線がこの駅で使用する番線（データ：dokorail.jp）',
     running:'運行中', dwelling:'停車中', speed:'速度', kmh:'km/h', firstLast:'全区間', track:'路線 = 公式路線色', legendNote:'列車色 = 所属路線色',
     followBtn:'列車を追跡', locateBtn:'位置', stopFollowBtn:'追跡停止', tripId:'列車', viaLines:'経由路線',
@@ -1594,7 +1598,7 @@ const I18N = {
     filterT:'Line types', legendT:'Legend', dayT:'Service day', dayAuto:'Auto', setT:'Settings', dataT:'Data', helpT:'Help', aboutT:'About',
     about1:'Mini JapanRail — a real-time 3D map of all Japan railways (train live positions). Driven by local timetables, it animates the positions of ~4,000 Shinkansen, limited express, local, subway and tram trains, with 3D globe projection, timetable replay and route search.', about2:'Covers 600+ railway lines and 8,900+ stations. Data source: scheduled timetables for all Japan railways, auto-refreshed weekly; zero external requests at runtime.', about3:'A personal hobby project — data provided for reference only.', about4:'Privacy Policy',
     about5:'Key features: live train positions / 3D globe projection / timetable replay (0.5–32×) / route search / station lookup and its lines / service-day switch / line-type filter / Japanese, Chinese and English UI.', about6:'Browse static pages:',
-    sw1:'Station labels', sw2:'Track glow', sw3:'Station dots', sw4:'Basemap tiles', sw5:'Train glow', sw6:'Copy off-rail trains', sw7:'Train hover tooltip', sw8:'Station footprint', sw9:'Station exits', sw10:'Detailed tracks', sw12:'Station badges', sw13:'High-zoom 3D train models',
+    sw1:'Station labels', sw2:'Track glow', sw3:'Station dots', sw4:'Basemap tiles', sw5:'Train glow', sw6:'Copy off-rail trains', sw7:'Train hover tooltip', sw8:'Station footprint', sw9:'Station exits', sw10:'Detailed tracks', sw12:'Station badges', sw13:'High-zoom 3D train models', sw14:'Live train delays', sw14Note:'Live delays from jr-delay, auto-refreshed every 5 min; delayed trains run late and show +min in the timetable', dlyAgo:'data {0} min ago',
     m3dRowL:'Model', m3dBtn:'View 3D model', m3dHint:'Drag to rotate · Scroll/pinch to zoom · Picking a view re-centers', m3dLoadT:'Loading model…', m3dNone:'No 3D model for this type', m3dVpL:'View', m3dMdL:'Consist', m3dVp:['Diagonal','Side','Front','Top'], m3dMdAll:'Full', m3dMdHead:'Head car', m3dMdAuto:'Auto-rotate', m3dDOp:'Operator', m3dDCars:'Cars', m3dDLen:'Length', m3dDDim:'Car', m3dDUnit:' cars', m3dSaved:'Screenshot saved',
     sw11:'Performance boost', sw11Note:'At low zoom only Shinkansen and limited express are drawn; zooming in progressively adds rapid and local trains (incl. subway and tram). Grade switches and entering/leaving the view cross-fade, so trains never pop in or out',
     modeT:'Train display', mode3d:'3D', modeIcon:'Icon', modeCute:'Cute',
@@ -1604,7 +1608,7 @@ const I18N = {
     now:'Now', station:'Station', line:'Line', stops:'stops', transfers:'transfers', routeMile:'Distance', routeNone:'No connected route (check names)',
     routeSame:'Same stations', badStation:'Station not found', h1:'Drag to pan · Scroll to zoom · Right-drag rotate/tilt', h2:'Click train = detail + follow · Blank = cancel',
     h3:'Click station = its lines', h4:'Bottom clock: pause / scrub / 0.5–32× replay', h5:'Search stations: Japanese / Chinese / English (Tokyo, Shinjuku)',
-    h6:'Scheduled timetable — no live delays', next:'Next', eta:'~', min:'min', dep:'dep', arr:'arr', status:'Status',
+    h6:'Scheduled timetables, optional live delays', next:'Next', eta:'~', min:'min', dep:'dep', arr:'arr', status:'Status',
     stopsTitle:'Stops', stopsCount:'stops', colStop:'Station', colArr:'Arr', colDep:'Dep', colPlat:'Platform', platRefTitle:'Platforms by line', platRefTip:'Platform numbers used by each line at this station (data: dokorail.jp)',
     running:'Running', dwelling:'At station', speed:'Speed', kmh:'km/h', firstLast:'Route', track:'Track = official line color', legendNote:'Train color = line color',
     followBtn:'Follow train', locateBtn:'Locate', stopFollowBtn:'Stop follow', tripId:'Trip', viaLines:'Lines',
@@ -2751,6 +2755,9 @@ function parseTrip(t) {
 
 /* ---------------- 位置引擎 ---------------- */
 function windowShift(t, M) {
+  /* 实时延误(二十三轮):t.dly>0 时把实时分钟折回时刻表分钟 —— 位置/活跃窗/跟随/ETA
+     全部经由本函数,折算集中在此,非延误班次逐位不变 */
+  if (t.dly) M -= t.dly;
   if (M < t.w0 && M + 1440 <= t.w1) return M + 1440;
   if (M > t.w1 && M - 1440 >= t.w0) return M - 1440;
   /* 连挂 1 分钟偏移补偿：后发车的那趟在连挂窗口内时钟往前拨，视觉与前车贴合 */
@@ -3733,6 +3740,122 @@ function buildDayIndex() {
   for (let m = 0; m < 1440; m++) { acc += diff[m]; diff[m] = acc; }
   dayActiveMin = diff;
   dayListBit = dayBit; dayListSrc = tripList;
+  try { delayOnDayRebuild(); } catch (e) {}
+}
+/* ---------------- 实时延误(jr-delay / github ooep/delay) ----------------
+   消费 delays.json 完整版:trains[].suki[0].key = 主站 tmap 段 ID(t.t)。
+   tmap 当天多班次共享 → 班次级决胜:tmap + 发车分钟(精确;无解才 ±1 且须唯一)
+   + 始发站一致 + 「报告所在站 ∈ 停靠序列」复核;任何不唯一/不符 → 整条弃用。
+   时效:5 分钟重拉;数据龄 >45min 清空(源 02:00–05:00 停更自然回落为无延误)。 */
+const DELAY_URLS = [
+  'https://cdn.jsdelivr.net/gh/ooep/delay@main/data/delays.json',
+  'https://raw.githubusercontent.com/ooep/delay/main/data/delays.json',
+];
+const DELAY_FETCH_MS = 5 * 60 * 1000, DELAY_MAX_AGE_MS = 45 * 60 * 1000, DELAY_STALE_MS = 20 * 60 * 1000;
+let delayOn = (() => { const v = localStorage.getItem('mjr3d_delay'); return v === null ? true : v === '1'; })();
+const delayedSet = new Set();
+let delayTmapIdx = null, delayLastFetch = 0, delayTimer = null, delayGenMs = 0, delayBusy = false;
+function delayClear() {
+  if (!delayedSet.size) return;
+  for (const t of delayedSet) { t.dly = 0; t._fk = null; }
+  delayedSet.clear();
+}
+function delayParseGen(iso) {
+  if (typeof iso !== 'string') return 0;
+  const ts = Date.parse(iso);
+  return isNaN(ts) ? 0 : ts;
+}
+function delayHm(s) {  /* "20:23"/"24:02" → 分钟,可 >1439,与 w0/dep[0] 同基准 */
+  const m = /^(\d{1,2}):(\d{2})$/.exec(String(s || '').trim());
+  return m ? (+m[1]) * 60 + (+m[2]) : null;
+}
+function delayApplyData(d, genMs) {
+  if (!d || !(genMs > 0) || Date.now() - genMs > DELAY_MAX_AGE_MS) { delayClear(); return 0; }
+  const list = Array.isArray(d.trains) ? d.trains : null;
+  if (!list || list.length > 3000) { delayClear(); return 0; }
+  const bit = dayBit, next = new Set();
+  for (const e of list) {
+    const n = Math.round(+e.delay_min);
+    if (!(n >= 1 && n <= 180)) continue;
+    const key = (e && e.suki && e.suki[0] && e.suki[0].key != null) ? String(e.suki[0].key) : null;
+    const depMin = delayHm(e && e.scheduled && e.scheduled.dep);
+    if (key === null || depMin === null || !delayTmapIdx) continue;
+    let cands = delayTmapIdx.get(key);
+    if (!cands || !cands.length) continue;
+    cands = cands.filter(t => (t.r & bit) && !t.bad && t.dep[0] === depMin);
+    if (!cands.length)  /* 同源时刻表理应精确一致;±1 仅供边界兜底,须唯一 */
+      cands = delayTmapIdx.get(key).filter(t => (t.r & bit) && !t.bad && Math.abs(t.dep[0] - depMin) <= 1);
+    if (!cands.length) continue;
+    const origin = (e.scheduled && e.scheduled.origin) || '';
+    if (origin) {
+      const byOrig = cands.filter(t => normName(t.jas[0]) === normName(origin) || t.jas[0].includes(origin) || origin.includes(t.jas[0]));
+      if (byOrig.length) cands = byOrig; else continue;  /* 始发站对不上 → tmap 映射可疑,弃 */
+    }
+    const fromN = normName(e.from || '');
+    if (fromN) {
+      const byFrom = cands.filter(t => t.jasN && t.jasN.indexOf(fromN) >= 0);
+      if (byFrom.length) cands = byFrom; else continue;  /* 报告所在站不在停靠序列 → 弃 */
+    }
+    if (cands.length !== 1) continue;                    /* 仍有歧义 → 宁漏报不误报 */
+    const t = cands[0];
+    if (next.has(t)) continue;
+    next.add(t);
+    if (t.dly !== n) { t.dly = n; t._fk = null; }
+  }
+  for (const t of delayedSet) if (!next.has(t) && t.dly) { t.dly = 0; t._fk = null; }
+  delayedSet.clear(); for (const t of next) delayedSet.add(t);
+  return next.size;
+}
+async function delayFetchOnce() {
+  if (delayBusy) return; delayBusy = true;
+  try {
+    let best = null, bestGen = 0;
+    for (let i = 0; i < DELAY_URLS.length; i++) {
+      try {
+        const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 10000);
+        const res = await fetch(DELAY_URLS[i] + '?t=' + Date.now(), { cache: 'no-store', signal: ctl.signal });
+        clearTimeout(to);
+        if (!res.ok) continue;
+        const d = await res.json();
+        if (d && (d.version === undefined || d.version === 1)) {
+          const g = delayParseGen(d.generated_at);
+          if (g > bestGen) { best = d; bestGen = g; }
+          if (g > 0 && Date.now() - g <= DELAY_STALE_MS) break;  /* 主源新鲜即止;陈旧再试备用源 */
+        }
+      } catch (e) { /* 单源失败继续下一源 */ }
+    }
+    if (best) { delayGenMs = bestGen; delayApplyData(best, bestGen); }  /* 全源失败:保留现状,由 45min 过期兜底清空 */
+    delayLastFetch = Date.now();
+  } finally { delayBusy = false; }
+}
+function delayUiNote() {
+  const el = $('tSw14Note');
+  if (!el) return;
+  const age = (delayOn && delayGenMs) ? Math.max(0, Math.round((Date.now() - delayGenMs) / 60000)) : null;
+  el.textContent = T().sw14Note + (age === null ? '' : ' · ' + T().dlyAgo.replace('{0}', String(age)));
+}
+function delayStart() {
+  if (delayTimer || !delayOn) return;
+  delayTimer = setInterval(() => {
+    if (document.hidden) return;
+    if (Date.now() - delayGenMs > DELAY_MAX_AGE_MS) delayClear();
+    delayFetchOnce();
+  }, DELAY_FETCH_MS);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && delayOn && Date.now() - delayLastFetch > DELAY_FETCH_MS) delayFetchOnce();
+  });
+  delayFetchOnce();
+}
+function delayOnDayRebuild() {  /* 数据加载/换日重建:按当日 dayList 重建索引并重匹配 */
+  delayTmapIdx = new Map();
+  for (const t of dayList) {
+    const k = String(t.t);
+    let a = delayTmapIdx.get(k);
+    if (!a) delayTmapIdx.set(k, a = []);
+    a.push(t);
+  }
+  delayClear();
+  if (delayOn) { if (delayGenMs) delayFetchOnce(); delayStart(); }
 }
 function updateTrains(M, dtms) {
   if (dayList === null || dayListSrc !== tripList || dayListBit !== dayBit) buildDayIndex();
@@ -5715,7 +5838,7 @@ function updateDetailLive(t, p, M, rebuild) {
       '<div class="d-sb">' + t.jas[0] + ' → ' + t.jas[N-1] + ' · ' + fmtHm(t.dep[0]) + '–' + fmtHm(t.arr[N-1]) + '</div></div>' +
       '<button class="btn icon d-x" id="dClose">' + ICO.close + '</button></div>' +
       '<div class="d-meta">' +
-      '<div class="mrow"><span class="lb">' + T().status + '</span><span class="mv"><span class="st-badge ' + (running ? 'run' : 'dwell') + '"></span>' + (running ? T().running + ' · ' + Math.round(p[5]) + ' ' + T().kmh : '<b>' + T().dwelling + '</b> @ ' + jas[i]) + '</span></div>' +
+      '<div class="mrow"><span class="lb">' + T().status + '</span><span class="mv"><span class="st-badge ' + (running ? 'run' : 'dwell') + '"></span>' + (running ? T().running + ' · ' + Math.round(p[5]) + ' ' + T().kmh : '<b>' + T().dwelling + '</b> @ ' + jas[i]) + (t.dly > 0 ? '<span class="dly-chip">+' + Math.round(t.dly) + T().min + '</span>' : '') + '</span></div>' +
       '<div class="mrow"><span class="lb">' + T().next + '</span><span class="mv">' + nextNm + ' ' + eta + '</span></div>' +
       (uniqLines.length ? '<div class="mrow"><span class="lb">' + T().viaLines + '</span><span class="mv">' + uniqLines.slice(0, 4).map(l => '<span class="lnchip" style="background:' + (lineColor.get(l) || '#6e6e6e') + '">' + l + '</span>').join('') + (uniqLines.length > 4 ? ' +' + (uniqLines.length - 4) : '') + '</span></div>' : '') +
       (t.cpl && t.cpl.length ? '<div class="d-cpl mrow"><span class="lb">' + T().cplLabel + '</span><span class="mv">' + t.cpl.map(c => {
@@ -5733,13 +5856,14 @@ function updateDetailLive(t, p, M, rebuild) {
       '<div class="st-list">' +
       (function () {
         let s = '';
+        const dlyTag = t.dly > 0 ? '<span class="dlyn">+' + Math.round(t.dly) + '</span>' : '';
         for (let k = 0; k < N; k++) {
           const upCol = (k > 0) ? (lineColor.get(lineOfPair(t, k - 1)) || '#8899aa') : '';
           const dnCol = (k < N - 1) ? (lineColor.get(lineOfPair(t, k)) || '#8899aa') : '';
           const dotCol = upCol || dnCol;
           const tm = [];
-          if (k > 0) tm.push('<span class="t-arr">' + T().colArr + fmtHm(t.arr[k]) + '</span>');
-          if (k < N - 1) tm.push('<span class="t-dep">' + T().colDep + fmtHm(t.dep[k]) + '</span>');
+          if (k > 0) tm.push('<span class="t-arr">' + T().colArr + fmtHm(t.arr[k]) + dlyTag + '</span>');
+          if (k < N - 1) tm.push('<span class="t-dep">' + T().colDep + fmtHm(t.dep[k]) + dlyTag + '</span>');
           s += '<div class="dstop" data-i="' + k + '"><span class="vn">' +
             (k > 0 ? '<span class="vln up" style="background:' + upCol + '"></span>' : '') +
             '<span class="dot" style="--dc:' + dotCol + '"></span>' +
@@ -5779,7 +5903,7 @@ function updateDetailLive(t, p, M, rebuild) {
     /* 每帧 innerHTML 重写有 GC/排版开销:内容不变时跳过,只写变化行 */
     const st = detailEl.querySelector('.d-meta');
     if (st) {
-      const s1 = '<span class="lb">' + T().status + '</span><span class="mv"><span class="st-badge ' + (running ? 'run' : 'dwell') + '"></span>' + (running ? T().running + ' · ' + Math.round(p[5]) + ' ' + T().kmh : '<b>' + T().dwelling + '</b> @ ' + jas[i]) + '</span>';
+      const s1 = '<span class="lb">' + T().status + '</span><span class="mv"><span class="st-badge ' + (running ? 'run' : 'dwell') + '"></span>' + (running ? T().running + ' · ' + Math.round(p[5]) + ' ' + T().kmh : '<b>' + T().dwelling + '</b> @ ' + jas[i]) + (t.dly > 0 ? '<span class="dly-chip">+' + Math.round(t.dly) + T().min + '</span>' : '') + '</span>';
       if (s1 !== t._dS1) { st.children[0].innerHTML = s1; t._dS1 = s1; }
       const s2 = '<span class="lb">' + T().next + '</span><span class="mv">' + nextNm + ' ' + eta + '</span>';
       if (s2 !== t._dS2) { st.children[1].innerHTML = s2; t._dS2 = s2; }
@@ -6933,6 +7057,15 @@ $('swOrm').addEventListener('click', function () {
   if (ormEnabled && !ormLoaded) fetchOrmTracks(); /* 低配设备首次开启时按需拉取 */
 });
 $('swTrail').addEventListener('click', function () { this.classList.toggle('on'); });
+/* 实时延误:默认开。关 = 停拉取并立即恢复全部正点;开 = 立即拉取 */
+$('swDelay').classList.toggle('on', delayOn);
+$('swDelay').addEventListener('click', function () {
+  delayOn = !delayOn; this.classList.toggle('on', delayOn);
+  localStorage.setItem('mjr3d_delay', delayOn ? '1' : '0');
+  if (delayOn) { delayStart(); }
+  else { if (delayTimer) { clearInterval(delayTimer); delayTimer = null; } delayClear(); }
+  delayUiNote();
+});
 /* 性能改善(默认关):低倍率分层显示 + 淡入淡出。开启 = 低缩放只渲染新干线/特急。
    开关切换后等级门重新求值,差额部分走已有的 alpha 过渡淡入/淡出,不会突兀。 */
 $('swPerf').classList.toggle('on', perfLod);
@@ -7215,6 +7348,7 @@ function applyLang() {
   $('tSw1').textContent = t.sw1; $('tSw2').textContent = t.sw2; $('tSw3').textContent = t.sw3; $('tSw4').textContent = t.sw4; $('tSw5').textContent = t.sw5; $('tSw6').textContent = t.sw6; $('tSw7').textContent = t.sw7; $('tSw8').textContent = t.sw8; $('tSw9').textContent = t.sw9;
   if ($('tSw11')) $('tSw11').textContent = t.sw11; if ($('tSw11Note')) $('tSw11Note').textContent = t.sw11Note;
   if ($('tSw12')) $('tSw12').textContent = t.sw12;
+  if ($('tSw14')) { $('tSw14').textContent = t.sw14; delayUiNote(); }
   if ($('tM3dVpL')) {
     $('tM3dVpL').textContent = t.m3dVpL; $('tM3dMdL').textContent = t.m3dMdL;
     const vr = $('m3dViewRow'), mr = $('m3dModeRow');

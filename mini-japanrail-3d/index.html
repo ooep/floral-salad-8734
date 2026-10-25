@@ -496,7 +496,7 @@ button { font-family:inherit; }
 #m3dViewer .m3d-hint { font-size:11px; color:var(--dim); text-align:center; padding-top:5px; pointer-events:none; }
 #m3dViewer .m3d-dn { display:flex; gap:2px; background:rgba(10,14,22,.55); border:1px solid rgba(255,255,255,.14); border-radius:999px; padding:3px; -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); }
 #m3dViewer .m3d-dn button { border:0; background:transparent; color:var(--dim); font-size:13px; line-height:1; padding:4px 10px; border-radius:999px; cursor:pointer; transition:background .15s, color .15s; }
-#m3dViewer .m3d-dn button[aria-pressed="true"] { background:var(--acc); color:#fff; }
+#m3dViewer .m3d-dn button[aria-pressed="true"] { background:var(--m3d-acc, var(--acc)); color:#fff; }
 #m3dViewer .m3d-panel { position:absolute; left:max(10px,env(safe-area-inset-left)); right:max(10px,env(safe-area-inset-right)); bottom:max(10px,env(safe-area-inset-bottom)); z-index:2; display:flex; flex-direction:column; gap:7px; padding:12px 14px 10px; background:rgba(9,13,21,.66); border:1px solid rgba(255,255,255,.11); border-radius:18px; box-shadow:0 10px 36px rgba(0,0,0,.38); -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px); max-height:46%; overflow-y:auto; scrollbar-width:none; opacity:0; transform:translateY(14px); transition:opacity .36s ease .1s, transform .36s var(--spring-out, ease) .1s; }
 #m3dViewer.open .m3d-panel { opacity:1; transform:none; }
 #m3dViewer .m3d-panel::-webkit-scrollbar { display:none; }
@@ -506,11 +506,21 @@ button { font-family:inherit; }
 #m3dViewer .mchip { flex:none; border:1px solid rgba(255,255,255,.13); background:rgba(127,140,160,.10); color:var(--dim); font-size:11.5px; font-weight:600; padding:4.5px 11px; border-radius:999px; cursor:pointer; -webkit-tap-highlight-color:transparent; transition:background .15s, color .15s, border-color .15s, transform .12s; }
 #m3dViewer .mchip:hover { background:rgba(127,140,160,.20); color:var(--txt); }
 #m3dViewer .mchip:active { transform:scale(.94); }
-#m3dViewer .mchip.on { background:var(--acc); border-color:var(--acc); color:#fff; }
-#m3dViewer .mchip:focus-visible { outline:2px solid var(--acc); outline-offset:2px; }
+#m3dViewer .mchip.on { background:var(--m3d-acc, var(--acc)); border-color:var(--m3d-acc, var(--acc)); color:#fff; }
+#m3dViewer .mchip:focus-visible { outline:2px solid var(--m3d-acc, var(--acc)); outline-offset:2px; }
 #m3dViewer .m3d-detail { display:flex; flex-wrap:wrap; gap:5px 0; font-size:11px; color:var(--dim); border-top:1px solid rgba(255,255,255,.08); padding-top:9px; letter-spacing:.2px; }
 #m3dViewer .m3d-detail b { color:var(--txt); font-weight:700; }
 #m3dViewer .m3d-detail .d { display:inline-flex; align-items:baseline; gap:4px; margin-right:13px; white-space:nowrap; }
+/* ── 明亮主题皮肤(跟随主站 data-theme=light):浅玻璃面板/浅压光/深字 ── */
+#m3dViewer.light .m3d-scrim { background:linear-gradient(to bottom, rgba(255,255,255,.72), rgba(255,255,255,0)); }
+#m3dViewer.light .m3d-panel { background:rgba(250,251,253,.80); border-color:rgba(20,30,50,.10); box-shadow:0 10px 36px rgba(30,40,60,.20); }
+#m3dViewer.light .m3d-dn { background:rgba(255,255,255,.70); border-color:rgba(20,30,50,.12); }
+#m3dViewer.light .m3d-dn button { color:#5a6472; }
+#m3dViewer.light .m3d-x { background:rgba(255,255,255,.70); border-color:rgba(20,30,50,.12); color:#1c2430; }
+#m3dViewer.light .m3d-x:hover { background:rgba(255,255,255,.95); }
+#m3dViewer.light .mchip { background:rgba(20,30,50,.05); border-color:rgba(20,30,50,.10); color:#5a6472; }
+#m3dViewer.light .mchip:hover { background:rgba(20,30,50,.12); color:#10161f; }
+#m3dViewer.light .m3d-detail { border-top-color:rgba(20,30,50,.08); }
 #m3dViewer .m3d-load { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); z-index:2; color:var(--dim); font-size:12.5px; display:flex; flex-direction:column; align-items:center; gap:10px; pointer-events:none; }
 #m3dViewer .m3d-load .spin { width:26px; height:26px; border-radius:50%; border:2.5px solid rgba(120,150,200,.22); border-top-color:var(--acc-txt); animation:m3dSpin .8s linear infinite; }
 @keyframes m3dSpin { to { transform:rotate(360deg); } }
@@ -7609,6 +7619,12 @@ const M3D = (() => {
       d.ground.scale.setScalar(Math.max(size.x, size.z) * 0.62 + 6);
       d.ground.position.set(c.x, -0.04, c.z);
       drBindPanel(t, tmpl, inst, c, r);
+      try {
+        const vEl = $('m3dViewer');
+        const lc = (t.lines && t.lines.length) ? lineColor.get(t.lines[0]) : '';
+        vEl.style.setProperty('--m3d-acc', lc || '');
+        vEl.classList.toggle('light', document.documentElement.getAttribute('data-theme') === 'light');
+      } catch (e) {}
       $('m3dLoad').style.display = 'none';
       cancelAnimationFrame(d.raf);
       d.raf = requestAnimationFrame(drLoop);

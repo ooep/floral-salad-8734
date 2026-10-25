@@ -563,10 +563,6 @@ button { font-family:inherit; }
 #detail .vn .vln.up { top:0; height:50%; }
 #detail .vn .vln.dn { bottom:0; height:50%; }
 #detail .vn .dot { position:absolute; left:50%; top:50%; width:10px; height:10px; border-radius:50%; transform:translate(-50%,-50%); z-index:2; box-sizing:border-box; border:2px solid var(--dc, var(--glass-edge)); background:var(--glass-solid); }
-#detail .vn .dst-ic { position:absolute; left:50%; top:50%; width:20px; height:20px; transform:translate(-50%,-50%); z-index:2; object-fit:contain; display:block; border-radius:4.5px; background:rgba(255,255,255,.94); box-shadow:0 0 0 1px rgba(8,12,20,.32), 0 1px 3px rgba(0,0,0,.32); transition:filter .3s, box-shadow .3s; }   /* 浅色底牌+小圆角:圆/方/盾形记号都完整显示,不裁形状 */
-#detail .dstop.here .dst-ic { box-shadow:0 0 0 2px var(--acc), 0 0 0 5px var(--acc-soft); }
-#detail .dstop.next .dst-ic { box-shadow:0 0 0 2px var(--acc); }
-#detail .dstop.done .dst-ic { filter:grayscale(.9); opacity:.6; }
 #detail .vc { flex:1; min-width:0; display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8.5px 0; }
 #detail .vnm { flex:1 1 auto; min-width:0; font-size:13px; font-weight:600; color:var(--txt); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 #detail .vmeta { flex:0 0 auto; max-width:62%; display:flex; flex-direction:column; align-items:flex-end; gap:2.5px; line-height:1.25; }
@@ -1052,6 +1048,10 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
 .tc-media { --lrail:#3d7bf0; position:relative; height:46px; margin:2px 8px 11px; overflow:hidden; }
 .tc-media .tc-rail { position:absolute; left:0; right:0; bottom:7px; height:2px; border-radius:2px;
   background:linear-gradient(90deg, transparent, color-mix(in srgb, var(--lrail) 60%, transparent) 16%, color-mix(in srgb, var(--lrail) 60%, transparent) 84%, transparent); }
+.tc-media .tc-rail::before, .tc-media .tc-rail::after { content:''; position:absolute; top:-2px; width:6px; height:6px; border-radius:50%;
+  background:color-mix(in srgb, var(--lrail) 80%, #fff); box-shadow:0 0 7px color-mix(in srgb, var(--lrail) 65%, transparent); }
+.tc-media .tc-rail::before { left:3px; }
+.tc-media .tc-rail::after { right:3px; }
 .tc-media .tc-train { position:absolute; left:50%; bottom:6px; margin-left:-22px; animation:tcRide 3.6s cubic-bezier(.42,.08,.58,.92) infinite; }
 @keyframes tcRide { 0% { transform:translateX(-66px); opacity:0; } 16% { opacity:1; } 52% { transform:translateX(66px); opacity:1; } 66% { transform:translateX(92px); opacity:0; } 100% { transform:translateX(-66px); opacity:0; } }
 .tc-head { display:flex; align-items:center; gap:9px; }
@@ -1059,6 +1059,8 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
   background:var(--acc-soft); border:1px solid color-mix(in srgb, var(--acc) 38%, transparent); }
 :root[data-theme="light"] .tc-ico { color:var(--acc); }
 .tc-title { flex:1; min-width:0; margin:0; font-size:14px; font-weight:650; letter-spacing:.2px; }
+.tc-x { flex:none; width:24px; height:24px; margin-right:-4px; display:grid; place-items:center; border:0; border-radius:8px; background:transparent; color:var(--dim); cursor:pointer; transition:background .15s, color .15s; }
+.tc-x:hover { background:var(--glass-2); color:var(--txt); }
 .tc-body { margin:6px 0 0; font-size:12px; line-height:1.75; color:var(--dim); }
 .tc-foot { display:flex; align-items:center; gap:8px; margin-top:12px; }
 .tc-dots { flex:1; min-width:0; display:flex; align-items:center; gap:5px; }
@@ -1079,11 +1081,8 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
 .tc-back { background:transparent; color:var(--dim); padding:7px 10px; }
 .tc-back:hover { background:var(--glass-2); color:var(--txt); }
 .tc-back[hidden] { display:none; }
-.tc-skip { background:transparent; color:var(--dim); padding:7px 10px; }
-.tc-skip:hover { background:var(--glass-2); color:var(--txt); }
-.tc-skip[hidden] { display:none; }
 .tc-back svg { margin-left:-3px; }
-.tc-btn:focus-visible, .tc-skip:focus-visible, .tc-dot:focus-visible { outline:2px solid var(--acc); outline-offset:1px; }
+.tc-btn:focus-visible, .tc-x:focus-visible, .tc-dot:focus-visible { outline:2px solid var(--acc); outline-offset:1px; }
 .tc-replay { margin-top:10px; display:inline-flex; align-items:center; gap:6px; background:var(--glass-2); color:var(--txt); border:1px solid var(--line); }
 .tc-replay:hover { border-color:var(--acc-border); background:var(--acc-soft); }
 @media (prefers-reduced-motion: reduce) { #tourHole, #tourCard, .tc-dot { transition:none; } .tc-media .tc-train, #tourHole::after, #tourCard .tc-in { animation:none; } }
@@ -1332,12 +1331,12 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
     <div class="tc-head">
       <span class="tc-ico" id="tourIco" aria-hidden="true"></span>
       <p class="tc-title" id="tourTitle"></p>
+      <button class="tc-x" id="tourSkip" type="button"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     </div>
     <p class="tc-body" id="tourBody"></p>
     <div class="tc-foot">
       <span class="tc-dots" id="tourDots" aria-hidden="true"></span>
       <button class="tc-btn tc-back" id="tourBack" type="button" hidden>Back</button>
-      <button class="tc-btn tc-skip" id="tourSkip" type="button" hidden>Skip</button>
       <button class="tc-btn tc-next" id="tourNext" type="button">Next</button>
     </div>
   </div></section>
@@ -1616,7 +1615,7 @@ const I18N = {
       panelT:'侧栏面板', panelB:'路线搜索（输入起终点自动规划换乘方案）、图例，以及丰富的显示设置（语言 / 主题 / 底图 / 列车样式）。',
       hudT:'实时数据', hudB:'顶部实时显示当前在途列车数与今日总班次；点击站名区域可回到全国视图。',
       doneT:'准备完毕！', doneB:'现在就出发，去追一列正在飞驰的新干线吧。本引导随时可以在设置页最底部重播。',
-      next:'下一步', back:'上一步', skip:'跳过引导', start:'开始探索', replay:'重播欢迎引导', doneToast:'欢迎光临！随时可在设置页底部重播' },
+      next:'下一步', back:'上一步', skip:'跳过引导', start:'开始探索', replay:'重播欢迎引导', doneToast:'引导完成！随时可在设置页底部重播' },
   },
   ja: {
     title:'ミニ日本鉄道', sub:'全国鉄道リアルタイムマップ', loading:'準備中…', live:'リアルタイム', follow:'追跡中', followStop:'追跡解除',
@@ -1658,7 +1657,7 @@ const I18N = {
       panelT:'サイドパネル', panelB:'経路検索（出発・到着駅で乗換案内）、凡例、そして豊富な表示設定（言語 / テーマ / 背景 / 列車スタイル）。',
       hudT:'リアルタイムデータ', hudB:'上部には現在の走行列車数と本日の便数を表示。ブランド部分をクリックすると全国表示に戻ります。',
       doneT:'準備完了！', doneB:'さあ、走り抜ける新幹線を追いかけてみましょう。このツアーは設定ページの最下部からいつでも再生できます。',
-      next:'次へ', back:'戻る', skip:'スキップ', start:'はじめる', replay:'ウェルカムツアーを再生', doneToast:'ようこそ！設定ページの最下部からいつでも再生できます' },
+      next:'次へ', back:'戻る', skip:'スキップ', start:'はじめる', replay:'ウェルカムツアーを再生', doneToast:'ツアー完了！設定ページの最下部からいつでも再生できます' },
   },
   en: {
     title:'Mini JapanRail', sub:'Japan Train Live Map', loading:'Preparing…', live:'Live', follow:'Following', followStop:'Stop follow',
@@ -1700,7 +1699,7 @@ const I18N = {
       panelT:'Side panel', panelB:'Route search (origin & destination with transfer plans), the legend, and rich display settings (language / theme / basemap / train style).',
       hudT:'Live stats', hudB:'Trains currently running and today\'s total trips, shown up top. Click the brand to return to the nationwide view.',
       doneT:'You\'re all set!', doneB:'Go chase a Shinkansen. You can replay this tour anytime from the bottom of the Settings page.',
-      next:'Next', back:'Back', skip:'Skip tour', start:'Let\'s go', replay:'Replay welcome tour', doneToast:'Welcome! Replay it anytime from the bottom of Settings' },
+      next:'Next', back:'Back', skip:'Skip tour', start:'Let\'s go', replay:'Replay welcome tour', doneToast:'Tour done! Replay it anytime from the bottom of Settings' },
   },
 };
 let lang = localStorage.getItem('mjr3d_lang') || (['ja','en'].includes(navigator.language?.slice(0,2)) ? navigator.language.slice(0,2) : 'zh');
@@ -4076,12 +4075,8 @@ function initMap() {
     container: 'map', style: baseStyle(),
     center: [137.2, 36.8], zoom: 3.4, pitch: 0, bearing: 0,
     minZoom: 1.2, maxZoom: 17.5, maxPitch: 70, /* 17.5:z16 下 200m 编组仅约 200px,提到 17.5 后约 580px,3D 模型可怼脸观察 */
-    /* 抗锯齿:新设备保留(线条更平滑);老旧设备关闭(减少 GPU 过绘制,明显提帧)。
-       powerPreference:'low-power':双 GPU 笔记本(独显+核显)默认抓独显渲染整个地图,
-       风扇/发热显著;十五轮降载后 GPU 负载已是零头(嵌套模糊剥离、顶点 -92%、
-       4-30fps 自适应),核显完全够用 —— 观感零变化,单 GPU 设备(含 M 系列)无感。
-       M3D 查看器渲染器同款设置(既有先例);低帧仍有 glowAutoOff/frameSkip 兜底 */
-    canvasContextAttributes: { antialias: !PERF_LOW, preserveDrawingBuffer: false, powerPreference: 'low-power' },
+    /* 抗锯齿:新设备保留(线条更平滑);老旧设备关闭(减少 GPU 过绘制,明显提帧) */
+    canvasContextAttributes: { antialias: !PERF_LOW, preserveDrawingBuffer: false },
     attributionControl: false,
     /* 全局优化(所有设备,不改变功能/体验):
        1) fadeDuration:0 → 图层无淡入淡出,缩放/切换底图时画面更干脆(与主站根页一致);
@@ -4195,12 +4190,8 @@ function stateHash() {
   try {
     const c = map.getCenter();
     const h = { c: [+c.lng.toFixed(4), +c.lat.toFixed(4)], z: +map.getZoom().toFixed(2), p: +map.getPitch().toFixed(1), b: +map.getBearing().toFixed(1), j: map.getProjection().type, l: lang, m: localStorage.getItem('mjr3d_theme') || 'auto', v: liveOn ? 1 : 0, s: baseKey };
-    /* replaceState 而非 location.hash 赋值:后者每次值变化压一条浏览器历史 —— 平移几分钟后
-       返回键要连按几十次才能离开页面。replaceState 原地替换当前条目:URL 照常可分享/刷新,
-       不触发 hashchange(本页自写本就不该触发);外部粘贴深链仍走 hashchange 正常生效 */
-    const h2 = '#mjr3d=' + btoa(unescape(encodeURIComponent(JSON.stringify(h))));
-    history.replaceState(null, '', h2);
-    lastWrittenHash = h2;
+    location.hash = 'mjr3d=' + btoa(unescape(encodeURIComponent(JSON.stringify(h))));
+    lastWrittenHash = location.hash;
   } catch (e) {}
 }
 function applyUrlState() {
@@ -5690,20 +5681,16 @@ function updateDetailLive(t, p, M, rebuild) {
       '<div class="st-list">' +
       (function () {
         let s = '';
-        const _LIC = window.LINE_ICON || {};
         for (let k = 0; k < N; k++) {
           const upCol = (k > 0) ? (lineColor.get(lineOfPair(t, k - 1)) || '#8899aa') : '';
           const dnCol = (k < N - 1) ? (lineColor.get(lineOfPair(t, k)) || '#8899aa') : '';
           const dotCol = upCol || dnCol;
-          /* 站点徽章:对应线路有官方记号 SVG 时替代圆点;优先列车即将驶入的下段线路,其次到达段 */
-          const dstIc = (k < N - 1 && _LIC[lineOfPair(t, k)]) || (k > 0 && _LIC[lineOfPair(t, k - 1)]) || '';
-          const midHtml = dstIc ? '<img class="dst-ic" src="' + dstIc + '" alt="" loading="lazy">' : '<span class="dot" style="--dc:' + dotCol + '"></span>';
           const tm = [];
           if (k > 0) tm.push('<span class="t-arr">' + T().colArr + fmtHm(t.arr[k]) + '</span>');
           if (k < N - 1) tm.push('<span class="t-dep">' + T().colDep + fmtHm(t.dep[k]) + '</span>');
           s += '<div class="dstop" data-i="' + k + '"><span class="vn">' +
             (k > 0 ? '<span class="vln up" style="background:' + upCol + '"></span>' : '') +
-            midHtml +
+            '<span class="dot" style="--dc:' + dotCol + '"></span>' +
             (k < N - 1 ? '<span class="vln dn" style="background:' + dnCol + '"></span>' : '') +
             '</span><span class="vc"><span class="vnm">' + esc(t.jas[k]) + '</span><span class="vmeta">' +
             (_platAt(PLATMAP && PLATMAP.t && PLATMAP.t[t.t], k) ? '<span class="vplat" title="' + T().colPlat + '">' + _platAt(PLATMAP && PLATMAP.t && PLATMAP.t[t.t], k).replace(/;/g, '/') + '</span>' : '') +
@@ -7796,8 +7783,8 @@ function tourTexts() {
   tourNextBtn.innerHTML = '<span>' + (s.last ? tt.start : tt.next) + '</span>' + _CHEV_R;
   tourBackBtn.innerHTML = _CHEV_L + '<span>' + tt.back + '</span>';
   tourBackBtn.hidden = tourStep === 0;
-  tourSkipBtn.textContent = tt.skip;
-  tourSkipBtn.hidden = tourStep !== 0;   /* 跳过只在欢迎步显示,进入后续步骤即隐藏 */
+  tourSkipBtn.setAttribute('aria-label', tt.skip);
+  tourSkipBtn.title = tt.skip;
   /* 圆点:可点击直达任意步;tabindex=-1 不进 Tab 序列(纯视觉导航辅助,容器保持 aria-hidden) */
   tourDotsEl.innerHTML = TOUR_DEF.map((st, i) =>
     '<button type="button" tabindex="-1" class="tc-dot' + (i < tourStep ? ' past' : i === tourStep ? ' on' : '') + '" data-i="' + i + '" aria-label="' + (i + 1) + '/' + TOUR_DEF.length + ' ' + tt[st.key + 'T'] + '"></button>').join('');

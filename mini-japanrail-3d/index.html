@@ -3303,7 +3303,7 @@ const WALL_BY = new Float32Array([-1, 1, 1, 1]);
 const WALL_QI = new Int8Array([0, 1, 2, 0, 2, 3]);
 const MAXT = 9000, STRIDE = 13; /* 12 + a_uv(图集索引 float,-1=无纹理) */
 let vbo = null, vao = null, uni = new Map(), glRef = null, bufArr = new Float32Array(MAXT * 42 * STRIDE); /* 倾斜视角立体盒:每列车 底6+顶6+4侧24=36 + 光晕 6 最坏 42 顶点 */
-let __renderCount = 0, __glErr = 0, __lastDraw = 0, __lastArgs = null;
+let __renderCount = 0, __glErr = 0, __lastDraw = 0, __lastArgs = null, __glSample = 0;
 /* 高 zoom 抖动修复(MC):mercator 变体下,世界→裁剪矩阵的平移列 ≈ ±5.96e4,
    float32 舍入在相机跟随/平移时每帧 ±1-2px(≈ULP/帧)量化步进 → 列车与镜头肉眼抖动。
    解法(三层全部高精度):
@@ -3493,8 +3493,9 @@ void main() {
       gl.uniform2f(U.u_quadSize, lastQuad[0], lastQuad[1]);
     }
     gl.drawArrays(gl.TRIANGLES, 0, visibleCount); // visibleCount 为总顶点数
-    const e = gl.getError();
-    if (e) __glErr = e;
+    /* gl.getError 诊断采样:每帧调用会在部分驱动上强制管线同步(flush),是逐帧渲染的
+       经典性能陷阱;改为每 600 帧采样一次(诊断用途足够,~10-20s 一个样) */
+    if (( __glSample = (__glSample || 0) + 1) % 600 === 0) { const e = gl.getError(); if (e) __glErr = e; }
     __lastDraw = visibleCount;
     gl.bindVertexArray(null);
     gl.enable(gl.DEPTH_TEST);
@@ -4070,7 +4071,10 @@ function baseStyle() {
       { id: 'bg', type: 'background', paint: { 'background-color': '#07090f' } },
       { id: 'basemap', type: 'raster', source: 'basemap', paint: {
         'raster-saturation': -0.85, 'raster-brightness-max': 0.34, 'raster-brightness-min': 0.02,
-        'raster-contrast': 0.12, 'raster-opacity': 0.96 } },
+        'raster-contrast': 0.12, 'raster-opacity': 0.96,
+        /* 瓦片交叉淡出关断(默认 300ms):缩放时新旧瓦片双重采样,与全局 fadeDuration:0
+           的「切换干脆」口径一致;瓦片就位即显,无半透明过渡期 */
+        'raster-fade-duration': 0 } },
     ],
   };
 }

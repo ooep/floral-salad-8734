@@ -86,7 +86,6 @@ window.__loadClarity = function () {
   try {
     var ua = navigator.userAgent || '';
     var mobile = /Mobi|Android|iPhone|iPad|iPod/i.test(ua);
-    window.__MOBILE = mobile; /* 供 initMap 手机档决策(DPR 钳制/预取降级/缩放期标签隐藏) */
     var cores = navigator.hardwareConcurrency || (mobile ? 4 : 8);
     var mem = navigator.deviceMemory || (mobile ? 4 : 8);
     var soft = false;
@@ -3724,17 +3723,8 @@ function updateTrains(M, dtms) {
   }
   const inputChanged = minuteKey !== scanMinute || gatesKey !== scanGates ||
     (pureLine || null) !== scanPure || dayListSrc !== tripList || dayListBit !== dayBit || vpChanged;
-  /* ★ 二十一轮:缩放手势进行中(lastZoomT 180ms 内有 zoom 事件)冻结重扫 ——
-     基线实测(正午):缩小手势 z13→z4 阶段 1 重扫 mean 22.9ms/帧、z8→z5(视口
-     变大回退线性扫描)mean 38.8ms/帧,单帧就吃掉 60fps 预算的 1.4-2.3 倍,
-     是「缩放不跟手」的主因(放大方向已被十九轮容忍键免除,mean 4.8ms)。
-     手势期 eligible 冻结:缩小方向旧集合不是新视口超集,边缘班次暂缺 —— 由
-     wRect 写出裁剪 + moveend 的 scanForceNext 立即补齐(补齐班次走 260ms
-     淡入,与既有进出视野行为一致);手势通常 <1s,边缘空窗被缩放动画本身掩盖。
-     分钟翻转/等级门变化同样延后到手势结束(≤1s 的班次起终点延迟无感)。 */
-  const zoomGesturing = nowMs - lastZoomT < 180;
-  let needScan = scanStamp === 0 || scanForceNext || nowMs - scanT0 > 5000 ||
-    (inputChanged && nowMs - scanT0 >= 33 && !zoomGesturing);   /* 扫描 30Hz 上限 */
+  let needScan = scanStamp === 0 || nowMs - scanT0 > 5000 ||
+    (inputChanged && nowMs - scanT0 >= 33);   /* 扫描 30Hz 上限 */
   const stamp = needScan ? ++fadeStamp : scanStamp;
   const gate = perfLod ? tierOn : TIER_ALL;
   if (needScan) {
@@ -3804,7 +3794,6 @@ function updateTrains(M, dtms) {
   scanHasVp = !!vp;
   if (vp) { scanVp0 = vp.mx0; scanVp1 = vp.mx1; scanVp2 = vp.my0; scanVp3 = vp.my1; }
   scanT0 = nowMs;
-  scanForceNext = false; /* 手势结束触发的强制重扫已消费 */
   }
   /* 跟随 / 详情中的列车强制通过等级门(每帧执行,≤2 辆):否则缩到低倍率时相机仍跟着
      一辆「被 LOD 隐藏」的车,画面里空无一物、详情面板位置却还在动;缓存帧也要补挂。 */
@@ -4064,11 +4053,10 @@ function initMap() {
     /* 全局优化(所有设备,不改变功能/体验):
        1) fadeDuration:0 → 图层无淡入淡出,缩放/切换底图时画面更干脆(与主站根页一致);
        2) 新设备 prefetchZoomDelta:2 → 预取相邻 2 级瓦片,缩放不空等灰块
-          (老旧设备网络/显存紧张不预取,保持默认 1 级;中端档与手机同样 1 级——
-           多预取一级的瓦片解码/显存是持续发热源,手机蜂窝网下瓦片解码风暴
-           还会与捏合手势争抢主线程,是手机缩放不跟手的帮凶之一) */
+          (老旧设备网络/显存紧张不预取,保持默认 1 级;中端档同样 1 级——
+           多预取一级的瓦片解码/显存是持续发热源) */
     fadeDuration: 0,
-    ...(!PERF_LOW ? { prefetchZoomDelta: (window.__PERF_MID || window.__MOBILE) ? 1 : 2 } : {}),
+    ...(!PERF_LOW ? { prefetchZoomDelta: window.__PERF_MID ? 1 : 2 } : {}),
     /* 老旧设备降载(仅 PERF_LOW 生效;新设备不传这些项,行为与旧版完全一致):
        1) pixelRatio 上限 1.25× → 高分屏渲染像素数降约 60%,GPU 压力大减;
        2) crossSourceCollisions:false → 跳过跨源标签碰撞检测(缩放时最耗 CPU 之一),
@@ -4082,20 +4070,13 @@ function initMap() {
       /* 中端档(桌面 3-4 核):渲染分辨率钳 1.5× + 跳过跨源碰撞,其余体验项不动 */
       pixelRatio: Math.min(window.devicePixelRatio || 1, 1.5),
       crossSourceCollisions: false,
-    } : (window.__MOBILE ? {
-      /* 手机高端档(二十一轮):现代手机 DPR 普遍 3×(iPhone)/2.6-3.5×(Android),
-         满分辨率下捏合缩放期 GPU 填充(栅格底图+股道线+列车 GL+玻璃面板重模糊)
-         是掉帧主因 —— 钳 2× 渲染像素 -56%。底图重度降饱和变暗(信息密度低),
-         2× 与 3× 的清晰度差异在暗底图上几乎不可感;列车图标/线宽按 CSS px 计不受影响 */
-      pixelRatio: Math.min(window.devicePixelRatio || 1, 2),
-      crossSourceCollisions: false,
     } : {
       /* 高端档(十二轮):跨源碰撞同样关闭 —— 全站符号源仅 站名标签(stas) 与
          出入口图标(ent,z16+),同源碰撞仍生效;跨源重叠仅出现在 z16+ 出入口
          与站名之间,低端机一直如此,实测观感无差异;碰撞检测是缩放期最贵的
          CPU 项之一(每帧重排全部可见符号) */
       crossSourceCollisions: false,
-    }))),
+    })),
     /* 瓦片请求治理(修复底图同 URL 反复请求):
        1) refreshExpiredTiles:false → 栅格瓦片改走 <img> 加载(默认 true 走 fetch 读取缓存头,
           但 GSI 不返回 Cache-Control/Expires,反而让同 URL 的重复请求每次都真实走网络);
@@ -4106,23 +4087,17 @@ function initMap() {
   });
   /* 液态玻璃改版:移除左下角缩放/指南针 NavigationControl 与比例尺(原比例尺容器被隐藏从未显示),缩放改由滚轮/双指手势完成,底部四角留给 Dock */
   let stateSaveT = 0;
-  /* 手势结束:强制下一帧全量重扫,补齐缩放期间冻结漏掉的边缘班次。
-     仅在「确实刚发生过缩放」(400ms 内有 zoom 事件)时置位 —— 跟随模式的逐帧
-     jumpTo 同样会触发 moveend,无条件置位会让冻结逻辑退化成每帧全量重扫 */
-  map.on('moveend', () => { clearTimeout(stateSaveT); stateSaveT = setTimeout(stateHash, 700); if (performance.now() - lastZoomT < 400) scanForceNext = true; });
+  map.on('moveend', () => { clearTimeout(stateSaveT); stateSaveT = setTimeout(stateHash, 700); });
   map.on('move', () => { viewDirty = true; }); /* 相机变化标记:暂停时也要据此重建列车顶点(见 startLoop 的 tick) */
-  map.on('zoom', () => { lastZoomT = performance.now(); }); /* 缩放进行中标记(二十一轮):手势期冻结阶段 1 重扫 + 顶点半频重建 */
   map.on('style.load', () => { try { map.setProjection({ type: 'globe' }); } catch (e) { console.warn('globe unavailable', e); } });
   map.on('error', e => { const m = e && e.error && (e.error.message || String(e.error)) || String(e || ''); window.__errs.push('MAP ' + m.slice(0, 200)); });
   map.on('dragstart', () => { if (followTrip) stopFollow(true); });
   map.on('movestart', () => { if (trPickEl) trPickEl.classList.remove('show'); });
   map.getCanvas().addEventListener('mousemove', onMouseMove);
   map.getCanvas().addEventListener('click', onMapClick);
-  if (PERF_LOW || window.__MOBILE) {
-    /* 老旧设备 + 全部手机(二十一轮扩展):缩放期间临时隐藏文字/图标标签层 ——
-       符号碰撞检测是缩放时最耗 CPU 的操作之一,隐藏后缩放帧率大幅提升;
-       zoomend 恢复,最终画面与旧版一致。手机 GPU 填充受限(玻璃面板重模糊+
-       栅格底图),标签层在捏合期的重排/绘制是纯浪费。
+  if (PERF_LOW) {
+    /* 老旧设备降载:缩放期间临时隐藏文字/图标标签层 —— 符号碰撞检测是缩放时最耗
+       CPU 的操作,隐藏后缩放帧率大幅提升;zoomend 恢复,最终画面与旧版一致。
        (标签层在 boot 的 addMapLayers 中创建,这里仅注册事件,层未建时自动跳过) */
     const SYM = ['stas-label', 'ent'];
     let savedVis = {};
@@ -4790,12 +4765,6 @@ let viewDirty = false;
 let anyFading = false;
 /* 上次重建列车顶点时的 zoom:tick 判定「纯平移」用(zoom 未变的 viewDirty 无需重建) */
 let lastBuildZoom = -1;
-/* 最近一次 zoom 变化(map 'zoom' 事件)的时间戳:缩放手势进行中判定
-   (updateTrains 冻结重扫 / tick 半频重建共用,180ms 宽限覆盖事件间隔) */
-let lastZoomT = -1e9;
-/* 手势结束(moveend)后强制下一帧全量重扫:缩放期间冻结的 eligible 在缩小方向
-   不是新视口的超集,边缘班次需在手势结束时立即补齐(见 needScan 注释) */
-let scanForceNext = false;
 /* 阶段 1 扫描缓存(七轮):eligible 集合只取决于 [整数分钟, 等级门, 视口矩形(z≥5),
    纯线模式, 数据档]。全国视图缩放时每帧重建只改顶点尺寸,扫描结果不变 —— 实测全量
    扫描 8.2ms/帧(86,085 班次),缓存后缩放/空闲帧免扫;5s TTL 兜底起终点分钟边界的
@@ -4887,13 +4856,7 @@ function startLoop() {
       viewDirty = false;
     } else {
       let frameStride;
-      /* ★ 二十一轮:缩放手势进行中顶点重建降半频(60Hz→30Hz)—— 阶段 1 已冻结,
-         每帧只剩阶段 3 重建(基线 z14 正午 ~1.7ms,手机 ~2-3 倍),半频再把这块
-         CPU 减半,把主线程让给手势输入与 MapLibre 相机渲染(跟手性的关键)。
-         尺寸烘焙延迟 1 帧(≤33ms 内 ~2% 尺寸差),缩放动画中被完全掩盖;
-         跟随/时间轴拖动不降频(相机锁定/位置连续性优先)。 */
-      if (viewDirty && zoomMoved && performance.now() - lastZoomT < 180 && !followTrip && !sliderDragging) frameStride = 2;
-      else if (viewDirty || followTrip || sliderDragging) frameStride = 1;
+      if (viewDirty || followTrip || sliderDragging) frameStride = 1;
       else if (anyFading) frameStride = 4;
       else frameStride = zz < 5 ? 15 : (zz < 8 ? 6 : 2);
       needTrains = frameC++ % frameStride === 0;

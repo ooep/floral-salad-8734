@@ -2974,13 +2974,32 @@ function locateSeg(t, M2) {
 const _pos = [0, 0, 0, '', '', 0];
 function trainPosition(t, M) {
   const { dep, arr, N, jas } = t;
+  /* 段内线性快径(十九轮):缓存上次解算的(时间窗 m0/m1、折线子段 kLo/kSpan、
+     子段起点/方向/方位角、线路/种类/速度)。M 仍落在同一时间窗与同一折线子段内时,
+     位置是 M 的线性函数 —— 用与全量解算完全相同的操作数与顺序计算,输出逐位一致,
+     免去 locateSeg 与 skCum 两次二分及 atan2(城市正午实测约占阶段 3 的一半)。
+     越界/停车/联挂/骨架/fallback 一律回退下方全量路径。 */
+  const fk = t._fk;
+  if (fk && !t.cpl && M >= fk.m0 && M <= fk.m1 + 1e-6) {
+    const frac = (M - fk.m0) / fk.runRaw;
+    const target = frac * fk.len;
+    _pos[7] = fk.coords; _pos[8] = fk.cum; _pos[9] = fk.len; _pos[10] = target;
+    const f = (target - fk.kLo) / fk.kSpan;
+    _pos[0] = fk.c0x + fk.dx * f;
+    _pos[1] = fk.c0y + fk.dy * f;
+    _pos[2] = fk.brg;
+    _pos[3] = fk.line; _pos[4] = fk.kind; _pos[5] = fk.kmh;
+    return _pos;
+  }
   _pos[7] = null; _pos[8] = null; _pos[9] = 0; _pos[10] = 0; /* 3D 逐车厢采样数据清脏(共享暂存) */
-  if (M < dep[0] - 1e-6 || M > arr[N-1] + 1e-6) return null;
+  if (M < dep[0] - 1e-6 || M > arr[N-1] + 1e-6) { t._fk = null; return null; }
   let i = locateSeg(t, M);
+  let shifted = false, isMain = false;
+  let ckLo = 0, ckSpan = 0, cc0x = 0, cc0y = 0, cdx = 0, cdy = 0, cbrg = 0;
   /* 零时长区间前瞻: 下一区间 run=0 且其平滑窗已开始(本站无停车可借时窗口提前到
      当前区间末端), 提前进入该区间渲染滑动 —— 消除连发零区间的到站瞬间冲刺 */
   if (i < N - 2 && arr[i+1] - dep[i] > 0 && arr[i+2] - dep[i+1] <= 0 &&
-      M >= t.sStart[i+1] && M <= arr[i+2] + 1e-6) i += 1;
+      M >= t.sStart[i+1] && M <= arr[i+2] + 1e-6) { i += 1; shifted = true; }
   const runRaw = arr[i+1] - dep[i];
   const running = M <= arr[i+1] + 1e-6;
   let frac = -1, kmh = 0;
@@ -3028,7 +3047,7 @@ function trainPosition(t, M) {
   }
   let coords = null, cum = null, len = 0, line = '', kind = '';
   let fPos = frac;
-  if (segEntry) { coords = segEntry.coords; cum = segEntry.cum; len = segEntry.len; line = segEntry.line; kind = segEntry.kind; }
+  if (segEntry) { coords = segEntry.coords; cum = segEntry.cum; len = segEntry.len; line = segEntry.line; kind = segEntry.kind; isMain = true; }
   if (!coords) {
     /* per-trip 区间路径缓存:fallback 路径(站坐标消歧/同段截取/站序折线/骨架)对同一班次是
        固定结果 —— 缓存后渲染帧不再重复 resolveCoord/segSubPath/bfs/route,
@@ -3100,12 +3119,21 @@ function trainPosition(t, M) {
       _pos[1] = c0[1] + (c1[1]-c0[1]) * f;
       const dxm = (c1[0]-c0[0]), dym = (c1[1]-c0[1]);
       _pos[2] = Math.atan2(dxm, dym); // 以北为 0、东为 90° 的方位角
+      /* 暂存本子段几何(快径用):kLo/kSpan 定义 M→距离 的线性映射的有效域 */
+      ckLo = cum[k-1]; ckSpan = segLen; cc0x = c0[0]; cc0y = c0[1];
+      cdx = c1[0] - c0[0]; cdy = c1[1] - c0[1]; cbrg = _pos[2];
     }
     if (!line) line = lineOfPair(t, i);
     if (!kind) kind = lineKind.get(line) || '鉄道';
     /* 线路约束(MC 核心):列车只能出现在途经线路上 —— fallback 路径生成时已做
        整体钳制(替换为投影段或保持原样), 渲染帧零钳制开销(避免 distToLineSet 每帧网格全扫) */
     _pos[3] = line; _pos[4] = kind; _pos[5] = kmh;
+    /* 写快径缓存(主路径专用:segEntry 几何 + 正常运行 + 非前瞻位移 + 子段有效) */
+    if (isMain && !shifted && running && frac >= 0 && runRaw > 0 && ckSpan > 0) {
+      t._fk = { m0: dep[i], m1: arr[i+1], runRaw, len, coords, cum,
+        kLo: ckLo, kSpan: ckSpan, c0x: cc0x, c0y: cc0y, dx: cdx, dy: cdy,
+        brg: cbrg, line: _pos[3], kind: _pos[4], kmh };
+    } else t._fk = null;
     return _pos;
   }
   // 兜底:骨架线(按时间在最近已知站之间插值)

@@ -1,26 +1,229 @@
 {
  "_meta": {
-  "v": 2,
+  "v": 4,
   "generated": "2026-10-25",
-  "principle": "车型必须与线路现役车辆一致(train_wiki_map+实际车队核对);判不了的宁缺毋滥→回退图标。组合规则替代单纯线名:东京圈共线实体(山手貨物線/東海道本線横浜−大船段)会把直通列车也打上该实体标记,exact/none/hasStop 用于消歧",
-  "first_batch": [
-   "jr-east-e235-0-series",
-   "jr-east-e235-1000-series",
-   "jr-east-series-e233-1000",
-   "tf2-n700s-16car",
-   "tf2-e257-2000-9car"
-  ]
+  "principle": "车型目录直接取自 DokoRail 車両コレクション作者目录(odpt.Railway 184 线 + 爱称 15 组),ja 线名对齐本站 tmaps 实体;跨公司区段(東海道/山陽本線)与东京圈共线实体用规则消歧;判不了的回退图标",
+  "rules_engine": "names → lines → rules(exact/all/none/hasStop/firstStopIn/stopsIn)",
+  "models": {
+   "tf2-n700s-16car": {
+    "reverse": true
+   }
+  }
  },
  "names": {
+  "成田エクスプレス": "/models/jr-east-e259-series-n-ex-1683535411-jr-east-e259-series-nex-crp-6cf9a67b/consist.json",
+  "スカイライナー": "/models/tf2-ae-8car/consist.json",
+  "モーニングライナー": "/models/tf2-ae-8car/consist.json",
+  "イブニングライナー": "/models/tf2-ae-8car/consist.json",
+  "臨時ライナー": "/models/tf2-ae-8car/consist.json",
+  "ひたち": "/models/jr-east-e657-series/consist.json",
+  "ときわ": "/models/jr-east-e657-series/consist.json",
+  "リバティりょうもう": "/models/tobu-500-series-1854555434-tobu-500-6-crp-30a19c8a/consist.json",
+  "リバティけごん": "/models/tobu-500-series-1854555434-tobu-500-6-crp-30a19c8a/consist.json",
+  "リバティ会津": "/models/tobu-500-series-1854555434-tobu-500-6-crp-30a19c8a/consist.json",
+  "リバティきぬ": "/models/tobu-500-series-1854555434-tobu-500-6-crp-30a19c8a/consist.json",
+  "尾瀬夜行23:45": "/models/tobu-500-series-1854555434-tobu-500-6-crp-30a19c8a/consist.json",
+  "スノーパル23:45": "/models/tobu-500-series-1854555434-tobu-500-6-crp-30a19c8a/consist.json",
+  "日光紅葉夜行23:45": "/models/tobu-500-series-1854555434-tobu-500-6-crp-30a19c8a/consist.json",
+  "THライナー": "/models/tobu-70090-series/consist.json",
+  "S-TRAIN": "/models/seibu-40000-series/consist.json",
+  "拝島ライナー": "/models/seibu-40000-series/consist.json",
+  "サンライズ出雲": "/models/jr-central-285-series/consist.json",
+  "サンライズ瀬戸": "/models/jr-central-285-series/consist.json",
   "踊り子": "/models/tf2-e257-2000-9car/consist.json",
-  "湘南": "/models/tf2-e257-2000-9car/consist.json"
+  "湘南": "/models/tf2-e257-2000-9car/consist.json",
+  "わかしお": "/models/tf2-e257-500-5car/consist.json",
+  "さざなみ": "/models/tf2-e257-500-5car/consist.json",
+  "しおさい": "/models/tf2-e257-500-5car/consist.json",
+  "新宿わかしお": "/models/tf2-e257-500-5car/consist.json",
+  "新宿さざなみ": "/models/tf2-e257-500-5car/consist.json",
+  "草津・四万": "/models/tf2-e257-5500-5car/consist.json",
+  "あかぎ": "/models/tf2-e257-5500-5car/consist.json",
+  "モーニング・ウィング": "/models/tf2-keikyu-2100-8car/consist.json",
+  "イブニング・ウィング": "/models/tf2-keikyu-2100-8car/consist.json",
+  "TJライナー": "/models/tf2-tobu-50090-10car/consist.json",
+  "ひのとり": "/models/kintetsu-80000/consist.json",
+  "特急 ひのとり": "/models/kintetsu-80000/consist.json",
+  "ミッドナイトひのとり": "/models/kintetsu-80000/consist.json",
+  "しまかぜ": "/models/kintetsu-50000-series/consist.json",
+  "特急 しまかぜ": "/models/kintetsu-50000-series/consist.json",
+  "ミュースカイ": "/models/meitetsu-2000-series/consist.json",
+  "μSKY": "/models/meitetsu-2000-series/consist.json",
+  "MuSKY": "/models/meitetsu-2000-series/consist.json"
  },
  "lines": {
-  "東海道新幹線": "/models/tf2-n700s-16car/consist.json"
+  "浅草線": "/models/toei-5300-series/consist.json",
+  "三田線": "/models/6500-train-8-car/consist.json",
+  "JR東日本": "/models/toden-8900-blue-tram-ver/consist.json",
+  "東北新幹線": "/models/tf2-e5-10car/consist.json",
+  "山形新幹線": "/models/tf2-e3-2000-7car/consist.json",
+  "秋田新幹線": "/models/tf2-e6-7car/consist.json",
+  "上越新幹線": "/models/shinkansen-w7-jr/consist.json",
+  "上越新幹線 ガーラ湯沢支線": "/models/shinkansen-w7-jr/consist.json",
+  "北陸新幹線": "/models/shinkansen-w7-jr/consist.json",
+  "京浜東北線・根岸線": "/models/jr-east-series-e233-1000/consist.json",
+  "中央線快速": "/models/jr-east-series-e233-0/consist.json",
+  "伊東線": "/models/jr-east-series-e233-3000/consist.json",
+  "中央・総武各駅停車": "/models/e231-500s-10cars/consist.json",
+  "京葉線": "/models/209-500-k-10cars/consist.json",
+  "埼京線・川越線": "/models/e233-7000-10cars/consist.json",
+  "総武快速線": "/models/jr-east-e235-1000-series/consist.json",
+  "常磐線快速": "/models/jr-east-e231-0-10-car/consist.json",
+  "湘南新宿ライン": "/models/jr-east-series-e233-3000/consist.json",
+  "宇都宮線": "/models/jr-east-series-e233-3000/consist.json",
+  "高崎線": "/models/jr-east-series-e233-3000/consist.json",
+  "横浜線": "/models/jr-e233-6000-series-kurah017/consist.json",
+  "武蔵野線": "/models/jr-east-e231-0-musashino-line/consist.json",
+  "南武線": "/models/jr-e233-8000-series-nahan15/consist.json",
+  "常磐線各駅停車": "/models/jr-east-series-e233-2000/consist.json",
+  "青梅線": "/models/jr-east-series-e233-0/consist.json",
+  "外房線": "/models/jr-e131-0-series-r02-r08/consist.json",
+  "内房線": "/models/jr-e131-0-series-r02-r08/consist.json",
+  "鶴見線": "/models/jr-e131-1000-series-nahat2/consist.json",
+  "八高線": "/models/jr-east-e231-3000-series/consist.json",
+  "相模線": "/models/jr-e131-500-series-kotsug-01/consist.json",
+  "両毛線": "/models/jr-east-series-211-3000-takasaki/consist.json",
+  "五日市線": "/models/jr-east-series-e233-0/consist.json",
+  "川越線(川越-高麗川間)": "/models/jr-east-e231-3000-series/consist.json",
+  "相鉄直通線": "/models/e233-7000-s-10cars/consist.json",
+  "成田線我孫子支線": "/models/jr-east-e231-0-10-car/consist.json",
+  "成田線": "/models/209-21k/consist.json",
+  "上越線": "/models/jr-east-series-211-3000-takasaki/consist.json",
+  "水戸線": "/models/jr-east-e531-series-3047599508-jreaste531series5car-crp-2e5cdec0/consist.json",
+  "東金線": "/models/209-21k/consist.json",
+  "水郡線": "/models/jr-east-kiha-e131-132-0/consist.json",
+  "日光線": "/models/jr-e131-600-series-yamatn6/consist.json",
+  "鶴見線海芝浦支線": "/models/jr-e131-1000-series-nahat3/consist.json",
+  "信越本線": "/models/jr-east-series-211-3000-takasaki/consist.json",
+  "久留里線": "/models/jr-east-kiha-e130-100/consist.json",
+  "鹿島線": "/models/jr-e131-0-series-r02-r08/consist.json",
+  "吾妻線": "/models/jr-east-series-211-3000-takasaki/consist.json",
+  "水郡線常陸太田支線": "/models/jr-east-kiha-e131-132-0/consist.json",
+  "烏山線": "/models/e301-2cars/consist.json",
+  "鶴見線大川支線": "/models/jr-e131-1000-series-nahat6/consist.json",
+  "成田線空港支線": "/models/209-21k/consist.json",
+  "銀座線": "/models/tokyometro-1000-series/consist.json",
+  "丸ノ内線": "/models/tokyo-metro-2000-series/consist.json",
+  "丸ノ内線支線": "/models/tokyo-metro-2000-series/consist.json",
+  "日比谷線": "/models/tokyo-metro-03-series/consist.json",
+  "東西線": "/models/tokyo-metro-15000-series/consist.json",
+  "千代田線": "/models/tokyo-metro-16000-series/consist.json",
+  "有楽町線": "/models/tokyo-metro-7000-series/consist.json",
+  "半蔵門線": "/models/tokyo-metro-08-series/consist.json",
+  "南北線": "/models/tokyo-metro-9000series-5th/consist.json",
+  "東急電鉄": "/models/tokyo-metro-7000-series/consist.json",
+  "田園都市線": "/models/tokyu-2000-series/consist.json",
+  "東横線": "/models/tokyu5050-8cars/consist.json",
+  "目黒線": "/models/tokyu-3000-series/consist.json",
+  "東急新横浜線": "/models/tokyu-3000-series/consist.json",
+  "大井町線": "/models/tokyu9000om-blocal/consist.json",
+  "小田原線": "/models/3000-10cars/consist.json",
+  "多摩線": "/models/3000-10cars/consist.json",
+  "江ノ島線": "/models/3000-10cars/consist.json",
+  "東武スカイツリーライン": "/models/tobu-70000-series/consist.json",
+  "伊勢崎線": "/models/tobu-70000-series/consist.json",
+  "東武アーバンパークライン": "/models/td6000f/consist.json",
+  "東上線": "/models/tobu10030-2x5/consist.json",
+  "京急本線": "/models/keikyu-n1000-al-6c/consist.json",
+  "空港線": "/models/keikyu-n1000-al-6c/consist.json",
+  "大師線": "/models/keikyu-n1000-al-6c/consist.json",
+  "逗子線": "/models/keikyu-n1000-al-6c/consist.json",
+  "京成電鉄": "/models/keikyu-n1000-al-6c/consist.json",
+  "京成本線": "/models/keisei3001f/consist.json",
+  "東成田線": "/models/keisei3001f/consist.json",
+  "押上線": "/models/keisei3001f/consist.json",
+  "千葉線": "/models/keisei3005f/consist.json",
+  "千原線": "/models/keisei3005f/consist.json",
+  "金町線": "/models/keisei3500-4v2/consist.json",
+  "松戸線": "/models/n800/consist.json",
+  "宇都宮ライトレール": "/models/keisei3055/consist.json",
+  "上毛電気鉄道": "/models/krt6000-2cars/consist.json",
+  "ゆりかもめ": "/models/twr-70-000-series/consist.json",
+  "東京モノレール": "/models/yurikamome/consist.json",
+  "横浜高速鉄道": "/models/tokyo-monorail-10000-series/consist.json",
+  "埼玉高速鉄道": "/models/tokyu5050-8cars/consist.json",
+  "東葉高速鉄道": "/models/tokyo-metro-9000series-5th/consist.json",
+  "相鉄": "/models/tokyo-metro-15000-series/consist.json",
+  "相鉄本線": "/models/20000series-10cars-train/consist.json",
+  "いずみ野線": "/models/20000series-10cars-train/consist.json",
+  "北総鉄道": "/models/20000series-10cars-train/consist.json",
+  "芝山鉄道": "/models/hokso7503/consist.json",
+  "首都圏新都市鉄道": "/models/keisei3700-6cars/consist.json",
+  "ブルーライン": "/models/blueline-6cars/consist.json",
+  "千葉都市モノレール": "/models/green-line/consist.json",
+  "千葉モノレール1号線": "/models/urban-flyer-2cars/consist.json",
+  "横浜シーサイドライン": "/models/urban-flyer-2cars/consist.json",
+  "多摩都市モノレール": "/models/shonanmono-5601f-series5000/consist.json",
+  "小田急箱根": "/models/enoden305/consist.json",
+  "東海道新幹線": "/models/tf2-n700s-16car/consist.json",
+  "御殿場線": "/models/jr-central-series-211-5000/consist.json",
+  "武豊線": "/models/jr-central-313-series-1912805926-jrc-313-6-crp-39ac872d/consist.json",
+  "山陽新幹線": "/models/shinkansen-n700-2-jr/consist.json",
+  "博多南線": "/models/shinkansen-n700-2-jr-1781004934-n700-jrc-8-crp-f43837e2/consist.json",
+  "JR大阪環状線": "/models/jrw323-oloc-8cars/consist.json",
+  "JR桜島線": "/models/jrw323-oloc-8cars/consist.json",
+  "JR関西本線": "/models/221-4/consist.json",
+  "奈良線": "/models/221-4/consist.json",
+  "おおさか東線": "/models/221-4/consist.json",
+  "JR東西線": "/models/jrw321-aaloc-7cars/consist.json",
+  "JR片町線": "/models/jrw321-aaloc-7cars/consist.json",
+  "福知山線 (福知山 => 尼崎)": "/models/jrw207n-haloc-4-3-cars/consist.json",
+  "湖西線": "/models/223-2000-4/consist.json",
+  "山陽本線 (A)": "/models/223-2000-8/consist.json",
+  "JR赤穂線": "/models/jrw225-100-basrap-8cars/consist.json",
+  "JR阪和線": "/models/jrw225-5000-rloc-4cars/consist.json",
+  "JR関西空港線": "/models/jrw225-5000-rloc-4cars/consist.json",
+  "JR和歌山線": "/models/jrw227-1000-uloc-2cars/consist.json",
+  "JR桜井線": "/models/jrw227-1000-uloc-2cars/consist.json",
+  "JR九州": "/models/jrw227-1000-wloc-2-2cars/consist.json",
+  "九州新幹線": "/models/tf2-n700-8000-8car/consist.json",
+  "西九州新幹線": "/models/tf2-n700s-8000-kamome/consist.json",
+  "北海道新幹線": "/models/tf2-h5-10car/consist.json",
+  "常総線": "/models/kanto-railway-dc2100-dmu/consist.json",
+  "秩父鉄道": "/models/kanto-railway-dc2200-dmu/consist.json",
+  "JR四国": "/models/izukyu-8000-series-2970424931-izukyu-8000-series-crp-3cf55604/consist.json",
+  "名鉄名古屋本線": "/models/meitetsu-3300-series/consist.json",
+  "名古屋鉄道犬山線": "/models/meitetsu-9500-series/consist.json",
+  "名古屋鉄道常滑線": "/models/meitetsu-3300-series/consist.json",
+  "道南いさりび鉄道": "/models/meitetsu-9500-series/consist.json",
+  "阪急電鉄神戸本線": "/models/hankyu9000/consist.json",
+  "阪急電鉄宝塚本線": "/models/hankyu9003/consist.json",
+  "阪急電鉄京都本線": "/models/hankyu9306/consist.json",
+  "阪急千里線": "/models/hankyu1305/consist.json",
+  "北条鉄道": "/models/hankyu-6300-series/consist.json",
+  "京阪電気鉄道京阪本線・鴨東線": "/models/tf2-keihan-13000-8car/consist.json",
+  "京阪電気鉄道中之島線": "/models/tf2-keihan-13000-8car/consist.json",
+  "京阪電気鉄道宇治線": "/models/keihan-series-13000/consist.json",
+  "近畿日本鉄道": "/models/keihan-series-13000/consist.json",
+  "近畿日本鉄道奈良線": "/models/9820-hutu-amagasaki-6cars/consist.json",
+  "近畿日本鉄道難波線": "/models/9820-hutu-amagasaki-6cars/consist.json",
+  "近畿日本鉄道京都線": "/models/tf2-kintetsu-8a-4car/consist.json",
+  "近畿日本鉄道橿原線": "/models/tf2-kintetsu-8a-4car/consist.json",
+  "近畿日本鉄道天理線": "/models/tf2-kintetsu-8a-4car/consist.json",
+  "近畿日本鉄道大阪線": "/models/tf2-kintetsu-1a-4car/consist.json",
+  "近鉄名古屋線": "/models/tf2-kintetsu-1a-4car/consist.json",
+  "紀州鉄道": "/models/kintetsu1010-3cars-l/consist.json",
+  "神戸市交通局": "/models/om31000/consist.json",
+  "神戸市営地下鉄西神・山手線": "/models/tf2-kobe-6000-6car/consist.json",
+  "神戸新交通": "/models/tf2-kobe-6000-6car/consist.json",
+  "南海本線": "/models/nankai9513/consist.json",
+  "南海電気鉄道空港線 (関西空港 => 泉佐野)": "/models/tf2-nankai-8300-4car/consist.json",
+  "南海電気鉄道高野線": "/models/tf2-nankai-8300-4car/consist.json",
+  "阪神電気鉄道": "/models/tf2-nankai-8300-4car/consist.json",
+  "阪神電気鉄道本線": "/models/hanshin-series-1000/consist.json",
+  "大阪メトロ": "/models/hanshin-series-1000/consist.json",
+  "中央線": "/models/om400-6cars/consist.json",
+  "御堂筋線": "/models/om31000/consist.json",
+  "谷町線": "/models/om32000/consist.json",
+  "四つ橋線": "/models/om23000/consist.json",
+  "千日前線": "/models/om25000/consist.json",
+  "堺筋線": "/models/om66r/consist.json",
+  "今里筋線": "/models/osaka-metro-80-series/consist.json",
+  "大井川鐵道": "/models/osaka-metro-80-series/consist.json"
  },
  "rules": [
   {
-   "comment": "山手線环线普通车:停站全部∈山手30站(实体标记会被直通列车污染,纯线名判不住)",
+   "comment": "山手線环线普通车(停站全部∈山手30站)",
    "stopsIn": [
     "東京",
     "有楽町",
@@ -56,7 +259,7 @@
    "model": "/models/jr-east-e235-0-series/consist.json"
   },
   {
-   "comment": "京浜東北・根岸(含根岸線=京浜東北系;横浜線直通排除=E233-6000另型)",
+   "comment": "京浜東北・根岸(含根岸線=京浜東北系;横浜線直通另型排除)",
    "all": [
     "根岸線"
    ],
@@ -66,14 +269,116 @@
    "model": "/models/jr-east-series-e233-1000/consist.json"
   },
   {
-   "comment": "横須賀・総武快速(2024+ E235系1000番台;含湘南新宿/内房外房直通)",
+   "comment": "埼京線・川越線(赤羽線实体=埼京;川越線高麗川以南埼京系,八高系排除按赤羽線判)",
+   "all": [
+    "赤羽線"
+   ],
+   "model": "/models/e233-7000-10cars/consist.json"
+  },
+  {
+   "comment": "中央快速(中央本線+停新宿/東京;あずす等長野直通由 none 排除)",
+   "all": [
+    "中央本線"
+   ],
+   "hasStop": [
+    "新宿",
+    "東京"
+   ],
+   "none": [
+    "篠ノ井線",
+    "総武本線",
+    "大月線",
+    "河口湖線"
+   ],
+   "model": "/models/jr-east-series-e233-0/consist.json"
+  },
+  {
+   "comment": "湘南新宿/宇都宮・高崎・東海道線東京圏(统 E233-3000;京浜東北已被根岸線规则先判)",
+   "all": [
+    "東海道本線"
+   ],
+   "hasStop": [
+    "東京",
+    "上野",
+    "新宿",
+    "大船",
+    "藤沢",
+    "平塚",
+    "小田原",
+    "熱海"
+   ],
+   "none": [
+    "根岸線",
+    "横須賀線",
+    "御殿場線"
+   ],
+   "model": "/models/jr-east-series-e233-3000/consist.json"
+  },
+  {
+   "comment": "宇都宮線/高崎線(实体专用直通東京圏)",
+   "all": [
+    "宇都宮線"
+   ],
+   "model": "/models/jr-east-series-e233-3000/consist.json"
+  },
+  {
+   "all": [
+    "高崎線"
+   ],
+   "hasStop": [
+    "大宮",
+    "池袋",
+    "新宿",
+    "上野",
+    "高崎"
+   ],
+   "none": [
+    "上越線",
+    "信越本線",
+    "八高線"
+   ],
+   "model": "/models/jr-east-series-e233-3000/consist.json"
+  },
+  {
+   "comment": "横須賀・総武快速(E235-1000,2024+;含湘南新宿/内房外房直通)",
    "all": [
     "横須賀線"
    ],
    "model": "/models/jr-east-e235-1000-series/consist.json"
   },
   {
-   "comment": "中央・総武各停(中央本線+総武本線跨御茶ノ水;排除あずさ/東叶直通等长直通)",
+   "comment": "常磐線各停(千代田線直通 E233-2000)",
+   "all": [
+    "常磐線",
+    "千代田線"
+   ],
+   "model": "/models/jr-east-series-e233-2000/consist.json"
+  },
+  {
+   "comment": "常磐中距離(取手以北 E531)",
+   "all": [
+    "常磐線"
+   ],
+   "hasStop": [
+    "取手",
+    "土浦",
+    "牛久",
+    "荒川沖",
+    "水戸",
+    "勝田",
+    "いわき"
+   ],
+   "model": "/models/jr-east-e531-series-3047599508-jreaste531series5car-crp-2e5cdec0/consist.json"
+  },
+  {
+   "comment": "常磐線快速(E231-0)",
+   "all": [
+    "常磐線"
+   ],
+   "model": "/models/jr-east-e231-0-10-car/consist.json"
+  },
+  {
+   "comment": "中央・総武各停(跨御茶ノ水;E235-1000 现役)",
    "all": [
     "中央本線",
     "総武本線"
@@ -84,27 +389,97 @@
     "外房線",
     "内房線",
     "大月線",
-    "河口湖線"
+    "河口湖線",
+    "千葉線"
    ],
    "model": "/models/jr-east-e235-1000-series/consist.json"
   },
   {
-   "comment": "総武本線东京侧发着(各停/総武快速均 E235-1000)",
+   "comment": "総武本線东京侧(各停/総武快速 E235-1000;千葉以远 209 由下条覆盖不全则回退)",
    "all": [
     "総武本線"
    ],
-   "exact": [
-    "総武本線"
+   "hasStop": [
+    "千葉",
+    "稲毛",
+    "西千葉",
+    "幕張",
+    "船橋",
+    "津田沼",
+    "錦糸町",
+    "秋葉原",
+    "御茶ノ水"
    ],
    "firstStopIn": [
     "御茶ノ水",
     "東京",
+    "新日本橋",
+    "馬喰町",
     "錦糸町",
     "秋葉原",
     "両国",
-    "馬喰町"
+    "市川",
+    "船橋",
+    "津田沼",
+    "稲毛",
+    "西千葉",
+    "千葉"
    ],
    "model": "/models/jr-east-e235-1000-series/consist.json"
+  },
+  {
+   "comment": "成田線我孫子支線/成田線(209系)",
+   "all": [
+    "成田線"
+   ],
+   "model": "/models/209-21k/consist.json"
+  },
+  {
+   "comment": "東金線(209系)",
+   "all": [
+    "東金線"
+   ],
+   "model": "/models/209-21k/consist.json"
+  },
+  {
+   "comment": "八高線/川越線(八高系 E231-3000;埼京直通已被赤羽線规则先判)",
+   "all": [
+    "八高線"
+   ],
+   "model": "/models/jr-east-e231-3000-series/consist.json"
+  },
+  {
+   "all": [
+    "川越線"
+   ],
+   "model": "/models/jr-east-e231-3000-series/consist.json"
+  },
+  {
+   "comment": "東海道本線(JR東海区间,313系;由东京圏规则的 none 避让)",
+   "all": [
+    "東海道本線"
+   ],
+   "model": "/models/jr-central-313-series-1912805926-jrc-313-6-crp-39ac872d/consist.json"
+  },
+  {
+   "comment": "山陽本線(223/225 混在,取 225-100)",
+   "all": [
+    "山陽本線"
+   ],
+   "model": "/models/jrw225-100-aaloc-4cars/consist.json"
+  },
+  {
+   "comment": "関東鉄道",
+   "all": [
+    "常総線"
+   ],
+   "model": "/models/kanto-railway-dc2100-dmu/consist.json"
+  },
+  {
+   "all": [
+    "竜ヶ崎線"
+   ],
+   "model": "/models/kanto-railway-dc2200-dmu/consist.json"
   }
  ]
 }

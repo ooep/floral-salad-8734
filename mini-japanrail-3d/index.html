@@ -3012,12 +3012,19 @@ function trainPosition(t, M) {
   if (fk && !t.cpl && M >= fk.m0 && M <= fk.m1 + 1e-6) {
     const frac = (M - fk.m0) / fk.runRaw;
     const target = frac * fk.len;
-    const f = (target - fk.kLo) / fk.kSpan;
-    _pos[0] = fk.c0x + fk.dx * f;
-    _pos[1] = fk.c0y + fk.dy * f;
-    _pos[2] = fk.brg;
-    _pos[3] = fk.line; _pos[4] = fk.kind; _pos[5] = fk.kmh;
-    return _pos;
+    /* ★ 子段有效域检查(21a 轮修复「线路外乱飞/抽搐」):十九轮的守卫只验时间窗 [m0,m1],
+       漏验了 target 是否仍在缓存子段 [kLo, kLo+kSpan] 内 —— M 在同一区间内跨过子段边界后,
+       位置沿旧子段的弦线性外推(f 越出 [0,1]),弯道多的线(日豊本線/仙山線/奥羽線 等)
+       外推点偏离轨道数公里,直到下一站区间重建 _fk 才跳回 = 用户看到的乱飞+抽搐。
+       倍速播放/拖动时间滑块(ΔM 大)时尤甚。越界 → 回退全量路径重解并刷新 _fk。 */
+    if (target >= fk.kLo && target <= fk.kLo + fk.kSpan) {
+      const f = (target - fk.kLo) / fk.kSpan;
+      _pos[0] = fk.c0x + fk.dx * f;
+      _pos[1] = fk.c0y + fk.dy * f;
+      _pos[2] = fk.brg;
+      _pos[3] = fk.line; _pos[4] = fk.kind; _pos[5] = fk.kmh;
+      return _pos;
+    }
   }
   if (M < dep[0] - 1e-6 || M > arr[N-1] + 1e-6) { t._fk = null; return null; }
   let i = locateSeg(t, M);

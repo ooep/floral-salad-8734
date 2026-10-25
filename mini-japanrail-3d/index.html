@@ -2255,11 +2255,13 @@ function segSubPath(A, B, ca, cb, lineSet) {
     }
   }
   /* 端点校验(修复鹿児島本線等粗粒度长段折线在区间内打结/乱序导致的截取错位):
-     截取子路径端点必须与 A/B 站坐标匹配, 偏差 >3km 视为截取失败 —— 返回 null,
-     让 officialPath(每区间官方短折线, 干净) 接管, 避免列车沿错误长段一路乱跑 */
+     截取子路径端点必须与 A/B 站坐标匹配, 偏差 >1.5km 视为截取失败 —— 返回 null,
+     让 officialPath(每区间官方短折线, 干净) 接管, 避免列车沿错误长段一路乱跑。
+     二十二轮:3km→1.5km —— 銚子電気鉄道線 笠上黒生→本銚子 的 cb 被投影到 2.0km 外的
+     邻段长段上,反向截取后列车沿区间逆向折返;收紧后此类失配交给 officialPath 正向接管 */
   if (out && out.coords.length >= 2) {
     const c0 = out.coords[0], cN = out.coords[out.coords.length - 1];
-    if (geoKm(c0, ca) > 3 || geoKm(cN, cb) > 3) out = null;
+    if (geoKm(c0, ca) > 1.5 || geoKm(cN, cb) > 1.5) out = null;
   }
   if (segSubCache.size > 40000) segSubCache.clear();
   segSubCache.set(key, out);
@@ -3150,7 +3152,16 @@ function trainPosition(t, M) {
       _pos[0] = c0[0] + (c1[0]-c0[0]) * f;
       _pos[1] = c0[1] + (c1[1]-c0[1]) * f;
       const dxm = (c1[0]-c0[0]), dym = (c1[1]-c0[1]);
-      _pos[2] = Math.atan2(dxm, dym); // 以北为 0、东为 90° 的方位角
+      /* 前瞻方位角(二十二轮「停站图标原地自转」修复):截取/焊接折线含 2-4m 近重复点,
+         子段弦长与坐标量化(1e-5°≈1.1m)同量级 → 逐帧方位角成噪声(±90° 鞭打)。
+         沿 cum 前瞻取点定向:跨过噪声子段,方位角平滑且与真实行进方向一致 */
+      let la = Math.min(len, target + Math.min(30, len * 0.25));
+      let j = k;
+      while (j < coords.length - 1 && cum[j] < la) j++;
+      const pj = coords[j];
+      if (Math.abs(pj[0]-_pos[0]) + Math.abs(pj[1]-_pos[1]) > 2e-5)
+        _pos[2] = Math.atan2(pj[0]-_pos[0], pj[1]-_pos[1]); // 以北为 0、东为 90° 的方位角
+      else _pos[2] = Math.atan2(dxm, dym); // 端部退化:回退子段弦
       /* 暂存本子段几何(快径用):kLo/kSpan 定义 M→距离 的线性映射的有效域 */
       ckLo = cum[k-1]; ckSpan = segLen; cc0x = c0[0]; cc0y = c0[1];
       cdx = c1[0] - c0[0]; cdy = c1[1] - c0[1]; cbrg = _pos[2];

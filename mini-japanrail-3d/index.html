@@ -7720,6 +7720,26 @@ const M3D = (() => {
     m.name = 'headlight-beam'; m.frustumCulled = false; m.visible = false; m.userData.nightOnly = 1;
     return m;
   }
+  /* ── 新干线识别:新干线保持原编组顺序,普通列车首尾车厢对调展示 ──
+     依据 model_map.json:线路名含「新幹線」映射到下列 slug;前缀 shinkansen- 自动覆盖后续新增。 */
+  const SHINKANSEN_SLUGS = new Set([
+    'shinkansen-n700-2-jr',
+    'shinkansen-n700-2-jr-1781004934-n700-jrc-8-crp-f43837e2',
+    'shinkansen-w7-jr',
+    'tf2-e3-2000-7car',   /* 山形新幹線 E3系 */
+    'tf2-e5-10car',      /* 東北新幹線 E5系 */
+    'tf2-e6-7car',       /* 秋田新幹線 E6系 */
+    'tf2-h5-10car',      /* 北海道新幹線 H5系 */
+    'tf2-n700-8000-8car',/* 九州新幹線 N700系8000番台 */
+    'tf2-n700s-16car',   /* 東海道/山陽新幹線 N700S */
+    'tf2-n700s-8000-kamome' /* 西九州新幹線 N700S8000番台 かもめ */
+  ]);
+  function isShinkansenPath(p) {
+    const m = /\/models\/([^/]+)\//.exec(p || '');
+    if (!m) return false;
+    const slug = m[1];
+    return slug.startsWith('shinkansen-') || SHINKANSEN_SLUGS.has(slug);
+  }
   /* ── 编组加载:consist.json → 车厢并行加载+归一化 → couple 排布 → 前灯/LED ── */
   async function loadConsist(path) {
     await libs();
@@ -7729,7 +7749,12 @@ const M3D = (() => {
       fetch(base + 'maps.json').then(r => r.ok ? r.json() : {}).catch(() => ({}))]);
     const cfg = consist.material || {};
     const loader = new GLTFLoaderC.GLTFLoader().setMeshoptDecoder(MeshoptDecoder).setKTX2Loader(ktx2);
-    const cars = consist.cars, n = cars.length;
+    let cars = consist.cars.slice(), n = cars.length;
+    /* 普通列车(非新干线):把首车(cars[0],-z 端)与末车(cars[n-1],+z 端)对调位置。
+       鼻端校正(noseEnd)与 coupleF/R 计算按数组位置执行,对调后端车鼻端会自动转向朝外,无需改模型资源。 */
+    if (n >= 2 && !isShinkansenPath(path)) {
+      const tmp = cars[0]; cars[0] = cars[n - 1]; cars[n - 1] = tmp;
+    }
     let progN = 0;
     const progTick = () => { progN++; const el = $('m3dLoadTx'); if (el && $('m3dLoad').style.display !== 'none') el.textContent = (T().m3dLoadT || 'Loading…') + ' ' + progN + '/' + n; };
     const lenOf = i => (i === 0 || i === n - 1) ? (consist.car_length_m || 20) : (consist.middle_car_length_m || consist.car_length_m || 20);

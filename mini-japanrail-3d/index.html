@@ -598,10 +598,11 @@ button { font-family:inherit; }
 #detail .vn .vln.up { top:0; height:50%; }
 #detail .vn .vln.dn { bottom:0; height:50%; }
 #detail .vn .dot { position:absolute; left:50%; top:50%; width:10px; height:10px; border-radius:50%; transform:translate(-50%,-50%); z-index:2; box-sizing:border-box; border:2px solid var(--dc, var(--glass-edge)); background:var(--glass-solid); }
-#detail .vn .dst-ic { position:absolute; left:50%; top:50%; width:20px; height:20px; transform:translate(-50%,-50%); z-index:2; object-fit:contain; display:block; border-radius:4.5px; background:rgba(255,255,255,.94); box-shadow:0 0 0 1px rgba(8,12,20,.32), 0 1px 3px rgba(0,0,0,.32); transition:filter .3s, box-shadow .3s; }   /* 浅色底牌+小圆角:圆/方/盾形记号都完整显示,不裁形状 */
-#detail .dstop.here .dst-ic { box-shadow:0 0 0 2px var(--acc), 0 0 0 5px var(--acc-soft); }
-#detail .dstop.next .dst-ic { box-shadow:0 0 0 2px var(--acc); }
-#detail .dstop.done .dst-ic { filter:grayscale(.9); opacity:.6; }
+#detail .vn .stop-badge { position:absolute; left:50%; top:50%; width:20px; height:20px; transform:translate(-50%,-50%); z-index:2; display:flex; align-items:center; justify-content:center; }
+#detail .vn .stop-badge img { width:20px; height:20px; object-fit:contain; display:block; border-radius:4.5px; background:rgba(255,255,255,.94); box-shadow:0 0 0 1px rgba(8,12,20,.32), 0 1px 3px rgba(0,0,0,.32); }   /* 站标:浅色底牌+小圆角,圆/方/盾形完整显示 */
+#detail .dstop.here .stop-badge img { box-shadow:0 0 0 2px var(--acc), 0 0 0 5px var(--acc-soft); }
+#detail .dstop.next .stop-badge img { box-shadow:0 0 0 2px var(--acc); }
+#detail .dstop.done .stop-badge img { filter:grayscale(.9); opacity:.6; }
 #detail .vc { flex:1; min-width:0; display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8.5px 0; }
 #detail .vnm { flex:1 1 auto; min-width:0; font-size:13px; font-weight:600; color:var(--txt); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 #detail .vmeta { flex:0 0 auto; max-width:62%; display:flex; flex-direction:column; align-items:flex-end; gap:2.5px; line-height:1.25; }
@@ -4621,6 +4622,52 @@ function badgeEntriesOf(name) {
   if (bd) return [['', bd.code, bd.url, bd.crop]];
   return null;
 }
+/* 列车抽屉停靠站徽章:图集 webp 是大 sprite,按 crop 裁出单站标 → dataURL 填入 .stop-badge 容器。
+   Image/crop 结果按 sheet+crop 双重缓存(与地图徽章并行,浏览器 HTTP 层复用)。 */
+const _stopBadgeImgCache = new Map();   // sheetUrl -> HTMLImageElement(未加载完也在)
+const _stopBadgeUrlCache = new Map();   // sheetUrl|cx|cy -> dataURL
+async function refreshStopBadges(root) {
+  if (!root) return;
+  const els = root.querySelectorAll('.stop-badge');
+  if (!els || !els.length) return;
+  const todo = [];
+  for (const el of els) {
+    const key = el.dataset.sheet + '|' + el.dataset.cx + '|' + el.dataset.cy;
+    const cached = _stopBadgeUrlCache.get(key);
+    if (cached) { el.innerHTML = '<img src="' + cached + '" alt="">'; continue; }
+    todo.push(el);
+  }
+  if (!todo.length) return;
+  const bySheet = {};
+  for (const el of todo) (bySheet[el.dataset.sheet] = bySheet[el.dataset.sheet] || []).push(el);
+  for (const sheet in bySheet) {
+    let entry = _stopBadgeImgCache.get(sheet);
+    if (!entry) {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      const p = new Promise(res => { img.onload = res; img.onerror = res; });
+      img.src = BADGES_BASE + sheet;
+      entry = { img, p };
+      _stopBadgeImgCache.set(sheet, entry);
+    }
+    await entry.p;   /* 同一 sheet 所有站共享同一个 in-flight promise,加载完后后续 el 直接 resolve */
+    if (!entry.img.width) continue;
+    for (const el of bySheet[sheet]) {
+      const cx = +el.dataset.cx, cy = +el.dataset.cy, cw = +el.dataset.cw, ch = +el.dataset.ch;
+      const key = sheet + '|' + cx + '|' + cy;
+      let url = _stopBadgeUrlCache.get(key);
+      if (!url) {
+        const c = document.createElement('canvas');
+        const S = 48;
+        c.width = S; c.height = S;
+        c.getContext('2d').drawImage(entry.img, cx, cy, cw, ch, 0, 0, S, S);
+        url = c.toDataURL('image/png');
+        _stopBadgeUrlCache.set(key, url);
+      }
+      el.innerHTML = '<img src="' + url + '" alt="">';
+    }
+  }
+}
 /* 站徽章枚数(供 badgeN 属性,免为数组分配) */
 function badgeCountOf(name) {
   if (badgesLines && badgesLines.stations) {
@@ -5927,44 +5974,17 @@ function updateDetailLive(t, p, M, rebuild) {
       (function () {
         let s = '';
         const dlyTag = t.dly > 0 ? '<span class="dlyn">+' + Math.round(t.dly) + '</span>' : '';
-        const _LIC = window.LINE_ICON || {};
-        /* 记号查找:直接键 → 名称变体兜底(本線→線、公司前缀剥离,与 line_icons.js 生成规则对齐),提升段名覆盖率 */
-        const _licOf = n => {
-          if (!n) return '';
-          if (_LIC[n]) return _LIC[n];
-          const v1 = n.replace(/本線$/, '線');
-          if (v1 !== n && _LIC[v1]) return _LIC[v1];
-          const v2 = n.replace(/^(東京メトロ|都営地下鉄|京都市営地下鉄|大阪メトロ|横浜市営|札幌市営|名古屋市営|福岡市営|仙台市営|JR|jr)/, '');
-          return (v2 !== n) ? _licOf(v2) : '';
-        };
-        /* 本班次途经线路(全名)的可用徽章:段名可能是短名/复合名/建设名(如'東西線'、'京王線・高尾線・相模原線'、'10号線新宿線'),需多级匹配 */
-        const _tripLics = [];
-        for (const ln of (t.lines || [])) { const u = _licOf(ln) || _LIC[ln] || ''; if (u) _tripLics.push({ n: ln, u }); }
-        const _tripMatch = st => { for (const x of _tripLics) { if (x.n === st || x.n.endsWith(st) || st.endsWith(x.n)) return x.u; } return ''; };
-        const _segLic = seg => {
-          if (!seg) return '';
-          const d0 = _licOf(seg);
-          if (d0) return d0;
-          const t0 = _tripMatch(seg);
-          if (t0) return t0;
-          if (seg.includes('・')) {   /* 复合线路名:'京王線・高尾線・相模原線' → 逐段查 */
-            for (const p of seg.split('・')) { const d = _licOf(p) || _tripMatch(p); if (d) return d; }
-          }
-          const noN = seg.replace(/^\d+号線/, '');   /* 建设名前缀:'10号線新宿線' → '新宿線' */
-          if (noN !== seg) { const d = _licOf(noN) || _tripMatch(noN); if (d) return d; }
-          if (/線$/.test(seg) && !/本線$/.test(seg)) {   /* JR 爱称短名补全:'東海道線'→'東海道本線'、'山陽線'→'山陽本線' */
-            const d = _licOf(seg.replace(/線$/, '本線')) || _tripMatch(seg.replace(/線$/, '本線'));
-            if (d) return d;
-          }
-          return '';
-        };
         for (let k = 0; k < N; k++) {
           const upCol = (k > 0) ? (lineColor.get(lineOfPair(t, k - 1)) || '#8899aa') : '';
           const dnCol = (k < N - 1) ? (lineColor.get(lineOfPair(t, k)) || '#8899aa') : '';
           const dotCol = upCol || dnCol;
-          /* 站点徽章:对应线路有官方记号 SVG 时替代圆点;优先列车即将驶入的下段线路,其次到达段 */
-          const dstIc = (k < N - 1 && _segLic(lineOfPair(t, k))) || (k > 0 && _segLic(lineOfPair(t, k - 1))) || '';
-          const midHtml = dstIc ? '<img class="dst-ic" src="' + dstIc + '" alt="" loading="lazy">' : '<span class="dot" style="--dc:' + dotCol + '"></span>';
+          /* 站徽章:该站有官方站标(badges map/lines 图集)则替换圆点;无徽章回退线路色圆点 */
+          const ent = (typeof badgeEntriesOf === 'function') ? badgeEntriesOf(t.jas[k]) : null;
+          const b0 = (ent && ent[0]) ? ent[0] : null;
+          const crop = b0 && b0[3] ? b0[3] : [0, 0, 160, 160];
+          const midHtml = (b0 && b0[2])
+            ? '<span class="stop-badge" data-sheet="' + b0[2] + '" data-cx="' + crop[0] + '" data-cy="' + crop[1] + '" data-cw="' + crop[2] + '" data-ch="' + crop[3] + '"></span>'
+            : '<span class="dot" style="--dc:' + dotCol + '"></span>';
           const tm = [];
           if (k > 0) tm.push('<span class="t-arr">' + T().colArr + fmtHm(t.arr[k]) + dlyTag + '</span>');
           if (k < N - 1) tm.push('<span class="t-dep">' + T().colDep + fmtHm(t.dep[k]) + dlyTag + '</span>');
@@ -5998,6 +6018,7 @@ function updateDetailLive(t, p, M, rebuild) {
       });
       const actRow = stl0.querySelector('.dstop.here, .dstop.next');
       if (actRow) actRow.scrollIntoView({ block: 'center', behavior: 'auto' });
+      refreshStopBadges(stl0);
     }
     $('dClose').onclick = () => { closeDetail(); liveDetailTrip = null; if (followTrip) stopFollow(); };
     $('dFollow').onclick = () => { if (followTrip === t) stopFollow(); else startFollow(t); };

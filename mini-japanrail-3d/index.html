@@ -3792,6 +3792,7 @@ function buildDayIndex() {
    + 始发站一致 + 「报告所在站 ∈ 停靠序列」复核;任何不唯一/不符 → 整条弃用。
    时效:5 分钟重拉;数据龄 >45min 清空(源 02:00–05:00 停更自然回落为无延误)。 */
 const DELAY_URLS = [
+  'https://jr-static.suki.ing/data/delay/delays.json',
   'https://cdn.jsdelivr.net/gh/ooep/delay@main/data/delays.json',
   'https://raw.githubusercontent.com/ooep/delay/main/data/delays.json',
 ];

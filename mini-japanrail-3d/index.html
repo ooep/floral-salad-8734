@@ -603,6 +603,10 @@ button { font-family:inherit; }
 #detail .dstop.here .stop-badge img { box-shadow:0 0 0 2px var(--acc), 0 0 0 5px var(--acc-soft); }
 #detail .dstop.next .stop-badge img { box-shadow:0 0 0 2px var(--acc); }
 #detail .dstop.done .stop-badge img { filter:grayscale(.9); opacity:.6; }
+#detail .vn .dst-ic { position:absolute; left:50%; top:50%; width:20px; height:20px; transform:translate(-50%,-50%); z-index:2; object-fit:contain; display:block; border-radius:4.5px; background:rgba(255,255,255,.94); box-shadow:0 0 0 1px rgba(8,12,20,.32), 0 1px 3px rgba(0,0,0,.32); }   /* 回退1:线路记号,与站徽章同款底牌 */
+#detail .dstop.here .dst-ic { box-shadow:0 0 0 2px var(--acc), 0 0 0 5px var(--acc-soft); }
+#detail .dstop.next .dst-ic { box-shadow:0 0 0 2px var(--acc); }
+#detail .dstop.done .dst-ic { filter:grayscale(.9); opacity:.6; }
 #detail .vc { flex:1; min-width:0; display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8.5px 0; }
 #detail .vnm { flex:1 1 auto; min-width:0; font-size:13px; font-weight:600; color:var(--txt); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 #detail .vmeta { flex:0 0 auto; max-width:62%; display:flex; flex-direction:column; align-items:flex-end; gap:2.5px; line-height:1.25; }
@@ -5975,18 +5979,47 @@ function updateDetailLive(t, p, M, rebuild) {
       (function () {
         let s = '';
         const dlyTag = t.dly > 0 ? '<span class="dlyn">+' + Math.round(t.dly) + '</span>' : '';
+        /* 第二回退:LINE_ICON 线路记号(该站无专属站徽章时用),逻辑同 348d471 */
+        const _LIC = window.LINE_ICON || {};
+        const _licOf = n => {
+          if (!n) return '';
+          if (_LIC[n]) return _LIC[n];
+          const v1 = n.replace(/本線$/, '線');
+          if (v1 !== n && _LIC[v1]) return _LIC[v1];
+          const v2 = n.replace(/^(東京メトロ|都営地下鉄|京都市営地下鉄|大阪メトロ|横浜市営|札幌市営|名古屋市営|福岡市営|仙台市営|JR|jr)/, '');
+          return (v2 !== n) ? _licOf(v2) : '';
+        };
+        const _tripLics = [];
+        for (const ln of (t.lines || [])) { const u = _licOf(ln) || _LIC[ln] || ''; if (u) _tripLics.push({ n: ln, u }); }
+        const _tripMatch = st => { for (const x of _tripLics) { if (x.n === st || x.n.endsWith(st) || st.endsWith(x.n)) return x.u; } return ''; };
+        const _segLic = seg => {
+          if (!seg) return '';
+          const d0 = _licOf(seg);
+          if (d0) return d0;
+          const t0 = _tripMatch(seg);
+          if (t0) return t0;
+          if (seg.includes('・')) {
+            for (const p of seg.split('・')) { const d = _licOf(p) || _tripMatch(p); if (d) return d; }
+          }
+          const noN = seg.replace(/^\d+号線/, '');
+          if (noN !== seg) { const d = _licOf(noN) || _tripMatch(noN); if (d) return d; }
+          if (/線$/.test(seg) && !/本線$/.test(seg)) {
+            const d = _licOf(seg.replace(/線$/, '本線')) || _tripMatch(seg.replace(/線$/, '本線'));
+            if (d) return d;
+          }
+          return '';
+        };
         for (let k = 0; k < N; k++) {
           const upCol = (k > 0) ? (lineColor.get(lineOfPair(t, k - 1)) || '#8899aa') : '';
           const dnCol = (k < N - 1) ? (lineColor.get(lineOfPair(t, k)) || '#8899aa') : '';
           const dotCol = upCol || dnCol;
-          /* 站徽章:仅当该站在「本班列车这条线路」上有对应官方站标时才替换圆点。
-             多线站(如新宿 11 枚)只取本班段线路那一枚(山手线过新宿→JY17);
-             该站在本班线路上没录徽章 → 即使它有别的线路徽章也回退线路色圆点(不借别的线的标) */
+          /* 第一优先:该站在「本班线路」上的专属站徽章(站号圆标 JY17/A01 等);
+             回退1:该站无专属站徽章 → LINE_ICON 线路记号(山手线Y形等);
+             回退2:都没有 → 线路色圆点 */
           const ent = (typeof badgeEntriesOf === 'function') ? badgeEntriesOf(t.jas[k]) : null;
           const segThis = (k < N - 1) ? lineOfPair(t, k) : ((k > 0) ? lineOfPair(t, k - 1) : '');
           let b0 = null;
           if (ent && ent.length) {
-            /* map.json 兜底单枚(e[0]=='')=单线站无线路概念,直接用;否则按本班段线路匹配 */
             if (!ent[0][0]) { b0 = ent[0]; }
             else if (segThis) {
               for (const e of ent) {
@@ -5996,9 +6029,12 @@ function updateDetailLive(t, p, M, rebuild) {
             }
           }
           const crop = b0 && b0[3] ? b0[3] : [0, 0, 160, 160];
+          const dstIc = (!b0) ? ((k < N - 1 && _segLic(lineOfPair(t, k))) || (k > 0 && _segLic(lineOfPair(t, k - 1))) || '') : '';
           const midHtml = (b0 && b0[2])
             ? '<span class="stop-badge" data-sheet="' + b0[2] + '" data-cx="' + crop[0] + '" data-cy="' + crop[1] + '" data-cw="' + crop[2] + '" data-ch="' + crop[3] + '"></span>'
-            : '<span class="dot" style="--dc:' + dotCol + '"></span>';
+            : (dstIc
+              ? '<img class="dst-ic" src="' + dstIc + '" alt="" loading="lazy">'
+              : '<span class="dot" style="--dc:' + dotCol + '"></span>');
           const tm = [];
           if (k > 0) tm.push('<span class="t-arr">' + T().colArr + fmtHm(t.arr[k]) + dlyTag + '</span>');
           if (k < N - 1) tm.push('<span class="t-dep">' + T().colDep + fmtHm(t.dep[k]) + dlyTag + '</span>');

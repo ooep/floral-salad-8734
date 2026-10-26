@@ -599,7 +599,7 @@ button { font-family:inherit; }
 #detail .vn .vln.dn { bottom:0; height:50%; }
 #detail .vn .dot { position:absolute; left:50%; top:50%; width:10px; height:10px; border-radius:50%; transform:translate(-50%,-50%); z-index:2; box-sizing:border-box; border:2px solid var(--dc, var(--glass-edge)); background:var(--glass-solid); }
 #detail .vn .stop-badge { position:absolute; left:50%; top:50%; width:20px; height:20px; transform:translate(-50%,-50%); z-index:2; display:flex; align-items:center; justify-content:center; }
-#detail .vn .stop-badge img { width:20px; height:20px; object-fit:contain; display:block; border-radius:4.5px; background:rgba(255,255,255,.94); box-shadow:0 0 0 1px rgba(8,12,20,.32), 0 1px 3px rgba(0,0,0,.32); }   /* 站标:浅色底牌+小圆角,圆/方/盾形完整显示 */
+#detail .vn .stop-badge img { height:20px; width:auto; max-width:28px; object-fit:contain; display:block; border-radius:4.5px; background:rgba(255,255,255,.94); box-shadow:0 0 0 1px rgba(8,12,20,.32), 0 1px 3px rgba(0,0,0,.32); }
 #detail .dstop.here .stop-badge img { box-shadow:0 0 0 2px var(--acc), 0 0 0 5px var(--acc-soft); }
 #detail .dstop.next .stop-badge img { box-shadow:0 0 0 2px var(--acc); }
 #detail .dstop.done .stop-badge img { filter:grayscale(.9); opacity:.6; }
@@ -4658,9 +4658,10 @@ async function refreshStopBadges(root) {
       let url = _stopBadgeUrlCache.get(key);
       if (!url) {
         const c = document.createElement('canvas');
-        const S = 48;
-        c.width = S; c.height = S;
-        c.getContext('2d').drawImage(entry.img, cx, cy, cw, ch, 0, 0, S, S);
+        const S_H = 48;                                  /* 输出高度固定,宽度按 crop 比例(圆标160×160 / JR矩形193×232 不拉伸) */
+        const S_W = Math.max(1, Math.round(S_H * cw / ch));
+        c.width = S_W; c.height = S_H;
+        c.getContext('2d').drawImage(entry.img, cx, cy, cw, ch, 0, 0, S_W, S_H);
         url = c.toDataURL('image/png');
         _stopBadgeUrlCache.set(key, url);
       }
@@ -5978,9 +5979,22 @@ function updateDetailLive(t, p, M, rebuild) {
           const upCol = (k > 0) ? (lineColor.get(lineOfPair(t, k - 1)) || '#8899aa') : '';
           const dnCol = (k < N - 1) ? (lineColor.get(lineOfPair(t, k)) || '#8899aa') : '';
           const dotCol = upCol || dnCol;
-          /* 站徽章:该站有官方站标(badges map/lines 图集)则替换圆点;无徽章回退线路色圆点 */
+          /* 站徽章:仅当该站在「本班列车这条线路」上有对应官方站标时才替换圆点。
+             多线站(如新宿 11 枚)只取本班段线路那一枚(山手线过新宿→JY17);
+             该站在本班线路上没录徽章 → 即使它有别的线路徽章也回退线路色圆点(不借别的线的标) */
           const ent = (typeof badgeEntriesOf === 'function') ? badgeEntriesOf(t.jas[k]) : null;
-          const b0 = (ent && ent[0]) ? ent[0] : null;
+          const segThis = (k < N - 1) ? lineOfPair(t, k) : ((k > 0) ? lineOfPair(t, k - 1) : '');
+          let b0 = null;
+          if (ent && ent.length) {
+            /* map.json 兜底单枚(e[0]=='')=单线站无线路概念,直接用;否则按本班段线路匹配 */
+            if (!ent[0][0]) { b0 = ent[0]; }
+            else if (segThis) {
+              for (const e of ent) {
+                const ln = e[0] || '';
+                if (ln && (ln === segThis || ln.includes(segThis) || segThis.includes(ln))) { b0 = e; break; }
+              }
+            }
+          }
           const crop = b0 && b0[3] ? b0[3] : [0, 0, 160, 160];
           const midHtml = (b0 && b0[2])
             ? '<span class="stop-badge" data-sheet="' + b0[2] + '" data-cx="' + crop[0] + '" data-cy="' + crop[1] + '" data-cw="' + crop[2] + '" data-ch="' + crop[3] + '"></span>'

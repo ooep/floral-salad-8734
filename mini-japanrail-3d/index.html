@@ -2156,11 +2156,15 @@ function matchLine(a, b) {
   if (LINES_MAP[b] && LINES_MAP[b].includes(a)) return 3;
   if (a.includes(b) || b.includes(a)) return 2;
   const an = normCached(a), bn = normCached(b);
-  if (an && bn && (an.includes(bn) || bn.includes(an))) {
-    /* 新幹線 vs 在来線:norm 前缀包含(東海道新幹 vs 東海道)会让新干线列车误用在来线段
-       (豊橋→熱海 直线段 159km 跳跃), 禁止弱匹配 */
-    if ((an.includes('新幹') && !bn.includes('新幹')) || (bn.includes('新幹') && !an.includes('新幹'))) return 0;
-    return 1;
+  if (an && bn) {
+    /* norm 后完全相同(日豊本線/日豊線 → 日豊/日豊):同一条线的不同叫法,应等价于 === */
+    if (an === bn) return 3;
+    if (an.includes(bn) || bn.includes(an)) {
+      /* 新幹線 vs 在来線:norm 前缀包含(東海道新幹 vs 東海道)会让新干线列车误用在来线段
+         (豊橋→熱海 直线段 159km 跳跃), 禁止弱匹配 */
+      if ((an.includes('新幹') && !bn.includes('新幹')) || (bn.includes('新幹') && !an.includes('新幹'))) return 0;
+      return 1;
+    }
   }
   return 0;
 }

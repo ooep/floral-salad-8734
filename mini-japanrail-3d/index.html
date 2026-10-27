@@ -2211,20 +2211,26 @@ function resolveCoord(rawName, lineSet, prevCoord) {
     }
     if (allNear) return cands[0].coords;
   }
-  let best = null, bestScore = -1;
+  let best = null, bestScore = -1, bracketMatched = false;
   for (const c of cands) {
-    let score = 0;
+    let score = 0, brScore = 0;
     if (bracket) {
-      if (c.op && (c.op.includes(bracket.slice(0, 2)) || bracket.slice(0, 2).includes(c.op.slice(0, 2)))) score += 4;
-      if (bracket === '地下鉄' && /地下鉄|高速電気軌道|交通局|市営/.test(c.op)) score += 4;
-      if (c.line && c.line.includes(bracket.slice(0, 2))) score += 3;
+      if (c.op && (c.op.includes(bracket.slice(0, 2)) || bracket.slice(0, 2).includes(c.op.slice(0, 2)))) { brScore += 4; }
+      if (bracket === '地下鉄' && /地下鉄|高速電気軌道|交通局|市営/.test(c.op)) { brScore += 4; }
+      if (c.line && c.line.includes(bracket.slice(0, 2))) { brScore += 3; }
+      score += brScore;
+      if (brScore > 0) bracketMatched = true;
     }
     if (c.line) {
       for (const ln of lineSet || []) { const s = matchLine(ln, c.line); if (s > 0) { score += s; break; } }
     }
     if (score > bestScore) { bestScore = score; best = c; }
   }
-  if (bestScore >= 2 && best) return best.coords;
+  /* 括号注记(县名后缀)存在但无候选匹配 → 不能仅凭弱线路匹配(includes/norm)就选定,
+     否则「別府(大分県)」会被山陽電鉄「本線」候选(鹿児島本線.includes(本線)=2)抢走,
+     错配到兵庫県。阈值从 2 提高到 4,此时 fallthrough 到 prevCoord 地理连续性消歧。 */
+  const scoreThreshold = (bracket && !bracketMatched) ? 4 : 2;
+  if (bestScore >= scoreThreshold && best) return best.coords;
   if (prevCoord) {
     let bd = 1e18, bc = null;
     for (const c of cands) {

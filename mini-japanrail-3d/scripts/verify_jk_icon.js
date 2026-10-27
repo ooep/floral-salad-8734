@@ -19,6 +19,12 @@ const ATLAS = JSON.parse(fs.readFileSync(path.join(DATA, 'train_icons_atlas.json
 function normName(n) { return String(n).replace(/\([^)]*\)/g, '').replace(/[ケヶ]/g, 'ヶ').replace(/駅$/, '').trim(); }
 
 const ICON_SKIP_LINES = new Set(['山手線', '東海道本線', '東北本線']);
+/* 图集索引动态化: v7 重建后索引整体移位(根岸線300→298, 山手線109→108等), 断言一律从ATLAS读取 */
+const JK_ICON = ATLAS.line['根岸線'];
+const YM_ICON = ATLAS.line['山手線'];
+const MUS_ICON = ATLAS.line['武蔵野線'];
+const YOKO_ICON = ATLAS.line['横須賀線'];
+const SOBU_ICON = ATLAS.line['総武本線'];
 const ICON_PRIORITY_LINES = new Set(['武蔵野線']);
 const JK_ONLY_STA = new Set(['与野', '北浦和', '南浦和', '蕨', '西川口', '川口', '東十条', '王子', '上中里', '大井町', '大森', '蒲田', '桜木町', '関内', '石川町', '山手', '根岸', '磯子', '新子安', '新杉田', '洋光台', '港南台', '本郷台']);
 function isKeihinTohokuTrip(t) {
@@ -76,14 +82,14 @@ for (const tid of expect300) {
   const t = trips.find(x => x.tid === tid);
   if (!t) { report(false, '班次 ' + tid + ' 不存在'); continue; }
   const idx = lineIconFor(t);
-  report(idx === 300, `JK班次 ${tid} (${t.lines.join(',')} ${t.jas[0]}→${t.jas[t.N-1]}) 图标=${idx} 期望300`);
+  report(idx === JK_ICON, `JK班次 ${tid} (${t.lines.join(',')} ${t.jas[0]}→${t.jas[t.N-1]}) 图标=${idx} 期望JK(${JK_ICON})`);
 }
 /* 1b) 上野东京线直通(古河→小田原)不应为JK */
 {
   const t = trips.find(x => x.tid === '5343');
   const jk = isKeihinTohokuTrip(t);
   const idx = lineIconFor(t);
-  report(!jk && idx !== 300, `上野東京線 5343 (古河→小田原) 非JK (jk=${jk}, 图标=${idx})`);
+  report(!jk && idx !== JK_ICON, `上野東京線 5343 (古河→小田原) 非JK (jk=${jk}, 图标=${idx})`);
 }
 /* 2) 上野東京線不误判 + 纯干道组合改E217湘南色(489) */
 const notJK = ['1055', '2155', '5343'];
@@ -98,17 +104,17 @@ for (const tid of notJK) {
 for (const tid of ['4331', '2507', '7250']) {
   const t = trips.find(x => x.tid === tid);
   const idx = lineIconFor(t);
-  report(idx === 109, `山手線 ${tid} 图标=${idx} 期望109`);
+  report(idx === YM_ICON, `山手線 ${tid} 图标=${idx} 期望山手線(${YM_ICON})`);
 }
 
-/* 4) 全量一致性: 所有含根岸線 或 两线路含JK站的班次 → 300; 统计 */
+/* 4) 全量一致性: 所有含根岸線 或 两线路含JK站的班次 → JK_ICON; 统计 */
 let jkCnt = 0, rootCnt = 0, tohoku2 = 0, jkViaSta = 0;
 for (const t of trips) {
   const jk = isKeihinTohokuTrip(t);
   if (!jk) continue;
   jkCnt++;
   const idx = lineIconFor(t);
-  if (idx !== 300) { report(false, `JK班次 ${t.tid} 图标=${idx} 应为300`); }
+  if (idx !== JK_ICON) { report(false, `JK班次 ${t.tid} 图标=${idx} 应为JK(${JK_ICON})`); }
   if (t.lines.includes('根岸線')) rootCnt++;
   if (t.lines.length === 2 && t.lines.includes('東海道本線') && t.lines.includes('東北本線')) { tohoku2++; jkViaSta++; }
 }
@@ -128,10 +134,10 @@ console.log('两线路非JK班次图标分布:', JSON.stringify(twoLineNonJK));
 for (const p3 of ['東北線', '東海道線', '山手線', '根岸線']) {
   const t = trips.find(x => x.tid === '5581');
   const idx = trainIconIdx(t, p3);
-  report(idx === 300, `JK班次5581 trainIconIdx(p3=${p3}) = ${idx} 期望300`);
+  report(idx === JK_ICON, `JK班次5581 trainIconIdx(p3=${p3}) = ${idx} 期望JK(${JK_ICON})`);
 }
 const yt = trips.find(x => x.tid === '4331');
-report(trainIconIdx(yt, '山手線') === 109, `山手线4331 trainIconIdx(p3=山手線) = ${trainIconIdx(yt, '山手線')} 期望109`);
+report(trainIconIdx(yt, '山手線') === YM_ICON, `山手线4331 trainIconIdx(p3=山手線) = ${trainIconIdx(yt, '山手線')} 期望山手線(${YM_ICON})`);
 
 /* 7) 武藏野线直通: 直通列车车体为E231武藏野线涂装, 应优先武蔵野線图标(152) */
 const musa = [
@@ -143,7 +149,7 @@ const musa = [
 for (const [tid, lines] of musa) {
   const t = trips.find(x => x.tid === tid);
   const idx = lineIconFor(t);
-  report(idx === 152, `武藏野线直通 ${tid} (${lines.join(',')}) 图标=${idx} 期望152(武蔵野線E231)`);
+  report(idx === MUS_ICON, `武藏野线直通 ${tid} (${lines.join(',')}) 图标=${idx} 期望武蔵野線(${MUS_ICON})`);
 }
 /* 7b) 京葉線+武蔵野線 组合(西船橋⇔海浜幕張方向) 也应取152 */
 {
@@ -151,19 +157,19 @@ for (const [tid, lines] of musa) {
   for (const t of trips) {
     if (t.lines.length === 2 && t.lines.includes('京葉線') && t.lines.includes('武蔵野線')) {
       cnt++;
-      if (lineIconFor(t) !== 152) ok = false;
+      if (lineIconFor(t) !== MUS_ICON) ok = false;
     }
   }
-  report(ok && cnt > 0, `京葉線+武蔵野線 组合 ${cnt} 班次全部=152(武蔵野線E231)`);
+  report(ok && cnt > 0, `京葉線+武蔵野線 组合 ${cnt} 班次全部=武蔵野線(${MUS_ICON})`);
 }
 /* 7c) 纯武蔵野線 / 東北本線+武蔵野線 不受影响 */
 {
   let cnt = 0, ok = true;
   for (const t of trips) {
-    if (t.lines.length === 1 && t.lines[0] === '武蔵野線') { cnt++; if (lineIconFor(t) !== 152) ok = false; }
-    if (t.lines.length === 2 && t.lines.includes('東北本線') && t.lines.includes('武蔵野線')) { if (lineIconFor(t) !== 152) ok = false; }
+    if (t.lines.length === 1 && t.lines[0] === '武蔵野線') { cnt++; if (lineIconFor(t) !== MUS_ICON) ok = false; }
+    if (t.lines.length === 2 && t.lines.includes('東北本線') && t.lines.includes('武蔵野線')) { if (lineIconFor(t) !== MUS_ICON) ok = false; }
   }
-  report(ok, `纯武蔵野線 ${cnt} 班次及東北本線+武蔵野線全部=152`);
+  report(ok, `纯武蔵野線 ${cnt} 班次及東北本線+武蔵野線全部=武蔵野線(${MUS_ICON})`);
 }
 
 /* 8) 详情卡: 上野東京線在東海道線段 p[3]='東海道線' 必须走纯干道兜底(489) 而非西日本W223(143) */
@@ -177,28 +183,28 @@ for (const tid of ['1055', '2155', '5343']) {
 for (const tid of ['8575', '2549']) {
   const t = trips.find(x => x.tid === tid);
   const li = lineIconFor(t);
-  report(li === 149, `湘南新宿線 ${tid} (${t.jas[0]}→${t.jas[t.N-1]}) 图标=${li} 期望149(湘南色)`);
+  report(li === YOKO_ICON, `湘南新宿線 ${tid} (${t.jas[0]}→${t.jas[t.N-1]}) 图标=${li} 期望湘南色(${YOKO_ICON})`);
   for (const p3 of ['東北線', '山手線', '東海道線', '横須賀線']) {
     const d = trainIconIdx(t, p3);
-    report(d === 149, `湘南新宿線 ${tid} 详情卡 p3=${p3} = ${d} 期望149(不再取E701/山手E235/W223)`);
+    report(d === YOKO_ICON, `湘南新宿線 ${tid} 详情卡 p3=${p3} = ${d} 期望149(不再取E701/山手E235/W223)`);
   }
 }
 /* 10) 総武快速直通(成田/房総方向): 湘南色149, 非総武緩行黄色195 */
 for (const tid of ['2442', '2727', '3057', '6042']) {  // 逗子/久里浜/成田空港/銚子方向
   const t = trips.find(x => x.tid === tid);
   const idx = lineIconFor(t);
-  report(idx === 149, `総武快速直通 ${tid} (${t.jas[0]}→${t.jas[t.N-1]}) 图标=${idx} 期望149(湘南色) 非195(緩行黄)`);
+  report(idx === YOKO_ICON, `総武快速直通 ${tid} (${t.jas[0]}→${t.jas[t.N-1]}) 图标=${idx} 期望湘南色(${YOKO_ICON}) 非195(緩行黄)`);
 }
 /* 11) 緩行系不受影响: 中央総武緩行(195黄) / 東西線直通(195黄) */
 for (const tid of ['10325', '10829']) {  // 千葉→三鷹/西船橋→中野
   const t = trips.find(x => x.tid === tid);
   const idx = lineIconFor(t);
-  report(idx === 195, `中央総武緩行 ${tid} 图标=${idx} 期望195(黄色緩行)`);
+  report(idx === SOBU_ICON, `中央総武緩行 ${tid} 图标=${idx} 期望総武緩行(${SOBU_ICON})`);
 }
 {
   const t = trips.find(x => x.tid === '394');  // 津田沼→中野(東西線直通)
   const idx = lineIconFor(t);
-  report(idx === 195, `総武⇔東西線直通 394 图标=${idx} 期望195(黄色)`);
+  report(idx === SOBU_ICON, `総武⇔東西線直通 394 图标=${idx} 期望総武緩行(${SOBU_ICON})`);
 }
 /* 12) 单线路成田線普通车: 避N'EX特急E259(127), 用东日本通用通勤兜底 */
 for (const tid of ['8890', '9535', '2857']) {
@@ -210,7 +216,7 @@ for (const tid of ['8890', '9535', '2857']) {
 {
   const t = trips.find(x => x.tid === '3970');
   const idx = lineIconFor(t);
-  report(idx === 152, `武藏野線直通(横須賀線経由) 3970 图标=${idx} 期望152(武蔵野線E231)`);
+  report(idx === MUS_ICON, `武藏野線直通(横須賀線経由) 3970 图标=${idx} 期望武蔵野線(${MUS_ICON})`);
 }
 
 console.log(fail === 0 ? '\n✅ 全部通过' : `\n❌ ${fail} 项失败`);

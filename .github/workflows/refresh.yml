@@ -46,6 +46,13 @@ jobs:
       - name: Build local train files
         run: python3 scripts/build_trains.py --src data/timetables --out data/live
 
+      - name: Ensure tmaps covers trains keys (rebuild only when dangling)
+        # trains 更新常引入新 tmap_id（ダイヤ改正/新服务），而 tmaps.json 是
+        # 手动构建的旧版 → 悬空 key 会让这些班次在 delay bake 中宁漏。
+        # --ensure-keys: 全覆盖则秒级跳过；有缺失才全量重建（merge 旧 tmaps，约 25 分钟）。
+        # 重建失败不阻断主流程（下周重试），避免周日流水线因单个脚本卡死。
+        run: python3 scripts/build_tmaps.py --ensure-keys --sleep 2.2 || echo '::warning::tmaps ensure failed, keeping previous build'
+
       - name: Sync Mini JapanRail data + contract verify
         # 契约校验不通过则 exit 1 → 后续 commit/部署中止,旧数据保持,页面不受影响
         run: python3 scripts/sync_mini_3d.py

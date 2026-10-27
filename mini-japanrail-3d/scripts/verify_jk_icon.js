@@ -37,9 +37,13 @@ function lineIconFor(t) {
   if (isKeihinTohokuTrip(t)) { const v = ATLAS.line['根岸線']; if (v !== undefined) return v; }
   if (t.lines.length > 1) {
     for (const ln of ICON_PRIORITY_LINES) { if (t.lines.includes(ln)) { const v = ATLAS.line[ln]; if (v !== undefined) return v; } }
+    const yv = ATLAS.line['横須賀線'];
+    if (t.lines.includes('横須賀線') && yv !== undefined) return yv;
+    if (t.lines.includes('総武本線') && !t.lines.includes('中央本線') && !t.lines.includes('東京メトロ東西線') && yv !== undefined) return yv;
     for (const ln of t.lines) { if (ICON_SKIP_LINES.has(ln)) continue; const v = ATLAS.line[ln]; if (v !== undefined) return v; }
     if (ATLAS.fallback !== undefined) return ATLAS.fallback;
   }
+  if (t.lines.length === 1 && t.lines[0] === '成田線' && ATLAS.fallback !== undefined) return ATLAS.fallback;
   for (let li = 0; li < t.lines.length; li++) {
     if (t.lines.length > 1 && t.lines[li] === '山手線') continue;
     const v = ATLAS.line[t.lines[li]]; if (v !== undefined) return v;
@@ -51,7 +55,7 @@ function trainIconIdx(t, lineName) {
   if (t.nm && ATLAS.tokkyu[t.nm] !== undefined) return ATLAS.tokkyu[t.nm];
   if (isKeihinTohokuTrip(t)) { const v = ATLAS.line['根岸線']; if (v !== undefined) return v; }
   if (t.lines.length > 1 && t.lines.every(ln => ICON_SKIP_LINES.has(ln)) && ATLAS.fallback !== undefined) return ATLAS.fallback;
-  if (lineName && ATLAS.line[lineName] !== undefined) return ATLAS.line[lineName];
+  if (t.lines.length === 1 && lineName && ATLAS.line[lineName] !== undefined) return ATLAS.line[lineName];
   const li = lineIconFor(t);
   if (li >= 0) return li;
   return ATLAS.fallback;
@@ -167,6 +171,46 @@ for (const tid of ['1055', '2155', '5343']) {
   const t = trips.find(x => x.tid === tid);
   const idx = trainIconIdx(t, '東海道線');
   report(idx === ATLAS.fallback, `上野東京線 ${tid} 详情卡 trainIconIdx(p3=東海道線) = ${idx} 期望兜底(${ATLAS.fallback}) 非143`);
+}
+
+/* 9) 湘南新宿線(宇都宮⇔逗子): 整趟统一湘南色(149), 详情卡不走p[3]随区段变色 */
+for (const tid of ['8575', '2549']) {
+  const t = trips.find(x => x.tid === tid);
+  const li = lineIconFor(t);
+  report(li === 149, `湘南新宿線 ${tid} (${t.jas[0]}→${t.jas[t.N-1]}) 图标=${li} 期望149(湘南色)`);
+  for (const p3 of ['東北線', '山手線', '東海道線', '横須賀線']) {
+    const d = trainIconIdx(t, p3);
+    report(d === 149, `湘南新宿線 ${tid} 详情卡 p3=${p3} = ${d} 期望149(不再取E701/山手E235/W223)`);
+  }
+}
+/* 10) 総武快速直通(成田/房総方向): 湘南色149, 非総武緩行黄色195 */
+for (const tid of ['2442', '2727', '3057', '6042']) {  // 逗子/久里浜/成田空港/銚子方向
+  const t = trips.find(x => x.tid === tid);
+  const idx = lineIconFor(t);
+  report(idx === 149, `総武快速直通 ${tid} (${t.jas[0]}→${t.jas[t.N-1]}) 图标=${idx} 期望149(湘南色) 非195(緩行黄)`);
+}
+/* 11) 緩行系不受影响: 中央総武緩行(195黄) / 東西線直通(195黄) */
+for (const tid of ['10325', '10829']) {  // 千葉→三鷹/西船橋→中野
+  const t = trips.find(x => x.tid === tid);
+  const idx = lineIconFor(t);
+  report(idx === 195, `中央総武緩行 ${tid} 图标=${idx} 期望195(黄色緩行)`);
+}
+{
+  const t = trips.find(x => x.tid === '394');  // 津田沼→中野(東西線直通)
+  const idx = lineIconFor(t);
+  report(idx === 195, `総武⇔東西線直通 394 图标=${idx} 期望195(黄色)`);
+}
+/* 12) 单线路成田線普通车: 避N'EX特急E259(127), 用东日本通用通勤兜底 */
+for (const tid of ['8890', '9535', '2857']) {
+  const t = trips.find(x => x.tid === tid);
+  const idx = lineIconFor(t);
+  report(idx === ATLAS.fallback, `成田線普通 ${tid} (${t.jas[0]}→${t.jas[t.N-1]}) 图标=${idx} 期望兜底(${ATLAS.fallback}) 非127(N'EX-E259)`);
+}
+/* 13) 武藏野线系统不受横须贺优先影响 */
+{
+  const t = trips.find(x => x.tid === '3970');
+  const idx = lineIconFor(t);
+  report(idx === 152, `武藏野線直通(横須賀線経由) 3970 图标=${idx} 期望152(武蔵野線E231)`);
 }
 
 console.log(fail === 0 ? '\n✅ 全部通过' : `\n❌ ${fail} 项失败`);

@@ -5842,14 +5842,20 @@ function lineIconFor(t) {
   if (isOsakaMetroChuoTrip(t)) { const v = ATLAS.line['大阪メトロ中央線']; if (v !== undefined) return v; }
   if (isMinamiasoThroughTrip(t)) { const v = ATLAS.line['高森線']; if (v !== undefined) return v; }
   if (t.lines.length > 1) {
-    /* 直通系统线路优先(武藏野线直通车体归属) */
+    /* 直通系统线路优先: 武藏野线(E231武藏野色) > 湘南色系统(横須賀線 E217/E235系1000番台; 含総武快速→成田/房総方向快速) */
     for (const ln of ICON_PRIORITY_LINES) { if (t.lines.includes(ln)) { const v = ATLAS.line[ln]; if (v !== undefined) return v; } }
+    const yv = ATLAS.line['横須賀線'];
+    if (t.lines.includes('横須賀線') && yv !== undefined) return yv;
+    /* 総武快速系: 多线路含'総武本線'且不含緩行特征(中央本線/東京メトロ東西線) = 東京⇔成田/千葉/房総直通快速, 车体为湘南色(E217等), 非総武緩行黄色(E235so) */
+    if (t.lines.includes('総武本線') && !t.lines.includes('中央本線') && !t.lines.includes('東京メトロ東西線') && yv !== undefined) return yv;
     for (const ln of t.lines) { if (ICON_SKIP_LINES.has(ln)) continue; const v = ATLAS.line[ln]; if (v !== undefined) return v; }
     /* 多线路但全是共享干道(上野東京線/宇都宮線等直通, 如 [東海道本線,東北本線]):
        不再取'東海道本線'的西日本W223(143, 灰+黄绿带, 与山手线E235视觉混淆),
        改用东日本E217湘南色通用通勤车兜底图 */
     if (ATLAS.fallback !== undefined) return ATLAS.fallback;
   }
+  /* 成田線: 图集键误配为N'EX特急E259(127), 成田线普通车(成田⇔我孫子 / 佐原⇔鹿島神宮)改用东日本通用通勤车兜底 */
+  if (t.lines.length === 1 && t.lines[0] === '成田線' && ATLAS.fallback !== undefined) return ATLAS.fallback;
   for (let li = 0; li < t.lines.length; li++) {
     if (t.lines.length > 1 && t.lines[li] === '山手線') continue;
     const v = ATLAS.line[t.lines[li]]; if (v !== undefined) return v;
@@ -5870,7 +5876,9 @@ function trainIconIdx(t, lineName) {
   if (lineName === '山手線' && ATLAS.line['山手線'] !== undefined) return ATLAS.line['山手線'];
   /* 纯共享干道直通(上野東京線等): 优先E217湘南色兜底, 防止 p[3]='東海道線' 绕过兜底取到西日本W223(143) */
   if (t.lines.length > 1 && t.lines.every(ln => ICON_SKIP_LINES.has(ln)) && ATLAS.fallback !== undefined) return ATLAS.fallback;
-  if (lineName && ATLAS.line[lineName] !== undefined) return ATLAS.line[lineName];
+  /* 多线路直通列车(湘南新宿線/武藏野線/総武快速等): 整趟车统一用 lineIconFor 的车系图标,
+     不走 p[3] 当前区段(否则东北段取E701/山手段取山手线E235/东海道段取W223, 一段一换错配) */
+  if (t.lines.length === 1 && lineName && ATLAS.line[lineName] !== undefined) return ATLAS.line[lineName];
   const li = lineIconFor(t);
   if (li >= 0) return li;
   return ATLAS.fallback;

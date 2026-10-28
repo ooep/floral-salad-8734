@@ -8620,15 +8620,14 @@ const M3D = (() => {
     if (!btn) return;
     const path = pathOf(t);
     const v = $('dModelV');
-    if (path) {
-      btn.classList.remove('na');
-      if (v) v.textContent = T().m3dBtn || '查看 3D 模型';
-      btn.onclick = () => openViewer(t);
-    } else {
-      btn.classList.add('na');
-      if (v) v.textContent = T().m3dNone || '该车型暂无 3D 模型';
-      btn.onclick = null;
+    if (!path) {
+      btn.style.display = 'none';
+      return;
     }
+    btn.style.display = '';
+    btn.classList.remove('na');
+    if (v) v.textContent = T().m3dBtn || '查看 3D 模型';
+    btn.onclick = () => openViewer(t);
   }
   /* ── init:拉映射表(小文件,加载即取;失败静默禁用) ── */
   async function init() {

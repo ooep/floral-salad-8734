@@ -218,7 +218,7 @@ const I18N = {
     h3:'点击车站 = 途经线路', h4:'底部时钟:暂停 / 拖动时间 / 0.5–32× 倍速回放', h5:'搜索站名:日文 / 中文(东京·涩谷)/ 英文(Tokyo, Shinjuku)',
     h6:'基于计划时刻表,可在设置中开启实时延误', next:'下一站', eta:'约', min:'分', dep:'发车', arr:'到达', status:'状态',
     stopsTitle:'停靠站', stopsCount:'站', colStop:'站', colArr:'到', colDep:'发', colPlat:'站台', platRefTitle:'各线路站台参考',
-    running:'运行中', dwelling:'停車中', speed:'速度', kmh:'km/h', firstLast:'全程', track:'轨道 = 官方线路色', legendNote:'列车颜色 = 所属线路色',
+    running:'运行中', dwelling:'停車中', speed:'速度', kmh:'km/h', estTag:'推定', estWhy:'该区间时刻紧于加减速物理极限,速度为推定值,位置按时刻表插值', firstLast:'全程', track:'轨道 = 官方线路色', legendNote:'列车颜色 = 所属线路色',
     followBtn:'跟随此列车', locateBtn:'定位', stopFollowBtn:'停止跟随', tripId:'班次', viaLines:'途经线路',
     cplLabel:'併结', cplSplit:'与 {0} 併结，于 {1} 分割', cplJoin:'与 {0} 于 {1} 併结', cplView:'查看 {0}',
     wikiLabel:'列车百科', wikiEmpty:'暂无百科数据', wikiLoading:'百科数据加载中…', wikiFail:'百科数据加载失败',
@@ -260,7 +260,7 @@ const I18N = {
     h3:'駅クリック = 経由路線', h4:'下部時計:一時停止 / 時間操作 / 0.5–32× 再生', h5:'駅名検索:日本語 / 中国語 / 英語(Tokyo, Shinjuku)',
     h6:'計画時刻表ベース(設定でリアルタイム遅延に対応)', next:'次駅', eta:'約', min:'分', dep:'発', arr:'着', status:'状態',
     stopsTitle:'停車駅', stopsCount:'駅', colStop:'駅', colArr:'着', colDep:'発', colPlat:'番線', platRefTitle:'路線別の番線参考',
-    running:'運行中', dwelling:'停車中', speed:'速度', kmh:'km/h', firstLast:'全区間', track:'路線 = 公式路線色', legendNote:'列車色 = 所属路線色',
+    running:'運行中', dwelling:'停車中', speed:'速度', kmh:'km/h', estTag:'推定', estWhy:'この区間の所要時間が加減速の物理限界を下回るため、速度は推定値・位置は時刻表補間です', firstLast:'全区間', track:'路線 = 公式路線色', legendNote:'列車色 = 所属路線色',
     followBtn:'列車を追跡', locateBtn:'位置', stopFollowBtn:'追跡停止', tripId:'列車', viaLines:'経由路線',
     cplLabel:'併結', cplSplit:'{0}と併結、{1}で分割', cplJoin:'{1}で{0}と併結', cplView:'{0}を表示',
     wikiLabel:'列車百科', wikiEmpty:'百科データなし', wikiLoading:'百科データ読込中…', wikiFail:'百科データの読込に失敗しました',
@@ -302,7 +302,7 @@ const I18N = {
     h3:'Click station = its lines', h4:'Bottom clock: pause / scrub / 0.5–32× replay', h5:'Search stations: Japanese / Chinese / English (Tokyo, Shinjuku)',
     h6:'Scheduled timetables, optional live delays', next:'Next', eta:'~', min:'min', dep:'dep', arr:'arr', status:'Status',
     stopsTitle:'Stops', stopsCount:'stops', colStop:'Station', colArr:'Arr', colDep:'Dep', colPlat:'Platform', platRefTitle:'Platforms by line',
-    running:'Running', dwelling:'At station', speed:'Speed', kmh:'km/h', firstLast:'Route', track:'Track = official line color', legendNote:'Train color = line color',
+    running:'Running', dwelling:'At station', speed:'Speed', kmh:'km/h', estTag:'est.', estWhy:'Segment time is below the physical accel/braking limit; speed is estimated and position follows the timetable', firstLast:'Route', track:'Track = official line color', legendNote:'Train color = line color',
     followBtn:'Follow train', locateBtn:'Locate', stopFollowBtn:'Stop follow', tripId:'Trip', viaLines:'Lines',
     cplLabel:'Coupled', cplSplit:'Coupled w/ {0}, splits at {1}', cplJoin:'Couples w/ {0} at {1}', cplView:'View {0}',
     wikiLabel:'Train encyclopedia', wikiEmpty:'No encyclopedia data', wikiLoading:'Loading encyclopedia…', wikiFail:'Failed to load encyclopedia',
@@ -1468,7 +1468,7 @@ function parseTrip(t) {
      在此一并声明以固定对象形状(9.5 万个班次,避免运行时反复触发隐藏类迁移)。
      _k: 上次成功解算得到的线路类型(KINDS 之一),用于让「类型过滤」也走淡入淡出
      _seen: 空间网格查询的帧戳(班次跨多格时去重,避免重复入 eligible) */
-  return { t: t.t, r: t.r, i: t.i || '', g: gradeOf(t.i || ''), _f: 0, _M2: 0, _ok: 0, _fm: 0, _k: null, _seen: 0, nm: tripName(t.i || '', N, jas, linesN), w0, w1, dep, arr, N, jas, jasN, stopC, lines, linesN, lineSet, sStart, sRun, skX, skY, skStop, skCum, skLen, bad, skUp, skDn, color: typeColor(t.i), mx0: mx0 - 0.0005, mx1: mx1 + 0.0005, my0: my0 - 0.0007, my1: my1 + 0.0007, tid: t._ || '', c: t.c || [] };
+  return { t: t.t, r: t.r, i: t.i || '', g: gradeOf(t.i || ''), _f: 0, _M2: 0, _ok: 0, _fm: 0, _k: null, _seen: 0, _prof: null, nm: tripName(t.i || '', N, jas, linesN), w0, w1, dep, arr, N, jas, jasN, stopC, lines, linesN, lineSet, sStart, sRun, skX, skY, skStop, skCum, skLen, bad, skUp, skDn, color: typeColor(t.i), mx0: mx0 - 0.0005, mx1: mx1 + 0.0005, my0: my0 - 0.0007, my1: my1 + 0.0007, tid: t._ || '', c: t.c || [] };
 }
 
 /* ---------------- 位置引擎 ---------------- */
@@ -1726,8 +1726,38 @@ function locateSeg(t, M2) {
   t._i = i; t._iM = M2;
   return i;
 }
-/* 主入口:返回 [lng, lat, heading(rad), lineName, kind, kmh] 或 null */
-const _pos = [0, 0, 0, '', '', 0];
+/* 主入口:返回 [lng, lat, heading(rad), lineName, kind, kmh, 速度是否为推定值] 或 null */
+const _pos = [0, 0, 0, '', '', 0, 0];
+/* 速度梯形物理模型(DokoRail 迁移):真实列车起停非线性加减速 —— 先以 TRAPEZ_A 加速,
+   再匀速巡航,最后对称制动;位置与速度同源,替代旧「段内匀速」线性插值。
+   时刻紧于物理极限时退化为三角形(无巡航段),仍按时刻表走完。 */
+const TRAPEZ_A = 0.9;   /* m/s²,默认加速度 */
+function trapezProfile(t, i) {
+  const cache = t._prof || (t._prof = []);
+  let pf = cache[i];
+  if (pf !== undefined) return pf;   /* null = 距离异常区间,已判定走线性 */
+  const D = pairKm(t, i) * 1000;            /* m */
+  const T = (t.arr[i+1] - t.dep[i]) * 60;   /* s */
+  if (!(D > 0) || !isFinite(D) || !(T > 0)) { cache[i] = null; return null; }
+  const vmax = t.g === 0 ? 300 / 3.6 : 130 / 3.6;
+  let o = TRAPEZ_A, disc = T * T - 4 * D / o, c;
+  if (disc < 0) { o = 4 * D / (T * T); c = o * T / 2; }   /* 三角形:时刻极紧,等效加速度 */
+  else c = o * (T - Math.sqrt(disc)) / 2;
+  if (c > vmax && D < vmax * T) { c = vmax; o = c * c / (c * T - D); } /* 富余时刻钳顶棚 */
+  const minT = D <= vmax * vmax / TRAPEZ_A ? 2 * Math.sqrt(D / TRAPEZ_A) : D / vmax + vmax / TRAPEZ_A;
+  pf = { D, T, o, c, l: c / o, unrel: T + 1e-6 < minT ? 1 : 0 };
+  cache[i] = pf;
+  return pf;
+}
+function trapezAt(pf, tau) {
+  if (tau <= 0) return [0, 0];
+  if (tau >= pf.T) return [pf.D, 0];
+  if (tau < pf.l) return [0.5 * pf.o * tau * tau, pf.o * tau];
+  const dc = 0.5 * pf.c * pf.l;
+  if (tau <= pf.T - pf.l) return [dc + pf.c * (tau - pf.l), pf.c];
+  const r = pf.T - tau;
+  return [pf.D - 0.5 * pf.o * r * r, pf.o * r];
+}
 /* 二十三轮「整区间反向行驶」修复:segIndex 存在键为 A|B 但坐标实为 B→A 的反向注册段
    (宝殿|曽根、香取|佐原 等,列车整区间倒行、终点停在出发站)。主路径 pickSeg 后按
    stopC[i] 定向:尾端更近本站 → 换用惰性反向孪生(cum 反演 newCum[j]=len-oldCum[N-j],
@@ -1759,14 +1789,21 @@ function orientSeg(t, i, e) {
 }
 function trainPosition(t, M) {
   const { dep, arr, N, jas } = t;
-  /* 段内线性快径(十九轮):缓存上次解算的(时间窗 m0/m1、折线子段 kLo/kSpan、
-     子段起点/方向/方位角、线路/种类/速度)。M 仍落在同一时间窗与同一折线子段内时,
-     位置是 M 的线性函数 —— 用与全量解算完全相同的操作数与顺序计算,输出逐位一致,
-     免去 locateSeg 与 skCum 两次二分及 atan2(城市正午实测约占阶段 3 的一半)。
-     越界/停车/联挂/骨架/fallback 一律回退下方全量路径。 */
+  _pos[6] = 0;   /* 共享数组:每次调用先清零,防上一班次的 unrel 标记残留 */
+  /* 段内快径(十九轮,二十四轮并入梯形剖面):缓存上次解算的(时间窗 m0/m1、折线子段 kLo/kSpan、
+     子段起点/方向/方位角、线路/种类)。M 仍落在同一时间窗与同一折线子段内时,直接复用子段几何;
+     frac 与速度改由梯形剖面按加减速非线性推进(与全量解算同一算法),免去 locateSeg 与 skCum
+     两次二分及 atan2。越界/停车/联挂/骨架/fallback 一律回退下方全量路径。 */
   const fk = t._fk;
   if (fk && !t.cpl && M >= fk.m0 && M <= fk.m1 + 1e-6) {
-    const frac = (M - fk.m0) / fk.runRaw;
+    const pf = trapezProfile(t, fk.i);
+    let frac, kmh = fk.kmh, unrel = 0;
+    if (pf) {
+      const d = trapezAt(pf, (M - fk.m0) * 60);
+      frac = Math.min(1, d[0] / pf.D);
+      kmh = d[1] * 3.6;
+      unrel = pf.unrel;
+    } else frac = (M - fk.m0) / fk.runRaw;   /* 距离异常区间:回退旧线性 */
     const target = frac * fk.len;
     /* ★ 子段有效域检查(21a 轮修复「线路外乱飞/抽搐」):十九轮的守卫只验时间窗 [m0,m1],
        漏验了 target 是否仍在缓存子段 [kLo, kLo+kSpan] 内 —— M 在同一区间内跨过子段边界后,
@@ -1778,7 +1815,8 @@ function trainPosition(t, M) {
       _pos[0] = fk.c0x + fk.dx * f;
       _pos[1] = fk.c0y + fk.dy * f;
       _pos[2] = fk.brg;
-      _pos[3] = fk.line; _pos[4] = fk.kind; _pos[5] = fk.kmh;
+      _pos[3] = fk.line; _pos[4] = fk.kind; _pos[5] = kmh;
+      _pos[6] = unrel;
       return _pos;
     }
   }
@@ -1795,8 +1833,16 @@ function trainPosition(t, M) {
   let frac = -1, kmh = 0;
   if (running) {
     if (runRaw > 0) {
-      frac = (M - dep[i]) / runRaw;
-      if (M >= dep[i] - 1e-9) kmh = pairKm(t, i) / (runRaw / 60);
+      if (M >= dep[i] - 1e-9) {
+        /* 梯形剖面:位置/速度同源(起停加减速),详注见 trapezProfile */
+        const pf = trapezProfile(t, i);
+        if (pf) {
+          const d = trapezAt(pf, (M - dep[i]) * 60);
+          frac = Math.min(1, d[0] / pf.D);
+          kmh = d[1] * 3.6;
+          _pos[6] = pf.unrel;
+        } else frac = (M - dep[i]) / runRaw;   /* 距离异常(缺几何/同坐标站):回退旧线性 */
+      } else frac = (M - dep[i]) / runRaw; /* 停站等待期:负 frac → 走停車分支 */
     } else {
       /* 零运行时长(分钟取整): 在平滑窗 sStart..arr[i+1] 内沿区间滑动, 窗外停起点站 */
       const r0 = (t.sRun && t.sRun[i]) || 0.25;
@@ -1918,7 +1964,7 @@ function trainPosition(t, M) {
     }
     if (fb.coords) {
       coords = fb.coords; cum = fb.cum; len = fb.len; line = fb.line; kind = fb.kind;
-      fPos = fb.m1 > fb.m0 ? Math.min(1, Math.max(0, (M - fb.m0) / (fb.m1 - fb.m0))) : 0;
+      fPos = (fb.m0 === dep[i] && fb.m1 === arr[i+1]) ? frac : (fb.m1 > fb.m0 ? Math.min(1, Math.max(0, (M - fb.m0) / (fb.m1 - fb.m0))) : 0);
     }
   }
   if (coords) {
@@ -1954,7 +2000,7 @@ function trainPosition(t, M) {
     _pos[3] = line; _pos[4] = kind; _pos[5] = kmh;
     /* 写快径缓存(主路径专用:segEntry 几何 + 正常运行 + 非前瞻位移 + 子段有效) */
     if (isMain && !shifted && running && frac >= 0 && runRaw > 0 && ckSpan > 0) {
-      t._fk = { m0: dep[i], m1: arr[i+1], runRaw, len, coords, cum,
+      t._fk = { i, m0: dep[i], m1: arr[i+1], runRaw, len, coords, cum,
         kLo: ckLo, kSpan: ckSpan, c0x: cc0x, c0y: cc0y, dx: cdx, dy: cdy,
         brg: cbrg, line: _pos[3], kind: _pos[4], kmh };
     } else t._fk = null;
@@ -5192,7 +5238,7 @@ function updateDetailLive(t, p, M, rebuild) {
       '<button class="btn icon d-x" id="dClose">' + ICO.close + '</button></div>' +
       '<div class="d-body">' +
       '<div class="d-meta">' +
-      '<div class="mrow"><span class="lb">' + T().status + '</span><span class="mv"><span class="st-badge ' + (running ? 'run' : 'dwell') + '"></span>' + (running ? T().running + ' · ' + Math.round(p[5]) + ' ' + T().kmh : '<b>' + T().dwelling + '</b> @ ' + jas[i]) + (t.dly > 0 ? '<span class="dly-chip">+' + Math.round(t.dly) + T().min + '</span>' : '') + '</span></div>' +
+      '<div class="mrow"><span class="lb">' + T().status + '</span><span class="mv"><span class="st-badge ' + (running ? 'run' : 'dwell') + '"></span>' + (running ? T().running + ' · ' + Math.round(p[5]) + ' ' + T().kmh : '<b>' + T().dwelling + '</b> @ ' + jas[i]) + (p[6] ? ' <span class="est-tag" title="' + T().estWhy + '">' + T().estTag + '</span>' : '') + (t.dly > 0 ? '<span class="dly-chip">+' + Math.round(t.dly) + T().min + '</span>' : '') + '</span></div>' +
       '<div class="mrow"><span class="lb">' + T().next + '</span><span class="mv">' + nextNm + ' ' + eta + '</span></div>' +
       comfortRowHtml(t) +
       (uniqLines.length ? '<div class="mrow"><span class="lb">' + T().viaLines + '</span><span class="mv">' + uniqLines.slice(0, 4).map(l => '<span class="lnchip" style="background:' + (lineColor.get(l) || '#6e6e6e') + '">' + l + '</span>').join('') + (uniqLines.length > 4 ? ' +' + (uniqLines.length - 4) : '') + '</span></div>' : '') +
@@ -5339,7 +5385,7 @@ function updateDetailLive(t, p, M, rebuild) {
     /* 每帧 innerHTML 重写有 GC/排版开销:内容不变时跳过,只写变化行 */
     const st = detailEl.querySelector('.d-meta');
     if (st) {
-      const s1 = '<span class="lb">' + T().status + '</span><span class="mv"><span class="st-badge ' + (running ? 'run' : 'dwell') + '"></span>' + (running ? T().running + ' · ' + Math.round(p[5]) + ' ' + T().kmh : '<b>' + T().dwelling + '</b> @ ' + jas[i]) + (t.dly > 0 ? '<span class="dly-chip">+' + Math.round(t.dly) + T().min + '</span>' : '') + '</span>';
+      const s1 = '<span class="lb">' + T().status + '</span><span class="mv"><span class="st-badge ' + (running ? 'run' : 'dwell') + '"></span>' + (running ? T().running + ' · ' + Math.round(p[5]) + ' ' + T().kmh : '<b>' + T().dwelling + '</b> @ ' + jas[i]) + (p[6] ? ' <span class="est-tag" title="' + T().estWhy + '">' + T().estTag + '</span>' : '') + (t.dly > 0 ? '<span class="dly-chip">+' + Math.round(t.dly) + T().min + '</span>' : '') + '</span>';
       if (s1 !== t._dS1) { st.children[0].innerHTML = s1; t._dS1 = s1; }
       const s2 = '<span class="lb">' + T().next + '</span><span class="mv">' + nextNm + ' ' + eta + '</span>';
       if (s2 !== t._dS2) { st.children[1].innerHTML = s2; t._dS2 = s2; }

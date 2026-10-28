@@ -679,6 +679,9 @@ button { font-family:inherit; }
 #detail .d-stops .st-title { display:flex; align-items:center; justify-content:space-between; padding:12px 2px 7px; font-size:10.5px; font-weight:700; color:var(--dim); letter-spacing:.6px; }
 #detail .d-stops .st-title .cnt { color:var(--dim); font-weight:600; font-size:10px; }
 #detail .st-list { max-height:min(264px,46vh); overflow-y:auto; overscroll-behavior:contain; padding:0 0 4px; }
+/* 抽屉内的滚动区一律不画滚动条(正文/列表/百科),滚动手感不变 */
+#detail .d-body, #detail .st-list, #detail .dw-art { scrollbar-width:none; -ms-overflow-style:none; }
+#detail .d-body::-webkit-scrollbar, #detail .st-list::-webkit-scrollbar, #detail .dw-art::-webkit-scrollbar { width:0; height:0; display:none; }
 #detail .dstop { position:relative; display:flex; gap:10px; min-height:38px; align-items:stretch; padding:0 8px; border-radius:12px; }
 #detail .dstop:hover { background:rgba(255,255,255,.05); }
 #detail .vn { position:relative; width:16px; flex:none; }

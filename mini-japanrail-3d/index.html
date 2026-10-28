@@ -630,6 +630,18 @@ button { font-family:inherit; }
    少一个选择器特性依赖,旧 WebKit 上也一样生效 */
 #detail .d-meta .crow.carsopen { flex-wrap:wrap; }
 #detail .d-meta .crow.carsopen .mv { flex:1 1 100%; }
+/* 收起后归位:柱图和 chip 用 FLIP 平移回行内,行高同时过渡。
+   过渡期间必须放开 .mv 的裁剪,否则上移的 chip 会被切掉 */
+#detail .d-meta .crow.carsettling, #detail .d-meta .crow.carsettling .mv { overflow:visible; }
+/* chip 归位要横穿柱子那一格(缩回后宽度只有 34px),同屏滑动必然把柱子盖掉;
+   归位段让 chip 淡出、落到新位置再淡入,柱子上移的过程才完整可见 */
+@keyframes cfoSettleFade {
+  0% { opacity:1; }
+  12% { opacity:0; }
+  50% { opacity:0; }
+  92% { opacity:1; }
+}
+#detail .d-meta .crow.carsettling .cfo-chip { animation:cfoSettleFade var(--morph-in) linear both; }
 .sbdly { display:inline-block; margin-left:3px; padding:0 3px; border-radius:5px; background:rgba(251,113,133,.18); color:#fb7185; font-size:9.5px; font-weight:700; line-height:13px; vertical-align:1px; }
 #tip .sg.dly-t, .tip .sg.dly-t { color:#fb7185; font-weight:700; }
 #detail .vtm .dlyn { color:#fb7185; font-weight:600; margin-left:2px; white-space:nowrap; }
@@ -4125,7 +4137,7 @@ const COMFORT_FETCH_MS = 5 * 60 * 1000, COMFORT_MAX_AGE_MS = 45 * 60 * 1000;
 let comfortLastFetch = 0, comfortTimer = null, comfortGenMs = 0, comfortBusy = false, comfortPending = false;
 /* 逐车柱图 ⇄ 编组图 的展开态。存在模块变量里:换车、5 分钟一次的
    comfortApplyData 强制重建抽屉时都保持用户选的那一档 */
-let comfortCarsOpen = false, comfortWrapTimer = 0;
+let comfortCarsOpen = false, comfortWrapTimer = 0, comfortSettleTimer = 0;
 const comfortSet = new Set();
 function comfortClear() {
   if (!comfortSet.size) return;
@@ -4271,10 +4283,93 @@ function comfortHtml(c) {
 }
 /* 逐车柱图 ⇄ 编组图。抽屉每次重建都会换掉这批节点,所以监听挂在 #detail 上
    做事件委托;切换时直接改 class 而不是重建,CSS 才有中间态可动画。 */
+/* 归位动画结束:清掉 FLIP 的内联高度与位移,恢复自然布局 */
+function comfortCarsEndSettle() {
+  const rows = detailEl.querySelectorAll('.crow.carsettling');
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i], mv = row.querySelector('.mv');
+    row.classList.remove('carsettling');
+    row.style.height = '';
+    row.style.transition = '';
+    row.style.overflow = '';
+    if (!mv) continue;
+    mv.style.overflow = '';
+    const kids = mv.children;
+    for (let j = 0; j < kids.length; j++) {
+      kids[j].style.transition = '';
+      kids[j].style.transform = '';
+    }
+  }
+}
+/* 柱图缩回后,把柱图和温度/设施 chip 一起平移回同一行(FLIP):
+   先量展开态位置 → 撤 wrap/open 让行内排版生效 → 反向位移 → 过渡回 0。
+   行高同时从 h0 收到 h1,抽屉高度跟着连续变化,不再整卡跳一下 */
+function comfortCarsSettle() {
+  if (comfortCarsOpen) return;
+  const cs = detailEl.querySelectorAll('.cfo-cars.wrap:not(.open)');
+  if (!cs.length) return;
+  const rows = [];
+  for (let i = 0; i < cs.length; i++) {
+    const row = cs[i].closest('.crow');
+    if (row && rows.indexOf(row) < 0) rows.push(row);
+  }
+  const reduce = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  if (reduce) {
+    for (let i = 0; i < cs.length; i++) cs[i].classList.remove('wrap');
+    for (let i = 0; i < rows.length; i++) rows[i].classList.remove('carsopen');
+    return;
+  }
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i], mv = row.querySelector('.mv');
+    const kids = mv ? Array.from(mv.children) : [];
+    /* .cfo-cars 独占行时容器是整行宽、柱子居中,位移锚点要取里面的 .tr,
+       否则收起后柱子会先跳到容器左边再滑回行内 */
+    const anchors = kids.map(k => k.classList.contains('cfo-cars') ? (k.querySelector('.tr') || k) : k);
+    const before = [];
+    for (let j = 0; j < anchors.length; j++) before.push(anchors[j].getBoundingClientRect());
+    const h0 = row.getBoundingClientRect().height;
+    row.style.overflow = 'visible';
+    row.style.height = h0 + 'px';
+    if (mv) mv.style.overflow = 'visible';
+    /* 先关掉各自过渡再撤 wrap:margin-right 从 0 回 6px 若还在过渡,
+       量到的落点会比最终位置偏 6px,柱子起手就会横跳一下 */
+    for (let j = 0; j < kids.length; j++) kids[j].style.transition = 'none';
+    row.classList.remove('carsopen');
+    const rc = row.querySelectorAll('.cfo-cars.wrap');
+    for (let j = 0; j < rc.length; j++) rc[j].classList.remove('wrap');
+    void row.offsetHeight;
+    /* 量出行内态的自然高度后立刻钉回 h0:反向位移必须以抽屉原位为基准,
+       否则抽屉先因高度收缩下移,再叠加位移就会抖 */
+    row.style.height = 'auto';
+    const h1 = row.getBoundingClientRect().height;
+    row.style.height = h0 + 'px';
+    void row.offsetHeight;
+    for (let j = 0; j < kids.length; j++) {
+      const r = anchors[j].getBoundingClientRect();
+      kids[j].style.transform = 'translate(' + (before[j].left - r.left).toFixed(1) + 'px,' + (before[j].top - r.top).toFixed(1) + 'px)';
+    }
+    void row.offsetHeight;
+    row.classList.add('carsettling');
+    row.style.transition = 'height var(--morph-in) var(--spring-in)';
+    row.style.height = h1 + 'px';
+    for (let j = 0; j < kids.length; j++) {
+      kids[j].style.transition = 'transform var(--morph-in) var(--spring-in)';
+      kids[j].style.transform = '';
+    }
+  }
+  clearTimeout(comfortSettleTimer);
+  comfortSettleTimer = setTimeout(() => {
+    comfortSettleTimer = 0;
+    comfortCarsEndSettle();
+  }, 380);
+}
 function comfortCarsToggle(el) {
   comfortCarsOpen = !comfortCarsOpen;
   clearTimeout(comfortWrapTimer);
   comfortWrapTimer = 0;
+  clearTimeout(comfortSettleTimer);
+  comfortSettleTimer = 0;
+  comfortCarsEndSettle();
   const list = detailEl.querySelectorAll('.cfo-cars');
   for (let i = 0; i < list.length; i++) {
     const c = list[i];
@@ -4285,16 +4380,12 @@ function comfortCarsToggle(el) {
     if (row) row.classList.add('carsopen');
   }
   /* 收起时先让编组在独占行里缩回柱状,动画结束再解除 wrap;
-     否则 flex 行立刻重排,正在过渡的 .tr 会被挤窄 */
+     否则 flex 行立刻重排,正在过渡的 .tr 会被挤窄。
+     解除的那一下交给 comfortCarsSettle 做平移动画 */
   if (!comfortCarsOpen) {
     comfortWrapTimer = setTimeout(() => {
       comfortWrapTimer = 0;
-      const cs = detailEl.querySelectorAll('.cfo-cars.wrap:not(.open)');
-      for (let i = 0; i < cs.length; i++) {
-        cs[i].classList.remove('wrap');
-        const row = cs[i].closest('.crow');
-        if (row && !row.querySelector('.cfo-cars.open')) row.classList.remove('carsopen');
-      }
+      comfortCarsSettle();
     }, 360);
   }
   if (el) el.blur();

@@ -4748,6 +4748,84 @@ function badgeEntriesOf(name) {
   if (bd) return [['', bd.code, bd.url, bd.crop]];
   return null;
 }
+/* ── 站徽章「城市/线路」消歧(神戸市営地下鉄山手線徽章错配修复) ────────────
+   徽章数据的历史合并把跨城同名站(大倉山/県庁前/長田…)的条目拍平到同一键,
+   导致神戸大倉山显示东京東横線 TY15。这里用 station_map 限定键(每键带
+   都道府県与线路列表,是逐城权威数据)定位要素城市:站级展示限定键条目徽章;
+   无法定位/单义站保持全部条目(零回归)。列车抽屉停靠站本就按分段线路匹配,
+   不受影响。 */
+const BADGE_NORM = [['電気鉄道',''],['旅客鉄道',''],['都市モノレール','モノレール'],['高速電気軌道',''],['モノレール','MR'],['新交通','NT'],['本線','線'],['地方鉄道',''],['市内','']];
+const BADGE_PREFIX = ['名鉄','JR','近畿日本鉄道'];
+function badgeNorm(s) {
+  if (!s) return '';
+  s = (s + '').replace(/\s*\([^)]*\)/g, '');
+  for (let i = 0; i < BADGE_NORM.length; i++) s = s.replace(BADGE_NORM[i][0], BADGE_NORM[i][1]);
+  s = s.trim();
+  for (let i = 0; i < BADGE_PREFIX.length; i++) { if (s.indexOf(BADGE_PREFIX[i]) === 0) { s = s.slice(BADGE_PREFIX[i].length); break; } }
+  return s;
+}
+function badgeNormParts(s) {
+  if (!s) return [];
+  s = (s + '').replace(/\s*\([^)]*\)/g, '');
+  return s.split(/[・/、]/).map(badgeNorm).filter(Boolean);
+}
+/* 条目线路 与 某线路 是否同族(命名变体归一后相等/互含/前缀;原始互含针对
+   「4号線(中央線)」这类括号内带线路名的要素线路) */
+function badgeFamilyHit(entryLine, line) {
+  if (!entryLine || !line) return false;
+  const rw = entryLine + '', rl = line + '';
+  /* 原始互含(不剥括号):「4号線(中央線)」⊃「中央線」、「沖縄都市モノレール線 (…)」⊃「沖縄都市モノレール線」 */
+  if (rl.length >= 3 && (rw.indexOf(rl) >= 0 || rl.indexOf(rw) >= 0)) return true;
+  const ae = badgeNorm(entryLine), bl = badgeNorm(line);
+  if (!ae || !bl) return false;
+  if (ae === bl) return true;
+  const parts = badgeNormParts(entryLine);
+  for (let i = 0; i < parts.length; i++) {
+    const p = parts[i];
+    if (p === bl) return true;
+    if (p.length >= 3 && (bl.indexOf(p) >= 0 || p.indexOf(bl) >= 0)) return true;
+    if (p.length >= 2 && bl.indexOf(p) === 0) return true;
+  }
+  return false;
+}
+let stationKeyIdx = null;
+function ensureStationKeyIdx() {
+  if (stationKeyIdx || !stationMap || !stationMap.stations) return;
+  stationKeyIdx = new Map();
+  const stm = stationMap.stations;
+  for (const k in stm) {
+    const n = stm[k].name;
+    if (n) { const a = stationKeyIdx.get(n); if (a) a.push(k); else stationKeyIdx.set(n, [k]); }
+  }
+}
+/* 同名站中,要素线路/运营者命中的限定键(单义站或无法判定 → null) */
+function badgeKeyOfFeature(name, featLine, featOp) {
+  ensureStationKeyIdx();
+  if (!stationKeyIdx) return null;
+  const ks = stationKeyIdx.get(name);
+  if (!ks || ks.length < 2) return null;
+  if (featLine) {
+    for (let i = 0; i < ks.length; i++) {
+      const lines = stationMap.stations[ks[i]].lines;
+      if (lines && lines.some(L => badgeFamilyHit(featLine, L))) return ks[i];
+    }
+  }
+  if (featOp) {
+    for (let i = 0; i < ks.length; i++) {
+      const lines = stationMap.stations[ks[i]].lines;
+      if (lines && lines.some(L => L && L.indexOf(featOp) === 0)) return ks[i];
+    }
+  }
+  return null;
+}
+/* 站级徽章:限定键条目优先(重排后数据逐城正确);限定键无条目 → 无徽章(线路色圆点);
+   单义站/无法定位 → 归一化条目(现状) */
+function badgeEntriesOfStation(name, featLine, featOp) {
+  const key = badgeKeyOfFeature(name, featLine, featOp);
+  if (!key || key === name) return badgeEntriesOf(name);
+  const ent = badgeEntriesOf(key);
+  return ent && ent.length ? ent : null;
+}
 /* 列车抽屉停靠站徽章:图集 webp 是大 sprite,按 crop 裁出单站标 → dataURL 填入 .stop-badge 容器。
    Image/crop 结果按 sheet+crop 双重缓存(与地图徽章并行,浏览器 HTTP 层复用)。 */
 const _stopBadgeImgCache = new Map();   // sheetUrl -> HTMLImageElement(未加载完也在)
@@ -4863,12 +4941,12 @@ async function badgeCanvas(e) {
 }
 /* 站徽章 icon 注册:取前 BADGE_MAX_ONMAP 枚并排合成一张 canvas(间 6px,垂直居中)→ addImage。
    各枚保持原始宽高比;单枚站输出与旧版一致(直接裁剪尺寸)。 */
-async function badgeEnsureIcon(name) {
-  const key = 'bd_' + name;
-  if (badgesIcons.has(key) || badgesBusy.has(key) || !map || !badgesMap) return;
-  const entries = badgeEntriesOf(name);
+async function badgeEnsureIcon(name, featLine, featOp, key) {
+  const k = key || 'bd_' + name;
+  if (badgesIcons.has(k) || badgesBusy.has(k) || !map || !badgesMap) return;
+  const entries = badgeEntriesOfStation(name, featLine, featOp);
   if (!entries) return;
-  badgesBusy.add(key);
+  badgesBusy.add(k);
   try {
     const picks = entries.slice(0, BADGE_MAX_ONMAP);
     const cs = (await Promise.all(picks.map(badgeCanvas))).filter(Boolean);
@@ -4880,10 +4958,10 @@ async function badgeEnsureIcon(name) {
     const ctx = c.getContext('2d');
     let x = 0;
     for (const one of cs) { ctx.drawImage(one, x, (c.height - one.height) / 2); x += one.width + GAP; }
-    if (!map.hasImage(key)) map.addImage(key, ctx.getImageData(0, 0, c.width, c.height));
-    badgesIcons.add(key);
+    if (!map.hasImage(k)) map.addImage(k, ctx.getImageData(0, 0, c.width, c.height));
+    badgesIcons.add(k);
   } catch (e) { /* 单个徽章失败不影响整体 */ }
-  finally { badgesBusy.delete(key); }
+  finally { badgesBusy.delete(k); }
 }
 /* 把「视野内」站的 badgeIcon 写回 GeoJSON 并确保 icon 注册(懒加载:仅放大后按视野补,
    避免全量 4,669 站一次 addImage + 图集风暴拖垮帧率与底图加载)。
@@ -4905,28 +4983,36 @@ function updateBadgeIcons() {
   let changed = false;
   const seen = new Set(); /* 同站多 feature:仅第一个挂 icon(预写/历史 setData 可能漏挂或多挂) */
   for (const f of data.features) {
-    const nm = f.properties && f.properties.station;
-    if (!nm || !(badgesMap[nm] || (badgesLines && badgesLines.stations[nm]))) continue;
-    if (seen.has(nm)) { /* 同站后续 feature:清掉可能残留的 icon 属性(旧版数据/热更新) */
-      if (f.properties.badgeIcon || f.properties.fbBadge) { delete f.properties.badgeIcon; delete f.properties.badgeN; delete f.properties.fbBadge; changed = true; }
+    const p = f.properties || {};
+    const nm = p.station;
+    if (!nm) continue;
+    const key = badgeKeyOfFeature(nm, p.line, p.op);
+    const dk = (key && key !== nm) ? key : nm;   /* 同名跨城站:按限定键区分 icon 与去重 */
+    const ent = badgeEntriesOfStation(nm, p.line, p.op);
+    if (!ent || !ent.length) {
+      if (p.badgeIcon || p.fbBadge) { delete p.badgeIcon; delete p.badgeN; delete p.fbBadge; changed = true; }
       continue;
     }
-    seen.add(nm);
+    if (seen.has(dk)) { /* 同站后续 feature:清掉可能残留的 icon 属性(旧版数据/热更新) */
+      if (p.badgeIcon || p.fbBadge) { delete p.badgeIcon; delete p.badgeN; delete p.fbBadge; changed = true; }
+      continue;
+    }
+    seen.add(dk);
     /* 稳态快速通道:属性已写且 icon 已注册 → 什么都不用做。
        此前 project 在最前,z13+ 驻留时每 200ms 对 ~4k 站全量投影(常驻 ~2% CPU),
        现在稳态只剩属性字符串比较,零投影 */
-    if (f.properties.badgeIcon && badgesIcons.has(f.properties.badgeIcon)) continue;
+    if (p.badgeIcon && badgesIcons.has(p.badgeIcon)) continue;
     const g = f.geometry && f.geometry.coordinates;
     if (!g) continue;
     let pt = null;
     try { pt = map.project(g); } catch (e) {}
     if (!pt || pt.x < -pad || pt.x > cw + pad || pt.y < -pad || pt.y > ch + pad) continue;
-    if (!f.properties.badgeIcon) {
-      f.properties.badgeIcon = 'bd_' + nm; f.properties.badgeN = badgeCountOf(nm);
-      delete f.properties.fbBadge; /* 从兜底色圆升级为专属徽章(addMapLayers 预写时 map 未就绪的场景) */
+    if (!p.badgeIcon) {
+      p.badgeIcon = 'bd_' + dk; p.badgeN = ent.length;
+      delete p.fbBadge; /* 从兜底色圆升级为专属徽章(addMapLayers 预写时 map 未就绪的场景) */
       changed = true;
     }
-    badgeEnsureIcon(nm); /* 属性已有但 image 未注册时同样补注册(内部去重,不重复下载) */
+    badgeEnsureIcon(nm, p.line, p.op, p.badgeIcon); /* 属性已有但 image 未注册时同样补注册(内部去重,不重复下载) */
   }
   if (changed) map.getSource('stas').setData(data);
 }
@@ -4948,14 +5034,14 @@ function applyBadgeVisible(v) {
 }
 /* 车站抽屉顶部徽章条:该站全部线路徽章完整排列(不限地图上的 3 枚上限),
    每枚 title=「线路名 站码」;无徽章数据时整条隐藏。数据未就绪时等加载完再渲染。 */
-async function renderStationBadges(name) {
+async function renderStationBadges(name, featLine, featOp) {
   const box = $('shBadges');
   if (!box) return;
   if (!badgesMap) {
-    loadBadgesMap().then(() => { if (sheetStation === name && $('sheet').classList.contains('open')) renderStationBadges(name); });
+    loadBadgesMap().then(() => { if (sheetStation === name && $('sheet').classList.contains('open')) renderStationBadges(name, sheetLine, sheetOp); });
     return;
   }
-  const entries = badgeEntriesOf(name);
+  const entries = badgeEntriesOfStation(name, featLine, featOp);
   if (!entries || !entries.length) { box.hidden = true; box.innerHTML = ''; return; }
   box.hidden = false;
   box.innerHTML = '';
@@ -5048,15 +5134,20 @@ function addMapLayers() {
       }
       const seen = new Set();
       for (const f of staFC.features) {
-        const nm = f.properties && f.properties.station;
-        if (!nm || seen.has(nm)) continue;
-        seen.add(nm);
-        if (badgesMap && (badgesMap[nm] || (badgesLines && badgesLines.stations[nm]))) {
-          f.properties.badgeIcon = 'bd_' + nm;
-          f.properties.badgeN = badgeCountOf(nm);
-        } else if (!f.properties.badgeIcon) {
-          f.properties.fbBadge = 1;
-          f.properties.fbColor = lineColorQ.get(f.properties.line) || '#5b6572';
+        const p = f.properties || {};
+        const nm = p.station;
+        if (!nm) continue;
+        const key = badgeKeyOfFeature(nm, p.line, p.op);
+        const dk = (key && key !== nm) ? key : nm;   /* 同名跨城站按限定键区分(神戸大倉山与東京大倉山不同图标) */
+        if (seen.has(dk)) continue;
+        seen.add(dk);
+        const ent = badgeEntriesOfStation(nm, p.line, p.op);
+        if (ent && ent.length) {
+          p.badgeIcon = 'bd_' + dk;
+          p.badgeN = ent.length;
+        } else if (!p.badgeIcon) {
+          p.fbBadge = 1;
+          p.fbColor = lineColorQ.get(p.line) || '#5b6572';
         }
       }
       if (map.getSource('stas')) map.getSource('stas').setData(staFC);
@@ -5651,7 +5742,7 @@ function onMapClick(e) {
       const dx = pr.x - pt[0], dy = pr.y - pt[1], d = dx * dx + dy * dy;
       if (d < bd) { bd = d; best = f; }
     }
-    showStationDetail(best.properties.station, best.geometry.coordinates);
+    showStationDetail(best.properties.station, best.geometry.coordinates, best.properties.line, best.properties.op);
     return;
   }
   // 空白
@@ -6277,7 +6368,7 @@ const OP_LOGO = {
 };
 function shortTerm(s) { return String(s).replace(/[（(].*?[)）]/g, '').slice(0, 2); }
 function isRapidType(tp) { return ['特','急','快','準','区','通','回'].indexOf(tp) >= 0; }
-let lineOp = null, boardCache = new Map(), sheetStation = null, sheetCoord = null, sheetFlat = false;
+let lineOp = null, boardCache = new Map(), sheetStation = null, sheetCoord = null, sheetFlat = false, sheetLine = null, sheetOp = null;
 function buildLineOp() { if (lineOp) return; lineOp = new Map(); segFC.features.forEach(f => { const p = f.properties; if (p.line && !lineOp.has(p.line)) lineOp.set(p.line, p.op || ''); }); }
 // 时刻表线名 → 铁道公司全名(兜底, 覆盖带公司前缀/编号线等)
 const LINE_OP_FALLBACK = {
@@ -6519,10 +6610,10 @@ function bindSheet() {
   });
 }
 function closeSheet() { $('sheet').classList.remove('open'); $('sheetMask').classList.remove('open'); }
-function showStationDetail(name, coord) {
+function showStationDetail(name, coord, featLine, featOp) {
   const c = coord || stationCoord.get(normName(name));
   if (c) setHighlight([], c);
-  sheetStation = name; sheetCoord = coord || null; sheetFlat = false;
+  sheetStation = name; sheetCoord = coord || null; sheetFlat = false; sheetLine = featLine || null; sheetOp = featOp || null;
   $('shNm').textContent = name;
   // 新站打开：默认切回「一览」，隐藏信息面板并使懒渲染缓存失效
   sheetTab = 'tabGrid';
@@ -6536,7 +6627,7 @@ function showStationDetail(name, coord) {
   $('sheetMask').classList.add('open');
   closeDetail();
   if (tripList && tripList.length) renderStationBody();
-  renderStationBadges(name);
+  renderStationBadges(name, sheetLine, sheetOp);
   if (c) map.flyTo({ center: c, zoom: Math.max(map.getZoom(), 12), pitch: Math.min(map.getPitch(), 55), duration: 1200 });
 }
 document.getElementById('shX').addEventListener('click', closeSheet);
@@ -6549,7 +6640,7 @@ $('subDep').addEventListener('click', function () { sheetDepArr = 'dep'; $('subD
 $('subArr').addEventListener('click', function () { sheetDepArr = 'arr'; $('subArr').classList.add('on'); $('subDep').classList.remove('on'); renderStationBody(); });
 window.showStationDetail = showStationDetail;  // 调试/自动化钩子：供控制台与 E2E 直接打开车站抽屉
 // E2E 钩子：列车详情/站台数据（确定性验证用，只读引用）
-window.__mjr3d = { showTrainDetail, tripList: () => tripList, PLATMAP: () => PLATMAP, tmaps: () => tmaps };
+window.__mjr3d = { showTrainDetail, tripList: () => tripList, PLATMAP: () => PLATMAP, tmaps: () => tmaps, badgeKeyOfFeature, badgeEntriesOfStation, badgeEntriesOf, showStationDetail, stationCoord: () => stationCoord, stationMap: () => stationMap, badgeNorm, badgeFamilyHit };
 // E2E 钩子：列车叠加弹窗（确定性验证，不依赖实时列车密度）
 window.__trPick = { n: () => visibleTrips.length, near: (x, y) => collectTrains(x, y, 14).length, open: (x, y) => showTrPick(collectTrains(x, y, 14), x, y) };
 

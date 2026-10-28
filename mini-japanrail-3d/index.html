@@ -574,6 +574,7 @@ button { font-family:inherit; }
 .cfo-chip.c3 { background:rgba(251,113,133,.18); color:#fb7185; }
 .cfo-chip.g { background:rgba(96,165,250,.16); color:#60a5fa; }
 .cfo-chip.t { background:rgba(148,163,184,.18); color:#94a3b8; }
+.cfo-chip.a { background:rgba(56,189,248,.16); color:#38bdf8; }
 .cfo-cars { display:inline-flex; align-items:flex-end; gap:2px; height:14px; margin-right:6px; vertical-align:middle; }
 .cfo-cars i { display:inline-block; width:4px; border-radius:1px; background:#475569; }
 .cfo-cars i.b1 { background:#34d399; }
@@ -1637,7 +1638,7 @@ const I18N = {
     filterT:'线路类型', legendT:'图例', dayT:'运行日', dayAuto:'自动', setT:'设置', dataT:'数据', helpT:'帮助', aboutT:'关于',
     about1:'Mini JapanRail — 全日本列车实时运行可视化地图（列車走行位置・運行情報）。基于本地时刻表在浏览器端实时推算新干线・特急・在来线・地铁・路面电车约 4,000 列列车的走行位置，支持 3D 地球投影、时钟回放与路线搜索。', about2:'收录全国 600+ 条铁路线路、8,900+ 个车站。数据源为日本全国铁路计划时刻表，每周自动刷新；页面运行时零外部请求。', about3:'本站为个人爱好项目，数据仅供学习参考。', about4:'隐私政策',
     about5:'主要功能：实时列车位置・走行位置动画 / 3D 地球投影 / 时钟回放（0.5–32×）/ 起终点路线搜索 / 车站查询与途经线路 / 运行日切换 / 线路类型过滤 / 日・中・英三语。', about6:'浏览静态页面：',
-    sw1:'车站标签', sw2:'轨道光晕', sw3:'车站点', sw4:'底图瓦片', sw5:'列车光晕', sw6:'复制异常车辆', sw7:'列车悬浮提示', sw8:'车站轮廓', sw9:'出入口', sw10:'详细股道', sw12:'车站徽章', sw13:'高倍率 3D 列车模型', sw14:'实时列车延误', dlyAgo:'来自互联网 · 数据 {0} 分钟前', dlyLate:'晚点', cfoTitle:'车内拥挤度', cfoLow:'空', cfoMid:'略挤', cfoHigh:'拥挤', cfoGreen:'绿色车厢', cfoTemp:'车内温度',
+    sw1:'车站标签', sw2:'轨道光晕', sw3:'车站点', sw4:'底图瓦片', sw5:'列车光晕', sw6:'复制异常车辆', sw7:'列车悬浮提示', sw8:'车站轮廓', sw9:'出入口', sw10:'详细股道', sw12:'车站徽章', sw13:'高倍率 3D 列车模型', sw14:'实时列车延误', dlyAgo:'来自互联网 · 数据 {0} 分钟前', dlyLate:'晚点', cfoTitle:'车内拥挤度', cfoLow:'空', cfoMid:'略挤', cfoHigh:'拥挤', cfoGreen:'绿色车厢', cfoTemp:'车内温度', cfoAccess:'无障碍', cfoWheel:'轮椅', cfoStroller:'婴儿车', cfoWifi:'Wi-Fi', cfoToilet:'厕所', cfoLuggage:'行李架',
     m3dRowL:'模型', m3dBtn:'查看 3D 模型', m3dHint:'拖动旋转 · 滚轮/双指缩放 · 选视点自动回中', m3dLoadT:'正在加载模型…', m3dNone:'该车型暂无 3D 模型', m3dVpL:'视点', m3dMdL:'编组', m3dVp:['斜视','侧面','正面','俯视'], m3dMdAll:'全编组', m3dMdHead:'先头车', m3dMdAuto:'自动旋转', m3dDOp:'运营商', m3dDCars:'编组', m3dDLen:'编组长', m3dDDim:'车体', m3dDUnit:'辆', m3dSaved:'已保存截图',
     sw11:'性能改善', sw11Note:'只渲染新干线・特急，放大后逐级加入其他列车',
     modeT:'列车显示', mode3d:'3D', modeIcon:'图标', modeCute:'可爱',
@@ -1679,7 +1680,7 @@ const I18N = {
     filterT:'路線種別', legendT:'凡例', dayT:'運行日', dayAuto:'自動', setT:'設定', dataT:'データ', helpT:'ヘルプ', aboutT:'このサイトについて',
     about1:'ミニ日本鉄道 — 全国鉄道リアルタイム3Dマップ（列車走行位置・運行情報）。ローカル時刻表から新幹線・特急・在来線・地下鉄・路面電車 約 4,000 列の走行位置をブラウザ上でリアルタイムに再現。3D 地球投影・時刻表再生・経路検索に対応。', about2:'全国 600 以上の路線・8,900 以上の駅を収録。データソースは全国鉄道の計画時刻表で、毎週自動更新。ページ実行時の外部リクエストはありません。', about3:'個人の趣味プロジェクトです。データは学習・参考用です。', about4:'プライバシーポリシー',
     about5:'主な機能：リアルタイム列車位置・走行位置アニメーション / 3D 地球投影 / 時刻表再生（0.5〜32倍速）/ 経路検索 / 駅検索と経由路線 / 運行日切替 / 路線種別フィルタ / 日・中・英 3 言語。', about6:'静的ページを見る：',
-    sw1:'駅ラベル', sw2:'軌道グロー', sw3:'駅ドット', sw4:'背景タイル', sw5:'列車グロー', sw6:'異常列車コピー', sw7:'列車ホバーチップ', sw8:'駅舎ポリゴン', sw9:'出入口', sw10:'詳細軌道', sw12:'駅バッジ', sw13:'高倍率 3D 列車モデル', sw14:'リアルタイム列車遅延', dlyAgo:'インターネットから · データ {0} 分前', dlyLate:'遅延', cfoTitle:'車内混雑度', cfoLow:'空いている', cfoMid:'やや混雑', cfoHigh:'混雑', cfoGreen:'グリーン車', cfoTemp:'車内温度',
+    sw1:'駅ラベル', sw2:'軌道グロー', sw3:'駅ドット', sw4:'背景タイル', sw5:'列車グロー', sw6:'異常列車コピー', sw7:'列車ホバーチップ', sw8:'駅舎ポリゴン', sw9:'出入口', sw10:'詳細軌道', sw12:'駅バッジ', sw13:'高倍率 3D 列車モデル', sw14:'リアルタイム列車遅延', dlyAgo:'インターネットから · データ {0} 分前', dlyLate:'遅延', cfoTitle:'車内混雑度', cfoLow:'空いている', cfoMid:'やや混雑', cfoHigh:'混雑', cfoGreen:'グリーン車', cfoTemp:'車内温度', cfoAccess:'バリアフリー', cfoWheel:'車いす', cfoStroller:'ベビーカー', cfoWifi:'Wi-Fi', cfoToilet:'トイレ', cfoLuggage:'荷物置き',
     m3dRowL:'モデル', m3dBtn:'3Dモデルを見る', m3dHint:'ドラッグで回転・ホイール/2本指でズーム · 視点を選ぶと中央に戻ります', m3dLoadT:'モデルを読み込み中…', m3dNone:'この車種の3Dモデルはありません', m3dVpL:'視点', m3dMdL:'編成', m3dVp:['斜め','側面','正面','上面'], m3dMdAll:'全編成', m3dMdHead:'先頭車', m3dMdAuto:'自動回転', m3dDOp:'事業者', m3dDCars:'編成', m3dDLen:'編成長', m3dDDim:'車体', m3dDUnit:'両', m3dSaved:'スクリーンショットを保存しました',
     sw11:'パフォーマンス改善', sw11Note:'低ズームでは新幹線・特急のみ描画し、拡大するにつれ他の列車を段階的に追加',
     modeT:'列車表示', mode3d:'3D', modeIcon:'アイコン', modeCute:'かわいい',
@@ -1721,7 +1722,7 @@ const I18N = {
     filterT:'Line types', legendT:'Legend', dayT:'Service day', dayAuto:'Auto', setT:'Settings', dataT:'Data', helpT:'Help', aboutT:'About',
     about1:'Mini JapanRail — a real-time 3D map of all Japan railways (train live positions). Driven by local timetables, it animates the positions of ~4,000 Shinkansen, limited express, local, subway and tram trains, with 3D globe projection, timetable replay and route search.', about2:'Covers 600+ railway lines and 8,900+ stations. Data source: scheduled timetables for all Japan railways, auto-refreshed weekly; zero external requests at runtime.', about3:'A personal hobby project — data provided for reference only.', about4:'Privacy Policy',
     about5:'Key features: live train positions / 3D globe projection / timetable replay (0.5–32×) / route search / station lookup and its lines / service-day switch / line-type filter / Japanese, Chinese and English UI.', about6:'Browse static pages:',
-    sw1:'Station labels', sw2:'Track glow', sw3:'Station dots', sw4:'Basemap tiles', sw5:'Train glow', sw6:'Copy off-rail trains', sw7:'Train hover tooltip', sw8:'Station footprint', sw9:'Station exits', sw10:'Detailed tracks', sw12:'Station badges', sw13:'High-zoom 3D train models', sw14:'Live train delays', dlyAgo:'from web · data {0} min ago', dlyLate:'delayed', cfoTitle:'Onboard crowding', cfoLow:'Roomy', cfoMid:'Busy', cfoHigh:'Crowded', cfoGreen:'Green car', cfoTemp:'Car temp',
+    sw1:'Station labels', sw2:'Track glow', sw3:'Station dots', sw4:'Basemap tiles', sw5:'Train glow', sw6:'Copy off-rail trains', sw7:'Train hover tooltip', sw8:'Station footprint', sw9:'Station exits', sw10:'Detailed tracks', sw12:'Station badges', sw13:'High-zoom 3D train models', sw14:'Live train delays', dlyAgo:'from web · data {0} min ago', dlyLate:'delayed', cfoTitle:'Onboard crowding', cfoLow:'Roomy', cfoMid:'Busy', cfoHigh:'Crowded', cfoGreen:'Green car', cfoTemp:'Car temp', cfoAccess:'Accessible', cfoWheel:'wheelchair', cfoStroller:'stroller', cfoWifi:'Wi-Fi', cfoToilet:'toilet', cfoLuggage:'luggage',
     m3dRowL:'Model', m3dBtn:'View 3D model', m3dHint:'Drag to rotate · Scroll/pinch to zoom · Picking a view re-centers', m3dLoadT:'Loading model…', m3dNone:'No 3D model for this type', m3dVpL:'View', m3dMdL:'Consist', m3dVp:['Diagonal','Side','Front','Top'], m3dMdAll:'Full', m3dMdHead:'Head car', m3dMdAuto:'Auto-rotate', m3dDOp:'Operator', m3dDCars:'Cars', m3dDLen:'Length', m3dDDim:'Car', m3dDUnit:' cars', m3dSaved:'Screenshot saved',
     sw11:'Performance boost', sw11Note:'Only Shinkansen and limited express are drawn at low zoom; other trains are added progressively as you zoom in',
     modeT:'Train display', mode3d:'3D', modeIcon:'Icon', modeCute:'Cute',
@@ -4170,6 +4171,13 @@ function comfortHtml(c) {
       if (mx === null || v > mx) mx = v;
     }
     if (mn !== null) h += '<span class="cfo-chip t">' + T().cfoTemp + ' ' + Math.round(mn * 10) / 10 + (mx !== mn ? '~' + Math.round(mx * 10) / 10 : '') + '℃</span>';
+  }
+  /* 车両設備(JR西日本 trainmonitorinfo):轮椅/婴儿车/Wi-Fi/厕所/行李架 */
+  if (c.facilities && c.facilities.length) {
+    const fm = { wheelchair: T().cfoWheel, stroller: T().cfoStroller, wifi: T().cfoWifi, restroom: T().cfoToilet, luggage: T().cfoLuggage };
+    const fl = [];
+    for (let i = 0; i < c.facilities.length; i++) if (fm[c.facilities[i]]) fl.push(fm[c.facilities[i]]);
+    if (fl.length) h += '<span class="cfo-chip a">' + T().cfoAccess + ' ' + fl.join('·') + '</span>';
   }
   return h;
 }

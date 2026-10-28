@@ -156,6 +156,22 @@ def main():
     else:
         print('[basis] SKIP (not present)')
 
+    # 5.9) app.css / app.js —— 首页拆出的面板样式与主程序。首页(CF Pages/GH Pages)
+    #      只留关键 CSS 与加载条,这两个大文件走 Worker 边缘缓存快路径(2026-10-28)
+    app_out = os.path.join(out, 'app')
+    os.makedirs(app_out, exist_ok=True)
+    n = 0
+    for f in ('app.css', 'app.js'):
+        src = os.path.join(MINI, f)
+        if os.path.isfile(src):
+            shutil.copy2(src, os.path.join(app_out, f))
+            n += 1
+        else:
+            print('::error::missing ' + f)
+            sys.exit(1)
+    total += n
+    print('[app] %d (app.css/app.js)' % n)
+
     # 6) _headers —— Workers Static Assets 边缘直服(不经过 fetch handler)时注入 CORS，
     #    保证浏览器 crossOrigin='anonymous' 加载图集/图标不污染 canvas（toDataURL/texImage2D 可用）。
     #    注意：此文件必须由脚本生成；rmtree 重建 assets 时手工文件会被清掉。
@@ -185,8 +201,11 @@ def main():
         f.write('  Cache-Control: public, max-age=300\n')
         f.write('/data/badges/atlas/sha256/*\n')
         f.write('  Cache-Control: public, max-age=31536000, immutable\n')
+        # 首页拆分出的主程序/面板样式:文件名固定,靠 ETag 每次校验,避免新旧 HTML 错配
+        f.write('/app/*\n')
+        f.write('  Cache-Control: public, max-age=0, must-revalidate\n')
     total += 1
-    print('[_headers] 1 (CORS + data 5min cache + badge-atlas 1y immutable)')
+    print('[_headers] 1 (CORS + data 5min cache + badge-atlas 1y immutable + app revalidate)')
 
     # 7) robots.txt / healthz —— 纯资产模式(无 Worker 脚本)下改为真实静态文件，
     #    由平台直接服务，同样不触发 Worker 调用。

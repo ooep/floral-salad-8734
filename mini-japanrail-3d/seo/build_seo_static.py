@@ -104,11 +104,16 @@ def parse_js_obj(text):
     return dict(pairs)
 
 
-def build_tozh(index_html):
-    m = re.search(r'const JP2CN = \{(.*?)\};', index_html, re.S)
-    m2 = re.search(r'const KANA2ZH = \{(.*?)\};', index_html, re.S)
+def extract_tozh_tables(src_text):
+    m = re.search(r'const JP2CN = \{(.*?)\};', src_text, re.S)
+    m2 = re.search(r'const KANA2ZH = \{(.*?)\};', src_text, re.S)
     JP2CN = parse_js_obj(m.group(1)) if m else {}
     KANA2ZH = parse_js_obj(m2.group(1)) if m2 else {}
+    return JP2CN, KANA2ZH
+
+
+def build_tozh(src_text):
+    JP2CN, KANA2ZH = extract_tozh_tables(src_text)
     MONO_RE = re.compile(r'モノレール')
 
     def tozh(s):
@@ -175,8 +180,16 @@ def build_records(cfg):
         bsd_files = {f[:-4] for f in os.listdir(os.path.join(DATA_DIR, 'line_bsdiagrams')) if f.endswith('.svg')}
     except Exception:
         bsd_files = set()
-    index_html = open(os.path.join(ROOT, 'index.html'), encoding='utf-8').read()
-    tozh = build_tozh(index_html)
+    src_text = open(os.path.join(ROOT, 'index.html'), encoding='utf-8').read()
+    # 2026-10-28: 主程序拆到 app.js 后, JP2CN/KANA2ZH 常量已不在 index.html 里
+    app_js = os.path.join(ROOT, 'app.js')
+    if os.path.exists(app_js):
+        src_text += '\n' + open(app_js, encoding='utf-8').read()
+    tozh = build_tozh(src_text)
+    jp2cn, kana2zh = extract_tozh_tables(src_text)
+    if not jp2cn or not kana2zh:
+        raise SystemExit('::error::JP2CN/KANA2ZH not found (index.html + app.js)')
+    print('[tozh] JP2CN=%d KANA2ZH=%d' % (len(jp2cn), len(kana2zh)))
     canon_of = build_canon(lm)
 
     ni_st = ni.get('stations') or {}

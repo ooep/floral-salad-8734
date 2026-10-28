@@ -473,6 +473,10 @@ button { font-family:inherit; }
 #detail .d-meta .mrow + .mrow { border-top:1px solid var(--glass-lo); }
 #detail .d-meta .lb { color:var(--dim); flex:none; font-size:11px; letter-spacing:.2px; }
 #detail .d-meta .mv { flex:1; min-width:0; text-align:right; font-variant-numeric:tabular-nums; font-weight:600; color:var(--txt); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+/* 逐车拥挤度柱+温度+无障碍设施同排会超宽,窄屏下把设施标签挤进省略号;此行为多枚小标签的集合,允许换行完整展示 */
+#detail .d-meta .crow .mv { white-space:normal; display:flex; flex-wrap:wrap; justify-content:flex-end; align-items:center; gap:4px 6px; }
+#detail .d-meta .crow { align-items:flex-start; }
+#detail .d-meta .crow .lb { padding-top:2px; }
 #detail .d-meta .d-cpl .mv { text-align:left; white-space:normal; line-height:1.8; }
 /* ---------- 列车百科折叠框(ressha-wiki,取代原「班次」栏目) ---------- */
 #detail .d-wiki { margin-top:10px; border-top:1px solid var(--glass-lo); }
@@ -6335,7 +6339,7 @@ function updateDetailLive(t, p, M, rebuild) {
       '<div class="d-meta">' +
       '<div class="mrow"><span class="lb">' + T().status + '</span><span class="mv"><span class="st-badge ' + (running ? 'run' : 'dwell') + '"></span>' + (running ? T().running + ' · ' + Math.round(p[5]) + ' ' + T().kmh : '<b>' + T().dwelling + '</b> @ ' + jas[i]) + (t.dly > 0 ? '<span class="dly-chip">+' + Math.round(t.dly) + T().min + '</span>' : '') + '</span></div>' +
       '<div class="mrow"><span class="lb">' + T().next + '</span><span class="mv">' + nextNm + ' ' + eta + '</span></div>' +
-      (t.cfo && comfortHtml(t.cfo) ? '<div class="mrow"><span class="lb">' + T().cfoTitle + '</span><span class="mv">' + comfortHtml(t.cfo) + '</span></div>' : '') +
+      (t.cfo && comfortHtml(t.cfo) ? '<div class="mrow crow"><span class="lb">' + T().cfoTitle + '</span><span class="mv">' + comfortHtml(t.cfo) + '</span></div>' : '') +
       (uniqLines.length ? '<div class="mrow"><span class="lb">' + T().viaLines + '</span><span class="mv">' + uniqLines.slice(0, 4).map(l => '<span class="lnchip" style="background:' + (lineColor.get(l) || '#6e6e6e') + '">' + l + '</span>').join('') + (uniqLines.length > 4 ? ' +' + (uniqLines.length - 4) : '') + '</span></div>' : '') +
       (t.cpl && t.cpl.length ? '<div class="d-cpl mrow"><span class="lb">' + T().cplLabel + '</span><span class="mv">' + t.cpl.map(c => {
         const si = t.jasN.indexOf(c.split);

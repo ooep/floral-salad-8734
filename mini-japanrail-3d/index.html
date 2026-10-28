@@ -625,7 +625,7 @@ button { font-family:inherit; }
   .cfo-cars, .cfo-cars .tr, .cfo-cars i, .cfo-cars i::before, .cfo-cars i u, .cfo-cars i b { transition-duration:1ms !important; transition-delay:0s !important; }
   .cfo-cars:not(.open):hover i, .cfo-cars:active .tr { transform:none; }
 }
-/* 展开时让编组图独占整行(否则被"车内拥挤度"标签挤成半宽)。
+/* 展开时让编组图独占整行(否则被"车内状况"标签挤成半宽)。
    不用 :has(.cfo-cars.open):行上的类由 comfortCarsToggle 同步维护,
    少一个选择器特性依赖,旧 WebKit 上也一样生效 */
 #detail .d-meta .crow.carsopen { flex-wrap:wrap; }
@@ -902,11 +902,15 @@ button { font-family:inherit; }
      折叠态 z-index:12 高于 Dock(9),重叠区点击归窗口所有,杜绝穿透 */
   #detail { height:68px; display:flex; flex-direction:column;
     transition:opacity .26s var(--ease-smooth), backdrop-filter .26s var(--ease-smooth), -webkit-backdrop-filter .26s var(--ease-smooth), transform .34s var(--ease-spring), height .32s var(--ease-spring), visibility 0s linear .26s; }
-  /* 弹性布局:头部/按钮固定,正文(.d-body)整体可滚;停靠站仍是限高的小窗口,
-     列表内部滚动并聚焦在当前/下一站,不跟着把整张卡撑长 */
+  /* 弹性布局:头部/按钮固定,停靠站吃掉正文剩余高度但最多 264px,列表内部滚动。
+     平时正文不滚、列表窗口正好是看得见的那一段;万一 meta 太长(百科展开)
+     列表保底 120px,正文整块可滚,不至于把列表挤没 */
   #detail .d-h, #detail .d-act { flex:none; }
-  #detail .d-body { display:block; flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
-  #detail .d-stops { flex:none; display:block; }
+  #detail .d-body { display:flex; flex-direction:column; flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
+  #detail .d-meta, #detail .d-sep { flex:none; }
+  #detail .d-stops { flex:1 1 auto; min-height:120px; display:flex; flex-direction:column; }
+  #detail .d-stops .st-title { flex:none; }
+  #detail .st-list { flex:1 1 auto; min-height:0; overflow-y:auto; max-height:min(264px,46vh); }
   #detail.fold { display:flex; align-items:center; }
   #detail.fold .d-h { width:100%; }
   #detail.fold .d-body, #detail.fold .d-act { display:none; }
@@ -1716,7 +1720,7 @@ const I18N = {
     filterT:'线路类型', legendT:'图例', dayT:'运行日', dayAuto:'自动', setT:'设置', dataT:'数据', helpT:'帮助', aboutT:'关于',
     about1:'Mini JapanRail — 全日本列车实时运行可视化地图（列車走行位置・運行情報）。基于本地时刻表在浏览器端实时推算新干线・特急・在来线・地铁・路面电车约 4,000 列列车的走行位置，支持 3D 地球投影、时钟回放与路线搜索。', about2:'收录全国 600+ 条铁路线路、8,900+ 个车站。数据源为日本全国铁路计划时刻表，每周自动刷新；页面运行时零外部请求。', about3:'本站为个人爱好项目，数据仅供学习参考。', about4:'隐私政策',
     about5:'主要功能：实时列车位置・走行位置动画 / 3D 地球投影 / 时钟回放（0.5–32×）/ 起终点路线搜索 / 车站查询与途经线路 / 运行日切换 / 线路类型过滤 / 日・中・英三语。', about6:'浏览静态页面：',
-    sw1:'车站标签', sw2:'轨道光晕', sw3:'车站点', sw4:'底图瓦片', sw5:'列车光晕', sw6:'复制异常车辆', sw7:'列车悬浮提示', sw8:'车站轮廓', sw9:'出入口', sw10:'详细股道', sw12:'车站徽章', sw13:'高倍率 3D 列车模型', sw14:'实时列车延误', dlyAgo:'来自互联网 · 数据 {0} 分钟前', dlyLate:'晚点', cfoTitle:'车内拥挤度', cfoLow:'宽松', cfoMid:'略挤', cfoHigh:'拥挤', cfoAvg:'5日均', cfoGreen:'绿色车厢', cfoTemp:'车内温度', cfoAccess:'无障碍', cfoWheel:'轮椅', cfoStroller:'婴儿车', cfoWifi:'Wi-Fi', cfoToilet:'厕所', cfoLuggage:'行李架', cfoCarsHint:'点按展开每车厢拥挤度', cfoCarTip:'{0}号车 {1}%',
+    sw1:'车站标签', sw2:'轨道光晕', sw3:'车站点', sw4:'底图瓦片', sw5:'列车光晕', sw6:'复制异常车辆', sw7:'列车悬浮提示', sw8:'车站轮廓', sw9:'出入口', sw10:'详细股道', sw12:'车站徽章', sw13:'高倍率 3D 列车模型', sw14:'实时列车延误', dlyAgo:'来自互联网 · 数据 {0} 分钟前', dlyLate:'晚点', cfoTitle:'车内状况', cfoLow:'宽松', cfoMid:'略挤', cfoHigh:'拥挤', cfoAvg:'5日均', cfoGreen:'绿色车厢', cfoTemp:'车内温度', cfoAccess:'无障碍', cfoWheel:'轮椅', cfoStroller:'婴儿车', cfoWifi:'Wi-Fi', cfoToilet:'厕所', cfoLuggage:'行李架', cfoCarsHint:'点按展开每车厢拥挤度', cfoCarTip:'{0}号车 {1}%',
     m3dRowL:'模型', m3dBtn:'查看 3D 模型', m3dHint:'拖动旋转 · 滚轮/双指缩放 · 选视点自动回中', m3dLoadT:'正在加载模型…', m3dNone:'该车型暂无 3D 模型', m3dVpL:'视点', m3dMdL:'编组', m3dVp:['斜视','侧面','正面','俯视'], m3dMdAll:'全编组', m3dMdHead:'先头车', m3dMdAuto:'自动旋转', m3dDOp:'运营商', m3dDCars:'编组', m3dDLen:'编组长', m3dDDim:'车体', m3dDUnit:'辆', m3dSaved:'已保存截图',
     sw11:'性能改善', sw11Note:'只渲染新干线・特急，放大后逐级加入其他列车',
     modeT:'列车显示', mode3d:'3D', modeIcon:'图标', modeCute:'可爱',
@@ -1758,7 +1762,7 @@ const I18N = {
     filterT:'路線種別', legendT:'凡例', dayT:'運行日', dayAuto:'自動', setT:'設定', dataT:'データ', helpT:'ヘルプ', aboutT:'このサイトについて',
     about1:'ミニ日本鉄道 — 全国鉄道リアルタイム3Dマップ（列車走行位置・運行情報）。ローカル時刻表から新幹線・特急・在来線・地下鉄・路面電車 約 4,000 列の走行位置をブラウザ上でリアルタイムに再現。3D 地球投影・時刻表再生・経路検索に対応。', about2:'全国 600 以上の路線・8,900 以上の駅を収録。データソースは全国鉄道の計画時刻表で、毎週自動更新。ページ実行時の外部リクエストはありません。', about3:'個人の趣味プロジェクトです。データは学習・参考用です。', about4:'プライバシーポリシー',
     about5:'主な機能：リアルタイム列車位置・走行位置アニメーション / 3D 地球投影 / 時刻表再生（0.5〜32倍速）/ 経路検索 / 駅検索と経由路線 / 運行日切替 / 路線種別フィルタ / 日・中・英 3 言語。', about6:'静的ページを見る：',
-    sw1:'駅ラベル', sw2:'軌道グロー', sw3:'駅ドット', sw4:'背景タイル', sw5:'列車グロー', sw6:'異常列車コピー', sw7:'列車ホバーチップ', sw8:'駅舎ポリゴン', sw9:'出入口', sw10:'詳細軌道', sw12:'駅バッジ', sw13:'高倍率 3D 列車モデル', sw14:'リアルタイム列車遅延', dlyAgo:'インターネットから · データ {0} 分前', dlyLate:'遅延', cfoTitle:'車内混雑度', cfoLow:'空いている', cfoMid:'やや混雑', cfoHigh:'混雑', cfoAvg:'5日平均', cfoGreen:'グリーン車', cfoTemp:'車内温度', cfoAccess:'バリアフリー', cfoWheel:'車いす', cfoStroller:'ベビーカー', cfoWifi:'Wi-Fi', cfoToilet:'トイレ', cfoLuggage:'荷物置き', cfoCarsHint:'車両別の混雑度を表示', cfoCarTip:'{0}号車 {1}%',
+    sw1:'駅ラベル', sw2:'軌道グロー', sw3:'駅ドット', sw4:'背景タイル', sw5:'列車グロー', sw6:'異常列車コピー', sw7:'列車ホバーチップ', sw8:'駅舎ポリゴン', sw9:'出入口', sw10:'詳細軌道', sw12:'駅バッジ', sw13:'高倍率 3D 列車モデル', sw14:'リアルタイム列車遅延', dlyAgo:'インターネットから · データ {0} 分前', dlyLate:'遅延', cfoTitle:'車内状況', cfoLow:'空いている', cfoMid:'やや混雑', cfoHigh:'混雑', cfoAvg:'5日平均', cfoGreen:'グリーン車', cfoTemp:'車内温度', cfoAccess:'バリアフリー', cfoWheel:'車いす', cfoStroller:'ベビーカー', cfoWifi:'Wi-Fi', cfoToilet:'トイレ', cfoLuggage:'荷物置き', cfoCarsHint:'車両別の混雑度を表示', cfoCarTip:'{0}号車 {1}%',
     m3dRowL:'モデル', m3dBtn:'3Dモデルを見る', m3dHint:'ドラッグで回転・ホイール/2本指でズーム · 視点を選ぶと中央に戻ります', m3dLoadT:'モデルを読み込み中…', m3dNone:'この車種の3Dモデルはありません', m3dVpL:'視点', m3dMdL:'編成', m3dVp:['斜め','側面','正面','上面'], m3dMdAll:'全編成', m3dMdHead:'先頭車', m3dMdAuto:'自動回転', m3dDOp:'事業者', m3dDCars:'編成', m3dDLen:'編成長', m3dDDim:'車体', m3dDUnit:'両', m3dSaved:'スクリーンショットを保存しました',
     sw11:'パフォーマンス改善', sw11Note:'低ズームでは新幹線・特急のみ描画し、拡大するにつれ他の列車を段階的に追加',
     modeT:'列車表示', mode3d:'3D', modeIcon:'アイコン', modeCute:'かわいい',
@@ -1800,7 +1804,7 @@ const I18N = {
     filterT:'Line types', legendT:'Legend', dayT:'Service day', dayAuto:'Auto', setT:'Settings', dataT:'Data', helpT:'Help', aboutT:'About',
     about1:'Mini JapanRail — a real-time 3D map of all Japan railways (train live positions). Driven by local timetables, it animates the positions of ~4,000 Shinkansen, limited express, local, subway and tram trains, with 3D globe projection, timetable replay and route search.', about2:'Covers 600+ railway lines and 8,900+ stations. Data source: scheduled timetables for all Japan railways, auto-refreshed weekly; zero external requests at runtime.', about3:'A personal hobby project — data provided for reference only.', about4:'Privacy Policy',
     about5:'Key features: live train positions / 3D globe projection / timetable replay (0.5–32×) / route search / station lookup and its lines / service-day switch / line-type filter / Japanese, Chinese and English UI.', about6:'Browse static pages:',
-    sw1:'Station labels', sw2:'Track glow', sw3:'Station dots', sw4:'Basemap tiles', sw5:'Train glow', sw6:'Copy off-rail trains', sw7:'Train hover tooltip', sw8:'Station footprint', sw9:'Station exits', sw10:'Detailed tracks', sw12:'Station badges', sw13:'High-zoom 3D train models', sw14:'Live train delays', dlyAgo:'from web · data {0} min ago', dlyLate:'delayed', cfoTitle:'Onboard crowding', cfoLow:'Roomy', cfoMid:'Busy', cfoHigh:'Crowded', cfoAvg:'5-day avg', cfoGreen:'Green car', cfoTemp:'Car temp', cfoAccess:'Accessible', cfoWheel:'wheelchair', cfoStroller:'stroller', cfoWifi:'Wi-Fi', cfoToilet:'toilet', cfoLuggage:'luggage', cfoCarsHint:'Tap for per-car crowding', cfoCarTip:'Car {0}: {1}%',
+    sw1:'Station labels', sw2:'Track glow', sw3:'Station dots', sw4:'Basemap tiles', sw5:'Train glow', sw6:'Copy off-rail trains', sw7:'Train hover tooltip', sw8:'Station footprint', sw9:'Station exits', sw10:'Detailed tracks', sw12:'Station badges', sw13:'High-zoom 3D train models', sw14:'Live train delays', dlyAgo:'from web · data {0} min ago', dlyLate:'delayed', cfoTitle:'Onboard conditions', cfoLow:'Roomy', cfoMid:'Busy', cfoHigh:'Crowded', cfoAvg:'5-day avg', cfoGreen:'Green car', cfoTemp:'Car temp', cfoAccess:'Accessible', cfoWheel:'wheelchair', cfoStroller:'stroller', cfoWifi:'Wi-Fi', cfoToilet:'toilet', cfoLuggage:'luggage', cfoCarsHint:'Tap for per-car crowding', cfoCarTip:'Car {0}: {1}%',
     m3dRowL:'Model', m3dBtn:'View 3D model', m3dHint:'Drag to rotate · Scroll/pinch to zoom · Picking a view re-centers', m3dLoadT:'Loading model…', m3dNone:'No 3D model for this type', m3dVpL:'View', m3dMdL:'Consist', m3dVp:['Diagonal','Side','Front','Top'], m3dMdAll:'Full', m3dMdHead:'Head car', m3dMdAuto:'Auto-rotate', m3dDOp:'Operator', m3dDCars:'Cars', m3dDLen:'Length', m3dDDim:'Car', m3dDUnit:' cars', m3dSaved:'Screenshot saved',
     sw11:'Performance boost', sw11Note:'Only Shinkansen and limited express are drawn at low zoom; other trains are added progressively as you zoom in',
     modeT:'Train display', mode3d:'3D', modeIcon:'Icon', modeCute:'Cute',
@@ -6241,7 +6245,7 @@ function onMapClick(e) {
 }
 
 /* ---------------- 详情卡 ---------------- */
-let detailTimer = 0;
+let detailTimer = 0, stopFocusTimer = 0;
 function openDetail() {
   clearTimeout(detailTimer);
   if (window.innerWidth <= 640) $('dock').classList.add('hide');
@@ -6780,9 +6784,10 @@ function updateDetailLive(t, p, M, rebuild) {
       const listEl = stl0.querySelector('.st-list');
       /* 只滚列表自身,别把外层正文一起带走。用 offsetTop(布局坐标)而不是
          getBoundingClientRect——详情卡刚打开时还在播放缩放/上移动画,缩放后的
-         矩形会把窗口算小;移动端列表下半截还可能被正文裁掉,所以按「列表在
-         正文里露出的那一段」居中,当前/下一站一定落在看得见的地方 */
-      if (actRow && listEl) {
+         矩形会把窗口算小;列表下半截被正文裁掉时按「露出的那一段」居中 */
+      const focusStop = () => {
+        const row = listEl.querySelector('.dstop.here, .dstop.next');
+        if (!row) return;
         const bd = listEl.closest('.d-body');
         const listTop = listEl.offsetTop, listH = listEl.offsetHeight;
         let visTop = listTop, visBot = listTop + listH, bodyScroll = 0;
@@ -6791,7 +6796,19 @@ function updateDetailLive(t, p, M, rebuild) {
           visTop = Math.max(listTop - bodyScroll, bd.offsetTop);
           visBot = Math.min(listTop - bodyScroll + listH, bd.offsetTop + bd.clientHeight);
         }
-        listEl.scrollTop = actRow.offsetTop - bodyScroll + actRow.offsetHeight / 2 - (visTop + visBot) / 2;
+        listEl.scrollTop = row.offsetTop - bodyScroll + row.offsetHeight / 2 - (visTop + visBot) / 2;
+      };
+      if (actRow && listEl) {
+        focusStop();
+        /* 车内状况行/站徽是异步补进来的,长高之后可能把聚焦行挤出窗口,再对一次 */
+        clearTimeout(stopFocusTimer);
+        stopFocusTimer = setTimeout(() => {
+          if (liveDetailTrip !== t || !detailEl.classList.contains('show')) return;
+          const row = listEl.querySelector('.dstop.here, .dstop.next');
+          if (!row) return;
+          const lr = listEl.getBoundingClientRect(), rr = row.getBoundingClientRect();
+          if (rr.top < lr.top - 1 || rr.bottom > lr.bottom + 1) focusStop();
+        }, 600);
       }
       refreshStopBadges(stl0);
     }

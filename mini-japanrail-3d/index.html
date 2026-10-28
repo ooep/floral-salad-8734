@@ -902,12 +902,11 @@ button { font-family:inherit; }
      折叠态 z-index:12 高于 Dock(9),重叠区点击归窗口所有,杜绝穿透 */
   #detail { height:68px; display:flex; flex-direction:column;
     transition:opacity .26s var(--ease-smooth), backdrop-filter .26s var(--ease-smooth), -webkit-backdrop-filter .26s var(--ease-smooth), transform .34s var(--ease-spring), height .32s var(--ease-spring), visibility 0s linear .26s; }
-  /* 弹性布局:头部/按钮固定,正文(.d-body)整体滚动——状态、拥挤度、百科、停靠站
-     在同一条滚动线上,随便从哪一行开始滑都能动;列表区不再单独开滚动框 */
+  /* 弹性布局:头部/按钮固定,正文(.d-body)整体可滚;停靠站仍是限高的小窗口,
+     列表内部滚动并聚焦在当前/下一站,不跟着把整张卡撑长 */
   #detail .d-h, #detail .d-act { flex:none; }
   #detail .d-body { display:block; flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
   #detail .d-stops { flex:none; display:block; }
-  #detail .st-list { max-height:none; overflow:visible; }
   #detail.fold { display:flex; align-items:center; }
   #detail.fold .d-h { width:100%; }
   #detail.fold .d-body, #detail.fold .d-act { display:none; }
@@ -6778,8 +6777,22 @@ function updateDetailLive(t, p, M, rebuild) {
         if (ni0 > i && k === ni0) row.classList.add('next');
       });
       const actRow = stl0.querySelector('.dstop.here, .dstop.next');
-      /* 移动端正文整块滚动:这里自动居中会把状态/拥挤度顶出视野,保持从顶部开始看 */
-      if (actRow && window.innerWidth > 640) actRow.scrollIntoView({ block: 'center', behavior: 'auto' });
+      const listEl = stl0.querySelector('.st-list');
+      /* 只滚列表自身,别把外层正文一起带走。用 offsetTop(布局坐标)而不是
+         getBoundingClientRect——详情卡刚打开时还在播放缩放/上移动画,缩放后的
+         矩形会把窗口算小;移动端列表下半截还可能被正文裁掉,所以按「列表在
+         正文里露出的那一段」居中,当前/下一站一定落在看得见的地方 */
+      if (actRow && listEl) {
+        const bd = listEl.closest('.d-body');
+        const listTop = listEl.offsetTop, listH = listEl.offsetHeight;
+        let visTop = listTop, visBot = listTop + listH, bodyScroll = 0;
+        if (bd && bd.clientHeight > 0) {
+          bodyScroll = bd.scrollTop;
+          visTop = Math.max(listTop - bodyScroll, bd.offsetTop);
+          visBot = Math.min(listTop - bodyScroll + listH, bd.offsetTop + bd.clientHeight);
+        }
+        listEl.scrollTop = actRow.offsetTop - bodyScroll + actRow.offsetHeight / 2 - (visTop + visBot) / 2;
+      }
       refreshStopBadges(stl0);
     }
     $('dClose').onclick = () => { closeDetail(); liveDetailTrip = null; if (followTrip) stopFollow(); };

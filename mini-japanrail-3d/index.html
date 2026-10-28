@@ -580,6 +580,10 @@ button { font-family:inherit; }
 .cfo-chip.t { background:rgba(148,163,184,.18); color:#94a3b8; }
 .cfo-chip.a { background:rgba(56,189,248,.16); color:#38bdf8; margin-left:4px; }
 .cfo-chip.avg { background:rgba(148,163,184,.14); color:#94a3b8; margin-left:4px; }
+.cfo-chip.ic { display:inline-flex; align-items:center; gap:4px; }
+.cfo-chip .ci { width:13px; height:13px; flex:none; display:block; }
+/* 1.5em = 文字行盒高度,让纯图标 chip 和带字 chip 一样高 */
+.cfo-chip .cf { display:flex; align-items:center; height:1.5em; }
 .cfo-cars { display:inline-flex; vertical-align:middle; margin-right:6px; cursor:pointer; -webkit-tap-highlight-color:transparent; }
 /* .tr 是真正的柱子盒:闭合时靠 --n 算出紧凑宽度,展开时算出编组宽度。
    宽度用 calc 而不是 intrinsic size,因为柱子是 flex:1 1 0,
@@ -1667,7 +1671,7 @@ const I18N = {
     filterT:'线路类型', legendT:'图例', dayT:'运行日', dayAuto:'自动', setT:'设置', dataT:'数据', helpT:'帮助', aboutT:'关于',
     about1:'Mini JapanRail — 全日本列车实时运行可视化地图（列車走行位置・運行情報）。基于本地时刻表在浏览器端实时推算新干线・特急・在来线・地铁・路面电车约 4,000 列列车的走行位置，支持 3D 地球投影、时钟回放与路线搜索。', about2:'收录全国 600+ 条铁路线路、8,900+ 个车站。数据源为日本全国铁路计划时刻表，每周自动刷新；页面运行时零外部请求。', about3:'本站为个人爱好项目，数据仅供学习参考。', about4:'隐私政策',
     about5:'主要功能：实时列车位置・走行位置动画 / 3D 地球投影 / 时钟回放（0.5–32×）/ 起终点路线搜索 / 车站查询与途经线路 / 运行日切换 / 线路类型过滤 / 日・中・英三语。', about6:'浏览静态页面：',
-    sw1:'车站标签', sw2:'轨道光晕', sw3:'车站点', sw4:'底图瓦片', sw5:'列车光晕', sw6:'复制异常车辆', sw7:'列车悬浮提示', sw8:'车站轮廓', sw9:'出入口', sw10:'详细股道', sw12:'车站徽章', sw13:'高倍率 3D 列车模型', sw14:'实时列车延误', dlyAgo:'来自互联网 · 数据 {0} 分钟前', dlyLate:'晚点', cfoTitle:'车内拥挤度', cfoLow:'空', cfoMid:'略挤', cfoHigh:'拥挤', cfoAvg:'5日均', cfoGreen:'绿色车厢', cfoTemp:'车内温度', cfoAccess:'无障碍', cfoWheel:'轮椅', cfoStroller:'婴儿车', cfoWifi:'Wi-Fi', cfoToilet:'厕所', cfoLuggage:'行李架', cfoCarsHint:'点按展开每车厢拥挤度', cfoCarTip:'{0}号车 {1}%',
+    sw1:'车站标签', sw2:'轨道光晕', sw3:'车站点', sw4:'底图瓦片', sw5:'列车光晕', sw6:'复制异常车辆', sw7:'列车悬浮提示', sw8:'车站轮廓', sw9:'出入口', sw10:'详细股道', sw12:'车站徽章', sw13:'高倍率 3D 列车模型', sw14:'实时列车延误', dlyAgo:'来自互联网 · 数据 {0} 分钟前', dlyLate:'晚点', cfoTitle:'车内拥挤度', cfoLow:'宽松', cfoMid:'略挤', cfoHigh:'拥挤', cfoAvg:'5日均', cfoGreen:'绿色车厢', cfoTemp:'车内温度', cfoAccess:'无障碍', cfoWheel:'轮椅', cfoStroller:'婴儿车', cfoWifi:'Wi-Fi', cfoToilet:'厕所', cfoLuggage:'行李架', cfoCarsHint:'点按展开每车厢拥挤度', cfoCarTip:'{0}号车 {1}%',
     m3dRowL:'模型', m3dBtn:'查看 3D 模型', m3dHint:'拖动旋转 · 滚轮/双指缩放 · 选视点自动回中', m3dLoadT:'正在加载模型…', m3dNone:'该车型暂无 3D 模型', m3dVpL:'视点', m3dMdL:'编组', m3dVp:['斜视','侧面','正面','俯视'], m3dMdAll:'全编组', m3dMdHead:'先头车', m3dMdAuto:'自动旋转', m3dDOp:'运营商', m3dDCars:'编组', m3dDLen:'编组长', m3dDDim:'车体', m3dDUnit:'辆', m3dSaved:'已保存截图',
     sw11:'性能改善', sw11Note:'只渲染新干线・特急，放大后逐级加入其他列车',
     modeT:'列车显示', mode3d:'3D', modeIcon:'图标', modeCute:'可爱',
@@ -1816,6 +1820,14 @@ const ICO = {
   retry: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66M20 4v4h-4"/></svg>',
   arrow: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h14M13 6l6 6-6 6"/></svg>',
   train: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15h16M5 15l1.5-6A2 2 0 0 1 8.4 7.5h7.2a2 2 0 0 1 1.9 1.5L19 15M7 18.5h.01M17 18.5h.01"/><circle cx="8" cy="18.5" r="1"/><circle cx="16" cy="18.5" r="1"/></svg>',
+  /* 舒适度 chip 小图标:线性取自 Lucide(ISC),婴儿车/轮椅 Lucide 没有,
+     用 MDI(Apache-2.0)的填充版补齐。尺寸由 CSS 统一压到 13px */
+  cfoTemp: '<svg class="ci" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/></svg>',
+  cfoToilet: '<svg class="ci" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 12h13a1 1 0 0 1 1 1 5 5 0 0 1-5 5h-.598a.5.5 0 0 0-.424.765l1.544 2.47a.5.5 0 0 1-.424.765H5.402a.5.5 0 0 1-.424-.765L7 18"/><path d="M8 18a5 5 0 0 1-5-5V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8"/></svg>',
+  cfoWifi: '<svg class="ci" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h.01"/><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.859a10 10 0 0 1 14 0"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/></svg>',
+  cfoLuggage: '<svg class="ci" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M6 20a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2"/><path d="M8 18V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v14"/><path d="M10 20h4"/><circle cx="16" cy="20" r="2"/><circle cx="8" cy="20" r="2"/></svg>',
+  cfoStroller: '<svg class="ci" viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M13,2V10H21A8,8 0 0,0 13,2M19.32,15.89C20.37,14.54 21,12.84 21,11H6.44L5.5,9H2V11H4.22C4.22,11 6.11,15.07 6.34,15.42C5.24,16 4.5,17.17 4.5,18.5A3.5,3.5 0 0,0 8,22C9.76,22 11.22,20.7 11.46,19H13.54C13.78,20.7 15.24,22 17,22A3.5,3.5 0 0,0 20.5,18.5C20.5,17.46 20.04,16.53 19.32,15.89M8,20A1.5,1.5 0 0,1 6.5,18.5A1.5,1.5 0 0,1 8,17A1.5,1.5 0 0,1 9.5,18.5A1.5,1.5 0 0,1 8,20M17,20A1.5,1.5 0 0,1 15.5,18.5A1.5,1.5 0 0,1 17,17A1.5,1.5 0 0,1 18.5,18.5A1.5,1.5 0 0,1 17,20Z"/></svg>',
+  cfoWheel: '<svg class="ci" viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M8.5 4A2 2 0 0 1 6.5 6A2 2 0 0 1 4.5 4A2 2 0 0 1 6.5 2A2 2 0 0 1 8.5 4M5 7C3.89 7 3 7.89 3 9V15H5V22H8.61A7 7 0 0 1 6.5 17A7 7 0 0 1 10 10.95V9C10 7.89 9.11 7 8 7M13 8V16H18.5L21.2 19.6L22.8 18.4L19.5 14H15V8M12 12.23A5 5 0 0 0 8.5 17A5 5 0 0 0 13.5 22A5 5 0 0 0 18.5 17H16.5A3 3 0 0 1 13.5 20A3 3 0 0 1 10.5 17A3 3 0 0 1 12 14.41Z"/></svg>',
 };
 
 /* ---------------- 全局状态 ---------------- */
@@ -4219,14 +4231,24 @@ function comfortHtml(c) {
       if (mn === null || v < mn) mn = v;
       if (mx === null || v > mx) mx = v;
     }
-    if (mn !== null) h += '<span class="cfo-chip t">' + T().cfoTemp + ' ' + Math.round(mn * 10) / 10 + (mx !== mn ? '~' + Math.round(mx * 10) / 10 : '') + '℃</span>';
+    if (mn !== null) h += '<span class="cfo-chip t ic" title="' + T().cfoTemp + '">' + ICO.cfoTemp + Math.round(mn * 10) / 10 + (mx !== mn ? '~' + Math.round(mx * 10) / 10 : '') + '℃</span>';
   }
-  /* 车両設備(JR西日本 trainmonitorinfo):轮椅/婴儿车/Wi-Fi/厕所/行李架 */
+  /* 车両設備(JR西日本 trainmonitorinfo):轮椅/婴儿车/Wi-Fi/厕所/行李架。
+     图标代替文字省一行宽度;每个图标各自带 title,整个 chip 的 aria-label
+     保留完整文字,读屏和悬停都拿得到原文 */
   if (c.facilities && c.facilities.length) {
-    const fm = { wheelchair: T().cfoWheel, stroller: T().cfoStroller, wifi: T().cfoWifi, restroom: T().cfoToilet, luggage: T().cfoLuggage };
-    const fl = [];
-    for (let i = 0; i < c.facilities.length; i++) if (fm[c.facilities[i]]) fl.push(fm[c.facilities[i]]);
-    if (fl.length) h += '<span class="cfo-chip a">' + T().cfoAccess + ' ' + fl.join('·') + '</span>';
+    const fm = {
+      wheelchair: [T().cfoWheel, ICO.cfoWheel], stroller: [T().cfoStroller, ICO.cfoStroller],
+      wifi: [T().cfoWifi, ICO.cfoWifi], restroom: [T().cfoToilet, ICO.cfoToilet], luggage: [T().cfoLuggage, ICO.cfoLuggage],
+    };
+    let icons = '', words = [];
+    for (let i = 0; i < c.facilities.length; i++) {
+      const f = fm[c.facilities[i]];
+      if (!f) continue;
+      words.push(f[0]);
+      icons += '<span class="cf" title="' + f[0] + '">' + f[1] + '</span>';
+    }
+    if (words.length) h += '<span class="cfo-chip a ic" role="img" aria-label="' + T().cfoAccess + ' ' + words.join('·') + '">' + icons + '</span>';
   }
   return h;
 }

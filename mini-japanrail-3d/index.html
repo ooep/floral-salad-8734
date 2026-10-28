@@ -635,14 +635,24 @@ button { font-family:inherit; }
 #detail .d-meta .crow.carsettling, #detail .d-meta .crow.carsettling .mv,
 #detail .d-meta .crow.carsopening, #detail .d-meta .crow.carsopening .mv { overflow:visible; }
 /* chip 换行要横穿柱子那一格(收起后宽度只有 34px),同屏滑动必然把柱子盖掉;
-   两个方向都让 chip 淡出、落到新位置再淡入,柱子的移动过程才完整可见 */
+   两个方向都让 chip 淡出、落到新位置再淡入,柱子的移动过程才完整可见。
+   淡出只占前 9%,位移在 JS 里同样延迟 9% 起跑:chip 先原地消失再滑走,
+   否则半透明的 chip 会从正在长大的柱子上拖过去 */
 @keyframes cfoChipFade {
   0% { opacity:1; }
-  12% { opacity:0; }
-  50% { opacity:0; }
-  92% { opacity:1; }
+  9% { opacity:0; }
+  45% { opacity:0; }
+  86% { opacity:1; }
 }
-#detail .d-meta .crow.carsettling .cfo-chip { animation:cfoChipFade var(--morph-in) linear both; }
+/* 收起时柱子 20ms 就归位,chip 要到 75ms 才真正压到柱子上、180ms 让开;
+   淡出淡入都收在这段里,别让整行标签空掉大半程 */
+@keyframes cfoChipFadeClose {
+  0% { opacity:1; }
+  22% { opacity:0; }
+  52% { opacity:0; }
+  82% { opacity:1; }
+}
+#detail .d-meta .crow.carsettling .cfo-chip { animation:cfoChipFadeClose var(--morph-in) linear both; }
 #detail .d-meta .crow.carsopening .cfo-chip { animation:cfoChipFade var(--morph-out) linear both; }
 .sbdly { display:inline-block; margin-left:3px; padding:0 3px; border-radius:5px; background:rgba(251,113,133,.18); color:#fb7185; font-size:9.5px; font-weight:700; line-height:13px; vertical-align:1px; }
 #tip .sg.dly-t, .tip .sg.dly-t { color:#fb7185; font-weight:700; }
@@ -4332,6 +4342,17 @@ function comfortCarsSettle() {
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i], mv = row.querySelector('.mv');
     const kids = mv ? Array.from(mv.children) : [];
+    /* 180ms 就接管布局时柱子还没缩完。宽度过渡的起点记的是 min(173px,100%),
+       一撤 wrap,100% 的基准就从整行宽变成柱子自身,过渡值会塌到十几像素;
+       先把尺寸类过渡直接收尾(残余不到 4px,看不出来),再换布局 */
+    const szs = row.querySelectorAll('.cfo-cars .tr, .cfo-cars .tr i');
+    for (let k = 0; k < szs.length; k++) {
+      const ans = szs[k].getAnimations();
+      for (let m = 0; m < ans.length; m++) {
+        const p = ans[m].transitionProperty;
+        if (p && p !== 'transform' && p !== 'opacity' && p !== 'background-color' && p !== 'box-shadow') ans[m].finish();
+      }
+    }
     /* .cfo-cars 独占行时容器是整行宽、柱子居中,位移锚点要取里面的 .tr,
        否则收起后柱子会先跳到容器左边再滑回行内 */
     const anchors = kids.map(k => k.classList.contains('cfo-cars') ? (k.querySelector('.tr') || k) : k);
@@ -4363,7 +4384,8 @@ function comfortCarsSettle() {
     row.style.transition = 'height var(--morph-in) var(--spring-in)';
     row.style.height = h1 + 'px';
     for (let j = 0; j < kids.length; j++) {
-      kids[j].style.transition = 'transform var(--morph-in) var(--spring-in)';
+      kids[j].style.transition = 'transform var(--morph-in) var(--spring-in)' +
+        (kids[j].classList.contains('cfo-cars') ? '' : ' calc(var(--morph-in) * .09)');
       kids[j].style.transform = '';
     }
   }
@@ -4447,7 +4469,8 @@ function comfortCarsOpenMorph(list) {
       st.tr.style.padding = '';
     }
     for (let j = 0; j < st.kids.length; j++) {
-      st.kids[j].style.transition = 'transform var(--morph-out) var(--spring-out)';
+      st.kids[j].style.transition = 'transform var(--morph-out) var(--spring-out)' +
+        (st.kids[j].classList.contains('cfo-cars') ? '' : ' calc(var(--morph-out) * .09)');
       st.kids[j].style.transform = '';
     }
   }
@@ -4478,13 +4501,13 @@ function comfortCarsToggle(el) {
       const row = c.closest('.crow');
       if (row) row.classList.add('carsopen');
     }
-    /* 收起时先让编组在独占行里缩回柱状,动画结束再解除 wrap;
+    /* 收起时先让编组在独占行里缩回柱状,再解除 wrap;
        否则 flex 行立刻重排,正在过渡的 .tr 会被挤窄。
-       解除的那一下交给 comfortCarsSettle 做平移动画 */
+       spring-in 前段很快,180ms 时柱子只剩 3~4px 的余量,不用等满 340ms 才归位 */
     comfortWrapTimer = setTimeout(() => {
       comfortWrapTimer = 0;
       comfortCarsSettle();
-    }, 360);
+    }, 180);
   }
   if (el) el.blur();
 }

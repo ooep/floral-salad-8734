@@ -674,6 +674,8 @@ button { font-family:inherit; }
 #detail .d-x:active, #sheet .sh-x:active { transform:scale(.86); transition:transform .1s ease-in; }
 /* 停靠站时间线(去外框,内嵌高亮行) */
 #detail .d-stops { margin-top:2px; }
+/* 桌面保持原布局(信息行/列表各自独占),移动端这层才是整块正文的滚动容器 */
+#detail .d-body { display:contents; }
 #detail .d-stops .st-title { display:flex; align-items:center; justify-content:space-between; padding:12px 2px 7px; font-size:10.5px; font-weight:700; color:var(--dim); letter-spacing:.6px; }
 #detail .d-stops .st-title .cnt { color:var(--dim); font-weight:600; font-size:10px; }
 #detail .st-list { max-height:min(264px,46vh); overflow-y:auto; overscroll-behavior:contain; padding:0 0 4px; }
@@ -897,19 +899,19 @@ button { font-family:inherit; }
      折叠态 z-index:12 高于 Dock(9),重叠区点击归窗口所有,杜绝穿透 */
   #detail { height:68px; display:flex; flex-direction:column;
     transition:opacity .26s var(--ease-smooth), backdrop-filter .26s var(--ease-smooth), -webkit-backdrop-filter .26s var(--ease-smooth), transform .34s var(--ease-spring), height .32s var(--ease-spring), visibility 0s linear .26s; }
-  /* 弹性布局:头部/meta/标题/按钮固定,列表区占剩余空间滚动——併结行再多也不会把操作按钮挤出窗口 */
-  #detail .d-h, #detail .d-meta, #detail .d-sep, #detail .d-act { flex:none; }
-  #detail .d-stops { flex:1 1 auto; min-height:0; display:flex; flex-direction:column; }
-  #detail .st-title { flex:none; }
+  /* 弹性布局:头部/按钮固定,正文(.d-body)整体滚动——状态、拥挤度、百科、停靠站
+     在同一条滚动线上,随便从哪一行开始滑都能动;列表区不再单独开滚动框 */
+  #detail .d-h, #detail .d-act { flex:none; }
+  #detail .d-body { display:block; flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
+  #detail .d-stops { flex:none; display:block; }
+  #detail .st-list { max-height:none; overflow:visible; }
   #detail.fold { display:flex; align-items:center; }
   #detail.fold .d-h { width:100%; }
-  #detail.fold .d-meta, #detail.fold .d-sep, #detail.fold .d-stops, #detail.fold .d-act { display:none; }
+  #detail.fold .d-body, #detail.fold .d-act { display:none; }
   /* 高度用动态视口 + 顶部安全区留白:Android 上 vh 是大视口(地址栏收起),展开过猛会把头部顶出屏幕;
      刘海屏 safe-area-inset-top 也会吞掉车头/标题/关闭按钮的可点击区域 */
   #detail.medium { height:62vh; height:min(62vh, calc(100dvh - env(safe-area-inset-top, 0px) - 20px)); }
-  #detail.medium .st-list { flex:1 1 auto; min-height:0; overflow-y:auto; }
   #detail.full { height:92vh; height:min(92vh, calc(100dvh - env(safe-area-inset-top, 0px) - 20px)); }
-  #detail.full .st-list { flex:1 1 auto; min-height:0; overflow-y:auto; }
   #detail.dragging { transition:none; }
   .foot { display:none; }
   /* 表单元素 ≥16px 防止 iOS 聚焦自动缩放 */
@@ -6663,6 +6665,7 @@ function updateDetailLive(t, p, M, rebuild) {
       '<div class="d-t"><div class="d-nm">' + (t.nm || p[3] || uniqLines[0] || t.i) + '</div>' +
       '<div class="d-sb">' + t.jas[0] + ' → ' + t.jas[N-1] + ' · ' + fmtHm(t.dep[0]) + '–' + fmtHm(t.arr[N-1]) + '</div></div>' +
       '<button class="btn icon d-x" id="dClose">' + ICO.close + '</button></div>' +
+      '<div class="d-body">' +
       '<div class="d-meta">' +
       '<div class="mrow"><span class="lb">' + T().status + '</span><span class="mv"><span class="st-badge ' + (running ? 'run' : 'dwell') + '"></span>' + (running ? T().running + ' · ' + Math.round(p[5]) + ' ' + T().kmh : '<b>' + T().dwelling + '</b> @ ' + jas[i]) + (t.dly > 0 ? '<span class="dly-chip">+' + Math.round(t.dly) + T().min + '</span>' : '') + '</span></div>' +
       '<div class="mrow"><span class="lb">' + T().next + '</span><span class="mv">' + nextNm + ' ' + eta + '</span></div>' +
@@ -6754,7 +6757,7 @@ function updateDetailLive(t, p, M, rebuild) {
         }
         return s;
       })() +
-      '</div></div>' +
+      '</div></div></div>' +
       '<div class="d-act"><button class="btn' + (followTrip === t ? ' on' : '') + '" id="dFollow">' + (followTrip === t ? T().stopFollowBtn : T().followBtn) + '</button>' +
       '<button class="btn" id="dLoc">' + T().locateBtn + '</button></div>';
     /* 3D 模型入口:命中映射才显示(bindDetail 内部判 pathOf) */
@@ -6772,7 +6775,8 @@ function updateDetailLive(t, p, M, rebuild) {
         if (ni0 > i && k === ni0) row.classList.add('next');
       });
       const actRow = stl0.querySelector('.dstop.here, .dstop.next');
-      if (actRow) actRow.scrollIntoView({ block: 'center', behavior: 'auto' });
+      /* 移动端正文整块滚动:这里自动居中会把状态/拥挤度顶出视野,保持从顶部开始看 */
+      if (actRow && window.innerWidth > 640) actRow.scrollIntoView({ block: 'center', behavior: 'auto' });
       refreshStopBadges(stl0);
     }
     $('dClose').onclick = () => { closeDetail(); liveDetailTrip = null; if (followTrip) stopFollow(); };

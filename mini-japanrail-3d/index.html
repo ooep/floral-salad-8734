@@ -584,30 +584,47 @@ button { font-family:inherit; }
 .cfo-chip .ci { width:13px; height:13px; flex:none; display:block; }
 /* 1.5em = 文字行盒高度,让纯图标 chip 和带字 chip 一样高 */
 .cfo-chip .cf { display:flex; align-items:center; height:1.5em; }
-.cfo-cars { display:inline-flex; vertical-align:middle; margin-right:6px; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.cfo-cars { display:inline-flex; vertical-align:middle; margin-right:6px; cursor:pointer; -webkit-tap-highlight-color:transparent; transition:margin var(--morph-in) var(--spring-in); }
 /* .tr 是真正的柱子盒:闭合时靠 --n 算出紧凑宽度,展开时算出编组宽度。
    宽度用 calc 而不是 intrinsic size,因为柱子是 flex:1 1 0,
    容器按内容算宽度会得到 0,盒子只能靠已知车厢数自己算 */
 .cfo-cars .tr { display:inline-flex; align-items:flex-end; gap:2px; height:14px; width:calc(var(--n,1) * 6px - 2px);
-  transition:width var(--morph-in) var(--spring-in), height var(--morph-in) var(--spring-in), padding var(--morph-in) var(--spring-in), background-color 200ms linear, box-shadow 200ms linear; }
+  transition:width var(--morph-in) var(--spring-in), height var(--morph-in) var(--spring-in), padding var(--morph-in) var(--spring-in), transform 140ms var(--ease-spring), background-color 180ms var(--ease-smooth), box-shadow 200ms var(--ease-smooth); }
 .cfo-cars i { position:relative; flex:1 1 0; max-width:4px; height:var(--h,3px); border-radius:1px; background:currentColor; color:#475569;
-  transition:max-width var(--morph-in) var(--spring-in), height var(--morph-in) var(--spring-in), border-radius var(--morph-in) var(--spring-in), transform 220ms var(--spring-in); }
+  transition:max-width var(--morph-in) var(--spring-in), height var(--morph-in) var(--spring-in), border-radius var(--morph-in) var(--spring-in), background-color 180ms linear, transform 220ms var(--spring-in); }
 .cfo-cars i.b1 { color:#34d399; }
 .cfo-cars i.b2 { color:#fbbf24; }
 .cfo-cars i.b3 { color:#fb7185; }
 /* 车厢格轨道 / 车内填充 / 号車标签:三样都只在展开时淡入 */
-.cfo-cars i::before { content:''; position:absolute; left:0; right:0; top:0; bottom:12px; border-radius:4px; background:rgba(148,163,184,.13); box-shadow:inset 0 0 0 1px rgba(148,163,184,.16); opacity:0; transition:opacity 200ms linear; }
-.cfo-cars i u { position:absolute; left:1px; right:1px; bottom:13px; height:max(0px, calc((100% - 13px) * var(--pf,0))); border-radius:0 0 3px 3px; background:currentColor; opacity:0; transition:opacity 200ms linear; }
-.cfo-cars i b { position:absolute; left:0; right:0; bottom:0; height:12px; line-height:12px; font-style:normal; font-size:9px; font-weight:700; text-align:center; color:var(--dim,#94a3b8); opacity:0; transition:opacity 200ms linear; }
+.cfo-cars i::before { content:''; position:absolute; left:0; right:0; top:0; bottom:12px; border-radius:4px; background:rgba(148,163,184,.13); box-shadow:inset 0 0 0 1px rgba(148,163,184,.16); opacity:0; transition:opacity 160ms linear; }
+.cfo-cars i u { position:absolute; left:1px; right:1px; bottom:13px; height:max(0px, calc((100% - 13px) * var(--pf,0))); border-radius:0 0 3px 3px; background:currentColor; opacity:0; transition:opacity 160ms linear; }
+.cfo-cars i b { position:absolute; left:0; right:0; bottom:0; height:12px; line-height:12px; font-style:normal; font-size:9px; font-weight:700; text-align:center; color:var(--dim,#94a3b8); opacity:0; transform:translateY(2px); transition:opacity 140ms linear, transform 200ms var(--ease-spring); }
 .cfo-cars:not(.open):hover i { transform:translateY(-2px); transition-delay:calc(var(--i,0) * 24ms); }
+.cfo-cars:active .tr { transform:scale(.97); }
+.cfo-cars:focus-visible { outline:2px solid var(--acc); outline-offset:3px; border-radius:10px; }
 /* 展开态:外层 flex:1 1 100% 独占一行并把柱子盒居中,
-   内层 .tr 收成编组的实际宽度,首末格再收成车头/车尾 */
-.cfo-cars.open { flex:1 1 100%; justify-content:center; margin:4px 0 1px; }
-.cfo-cars.open .tr { width:calc(var(--n,1) * 27px + 11px); max-width:100%; height:auto; gap:3px; align-items:stretch; padding:7px 7px 2px; border-radius:11px; background:rgba(148,163,184,.06); box-shadow:inset 0 0 0 1px rgba(148,163,184,.12); }
-.cfo-cars.open i { max-width:24px; height:40px; border-radius:0; background:transparent; }
-.cfo-cars.open i::before, .cfo-cars.open i u, .cfo-cars.open i b { opacity:1; }
+   内层 .tr 收成编组的实际宽度,首末格再收成车头/车尾。
+   wrap 与 open 拆开:收起时先撤 open 只收编组,wrap 等动画结束再撤,
+   否则行一重排就会把还在缩小的车压成十几像素 */
+.cfo-cars.open, .cfo-cars.wrap { flex:1 1 100%; min-width:0; max-width:100%; justify-content:center; margin:4px 0 1px; transition:margin var(--morph-out) var(--spring-out); }
+/* 高度写死 49px 而不是 auto:auto 不可过渡,展开瞬间整行会先跳高再长车。
+   12 节编组宽度超过抽屉时 min()/max-width 一起把格子压窄,不能溢出 .mv */
+.cfo-cars.open .tr { width:min(calc(var(--n,1) * 27px + 11px), 100%); max-width:100%; height:49px; gap:3px; align-items:stretch; padding:7px 7px 2px; border-radius:11px; background:rgba(148,163,184,.06); box-shadow:inset 0 0 0 1px rgba(148,163,184,.12);
+  transition:width var(--morph-out) var(--spring-out), height var(--morph-out) var(--spring-out), padding var(--morph-out) var(--spring-out), transform 140ms var(--ease-spring), background-color 240ms var(--ease-smooth), box-shadow 240ms var(--ease-smooth); }
+.cfo-cars.open i { max-width:24px; height:40px; border-radius:0; background:transparent;
+  transition:max-width var(--morph-out) var(--spring-out), height var(--morph-out) var(--spring-out), border-radius var(--morph-out) var(--spring-out), background-color 180ms linear, transform 220ms var(--spring-in); }
+/* 轨道/填充/编号逐节亮起:延迟按 --i 递增,像列车一节节挂出来;
+   收起时不设延迟,文字和轨道先撤,尺寸再收回 */
+.cfo-cars.open i::before { opacity:1; transition:opacity 200ms linear calc(var(--i,0) * 18ms + 70ms); }
+.cfo-cars.open i u { opacity:1; transition:opacity 220ms var(--ease-smooth) calc(var(--i,0) * 18ms + 70ms); }
+.cfo-cars.open i b { opacity:1; transform:none;
+  transition:opacity 180ms linear calc(var(--i,0) * 18ms + 90ms), transform 260ms var(--spring-out) calc(var(--i,0) * 18ms + 90ms); }
 .cfo-cars.open i:first-child::before { border-radius:8px 4px 4px 8px; }
 .cfo-cars.open i:last-child::before { border-radius:4px 8px 8px 4px; }
+@media (prefers-reduced-motion: reduce) {
+  .cfo-cars, .cfo-cars .tr, .cfo-cars i, .cfo-cars i::before, .cfo-cars i u, .cfo-cars i b { transition-duration:1ms !important; transition-delay:0s !important; }
+  .cfo-cars:not(.open):hover i, .cfo-cars:active .tr { transform:none; }
+}
 /* 展开时让编组图独占整行(否则被"车内拥挤度"标签挤成半宽)。
    不用 :has(.cfo-cars.open):行上的类由 comfortCarsToggle 同步维护,
    少一个选择器特性依赖,旧 WebKit 上也一样生效 */
@@ -4108,7 +4125,7 @@ const COMFORT_FETCH_MS = 5 * 60 * 1000, COMFORT_MAX_AGE_MS = 45 * 60 * 1000;
 let comfortLastFetch = 0, comfortTimer = null, comfortGenMs = 0, comfortBusy = false, comfortPending = false;
 /* 逐车柱图 ⇄ 编组图 的展开态。存在模块变量里:换车、5 分钟一次的
    comfortApplyData 强制重建抽屉时都保持用户选的那一档 */
-let comfortCarsOpen = false;
+let comfortCarsOpen = false, comfortWrapTimer = 0;
 const comfortSet = new Set();
 function comfortClear() {
   if (!comfortSet.size) return;
@@ -4220,7 +4237,7 @@ function comfortHtml(c) {
       bars += '<i' + (k ? ' class="b' + k + '"' : '') + ' style="--h:' + bh + 'px;--pf:' +
         (v == null ? 0 : Math.min(1, v / 100).toFixed(3)) + ';--i:' + i + '"' + tip + '><u></u><b>' + (i + 1) + '</b></i>';
     }
-    h += '<span class="cfo-cars' + (comfortCarsOpen ? ' open' : '') + '" style="--n:' + c.congestion_cars.length + '" role="button" tabindex="0" aria-expanded="' +
+    h += '<span class="cfo-cars' + (comfortCarsOpen ? ' open wrap' : '') + '" style="--n:' + c.congestion_cars.length + '" role="button" tabindex="0" aria-expanded="' +
       (comfortCarsOpen ? 'true' : 'false') + '" title="' + T().cfoCarsHint + '"><span class="tr">' + bars + '</span></span>';
   }
   if (c.temperature_cars && c.temperature_cars.length) {
@@ -4256,12 +4273,29 @@ function comfortHtml(c) {
    做事件委托;切换时直接改 class 而不是重建,CSS 才有中间态可动画。 */
 function comfortCarsToggle(el) {
   comfortCarsOpen = !comfortCarsOpen;
+  clearTimeout(comfortWrapTimer);
+  comfortWrapTimer = 0;
   const list = detailEl.querySelectorAll('.cfo-cars');
   for (let i = 0; i < list.length; i++) {
-    list[i].classList.toggle('open', comfortCarsOpen);
-    list[i].setAttribute('aria-expanded', comfortCarsOpen ? 'true' : 'false');
-    const row = list[i].closest('.crow');
-    if (row) row.classList.toggle('carsopen', comfortCarsOpen);
+    const c = list[i];
+    c.classList.add('wrap');
+    c.classList.toggle('open', comfortCarsOpen);
+    c.setAttribute('aria-expanded', comfortCarsOpen ? 'true' : 'false');
+    const row = c.closest('.crow');
+    if (row) row.classList.add('carsopen');
+  }
+  /* 收起时先让编组在独占行里缩回柱状,动画结束再解除 wrap;
+     否则 flex 行立刻重排,正在过渡的 .tr 会被挤窄 */
+  if (!comfortCarsOpen) {
+    comfortWrapTimer = setTimeout(() => {
+      comfortWrapTimer = 0;
+      const cs = detailEl.querySelectorAll('.cfo-cars.wrap:not(.open)');
+      for (let i = 0; i < cs.length; i++) {
+        cs[i].classList.remove('wrap');
+        const row = cs[i].closest('.crow');
+        if (row && !row.querySelector('.cfo-cars.open')) row.classList.remove('carsopen');
+      }
+    }, 360);
   }
   if (el) el.blur();
 }

@@ -1,82 +1,46 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""上行併结（join）检测 —— 构建期执行，结果固化进 trains_*.json 的 "c" 字段。
+"""併结检测（构建期）—— 固定服务目录 + 时刻对齐，结果固化进 trains_*.json 的 "c" 字段。
 
-架构（2026-10-13，方向D：构建期检测 + 併结点白名单最后闸门）：
-  - 下行/同起点分割（pass1）完全留在浏览器 buildCouplings 不动（零回归风险）。
-  - 本模块只负责上行/异起点併结（pass2）：はやぶさ×こまち@盛岡、
-    みどり×ハウステンボス@早岐、しおかぜ×いしづち@宇多津 等，
-    这类列车始发站不同、共享段位于双方路线尾部，浏览器旧规则无法识别。
-  - 判定链：双方终点相同 + 共享段从双方路线中部起、覆盖双方尾部（≥4站）
-    + 共享段逐站发车时刻对齐 ≤ALIGN_TOL + 运行窗重叠
-    + **併结点白名单 JOIN_POINTS 最后闸门**（(併结站, 终点, 始发站无序对)）。
-  - 每列车物理上只有一个併结伙伴：候选对按对齐偏差升序贪心匹配，
-    每条记录至多挂一个 "c"（join 条目）。
+设计（2026-10-29 根治版）：
+  - 浏览器不再做任何启发式併结扫描；页面上出现的每一对併结列车都来自本模块。
+    时刻表刷新后不会因站序/记录形状变化而在前端悄悄错配或漏配。
+  - EVENTS 列出所有真实存在的併结服务（2026-10 联网逐组核实），每条给出併结站、
+    双方判定、窗口锚点（共同始发/终到站）与时刻容差。新增/废止併结只改这张表。
+  - 判定只依赖两件事：共同端点的连续站序（允许中间跳站, LCS）+ 共享段逐站到发
+    时刻对齐。记录被截短、绕环、同班次重复录入都不影响：配不上宁可不标。
+  - 每条记录物理上只有一个併结伙伴：候选按偏差升序全局贪心一对一。
+  - scan_uncatalogued() 在构建日志里报告“像併结但不在目录内”的强候选；时刻表
+    新增併结服务时能第一时间看见，而不是等用户发现。
 
-白名单来源（2026-10 联网核实）：
-  盛岡   はやぶさ(新青森/新函館北斗)×こまち(秋田)        東北新幹線（上り併結）
-  福島   やまびこ(盛岡)×つばさ(山形/新庄)               東北/山形新幹線（上り併結）
-  宇多津 しおかぜ(岡山)×いしづち(高松)                  予讃線（上り併結）
-  多度津 しおかぜ(岡山)×いしづち(高松)                  同上（一部列車）
-  早岐   みどり(佐世保)×ハウステンボス(ハウステンボス)  佐世保線（上り併結）
+"c" 条目：{"p": 伙伴train_id, "k": "s"|"j", "sp": 併结站(normName),
+  "t0"/"t1": 併结窗口(分钟), "nm": 伙伴爱称}
+  k="s": 共享前缀（同起点方向, 列车在 sp 分割）
+  k="j": 共享后缀（异起点方向, 列车在 sp 併结）
 
-"c" 条目格式：{"p": 伙伴train_id, "k": "j", "sp": 併结站(normName),
-  "t0": 併结窗口起点, "t1": 窗口终点, "nm": 伙伴爱称}
-前端只读不判：解析时按 tid 解析回活班次对象并挂到 cpl（join 型文案）。
+判定指标：共享站「到达」时刻差（分割段含併结站到达；併结段取併结站发车 +
+后续各站到达, 共同终点站的到站记法差排除）。运行窗取双方 w0/w1 交集。
 """
 import re
 
-# 共享段逐站发车时刻对齐容差（分钟）。物理併结车共享段时刻几乎一致；
-# 但源数据对两车记录偶有 1-7min 记法偏差（早岐みどり×ハウステンボス全程差 1-4min、
-# 宇多津 18:35 对差 7min 后段归 0），故取 10。真正的防误判靠 JOIN_POINTS 白名单。
-ALIGN_TOL = 10
-
-# 上行併结白名单：(併结站normName, 终点normName, frozenset(两始发站normName))
-# 只有命中此表的上行/异起点併结候选才允许标注（结构性零误判）。
-# 注意福島上り併结是 やまびこ(仙台発)×つばさ(山形/新庄)——盛岡発やまびこ上り不併结。
-JOIN_POINTS = {
-    ("盛岡", "東京", frozenset({"新青森", "秋田"})),
-    ("盛岡", "東京", frozenset({"新函館北斗", "秋田"})),
-    ("福島", "東京", frozenset({"仙台", "山形"})),
-    ("福島", "東京", frozenset({"仙台", "新庄"})),
-    ("宇多津", "松山", frozenset({"岡山", "高松"})),
-    ("多度津", "松山", frozenset({"岡山", "高松"})),
-    ("早岐", "博多", frozenset({"佐世保", "ハウステンボス"})),
-    # サンライズ瀬戸×出雲：上り 高松/出雲市 → 岡山併结 → 東京
-    ("岡山", "東京", frozenset({"高松", "出雲市"})),
-    # 2026-10-14 全量盲区扫描 + 互联网逐组核实（JR东/西/九官方、東武公式、tabiblo 等）
-    # 成田エクスプレス：大船×新宿 → 東京併结 → 成田空港（JR東：东京站12辆连接/切离）
-    ("東京", "成田空港", frozenset({"大船", "新宿"})),
-    # 富士回遊×かいじ：河口湖×甲府 → 大月併結 → 新宿（JR東中文页明记"甲斐路と連結"；あずさ松本は非併結）
-    ("大月", "新宿", frozenset({"河口湖", "甲府"})),
-    # 踊り子：伊豆急下田×修善寺 → 熱海併結 → 東京（JR東：热海站分割·併結）
-    ("熱海", "東京", frozenset({"伊豆急下田", "修善寺"})),
-    # 関空快速×紀州路快速 上り：和歌山×関西空港 → 日根野併結 → 天王寺/京橋（JR西）
-    ("日根野", "天王寺", frozenset({"和歌山", "関西空港"})),
-    ("日根野", "京橋", frozenset({"和歌山", "関西空港"})),
-    # まいづる×きのさき/はしだて：東舞鶴×豊岡/天橋立 → 綾部併結 → 京都
-    ("綾部", "京都", frozenset({"東舞鶴", "豊岡"})),
-    ("綾部", "京都", frozenset({"東舞鶴", "天橋立"})),
-    # 東武リバティけごん×きぬ/会津：東武日光×鬼怒川温泉/会津田島 → 下今市で合流・春日部で併結 → 浅草
-    # （時刻表上は下今市から駅順一致、物理併結は春日部。下りの分割駅表示は浏览器側で春日部）
-    ("下今市", "浅草", frozenset({"東武日光", "鬼怒川温泉"})),
-    ("下今市", "浅草", frozenset({"会津田島", "東武日光"})),
-}
-
-# 参与併结的车种白名单（与 index.html COUPLE_CLASSES 一致）
+# 与页面 GRADE / 车种表一致；仅用于盲区扫描，不作为判定白名单
 COUPLE_CLASSES = {
     "Hayabusa", "Komachi", "Yamabiko", "Tsubasa", "Toki", "Tanigawa",
-    "Sakura", "Tsubame", "特", "新", "関", "紀", "寝",  # 寝=寝台特急(サンライズ瀬戸×出雲)
+    "Sakura", "Tsubame", "特", "新", "関", "紀", "寝",
+}
+_SCAN_CLASSES = (COUPLE_CLASSES - {"新"}) | {
+    "Nozomi", "Hikari", "Kodama", "Mizuho", "Kagayaki", "Hakutaka", "Asama",
+    "Nasuno", "Hayate", "Tsurugi", "Kamome",
 }
 
-_TOKKYU_ICONS = set("関紀中丹寝京ミフ富九川ＴＳＮホ拝ラアエ空")
+_TOKKYU_ICONS = set("関紀中丹寝京ミフ富九川ＴＳＮホ拝ラアエ空特")
 _ICON_NAME = {
     "関": "関空快速", "紀": "紀州路快速", "丹": "こうのとり", "ミ": "ミュースカイ",
     "フ": "フジサン特急", "富": "フジサン特急", "九": "九州横断特急", "京": "京王特急",
     "川": "川越特急", "Ｔ": "東武特急", "Ｓ": "直通特急", "Ｎ": "西鉄特急",
     "ホ": "ホームライナー", "拝": "拝島ライナー", "ア": "アクセス特急",
     "エ": "アクセス特急", "空": "関空快速", "寝": "寝台特急", "中": "中央線特急",
-    "ラ": "ライナー",
+    "ラ": "ライナー", "特": "特急",
 }
 
 
@@ -85,7 +49,7 @@ def norm_name(n):
 
 
 def trip_name(icon, jas, lines, tokkyu):
-    """与 index.html tripName 一致（tokkyu: {"sh","nm","nmI"}）。"""
+    """与页面 tripName 一致（tokkyu: {"sh","nm","nmI"}）。"""
     if tokkyu and tokkyu.get("sh", {}).get(icon):
         return tokkyu["sh"][icon]
     if icon not in _TOKKYU_ICONS:
@@ -100,9 +64,8 @@ def trip_name(icon, jas, lines, tokkyu):
 
 
 def couple_name(icon, jas, lines, tokkyu):
-    """併结伙伴展示名：优先爱称表（含「特」icon 的线路签名直查，如 みどり/しおかぜ/
-    いしづち/ハウステンボス），再退回车种/爱称通用名。仅构建期 join 元数据用，
-    不改页面 tripName 行为。"""
+    """伙伴展示名：优先线路签名爱称（みどり/しおかぜ/いしづち 等 icon=特），
+    再退回车种通用名。"""
     n = trip_name(icon, jas, lines, tokkyu)
     if n:
         return n
@@ -116,7 +79,7 @@ def couple_name(icon, jas, lines, tokkyu):
 
 
 def build_trip(rec, tm, tokkyu):
-    """轻量班次对象（join 判定所需字段）。"""
+    """轻量班次对象。s 解码：dep0, run1, dwell1, run2, ...（长度 2N-2）。"""
     jas = tm.get("s_jas") or []
     N = len(jas)
     if N < 2:
@@ -125,111 +88,311 @@ def build_trip(rec, tm, tokkyu):
     if len(s) != 2 * N - 2:
         return None
     dep = [0] * N
-    dep[0] = s[0]
+    arr = [0] * N
+    dep[0] = arr[0] = s[0]
     for i in range(1, N):
-        dep[i] = dep[i - 1] + s[2 * i - 1] + (s[2 * i] if 2 * i < len(s) else 0)
+        arr[i] = dep[i - 1] + s[2 * i - 1]
+        dep[i] = arr[i] + (s[2 * i] if 2 * i < len(s) else 0)
     w0, w1 = [int(x) for x in rec["w"].split(",")]
     return {
         "tid": rec["_"], "t": rec["t"], "i": rec.get("i", ""), "N": N,
-        "jasN": [norm_name(x) for x in jas], "dep": dep, "w0": w0, "w1": w1,
+        "jasN": [norm_name(x) for x in jas], "dep": dep, "arr": arr,
+        "w0": w0, "w1": w1,
         "nm": trip_name(rec.get("i", ""), jas, tm.get("lines") or [], tokkyu),
         "cnm": couple_name(rec.get("i", ""), jas, tm.get("lines") or [], tokkyu),
     }
 
 
-def _lcs(A, B):
-    """最长公共连续站序（双向遍历, 与页面一致; 平局取首次出现）。返回
-    (best, endA, endB)；best=0 表示无共享。"""
-    best = end_a = end_b = 0
-    for i in range(A["N"]):
-        for j in range(B["N"]):
-            if A["jasN"][i] != B["jasN"][j]:
-                continue
-            k = 0
-            while (i + k < A["N"] and j + k < B["N"]
-                   and A["jasN"][i + k] == B["jasN"][j + k]):
-                k += 1
-            if k > best:
-                best, end_a, end_b = k, i + k - 1, j + k - 1
-    return best, end_a, end_b
-
-
-def detect_join(trips):
-    """上行/异起点併结——尾部共享 + 终点相同 + 逐站对齐≤ALIGN_TOL + 白名单闸门。
-    返回 [(tidA, tidB, sp, t0, t1, nmB, dev), ...]（sp=併结站=共享段起点）。"""
-    by_term = {}
-    for t in trips:
-        if t["N"] < 4:
-            continue
-        by_term.setdefault(t["jasN"][-1], []).append(t)
+def _lcs_pairs(a, b):
+    """最长公共子序列的站序配对（允许中间跳站：郡山通过等）。
+    返回 [(i, j), ...] 按站序递增。"""
+    n, m = len(a), len(b)
+    dp = [[0] * (m + 1) for _ in range(n + 1)]
+    for i in range(n - 1, -1, -1):
+        row, nxt = dp[i], dp[i + 1]
+        ai = a[i]
+        for j in range(m - 1, -1, -1):
+            row[j] = 1 + nxt[j + 1] if ai == b[j] else (nxt[j] if nxt[j] >= row[j + 1] else row[j + 1])
     out = []
-    for lst in by_term.values():
-        lst.sort(key=lambda t: t["dep"][-1])
-        for a in range(len(lst)):
-            A = lst[a]
-            for b in range(a + 1, len(lst)):
-                B = lst[b]
-                if B["dep"][-1] - A["dep"][-1] > ALIGN_TOL:
-                    break
-                if A["i"] not in COUPLE_CLASSES or B["i"] not in COUPLE_CLASSES:
-                    continue
-                if A["jasN"][0] == B["jasN"][0]:
-                    continue  # 同始发站 = 下行/分割类型, 留在浏览器 pass1
-                best, end_a, end_b = _lcs(A, B)
-                if best < 4:
-                    continue
-                st_a, st_b = end_a - best + 1, end_b - best + 1
-                if st_a == 0 or st_b == 0:
-                    continue  # 共享段必须从双方路线中部开始（异起点併结）
-                if end_a != A["N"] - 1 or end_b != B["N"] - 1:
-                    continue  # 共享段必须是双方尾部（都到同一终点）
-                na, nb = A["nm"], B["nm"]
-                if na and nb and na == nb:
-                    continue
-                dev = 0
-                ok = True
-                for k in range(best):
-                    d = abs(A["dep"][st_a + k] - B["dep"][st_b + k])
-                    if d > ALIGN_TOL:
-                        ok = False
-                        break
-                    dev = max(dev, d)
-                if not ok:
-                    continue
-                t0 = max(A["dep"][st_a], B["dep"][st_b])
-                t1 = min(A["dep"][end_a], B["dep"][end_b])
-                w0, w1 = max(A["w0"], B["w0"]), min(A["w1"], B["w1"])
-                if t0 > w1 or t1 < w0:
-                    continue
-                c0, c1 = max(t0, w0), min(t1, w1)
-                junction = A["jasN"][st_a]
-                key = (junction, A["jasN"][-1], frozenset((A["jasN"][0], B["jasN"][0])))
-                if key not in JOIN_POINTS:
-                    continue  # 白名单最后闸门：只认人工核实的真併结点
-                out.append((A["tid"], B["tid"], junction, c0, c1, nb or B["i"], dev))
+    i = j = 0
+    while i < n and j < m:
+        if a[i] == b[j]:
+            out.append((i, j))
+            i += 1
+            j += 1
+        elif dp[i + 1][j] >= dp[i][j + 1]:
+            i += 1
+        else:
+            j += 1
     return out
 
 
-def _match_unique(cands):
-    """每条记录最多保留 1 条上行併结（物理上一列车只有一个併结伙伴）。
-    候选按对齐偏差升序贪心匹配，已配对的记录不再参与。"""
-    cands = sorted(cands, key=lambda c: (c[6], c[3]))
-    used = set()
-    chosen = []
-    for tid_a, tid_b, sp, t0, t1, nm, dev in cands:
-        if tid_a in used or tid_b in used:
-            continue
-        used.add(tid_a)
-        used.add(tid_b)
-        chosen.append((tid_a, tid_b, sp, t0, t1, nm))
-    return chosen
+# ---------------- 服务成员判定 ----------------
+def _has(t, *s):
+    return all(x in t["jasN"] for x in s)
 
 
-def compute_joins(recs, tmaps, tokkyu):
+def _ends(t, *s):
+    return t["jasN"][0] in s or t["jasN"][-1] in s
+
+
+def m_hayabusa(t):
+    return t["i"] == "Hayabusa" or "はやぶさ" in (t.get("nm") or "")
+
+
+def m_komachi(t):
+    return t["i"] == "Komachi" or "こまち" in (t.get("nm") or "")
+
+
+def m_yamabiko(t):
+    return t["i"] == "Yamabiko" or "やまびこ" in (t.get("nm") or "")
+
+
+def m_tsubasa(t):
+    return t["i"] == "Tsubasa" or "つばさ" in (t.get("nm") or "")
+
+
+def m_shiokaze(t):
+    return t["i"] == "特" and _has(t, "児島") and _ends(t, "松山", "伊予西条")
+
+
+def m_ishizuchi(t):
+    return t["i"] == "特" and _has(t, "宇多津") and not _has(t, "児島") and \
+        _ends(t, "高松", "松山", "伊予西条", "新居浜")
+
+
+def m_midori(t):
+    return t["i"] == "特" and _has(t, "早岐") and _ends(t, "佐世保")
+
+
+def m_htb(t):
+    return t["i"] == "特" and _has(t, "早岐") and _ends(t, "ハウステンボス")
+
+
+def m_sunrise_seto(t):
+    return t["i"] == "寝" and _has(t, "岡山") and _ends(t, "高松", "琴平")
+
+
+def m_sunrise_izumo(t):
+    return t["i"] == "寝" and _has(t, "岡山") and _ends(t, "出雲市")
+
+
+def m_nex(t):
+    return t["i"] == "特" and _has(t, "成田空港")
+
+
+def m_odoriko_shuzenji(t):
+    return t["i"] == "特" and _has(t, "熱海") and _ends(t, "修善寺")
+
+
+def m_odoriko_izukyu(t):
+    return t["i"] == "特" and _has(t, "熱海") and _ends(t, "伊豆急下田")
+
+
+def m_kansai(t):
+    return t["i"] == "関" and _has(t, "日根野") and _ends(t, "関西空港")
+
+
+def m_kishuji(t):
+    return t["i"] == "紀" and _has(t, "日根野") and \
+        _ends(t, "和歌山", "海南", "湯浅", "御坊", "紀伊田辺")
+
+
+def m_maizuru(t):
+    return t["i"] == "特" and _has(t, "綾部") and _ends(t, "東舞鶴")
+
+
+def m_kitakinki(t):
+    return t["i"] == "特" and _has(t, "綾部") and \
+        _ends(t, "福知山", "豊岡", "天橋立", "宮津", "城崎温泉", "香住", "浜坂", "西舞鶴", "京都")
+
+
+def m_kitakinki_sym(t):
+    return t["i"] == "特" and _has(t, "綾部", "福知山") and \
+        _ends(t, "京都", "福知山", "豊岡", "天橋立", "宮津", "城崎温泉", "香住", "浜坂")
+
+
+def m_fuji(t):
+    return t["i"] == "特" and _has(t, "大月") and _ends(t, "河口湖")
+
+
+def m_kaiji(t):
+    return t["i"] == "特" and _has(t, "大月") and \
+        _ends(t, "甲府", "竜王", "松本", "南小谷", "白馬")
+
+
+def m_tobu(t):
+    return t["i"] == "特" and _has(t, "下今市") and \
+        _ends(t, "浅草", "東武日光", "鬼怒川温泉", "会津田島")
+
+
+def m_hida(t):
+    return ("ひだ" in (t.get("nm") or "")) or \
+        (t["i"] == "特" and _has(t, "岐阜") and _ends(t, "高山", "飛騨古川"))
+
+
+def m_hakone(t):
+    return t["i"] == "特" and _has(t, "相模大野") and _ends(t, "新宿", "北千住", "箱根湯本")
+
+
+def m_enoshima(t):
+    return t["i"] == "特" and _has(t, "相模大野") and \
+        _ends(t, "新宿", "北千住", "片瀬江ノ島", "藤沢")
+
+
+# (名称, 併结站, 类型, 成员判定, 时刻容差, 共享段必经站, 端点锚, 允许一侧记录截到端点)
+# 端点锚：分割=共享段首站；併结=共享段末站。允许一侧缺失相邻站（记录被截短）。
+EVENTS = [
+    ("はやぶさ×こまち@盛岡", "盛岡", "s", [m_hayabusa, m_komachi], 4, None, "東京", False),
+    ("はやぶさ×こまち@盛岡", "盛岡", "j", [m_hayabusa, m_komachi], 4, None, "東京", False),
+    ("やまびこ×つばさ@福島", "福島", "s", [m_yamabiko, m_tsubasa], 3, None, "東京", False),
+    ("やまびこ×つばさ@福島", "福島", "j", [m_yamabiko, m_tsubasa], 3, None, "東京", False),
+    ("しおかぜ×いしづち@宇多津", "宇多津", "s", [m_shiokaze, m_ishizuchi], 3, None, "松山", False),
+    ("しおかぜ×いしづち@宇多津", "宇多津", "j", [m_shiokaze, m_ishizuchi], 3, None, "松山", False),
+    # 下り 21～29 号は多度津で併合(公式編成図 2025-03-15・jr-group.jp 時刻表)。
+    # 両車は宇多津→多度津を別々に走り、多度津で同刻発になる。
+    ("しおかぜ×いしづち@多度津", "多度津", "j", [m_shiokaze, m_ishizuchi], 3, None, "松山", False),
+    ("みどり×ハウステンボス@早岐", "早岐", "s", [m_midori, m_htb], 6, None, "博多", False),
+    ("みどり×ハウステンボス@早岐", "早岐", "j", [m_midori, m_htb], 6, None, "博多", False),
+    ("サンライズ瀬戸×出雲@岡山", "岡山", "s", [m_sunrise_seto, m_sunrise_izumo], 3, None, "東京", False),
+    ("サンライズ瀬戸×出雲@岡山", "岡山", "j", [m_sunrise_seto, m_sunrise_izumo], 3, None, "東京", False),
+    ("NEX@東京", "東京", "s", [m_nex], 3, None, "成田空港", False),
+    ("NEX@東京", "東京", "j", [m_nex], 3, None, "成田空港", False),
+    ("踊り子@熱海", "熱海", "s", [m_odoriko_shuzenji, m_odoriko_izukyu], 3, "東京", None, False),
+    ("踊り子@熱海", "熱海", "j", [m_odoriko_shuzenji, m_odoriko_izukyu], 3, "東京", None, False),
+    ("関空快速×紀州路快速@日根野", "日根野", "s", [m_kansai, m_kishuji], 4, "天王寺", None, False),
+    ("関空快速×紀州路快速@日根野", "日根野", "j", [m_kansai, m_kishuji], 4, "天王寺", None, False),
+    ("まいづる×北近畿@綾部", "綾部", "s", [m_maizuru, m_kitakinki], 3, None, "京都", False),
+    ("まいづる×北近畿@綾部", "綾部", "j", [m_maizuru, m_kitakinki], 3, None, "京都", False),
+    ("北近畿@福知山", "福知山", "s", [m_kitakinki_sym], 3, None, "京都", True),
+    ("北近畿@福知山", "福知山", "j", [m_kitakinki_sym], 3, None, "京都", True),
+    ("富士回遊×かいじ/あずさ@大月", "大月", "s", [m_fuji, m_kaiji], 3, "新宿", None, False),
+    ("富士回遊×かいじ/あずさ@大月", "大月", "j", [m_fuji, m_kaiji], 3, "新宿", None, False),
+    ("東武特急@下今市", "下今市", "s", [m_tobu], 3, None, "浅草", False),
+    ("東武特急@下今市", "下今市", "j", [m_tobu], 3, None, "浅草", False),
+    ("ひだ@岐阜", "岐阜", "s", [m_hida], 3, None, "高山", False),
+    ("ひだ@岐阜", "岐阜", "j", [m_hida], 3, None, "高山", False),
+    # 小田急 はこね×えのしま：土休日 新宿⇄相模大野 6 往復、メトロはこね×メトロえのしま
+    # 北千住⇄相模大野（全列車）。新宿側の共享段只有 相模大野・新百合ケ丘・新宿 3 站。
+    ("小田急はこね×えのしま@相模大野(新宿)", "相模大野", "s", [m_hakone, m_enoshima], 1, None, "新宿", False),
+    ("小田急はこね×えのしま@相模大野(新宿)", "相模大野", "j", [m_hakone, m_enoshima], 1, None, "新宿", False),
+    ("小田急はこね×えのしま@相模大野(北千住)", "相模大野", "s", [m_hakone, m_enoshima], 1, None, "北千住", False),
+    ("小田急はこね×えのしま@相模大野(北千住)", "相模大野", "j", [m_hakone, m_enoshima], 1, None, "北千住", False),
+]
+
+# 个别服务共享段天然较短，按事件放宽最少共享站数（默认 4）。
+_MIN_PAIRS = {
+    "小田急はこね×えのしま@相模大野(新宿)": 3,
+    "小田急はこね×えのしま@相模大野(北千住)": 3,
+}
+
+
+# 已知併结服务对（成员判定函数名）。盲区扫描只报“服务对本身不在目录内”的候选，
+# 目录内服务的重复/截短记录不重复报警。
+_ALL_MATCHERS = []
+for _ev in EVENTS:
+    for _fn in _ev[3]:
+        if _fn not in _ALL_MATCHERS:
+            _ALL_MATCHERS.append(_fn)
+_EVENT_MEMBER_PAIRS = set()
+for _ev in EVENTS:
+    _names = [fn.__name__ for fn in _ev[3]]
+    for _a in _names:
+        for _b in _names:
+            _EVENT_MEMBER_PAIRS.add((_a, _b))
+
+
+def _service_tags(t):
+    return {fn.__name__ for fn in _ALL_MATCHERS if fn(t)}
+
+
+def _candidates(tagged, ev):
+    """tagged: [(trip, [member_idx...])] against one event. Returns candidate list."""
+    name, J, kind, preds, tol, contains, anchor, allow_edge = ev
+    minp = _MIN_PAIRS.get(name, 4)
+    out = []
+    for x in range(len(tagged)):
+        A, ma = tagged[x]
+        ia = A["jasN"].index(J)
+        for y in range(x + 1, len(tagged)):
+            B, mb = tagged[y]
+            if len(preds) > 1 and not any(a != b for a in ma for b in mb):
+                continue
+            ib = B["jasN"].index(J)
+            if kind == "s":
+                if ia == 0 or ib == 0:
+                    continue
+                if abs(A["arr"][ia] - B["arr"][ib]) > tol:
+                    continue
+                pairs = _lcs_pairs(A["jasN"][:ia + 1], B["jasN"][:ib + 1])
+                if not pairs or pairs[-1] != (ia, ib) or len(pairs) < minp:
+                    continue
+                if anchor and A["jasN"][pairs[0][0]] != anchor:
+                    continue
+                if contains and contains not in (A["jasN"][i] for i, _ in pairs):
+                    continue
+                na = A["jasN"][ia + 1] if ia + 1 < A["N"] else None
+                nb = B["jasN"][ib + 1] if ib + 1 < B["N"] else None
+                if na == nb or (na is None and nb is None):
+                    continue
+                if (na is None or nb is None) and not allow_edge:
+                    continue
+                devs = [abs(A["arr"][i] - B["arr"][j]) for i, j in pairs[1:]]
+                if not devs:
+                    devs = [abs(A["arr"][ia] - B["arr"][ib])]
+                if max(devs) > tol:
+                    continue
+                t0 = max(A["dep"][pairs[0][0]], B["dep"][pairs[0][1]])
+                t1 = min(A["arr"][ia], B["arr"][ib])
+            else:
+                if ia == A["N"] - 1 or ib == B["N"] - 1:
+                    continue
+                if abs(A["dep"][ia] - B["dep"][ib]) > tol:
+                    continue
+                pairs = _lcs_pairs(A["jasN"][ia:], B["jasN"][ib:])
+                if not pairs or pairs[0] != (0, 0) or len(pairs) < minp:
+                    continue
+                if anchor and A["jasN"][ia + pairs[-1][0]] != anchor:
+                    continue
+                if contains and contains not in (A["jasN"][ia + i] for i, _ in pairs):
+                    continue
+                pa = A["jasN"][ia - 1] if ia > 0 else None
+                pb = B["jasN"][ib - 1] if ib > 0 else None
+                if pa is None and pb is None:
+                    continue
+                if pa == pb:
+                    # 同一前站:两车可能沿同一线路分开跑到 J 才併结(如 しおかぜ×いしづち@多度津)。
+                    # 前站发车差 > tol 才认为是分开运行;同刻发车前站相同的,此前已连挂,
+                    # 应由上游併结站认领,不能把连挂窗口截短。
+                    if abs(A["dep"][ia - 1] - B["dep"][ib - 1]) <= tol:
+                        continue
+                elif pa is None or pb is None:
+                    if not allow_edge:
+                        continue
+                # 併结站发车 + 中间共享站到达；共同终点到站记法差排除
+                devs = [abs(A["dep"][ia] - B["dep"][ib])]
+                devs += [abs(A["arr"][ia + i] - B["arr"][ib + j]) for i, j in pairs[1:-1]]
+                if max(devs) > tol:
+                    continue
+                t0 = max(A["dep"][ia], B["dep"][ib])
+                t1 = min(A["arr"][ia + pairs[-1][0]], B["arr"][ib + pairs[-1][1]])
+            w0 = max(A["w0"], B["w0"])
+            w1 = min(A["w1"], B["w1"])
+            t0 = max(t0, w0)
+            t1 = min(t1, w1)
+            if t0 > t1:
+                continue
+            score = (max(devs), sum(devs), -len(pairs), -(A["N"] + B["N"]))
+            out.append((score, A, B, t0, t1, len(pairs), name, J, kind))
+    return out
+
+
+def compute_couplings(recs, tmaps, tokkyu):
     """recs: {train_id: rec}; tmaps: {tmap_id: tm}; tokkyu: 爱称表。
-    对给定记录集检测上行併结。返回 (c_by_tid, n_join)：
-    c_by_tid: {tid: [{"p","k":"j","sp","t0","t1","nm"}, ...]}（每记录至多 1 条）
-    不改动 recs 对象（供按日型分别调用）。"""
+    返回 (c_by_tid, stats, warnings)。
+    c_by_tid: {tid: [{"p","k","sp","t0","t1","nm"}, ...]}（每记录至多 1 条）
+    stats: {(名称, 类型): (选中数, 候选数)}
+    """
     trips = {}
     for tid, rec in recs.items():
         tm = tmaps.get(str(rec["t"]))
@@ -238,12 +401,128 @@ def compute_joins(recs, tmaps, tokkyu):
         t = build_trip(rec, tm, tokkyu)
         if t:
             trips[tid] = t
-    cands = detect_join(list(trips.values()))
-    chosen = _match_unique(cands)
+    pool = list(trips.values())
+
+    chosen = []
+    stats = {}
+    for ev in EVENTS:
+        name, J, kind, preds = ev[0], ev[1], ev[2], ev[3]
+        at = [t for t in pool if J in t["jasN"] and t["N"] >= 4 and not t.get("bad")]
+        tagged = []
+        for t in at:
+            ms = [k for k, p in enumerate(preds) if p(t)]
+            if ms:
+                tagged.append((t, ms))
+        cands = _candidates(tagged, ev)
+        stats[(name, kind)] = [0, len(cands)]
+        chosen.extend(cands)
+
+    chosen.sort(key=lambda c: c[0])
+    used = set()
+    picked = []
+    for cand in chosen:
+        _, A, B = cand[0], cand[1], cand[2]
+        if A["tid"] in used or B["tid"] in used:
+            continue
+        used.add(A["tid"])
+        used.add(B["tid"])
+        picked.append(cand)
+        stats[(cand[6], cand[8])][0] += 1
+
     c_by_tid = {}
-    for tid_a, tid_b, sp, t0, t1, nm in chosen:
-        ta, tb = trips[tid_a], trips[tid_b]
-        for tid, other, other_nm in ((tid_a, tid_b, tb["cnm"]), (tid_b, tid_a, ta["cnm"])):
-            c_by_tid.setdefault(tid, []).append(
-                {"p": other, "k": "j", "sp": sp, "t0": t0, "t1": t1, "nm": other_nm or ""})
-    return c_by_tid, len(chosen)
+    for score, A, B, t0, t1, nr, name, J, kind in picked:
+        for a, b, bnm in ((A, B, B["cnm"]), (B, A, A["cnm"])):
+            c_by_tid.setdefault(a["tid"], []).append(
+                {"p": b["tid"], "k": kind, "sp": J, "t0": t0, "t1": t1,
+                 "nm": bnm or b["i"] or ""})
+
+    warnings = []
+    for (name, kind), (n, cand) in sorted(stats.items()):
+        if n == 0 and cand > 0:
+            warnings.append(f"目录事件候选全部落空: {name} ({kind}) cand={cand}")
+    known = {frozenset((c[1]["tid"], c[2]["tid"])) for c in picked}
+    for hit in scan_uncatalogued(pool, known):
+        warnings.append("未入目录的强候选: " + hit)
+    return c_by_tid, stats, warnings
+
+
+def scan_uncatalogued(trips, known):
+    """报告「同起点的共同前缀 / 同终点的共同后缀 + 逐站同刻」但不在目录内的
+    不同种别、不同终到(始发)的强候选。只做诊断，不参与页面标注。"""
+    hits = []
+    tags = {}
+    for t in trips:
+        if t["i"] in _SCAN_CLASSES and t["N"] >= 4 and not t.get("bad"):
+            tags[t["tid"]] = _service_tags(t)
+    def known_service_pair(A, B):
+        ta, tb = tags.get(A["tid"], ()), tags.get(B["tid"], ())
+        return any(x in ta and y in tb for x, y in _EVENT_MEMBER_PAIRS)
+    by_orig = {}
+    for t in trips:
+        if t["tid"] in tags:
+            by_orig.setdefault((t["jasN"][0], t["jasN"][1] if t["N"] > 1 else ""), []).append(t)
+    for lst in by_orig.values():
+        lst.sort(key=lambda t: t["dep"][0])
+        for i in range(len(lst)):
+            A = lst[i]
+            for j in range(i + 1, len(lst)):
+                B = lst[j]
+                if B["dep"][0] - A["dep"][0] > 2:
+                    break
+                if A["jasN"][-1] == B["jasN"][-1]:
+                    continue
+                if A["cnm"] and A["cnm"] == B["cnm"]:
+                    continue
+                if frozenset((A["tid"], B["tid"])) in known:
+                    continue
+                if known_service_pair(A, B):
+                    continue
+                pairs = _lcs_pairs(A["jasN"], B["jasN"])
+                if len(pairs) < 5 or pairs[0] != (0, 0):
+                    continue
+                if pairs[-1] == (A["N"] - 1, B["N"] - 1):
+                    continue
+                devs = [abs(A["arr"][k] - B["arr"][m]) for k, m in pairs[1:]]
+                if not devs or max(devs) > 1:
+                    continue
+                hits.append(f"{A['jasN'][0]}→{A['jasN'][-1]}({A['cnm'] or A['i']}) × "
+                            f"{B['jasN'][0]}→{B['jasN'][-1]}({B['cnm'] or B['i']}) "
+                            f"@{A['dep'][0]} 共{len(pairs)}站 dev{max(devs)}")
+    by_term = {}
+    for t in trips:
+        if t["tid"] in tags:
+            by_term.setdefault((t["jasN"][-1], t["jasN"][-2] if t["N"] > 1 else ""), []).append(t)
+    for lst in by_term.values():
+        lst.sort(key=lambda t: t["arr"][-1])
+        for i in range(len(lst)):
+            A = lst[i]
+            for j in range(i + 1, len(lst)):
+                B = lst[j]
+                if B["arr"][-1] - A["arr"][-1] > 2:
+                    break
+                if A["jasN"][0] == B["jasN"][0]:
+                    continue
+                if A["cnm"] and A["cnm"] == B["cnm"]:
+                    continue
+                if frozenset((A["tid"], B["tid"])) in known:
+                    continue
+                if known_service_pair(A, B):
+                    continue
+                pairs = _lcs_pairs(A["jasN"][::-1], B["jasN"][::-1])
+                if len(pairs) < 5 or pairs[0] != (0, 0):
+                    continue
+                if pairs[-1] == (A["N"] - 1, B["N"] - 1):
+                    continue
+                devs = [abs(A["arr"][A["N"] - 1 - k] - B["arr"][B["N"] - 1 - m])
+                        for k, m in pairs[1:]]
+                if not devs or max(devs) > 1:
+                    continue
+                hits.append(f"{A['jasN'][0]}→{A['jasN'][-1]}({A['cnm'] or A['i']}) × "
+                            f"{B['jasN'][0]}→{B['jasN'][-1]}({B['cnm'] or B['i']}) "
+                            f"@{A['arr'][-1]} 共{len(pairs)}站 dev{max(devs)}")
+    # 去重（同一对可能在两个方向各出现一次）
+    uniq = []
+    for h in hits:
+        if h not in uniq:
+            uniq.append(h)
+    return uniq[:20]

@@ -183,17 +183,18 @@ def main():
     os.makedirs(args.out, exist_ok=True)
     meta = {"b": now, "n": len(recs), "src": os.path.basename(os.path.normpath(src))}
 
-    # 上行併结检测（构建期, 方向D）：按日型分别检测（班次伙伴随日型变化），
-    # 结果附加到当日记录 "c" 字段（join 型）；浏览器 pass1（下行分割）不动。
+    # 併结/分割检测（构建期）：目录化服务表 + 时刻对齐，结果固化进当日记录 "c" 字段。
+    # 页面不再做启发式扫描，时刻表刷新不会改变已核实服务的判定结果。
     tmaps_path = os.path.join(args.out, "tmaps.json")
     tokkyu_path = os.path.join(root, "mini-japanrail-3d", "data", "tokkyu.json")
     tmaps = json.load(open(tmaps_path, encoding="utf-8")) if os.path.exists(tmaps_path) else {}
     tokkyu = json.load(open(tokkyu_path, encoding="utf-8")) if os.path.exists(tokkyu_path) else None
-    total_join = 0
+    total_pairs = 0
     for bit, name, label in ((1, "wd", "平日"), (2, "sa", "周六"), (4, "su", "周日·假日")):
         day_recs = {tid: r for tid, r in recs.items() if r["r"] & bit}
-        c_by_tid, n_join = couplings.compute_joins(day_recs, tmaps, tokkyu)
-        total_join += n_join
+        c_by_tid, stats, warns = couplings.compute_couplings(day_recs, tmaps, tokkyu)
+        n_pairs = sum(len(v) for v in c_by_tid.values()) // 2
+        total_pairs += n_pairs
         out_recs = []
         for tid, r in day_recs.items():
             item = dict(r)
@@ -203,10 +204,15 @@ def main():
         path = os.path.join(args.out, f"trains_{name}.json")
         with open(path, "w", encoding="utf-8") as f:
             json.dump({"b": now, "n": len(out_recs), "T": out_recs}, f, ensure_ascii=False, separators=(",", ":"))
-        print(f"trains_{name}.json ({label}): {len(out_recs)} 班次 (上行併结 {n_join} 对) -> {path} ({os.path.getsize(path)/1e6:.1f}MB)")
+        print(f"trains_{name}.json ({label}): {len(out_recs)} 班次 (併结/分割 {n_pairs} 对) -> {path} ({os.path.getsize(path)/1e6:.1f}MB)")
+        for (ev_name, kind), (n, cand) in sorted(stats.items()):
+            if n or cand:
+                print(f"  [c] {ev_name} {'併结' if kind == 'j' else '分割'}: {n}/{cand}")
+        for w in warns:
+            print(f"  [coupling] {w}")
 
     print(f"唯一班次总数: {len(recs)} | 跳过: {skipped} | 负区间钳制: {neg_clamped} | 保守去重合并: {deduped}")
-    print(f"上行併结检测合计: {total_join} 对")
+    print(f"併结/分割检测合计: {total_pairs} 对")
     print(f"完成 @ {now}")
 
 if __name__ == "__main__":

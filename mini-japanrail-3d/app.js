@@ -368,7 +368,11 @@ const ICO = {
 /* ---------------- 全局状态 ---------------- */
 /* 老旧设备降载开关(由 <head> 内联脚本判定;false 时仅保留对全设备无害的全局优化,行为与旧版一致) */
 const PERF_LOW = !!window.__PERF_LOW;
-let segFC = null, staFC = null, footprintFC = null, entrancesFC = null, platformsFC = null, tmaps = null, trainJSON = null, PLATMAP = null;
+/* 移动端判定:高分屏手机 DPR 3,原先按原生 DPR 渲染,像素数是 DPR2 的 2.25 倍 ——
+   填充率/带宽/发热的首要来源。仅用于移动端专属降载(分辨率钳 2×、预取减半),
+   桌面行为不变。低端移动设备已在 <head> 内联脚本判为 PERF_LOW,走更激进档。 */
+const IS_MOBILE = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
+let segFC = null, staFC = null, tmaps = null, PLATMAP = null;
 /* 官方权威站坐标/区间折线映射 (station_map.json v2, 官方几何构建):
    tmap_stops[t] = 每车次每站 [lng,lat](与 tmaps[t].s_jas 等长等序),
    tmap_lids[t] = 每区间官方线段 ID(符号=方向), segments[id] = 官方折线坐标 */
@@ -1346,8 +1350,15 @@ async function buildStaticIndexAsync(onPhase) {
 }
 let routeGraph = null, routeNodes = null, stationLinesAt = null;
 
+/* tmap 级几何共享:jasN/linesN/lineSet/stopC/sk 系列/包围盒只由 t.t 决定(2026-10-29 全量普查:
+   95,030 班次 / 9,512 个 tmap,同组内停站坐标/骨架/线路集合零分歧),旧实现 9.5 万班次各复制
+   一份 = 移动端数百 MB 堆峰。班次对象只保留时刻(dep/arr/sStart/sRun)与引用。
+   400km/h 错配剔除用组内首班次的时间窗判定;普查零分歧,未来若出现组内分歧,影响仅是该组
+   共用首班次的剔除结果(与既有 per-trip 判定同为启发式)。 */
+const tripGeoCache = new Map();
 /* 班次解析(分片化):s 首项=首站发车分钟,之后为相对前一站事件的差值(arr, dep 交替,终点只有 arr) */
 async function parseTripsAsync(json, onPhase) {
+  tripGeoCache.clear(); /* 换日/换数据档:几何缓存随新 tmaps 重建 */
   const trips = [];
   const T0 = json.T || [];
   const n0 = T0.length;
@@ -1403,12 +1414,23 @@ function parseTrip(t) {
     }
   }
   const lines = tm.lines || [];
+  const jas = tm.s_jas;
+  let geo = tripGeoCache.get(t.t);
+  if (!geo) { geo = buildTripGeo(t.t, N, jas, lines, arr, dep); tripGeoCache.set(t.t, geo); }
+  /* g: 列车等级(性能改善分层用,见 GRADE_SH/EX/RP);后 7 个字段为渲染期的 LOD/淡入淡出状态,
+     在此一并声明以固定对象形状(9.5 万个班次,避免运行时反复触发隐藏类迁移)。
+     _k: 上次成功解算得到的线路类型(KINDS 之一),用于让「类型过滤」也走淡入淡出
+     _seen: 空间网格查询的帧戳(班次跨多格时去重,避免重复入 eligible) */
+  return { t: t.t, r: t.r, i: t.i || '', g: gradeOf(t.i || ''), _f: 0, _M2: 0, _ok: 0, _fm: 0, _k: null, _seen: 0, nm: tripName(t.i || '', N, jas, geo.linesN), w0, w1, dep, arr, N, jas, jasN: geo.jasN, stopC: geo.stopC, lines, linesN: geo.linesN, lineSet: geo.lineSet, sStart, sRun, skX: geo.skX, skY: geo.skY, skStop: geo.skStop, skCum: geo.skCum, skLen: geo.skLen, bad: geo.bad, skUp: geo.skUp, skDn: geo.skDn, color: typeColor(t.i), mx0: geo.mx0, mx1: geo.mx1, my0: geo.my0, my1: geo.my1, tid: t._ || '', c: t.c || [] };
+}
+
+/* 每站坐标: ① 官方权威映射(按车次+站序由官方区间折线端点拼出, 跨城同名天然消歧)
+   ② 相邻轨道段端点(几何对齐) ③ 站表线语境 ④ 全局匹配 */
+function buildTripGeo(tid, N, jas, lines, arr, dep) {
   const linesN = lines.map(normName);
-  const jas = tm.s_jas, jasN = jas.map(normName);
+  const jasN = jas.map(normName);
   const lineSet = new Set(linesN);
-  /* 每站坐标: ① 官方权威映射(按车次+站序由官方区间折线端点拼出, 跨城同名天然消歧)
-     ② 相邻轨道段端点(几何对齐) ③ 站表线语境 ④ 全局匹配 */
-  const smStops = officialStopsFor(t.t, N);
+  const smStops = officialStopsFor(tid, N);
   function stopCoordAt(i) {
     if (smStops && smStops[i]) return smStops[i];
     if (i - 1 >= 0) { const e = segIndex.get(jasN[i-1] + '|' + jasN[i]); if (e) return e[0].coords[e[0].coords.length - 1]; }
@@ -1464,11 +1486,8 @@ function parseTrip(t) {
   }
   if (mx0 > mx1) { mx0 = 0; mx1 = 1; my0 = 0; my1 = 1; }
   /* 班次包围盒 = 停站坐标包络(列车插值/骨架均在站间,边距仅防浮点与贴边,~16km) */
-  /* g: 列车等级(性能改善分层用,见 GRADE_SH/EX/RP);后 7 个字段为渲染期的 LOD/淡入淡出状态,
-     在此一并声明以固定对象形状(9.5 万个班次,避免运行时反复触发隐藏类迁移)。
-     _k: 上次成功解算得到的线路类型(KINDS 之一),用于让「类型过滤」也走淡入淡出
-     _seen: 空间网格查询的帧戳(班次跨多格时去重,避免重复入 eligible) */
-  return { t: t.t, r: t.r, i: t.i || '', g: gradeOf(t.i || ''), _f: 0, _M2: 0, _ok: 0, _fm: 0, _k: null, _seen: 0, nm: tripName(t.i || '', N, jas, linesN), w0, w1, dep, arr, N, jas, jasN, stopC, lines, linesN, lineSet, sStart, sRun, skX, skY, skStop, skCum, skLen, bad, skUp, skDn, color: typeColor(t.i), mx0: mx0 - 0.0005, mx1: mx1 + 0.0005, my0: my0 - 0.0007, my1: my1 + 0.0007, tid: t._ || '', c: t.c || [] };
+  return { jasN, linesN, lineSet, stopC, skX, skY, skStop, skCum, skLen, bad, skUp, skDn,
+    mx0: mx0 - 0.0005, mx1: mx1 + 0.0005, my0: my0 - 0.0007, my1: my1 + 0.0007 };
 }
 
 /* ---------------- 位置引擎 ---------------- */
@@ -2075,7 +2094,10 @@ const WALL_BX = new Float32Array([1, 1, -1, 1]);
 const WALL_BY = new Float32Array([-1, 1, 1, 1]);
 const WALL_QI = new Int8Array([0, 1, 2, 0, 2, 3]);
 const MAXT = 9000, STRIDE = 13; /* 12 + a_uv(图集索引 float,-1=无纹理) */
-let vbo = null, vao = null, uni = new Map(), glRef = null, bufArr = new Float32Array(MAXT * 42 * STRIDE); /* 倾斜视角立体盒:每列车 底6+顶6+4侧24=36 + 光晕 6 最坏 42 顶点 */
+/* 顶点缓冲按需扩容(见 updateTrains):倾斜视角最坏每车 42 顶点(底6+顶6+4侧24+光晕6)。
+   固定 MAXT 容量 = CPU 19.7MB + GPU 19.7MB;城市级实际只需 1-3MB,全国级才逼近上限。 */
+const BUF_T_MIN = 512, BUF_MAX = MAXT * 42 * STRIDE;
+let vbo = null, vao = null, uni = new Map(), glRef = null, bufArr = new Float32Array(BUF_T_MIN * 42 * STRIDE);
 let __renderCount = 0, __glErr = 0, __lastDraw = 0, __lastArgs = null, __glSample = 0;
 /* 高 zoom 抖动修复(MC):mercator 变体下,世界→裁剪矩阵的平移列 ≈ ±5.96e4,
    float32 舍入在相机跟随/平移时每帧 ±1-2px(≈ULP/帧)量化步进 → 列车与镜头肉眼抖动。
@@ -3049,6 +3071,21 @@ detailEl.addEventListener('keydown', e => {
   e.preventDefault();
   comfortCarsToggle(w);
 });
+function growVtxBuf(targetFloats) {
+  if (targetFloats <= bufArr.length) return true;
+  if (bufArr.length >= BUF_MAX) return false;
+  let cap = bufArr.length;
+  while (cap < targetFloats && cap < BUF_MAX) cap = Math.min(BUF_MAX, cap * 2);
+  if (cap < targetFloats) return false;
+  const nb = new Float32Array(cap);
+  nb.set(bufArr);
+  bufArr = nb;
+  if (glRef && vbo) {
+    glRef.bindBuffer(glRef.ARRAY_BUFFER, vbo);
+    glRef.bufferData(glRef.ARRAY_BUFFER, bufArr.byteLength, glRef.DYNAMIC_DRAW);
+  }
+  return true;
+}
 function updateTrains(M, dtms) {
   if (dayList === null || dayListSrc !== tripList || dayListBit !== dayBit) buildDayIndex();
   let n = 0, vtx = 0; // vtx:总顶点数(俯视 6/列车,倾斜 36/列车 + 光晕 6/个)
@@ -3259,6 +3296,11 @@ function updateTrains(M, dtms) {
   }
   anyFading = fadingNow;
 
+  /* 顶点缓冲按实际写出的顶点扩容(见写循环内的容量检查):fadeList 只代表「本时段在运」,
+     其长度在城市视图可含数千班车,而视口内真正写出顶点的只有几十班 —— 按它估容量会
+     多分配 10 倍以上。改为写出前按需扩容,容量只跟屏幕上真实车数走。
+     扩容时同步重分配 GPU 存储(VAO 属性指针绑定的是 buffer 对象,偏移不变)。 */
+
   /* 写矩形(wRect,十四轮)→ 经纬度(阶段 3「视口外免写」判定用):
      当前视锥 + 64px 余量,远小于扫描缓冲 vm —— 写出只关心本帧在不在屏内 */
   let vpLng0 = 0, vpLng1 = 0, vpLat0 = 0, vpLat1 = 0;
@@ -3273,7 +3315,8 @@ function updateTrains(M, dtms) {
     const t = fadeList[i];
     const al = t._f;
     if (al < 0.02) continue;                    /* 尚未起步 / 已淡完:不占顶点、不上传 */
-    if (n >= MAXT - 1 || vtx * STRIDE + (t.dly > 0 ? 42 : 36) * STRIDE > bufArr.length) { stopped = i; break; }
+    if (n >= MAXT - 1) { stopped = i; break; }
+    if (!growVtxBuf(vtx * STRIDE + (t.dly > 0 ? 42 : 36) * STRIDE)) { stopped = i; break; }
     /* 二十轮:屏外远车跳过解算 —— 上次解算位置在写矩形外 ~6.7km 且非本帧强制刷新
        (每班次每 8 个重建帧强制解算一次,防位置永久陈旧)时,本帧不解算不写出。
        M 跳变 >1.5 分钟(拖动时间轴/暂停恢复/倍速)自动全量解算;屏内/近界列车
@@ -3400,7 +3443,8 @@ function updateTrains(M, dtms) {
   if (drawGlow) {
     const GL = L * 2.6, GW = W * 2.6;
     for (let gi = 0; gi < glowN; gi++) {
-      if (n >= MAXT - 1 || vtx * STRIDE + 6 * STRIDE > bufArr.length) break;
+      if (n >= MAXT - 1) break;
+      if (!growVtxBuf(vtx * STRIDE + 6 * STRIDE)) break;
       let o = vtx * STRIDE;
       const gb = gi * 8;
       const mx = glowBuf[gb], my = glowBuf[gb + 1], dxm = glowBuf[gb + 2], dym = glowBuf[gb + 3];
@@ -3489,7 +3533,7 @@ function initMap() {
           (老旧设备网络/显存紧张不预取,保持默认 1 级;中端档同样 1 级——
            多预取一级的瓦片解码/显存是持续发热源) */
     fadeDuration: 0,
-    ...(!PERF_LOW ? { prefetchZoomDelta: window.__PERF_MID ? 1 : 2 } : {}),
+    ...(!PERF_LOW ? { prefetchZoomDelta: (window.__PERF_MID || IS_MOBILE) ? 1 : 2 } : {}),
     /* 老旧设备降载(仅 PERF_LOW 生效;新设备不传这些项,行为与旧版完全一致):
        1) pixelRatio 上限 1.25× → 高分屏渲染像素数降约 60%,GPU 压力大减;
        2) crossSourceCollisions:false → 跳过跨源标签碰撞检测(缩放时最耗 CPU 之一),
@@ -3499,6 +3543,11 @@ function initMap() {
       pixelRatio: Math.min(window.devicePixelRatio || 1, 1.25),
       crossSourceCollisions: false,
       zoomAnimation: false,
+    } : (IS_MOBILE ? {
+      /* 高分屏手机(DPR 3):渲染分辨率钳 2× —— 像素数降 56%,填充率/发热大降。
+         DPR2 仍为视网膜级;跨源碰撞同理关闭(与低端/中端档一致)。 */
+      pixelRatio: Math.min(window.devicePixelRatio || 1, 2),
+      crossSourceCollisions: false,
     } : (window.__PERF_MID ? {
       /* 中端档(桌面 3-4 核):渲染分辨率钳 1.5× + 跳过跨源碰撞,其余体验项不动 */
       pixelRatio: Math.min(window.devicePixelRatio || 1, 1.5),
@@ -3509,7 +3558,7 @@ function initMap() {
          与站名之间,低端机一直如此,实测观感无差异;碰撞检测是缩放期最贵的
          CPU 项之一(每帧重排全部可见符号) */
       crossSourceCollisions: false,
-    })),
+    }))),
     /* 瓦片请求治理(修复底图同 URL 反复请求):
        1) refreshExpiredTiles:false → 栅格瓦片改走 <img> 加载(默认 true 走 fetch 读取缓存头,
           但 GSI 不返回 Cache-Control/Expires,反而让同 URL 的重复请求每次都真实走网络);
@@ -3524,6 +3573,40 @@ function initMap() {
   map.on('move', () => { viewDirty = true; }); /* 相机变化标记:暂停时也要据此重建列车顶点(见 startLoop 的 tick) */
   map.on('style.load', () => { try { map.setProjection({ type: 'globe' }); } catch (e) { console.warn('globe unavailable', e); } });
   map.on('error', e => { const m = e && e.error && (e.error.message || String(e.error)) || String(e || ''); window.__errs.push('MAP ' + m.slice(0, 200)); });
+  /* GPU 上下文丢失(手机切后台/显存紧张被系统回收是常态):MapLibre 会销毁并重建整个
+     style,自定义 GL 层不在其序列化范围内 —— 不处理则恢复后底图正常、列车却永远消失。
+     丢失时丢弃全部 GL 句柄与已编译程序(旧上下文的 program/buffer 均已失效);
+     恢复后按原图层顺序重新挂载,下一帧 updateTrains 重新解算并上传顶点。 */
+  map.on('webglcontextlost', () => {
+    glRef = null; vbo = null; vao = null;
+    uni.clear();
+    trainShaderLayer.shaderMap.clear();
+    /* 图集纹理对象属于旧上下文,恢复后必须重新 createTexture+texImage2D;
+       否则 ATLAS.tex 仍为真值,render 会继续绑定失效纹理(画面变成整片白色方块) */
+    for (const k in ATLAS_SETS) { const s = ATLAS_SETS[k]; if (s && s.json && s.json.tex) s.json.tex = null; }
+    visibleCount = 0;
+  });
+  map.on('webglcontextrestored', () => {
+    glRef = null; vbo = null; vao = null;
+    /* setStyle 后的样式装载是异步的:addLayer 可能因 style 未就绪抛错,定时重试 + style.load 兜底 */
+    const readd = () => {
+      if (map.getLayer('trains-gl')) return;
+      const before = map.getLayer('stas-badge') ? 'stas-badge' : (map.getLayer('stas-label') ? 'stas-label' : undefined);
+      try {
+        map.addLayer(trainShaderLayer, before);
+      } catch (e) {
+        const m = String(e && e.message || e);
+        /* 样式重装是异步的,首次 addLayer 报 "Style is not done loading." 属预期,重试即可 */
+        if (!/Style is not done loading/.test(m)) window.__errs.push('CTX ' + m.slice(0, 160));
+        setTimeout(readd, 400);
+        return;
+      }
+      try { map.triggerRepaint(); } catch (e) {}
+    };
+    readd();
+    setTimeout(readd, 800);
+    setTimeout(readd, 2400);
+  });
   map.on('dragstart', () => { if (followTrip) stopFollow(true); });
   map.on('movestart', () => { if (trPickEl) trPickEl.classList.remove('show'); });
   map.getCanvas().addEventListener('mousemove', onMouseMove);
@@ -3642,7 +3725,6 @@ async function boot() {
     /* 新干线图标表以数据为准(时刻表新增列车名时自动纳入 G0 等级) */
     if (tk && tk.sh) for (const k in tk.sh) GRADE_SH.add(k);
     NAME_I18N = ni;
-    trainJSON = tj;
     /* 官方补缺轨道/车站(地图遗漏的新开线/私铁, 如西鉄甘木線/北大阪急行延伸/夢洲):
        合并进同一 GeoJSON, 渲染/索引/寻路自动一致; 不改任何既有几何 */
     if (stationMap && Array.isArray(stationMap.extra_segments)) {
@@ -3698,7 +3780,9 @@ async function boot() {
     setStatus(T().goLive);
     if (!liveOn) setTimeout(() => { if (!liveOn) { setLive(true); } }, 600);
     startLoop();
-    if (window.__loadClarity) setTimeout(window.__loadClarity, 4000); /* 统计脚本延后注入(见 head 注释) */
+    /* 统计脚本延后注入(见 head 注释);手机端停用:会话录制按 DOM 变更量整份留档,
+       开站/方向网格展开会持续累积(实测同序列 10 次开站 +20MB/次不收敛) */
+    if (window.__loadClarity && !IS_MOBILE) setTimeout(window.__loadClarity, 4000);
   } catch (err) {
     console.error(err);
     setLoadMsg('⚠ ' + T().failMsg);
@@ -4072,10 +4156,58 @@ async function renderStationBadges(name, featLine, featOp) {
   requestAnimationFrame(more);
 }
 
+/* 站房三件套以 URL 交给 MapLibre:GeoJSON 的下载/JSON.parse/瓦片化都在 worker 完成,
+   主线程不再保留 14MB 原始 FeatureCollection(旧实现解析后常驻,是城市级堆峰来源之一)。
+   detailWanted:只有真正需要(放大到 z≥11.5 或用户打开开关)才建源,保持懒加载语义。 */
+const DETAIL_URLS = {
+  pl: 'https://jr-static.suki.ing/data/station_platforms.geojson',
+  fp: 'https://jr-static.suki.ing/data/station_overall_footprints.geojson',
+  ent: 'https://jr-static.suki.ing/data/station_entrances.geojson',
+};
+let detailWanted = false;
+/* 详情三源是 URL 交给 MapLibre worker 拉的:中转/弱网偶发单源失败时图层整层空白,
+   按「源 URL 命中错误 → 退避重加源与图层」自愈,每源最多 3 次,成功加载后清零。 */
+const detailRetry = {}, detailRetryTimer = {}, detailErrAt = {};
+let detailErrBound = false;
+function detailSrcOfUrl(url) {
+  if (!url) return '';
+  for (const id in DETAIL_URLS) if (url.indexOf(DETAIL_URLS[id]) >= 0) return id;
+  return '';
+}
+function bindDetailErrorRetry() {
+  if (detailErrBound || !map) return;
+  detailErrBound = true;
+  map.on('error', function (e) {
+    const id = detailSrcOfUrl(e && e.error && e.error.url);
+    if (!id || !detailWanted) return;
+    const now = Date.now();
+    if (now - (detailErrAt[id] || 0) < 800) return;   /* 同一次失败的多条 error 只算一次 */
+    detailErrAt[id] = now;
+    if (detailRetryTimer[id]) return;
+    const n = (detailRetry[id] || 0) + 1;
+    detailRetry[id] = n;
+    if (n > 3) return;
+    detailRetryTimer[id] = setTimeout(function () {
+      detailRetryTimer[id] = 0;
+      reAddDetailSource(id);
+    }, 1000 * Math.pow(2, n - 1));
+  });
+  /* 不再用 sourcedata 复位计数:失败源同样报 isSourceLoaded,复位会让重试不封顶
+     (404 实测每轮失败后计数回到 0,反复重下)。每源每会话最多 3 次,成功与否都到此为止。 */
+}
+function reAddDetailSource(id) {
+  if (!map || !detailWanted || !map.getSource(id)) return;
+  const layers = { pl: ['pl-fill', 'pl-line'], fp: ['fp-fill', 'fp-line'], ent: ['ent'] }[id] || [];
+  for (const l of layers) if (map.getLayer(l)) map.removeLayer(l);
+  map.removeSource(id);
+  addDetailLayers();
+}
 function addDetailLayers() {
+  if (!map || !detailWanted) return;
+  if (!map.isStyleLoaded()) { setTimeout(addDetailLayers, 600); return; }
   /* ── 站台层(platform):OSM railway=platform 站台面/线,黄色;地铁站无地面站房时的范围表示 ── */
-  if (platformsFC && !map.getSource('pl')) {
-    map.addSource('pl', { type: 'geojson', data: platformsFC });
+  if (!map.getSource('pl')) {
+    map.addSource('pl', { type: 'geojson', data: DETAIL_URLS.pl });
     map.addLayer({ id: 'pl-fill', type: 'fill', source: 'pl', paint: {
       'fill-color': '#f2c200', 'fill-opacity': 0.32 } });
     map.addLayer({ id: 'pl-line', type: 'line', source: 'pl', paint: {
@@ -4085,8 +4217,8 @@ function addDetailLayers() {
     try { map.setLayerZoomRange('pl-fill', 13, 22); map.setLayerZoomRange('pl-line', 13, 22); } catch (e) {}
   }
   /* ── 车站整体轮廓层(footprint):站房轮廓+站台面按站合并(unary_union),按线路代表色渲染 ── */
-  if (footprintFC && !map.getSource('fp')) {
-    map.addSource('fp', { type: 'geojson', data: footprintFC });
+  if (!map.getSource('fp')) {
+    map.addSource('fp', { type: 'geojson', data: DETAIL_URLS.fp });
     map.addLayer({ id: 'fp-fill', type: 'fill', source: 'fp', paint: {
       'fill-color': ['get', 'color'], 'fill-opacity': 0.4 } });
     map.addLayer({ id: 'fp-line', type: 'line', source: 'fp', paint: {
@@ -4095,22 +4227,38 @@ function addDetailLayers() {
     try { map.setLayerZoomRange('fp-fill', 12, 22); map.setLayerZoomRange('fp-line', 12, 22); } catch (e) {}
     if (typeof fpVisible === 'function') fpVisible(fpEnabled);
   }
-  /* ── 出入口层:重绘的橙色方框箭头图标(原创), zoom>=16(画面只剩车站)才显示 ── */
-  if (entrancesFC && !map.getSource('ent')) {
-    map.addSource('ent', { type: 'geojson', data: entrancesFC });
-    const addEntLayer = function () {
-      if (map.getLayer('ent')) return;
-      map.addLayer({ id: 'ent', type: 'symbol', source: 'ent', minzoom: 16, layout: {
-        'icon-image': 'exit-sign', 'icon-size': 0.32, 'icon-allow-overlap': false, 'icon-anchor': 'center' } });
-      if (typeof entVisible === 'function') entVisible(entEnabled);
-    };
-    if (map.hasImage('exit-sign')) { addEntLayer(); }
-    else {
-      const im = new Image();
-      im.onload = function () { if (!map.hasImage('exit-sign')) map.addImage('exit-sign', im); addEntLayer(); };
-      im.onerror = function () {};
-      im.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHc4AAAFLUlEQVR4nO2dz08bRxTH3yLXpsovRaHtJYf20N+pUlW2E0iiGLdV/4f0EAwhiXrJL6LkAm3JhSSQH01/kKYh7aGVqv5W7wapCQS85Neh5/4BaQOEYFCB6aH2MjOeWXbt2Z018z7SSOwufm/8fftmnndXOxb5/T1A9BEjhOjug9HEQHEAkkf+6FVqMILYl/f0qLJlLf/2bs1GTBBdRq3BsJZ/faeqDyaP3jRWdBn2pd2+g1FVANzEty/t7vZtsM5IHr15RnbMbxCs5V/e9u742C2h8PbFXWtedBnJY7eEwbAv7vIUCGvJYwBSAvELBgvPkxIEouAhCNbSz9nVjR8fZcQvXGhB4SWkjo8ygShcaHENQoMHgyi+D3h9eP14rKWfWqUHUyfGWPEHmlF8j6ROjLGZMNAszARr6ceM2EDXbVb8/p0ovk9SXbfZIPTvrAjCqkNQ6YMofhV40c1a/GFvxc70yXHn7J84vwPFr5H0yXEnEybO72CyoCIDaPER9fD6NgAhwDSKiXPp7orj2Hy3iXNpdhShjnmaA5DgsBa/3+NspE8VVsb+sykc+xWTPlVYmQvOpnoAPFZBSHDIb8jgnbJgKenbQACAAED6tO0MP+N9ye7yfmzq2nhf0hnW06ftXgKyDMCzPxwIwQBoBctQ/WjLgNi+Uefvxe9aAvcXSXRlAC2+aNskhA9mBfmw1lPvj4k7sm8U/v22OTC/UYTgHKCfaFVBplVfmAH6wQzQCWaAfkKvgtww7VF5ErlLEYYFwOghKL6/oLsLAEDfE6YJ8h6pG2Heq4VSEMK+R8x9X2MzoEy8zdbq3+gMKBNvszEDdBPPTUI8Nxm6XyxDOeK5SVgYeisUX3gxTkKi/U5ovnAOkJBov4NzgG4SHXcD91GXv4QTB+4F2w/aV8ddWPjqzWCMkzq7FJHovB9SRzi/B+7BwrXt6g0TAjHRV9ZVi+ivgeSUgz+vMBAE6mgSbtR09vM0dt7HSVg3jQcfKLNVNxkQNRoPPsAM0Mn81TeU2KmrKigqzA9uU2OIkJXH05n9ATbX/ri0oqovXSPFwW3Kvj8BzADPFL94Xb3RevshVvz8NQAAePqDP8PoTYVf5RACsWAsB4sKQbwGMTDxS9RVBoRN8bNXg3WAZaicwMUvgRkgoPjpK+E4wotxlcyFJT5gGcowd+Xl8J3iHPA/WsQvYXwGzH3yUug+HUzPAK3ilzA2A+YuvxiaLymE4INZOsEHsyKAsUNQJMAM0A9mgE4wA/SDVZBGtFRBswMv+Nq/1tEyB8z2Pw/ru/5ito1E5y1JY0XniFYVZBqReyrCNLAM1Y8107fV2cgMPnRe3jpyuAnfHa2YzOBD593RI4eb8N3RUQDfHa2Lkr5MBowc2uIsr5G5+rd0uT7EP7SetM7uy9liFgQDpavrHJD58h/MAgW46dhACAG6DXduZlb54Y9j899ohjs399DHhBlAB6H12iPMghqg9eNPbgDRKkrlxhuR/R82aas4eQX/Y02feU4evevTzJpXwx2b8MeZR1qvTzPiD3dsEq4l6ToJ8x/ijSJivIoPAGBN9z67usGhGTYT2jdiJkhoHZphxW/f6LqesDXlIQAAAFkuCAAAeQyEQ5YTHgAgv4r4AADW1MfPeHdy47Fwncl8boOxgcjeeCwclvO5Dd7WlPcTAMqpdMFPE4IhEx3Au/BlrKmPmqrrxNezuOoqR75tvS/xAWoIAI3JwahGdBpr6sMtqvoCAADZb56s+WDk96+rSXQa5QFA/PEfOjCukRTL4vIAAAAASUVORK5CYII=';
-    }
+  /* ── 出入口层:重绘的橙色方框箭头图标(原创), zoom>=16(画面只剩车站)才显示 ──
+     1.9 万要素在 z<16 完全不可见,却会和 pl/fp 一起在 worker 里解析:移动端首次建源实测
+     堆锋 757MB。改为到达 z15.5 再建源,低倍率浏览不给堆峰添一份。 */
+  if (!map.getSource('ent') && map.getZoom() >= 15.5) addEntSource();
+  bindEntZoom();
+  bindDetailErrorRetry();
+}
+
+let entZoomBound = false;
+function bindEntZoom() {
+  if (entZoomBound || !map) return;
+  entZoomBound = true;
+  map.on('zoomend', function () {
+    if (detailWanted && map.getZoom() >= 15.5) addEntSource();
+  });
+}
+
+function addEntSource() {
+  if (!map || !detailWanted || map.getSource('ent')) return;
+  map.addSource('ent', { type: 'geojson', data: DETAIL_URLS.ent });
+  const addEntLayer = function () {
+    if (map.getLayer('ent')) return;
+    map.addLayer({ id: 'ent', type: 'symbol', source: 'ent', minzoom: 16, layout: {
+      'icon-image': 'exit-sign', 'icon-size': 0.32, 'icon-allow-overlap': false, 'icon-anchor': 'center' } });
+    if (typeof entVisible === 'function') entVisible(entEnabled);
+  };
+  if (map.hasImage('exit-sign')) { addEntLayer(); }
+  else {
+    const im = new Image();
+    im.onload = function () { if (!map.hasImage('exit-sign')) map.addImage('exit-sign', im); addEntLayer(); };
+    im.onerror = function () {};
+    im.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHc4AAAFLUlEQVR4nO2dz08bRxTH3yLXpsovRaHtJYf20N+pUlW2E0iiGLdV/4f0EAwhiXrJL6LkAm3JhSSQH01/kKYh7aGVqv5W7wapCQS85Neh5/4BaQOEYFCB6aH2MjOeWXbt2Z018z7SSOwufm/8fftmnndXOxb5/T1A9BEjhOjug9HEQHEAkkf+6FVqMILYl/f0qLJlLf/2bs1GTBBdRq3BsJZ/faeqDyaP3jRWdBn2pd2+g1FVANzEty/t7vZtsM5IHr15RnbMbxCs5V/e9u742C2h8PbFXWtedBnJY7eEwbAv7vIUCGvJYwBSAvELBgvPkxIEouAhCNbSz9nVjR8fZcQvXGhB4SWkjo8ygShcaHENQoMHgyi+D3h9eP14rKWfWqUHUyfGWPEHmlF8j6ROjLGZMNAszARr6ceM2EDXbVb8/p0ovk9SXbfZIPTvrAjCqkNQ6YMofhV40c1a/GFvxc70yXHn7J84vwPFr5H0yXEnEybO72CyoCIDaPER9fD6NgAhwDSKiXPp7orj2Hy3iXNpdhShjnmaA5DgsBa/3+NspE8VVsb+sykc+xWTPlVYmQvOpnoAPFZBSHDIb8jgnbJgKenbQACAAED6tO0MP+N9ye7yfmzq2nhf0hnW06ftXgKyDMCzPxwIwQBoBctQ/WjLgNi+Uefvxe9aAvcXSXRlAC2+aNskhA9mBfmw1lPvj4k7sm8U/v22OTC/UYTgHKCfaFVBplVfmAH6wQzQCWaAfkKvgtww7VF5ErlLEYYFwOghKL6/oLsLAEDfE6YJ8h6pG2Heq4VSEMK+R8x9X2MzoEy8zdbq3+gMKBNvszEDdBPPTUI8Nxm6XyxDOeK5SVgYeisUX3gxTkKi/U5ovnAOkJBov4NzgG4SHXcD91GXv4QTB+4F2w/aV8ddWPjqzWCMkzq7FJHovB9SRzi/B+7BwrXt6g0TAjHRV9ZVi+ivgeSUgz+vMBAE6mgSbtR09vM0dt7HSVg3jQcfKLNVNxkQNRoPPsAM0Mn81TeU2KmrKigqzA9uU2OIkJXH05n9ATbX/ri0oqovXSPFwW3Kvj8BzADPFL94Xb3RevshVvz8NQAAePqDP8PoTYVf5RACsWAsB4sKQbwGMTDxS9RVBoRN8bNXg3WAZaicwMUvgRkgoPjpK+E4wotxlcyFJT5gGcowd+Xl8J3iHPA/WsQvYXwGzH3yUug+HUzPAK3ilzA2A+YuvxiaLymE4INZOsEHsyKAsUNQJMAM0A9mgE4wA/SDVZBGtFRBswMv+Nq/1tEyB8z2Pw/ru/5ito1E5y1JY0XniFYVZBqReyrCNLAM1Y8107fV2cgMPnRe3jpyuAnfHa2YzOBD593RI4eb8N3RUQDfHa2Lkr5MBowc2uIsr5G5+rd0uT7EP7SetM7uy9liFgQDpavrHJD58h/MAgW46dhACAG6DXduZlb54Y9j899ohjs399DHhBlAB6H12iPMghqg9eNPbgDRKkrlxhuR/R82aas4eQX/Y02feU4evevTzJpXwx2b8MeZR1qvTzPiD3dsEq4l6ToJ8x/ijSJivIoPAGBN9z67usGhGTYT2jdiJkhoHZphxW/f6LqesDXlIQAAAFkuCAAAeQyEQ5YTHgAgv4r4AADW1MfPeHdy47Fwncl8boOxgcjeeCwclvO5Dd7WlPcTAMqpdMFPE4IhEx3Au/BlrKmPmqrrxNezuOoqR75tvS/xAWoIAI3JwahGdBpr6sMtqvoCAADZb56s+WDk96+rSXQa5QFA/PEfOjCukRTL4vIAAAAASUVORK5CYII=';
   }
 }
 
@@ -4236,37 +4384,43 @@ function addMapLayers() {
    properties={color, line, kind, op}; 颜色 = OSM 线路关系色 ∪ 官方线路色表 ∪ 轨道类型兜底。
    异步加载(启动后与索引构建并行),不参与进度条、不阻塞 dataReady;图层插在官方轨道层(segs)之下。
    与官方简易轨道层互斥:swOrm(详细股道)开启时隐藏 segs/segs-glow 并显示本图层,关闭时恢复。 */
-let ormFC = null, ormLoaded = false, ormFetching = false;
+let ormLoaded = false, ormFetching = false;
+/* ORM 44MB 拆两片(CF Pages 单文件上限)。数据以 URL 交给 MapLibre:下载/JSON.parse/
+   geojson-vt 瓦片化全部在 worker,主线程不再保留 44MB 原始 FeatureCollection
+   (旧实现 = 城市级 900MB 堆峰的最大来源)。两片各建同款图层,绘制顺序相邻。 */
+const ORM_URLS = [
+  'https://jr-static.suki.ing/data/orm_tracks.0.geojson',
+  'https://jr-static.suki.ing/data/orm_tracks.1.geojson',
+];
 function addOrmLayer() {
-  if (!map || !ormFC || !ormFC.features || map.getLayer('orm')) return;
-  if (!map.getSource('orm')) {
-    map.addSource('orm', { type: 'geojson', data: ormFC });
-    map.addLayer({ id: 'orm', type: 'line', source: 'orm', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: {
-      'line-color': ['get', 'color'],
-      'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 2, 0.32, 9, 0.85, 14, 1.9],
-      'line-opacity': 0.8 } }, 'segs-glow');
-  }
-  ormLoaded = true;
-  applyTrackMode();
+  if (!map || map.getLayer('orm0')) return;
+  const before = map.getLayer('segs-glow') ? 'segs-glow' : undefined;
+  ORM_URLS.forEach((url, i) => {
+    const id = 'orm' + i;
+    if (!map.getSource(id)) {
+      map.addSource(id, { type: 'geojson', data: url });
+      map.addLayer({ id, type: 'line', source: id, layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: {
+        'line-color': ['get', 'color'],
+        'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 2, 0.32, 9, 0.85, 14, 1.9],
+        'line-opacity': 0.8 } }, before);
+    }
+    try { map.setLayoutProperty(id, 'visibility', 'none'); } catch (e) {}
+  });
+  /* 两片瓦片就位后再切走简易轨道 —— 否则下载/解析期间轨道层被隐藏 = 轨道短暂消失 */
+  const got = new Set();
+  const onSrc = e => {
+    if ((e.sourceId === 'orm0' || e.sourceId === 'orm1') && e.isSourceLoaded) {
+      got.add(e.sourceId);
+      /* 两片都真正就位才隐藏简易轨道;若 ORM 加载失败则保持 segs,避免轨道整层消失 */
+      if (got.size >= 2) { map.off('sourcedata', onSrc); ormLoaded = true; ormFetching = false; applyTrackMode(); }
+    }
+  };
+  map.on('sourcedata', onSrc);
 }
 function fetchOrmTracks() {
   if (ormLoaded || ormFetching) return;
   ormFetching = true;
-  /* 数据按 2 分片存储(orm_tracks.0/.1.geojson, 各 <25MB, 适配 Cloudflare Pages 单文件上限)。
-     ★ 串行加载:两个 22MB JSON 若同时到达,两次 JSON.parse 连续阻塞主线程 2-4s(地图冻结);
-     串行至少让两个解析之间有喘息,且第二片下载可与第一片解析重叠 */
-  (async () => {
-    try {
-      const a = await fetchJSONWithCache('https://jr-static.suki.ing/data/orm_tracks.0.geojson', '', 11, true);
-      await yieldToUI();
-      const b = await fetchJSONWithCache('https://jr-static.suki.ing/data/orm_tracks.1.geojson', '', 11, true);
-      ormFC = { type: 'FeatureCollection', features: (a && a.features || []).concat(b && b.features || []) };
-      addOrmLayer();
-    } catch (e) {
-      console.warn('[orm]', e);
-      ormFetching = false; /* 失败允许重试(下次触发再拉) */
-    }
-  })();
+  addOrmLayer();
 }
 
 /* ---------------- 重数据懒加载(性能优化,2026-10-24/25) ----------------
@@ -4275,39 +4429,37 @@ function fetchOrmTracks() {
    - 数据每次刷新(ETag 变)后,老用户也要全量重下 —— 启动即 ~90MB 下载 + 连续大 JSON.parse
      主线程冻结 + IDB 重写,是「启动后一段时间卡死」的主因;
    - platform_map 只服务列车详情 Plat. 徽章与车站信息站台参考,为 null 本就优雅降级,
-     延后到启动空闲期拉取,启动关键期(8 个核心文件并行 + 索引构建 + 时刻表解析)不再抢带宽;
+     改为打开列车详情/车站指南时才拉,启动与全国浏览全程不下载;
    - ORM/站房只在两种情况下拉:① 首次放大到城市级视野(z≥11.5,此缩放以下简易轨道层足够)
      —— 且延后 3s 并复验缩放,让 ~100ms 级的 JSON.parse/IDB 写避开缩放刚结束的交互窗口;
      ② 用户打开对应开关。开关打开但数据未到时显示简易轨道,数据到位后无缝切换。
    全国俯瞰用户(多数访问)从此不再下载这 58MB。 */
-let lazyHeavyBound = false, stationDetailFetched = false, platmapFetched = false;
+let lazyHeavyBound = false, stationDetailFetched = false, platmapP = null;
+/* platform_map(3.3MB)按需拉:只有列车详情/车站指南真正要用站台号时才取,
+   复位索引并在数据到达后回填已打开的详情行与指南页;失败不锁死,下次再试。 */
 function fetchPlatmap() {
-  if (platmapFetched) return;
-  platmapFetched = true;
-  fetchJSONWithCache('https://jr-static.suki.ing/data/platform_map.json', '', 11)
+  if (PLATMAP) return Promise.resolve(PLATMAP);
+  if (platmapP) return platmapP;
+  platmapP = fetchJSONWithCache('https://jr-static.suki.ing/data/platform_map.json', '', 11)
     .then(j => { PLATMAP = (j && j.t) ? j : null; })
-    .catch(() => { PLATMAP = null; });
+    .catch(() => { PLATMAP = null; })
+    .then(() => {
+      if (!PLATMAP) { platmapP = null; return null; }
+      _platIdx = null; _platIdxP = null;
+      refreshPlatConsumers();
+      return PLATMAP;
+    });
+  return platmapP;
 }
 function fetchStationDetailData() {
   if (stationDetailFetched) return;
   stationDetailFetched = true;
-  fetchPlatmap(); /* 站台编号与站房同批,一并延后 */
-  /* 三件并行(silent:不占进度条;loader 此时早已隐藏) */
-  Promise.all([
-    fetchJSONWithCache('https://jr-static.suki.ing/data/station_overall_footprints.geojson', '', 11, true).catch(() => null),
-    fetchJSONWithCache('https://jr-static.suki.ing/data/station_entrances.geojson', '', 11, true).catch(() => null),
-    fetchJSONWithCache('https://jr-static.suki.ing/data/station_platforms.geojson', '', 11, true).catch(() => null),
-  ]).then(([fp, en, pl]) => {
-    footprintFC = fp; entrancesFC = en; platformsFC = pl;
-    if (map) addDetailLayers();
-  }).catch(e => { stationDetailFetched = false; console.warn('[detail]', e); });
+  detailWanted = true;
+  addDetailLayers(); /* 建源即返回;数据由 MapLibre worker 拉取/解析,不占主线程 */
 }
 function bindLazyHeavyData() {
   if (lazyHeavyBound || !map) return;
   lazyHeavyBound = true;
-  /* 启动空闲期:platform_map 无视野条件,等启动完全就绪(dataReady)再补拉 */
-  const platWhenReady = () => { if (dataReady) fetchPlatmap(); else setTimeout(platWhenReady, 1500); };
-  setTimeout(platWhenReady, 4000);
   /* 延迟执行体:启动未完成则自续 2s 重试(深链场景),完成后校验缩放再拉重数据 */
   const deferredFetch = () => {
     if (!dataReady) { setTimeout(deferredFetch, 2000); return; }
@@ -4614,7 +4766,6 @@ async function ensureDayFile() {
   setStatus(T()[DAY_LABEL[want] ? 'dayFileNote' : ''] + ' …');
   try {
     const tj = await fetchJSONWithCache(TRAIN_FILES[want], 'loadingTr');
-    trainJSON = tj;
     tripList = await parseTripsAsync(tj);
     buildCouplings(tripList); /* 併结/分割列车检测(跨日重算) */
     applyJoins(tripList); /* 上行併结(跨日重算) */
@@ -4861,6 +5012,7 @@ function closeDetail() {
 })();
 function showTrainDetail(t) {
   liveDetailTrip = t;
+  fetchPlatmap(); /* 站台号数据按需拉:到达后 refreshPlatConsumers 回填本卡各行 */
   /* 打开详情卡时自动收起菜单:走 __sideSet 才有两阶段收拢动画,硬摘 class 会瞬间消失 */
   if (window.__sideSet) window.__sideSet(false);
   else if (!sideEl.classList.contains('collapsed')) { sideEl.classList.add('collapsed'); syncSideBtn(); }
@@ -5408,7 +5560,15 @@ const OP_LOGO = {
 };
 function shortTerm(s) { return String(s).replace(/[（(].*?[)）]/g, '').slice(0, 2); }
 function isRapidType(tp) { return ['特','急','快','準','区','通','回'].indexOf(tp) >= 0; }
-let lineOp = null, boardCache = new Map(), sheetStation = null, sheetCoord = null, sheetFlat = false, sheetLine = null, sheetOp = null;
+let lineOp = null, boardCache = new Map(), boardCacheItems = 0, sheetStation = null, sheetCoord = null, sheetFlat = false, sheetLine = null, sheetOp = null;
+/* 开站看板缓存按「班次条目数」限容:实测连续开 12 个大站累计 15 万条(items+itemsArr),
+   buildBoard/groupDirs 分配约 11MB 且无上限随浏览站点数线性累积。
+   超限按最久未用淘汰,重开旧站时重建(毫秒级);键含 dayBit,跨日旧档同样受此上限约束。 */
+const BOARD_CACHE_MAX_ITEMS = PERF_LOW ? 40000 : 100000;
+/* 方向全天网格按需构建:一次开站抽屉若把所有方向的全天格子都塞进 DOM,东京站约 3.9 万节点、
+   1.16MB HTML;Clarity 等 DOM 观察者会按变更量整份留内存,手机连续开站可累积数百 MB。
+   d-more 展开时才生成对应网格,字符串构建与 DOM 插入都推迟。 */
+let dayLazyBuild = new Map(), dayLazySeq = 0;
 function buildLineOp() { if (lineOp) return; lineOp = new Map(); segFC.features.forEach(f => { const p = f.properties; if (p.line && !lineOp.has(p.line)) lineOp.set(p.line, p.op || ''); }); }
 // 时刻表线名 → 铁道公司全名(兜底, 覆盖带公司前缀/编号线等)
 const LINE_OP_FALLBACK = {
@@ -5509,7 +5669,8 @@ function buildBoard(station, coord) {
   /* 缓存键必须带 dayBit:运行日切换(平日↔周六/周日)后若沿用旧键,会命中切换前构建的时刻表,
      实测切换后重开同一车站仍返回旧日期数据 */
   const ck = (coord ? (nk + '|' + coord[0].toFixed(3) + ',' + coord[1].toFixed(3)) : nk) + '#' + dayBit;
-  if (boardCache.has(ck)) return boardCache.get(ck);
+  const hit = boardCache.get(ck);
+  if (hit) { boardCache.delete(ck); boardCache.set(ck, hit); return hit; }
   buildLineOp();
   const byLine = new Map();
   /* 用预索引(解析时刻表时构建)只遍历途经本站的班次,替代原 5.7 万班次全表扫描 */
@@ -5560,7 +5721,17 @@ function buildBoard(station, coord) {
   lines.sort((a, b) => (a.op || '').localeCompare(b.op || '') || a.name.localeCompare(b.name));
   const ops = [], opMap = new Map();
   lines.forEach(L => { if (!opMap.has(L.op)) { opMap.set(L.op, { op: L.op, lines: [] }); ops.push(opMap.get(L.op)); } opMap.get(L.op).lines.push(L); });
-  const board = { ops }; boardCache.set(ck, board); return board;
+  let nItems = 0;
+  lines.forEach(L => { nItems += L.items.length + L.itemsArr.length; });
+  const board = { ops, nItems };
+  boardCache.set(ck, board); boardCacheItems += nItems;
+  while (boardCacheItems > BOARD_CACHE_MAX_ITEMS && boardCache.size > 1) {
+    const oldest = boardCache.keys().next().value;
+    if (oldest === ck) break;
+    boardCacheItems -= (boardCache.get(oldest).nItems || 0);
+    boardCache.delete(oldest);
+  }
+  return board;
 }
 function dayGridHtml(L, d) {
   const tc = {}; d.trains.forEach(r => tc[r.term] = (tc[r.term] || 0) + 1);
@@ -5568,7 +5739,7 @@ function dayGridHtml(L, d) {
   const byH = {};
   d.trains.forEach(r => { const hh = Math.floor(r.dep / 60); (byH[hh] = byH[hh] || []).push(r); });
   const hours = Object.keys(byH).map(Number).sort((a, b) => a - b);
-  let h = '<div class="day"><div class="dlg">種別：<b>快速</b> / 無印=普通<br>終点：無印=' + esc(def);
+  let h = '<div class="dlg">種別：<b>快速</b> / 無印=普通<br>終点：無印=' + esc(def);
   Object.keys(tc).forEach(t2 => { if (t2 !== def) h += ' / ' + esc(shortTerm(t2)) + '-' + esc(t2); });
   h += '</div>';
   hours.forEach(hh => {
@@ -5581,7 +5752,7 @@ function dayGridHtml(L, d) {
     });
     h += '</div></div>';
   });
-  return h + '</div>';
+  return h;
 }
 function dirHtml(L, d, hour) {
   let h = '<div class="dir" style="--lc:' + L.color + '">';
@@ -5593,7 +5764,10 @@ function dirHtml(L, d, hour) {
     h += '<div class="hr-t" data-type="' + esc(r.type) + '"><span class="dot"></span><div class="m">' + pad(Math.round(r.dep % 60)) + (r.tr && r.tr.dly > 0 ? '<span class="sbdly">+' + Math.round(r.tr.dly) + '</span>' : '') + '</div><div class="d">' + esc(r.term) + '</div></div>';
   });
   else h += '<div style="align-self:center;color:var(--dim);font-size:11px;padding:0 8px">この時刻の列車はありません</div>';
-  h += '</div></div>' + dayGridHtml(L, d) + '</div>';
+  h += '</div></div>';
+  const did = ++dayLazySeq;
+  dayLazyBuild.set(did, () => dayGridHtml(L, d));
+  h += '<div class="day" data-did="' + did + '"></div></div>';
   return h;
 }
 function lineRowHtml(L, hour) {
@@ -5612,6 +5786,7 @@ function lineRowHtml(L, hour) {
 }
 function renderStationBody() {
   if (!sheetStation) return;
+  dayLazyBuild.clear(); dayLazySeq = 0;
   const board = buildBoard(sheetStation, sheetCoord);
   $('shSub').textContent = board.ops.map(o => opShort(o.op)).join(' · ');
   const M = curMin(), hour = Math.floor(((M % 1440) + 1440) % 1440 / 60);
@@ -5628,6 +5803,12 @@ function renderStationBody() {
   $('shBody').innerHTML = html || '<div class="empty">この駅の時刻データがありません</div>';
   bindSheet();
 }
+function applySheetTypeFilter(panel) {
+  if (!panel) return;
+  const on = new Set();
+  panel.querySelectorAll('.tc.on').forEach(x => on.add(x.getAttribute('data-type')));
+  panel.querySelectorAll('.hr-t, .dg-cell').forEach(cell => { cell.style.display = on.has(cell.getAttribute('data-type')) ? '' : 'none'; });
+}
 function bindSheet() {
   document.querySelectorAll('#shBody .lrow').forEach(row => {
     row.onclick = () => { row.classList.toggle('open'); row.nextElementSibling.classList.toggle('open'); };
@@ -5636,16 +5817,21 @@ function bindSheet() {
     m.onclick = e => {
       e.stopPropagation(); m.classList.toggle('on');
       const day = m.closest('.dir').querySelector('.day');
-      if (day) day.classList.toggle('open');
+      if (day) {
+        if (day.dataset.did && !day.firstChild) {
+          const build = dayLazyBuild.get(+day.dataset.did);
+          if (build) { day.innerHTML = build(); dayLazyBuild.delete(+day.dataset.did); }
+          applySheetTypeFilter(m.closest('.lpanel'));
+        }
+        day.classList.toggle('open');
+      }
       m.textContent = m.classList.contains('on') ? '方向 ▾' : '方向 ▸';
     };
   });
   document.querySelectorAll('#shBody .type-chips .tc').forEach(c => {
     c.onclick = () => {
       c.classList.toggle('on');
-      const panel = c.closest('.lpanel'), on = new Set();
-      panel.querySelectorAll('.tc.on').forEach(x => on.add(x.getAttribute('data-type')));
-      panel.querySelectorAll('.hr-t, .dg-cell').forEach(cell => { cell.style.display = on.has(cell.getAttribute('data-type')) ? '' : 'none'; });
+      applySheetTypeFilter(c.closest('.lpanel'));
     };
   });
 }
@@ -5680,7 +5866,7 @@ $('subDep').addEventListener('click', function () { sheetDepArr = 'dep'; $('subD
 $('subArr').addEventListener('click', function () { sheetDepArr = 'arr'; $('subArr').classList.add('on'); $('subDep').classList.remove('on'); renderStationBody(); });
 window.showStationDetail = showStationDetail;  // 调试/自动化钩子：供控制台与 E2E 直接打开车站抽屉
 // E2E 钩子：列车详情/站台数据（确定性验证用，只读引用）
-window.__mjr3d = { showTrainDetail, tripList: () => tripList, PLATMAP: () => PLATMAP, tmaps: () => tmaps, badgeKeyOfFeature, badgeEntriesOfStation, badgeEntriesOf, showStationDetail, stationCoord: () => stationCoord, stationMap: () => stationMap, badgeNorm, badgeFamilyHit };
+window.__mjr3d = { showTrainDetail, tripList: () => tripList, PLATMAP: () => PLATMAP, tmaps: () => tmaps, badgeKeyOfFeature, badgeEntriesOfStation, badgeEntriesOf, showStationDetail, stationCoord: () => stationCoord, stationMap: () => stationMap, badgeNorm, badgeFamilyHit, map: () => map, ormState: () => ({ enabled: ormEnabled, loaded: ormLoaded, fetching: ormFetching }), detailState: () => ({ wanted: detailWanted, fetched: stationDetailFetched }), bufState: () => ({ bytes: bufArr.byteLength, trains: Math.min(MAXT, fadeList.length) }), boardCacheStats: () => ({ size: boardCache.size, items: boardCacheItems, cap: BOARD_CACHE_MAX_ITEMS }), platState: () => ({ loaded: !!PLATMAP, pending: !!(platmapP && !PLATMAP) }), detailRetry: () => Object.assign({}, detailRetry) };
 // E2E 钩子：列车叠加弹窗（确定性验证，不依赖实时列车密度）
 window.__trPick = { n: () => visibleTrips.length, near: (x, y) => collectTrains(x, y, 14).length, open: (x, y) => showTrPick(collectTrains(x, y, 14), x, y) };
 
@@ -5905,10 +6091,33 @@ function _platAt(byRid, k) {
   }
   return s;
 }
+/* platform_map 到达后回填:已打开的列车详情逐行补 .vplat 徽章(不重建详情,保持滚动位置),
+   指南页若正开着则清 key 重渲染,让站台参考块出现 */
+function refreshPlatConsumers() {
+  const tr = liveDetailTrip;
+  if (tr && detailEl.classList.contains('show')) {
+    const byRid = PLATMAP.t && PLATMAP.t[tr.t];
+    if (byRid) detailEl.querySelectorAll('.dstop').forEach(row => {
+      const meta = row.querySelector('.vmeta');
+      if (!meta || meta.querySelector('.vplat')) return;
+      const pw = _platAt(byRid, parseInt(row.dataset.i, 10));
+      if (!pw) return;
+      const span = document.createElement('span');
+      span.className = 'vplat';
+      span.title = T().colPlat;
+      span.textContent = pw.replace(/;/g, '/');
+      meta.insertBefore(span, meta.querySelector('.vtm'));
+    });
+  }
+  if ($('panelGuide') && !$('panelGuide').hidden && sheetStation && $('sheet').classList.contains('open')) {
+    _guideKey = null;
+    renderGuideTab();
+  }
+}
 function buildPlatIndex() {
   if (_platIdx) return Promise.resolve(_platIdx);
-  if (_platIdxP) return _platIdxP;
-  _platIdxP = new Promise((res) => {
+  if (!PLATMAP) return Promise.resolve(null);   /* 数据未到:不缓存空索引,否则到达后仍是空 */
+  if (_platIdxP) return _platIdxP;  _platIdxP = new Promise((res) => {
     try {
       const idx = new Map(), tm = tmaps, pm = PLATMAP && PLATMAP.t;
       if (tm && pm) {
@@ -5936,6 +6145,7 @@ function buildPlatIndex() {
 async function buildPlatRefHtml(stName) {
   try {
     const idx = await buildPlatIndex();
+    if (!idx) return '';
     let key = platKey(stName);
     let arr = idx.get(key);
     if (!arr) {
@@ -6026,6 +6236,7 @@ function gdTr(ja) {
 async function renderGuideTab() {
   const box = $('panelGuide');
   if (_guideKey === sheetStation) return;
+  fetchPlatmap(); /* 打开指南页才拉站台号;到达后 refreshPlatConsumers 重渲染本页 */
   const platHtml = await buildPlatRefHtml(sheetStation);
   if (sheetStation !== $('shNm').textContent) return;   // await 期间用户已换站
   box.innerHTML = '<div class="gd-loading">' + _escTxt(T().gdLoading) + '</div>';
@@ -6453,7 +6664,7 @@ $('m3dMask').addEventListener('click', () => M3D.closeViewer());
     this.classList.toggle('on', fpEnabled);
     localStorage.setItem('mjr3d_showfp', fpEnabled ? '1' : '0');
     fpVisible(fpEnabled);
-    if (fpEnabled && !footprintFC) fetchStationDetailData(); /* 站房数据懒加载:低倍率下打开开关时即刻拉取 */
+    if (fpEnabled && !detailWanted) fetchStationDetailData(); /* 站房数据懒加载:低倍率下打开开关时即刻建源 */
   });
   /* 出入口开关:默认开,选择持久化(mjr3d_showent) */
   let entEnabled = localStorage.getItem('mjr3d_showent') !== '0';
@@ -6467,13 +6678,16 @@ $('m3dMask').addEventListener('click', () => M3D.closeViewer());
     this.classList.toggle('on', entEnabled);
     localStorage.setItem('mjr3d_showent', entEnabled ? '1' : '0');
     entVisible(entEnabled);
-    if (entEnabled && !entrancesFC) fetchStationDetailData(); /* 出入口数据懒加载:同上 */
+    if (entEnabled && !detailWanted) fetchStationDetailData(); /* 出入口数据懒加载:同上 */
   });
 $('swBase').addEventListener('click', function () { this.classList.toggle('on'); map.setLayoutProperty('basemap', 'visibility', this.classList.contains('on') ? 'visible' : 'none'); });
 /* 详细股道开关(互斥模式): 开启 = 显示 ORM 全量股道并隐藏原有简易轨道层(segs/segs-glow);
    关闭 = 隐藏 ORM,恢复简易轨道层(光晕层跟随 swGlow 开关)。仅切换图层显示,其余一切不变。
-   默认关(低配设备默认关,按需加载),选择持久化(mjr3d_showorm) */
-let ormEnabled = PERF_LOW ? false : (localStorage.getItem('mjr3d_showorm') !== '0');
+   默认关(低配设备/手机默认关,按需加载),选择持久化(mjr3d_showorm)。
+   手机端实测开 ORM 城市空闲堆 387–453MB、长任务 11.0s(关 ORM 380MB、4.3s),默认关,
+   用户手动开启后仍按 '1' 持久化生效 */
+const _ormPref = localStorage.getItem('mjr3d_showorm');
+let ormEnabled = (PERF_LOW || IS_MOBILE) ? (_ormPref === '1') : (_ormPref !== '0');
 $('swOrm').classList.toggle('on', ormEnabled);
 function applyTrackMode() {
   if (!map) return;
@@ -6482,7 +6696,7 @@ function applyTrackMode() {
   const ormOn = ormEnabled && ormLoaded;
   if (map.getLayer('segs')) map.setLayoutProperty('segs', 'visibility', ormOn ? 'none' : 'visible');
   if (map.getLayer('segs-glow')) map.setLayoutProperty('segs-glow', 'visibility', ormOn ? 'none' : ($('swGlow').classList.contains('on') ? 'visible' : 'none'));
-  if (map.getLayer('orm')) map.setLayoutProperty('orm', 'visibility', ormEnabled ? 'visible' : 'none');
+  ['orm0', 'orm1'].forEach(id => { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', ormOn ? 'visible' : 'none'); });
 }
 applyTrackMode();
 $('swOrm').addEventListener('click', function () {

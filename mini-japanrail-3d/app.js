@@ -5446,6 +5446,19 @@ async function wikiBoxInit(t) {
   };
   if (open) _wikiShow(t, sel, vs);   /* 重建时恢复展开(车型数据已会话缓存,瞬间呈现) */
 }
+/* 併结伙伴已过运行窗(如分割后関空快速先到关西空港)时置灰切换按钮:
+   详情卡对未运行列车直接不渲染,按钮保持可点会表现为"点了没反应" */
+function syncCplBtns(t, M) {
+  const btns = detailEl.querySelectorAll('.d-cpl .cplbtn');
+  for (let k = 0; k < btns.length; k++) {
+    const btn = btns[k];
+    const c = t.cpl[parseInt(btn.dataset.ci, 10)];
+    if (!c || !c.p) continue;
+    const pm = windowShift(c.p, M);
+    const off = pm < c.p.dep[0] - 1e-6 || pm > c.p.arr[c.p.N - 1] + 1e-6;
+    if (btn.disabled !== off) btn.disabled = off;
+  }
+}
 function updateDetailLive(t, p, M, rebuild) {
   if (!p) { p = trainPosition(t, windowShift(t, M)); }
   if (!p) return;
@@ -5634,6 +5647,7 @@ function updateDetailLive(t, p, M, rebuild) {
       }
     }
   }
+  if (t.cpl && t.cpl.length) syncCplBtns(t, M);
 }
 let followStartT = 0;
 function startFollow(t) {

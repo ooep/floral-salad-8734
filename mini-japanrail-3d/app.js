@@ -2524,12 +2524,14 @@ const DELAY_URLS = [
 ];
 const DELAY_FETCH_MS = 5 * 60 * 1000, DELAY_MAX_AGE_MS = 45 * 60 * 1000, DELAY_STALE_MS = 20 * 60 * 1000;
 let delayOn = (() => { const v = localStorage.getItem('mjr3d_delay'); return v === null ? true : v === '1'; })();
-const delayedSet = new Set();
-let delayTmapIdx = null, delayLastFetch = 0, delayTimer = null, delayGenMs = 0, delayBusy = false, delayPending = false;
+const delayedSet = new Set(), delaySynced = new Set();
+let delayTmapIdx = null, delayLastFetch = 0, delayTimer = null, delayGenMs = 0, delayBusy = false, delayPending = false, delaySyncMin = -1;
 function delayClear() {
-  if (!delayedSet.size) return;
-  for (const t of delayedSet) { t.dly = 0; t._fk = null; }
-  delayedSet.clear();
+  delaySyncMin = -1;
+  for (const t of delayedSet) { t.dly = 0; t._fk = null; t._dlyOwn = 0; }
+  for (const t of delaySynced) { t.dly = 0; t._fk = null; }
+  delayedSet.clear(); delaySynced.clear();
+  if (dayList) for (let i = 0; i < dayList.length; i++) { const t = dayList[i]; if (t._dlyOwn) t._dlyOwn = 0; if (t.dly) { t.dly = 0; t._fk = null; } }
 }
 function delayParseGen(iso) {
   if (typeof iso !== 'string') return 0;
@@ -2577,11 +2579,36 @@ function delayApplyData(d, genMs) {
     const t = cands[0];
     if (next.has(t)) continue;
     next.add(t);
-    if (t.dly !== n) { t.dly = n; t._fk = null; }
+    t._dlyOwn = n;
   }
-  for (const t of delayedSet) if (!next.has(t) && t.dly) { t.dly = 0; t._fk = null; }
+  for (const t of delayedSet) if (!next.has(t)) { t._dlyOwn = 0; if (t.dly) { t.dly = 0; t._fk = null; } }
   delayedSet.clear(); for (const t of next) delayedSet.add(t);
+  delaySyncCouples();
   return next.size;
+}
+/* 併结/分割窗口内的晚点共享:t0～t1 两车是同一列物理编成,任一侧晚点即整体晚点,
+   显示值取双方自身延误的最大值;窗口外(尚未连挂 / 已分割)各用数据源给的单车值。
+   窗口按分钟迭代重算,分割发生在 t1 之后立刻恢复各算各的。 */
+function delaySyncCouples(M) {
+  for (const t of delaySynced) { t.dly = t._dlyOwn || 0; t._fk = null; }
+  delaySynced.clear();
+  for (const t of delayedSet) if (t.dly !== (t._dlyOwn || 0)) { t.dly = t._dlyOwn || 0; t._fk = null; }
+  if (!dayList) return;
+  if (M === undefined) M = curMin();
+  const inWin = (t0, t1) => (M >= t0 && M <= t1) ||
+    (M + 1440 >= t0 && M + 1440 <= t1) || (M - 1440 >= t0 && M - 1440 <= t1);
+  for (let i = 0; i < dayList.length; i++) {
+    const t = dayList[i], cs = t.cpl;
+    if (!cs) continue;
+    for (let j = 0; j < cs.length; j++) {
+      const c = cs[j], B = c.p;
+      if (!B || !inWin(c.t0, c.t1)) continue;
+      const v = Math.max(t._dlyOwn || 0, B._dlyOwn || 0);
+      if (!v) continue;
+      if (t.dly !== v) { t.dly = v; t._fk = null; delaySynced.add(t); }
+      if (B.dly !== v) { B.dly = v; B._fk = null; delaySynced.add(B); }
+    }
+  }
 }
 async function delayFetchOnce() {
   if (delayBusy) { delayPending = true; return; } delayBusy = true;
@@ -4520,6 +4547,9 @@ function startLoop() {
     if (!dataReady) return;
     const M = curMin();
     refreshClockUI(M);
+    /* 併结窗口按分钟推进:到点併合/分割时不用等下一次延误拉取,立刻切换共享/独立 */
+    const Mn = Math.floor(M);
+    if (Mn !== delaySyncMin) { delaySyncMin = Mn; delaySyncCouples(Mn); }
     /* 自适应降载:持续低帧率 → 自动关列车光晕 → 仍不足则隔帧更新(保交互优先于动画流畅) */
     if (fps < 22) lowFpsN++; else if (fps > 30) lowFpsN = Math.max(0, lowFpsN - 2);
     if (lowFpsN > 300) {

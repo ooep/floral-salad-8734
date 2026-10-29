@@ -901,26 +901,26 @@ function segSubPath(A, B, ca, cb, lineSet) {
           }
         }
         if (ia !== ib) {
-          let sub;
-          if (sameEntry) {
-            /* 同段(同 key):按段坐标方向截取 A→B——段 co 可能反向注册(宇都宮|黒磯 的 co 实为黒磯→宇都宮),
-               dirRev=true 时 A 在上游意味着 ia > ib */
-            const coA = co[0], coN = co[co.length - 1];
-            const fromC = stationCoord.get(ka.split('|')[0]);
-            const dirRev = fromC ? geoKm(coA, fromC) > geoKm(coN, fromC) : false;
-            const aIsUp = dirRev ? ia > ib : ia < ib;
-            sub = aIsUp
-              ? (ia < ib ? co.slice(ia, ib + 1) : co.slice(ib, ia + 1).slice().reverse())
-              : (ia < ib ? co.slice(ia, ib + 1).slice().reverse() : co.slice(ib, ia + 1));
-          } else {
-            sub = ia < ib ? co.slice(ia, ib + 1) : co.slice(ib, ia + 1).slice().reverse();
-          }
+          /* 截取方向只由折线索引决定, 与段的正反注册无关。旧逻辑用 stationCoord.get(段首站名)
+             判 dirRev —— 同名站(中津: 大阪/大分)会解析错站, 把 杵築→別府 的截取整体反转,
+             再被端点校验拒绝, 该区间只能退回骨架弦线 */
+          const sub = ia < ib ? co.slice(ia, ib + 1) : co.slice(ib, ia + 1).slice().reverse();
           if (sub.length >= 2) out = withLen(sub);
         } else if (geoKm(pa.P, pb.P) > 0.1) {
           /* 同折线段:两点投影点间直接连线(站距 < 段点密度时也能定位) */
           out = withLen([pa.P, pb.P]);
         }
       }
+    } else {
+      /* 边界站: A/B 落在不同 key 的几何上, 但 B 恰是 pa 的端点站(別府→大分: 大分 是 中津|大分
+         的尾点, 只因同名站在佐伯|大分 上也注册了一次), 截取 pa 的剩余部分 */
+      const BND = 0.5, co = pa.co, ia = pa.i, cn = co.length - 1;
+      let sub = null;
+      if (geoKm(cb, co[cn]) <= BND) sub = co.slice(ia);
+      else if (geoKm(cb, co[0]) <= BND) sub = co.slice(0, ia + 1).slice().reverse();
+      else if (geoKm(ca, pb.co[0]) <= BND) sub = pb.co.slice(0, pb.i + 1);
+      else if (geoKm(ca, pb.co[pb.co.length - 1]) <= BND) sub = pb.co.slice(pb.i).slice().reverse();
+      if (sub && sub.length >= 2) out = withLen(sub);
     }
   }
   /* 端点校验(修复鹿児島本線等粗粒度长段折线在区间内打结/乱序导致的截取错位):
@@ -1976,14 +1976,17 @@ function trainPosition(t, M) {
     for (let k = 0; k < skStop.length; k++) { if (skStop[k] <= i) k0 = k; if (k1 < 0 && skStop[k] >= i + 1) { k1 = k; break; } }
     if (k0 < 0) k0 = 0;
     if (k1 < 0) k1 = skStop.length - 1;
-    const s0 = skStop[Math.max(k0,0)], s1 = skStop[Math.min(k1, skStop.length-1)];
+    /* 骨架里程必须从本区间起点 k0 起算:target 若用 f*skLen(全程),每个落到骨架兜底的区间
+       都会在整条线路上扫一遍 —— ソニック 別府→大分 等缺段区间可见「列车跨城乱飘」 */
+    const kA = Math.max(k0, 0), kB = Math.max(kA, Math.min(k1, skStop.length - 1));
+    const s0 = skStop[kA], s1 = skStop[kB];
     let f;
     if (s1 === s0) f = 0;
     else {
       const m0 = dep[s0], m1 = arr[s1] > dep[s0] ? arr[s1] : dep[s0] + 1;
       f = Math.min(1, Math.max(0, (M - m0) / (m1 - m0)));
     }
-    const target = f * t.skLen;
+    const target = skCum[kA] + f * (skCum[kB] - skCum[kA]);
     let lo = 1, hi = skCum.length - 1;
     while (lo < hi) { const mid = (lo + hi) >> 1; if (skCum[mid] < target) lo = mid + 1; else hi = mid; }
     const k = lo;

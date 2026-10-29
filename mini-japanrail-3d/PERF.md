@@ -410,6 +410,7 @@ GC 后 430→453MB(修复前同口径 +20MB/次且不收敛),0 错误。
 5. **出入口层(ent)延迟到 z≥15.5 建源**:19,390 要素 / 2.7MB,图层 minzoom 16,在 z<16 完全不可见,
    原实现随 pl/fp 在 z≥11.5 一起拉取。现改为到达 z15.5 才 addSource,并由 zoomend 补建。
    实测 z14 深链:`ent` 源/图层均不存在;z16.3 后 0.07s 内建源出图;0 错误。
+   z16.3 **冷启动深链**(桌面):12.5s 就绪,18.1s 时 `ent` 源已 loaded、图层 visible、瓦片齐、0 错误。
 6. **堆峰归因(避免误判)**:z14 首次建源期间 `performance.memory` 峰 **695–769MB**,但 CDP
    `Runtime.getHeapUsage` 主 isolate 峰仅 **331MB**、GC 后 237MB(`performance.memory` 把 worker
    isolate 也算进来)。把三源全换成本地空 GeoJSON 的对照构建,启动峰仍 **709MB** → 该峰来自底图

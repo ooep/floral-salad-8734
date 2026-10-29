@@ -286,6 +286,12 @@ _MIN_PAIRS = {
     "小田急はこね×えのしま@相模大野(北千住)": 3,
 }
 
+# 同一物理列车被两个来源各录一份、同刻始发，但其中一份把各站站停多记了 1 分钟，
+# 累计漂移超过 tol 的对：把慢的一份对齐到快的一份再正常併结。只对已逐班核对过
+# 的事件开启，避免把相邻班次误认成同一列车。上限 10 分钟。
+_ALIGN_EVENTS = {"関空快速×紀州路快速@日根野"}
+_ALIGN_MAX = 10
+
 
 # 已知併结服务对（成员判定函数名）。盲区扫描只报“服务对本身不在目录内”的候选，
 # 目录内服务的重复/截短记录不重复报警。
@@ -387,6 +393,118 @@ def _candidates(tagged, ev):
     return out
 
 
+def _encode_s(t):
+    s = [t["dep"][0]]
+    for i in range(1, t["N"]):
+        s.append(max(0, t["arr"][i] - t["dep"][i - 1]))
+        if i < t["N"] - 1:
+            s.append(max(0, t["dep"][i] - t["arr"][i]))
+    return ",".join(map(str, s))
+
+
+def _rebase_times(slow, fast, pairs):
+    """pairs: [(slow_idx, fast_idx)]。共享段按 fast 的到发时刻重写 slow；
+    fast 跳过的站按时间比例插值偏移；分割站之后的尾段整体平移，保持本段运行时间。"""
+    sa0, sd0 = slow["arr"][:], slow["dep"][:]
+    fa, fd = fast["arr"], fast["dep"]
+    n = slow["N"]
+    new_arr, new_dep = sa0[:], sd0[:]
+    off_arr = {}
+    for si, fi in pairs:
+        off_arr[si] = fa[fi] - sa0[si]
+        new_arr[si], new_dep[si] = fa[fi], fd[fi]
+    ks = [si for si, _ in pairs]
+    for a, b in zip(ks, ks[1:]):
+        if b - a <= 1:
+            continue
+        ta, tb = sa0[a], sa0[b]
+        for k in range(a + 1, b):
+            f = (sa0[k] - ta) / (tb - ta) if tb > ta else 0.0
+            d = int(round(off_arr[a] + (off_arr[b] - off_arr[a]) * f))
+            new_arr[k] = sa0[k] + d
+            new_dep[k] = sd0[k] + d
+    split = ks[-1]
+    tail = new_dep[split] - sd0[split]
+    for k in range(split + 1, n):
+        new_arr[k] = sa0[k] + tail
+        new_dep[k] = sd0[k] + tail
+    for k in range(1, n):
+        if new_arr[k] < new_dep[k - 1]:
+            new_arr[k] = new_dep[k - 1]
+        if new_dep[k] < new_arr[k]:
+            new_dep[k] = new_arr[k]
+    return new_arr, new_dep
+
+
+def _apply_alignments(pool, recs, warnings):
+    for ev in EVENTS:
+        name, J, kind, preds, tol, contains, anchor, allow_edge = ev
+        if kind != "s" or name not in _ALIGN_EVENTS or len(preds) < 2:
+            continue
+        minp = _MIN_PAIRS.get(name, 4)
+        tagged = []
+        for t in pool:
+            if J not in t["jasN"] or t["N"] < 4 or t.get("bad"):
+                continue
+            ms = [k for k, p in enumerate(preds) if p(t)]
+            if ms:
+                tagged.append((t, ms))
+        cands = []
+        for x in range(len(tagged)):
+            A, ma = tagged[x]
+            ia = A["jasN"].index(J)
+            if ia == 0:
+                continue
+            for y in range(x + 1, len(tagged)):
+                B, mb = tagged[y]
+                if not any(a != b for a in ma for b in mb):
+                    continue
+                ib = B["jasN"].index(J)
+                if ib == 0:
+                    continue
+                # 同起点且同分钟发车：同一轨道不可能同刻两班，只能是同一列车
+                if A["jasN"][0] != B["jasN"][0] or A["dep"][0] != B["dep"][0]:
+                    continue
+                pairs = _lcs_pairs(A["jasN"][:ia + 1], B["jasN"][:ib + 1])
+                if not pairs or pairs[0] != (0, 0) or pairs[-1] != (ia, ib) or len(pairs) < minp:
+                    continue
+                if anchor and A["jasN"][pairs[0][0]] != anchor:
+                    continue
+                if contains and contains not in (A["jasN"][i] for i, _ in pairs):
+                    continue
+                na = A["jasN"][ia + 1] if ia + 1 < A["N"] else None
+                nb = B["jasN"][ib + 1] if ib + 1 < B["N"] else None
+                if na == nb or (na is None and nb is None):
+                    continue
+                if (na is None or nb is None) and not allow_edge:
+                    continue
+                devs = [abs(A["arr"][i] - B["arr"][j]) for i, j in pairs[1:]]
+                m = max(devs) if devs else abs(A["arr"][ia] - B["arr"][ib])
+                if m <= tol or m > _ALIGN_MAX:
+                    continue
+                cands.append((m, A, B, pairs))
+        cands.sort(key=lambda c: c[0])
+        used = set()
+        for m, A, B, pairs in cands:
+            if A["tid"] in used or B["tid"] in used:
+                continue
+            used.add(A["tid"])
+            used.add(B["tid"])
+            spanA = A["arr"][pairs[-1][0]] - A["dep"][pairs[0][0]]
+            spanB = B["arr"][pairs[-1][1]] - B["dep"][pairs[0][1]]
+            if spanA <= spanB:
+                fast, slow, pr = A, B, [(j, i) for i, j in pairs]
+            else:
+                fast, slow, pr = B, A, pairs
+            slow["arr"], slow["dep"] = _rebase_times(slow, fast, pr)
+            rec = recs[slow["tid"]]
+            rec["s"] = _encode_s(slow)
+            rec["w"] = f"{slow['dep'][0]},{slow['arr'][-1]}"
+            warnings.append(
+                f"[align] {name} {A['tid'][-6:]}/{B['tid'][-6:]} 共享段站停多记漂移 {m} 分，"
+                f"已按 {fast['tid'][-6:]} 对齐")
+
+
 def compute_couplings(recs, tmaps, tokkyu):
     """recs: {train_id: rec}; tmaps: {tmap_id: tm}; tokkyu: 爱称表。
     返回 (c_by_tid, stats, warnings)。
@@ -402,6 +520,9 @@ def compute_couplings(recs, tmaps, tokkyu):
         if t:
             trips[tid] = t
     pool = list(trips.values())
+
+    warnings = []
+    _apply_alignments(pool, recs, warnings)
 
     chosen = []
     stats = {}
@@ -436,7 +557,6 @@ def compute_couplings(recs, tmaps, tokkyu):
                 {"p": b["tid"], "k": kind, "sp": J, "t0": t0, "t1": t1,
                  "nm": bnm or b["i"] or ""})
 
-    warnings = []
     for (name, kind), (n, cand) in sorted(stats.items()):
         if n == 0 and cand > 0:
             warnings.append(f"目录事件候选全部落空: {name} ({kind}) cand={cand}")

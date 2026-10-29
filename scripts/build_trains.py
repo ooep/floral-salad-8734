@@ -191,7 +191,8 @@ def main():
     tokkyu = json.load(open(tokkyu_path, encoding="utf-8")) if os.path.exists(tokkyu_path) else None
     total_pairs = 0
     for bit, name, label in ((1, "wd", "平日"), (2, "sa", "周六"), (4, "su", "周日·假日")):
-        day_recs = {tid: r for tid, r in recs.items() if r["r"] & bit}
+        # 拷贝：併结对齐会改写记录时刻，不能串到其它日型
+        day_recs = {tid: dict(r) for tid, r in recs.items() if r["r"] & bit}
         c_by_tid, stats, warns = couplings.compute_couplings(day_recs, tmaps, tokkyu)
         n_pairs = sum(len(v) for v in c_by_tid.values()) // 2
         total_pairs += n_pairs

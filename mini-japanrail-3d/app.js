@@ -2555,7 +2555,8 @@ function delayApplyData(d, genMs) {
   const bit = dayBit, next = new Set();
   for (const e of list) {
     const n = Math.round(+e.delay_min);
-    if (!(n >= 1 && n <= 180)) continue;
+    /* 上限放宽到 1440 分:JR 北海道实测有 3h54m/5h13m 的真实晚点(官方核实),旧 180 分会整条误丢;超过一天的按脏数据处理 */
+    if (!(n >= 1 && n <= 1440)) continue;
     const key = (e && e.suki && e.suki[0] && e.suki[0].key != null) ? String(e.suki[0].key) : null;
     const depMin = delayHm(e && e.scheduled && e.scheduled.dep);
     if (key === null || depMin === null || !delayTmapIdx) continue;

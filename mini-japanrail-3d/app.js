@@ -167,6 +167,67 @@ function applyJoins(trips) {
   if (window.__dbgOn) console.log('[join] ' + joined + ' joins, ' + aligned + ' offset-aligned');
   return trips;
 }
+/* 関空快速×紀州路快速 併結补检(2026-10-29)：RailAround 把大阪環状線直通段并进関空快速记录
+   ——下り部分列车自天王寺始发绕环至京橋、上り部分列车过京橋后继续绕环回天王寺——两车记录的
+   始发/终点因此不同, pass1(同起点)与构建期 join(同终点)都漏检(248 班里仅 64 班带 cpl)。
+   这里只对 関/紀 的 京橋↔日根野 共享段做白名单补检: 站序逐站一致、逐站发车差≤4min、
+   连挂站发车差≤2min; 每条记录至多一个伙伴, 已有 cpl 的班次不动(保持 pass1/join 结果)。 */
+function buildHanwaCouplings(trips) {
+  const kan = [], ki = [];
+  for (let i = 0; i < trips.length; i++) {
+    const t = trips[i];
+    if (t.bad || (t.i !== '関' && t.i !== '紀') || (t.cpl && t.cpl.length)) continue;
+    const kq = t.jasN.indexOf('京橋'), hr = t.jasN.indexOf('日根野');
+    if (kq < 0 || hr < 0) continue;
+    (t.i === '関' ? kan : ki).push({ t, kq, hr });
+  }
+  const cand = [];
+  const addCand = (A0, B0, up) => {
+    const A = A0.t, B = B0.t;
+    const ia = up ? A0.hr : A0.kq, ib = up ? B0.hr : B0.kq;
+    const last = up ? '京橋' : '日根野';
+    let k = 0;
+    while (ia + k < A.N && ib + k < B.N && A.jasN[ia + k] === B.jasN[ib + k]) k++;
+    if (k < 4 || A.jasN[ia + k - 1] !== last || B.jasN[ib + k - 1] !== last) return;
+    const od = Math.abs(A.dep[ia] - B.dep[ib]);
+    if (od > 2) return;
+    let dev = 0, sum = 0;
+    for (let m = 0; m < k; m++) {
+      const d = Math.abs(A.dep[ia + m] - B.dep[ib + m]);
+      if (d > dev) dev = d;
+      sum += d;
+    }
+    if (dev > 4) return;
+    const w0 = Math.max(A.w0, B.w0), w1 = Math.min(A.w1, B.w1);
+    const t0 = Math.max(A.dep[ia], B.dep[ib], w0);
+    const t1 = Math.min(A.dep[ia + k - 1], B.dep[ib + k - 1], w1);
+    if (t0 > t1) return;
+    cand.push({ A, B, ia, ib, up, od, dev, sum, t0, t1 });
+  };
+  for (let a = 0; a < kan.length; a++) for (let b = 0; b < ki.length; b++) {
+    const A = kan[a], B = ki[b];
+    if (A.kq < A.hr && B.kq < B.hr) addCand(A, B, 0);   // 下り: 京橋连挂 → 日根野分割
+    if (A.hr < A.kq && B.hr < B.kq) addCand(A, B, 1);   // 上り: 日根野连挂(京橋解结)
+  }
+  cand.sort((x, y) => x.dev - y.dev || x.sum - y.sum || x.od - y.od || x.t0 - y.t0);
+  const used = new Set();
+  let pairs = 0;
+  for (let i = 0; i < cand.length; i++) {
+    const c = cand[i];
+    if (used.has(c.A) || used.has(c.B)) continue;
+    used.add(c.A); used.add(c.B);
+    const a = c.A, b = c.B;
+    (a.cpl = a.cpl || []).push({ p: b, t0: c.t0, t1: c.t1, split: '日根野', name: b.nm || b.i || '', join: c.up });
+    (b.cpl = b.cpl || []).push({ p: a, t0: c.t0, t1: c.t1, split: '日根野', name: a.nm || a.i || '', join: c.up });
+    if (c.od === 1) {                     // 连挂站差 1 分钟: 沿用 applyJoins 的时钟补偿
+      const late = a.dep[c.ia] > b.dep[c.ib] ? a : b;
+      late._coupleOff = 1; late._coupleT0 = c.t0; late._coupleT1 = c.t1;
+    }
+    pairs++;
+  }
+  if (window.__dbgOn) console.log('[hanwa] ' + pairs + ' pairs');
+  return trips;
+}
 /* 日本节假日 2024–2030(固定日 + 春分/秋分),振替休日与国民の休日按规则推导 */
 const HOLIDAY_BASE = {
   2024: [[1,1],[1,8],[2,12],[2,23],[3,20],[4,29],[5,3],[5,4],[5,5],[5,6],[7,15],[8,11],[9,16],[9,23],[10,14],[11,4],[11,23]],
@@ -3812,6 +3873,7 @@ async function boot() {
     tripList = await parseTripsAsync(tj, f => setPhase(IDX_PCT, PRS_PCT, f));
     buildCouplings(tripList); /* 併结/分割列车检测 */
     applyJoins(tripList); /* 上行併结:消费构建期预计算元数据 */
+    buildHanwaCouplings(tripList); /* 関空快速×紀州路快速:环状线绕环记录补检 */
     totalTripsToday = tj.n || tripList.length;
     dataReady = true;
     $('dBuild').textContent = tj.b || '-';
@@ -4815,6 +4877,7 @@ async function ensureDayFile() {
     tripList = await parseTripsAsync(tj);
     buildCouplings(tripList); /* 併结/分割列车检测(跨日重算) */
     applyJoins(tripList); /* 上行併结(跨日重算) */
+    buildHanwaCouplings(tripList); /* 関空快速×紀州路快速补检(跨日重算) */
     totalTripsToday = tj.n || tripList.length;
     $('dBuild').textContent = tj.b || '-';
     $('bCount').textContent = totalTripsToday.toLocaleString();

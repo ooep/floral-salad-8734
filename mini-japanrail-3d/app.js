@@ -2555,7 +2555,7 @@ function delayApplyData(d, genMs) {
   const bit = dayBit, next = new Set();
   for (const e of list) {
     const n = Math.round(+e.delay_min);
-    /* 上限放宽到 1440 分:JR 北海道实测有 3h54m/5h13m 的真实晚点(官方核实),旧 180 分会整条误丢;超过一天的按脏数据处理 */
+    /* 上限放宽到 1440 分:JR 北海道实测 3h54m(官网核实)乃至 5h13m 的真实晚点,旧 180 分会整条误丢;超过一天的按脏数据处理 */
     if (!(n >= 1 && n <= 1440)) continue;
     const key = (e && e.suki && e.suki[0] && e.suki[0].key != null) ? String(e.suki[0].key) : null;
     const depMin = delayHm(e && e.scheduled && e.scheduled.dep);
@@ -2589,23 +2589,29 @@ function delayApplyData(d, genMs) {
 }
 /* 併结/分割窗口内的晚点共享:t0～t1 两车是同一列物理编成,任一侧晚点即整体晚点,
    显示值取双方自身延误的最大值;窗口外(尚未连挂 / 已分割)各用数据源给的单车值。
-   窗口按分钟迭代重算,分割发生在 t1 之后立刻恢复各算各的。 */
+   窗口按分钟迭代重算;尾部按延误延长(实际分割发生在 t1+延误),其后恢复各算各的。 */
 function delaySyncCouples(M) {
   for (const t of delaySynced) { t.dly = t._dlyOwn || 0; t._fk = null; }
   delaySynced.clear();
   for (const t of delayedSet) if (t.dly !== (t._dlyOwn || 0)) { t.dly = t._dlyOwn || 0; t._fk = null; }
   if (!dayList) return;
   if (M === undefined) M = curMin();
-  const inWin = (t0, t1) => (M >= t0 && M <= t1) ||
-    (M + 1440 >= t0 && M + 1440 <= t1) || (M - 1440 >= t0 && M - 1440 <= t1);
+  /* 窗口尾部按编成延误 v 延长(M 或 M-v 命中窗口即共享):实际分割发生在 t1+v,
+     不延长会在仍物理连挂时提前「各算各的」。起点仍用名义 t0 —— 延误也可能是连挂
+     中途才出现,把起点向后推反而会漏掉本该共享的时段;此处只增不减,是旧行为的超集。 */
+  const inWin = (t0, t1, sh) => {
+    const m = M - (sh || 0);
+    return (m >= t0 && m <= t1) ||
+      (m + 1440 >= t0 && m + 1440 <= t1) || (m - 1440 >= t0 && m - 1440 <= t1);
+  };
   for (let i = 0; i < dayList.length; i++) {
     const t = dayList[i], cs = t.cpl;
     if (!cs) continue;
     for (let j = 0; j < cs.length; j++) {
       const c = cs[j], B = c.p;
-      if (!B || !inWin(c.t0, c.t1)) continue;
+      if (!B) continue;
       const v = Math.max(t._dlyOwn || 0, B._dlyOwn || 0);
-      if (!v) continue;
+      if (!v || (!inWin(c.t0, c.t1, 0) && !inWin(c.t0, c.t1, v))) continue;
       if (t.dly !== v) { t.dly = v; t._fk = null; delaySynced.add(t); }
       if (B.dly !== v) { B.dly = v; B._fk = null; delaySynced.add(B); }
     }

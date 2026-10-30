@@ -16,7 +16,7 @@ window.__loadClarity = function () {
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Mini JapanRail｜全日本列车实时运行可视化地图・列車走行位置・運行情報 | Japan Train Live Map</title>
 <meta name="baidu-site-verification" content="codeva-DigR5zzAl8" />
-<meta name="description" content="全日本列车实时运行可视化地图（列車走行位置・運行情報）：本地时刻表驱动，实时显示新干线・特急・在来线・地下铁・路面电车的列车走行位置与运行情报，覆盖 600+ 条线路、8,900+ 个车站、4,000+ 列列车，支持 3D 地球投影、时钟回放、路线搜索与车站查询，运行时零数据请求。日本全国の列車走行位置・運行情報がわかるリアルタイム鉄道マップ（走行シミュレーション）。Japan Train Live Map &amp; Real-Time Railway Tracker.">
+<meta name="description" content="全日本列车实时运行可视化地图（列車走行位置・運行情報）：本地时刻表驱动，实时显示新干线・特急・在来线・地下铁・路面电车的列车走行位置与运行情报，覆盖 600+ 条线路、8,900+ 个车站、4,000+ 列列车，支持 3D 地球投影、时钟回放、路线搜索与车站查询，列车数据随站点内置、无需实时数据接口。日本全国の列車走行位置・運行情報がわかるリアルタイム鉄道マップ（走行シミュレーション）。Japan Train Live Map &amp; Real-Time Railway Tracker.">
 <meta name="keywords" content="日本铁路,全日本铁路,日本铁路地图,日本铁路实时地图,日本列车实时位置,日本电车实时位置,日本列车实时追踪,列车运行可视化,列车运行可视化系统,列车运行情报,列车走行位置,列车实时位置,列车运行图,新干线实时位置,新干线地图,日本新干线,日本地铁地图,日本电车地图,日本铁路线路图,日本车站查询,日本列车时刻表,日本铁路3D地图,全日本列车在线,3D铁路地图,列車走行位置,列車運行情報,運行情報,リアルタイム列車位置,鉄道マップ,全国鉄道マップ,路線図,駅一覧,路線一覧,新幹線 走行位置,在来線 走行位置,特急 走行位置,電車 現在位置,鉄道 リアルタイム,走行シミュレーション,3D鉄道マップ,Japan train live map,Japan railway map,real-time train tracker,Japan train tracker,shinkansen live map,shinkansen tracker,Japan rail map,live train map,Japan train positions,Japanese railway map,Japan transit map,Japan 3D train map,Japan train timetable map">
 <meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large,max-video-preview:-1">
 <meta name="googlebot" content="index,follow,max-snippet:-1,max-image-preview:large">
@@ -55,6 +55,8 @@ window.__loadClarity = function () {
 <link rel="apple-touch-icon" sizes="180x180" href="https://jr-static.suki.ing/apple-touch-icon.png">
 <!-- maplibre CSS 非阻塞加载:启动遮罩/关键样式由页内 <style> 提供,其余面板样式由
      app.css(jr-static)并行加载,地图初始化在数据就绪后 —— 首帧不被跨域样式表阻塞 -->
+<link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin>
+<link rel="dns-prefetch" href="https://tiles.openfreemap.org">
 <link rel="preload" href="https://jr-static.suki.ing/vendor/maplibre/maplibre-gl.css" as="style" onload="this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://jr-static.suki.ing/vendor/maplibre/maplibre-gl.css"></noscript>
 <script>
@@ -271,7 +273,7 @@ button { font-family:inherit; }
     <h2 style="font-size:15px;margin:10px 0 4px">主要功能 / 主な機能 / Features</h2>
     <ul style="margin:0 0 6px 18px;padding:0;font-size:13px;color:#c7d3e6">
       <li>全日本列车实时位置与走行位置动画（新幹線・特急・在来線・地下鉄・路面電車）</li>
-      <li>3D 地球投影与 2D 平面地图切换、官方线路色轨道渲染</li>
+      <li>3D 地球投影与 2D/3D 视角切换（OpenFreeMap 矢量底图 3D 建筑，可换淡色 / 标准 / 卫星）、官方线路色轨道渲染</li>
       <li>时钟回放：任意时刻查看列车配置，0.5–32× 倍速播放</li>
       <li>起终点路线搜索（最短路 + 换乘）、车站查询与途经线路</li>
       <li>运行日切换（平日 / 周六 / 周日祝）、线路类型过滤</li>
@@ -284,7 +286,7 @@ button { font-family:inherit; }
       <dt><strong>新幹線の現在の走行位置はわかりますか？</strong></dt>
       <dd>はい。東海道・山陽・東北・北陸・九州など全国の新幹線の走行位置をリアルタイムで表示します。</dd>
       <dt><strong>データはどこから取得していますか？</strong></dt>
-      <dd>日本全国の鉄道の計画時刻表を元に構築しています（実際の遅延などの運行状況は含みません）。ページ実行時の外部リクエストはありません。</dd>
+      <dd>日本全国の鉄道の計画時刻表を元に構築しています（実際の遅延などの運行状況は含みません）。列車データはページ読み込み後に外部 API へ問い合わせません（地図タイルは OpenFreeMap / 国土地理院から読み込みます）。</dd>
       <dt><strong>Is this Japan train live map free?</strong></dt>
       <dd>Yes. It is a free, non-commercial hobby project; all data is based on scheduled timetables and provided for reference only.</dd>
     </dl>
@@ -303,6 +305,11 @@ button { font-family:inherit; }
     </div>
   </div>
 </div>
+
+<button id="btnView3d" type="button" aria-pressed="false" aria-label="3D 视角" title="3D 视角">
+  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.8 20 7v10l-8 4.2L4 17V7z"/><path d="M4 7l8 4.2 8-4.2M12 11.2V21"/></svg>
+  <span id="btnView3dLb">3D</span>
+</button>
 
 <div id="side">
   <div id="sideTabs">
@@ -360,10 +367,15 @@ button { font-family:inherit; }
         <div class="sw on" id="swBase"><span id="tSw4">底图瓦片</span><span class="trk"></span></div>
         <div class="sec-t" id="tBase" style="margin-top:12px">底图源</div>
         <div class="frow" id="baseSrcRow">
-          <button class="chip on" data-base="pale"><span id="bPale">淡色</span></button>
+          <button class="chip on" data-base="ofm"><span id="bOfm">矢量</span></button>
+          <button class="chip" data-base="pale"><span id="bPale">淡色</span></button>
           <button class="chip" data-base="std"><span id="bStd">标准</span></button>
-          <button class="chip" data-base="dark"><span id="bDark">深色</span></button>
           <button class="chip" data-base="sat"><span id="bSat">卫星</span></button>
+        </div>
+        <div class="sec-t" id="tView" style="margin-top:12px">地图视角</div>
+        <div class="frow" id="viewRow">
+          <button class="chip on" data-view="2d" id="vFlat">平面 2D</button>
+          <button class="chip" data-view="3d" id="vTilt">立体 3D</button>
         </div>
         <div class="sw on" id="swTrail"><span id="tSw5">列车光晕</span><span class="trk"></span></div>
         <div class="sw" id="swCopyBad"><span id="tSw6">复制异常车辆</span><span class="trk"></span></div>

@@ -147,14 +147,15 @@ const I18N = {
     searchT:'搜索', searchPh:'车站 / 线路(日·中·EN)…', routeT:'路线搜索', routeFrom:'起点站', routeTo:'终点站',
     tabRoute:'路线', aSearchPh:'搜索车站 / 线路…', badgeLive:'在途', badgeToday:'今日', noMatch:'无匹配结果',
     filterT:'线路类型', legendT:'图例', dayT:'运行日', dayAuto:'自动', setT:'设置', dataT:'数据', helpT:'帮助', aboutT:'关于',
-    about1:'Mini JapanRail — 全日本列车实时运行可视化地图（列車走行位置・運行情報）。基于本地时刻表在浏览器端实时推算新干线・特急・在来线・地铁・路面电车约 4,000 列列车的走行位置，支持 3D 地球投影、时钟回放与路线搜索。', about2:'收录全国 600+ 条铁路线路、8,900+ 个车站。数据源为日本全国铁路计划时刻表，每周自动刷新；页面运行时零外部请求。', about3:'本站为个人爱好项目，数据仅供学习参考。', about4:'隐私政策',
-    about5:'主要功能：实时列车位置・走行位置动画 / 3D 地球投影 / 时钟回放（0.5–32×）/ 起终点路线搜索 / 车站查询与途经线路 / 运行日切换 / 线路类型过滤 / 日・中・英三语。', about6:'浏览静态页面：',
+    about1:'Mini JapanRail — 全日本列车实时运行可视化地图（列車走行位置・運行情報）。基于本地时刻表在浏览器端实时推算新干线・特急・在来线・地铁・路面电车约 4,000 列列车的走行位置，支持 3D 地球投影、时钟回放与路线搜索。', about2:'收录全国 600+ 条铁路线路、8,900+ 个车站。列车数据源为日本全国铁路计划时刻表，每周自动刷新；底图来自 OpenFreeMap / 国土地理院等公开地图服务。', about3:'本站为个人爱好项目，数据仅供学习参考。', about4:'隐私政策',
+    about5:'主要功能：实时列车位置・走行位置动画 / 3D 地球投影与 2D/3D 视角切换（矢量底图 3D 建筑）/ 时钟回放（0.5–32×）/ 起终点路线搜索 / 车站查询与途经线路 / 运行日切换 / 线路类型过滤 / 日・中・英三语。', about6:'浏览静态页面：',
     sw1:'车站标签', sw2:'轨道光晕', sw3:'车站点', sw4:'底图瓦片', sw5:'列车光晕', sw6:'复制异常车辆', sw7:'列车悬浮提示', sw8:'车站轮廓', sw9:'出入口', sw10:'详细股道', sw12:'车站徽章', sw13:'高倍率 3D 列车模型', sw14:'实时列车延误', dlyAgo:'来自互联网 · 数据 {0} 分钟前', dlyLate:'晚点', cfoTitle:'车内状况', cfoLow:'宽松', cfoMid:'略挤', cfoHigh:'拥挤', cfoAvg:'5日均', cfoGreen:'绿色车厢', cfoTemp:'车内温度', cfoAccess:'无障碍', cfoWheel:'轮椅', cfoStroller:'婴儿车', cfoWifi:'Wi-Fi', cfoToilet:'厕所', cfoLuggage:'行李架', cfoWifiNote8000:'JR四国官方：8000/8600系车设有免费Wi-Fi，8000系仅部分车厢（非实时信息）', cfoWifiNote2700:'JR四国官方：2700/2600系车设有免费Wi-Fi（非实时信息）', cfoWifiNoteML:'JR四国官方：快速マリンライナー仅绿色车厢・指定席设有免费Wi-Fi（非实时信息）', cfoCarsHint:'点按展开每车厢拥挤度', cfoCarTip:'{0}号车 {1}%',
     m3dRowL:'模型', m3dBtn:'查看 3D 模型', m3dHint:'拖动旋转 · 滚轮/双指缩放 · 选视点自动回中', m3dLoadT:'正在加载模型…', m3dNone:'该车型暂无 3D 模型', m3dVpL:'视点', m3dMdL:'编组', m3dVp:['斜视','侧面','正面','俯视'], m3dMdAll:'全编组', m3dMdHead:'先头车', m3dMdAuto:'自动旋转', m3dDOp:'运营商', m3dDCars:'编组', m3dDLen:'编组长', m3dDDim:'车体', m3dDUnit:'辆', m3dSaved:'已保存截图',
     sw11:'性能改善', sw11Note:'只渲染新干线・特急，放大后逐级加入其他列车',
     modeT:'列车显示', mode3d:'3D', modeIcon:'图标', modeCute:'可爱',
     iconSetT:'图标集', iSetDefault:'默认', iSetVector:'矢量', iconSetNote:'仅"图标"模式生效',
-    baseT:'底图源', bPale:'淡色', bStd:'标准', bDark:'深色', bSat:'卫星',
+    baseT:'底图源', bOfm:'矢量', bPale:'淡色', bStd:'标准', bSat:'卫星',
+    viewT:'地图视角', vFlat:'平面 2D', vTilt:'立体 3D',
     d1:'在途列车', d2:'今日班次', d3:'运行日', d4:'线路 / 车站', d5:'时刻表构建', d6:'帧率',
     now:'回到现在', station:'车站', line:'线路', stops:'站', transfers:'换乘', routeMile:'里程', routeNone:'未找到连通路径(请检查站名)',
     routeSame:'起终点相同', badStation:'找不到车站', h1:'拖动平移 · 滚轮缩放 · 右键旋转/倾斜', h2:'点击列车 = 详情 + 相机跟随 · 点空白取消',
@@ -189,14 +190,15 @@ const I18N = {
     searchT:'検索', searchPh:'駅 / 路線(日·中·EN)…', routeT:'経路検索', routeFrom:'出発駅', routeTo:'到着駅',
     tabRoute:'路線', aSearchPh:'駅 / 路線を検索…', badgeLive:'走行中', badgeToday:'本日', noMatch:'該当なし',
     filterT:'路線種別', legendT:'凡例', dayT:'運行日', dayAuto:'自動', setT:'設定', dataT:'データ', helpT:'ヘルプ', aboutT:'このサイトについて',
-    about1:'ミニ日本鉄道 — 全国鉄道リアルタイム3Dマップ（列車走行位置・運行情報）。ローカル時刻表から新幹線・特急・在来線・地下鉄・路面電車 約 4,000 列の走行位置をブラウザ上でリアルタイムに再現。3D 地球投影・時刻表再生・経路検索に対応。', about2:'全国 600 以上の路線・8,900 以上の駅を収録。データソースは全国鉄道の計画時刻表で、毎週自動更新。ページ実行時の外部リクエストはありません。', about3:'個人の趣味プロジェクトです。データは学習・参考用です。', about4:'プライバシーポリシー',
-    about5:'主な機能：リアルタイム列車位置・走行位置アニメーション / 3D 地球投影 / 時刻表再生（0.5〜32倍速）/ 経路検索 / 駅検索と経由路線 / 運行日切替 / 路線種別フィルタ / 日・中・英 3 言語。', about6:'静的ページを見る：',
+    about1:'ミニ日本鉄道 — 全国鉄道リアルタイム3Dマップ（列車走行位置・運行情報）。ローカル時刻表から新幹線・特急・在来線・地下鉄・路面電車 約 4,000 列の走行位置をブラウザ上でリアルタイムに再現。3D 地球投影・時刻表再生・経路検索に対応。', about2:'全国 600 以上の路線・8,900 以上の駅を収録。列車データは全国鉄道の計画時刻表で毎週自動更新。ベースマップは OpenFreeMap / 国土地理院などの公開地図サービスを利用しています。', about3:'個人の趣味プロジェクトです。データは学習・参考用です。', about4:'プライバシーポリシー',
+    about5:'主な機能：リアルタイム列車位置・走行位置アニメーション / 3D 地球投影と 2D/3D 視点切替（ベクター地図の 3D 建物）/ 時刻表再生（0.5〜32倍速）/ 経路検索 / 駅検索と経由路線 / 運行日切替 / 路線種別フィルタ / 日・中・英 3 言語。', about6:'静的ページを見る：',
     sw1:'駅ラベル', sw2:'軌道グロー', sw3:'駅ドット', sw4:'背景タイル', sw5:'列車グロー', sw6:'異常列車コピー', sw7:'列車ホバーチップ', sw8:'駅舎ポリゴン', sw9:'出入口', sw10:'詳細軌道', sw12:'駅バッジ', sw13:'高倍率 3D 列車モデル', sw14:'リアルタイム列車遅延', dlyAgo:'インターネットから · データ {0} 分前', dlyLate:'遅延', cfoTitle:'車内状況', cfoLow:'空いている', cfoMid:'やや混雑', cfoHigh:'混雑', cfoAvg:'5日平均', cfoGreen:'グリーン車', cfoTemp:'車内温度', cfoAccess:'バリアフリー', cfoWheel:'車いす', cfoStroller:'ベビーカー', cfoWifi:'Wi-Fi', cfoToilet:'トイレ', cfoLuggage:'荷物置き', cfoWifiNote8000:'JR四国公式：8000系・8600系車両で無料Wi-Fiあり。8000系は一部車両のみ（リアルタイム情報ではありません）', cfoWifiNote2700:'JR四国公式：2700系・2600系車両で無料Wi-Fiあり（リアルタイム情報ではありません）', cfoWifiNoteML:'JR四国公式：快速マリンライナーはグリーン席・指定席のみ無料Wi-Fiあり（リアルタイム情報ではありません）', cfoCarsHint:'車両別の混雑度を表示', cfoCarTip:'{0}号車 {1}%',
     m3dRowL:'モデル', m3dBtn:'3Dモデルを見る', m3dHint:'ドラッグで回転・ホイール/2本指でズーム · 視点を選ぶと中央に戻ります', m3dLoadT:'モデルを読み込み中…', m3dNone:'この車種の3Dモデルはありません', m3dVpL:'視点', m3dMdL:'編成', m3dVp:['斜め','側面','正面','上面'], m3dMdAll:'全編成', m3dMdHead:'先頭車', m3dMdAuto:'自動回転', m3dDOp:'事業者', m3dDCars:'編成', m3dDLen:'編成長', m3dDDim:'車体', m3dDUnit:'両', m3dSaved:'スクリーンショットを保存しました',
     sw11:'パフォーマンス改善', sw11Note:'低ズームでは新幹線・特急のみ描画し、拡大するにつれ他の列車を段階的に追加',
     modeT:'列車表示', mode3d:'3D', modeIcon:'アイコン', modeCute:'かわいい',
     iconSetT:'アイコンセット', iSetDefault:'標準', iSetVector:'ベクター', iconSetNote:'「アイコン」モードのみ有効',
-    baseT:'ベースマップ', bPale:'淡色', bStd:'標準', bDark:'ダーク', bSat:'衛星',
+    baseT:'ベースマップ', bOfm:'ベクター', bPale:'淡色', bStd:'標準', bSat:'衛星',
+    viewT:'地図視点', vFlat:'平面 2D', vTilt:'立体 3D',
     d1:'運行中列車', d2:'本日列車', d3:'運行日', d4:'路線 / 駅', d5:'時刻表構築', d6:'フレーム率',
     now:'現在に戻る', station:'駅', line:'路線', stops:'駅', transfers:'乗換', routeMile:'距離', routeNone:'連絡経路なし(駅名確認)',
     routeSame:'同一点', badStation:'駅が見つかりません', h1:'ドラッグ移動 · ホイール拡縮 · 右回転/傾き', h2:'列車クリック = 詳細 + 追跡 · 空白で解除',
@@ -231,14 +233,15 @@ const I18N = {
     searchT:'Search', searchPh:'Station / Line (JA·ZH·EN)…', routeT:'Route search', routeFrom:'From', routeTo:'To',
     tabRoute:'Route', aSearchPh:'Search station / line…', badgeLive:'Live', badgeToday:'Today', noMatch:'No matches',
     filterT:'Line types', legendT:'Legend', dayT:'Service day', dayAuto:'Auto', setT:'Settings', dataT:'Data', helpT:'Help', aboutT:'About',
-    about1:'Mini JapanRail — a real-time 3D map of all Japan railways (train live positions). Driven by local timetables, it animates the positions of ~4,000 Shinkansen, limited express, local, subway and tram trains, with 3D globe projection, timetable replay and route search.', about2:'Covers 600+ railway lines and 8,900+ stations. Data source: scheduled timetables for all Japan railways, auto-refreshed weekly; zero external requests at runtime.', about3:'A personal hobby project — data provided for reference only.', about4:'Privacy Policy',
-    about5:'Key features: live train positions / 3D globe projection / timetable replay (0.5–32×) / route search / station lookup and its lines / service-day switch / line-type filter / Japanese, Chinese and English UI.', about6:'Browse static pages:',
+    about1:'Mini JapanRail — a real-time 3D map of all Japan railways (train live positions). Driven by local timetables, it animates the positions of ~4,000 Shinkansen, limited express, local, subway and tram trains, with 3D globe projection, timetable replay and route search.', about2:'Covers 600+ railway lines and 8,900+ stations. Train data comes from scheduled timetables for all Japan railways, auto-refreshed weekly; basemaps are served by public map services such as OpenFreeMap and GSI Japan.', about3:'A personal hobby project — data provided for reference only.', about4:'Privacy Policy',
+    about5:'Key features: live train positions / 3D globe projection with 2D/3D view toggle (extruded buildings on the vector basemap) / timetable replay (0.5–32×) / route search / station lookup and its lines / service-day switch / line-type filter / Japanese, Chinese and English UI.', about6:'Browse static pages:',
     sw1:'Station labels', sw2:'Track glow', sw3:'Station dots', sw4:'Basemap tiles', sw5:'Train glow', sw6:'Copy off-rail trains', sw7:'Train hover tooltip', sw8:'Station footprint', sw9:'Station exits', sw10:'Detailed tracks', sw12:'Station badges', sw13:'High-zoom 3D train models', sw14:'Live train delays', dlyAgo:'from web · data {0} min ago', dlyLate:'delayed', cfoTitle:'Onboard conditions', cfoLow:'Roomy', cfoMid:'Busy', cfoHigh:'Crowded', cfoAvg:'5-day avg', cfoGreen:'Green car', cfoTemp:'Car temp', cfoAccess:'Accessible', cfoWheel:'wheelchair', cfoStroller:'stroller', cfoWifi:'Wi-Fi', cfoToilet:'toilet', cfoLuggage:'luggage', cfoWifiNote8000:'JR Shikoku: free Wi-Fi on 8000/8600 series trains; some 8000-series cars only (not live data)', cfoWifiNote2700:'JR Shikoku: free Wi-Fi on 2700/2600 series trains (not live data)', cfoWifiNoteML:'JR Shikoku: Marine Liner offers free Wi-Fi in green cars and reserved seats only (not live data)', cfoCarsHint:'Tap for per-car crowding', cfoCarTip:'Car {0}: {1}%',
     m3dRowL:'Model', m3dBtn:'View 3D model', m3dHint:'Drag to rotate · Scroll/pinch to zoom · Picking a view re-centers', m3dLoadT:'Loading model…', m3dNone:'No 3D model for this type', m3dVpL:'View', m3dMdL:'Consist', m3dVp:['Diagonal','Side','Front','Top'], m3dMdAll:'Full', m3dMdHead:'Head car', m3dMdAuto:'Auto-rotate', m3dDOp:'Operator', m3dDCars:'Cars', m3dDLen:'Length', m3dDDim:'Car', m3dDUnit:' cars', m3dSaved:'Screenshot saved',
     sw11:'Performance boost', sw11Note:'Only Shinkansen and limited express are drawn at low zoom; other trains are added progressively as you zoom in',
     modeT:'Train display', mode3d:'3D', modeIcon:'Icon', modeCute:'Cute',
     iconSetT:'Icon set', iSetDefault:'Default', iSetVector:'Vector', iconSetNote:'Applies to "Icon" mode only',
-    baseT:'Basemap', bPale:'Pale', bStd:'Standard', bDark:'Dark', bSat:'Satellite',
+    baseT:'Basemap', bOfm:'Vector', bPale:'Pale', bStd:'Standard', bSat:'Satellite',
+    viewT:'Map view', vFlat:'2D', vTilt:'3D',
     d1:'Active trains', d2:'Trips today', d3:'Service day', d4:'Lines / Stations', d5:'Timetable built', d6:'FPS',
     now:'Now', station:'Station', line:'Line', stops:'stops', transfers:'transfers', routeMile:'Distance', routeNone:'No connected route (check names)',
     routeSame:'Same stations', badStation:'Station not found', h1:'Drag to pan · Scroll to zoom · Right-drag rotate/tilt', h2:'Click train = detail + follow · Blank = cancel',
@@ -447,7 +450,8 @@ function lmStart() {
 const FILES_PCT = 55, IDX_PCT = 78, PRS_PCT = 97;
 /* 数据版本号:segments/stations/station_map 等静态数据每次变更时必须递增,
    否则 IndexedDB 缓存可能让旧数据(如已修的幽灵直线)继续生效 */
-const DATA_VERSION = '2026-10-30b';   // 静态数据变更必须递增(refresh.yml 已自动递增)——不递增会让老访客 IDB 旧索引×新时刻表错配「乱飞」(2026-10-25 事故,见 PERF.md)
+const DATA_VERSION = '2026-10-30d';   // 静态数据变更必须递增(refresh.yml 已自动递增)——不递增会让老访客 IDB 旧索引×新时刻表错配「乱飞」(2026-10-25 事故,见 PERF.md)
+// 2026-10-30c: register() 单侧已知站的反向段定向(成田線 久住/大戸 不在站表)→ 索引构建逻辑变更,须重建
 // 2026-10-15a: tokkyu.json 修正——関空快速/紀州路快速 的签名不再误标为 はるか/くろしお
 //   （二者为快速级 225系通勤电车，只在阪和線・関西空港線内运行；はるか/くろしお 必経東海道本線）
 //   修正后 t.nm 取到 関空快速/紀州路快速，命中 ATLAS.tokkyu 的通勤电车图标(215)，不再误用特急车头。
@@ -773,7 +777,17 @@ function resolveCoord(rawName, lineSet, prevCoord) {
     if (allNear) return cands[0].coords;
   }
   let best = null, bestScore = -1, bracketMatched = false;
-  for (const c of cands) {
+  /* 括号注记为都道府県(江北(佐賀県))而候选站登记了别的都道府県(東京都) → 直接排除该候选。
+     佐賀 江北 不在站表,候选只剩东京同名站与段端点反哺坐标,靠线名强匹配(長崎本線=3)选对;
+     注意运营者名('西武鉄道''九州旅客鉄道')也以「道」结尾,不是行政区划 —— 只认 都/府/県/北海道 */
+  const prefBr = /[都府県]$/.test(bracket) || bracket === '北海道';
+  let pool = cands;
+  if (prefBr) {
+    const p2 = bracket.slice(0, 2);
+    const filtered = cands.filter(c => !(/(都|府|県)$/.test(c.op || '') || c.op === '北海道') || (c.op || '').slice(0, 2) === p2);
+    if (filtered.length) pool = filtered;
+  }
+  for (const c of pool) {
     let score = 0, brScore = 0;
     if (bracket) {
       if (c.op && (c.op.includes(bracket.slice(0, 2)) || bracket.slice(0, 2).includes(c.op.slice(0, 2)))) { brScore += 4; }
@@ -787,20 +801,23 @@ function resolveCoord(rawName, lineSet, prevCoord) {
     }
     if (score > bestScore) { bestScore = score; best = c; }
   }
-  /* 括号注记(县名后缀)存在但无候选匹配 → 不能仅凭弱线路匹配(includes/norm)就选定,
-     否则「別府(大分県)」会被山陽電鉄「本線」候选(鹿児島本線.includes(本線)=2)抢走,
-     错配到兵庫県。阈值从 2 提高到 4,此时 fallthrough 到 prevCoord 地理连续性消歧。 */
-  const scoreThreshold = (bracket && !bracketMatched) ? 4 : 2;
+  /* 括号注记(县名后缀)未被任何候选佐证时,只信「强线名匹配」(3: 完全相同/规范化相等/映射表):
+     包含式弱匹配(2)会串到 id 相近的其他线(別府(大分県)↔山陽電鉄「本線」);
+     强匹配则要求线名规范化后等价,跨城同名线几乎不存在。原阈值 4 连强匹配一起挡掉,
+     站表缺站时(小川(熊本県)/荒尾(熊本県) 只剩外地同名候选)整站坐标丢失 */
+  const scoreThreshold = (bracket && !bracketMatched) ? 3 : 2;
   if (bestScore >= scoreThreshold && best) return best.coords;
   if (prevCoord) {
     let bd = 1e18, bc = null;
-    for (const c of cands) {
+    for (const c of pool) {
       const dx = (c.coords[0] - prevCoord[0]) * Math.cos((c.coords[1] + prevCoord[1]) * Math.PI / 180);
       const dy = c.coords[1] - prevCoord[1];
       const d = dx * dx + dy * dy;
       if (d < bd) { bd = d; bc = c; }
     }
-    if (bc) return bc.coords;
+    /* 地理连续性只认可信距离:相邻站间 >60km 的「最近候选」是另一座城市的同名站
+       (白沢(秋田県) 只剩 名鉄河和線/指宿枕崎線, 最近也有 300km),宁缺勿错 */
+    if (bc && Math.sqrt(bd) * 111.32 <= 60) return bc.coords;
   }
   return null;
 }
@@ -1059,15 +1076,31 @@ async function buildStaticIndexAsync(onPhase) {
   });
   segIndex = new Map(); adj = new Map();
   const polyCache = new Map();
+  /* 同名站跨城坐标防护:站表按名去重只留首个同名站(江北 = 東京 舎人ライナー),该坐标若离
+     本段两端点都 >30km 就是同名异城站,不能拿来定向 —— 否则 佐賀→江北 段被判反向,
+     江北 候选被反登记成佐賀 坐标,列车停站后跨城瞬移 911km */
+  function staCoordNearSeg(c, coords) {
+    if (!c) return null;
+    return (geoKm(c, coords[0]) < 30 || geoKm(c, coords[coords.length - 1]) < 30) ? c : null;
+  }
   function register(a, b, coords, line, color, kind) {
     /* 方向修复:源数据部分段 from/to 与坐标方向相反(如上越新幹線「大宮|熊谷」coords 实为熊谷→大宮),
        导致路径从错误端开始。用站表权威坐标判断:coords[0] 应接近 key 前站 */
     if (coords.length >= 2) {
-      const ca = stationCoord.get(normName(a));
-      const cb = stationCoord.get(normName(b));
+      const ca = staCoordNearSeg(stationCoord.get(normName(a)), coords);
+      const cb = staCoordNearSeg(stationCoord.get(normName(b)), coords);
       if (ca && cb && geoKm(ca, cb) > 0.5 && geoKm(coords[0], cb) + geoKm(coords[coords.length - 1], ca) <
                        geoKm(coords[0], ca) + geoKm(coords[coords.length - 1], cb)) {
         coords = coords.slice().reverse();
+      } else if ((ca || cb) && !(ca && cb)) {
+        /* 单侧已知:对端站不在站表(成田線 久住/大戸),双端判定失效 —— 只要求已知站落在
+           对应端。该段反向注册曾把成田/久住 停站坐标互换、佐原取到大戸坐标,列车在
+           下総神崎→大戸 整区间折返。异端须明显更近(差 >0.25km)且 <2.5km 才翻转,
+           防跨城同名站坐标(叡山本線 八幡前 ~108km)误判 */
+        const k = ca || cb, isA = !!ca;
+        const d0 = geoKm(coords[0], k), d1 = geoKm(coords[coords.length - 1], k);
+        const want = isA ? d0 : d1, other = isA ? d1 : d0;
+        if (other + 0.25 < want && other < 2.5) coords = coords.slice().reverse();
       }
     }
     let pc = polyCache.get(coords);
@@ -1117,18 +1150,24 @@ async function buildStaticIndexAsync(onPhase) {
   for (const f of segFC.features) {
     const p = f.properties, g = f.geometry;
     const parts = g.type === 'MultiLineString' ? g.coordinates : [g.coordinates];
+    const lnk = normName(p.line);
     for (const co of parts) {
       if (co.length < 2) continue;
       const fm = normName(p.from), to = normName(p.to);
-      const cfa = stationCoord.get(fm), cta = stationCoord.get(to);
+      /* 线语境坐标优先(同名站按线消歧),否则用距本段端点 <30km 的站表坐标 */
+      const cfa = stationCoordLine.get(lnk + '|' + fm) || staCoordNearSeg(stationCoord.get(fm), co);
+      const cta = stationCoordLine.get(lnk + '|' + to) || staCoordNearSeg(stationCoord.get(to), co);
       let c0 = co[0], cN = co[co.length - 1];
       /* 方向修复:原始段可能 from/to 与坐标方向相反(如 宇都宮|黒磯 段 co 实为黒磯→宇都宮),
          登记端点必须与站名对应,否则把相邻站坐标混入候选(近距合并被 16km 噪声破坏) */
       if (cfa && cta && geoKm(c0, cta) + geoKm(cN, cfa) < geoKm(c0, cfa) + geoKm(cN, cta)) {
         c0 = co[co.length - 1]; cN = co[0];
       }
-      addCand(fm, '', p.line, c0);
-      addCand(to, '', p.line, cN);
+      /* 单段要素且已知站坐标离对应端点 >2.5km → 该端点不是这个站(残段/错标),不入候选 */
+      const okA = parts.length === 1 ? (!cfa || geoKm(c0, cfa) <= 2.5) : true;
+      const okN = parts.length === 1 ? (!cta || geoKm(cN, cta) <= 2.5) : true;
+      if (okA) addCand(fm, '', p.line, c0);
+      if (okN) addCand(to, '', p.line, cN);
     }
   }
   /* ===== 修复:轨道段网格索引(投影接入) ===== */
@@ -1403,19 +1442,95 @@ function buildTripGeo(tid, N, jas, lines, arr, dep) {
   const lineSet = new Set(linesN);
   const smStops = officialStopsFor(tid, N);
   function stopCoordAt(i) {
-    if (smStops && smStops[i]) return smStops[i];
-    if (i - 1 >= 0) { const e = segIndex.get(jasN[i-1] + '|' + jasN[i]); if (e) return e[0].coords[e[0].coords.length - 1]; }
-    if (i + 1 < N) { const e = segIndex.get(jasN[i] + '|' + jasN[i+1]); if (e) return e[0].coords[0]; }
-    for (const ln of linesN) { const c = stationCoordLine.get(ln + '|' + jasN[i]); if (c) return c; }
-    const prev = i > 0 ? stopC[i - 1] : null;
-    const c = resolveCoord(jas[i], linesN, prev);
+    /* 两侧相邻轨道段在本站的端点若重合(同一几何流水线,差 <0.1km)= 轨道给出的站址。
+       三河知立 2024 迁址:station_map 官方站坐标(旧站) 与 segments3d 轨道(新站)
+       差 0.88km,官方坐标优先会让列车在旧站位置停、发车瞬移上新线。两端自洽时
+       以轨道端点为准(0.3km 内视为正常偏差不折腾,>2km 视为错段不动) */
+    let segJoint = null;
+    if (i - 1 >= 0 && i + 1 < N) {
+      const ep = segIndex.get(jasN[i-1] + '|' + jasN[i]), en = segIndex.get(jasN[i] + '|' + jasN[i+1]);
+      if (ep && en) {
+        const p1 = ep[0].coords[ep[0].coords.length - 1], p2 = en[0].coords[0];
+        if (geoKm(p1, p2) < 0.1) segJoint = p1;
+      }
+    }
+    if (smStops && smStops[i]) {
+      const sm = smStops[i];
+      if (segJoint && geoKm(sm, segJoint) > 0.3 && geoKm(sm, segJoint) < 2) return segJoint;
+      return sm;
+    }
+    let c = null;
+    if (i - 1 >= 0) { const e = segIndex.get(jasN[i-1] + '|' + jasN[i]); if (e) c = e[0].coords[e[0].coords.length - 1]; }
+    if (!c && i + 1 < N) { const e = segIndex.get(jasN[i] + '|' + jasN[i+1]); if (e) c = e[0].coords[0]; }
+    /* 段端点与已有停靠点重合而站名不同 = 官方残段退化(成田線 久住/大戸 不在站表,
+       两段共用同一端点):骨架出现零长弦,该区间整段冻结在站上。视为无坐标,交给
+       站表线语境/跨站路径/骨架兜底 */
+    const dup = p => {
+      if (!p) return false;
+      for (let j = 0; j < i; j++) {
+        const q = stopC[j];
+        if (q && jasN[j] !== jasN[i] && Math.abs(p[0] - q[0]) + Math.abs(p[1] - q[1]) < 2e-3) return true;
+      }
+      return false;
+    };
+    if (c && dup(c)) c = null;
+    /* 段端点冒充站坐标:南千住|三河島 871m 残段的尾端在 南千住 站心 2.35km 外(邻线岔口),
+       直接采用会让列车停错位置、发车瞬移 2.35km。站表有本站线语境坐标时以它为准校验 */
+    if (c) {
+      let ref = null;
+      for (const ln of linesN) { const r0 = stationCoordLine.get(ln + '|' + jasN[i]); if (r0) { ref = r0; break; } }
+      if (ref && geoKm(c, ref) > 1.2) c = null;
+    }
+    if (!c) for (const ln of linesN) { const c2 = stationCoordLine.get(ln + '|' + jasN[i]); if (c2 && !dup(c2)) { c = c2; break; } }
     if (c) return c;
+    /* 地理消歧锚点取「最近的前一个已知停靠点」而不是 i-1:i-1 可能是 バルーンさが 这类
+       无坐标临时站,锚点一丢,江北 就按全局站表取到东京的同名站(日暮里・舎人ライナー),
+       到站瞬间瞬移 911km */
+    let prev = null;
+    for (let j = i - 1; j >= 0; j--) if (stopC[j]) { prev = stopC[j]; break; }
+    const c3 = resolveCoord(jas[i], linesN, prev);
+    if (c3 && !dup(c3)) return c3;
+    /* 多候选同名站且线路/邻站信号都没选中 → 宁缺勿错:全局回退会跨城(江北 佐賀/東京) */
+    const cands = stationCands.get(jasN[i]);
+    if (cands && cands.length > 1) return null;
     const g = stationCoord.get(jasN[i]);
-    if (g) return g; /* 站表首候选兜底:骨架 400km/h 校验会丢弃跨城错配点 */
+    if (g && !dup(g)) {
+      /* 单候选也查线名:站表缺本站时,唯一候选可能是外地同名站(小川 西武拝島線 vs 鹿児島本線) */
+      const c0 = cands && cands[0];
+      if (c0 && c0.line && lineSet.size && !lineMatches(lineSet, c0.line)) return null;
+      return g;
+    }
     return null; /* 不做全局同名回退:跨城同名站会把骨架拉到另一座城市(列车乱飞的根因) */
   }
   const stopC = new Array(N);
   for (let i = 0; i < N; i++) stopC[i] = stopCoordAt(i);
+  /* 同名站跨城污染清洗:站表缺站时(白沢(秋田県)/小川(熊本県))只剩外地同名候选,停站坐标
+     可能远在另一座城市,列车发车瞬间跨城瞬移 600-880km。相邻站隐含 >500km/h 本已不可能,
+     超速对由「离全班次站点中位数更远」的一方认领污染(真站不会和邻站构成超速对) */
+  {
+    const known = [];
+    for (let i = 0; i < N; i++) if (stopC[i]) known.push(i);
+    if (known.length >= 2) {
+      const lngs = known.map(i => stopC[i][0]).sort((a, b) => a - b);
+      const lats = known.map(i => stopC[i][1]).sort((a, b) => a - b);
+      const cLng = lngs[lngs.length >> 1], cLat = lats[lats.length >> 1];
+      const cosC = Math.cos(cLat * Math.PI / 180);
+      const far = p => Math.hypot((p[0] - cLng) * cosC, p[1] - cLat);
+      const kmh = (a, b) => {
+        const h = Math.max(0.01, (arr[b] - dep[a]) / 60);
+        const dx = (stopC[b][0] - stopC[a][0]) * cosC * 111.32;
+        const dy = (stopC[b][1] - stopC[a][1]) * 110.57;
+        return Math.hypot(dx, dy) / h;
+      };
+      const kill = new Set();
+      for (let k = 1; k < known.length; k++) {
+        const a = known[k - 1], b = known[k];
+        if (kill.has(a) || kill.has(b) || kmh(a, b) <= 500) continue;
+        kill.add(far(stopC[a]) >= far(stopC[b]) ? a : b);
+      }
+      for (const i of kill) stopC[i] = null;
+    }
+  }
   // 坐标骨架:相邻已知站间隐含时速 > 400km 的坐标视为错配,剔除
   const skX = [], skY = [], skStop = [];
   let lastGood = null;
@@ -1714,7 +1829,10 @@ function officialStopsFor(tid, N) {
 function locateSeg(t, M2) {
   const { arr, N } = t;
   let i = t._i;
-  if (i === undefined || i >= N - 1) i = 0;
+  /* 归零时连同时间锚一起清掉:越界调用(M=arr[N-1]+ε)会把 _i 推到 N-1,下一次小 M
+     调用归零后若仍保留越界的 _iM,M2 < _iM 会走回退分支而 i 已是 0 → 始终返回区间 0,
+     列车瞬移回起点(2026-10-30 审计:末区间停站采样点跳到首站) */
+  if (i === undefined || i >= N - 1) { i = 0; t._iM = undefined; }
   if (M2 >= (t._iM === undefined ? -1e9 : t._iM)) {
     while (i < N - 1 && M2 > arr[i + 1]) i++;
   } else {
@@ -1784,41 +1902,117 @@ function orientSeg(t, i, e) {
   if (geoKm(a, co[co.length - 1]) + 0.05 < geoKm(a, co[0])) return revSegEntry(e);
   return e;
 }
-/* 沿线前瞻取方位角(站内短距近重复点会让单段弦长退化,见二十二轮修复)。
-   la 单位 km, 与行车分支同一前瞻窗 —— 停站朝向与出发首帧才能接上。
-   默认从区间起点(行车首帧位置)读向;仅当尾端明显更近(>300m)才认定几何反向、
-   从尾部反读 —— 北千住站心落在股道末端外几十米,按"最近端"会把整段读反。 */
-function aheadBrg(co, c, la) {
-  const n = co.length, win = la == null ? 0.03 : la;
-  let s = 0;
-  if (c && geoKm(c, co[n - 1]) + 0.3 < geoKm(c, co[0])) s = n - 1;
-  const dir = s ? -1 : 1;
-  let acc = 0, j = 1;
-  while (j < n && acc < win) { acc += geoKm(co[s + (j - 1) * dir], co[s + j * dir]); j++; }
-  const p0 = co[s], pk = co[s + Math.min(j, n - 1) * dir];
-  if (Math.abs(pk[0] - p0[0]) + Math.abs(pk[1] - p0[1]) > 1e-6)
-    return Math.atan2(pk[0] - p0[0], pk[1] - p0[1]);
-  const e = co[s + (n - 1) * dir];
-  return Math.atan2(e[0] - p0[0], e[1] - p0[1]);
+/* 路径在里程 target 处的朝向:与行车分支同一算法(30m 前瞻,近重复点退化回子段弦)。
+   停站朝向取「出发首帧位置」的朝向 —— 停车朝向与发车方向必然一致,不再按站心最近端
+   猜读数方向(柏→新柏 环形兜底路径上会读反 180°,停站图标朝西、发车瞬间朝东)。 */
+function pathBrgAt(co, cum, target, len) {
+  const n = co.length;
+  if (n < 2) return undefined;
+  const tgt = Math.max(0, Math.min(target, len));
+  let lo = 1, hi = n - 1;
+  while (lo < hi) { const mid = (lo + hi) >> 1; if (cum[mid] < tgt) lo = mid + 1; else hi = mid; }
+  const k = lo, c0 = co[k - 1], c1 = co[k];
+  const segLen = cum[k] - cum[k - 1];
+  const f = segLen <= 0 ? 0 : (tgt - cum[k - 1]) / segLen;
+  const x = c0[0] + (c1[0] - c0[0]) * f, y = c0[1] + (c1[1] - c0[1]) * f;
+  const la = Math.min(len, tgt + Math.min(0.03, len * 0.25));
+  let j = k;
+  while (j < n - 1 && cum[j] < la) j++;
+  const pj = co[j];
+  if (Math.abs(pj[0] - x) + Math.abs(pj[1] - y) > 2e-5) return Math.atan2(pj[0] - x, pj[1] - y);
+  return Math.atan2(c1[0] - c0[0], c1[1] - c0[1]);
+}
+/* 站 i 的坐标(停站分支专用):班次站坐标 → 线语境解析 → 全局站表。
+   缺站坐标的临时站(偕楽園/バルーンさが 等)不能借用下一站坐标 —— 否则整个停站期间
+   列车显示在几公里外的下一站(佐賀 dwell 时跳到バルーンさが位置、往返跳变)。 */
+function stopPoint(t, i) {
+  const c = t.stopC && t.stopC[i];
+  if (c) return c;
+  const cache = t._spc || (t._spc = []);
+  if (cache[i] !== undefined) return cache[i];
+  const lsT = t.lineSet || (t.lineSet = new Set(t.lines));
+  let prevC = null;
+  for (let j = i - 1; j >= 0; j--) { const q = t.stopC && t.stopC[j]; if (q) { prevC = q; break; } }
+  let r = resolveCoord(t.jas[i], lsT, prevC);
+  if (!r) {
+    /* 同名站在别的城市(江北 佐賀/東京):多候选无信号时不要全局兜底,否则停站跳到 900km 外 */
+    const cands = stationCands.get(t.jasN[i]);
+    if (!(cands && cands.length > 1)) r = stationCoord.get(t.jasN[i]) || null;
+  }
+  /* 站表缺本站时唯一候选可能是别的线路的同名站(石川(奥羽本線) 只剩 弘南鉄道大鰐線 石川,
+     距真实站 1.2km):与 stopCoordAt 同规则做线名核对,不匹配则视为无坐标 */
+  if (r) {
+    const c0 = (stationCands.get(t.jasN[i]) || [])[0];
+    if (c0 && c0.line && lsT.size && !lineMatches(lsT, c0.line)) r = null;
+  }
+  /* 重解析会把 buildTripGeo 已按 >500km/h 清掉的跨城同名站复活:田沢湖線 神代(秋田県)
+     不在站表,重解析只剩 神代(山口県,山陽線) → 停站图标画到 978km 外。用同一阈值
+     与相邻已知停站复核,超速即视为错配,宁可无坐标(退回区间几何起点) */
+  if (r) {
+    const tooFast = (a, b, ta, tb) => {
+      const h = (tb - ta) / 60;
+      return h > 0 && geoKm(a, b) / h > 500;
+    };
+    let pj = i - 1; while (pj >= 0 && !t.stopC[pj]) pj--;
+    if (pj >= 0 && tooFast(t.stopC[pj], r, t.dep[pj], t.arr[i])) r = null;
+    let nj = i + 1; while (nj < t.N && !t.stopC[nj]) nj++;
+    if (r && nj < t.N && tooFast(r, t.stopC[nj], t.dep[i], t.arr[nj])) r = null;
+  }
+  cache[i] = r;
+  return r;
+}
+/* 本段主几何(按 班次×区间 缓存):pickSeg → 定向 → 站端吸附。停站朝向与行车共用同一对象,
+   吸附必须在这里做 —— stopBearing 先于 trainPosition 缓存时也拿到吸附后的几何 */
+function legSegEntry(t, i) {
+  if (t._seg && t._seg[i] !== undefined) return t._seg[i];
+  let e = orientSeg(t, i, pickSeg(t, t.jasN[i], t.jasN[i + 1], t.stopC && t.stopC[i], i) || null);
+  if (e) {
+    const sn = snapToStops(t, i, e.coords);
+    if (sn) e = { coords: sn.coords, cum: sn.cum, len: sn.len, line: e.line, kind: e.kind };
+  }
+  (t._seg = t._seg || [])[i] = e;
+  return e;
 }
 /* 停站朝向:_pos 为全列车共享数组,分支必须自己赋值 —— 否则图标朝向沿用上一辆车的方位,
-   站内每帧随机转(快速みえ 伊勢市 2026-10-30)。几何优先级与行车路径一致:
-   站对分段 → 官方区间折线 → 兜底路径 → 站间向量;结果按 班次×站 缓存,几何静态。 */
+   站内每帧随机转(快速みえ 伊勢市 2026-10-30)。几何与行车路径同源:
+   站对分段 → 兜底路径(内含 officialPath,带端点覆盖校验)→ 站间向量;按 班次×站 缓存。
+   朝向取行车在 dep[i] 时刻的起点朝向(跨站兜底路径用「到站时刻」锚点),与出发首帧一致。 */
 function stopBearing(t, i, c) {
   const cache = t._sbrg || (t._sbrg = []);
   let b = cache[i];
   if (b !== undefined) return b;
-  const A = t.jasN[i], B = t.jasN[i + 1];
-  let e;
-  if (t._seg && t._seg[i] !== undefined) e = t._seg[i];
-  else { e = orientSeg(t, i, pickSeg(t, A, B, t.stopC && t.stopC[i]) || null); (t._seg = t._seg || [])[i] = e; }
-  let co = null, glen = 0;
-  if (e) { co = e.coords; glen = e.len; }
-  if (!co) { const op = officialPath(t, i); if (op) { co = op.coords; glen = op.len; } }
-  if (!co) { const fb = fallbackSeg(t, i); if (fb && fb.coords) { co = fb.coords; glen = fb.len; } }
-  if (co && co.length >= 2) b = aheadBrg(co, c, Math.min(0.03, glen * 0.25));
+  let e = legSegEntry(t, i);
+  let co = null, cum = null, glen = 0, f0 = 0;
+  if (e) { co = e.coords; cum = e.cum; glen = e.len; }
+  if (!co) {
+    const fb = fallbackSeg(t, i);
+    if (fb && fb.coords) {
+      co = fb.coords; cum = fb.cum; glen = fb.len;
+      if (fb.m1 > fb.m0) f0 = Math.min(1, Math.max(0, (t.arr[i] - fb.m0) / (fb.m1 - fb.m0)));
+    }
+  }
+  if (co && cum && co.length >= 2) b = pathBrgAt(co, cum, f0 * glen, glen);
   if (b === undefined || !isFinite(b)) {
-    const a = (t.stopC && t.stopC[i]) || c, d = t.stopC && t.stopC[i + 1];
+    /* 骨架线兜底(缺站坐标/缺几何的班次):取站 i 在骨架上的已知停靠点,朝向沿骨架 ——
+       松原 曾因该分支缺失落到「站间向量=0」,停站图标朝北、发车瞬间跳 170° */
+    if (t.skCum && t.skLen > 0) {
+      let k0 = -1, k1 = -1;
+      for (let k = 0; k < t.skStop.length; k++) { if (t.skStop[k] <= i) k0 = k; if (k1 < 0 && t.skStop[k] >= i + 1) { k1 = k; break; } }
+      if (k0 < 0) k0 = 0;
+      if (k1 < 0) k1 = t.skStop.length - 1;
+      /* 骨架是「站坐标折线」,换线站(つばさ 福島:東北本線进站 → 奥羽本線去米沢)在站内
+         形成 76° 折角。与运动分支同式解出「dep 时刻落点所在子段」的朝向:发车首帧即该
+         朝向,取到站弦会让图标在发车瞬间原地翻转 */
+      const kA = Math.max(k0, 0), kB = Math.max(kA, Math.min(k1, t.skStop.length - 1));
+      const tgt = t.skCum[kA] + 1e-9 * (t.skCum[kB] - t.skCum[kA]);
+      let lo = 1, hi = t.skCum.length - 1;
+      while (lo < hi) { const mid = (lo + hi) >> 1; if (t.skCum[mid] < tgt) lo = mid + 1; else hi = mid; }
+      const k = lo;
+      if (t.skCum[k] > t.skCum[k - 1]) b = Math.atan2(t.skX[k] - t.skX[k - 1], t.skY[k] - t.skY[k - 1]);
+    }
+  }
+  if (b === undefined || !isFinite(b)) {
+    const a = c || stopPoint(t, i), d = stopPoint(t, i + 1);
     b = a && d && Math.abs(a[0] - d[0]) + Math.abs(a[1] - d[1]) > 1e-9
       ? Math.atan2(d[0] - a[0], d[1] - a[1]) : 0;
   }
@@ -1832,6 +2026,37 @@ function pathCovers(p, cA, cB) {
   const h = p.coords[0], tl = p.coords[p.coords.length - 1];
   return Math.min(geoKm(cA, h) + geoKm(cB, tl), geoKm(cB, h) + geoKm(cA, tl)) <= 5;
 }
+/* 路径真正连接两站:首尾必须「各自」贴近对应的站(成对校验),且长度不能显著短于站距。
+   pathCovers 的 5km 总量容差会把残段放进来 —— 桃園|伊勢中川 3.1km 区间取到 626m 残段
+   (首端离桃園 2.6km),列车整段以 12km/h 蠕行,发车瞬间先平移 2.6km */
+function pathAnchors(p, cA, cB) {
+  if (!p || !p.coords || p.coords.length < 2) return false;
+  const h = p.coords[0], tl = p.coords[p.coords.length - 1];
+  const chord = geoKm(cA, cB);
+  const tol = Math.min(2.5, Math.max(0.6, chord * 0.4));
+  const fwd = geoKm(cA, h) <= tol && geoKm(cB, tl) <= tol;
+  const rev = geoKm(cB, h) <= tol && geoKm(cA, tl) <= tol;
+  if (!fwd && !rev) return false;
+  if (p.len < chord * 0.3) return false;
+  return true;
+}
+/* 站端吸附:行车几何首/尾离站坐标有可见距离(残段端点、股道偏移、线间距)时,用直弦把
+   站坐标接上 —— 停站画在站坐标、行车画在几何端点,切换瞬间平移 0.3-2km 的「发车瞬移」。
+   弦长上限 = 区间站距的一半(超过说明选错路径,不遮丑,交给 pathAnchors 弃用) */
+function snapToStops(t, i, coords) {
+  const cA = t.stopC && t.stopC[i], cB = t.stopC && t.stopC[i + 1];
+  if (!cA && !cB) return null;
+  const chord = cA && cB ? geoKm(cA, cB) : 0;
+  const lim = Math.max(0.5, chord * 0.5);
+  const gH = cA ? geoKm(cA, coords[0]) : 0, gT = cB ? geoKm(cB, coords[coords.length - 1]) : 0;
+  if (gH <= 0.03 && gT <= 0.03) return null;
+  if (gH > lim || gT > lim) return null;
+  const path = [];
+  if (gH > 0.03) path.push([cA[0], cA[1]]);
+  for (const p of coords) path.push(p);
+  if (gT > 0.03) path.push([cB[0], cB[1]]);
+  return withLen(path);
+}
 /* per-trip 区间路径兜底(站坐标消歧/同段截取/站序折线/骨架):
    对同一班次是固定结果 —— 按 班次×区间 缓存,行车路径与停站朝向共用,
    渲染帧不再重复 resolveCoord/segSubPath/bfs/route */
@@ -1842,13 +2067,16 @@ function fallbackSeg(t, i) {
   const A = t.jasN[i], B = t.jasN[i + 1];
   let path = null;
   const lsT = t.lineSet || (t.lineSet = new Set(t.lines));
-  const prevC = i > 0 ? (t.stopC[i - 1] || null) : null;
-  let cA = t.stopC[i] || resolveCoord(t.jas[i], lsT, prevC) || stationCoord.get(A) || null;
-  let cB = t.stopC[i + 1] || resolveCoord(t.jas[i + 1], lsT, cA) || stationCoord.get(B) || null;
+  /* 站坐标必须走 stopPoint 的线名校验 + 500km/h 相邻停站复核,不能裸用 stationCoord:
+     水戸線 大和(茨城県) 缺站表坐标,同名全局兜底命中 大和(神奈川県) → 新治|大和 兜底路径
+     长 145.9km(经常磐線→東海道→横浜線),列车 4 分钟"飞"过東京往返(2026-10-30 t=11867) */
+  let cA = stopPoint(t, i);
+  let cB = stopPoint(t, i + 1);
   /* 防跨城同名错配:站距 >300km 视为站表错配(岡本/野崎等跨城同名),放弃该坐标走上下游骨架 */
   if (cA && cB && geoKm(cA, cB) > 300) cB = null;
-  let a2 = -1, b2 = -1, m0 = 0, m1 = 1;
+  let a2 = -1, b2 = -1, m0 = 0, m1 = 1, single = false;
   if (cA && cB) {
+    single = true;
     /* 二十三轮链序对调:officialPath(逐区间官方折线,端点=时刻表站对,方向带负lid反转)权威优先;
        segSubPath 邻段投影截取退居其次 —— 市区短站距下错误邻段端点可同时落入端点容差
        (七隈線 六本松→桜坂 被 別所|六本松 段截反),官方几何在场时不应被其遮蔽 */
@@ -1856,9 +2084,11 @@ function fallbackSeg(t, i) {
     for (const cd of [officialPath(t, i), segSubPath(A, B, cA, cB, lsT), findPathOnLines(A, B, lsT, t.jas[i], t.jas[i+1]), bridgePath(A, B, lsT, t.jas[i], t.jas[i+1]), routeByStops(A, B, lsT)]) {
       if (!cd) continue;
       if (!first) first = cd;
-      if (pathCovers(cd, cA, cB)) { path = cd; break; }
+      if (pathCovers(cd, cA, cB) && pathAnchors(cd, cA, cB)) { path = cd; break; }
     }
-    if (!path) path = first; /* 全部不合格:保留旧行为,交给下方终点校验/骨架兜底 */
+    /* 全部不合格(残段/错端) → 不保留「第一条」将就:宁可交给骨架线直线插值,
+       也不让列车沿错误几何蠕行并在发车瞬间平移数百米 */
+    if (!path && first && pathAnchors(first, cA, cB)) path = first;
     m0 = t.dep[i]; m1 = Math.max(t.arr[i+1], m0 + 1);
   } else {
     /* 区间站无坐标:用上下游最近已知站对重建轨道路径(磐越西線五泉→津川 真实几何),时间映射到该站对 */
@@ -1870,20 +2100,22 @@ function fallbackSeg(t, i) {
     m0 = a2 >= 0 ? t.dep[a2] : t.dep[i];
     m1 = b2 > a2 ? Math.max(t.arr[b2], m0 + 1) : Math.max(t.arr[i+1], m0 + 1);
   }
-  /* 方向对齐:fallback 路径必须 A→B(上一站→下一站),反了则反转 */
-  if (path && t.stopC[i] && t.stopC[i+1]) {
+  /* 方向对齐:路径必须从本段出发侧走向到达侧。跨站兜底(i/i+1 缺坐标)时用重建路径
+     两端 a2/b2 的站坐标对齐 —— 否则 佐賀→バルーンさが→江北 的 15km 兜底路径反向,
+     列车从江北起步(出发瞬间瞬移 13.6km) */
+  const sA = t.stopC[i] || (a2 >= 0 && t.stopC[a2] ? t.stopC[a2] : null);
+  if (path && sA) {
     const c0 = path.coords[0], c1 = path.coords[path.coords.length - 1];
-    if (geoKm(t.stopC[i], c1) < geoKm(t.stopC[i], c0)) path = withLen(path.coords.slice().reverse());
+    if (geoKm(sA, c1) < geoKm(sA, c0)) path = withLen(path.coords.slice().reverse());
   }
-  fb = { coords: path ? path.coords : null, cum: path ? path.cum : null, len: path ? path.len : 0, line: '', kind: '', m0, m1, clamp: false };
+  /* 站端吸附(见 snapToStops):小间距的端点偏移直接补弦,消除发车瞬间平移 */
+  if (path) { const sn = snapToStops(t, i, path.coords); if (sn) path = sn; }
+  fb = { coords: path ? path.coords : null, cum: path ? path.cum : null, len: path ? path.len : 0, line: '', kind: '', m0, m1, single, clamp: false };
   /* 站锚定判定(二十三轮):officialPath/segSubPath 的路径首尾即站坐标(≤2.5km)。
      直通运行的班次名义线路 ≠ 实际走行线(相鉄直通 海老名→大和 名义東海道本線),
      锚定路径若再按名义 lineSet 钳制,会被整段拽到名义线路上 = 串线。锚定 → 信任路径跳过钳制。 */
   let anchored = false;
-  if (fb.coords && cA && cB) {
-    const hh = fb.coords[0], tt = fb.coords[fb.coords.length - 1];
-    anchored = Math.min(geoKm(cA, hh), geoKm(cB, hh)) <= 2.5 && Math.min(geoKm(cA, tt), geoKm(cB, tt)) <= 2.5;
-  }
+  if (fb.coords && cA && cB) anchored = pathAnchors(fb, cA, cB);
   /* 钳制预检(生成时一次):路径中点若偏离途经线路 >8km → 直接把路径替换为
      投影段的几何(保证全程在线), 渲染帧零钳制开销 —— 避免每帧 distToLineSet+projToTrack
      网格全扫(大阪等密段区单次 ~10ms, 是卡顿元凶) */
@@ -1900,14 +2132,8 @@ function fallbackSeg(t, i) {
       } else fb.clamp = true; /* 投影失败(离线>10km 无段): 保持原路径, 渲染帧不再尝试钳制 */
     }
   }
-  /* 终点校验:fb 首尾应落在 cA/cB 附近(合法链源端点均为站坐标)。
-     同名站错配(有楽町→豊洲 解析到 11km 外)产出远地路径 → 弃用,末段落回骨架线插值 */
-  if (fb.coords && cA && cB) {
-    const h = fb.coords[0], tl = fb.coords[fb.coords.length - 1];
-    const dH2 = Math.min(geoKm(cA, h), geoKm(cB, h));
-    const dT2 = Math.min(geoKm(cA, tl), geoKm(cB, tl));
-    if (dH2 > 2.5 || dT2 > 2.5) { fb.coords = null; fb.cum = null; fb.len = 0; }
-  }
+  /* 终点校验(成对,见 pathAnchors):同名站错配/残段路径弃用,末段落回骨架线插值 */
+  if (fb.coords && cA && cB && !pathAnchors(fb, cA, cB)) { fb.coords = null; fb.cum = null; fb.len = 0; }
   fc[i] = fb;
   return fb;
 }
@@ -1946,6 +2172,10 @@ function trainPosition(t, M) {
   }
   if (M < dep[0] - 1e-6 || M > arr[N-1] + 1e-6) { t._fk = null; return null; }
   let i = locateSeg(t, M);
+  /* 越过末班到站时刻的那 1e-6 容差窗口:locateSeg 会返回 N-1(不存在的区间),
+     下方按 arr[i+1]=undefined 解算得到兜底残段(曾把列车画到起点站)。钳回末区间,
+     frac 由 trapez 饱和到 1 = 停在终点站 */
+  if (i > N - 2) i = N - 2;
   let shifted = false, isMain = false;
   let ckLo = 0, ckSpan = 0, cc0x = 0, cc0y = 0, cdx = 0, cdy = 0, cbrg = 0;
   /* 零时长区间前瞻: 下一区间 run=0 且其平滑窗已开始(本站无停车可借时窗口提前到
@@ -1975,26 +2205,27 @@ function trainPosition(t, M) {
       else frac = 0;
     }
   }
+  /* 零运行时长区间在平滑窗之前同样处于「本站停车」状态:此时 frac=0 并非行车,
+     位置应取站坐标而非区间几何起点(世田谷代田→下北沢 曾偏移 117m) */
+  if (!shifted && frac <= 0 && M < dep[i] - 1e-9) frac = -1;
   const A = t.jasN[i], B = t.jasN[i+1];
   if (frac < 0) {
     // 停車中:站位置(预计算,几何对齐)+ 朝向 = 本区间轨道方向
     /* M ∈ (arr[i], dep[i]) 时列车停在"区间起点站 i"(如 静岡 470-478 停站期),
-       取 stopC[i] 而非 stopC[i+1](下一站), 否则停车时显示到下一站(跑过头) */
-    const c = t.stopC[i] || t.stopC[i + 1];
+       只取站 i 自己的坐标 —— 缺坐标时退到几何起点,绝不借用 stopC[i+1]:
+       临时站(偕楽園 等)无站表坐标,旧逻辑会把停站列车画在下一站再缩回。 */
+    const c = stopPoint(t, i);
     if (c) {
       _pos[2] = stopBearing(t, i, c);
       const e = t._seg[i];
       _pos[0] = c[0]; _pos[1] = c[1]; _pos[3] = e ? e.line : lineOfPair(t, i); _pos[4] = kindOfPair(t, i); _pos[5] = 0;
       return _pos;
     }
-    /* 无坐标站停车(磐越西線咲花/日出谷等):fallthrough 到已知站对路径定位,列车不消失 */
+    /* 无坐标站停车(磐越西線咲花/日出谷/偕楽園等):frac 归零,由下方区间几何
+       定位到出发股道起点(列车不消失、也不跑到下一站) */
+    frac = 0;
   }
-  let segEntry;
-  if (t._seg && t._seg[i] !== undefined) segEntry = t._seg[i];
-  else {
-    segEntry = orientSeg(t, i, pickSeg(t, A, B, t.stopC[i]) || null);
-    (t._seg = t._seg || [])[i] = segEntry;
-  }
+  let segEntry = legSegEntry(t, i);
   let coords = null, cum = null, len = 0, line = '', kind = '';
   let fPos = frac;
   if (segEntry) { coords = segEntry.coords; cum = segEntry.cum; len = segEntry.len; line = segEntry.line; kind = segEntry.kind; isMain = true; }
@@ -2002,13 +2233,24 @@ function trainPosition(t, M) {
     const fb = fallbackSeg(t, i);
     if (fb.coords) {
       coords = fb.coords; cum = fb.cum; len = fb.len; line = fb.line; kind = fb.kind;
-      fPos = (fb.m0 === dep[i] && fb.m1 === arr[i+1]) ? frac : (fb.m1 > fb.m0 ? Math.min(1, Math.max(0, (M - fb.m0) / (fb.m1 - fb.m0))) : 0);
+      /* single = 兜底路径就是本区间(两端站坐标齐全)。零运行时长区间的 m1 被抬到
+         dep+1 防除零,旧条件 fb.m1===arr[i+1] 不成立 → f0/f1 双 0 → 整段映射成起点站:
+         土佐電 1 分钟区间在发车瞬间从上一站瞬移 0.4km。single 时直接沿用平滑 frac */
+      if (fb.single && fb.m0 === dep[i]) fPos = frac;
+      else if (fb.m1 > fb.m0) {
+        /* 跨站兜底路径的时间窗覆盖多站(缺坐标临时站):以「本段到站时刻」对应的里程为
+           停站锚点,出发后按本段自身时刻 0→1 推进。旧全局线性映射把停车时段也算成行进,
+           停站图标一边显示 0km/h 一边缓慢滑动、发车瞬间再跳数百米(偕楽園/バルーンさが) */
+        const f0 = Math.min(1, Math.max(0, (arr[i] - fb.m0) / (fb.m1 - fb.m0)));
+        const f1 = Math.min(1, Math.max(0, (arr[i+1] - fb.m0) / (fb.m1 - fb.m0)));
+        fPos = f0 + (f1 - f0) * Math.min(1, Math.max(0, frac));
+      } else fPos = 0;
     }
   }
   if (coords) {
     if (len <= 0) {
       _pos[0] = coords[0][0]; _pos[1] = coords[0][1];
-      _pos[2] = aheadBrg(coords, t.stopC && t.stopC[i]);
+      _pos[2] = pathBrgAt(coords, cum, 0, len);
     }
     else {
       const target = fPos * len;
@@ -2080,9 +2322,11 @@ function trainPosition(t, M) {
     return _pos;
   }
   if (frac <= 0 || frac >= 1) {
-    const c = t.stopC[frac < 0.5 ? i : i + 1];
+    const atEnd = frac >= 1;
+    const c = stopPoint(t, atEnd ? i + 1 : i);
     if (c) {
-      _pos[0] = c[0]; _pos[1] = c[1]; _pos[2] = stopBearing(t, i, c);
+      _pos[0] = c[0]; _pos[1] = c[1];
+      _pos[2] = stopBearing(t, atEnd ? Math.min(i + 1, N - 2) : i, c);
       _pos[3] = lineOfPair(t, i); _pos[4] = kindOfPair(t, i); _pos[5] = 0;
       return _pos;
     }
@@ -2093,23 +2337,46 @@ function trainPosition(t, M) {
    高崎|熊谷 只登记了 26m 的北陸新幹線/上越線碎片(真实上越新幹線几何按 本庄早稲田 拆分登记),
    挑中后整段长度≈0,列车在高崎停 13 分钟后瞬移到熊谷。真实几何应端点在两站上、长度不短于
    两站直线距离;不合格候选一律剔除,全部不合格则返回 null 交给 officialPath/segSubPath 按坐标解析 */
-function segUsable(e, A, B) {
-  const ca = stationCoord.get(normName(A)), cb = stationCoord.get(normName(B));
-  if (!ca || !cb || !e.coords || e.coords.length < 2) return true;
+function segUsable(e, A, B, cA0, cB0) {
+  if (!e.coords || e.coords.length < 2) return true;
+  /* 班次自身的停站坐标(含官方映射)优先:站表缺该站(夢洲)时也要能校验残段 */
+  const ca = cA0 || stationCoord.get(normName(A)), cb = cB0 || stationCoord.get(normName(B));
+  if (!ca || !cb) return true;
   const chord = geoKm(ca, cb);
-  if (chord < 3) return true;
   const co = e.coords;
-  const d0 = geoKm(co[0], ca), d1 = geoKm(co[co.length - 1], cb);
-  if (d0 + d1 > 2 + chord * 0.5) return false;
+  const h = co[0], tl = co[co.length - 1];
+  /* 短站距也要验长度:源数据存在只登记了「终点站侧一小段」的残段(片町線 大阪城北詰|京橋
+     141m / 東北線 南千住|三河島 871m / 副都心線 氷川台|小竹向原 213m),旧逻辑 chord<3
+     直接放行 → 列车在站上停着,发车瞬间跳到几百米~2km 外的残段起点。真实轨道长度必
+     ≥ 两站直线距离(站坐标与轨道的偏移算 0.5km 容差) */
+  if (e.len + 0.5 < chord) return false;
+  if (chord < 3) {
+    /* 短站距没有长度余量判别残段/旧站址几何,直接验两端分别落在两站附近(允许条目反向存放)。
+       容差 0.45km 起、随站距放宽 —— 東唐津 1.30km 旧站址段(两端离两站都 >1.3km)、
+       下今市 0.78km 旧段 在此剔除,改选正确几何;三河知立 只有一条(站已搬迁)时
+       由 pickSeg 的「无合格候选才保留线名匹配」分支放行并靠站端吸附收口 */
+    const lim = Math.max(0.45, chord * 0.6);
+    const fwd = geoKm(h, ca) <= lim && geoKm(tl, cb) <= lim;
+    const rev = geoKm(h, cb) <= lim && geoKm(tl, ca) <= lim;
+    return fwd || rev;
+  }
+  if (geoKm(h, ca) + geoKm(tl, cb) > 2 + chord * 0.5) return false;
   if (e.len < chord * 0.3) return false;
   return true;
 }
 /* 同一站对可能有多条平行段(不同线/上下行/异地同名站):
    优先本班次所乘线路,再按与前一停靠点的地理连续性消歧 */
-function pickSeg(t, A, B, prev) {
-  let arr = segIndex.get(A + '|' + B);
-  if (!arr || !arr.length) return null;
-  arr = arr.filter(e => segUsable(e, A, B));
+function pickSeg(t, A, B, prev, i) {
+  const raw = segIndex.get(A + '|' + B);
+  if (!raw || !raw.length) return null;
+  /* 用本班次的停站坐标做锚点(站表可能缺站/过时),剔除残段与旧站址几何 */
+  const cA0 = (i != null && t.stopC) ? t.stopC[i] : null;
+  const cB0 = (i != null && t.stopC) ? t.stopC[i + 1] : null;
+  let arr = raw.filter(e => segUsable(e, A, B, cA0, cB0));
+  /* 全部候选都过不了站端校验 = 该站对只登记了残段(高崎|熊谷 146m 上越新幹線碎片、
+     彦根|米原 220m 東海道線碎片、雀宮|宇都宮 294m 日光線碎片等)。不得回退到 raw:
+     残段起点在几公里外的另一站,列车停站时还正常、发车瞬间瞬移(とき 熊谷→高崎 39.4km、
+     雀宮→宇都宮 7.6km)。返回 null 交给 officialPath/segSubPath 按站坐标解析真实几何 */
   if (!arr.length) return null;
   if (t.lineSet && t.lineSet.size) {
     for (const e of arr) if (lineMatches(t.lineSet, e.line)) return e;
@@ -2143,7 +2410,7 @@ function pickSeg(t, A, B, prev) {
 }
 function lineOfPair(t, i) {
   if (t._lof && t._lof[i] !== undefined) return t._lof[i];
-  const e = pickSeg(t, t.jasN[i], t.jasN[i+1], t.stopC[i]);
+  const e = pickSeg(t, t.jasN[i], t.jasN[i+1], t.stopC[i], i);
   let r = e ? e.line : '';
   if (!r && t.lines && t.lines.length) {
     /* 该站对无本班次段(官方几何兜底):不能直接取 t.lines[0] —— とき 高崎→熊谷
@@ -2169,7 +2436,7 @@ function pairKm(t, i) {
   const e = segIndex.get(A + '|' + B);
   if (e) {
     /* pickSeg 对纯新干线车(无并行在来线段候选)返回 null → 不能直接取 .len,走官方 lid 几何或坐标兜底 */
-    const pe = pickSeg(t, A, B);
+    const pe = pickSeg(t, A, B, t.stopC && t.stopC[i], i);
     if (pe) {
       /* 同站对可能存在多条并行线且长度不同(如 姪浜|福岡空港:箱崎線 5.0km vs 空港線 13.2km),
          缓存键必须带线路名,否则后访问的线路会命中先到者缓存,时速显示错误 */
@@ -3629,31 +3896,68 @@ function updateTrains(M, dtms) {
 }
 
 /* ---------------- 地图初始化 ---------------- */
-/* 底图源:dim=1 时应用压暗去饱和蒙版(突出轨道/列车);卫星(dim=0)保持原色高清 */
+/* 底图:默认 OpenFreeMap 矢量深色(道路/水域/建筑随缩放细化,z14+ 支持 3D 建筑挤出),
+   栅格源保留作备用(矢量源不可达、弱网或想看图面时切换)。
+   dim=1 时应用压暗去饱和蒙版(突出轨道/列车);卫星(dim=0)保持原色高清。 */
+const OFM_STYLE_URL = 'https://tiles.openfreemap.org/styles/dark';
 const BASEMAPS = {
-  pale: { tiles: ['https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png'], attr: '国土地理院', dim: 1, sat: -0.85, bmax: 0.34, bmin: 0.02, ctr: 0.12, op: 0.96 },
-  std:  { tiles: ['https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png'], attr: '国土地理院', dim: 1, sat: -0.8,  bmax: 0.42, bmin: 0.05, ctr: 0.1,  op: 0.95 },
-  dark: { tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}'], attr: 'Esri / OpenStreetMap', dim: 1, sat: -0.3, bmax: 0.7, bmin: 0.15, ctr: 0.08, op: 0.94 },
-  sat:  { tiles: ['https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg'], attr: '国土地理院 空中写真', dim: 0 },
+  ofm:  { vec: 1, attr: '© OpenFreeMap · © OpenStreetMap contributors' },
+  pale: { tiles: ['https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png'], attr: '© 国土地理院', dim: 1, sat: -0.85, bmax: 0.34, bmin: 0.02, ctr: 0.12, op: 0.96 },
+  std:  { tiles: ['https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png'], attr: '© 国土地理院', dim: 1, sat: -0.8,  bmax: 0.42, bmin: 0.05, ctr: 0.1,  op: 0.95 },
+  sat:  { tiles: ['https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg'], attr: '© 国土地理院 空中写真', dim: 0 },
 };
-let baseKey = localStorage.getItem('mjr3d_base') || 'pale';
-if (!BASEMAPS[baseKey]) baseKey = 'pale';
+let baseKey = localStorage.getItem('mjr3d_base') || 'ofm';
+if (baseKey === 'dark') baseKey = 'ofm'; /* 旧「深色(Esri 栅格)」并入矢量深色 */
+if (!BASEMAPS[baseKey]) baseKey = 'ofm';
+/* 矢量底图运行态:样式是否可用 / 原样式图层 id 与原始可见性(切栅格时整组隐藏) */
+let ofmOK = false, ofmLayerIds = [], ofmLayerVis = {};
+/* 地图视角:2D 俯视 / 3D 倾斜 + 建筑挤出;默认 2D(与原俯视行为一致) */
+let view3d = localStorage.getItem('mjr3d_view') === '3d';
+function rasterPaintOf(bm) {
+  return bm.dim
+    ? { 'raster-saturation': bm.sat, 'raster-brightness-max': bm.bmax, 'raster-brightness-min': bm.bmin, 'raster-contrast': bm.ctr, 'raster-opacity': bm.op, 'raster-fade-duration': 0 }
+    : { 'raster-saturation': 0, 'raster-brightness-max': 1.0, 'raster-brightness-min': 0.0, 'raster-contrast': 0.12, 'raster-opacity': 1.0, 'raster-fade-duration': 0 };
+}
+function setOfmVisible(on) {
+  if (!map) return;
+  for (const id of ofmLayerIds) {
+    if (!map.getLayer(id)) continue;
+    try { map.setLayoutProperty(id, 'visibility', on ? (ofmLayerVis[id] || 'visible') : 'none'); } catch (e) {}
+  }
+}
+function applyBuildings() {
+  if (!map || !map.getLayer('bld-3d')) return;
+  const on = view3d && baseKey === 'ofm' && !PERF_LOW && $('swBase').classList.contains('on');
+  try { map.setLayoutProperty('bld-3d', 'visibility', on ? 'visible' : 'none'); } catch (e) {}
+}
+/* 底图整组显隐(swBase 开关 + 矢量/栅格互斥):矢量与栅格两套底图常驻同一 style,
+   切换只切 visibility,不 setStyle —— 轨道/车站/列车等自定义图层永不被重建 */
+function applyBaseVisibility() {
+  const vis = $('swBase').classList.contains('on');
+  const vec = baseKey === 'ofm';
+  setOfmVisible(vis && vec);
+  if (map && map.getLayer('basemap')) { try { map.setLayoutProperty('basemap', 'visibility', vis && !vec ? 'visible' : 'none'); } catch (e) {} }
+  applyBuildings();
+}
 function setBasemap(key) {
+  if (key === 'dark') key = 'ofm';
+  if (key === 'ofm' && !ofmOK) key = 'pale'; /* 矢量样式本次会话不可用时退回栅格 */
   const bm = BASEMAPS[key]; if (!bm) return;
   baseKey = key;
   localStorage.setItem('mjr3d_base', key);
-  const src = map.getSource('basemap');
-  if (src && src.setTiles) src.setTiles(bm.tiles); /* 只换瓦片源,不重建图层/自定义列车层 */
-  const paint = bm.dim
-    ? { 'raster-saturation': bm.sat, 'raster-brightness-max': bm.bmax, 'raster-brightness-min': bm.bmin, 'raster-contrast': bm.ctr, 'raster-opacity': bm.op }
-    : { 'raster-saturation': 0, 'raster-brightness-max': 1.0, 'raster-brightness-min': 0.0, 'raster-contrast': 0.12, 'raster-opacity': 1.0 };
-  for (const k in paint) { try { map.setPaintProperty('basemap', k, paint[k]); } catch (e) {} }
+  if (!bm.vec && map && map.getSource('basemap')) {
+    try { map.getSource('basemap').setTiles(bm.tiles); } catch (e) {}
+    const paint = rasterPaintOf(bm);
+    for (const k in paint) { try { map.setPaintProperty('basemap', k, paint[k]); } catch (e) {} }
+  }
+  applyBaseVisibility();
   document.querySelectorAll('#baseSrcRow .chip').forEach(c => c.classList.toggle('on', c.dataset.base === key));
   updateFootNote();
   stateHash();
 }
 function updateFootNote() {
-  $('footNote').textContent = '© OFM';
+  const bm = BASEMAPS[baseKey] || BASEMAPS.pale;
+  $('footNote').textContent = bm.attr;
 }
 function baseStyle() {
   return {
@@ -3678,9 +3982,94 @@ function baseStyle() {
     ],
   };
 }
-function initMap() {
+/* OpenFreeMap 样式预取:直接以对象交给 MapLibre(省一次重复请求)。
+   4s 内不可达(弱网/被墙)则本次会话回退栅格底图,首屏不至于空白;
+   设置里仍可切到其它栅格源,矢量源可用时也可随时切回。 */
+async function loadOfmStyle() {
+  try {
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), 4000);
+    const r = await fetch(OFM_STYLE_URL, { signal: ctl.signal, cache: 'force-cache' });
+    clearTimeout(timer);
+    if (!r.ok) return null;
+    const st = await r.json();
+    return (st && st.version === 8 && Array.isArray(st.layers) && st.sources && st.sources.openmaptiles) ? st : null;
+  } catch (e) { return null; }
+}
+/* 3D 建筑:OpenFreeMap 的 dark 样式不带 3D,克隆 liberty 的 building-3d(z14+ 逐栋挤出),
+   配色换成与深色底图协调的石板蓝,按楼高做明度分级(远景不刺眼、近景有层次) */
+const BLD3D_LAYER = {
+  id: 'bld-3d', type: 'fill-extrusion', source: 'openmaptiles', 'source-layer': 'building',
+  minzoom: 14, filter: ['!', ['has', 'hide_3d']],
+  layout: { visibility: 'none' },
+  paint: {
+    'fill-extrusion-base': ['coalesce', ['get', 'render_min_height'], 0],
+    'fill-extrusion-height': ['coalesce', ['get', 'render_height'], 12],
+    'fill-extrusion-color': ['interpolate', ['linear'], ['coalesce', ['get', 'render_height'], 12],
+      0, '#1d2635', 30, '#243144', 90, '#31425c', 200, '#445d80'],
+    'fill-extrusion-opacity': 0.93,
+  },
+};
+/* 低端设备:隐藏次要标注层(市辖区/水域名/普通道路名)—— 符号碰撞检测是缩放期最贵的 CPU 项 */
+const OFM_LOW_HIDE = ['place_suburb', 'water_name', 'highway_name_other'];
+function decorateBaseStyle(st) {
+  ofmLayerIds = st.layers.map(l => l.id);
+  ofmLayerVis = {};
+  for (const l of st.layers) {
+    if (l.id === 'background') { l.paint = l.paint || {}; l.paint['background-color'] = '#07090f'; }
+    if (l.layout && l.layout.visibility) ofmLayerVis[l.id] = l.layout.visibility;
+    if (l.type === 'raster') { l.paint = l.paint || {}; l.paint['raster-fade-duration'] = 0; }
+  }
+  if (PERF_LOW) for (const id of OFM_LOW_HIDE) {
+    const l = st.layers.find(x => x.id === id);
+    if (l) { l.layout = l.layout || {}; l.layout.visibility = 'none'; }
+    ofmLayerVis[id] = 'none';
+  }
+  /* 省级标签(中俄朝等)与普通城市名在国别视图会铺满整屏、把日本列岛淹掉:
+     分别推迟到 z6 / z5 出现,低倍率只留国名与首都/大城市;
+     顺带少掉低倍率下最贵的一批符号碰撞计算 */
+  { const l = st.layers.find(x => x.id === 'place_state'); if (l) l.minzoom = 6; }
+  { const l = st.layers.find(x => x.id === 'place_city'); if (l) l.minzoom = 5; }
+  const bm = BASEMAPS[baseKey] && !BASEMAPS[baseKey].vec ? BASEMAPS[baseKey] : BASEMAPS.pale;
+  st.sources.basemap = { type: 'raster', tiles: bm.tiles, tileSize: 256, minzoom: 2, maxzoom: 17, attribution: bm.attr };
+  if (baseKey !== 'ofm') {
+    /* URL/记忆选的是栅格源:矢量层整组隐藏,避免半透明栅格下透出两套底图 */
+    for (const l of st.layers) if (l.id !== 'background') { l.layout = l.layout || {}; l.layout.visibility = 'none'; }
+  }
+  if (IS_MOBILE) BLD3D_LAYER.minzoom = 15; /* 手机端推迟一级:低倍率挤出建筑收益小、填充率开销大 */
+  st.layers.push(BLD3D_LAYER);
+  st.layers.push({ id: 'basemap', type: 'raster', source: 'basemap',
+    layout: { visibility: baseKey === 'ofm' ? 'none' : 'visible' }, paint: rasterPaintOf(bm) });
+  return st;
+}
+/* 2D/3D 视角切换:只改俯仰角 + 建筑层可见性(投影保持 Globe,2D 时地球在低倍率仍是球面;
+   高倍率下与平面无差别)。切换不 setStyle,自定义图层零重建。 */
+function syncViewUi() {
+  document.querySelectorAll('#viewRow .chip').forEach(c => c.classList.toggle('on', (c.dataset.view === '3d') === view3d));
+  const qb = $('btnView3d');
+  if (qb) { qb.classList.toggle('on', view3d); qb.setAttribute('aria-pressed', view3d ? 'true' : 'false'); }
+}
+function setView3d(on, animate) {
+  view3d = !!on;
+  localStorage.setItem('mjr3d_view', view3d ? '3d' : '2d');
+  syncViewUi();
+  if (map) {
+    const pitch = view3d ? 55 : 0;
+    try { if (animate) map.easeTo({ pitch, duration: 700 }); else map.jumpTo({ pitch }); } catch (e) {}
+  }
+  applyBuildings();
+  stateHash();
+}
+let mapCreatedResolve; const mapCreated = new Promise(r => { mapCreatedResolve = r; });
+async function initMap() {
+  /* URL 深链里的底图源优先于 localStorage(决定初始 style 里栅格层是否可见) */
+  if (urlState && urlState.s) { const k = urlState.s === 'dark' ? 'ofm' : urlState.s; if (BASEMAPS[k]) baseKey = k; }
+  const ofmStyle = await loadOfmStyle();
+  ofmOK = !!ofmStyle;
+  if (ofmOK) decorateBaseStyle(ofmStyle);
+  else if (baseKey === 'ofm') baseKey = 'pale'; /* 矢量样式本次不可达:回退栅格,避免首屏空白 */
   map = new maplibregl.Map({
-    container: 'map', style: baseStyle(),
+    container: 'map', style: ofmStyle || baseStyle(),
     center: [137.2, 36.8], zoom: 3.4, pitch: 0, bearing: 0,
     minZoom: 1.2, maxZoom: 16, maxPitch: 70,
     /* 抗锯齿:新设备保留(线条更平滑);老旧设备关闭(减少 GPU 过绘制,明显提帧) */
@@ -3790,8 +4179,13 @@ function initMap() {
       savedVis = {};
     });
   }
+  /* 矢量源不可用(样式 4s 内不可达)时隐藏「矢量」chip,避免点了无反应 */
+  if (!ofmOK) { const oc = document.querySelector('#baseSrcRow [data-base="ofm"]'); if (oc) oc.style.display = 'none'; }
+  syncViewUi();
+  mapCreatedResolve();
 }
-function mapReadyPromise() {
+async function mapReadyPromise() {
+  await mapCreated;
   return new Promise(res => {
     if (map.loaded()) return res(); /* 地图早已就绪时直接放行,避免白等 */
     let done = false;
@@ -3812,7 +4206,7 @@ function mapReadyPromise() {
    打开(rAF 挂起)时样式会一直不就绪,这里轮询等待而不是超时硬放行,标签页回到
    前台(样式就绪)的瞬间自然继续启动 */
 function styleReadyPromise() {
-  return new Promise(res => {
+  return mapCreated.then(() => new Promise(res => {
     let done = false, iv = null;
     const fin = () => { if (!done) { done = true; if (iv) clearInterval(iv); res(); } };
     try { if (map.isStyleLoaded()) return res(); } catch (e) { return res(); }
@@ -3822,7 +4216,7 @@ function styleReadyPromise() {
       try { ok = map.isStyleLoaded(); } catch (e) { ok = true; }
       if (ok) fin();
     }, 1500);
-  });
+  }));
 }
 /* ---------------- URL 状态持久化(刷新/分享保留视角、投影、语言、主题、实时) ---------------- */
 let urlState = null, lastWrittenHash = '';
@@ -3836,7 +4230,7 @@ function parseHashState() {
 function stateHash() {
   try {
     const c = map.getCenter();
-    const h = { c: [+c.lng.toFixed(4), +c.lat.toFixed(4)], z: +map.getZoom().toFixed(2), p: +map.getPitch().toFixed(1), b: +map.getBearing().toFixed(1), j: map.getProjection().type, l: lang, m: localStorage.getItem('mjr3d_theme') || 'auto', v: liveOn ? 1 : 0, s: baseKey };
+    const h = { c: [+c.lng.toFixed(4), +c.lat.toFixed(4)], z: +map.getZoom().toFixed(2), p: +map.getPitch().toFixed(1), b: +map.getBearing().toFixed(1), j: map.getProjection().type, l: lang, m: localStorage.getItem('mjr3d_theme') || 'auto', v: liveOn ? 1 : 0, s: baseKey, d: view3d ? 1 : 0 };
     /* replaceState 而非 location.hash 赋值:后者每次值变化压一条浏览器历史 —— 平移几分钟后
        返回键要连按几十次才能离开页面。replaceState 原地替换当前条目:URL 照常可分享/刷新,
        不触发 hashchange(本页自写本就不该触发);外部粘贴深链仍走 hashchange 正常生效 */
@@ -3851,7 +4245,12 @@ function applyUrlState() {
   if (h.m) { localStorage.setItem('mjr3d_theme', h.m); applyThemeMode(); }
   if (h.c && h.z && map) { try { map.jumpTo({ center: [h.c[0], h.c[1]], zoom: h.z, pitch: h.p || 0, bearing: h.b || 0 }); } catch (e) {} }
   if (h.j && map) { try { map.setProjection({ type: h.j }); } catch (e) {} }
-  if (h.b && BASEMAPS[h.b]) baseKey = h.b;
+  if (h.s && BASEMAPS[h.s]) baseKey = h.s;
+  else if (h.s === 'dark') baseKey = 'ofm';
+  /* 视角:新链接带 d(1=立体),旧链接只有俯仰角 p —— >25° 视为当时的立体视角 */
+  if (h.d === 1) view3d = true;
+  else if (h.d === 0) view3d = false;
+  else if (h.p !== undefined) view3d = h.p > 25;
   if (h.v && dataReady) setLive(true);
   /* SEO 静态页深链：t='line' 选中线路 / t='station' 选中车站（旧链接无 t/q，行为不变） */
   if (h.t === 'line' && h.q) { try { highlightLineByCanon(h.q); } catch (e) {} }
@@ -3935,6 +4334,7 @@ async function boot() {
     applyUrlState();
     initPurelineMode();
     setBasemap(baseKey); /* 应用 URL / localStorage 记忆的底图源(含蒙版开关) */
+    setView3d(view3d, false); /* 应用 2D/3D 视角(俯仰角 + 3D 建筑) */
     setStatus(T().goLive);
     if (!liveOn) setTimeout(() => { if (!liveOn) { setLive(true); } }, 600);
     startLoop();
@@ -6120,7 +6520,7 @@ window.__mjr3d.e2e = {
         const arr = segIndex.get(t.jasN[i] + '|' + t.jasN[i + 1]);
         if (!arr || !arr.length) continue;
         legs++;
-        const e = pickSeg(t, t.jasN[i], t.jasN[i + 1], t.stopC[i]);
+        const e = pickSeg(t, t.jasN[i], t.jasN[i + 1], t.stopC[i], i);
         if (!e || !e.line) continue;
         const shink = e.line.includes('新幹');
         if ((!tripShink && shink) || (tripShink && !tripZai && !shink)) {
@@ -6143,7 +6543,7 @@ window.__mjr3d.e2e = {
         const A = t.jasN[i], B = t.jasN[i + 1];
         if (!segIndex.get(A + '|' + B)) continue;
         legs++;
-        const e = pickSeg(t, A, B, t.stopC[i]);
+        const e = pickSeg(t, A, B, t.stopC[i], i);
         if (!e || !e.coords || e.coords.length < 2) continue;
         const ca = stationCoord.get(normName(A)), cb = stationCoord.get(normName(B));
         if (!ca || !cb) continue;
@@ -7009,7 +7409,7 @@ $('m3dMask').addEventListener('click', () => M3D.closeViewer());
     entVisible(entEnabled);
     if (entEnabled && !detailWanted) fetchStationDetailData(); /* 出入口数据懒加载:同上 */
   });
-$('swBase').addEventListener('click', function () { this.classList.toggle('on'); map.setLayoutProperty('basemap', 'visibility', this.classList.contains('on') ? 'visible' : 'none'); });
+$('swBase').addEventListener('click', function () { this.classList.toggle('on'); applyBaseVisibility(); });
 /* 详细股道开关(互斥模式): 开启 = 显示 ORM 全量股道并隐藏原有简易轨道层(segs/segs-glow);
    关闭 = 隐藏 ORM,恢复简易轨道层(光晕层跟随 swGlow 开关)。仅切换图层显示,其余一切不变。
    默认关(低配设备/手机默认关,按需加载),选择持久化(mjr3d_showorm)。
@@ -7304,6 +7704,10 @@ mq.addEventListener('change', applyThemeMode);
 applyThemeMode();
 /* 底图源切换 */
 document.querySelectorAll('#baseSrcRow .chip').forEach(c => c.addEventListener('click', () => setBasemap(c.dataset.base)));
+/* 视角切换:设置面板 + 右上角浮动快捷键(同一状态) */
+document.querySelectorAll('#viewRow .chip').forEach(c => c.addEventListener('click', () => setView3d(c.dataset.view === '3d', true)));
+{ const qv = $('btnView3d'); if (qv) qv.addEventListener('click', () => setView3d(!view3d, true)); }
+syncViewUi();
 $('brand').addEventListener('click', () => map.flyTo({ center: [137.2, 36.8], zoom: 3.4, pitch: 0, bearing:0, duration: 1500 }));
 $('brand').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('brand').click(); } });
 document.addEventListener('keydown', e => {
@@ -7342,7 +7746,12 @@ function applyLang() {
   if ($('iSetDefault')) $('iSetDefault').textContent = t.iSetDefault;
   if ($('iSetVector')) $('iSetVector').textContent = t.iSetVector;
   $('tBase').textContent = t.baseT;
-  $('bPale').textContent = t.bPale; $('bStd').textContent = t.bStd; $('bDark').textContent = t.bDark; $('bSat').textContent = t.bSat;
+  if ($('bOfm')) $('bOfm').textContent = t.bOfm;
+  $('bPale').textContent = t.bPale; $('bStd').textContent = t.bStd; $('bSat').textContent = t.bSat;
+  if ($('tView')) $('tView').textContent = t.viewT;
+  if ($('vFlat')) $('vFlat').textContent = t.vFlat;
+  if ($('vTilt')) $('vTilt').textContent = t.vTilt;
+  { const qv = $('btnView3d'); if (qv) { qv.setAttribute('aria-label', t.vTilt); qv.setAttribute('title', t.vTilt); } }
   $('tD4').textContent = t.d4; $('tD5').textContent = t.d5; $('tD6').textContent = t.d6;
   $('cNow').textContent = t.now;
   updateFootNote();
@@ -7404,6 +7813,9 @@ window.addEventListener('hashchange', () => {
   if (location.hash === lastWrittenHash) return; /* 本页自己写入的,忽略 */
   urlState = parseHashState();
   if (urlState && urlState.c && map) { try { map.jumpTo({ center: [urlState.c[0], urlState.c[1]], zoom: urlState.z, pitch: urlState.p || 0, bearing: urlState.b || 0 }); } catch (e) {} }
+  if (urlState && urlState.s) setBasemap(urlState.s === 'dark' ? 'ofm' : urlState.s);
+  if (urlState && (urlState.d === 0 || urlState.d === 1)) setView3d(urlState.d === 1, true);
+  else if (urlState && urlState.p !== undefined) setView3d(urlState.p > 25, true);
   if (urlState && dataReady) {
     if (urlState.t === 'line' && urlState.q) { try { highlightLineByCanon(urlState.q); } catch (e) {} }
     else if (urlState.t === 'station' && urlState.q) { try { focusStationByKey(urlState.q); } catch (e) {} }
@@ -8157,7 +8569,7 @@ window.__probe = (lineFilter, limit) => {
     if (!p) continue;
     let i = 0;
     while (i < t.N - 2 && M2 > t.arr[i+1]) i++;
-    const e = pickSeg(t, t.jasN[i], t.jasN[i + 1], t.stopC[i]);
+    const e = pickSeg(t, t.jasN[i], t.jasN[i + 1], t.stopC[i], i);
     out.push({ trip: t.t, line: p[3], devM: e ? Math.round(distToPoly(p, e)) : -1, kmh: Math.round(p[5]), from: t.jas[i], to: t.jas[i + 1], x: p[0], y: p[1] });
     if (out.length >= (limit || 50)) break;
   }

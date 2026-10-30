@@ -342,16 +342,22 @@ def main():
                         detail["ok"] = False
                         failures.append("运転日互斥: %s 冻结 %s（服务日 %s）终点应为 %s，实际 %s" % (
                             name, a.freeze, svc_day.isoformat(), expect_to, r.get("to")))
-                    # 站牌：始发站同刻出发行只能有当日应该开的那条记录（原始症状就在站牌上）
+                    # 站牌是「当日 0–31 时」时刻表：同刻出发行只能有当日服务日对应的那条记录
+                    # （原始症状就在站牌上）。注意与「此刻在跑的那趟」是两回事：清晨的站牌
+                    # 21:26 行指的是今晚发车，不是昨夜那趟跨零点尾段。
                     dep_h, dep_m = (int(x) for x in svc["dep"].split(":"))
+                    board_day = base_day.isoformat()
+                    board_to = svc.get("ext_to") if board_day in dates else svc.get("base_to")
                     brows = json.loads(cdp.ev("JSON.stringify(window.__mjr3d.e2e.boardNamed(%s, %s))" % (
                         json.dumps(svc.get("from"), ensure_ascii=False), json.dumps(name, ensure_ascii=False))))
                     terms = sorted({norm_term(b["term"]) for b in brows if b.get("dep") == dep_h * 60 + dep_m})
+                    detail["boardServiceDate"] = board_day
+                    detail["boardExpectTo"] = board_to
                     detail["boardTerms"] = terms
-                    if terms != [norm_term(expect_to)]:
+                    if terms != [norm_term(board_to)]:
                         detail["ok"] = False
-                        failures.append("运転日互斥: %s 冻结 %s 站牌 %s 同刻出发终点应为 [%s]，实际 %s" % (
-                            name, a.freeze, svc.get("from"), expect_to, terms or "空"))
+                        failures.append("运転日互斥: %s 冻结 %s 站牌 %s 同刻出发终点应为 [%s]（服务日 %s），实际 %s" % (
+                            name, a.freeze, svc.get("from"), board_to, board_day, terms or "空"))
                 report["calendar"].append(detail)
 
         errs = json.loads(cdp.ev("JSON.stringify((window.__e2eErrs||[]).slice(0,10))"))

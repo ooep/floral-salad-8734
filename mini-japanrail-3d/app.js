@@ -358,9 +358,11 @@ function tripRunsForDate(t, baseMs) {
 /* 帧内精判：M2 是 windowShift 后的班次分钟(>=1440 即前一服务日发车的跨零点实例) */
 function tripRunsAtM(t, M2, baseMs) {
   if (!t.rd && !t.rx) return true;
-  /* 延误折算后 M2 可能略低于发车分钟(跨零点尾段)，仍属前一服务日 */
-  const prev = M2 >= 1440 || (M2 < t.w0 && t.w1 > 1440);
-  return tripRunsOn(t, svcKeyBack(baseMs === undefined ? simNow() : baseMs, prev ? 1 : 0));
+  const ms = baseMs === undefined ? simNow() : baseMs;
+  /* 跨零点尾段：M2>=1440 一定属前一日；有延误时 M2 会被折算到 1440 以下，
+     改用墙上时钟(仍早于发车时刻)判定，否则午夜后延误班次会按当日 d/x 误杀 */
+  const prev = M2 >= 1440 || (t.w1 > 1440 && minOfDay(ms) < t.w0);
+  return tripRunsOn(t, svcKeyBack(ms, prev ? 1 : 0));
 }
 function minOfDay(ms) { return (((ms + JST) % 86400000) / 60000); }
 function simNow() {
@@ -5779,15 +5781,16 @@ function buildBoard(station, coord) {
     const a = STATION_ALIAS[nk];
     if (tripsByStation && tripsByStation.get(a)) nk = a;
   }
-  /* 缓存键必须带 dayBit:运行日切换(平日↔周六/周日)后若沿用旧键,会命中切换前构建的时刻表,
-     实测切换后重开同一车站仍返回旧日期数据 */
-  const ck = (coord ? (nk + '|' + coord[0].toFixed(3) + ',' + coord[1].toFixed(3)) : nk) + '#' + dayBit;
+  /* 缓存键必须带 dayBit + JST 日期:运行日切换(平日↔周六/周日)或跨日后若沿用旧键,
+     会命中切换前构建的时刻表;d/x 行的取舍也随日期变化，只带 dayBit 会跨日命中旧行 */
+  /* 用预索引(解析时刻表时构建)只遍历途经本站的班次,替代原 5.7 万班次全表扫描 */
+  const stTrips = (tripsByStation && tripsByStation.get(nk)) || [];
+  const ck = (coord ? (nk + '|' + coord[0].toFixed(3) + ',' + coord[1].toFixed(3)) : nk) +
+    '#' + dayBit + '@' + jstDateParts(simNow()).key;
   const hit = boardCache.get(ck);
   if (hit) { boardCache.delete(ck); boardCache.set(ck, hit); return hit; }
   buildLineOp();
   const byLine = new Map();
-  /* 用预索引(解析时刻表时构建)只遍历途经本站的班次,替代原 5.7 万班次全表扫描 */
-  const stTrips = (tripsByStation && tripsByStation.get(nk)) || [];
   for (let k = 0; k < stTrips.length; k++) {
     const t = stTrips[k];
     if (t.bad || !(t.r & dayBit)) continue;
@@ -5807,14 +5810,10 @@ function buildBoard(station, coord) {
       idx = jn.indexOf(nk);
       if (idx < 0) continue;
     }
-    /* 运転日互斥：该站时刻取「离当前最近的那次服务日」判定。跨零点行(如 07:27 到达)
-       深夜视图属于今晚发车的服务日、清晨视图属于昨夜发车的服务日，不能只看 rowMin>=1440 */
+    /* 运転日互斥：站牌是「当日 0–31 时」时刻表，所有行(含跨零点的 31 时到达行)
+       都按当日服务日判定。按 rowMin>=1440 归前一日会把今晚发车的 21:26 行配错终点 */
     if (t.rd || t.rx) {
-      const rowMin = idx > 0 ? t.arr[idx] : t.dep[idx];
-      const nowMs = simNow(), dayStart = nowMs - minOfDay(nowMs) * 60000;
-      const dToday = Math.abs(dayStart + rowMin * 60000 - nowMs);
-      const dPrev = Math.abs(dayStart - 86400000 + rowMin * 60000 - nowMs);
-      if (!tripRunsOn(t, svcKeyBack(nowMs, dPrev < dToday ? 1 : 0))) continue;
+      if (!tripRunsOn(t, svcKeyBack(simNow(), 0))) continue;
     }
     // 到达记录：idx > 0 即列车从某站开来本站（含终着 idx == N-1）。时间用 arr[idx]，方向=起点 jas[0]
     if (idx > 0) {

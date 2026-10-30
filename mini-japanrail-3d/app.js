@@ -2752,6 +2752,9 @@ function delayOnDayRebuild() {  /* 数据加载/换日重建:按当日 dayList �
    一趟,就是那趟车;命中 0 或 >1 趟一律放弃(宁漏不误报)。
    时效:5 分钟重拉;数据龄 >45min 清空,日型/日期不符同样清空(同延误的双门)。 */
 const COMFORT_URLS = [
+  // own-domain mirror, refreshed every bake run (<5 min lag); jsDelivr@main
+  // and GitHub Pages can trail behind by hours, so they stay as fallbacks
+  'https://jr-delay.suki.ing/comfort.json',
   'https://cdn.jsdelivr.net/gh/ooep/jr-comfortable@main/data/comfort.json',
   'https://ooep.github.io/jr-comfortable/data/comfort.json',
   'https://raw.githubusercontent.com/ooep/jr-comfortable/main/data/comfort.json',

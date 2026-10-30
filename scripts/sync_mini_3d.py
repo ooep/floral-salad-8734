@@ -16,14 +16,24 @@ GitHub 上旧数据保持原样，不会引起页面乱飞/空白）。
   3. 站数匹配: s 长度 === 2*len(s_jas)-2 的班次占比 < 90% → 失败
      （时刻表站序/结构大改时会触发，宁停勿乱）
   4. 跨日 w 合法: w1 >= w0（跨日班次 w1 为 24h 制绝对分钟）
+  5. 运転日互斥: 可选字段 d(仅这些日期开行)/x(除这些日期外开行)必须是
+     非空 ISO 日期数组，且同一班次不能同时带 d 和 x
+     （由 service_calendar.json 在构建期烘焙，格式坏了页面会静默少开车）
 
 用法: python3 scripts/sync_mini_3d.py [--out mini-japanrail-3d/data]
 """
 import argparse, json, os, re, subprocess, sys
 
+ISO_DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
+
 def norm_ok(s):
     """s 字段为纯数字逗号串"""
     return bool(re.fullmatch(r"-?\d+(,-?\d+)*", s))
+
+def dates_ok(v):
+    """d/x 字段: None 或非空 ISO 日期数组"""
+    return v is None or (isinstance(v, list) and len(v) > 0
+                         and all(ISO_DATE.fullmatch(str(x)) for x in v))
 
 def _norm_name(n):
     """与页面 normName 一致:去括号注记、ケ→ヶ、去尾部「駅」"""
@@ -103,6 +113,15 @@ def check_file(name, path, tmaps):
         w = rec.get("w", "")
         # 1 结构
         if not isinstance(tmap_id, (str, int)) or not norm_ok(s) or not re.fullmatch(r"\d+,\d+", str(w)):
+            errs += 1
+            continue
+        # 运転日互斥字段（见 service_calendar.json）
+        if "d" in rec and "x" in rec:
+            print(f"  [FAIL] {name}: 班次 {rec.get('_')} 同时带 d 和 x")
+            errs += 1
+            continue
+        if not dates_ok(rec.get("d")) or not dates_ok(rec.get("x")):
+            print(f"  [FAIL] {name}: 班次 {rec.get('_')} 的 d/x 不是非空 ISO 日期数组")
             errs += 1
             continue
         # 2 tmap 覆盖

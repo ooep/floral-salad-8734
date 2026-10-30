@@ -81,9 +81,9 @@ jobs:
             echo "no data change"
           else
             V="$(date -u +%Y-%m-%d)a"
-            sed -i "s/const DATA_VERSION = '[^']*';/const DATA_VERSION = '$V';/" mini-japanrail-3d/index.html
+            sed -i "s/const DATA_VERSION = '[^']*';/const DATA_VERSION = '$V';/" mini-japanrail-3d/app.js
             sed -i "s/const DATA_VERSION = 'mjrj[^']*';/const DATA_VERSION = 'mjrj-$V';/" mini-japanrail-3d/journey.html
-            git add mini-japanrail-3d/index.html mini-japanrail-3d/journey.html
+            git add mini-japanrail-3d/app.js mini-japanrail-3d/journey.html
             git commit -m "chore(data): refresh timetables $(date -u +%Y-%m-%d)"
             git fetch origin
             git rebase origin/main

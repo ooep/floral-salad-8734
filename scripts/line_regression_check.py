@@ -17,11 +17,14 @@ line_regression_check.py — 列车「串线 / 线路外乱飞」回归闸门（
   · jumpScan：抽样班次逐 2 分钟解算，检查相邻时刻位移 >40km 的瞬移
   · wrongPolarityScan：全量班次逐腿检查站对选段的新幹線/在来線极性是否与班次线路集合一致
   · segSanityScan：全量班次逐腿检查选段几何是否撑得起站对（残段 / 端点错位）
+  · 运転日互斥：按 data/service_calendar.json 检查成对列车（基本区间/延伸区间）
+    同一时刻只开一条，终点须与冻结日期的运転日规则一致（延伸日→ext_to，否则 base_to）
 
 用法（需要一个静态服务器，默认 8766）：
   python3 -m http.server 8766 -d mini-japanrail-3d &
   python3 scripts/line_regression_check.py                      # 校验本地 app.js
   python3 scripts/line_regression_check.py --url https://jr.suki.ing/   # 校验线上
+  python3 scripts/line_regression_check.py --mutex-only --freeze 2026-11-01T03:00:00+09:00
 退出码：0 通过；1 有断言失败；2 环境/加载失败。
 """
 import argparse, base64, json, os, subprocess, sys, tempfile, time, urllib.request, datetime
@@ -39,6 +42,22 @@ JUMP_KM = 40
 
 def parse_freeze(s):
     return int(datetime.datetime.fromisoformat(s).timestamp() * 1000)
+
+
+def load_service_calendar(root):
+    p = os.path.join(root, "data", "service_calendar.json")
+    try:
+        with open(p, encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return None
+
+
+def calendar_dates(svc):
+    out = set()
+    for season in svc.get("seasons") or []:
+        out |= set(season.get("dates") or [])
+    return out
 
 
 class CDP:
@@ -106,17 +125,83 @@ class CDP:
 
 
 def local_page(root, url_path, app_src="./app.js"):
-    """index.html 里 app.js 是线上地址；本地校验时生成同目录临时页指向本地文件。"""
+    """index.html 里 app.js 是线上地址；本地校验时生成同目录临时页指向本地文件。
+    同时生成临时 app 副本把 TRAIN_FILES 指向本地 data/（才能测到 d/x 运転日字段），
+    几何/图标等其余数据仍走线上 CDN。返回 (页面路径, app 路径)。"""
     rel = (url_path or "/").lstrip("/") or "index.html"
     html_path = os.path.join(root, rel)
     if not os.path.exists(html_path):
         raise RuntimeError("找不到页面文件: " + html_path + " (用 --root 指定静态服务器根目录)")
+    app_path = os.path.join(root, app_src.lstrip("./"))
+    if not os.path.exists(app_path):
+        raise RuntimeError("找不到 app.js: " + app_path)
+    app_js = open(app_path, encoding="utf-8").read()
+    app_js = app_js.replace("https://jr-static.suki.ing/data/trains_", "./data/trains_")
+    fd2, app_tmp = tempfile.mkstemp(prefix="_e2e_app_", suffix=".js",
+                                    dir=os.path.dirname(os.path.abspath(app_path)))
+    with os.fdopen(fd2, "w", encoding="utf-8") as f:
+        f.write(app_js)
     src = open(html_path, encoding="utf-8").read()
-    out = src.replace("https://jr-static.suki.ing/app/app.js", app_src)
+    out = src.replace("https://jr-static.suki.ing/app/app.js", "./" + os.path.basename(app_tmp))
     fd, p = tempfile.mkstemp(prefix="_e2e_", suffix=".html", dir=os.path.dirname(os.path.abspath(html_path)))
     with os.fdopen(fd, "w", encoding="utf-8") as f:
         f.write(out)
-    return p, os.path.basename(p)
+    return p, os.path.basename(p), app_tmp
+
+
+def run_heavy_checks(cdp, stride, report, failures):
+    """几何贴合 / 瞬移 / 极性 / 选段合理性全量扫描。返回 jumpScan 结果。"""
+    for lim in LIMITS:
+        trips = cdp.ev("JSON.stringify(window.__mjr3d.e2e.tripLegs(%s, %s, %s))" % (
+            json.dumps(lim["name"], ensure_ascii=False), json.dumps(lim["from"], ensure_ascii=False),
+            json.dumps(lim["to"], ensure_ascii=False)))
+        trips = json.loads(trips)
+        if not trips:
+            failures.append("找不到班次 %s %s→%s" % (lim["name"], lim["from"], lim["to"]))
+            report["checks"].append({"limit": lim, "trips": 0, "ok": False, "reason": "trip not found"})
+            continue
+        worst_all = 0.0
+        bad = []
+        for tr in trips:
+            for leg in tr["legs"]:
+                km = leg["km"]
+                if km is None:
+                    continue
+                worst_all = max(worst_all, km)
+                if km > lim["maxKm"]:
+                    bad.append({"t": tr["t"], "leg": leg["A"] + "→" + leg["B"], "i": leg["i"], "km": km})
+        ok = not bad
+        if not ok:
+            for b in bad[:6]:
+                failures.append("%s %s→%s 区间 %s 偏离本线 %.2fkm (>%.2f)" % (
+                    lim["name"], lim["from"], lim["to"], b["leg"], b["km"], lim["maxKm"]))
+        report["checks"].append({"limit": lim, "trips": len(trips), "worstKm": round(worst_all, 3),
+                                 "ok": ok, "bad": bad[:10]})
+
+    jumps = json.loads(cdp.ev("JSON.stringify(window.__mjr3d.e2e.jumpScan(%d))" % stride))
+    report["jumps"] = jumps
+    if jumps.get("jumps"):
+        failures.append("瞬移扫描: %d 处相邻时刻位移 >%dkm" % (jumps["jumps"], JUMP_KM))
+
+    polar = json.loads(cdp.ev("JSON.stringify(window.__mjr3d.e2e.wrongPolarityScan())"))
+    report["polarity"] = polar
+    if polar.get("bad"):
+        for s in polar.get("samples", [])[:6]:
+            failures.append("%s %s 选段 %s 与新幹線/在来線极性不符 (%d 条同类)" % (
+                s.get("nm") or "（无车名）", s.get("leg"), s.get("seg"), polar["bad"]))
+        if not polar.get("samples"):
+            failures.append("选段极性不符 %d 条" % polar["bad"])
+
+    sanity = json.loads(cdp.ev("JSON.stringify(window.__mjr3d.e2e.segSanityScan())"))
+    report["segSanity"] = sanity
+    if sanity.get("bad"):
+        for s in sanity.get("samples", [])[:6]:
+            failures.append("%s %s 选段 %s 长度 %.2fkm 撑不起站对直线 %.1fkm (%d 条同类)" % (
+                s.get("nm") or "（无车名）", s.get("leg"), s.get("seg"), s.get("len", 0),
+                s.get("chord", 0), sanity["bad"]))
+        if not sanity.get("samples"):
+            failures.append("选段几何与站对不符 %d 条" % sanity["bad"])
+    return jumps
 
 
 def main():
@@ -129,11 +214,14 @@ def main():
     ap.add_argument("--port", type=int, default=9611)
     ap.add_argument("--freeze", default="2026-10-30T22:40:00+09:00")
     ap.add_argument("--stride", type=int, default=31, help="jumpScan 抽样步长(班次), 默认 31≈3000 班")
+    ap.add_argument("--mutex-only", action="store_true",
+                    help="只跑运転日互斥断言，跳过几何/瞬移全量扫描（用于多日期抽查）")
     ap.add_argument("--width", type=int, default=1440)
     ap.add_argument("--height", type=int, default=900)
     ap.add_argument("--no-proxy", action="store_true", default=True)
     ap.add_argument("--json", default="")
     a = ap.parse_args()
+    site_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
     if not os.path.exists(a.chrome):
         print("找不到 Chrome: " + a.chrome, file=sys.stderr)
@@ -146,6 +234,7 @@ def main():
 
     url = a.url
     tmp_page = None
+    tmp_app = None
     if a.app == "local":
         from urllib.parse import urlsplit, urlunsplit
         u = urlsplit(url)
@@ -154,7 +243,7 @@ def main():
             return 2
         root = a.root or os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "mini-japanrail-3d")
         try:
-            tmp_page, tmp_name = local_page(root, u.path)
+            tmp_page, tmp_name, tmp_app = local_page(root, u.path)
         except RuntimeError as exc:
             print(str(exc), file=sys.stderr)
             return 2
@@ -188,56 +277,45 @@ def main():
 
         report = {"url": url, "trips": n, "checks": [], "jumps": None, "errors": []}
 
-        for lim in LIMITS:
-            trips = cdp.ev("JSON.stringify(window.__mjr3d.e2e.tripLegs(%s, %s, %s))" % (
-                json.dumps(lim["name"], ensure_ascii=False), json.dumps(lim["from"], ensure_ascii=False),
-                json.dumps(lim["to"], ensure_ascii=False)))
-            trips = json.loads(trips)
-            if not trips:
-                failures.append("找不到班次 %s %s→%s" % (lim["name"], lim["from"], lim["to"]))
-                report["checks"].append({"limit": lim, "trips": 0, "ok": False, "reason": "trip not found"})
-                continue
-            worst_all = 0.0
-            bad = []
-            for tr in trips:
-                for leg in tr["legs"]:
-                    km = leg["km"]
-                    if km is None:
-                        continue
-                    worst_all = max(worst_all, km)
-                    if km > lim["maxKm"]:
-                        bad.append({"t": tr["t"], "leg": leg["A"] + "→" + leg["B"], "i": leg["i"], "km": km})
-            ok = not bad
-            if not ok:
-                for b in bad[:6]:
-                    failures.append("%s %s→%s 区间 %s 偏离本线 %.2fkm (>%.2f)" % (
-                        lim["name"], lim["from"], lim["to"], b["leg"], b["km"], lim["maxKm"]))
-            report["checks"].append({"limit": lim, "trips": len(trips), "worstKm": round(worst_all, 3),
-                                     "ok": ok, "bad": bad[:10]})
+        jumps = None
+        if not a.mutex_only:
+            jumps = run_heavy_checks(cdp, a.stride, report, failures)
 
-        jumps = json.loads(cdp.ev("JSON.stringify(window.__mjr3d.e2e.jumpScan(%d))" % a.stride))
-        report["jumps"] = jumps
-        if jumps.get("jumps"):
-            failures.append("瞬移扫描: %d 处相邻时刻位移 >%dkm" % (jumps["jumps"], JUMP_KM))
-
-        polar = json.loads(cdp.ev("JSON.stringify(window.__mjr3d.e2e.wrongPolarityScan())"))
-        report["polarity"] = polar
-        if polar.get("bad"):
-            for s in polar.get("samples", [])[:6]:
-                failures.append("%s %s 选段 %s 与新幹線/在来線极性不符 (%d 条同类)" % (
-                    s.get("nm") or "（无车名）", s.get("leg"), s.get("seg"), polar["bad"]))
-            if not polar.get("samples"):
-                failures.append("选段极性不符 %d 条" % polar["bad"])
-
-        sanity = json.loads(cdp.ev("JSON.stringify(window.__mjr3d.e2e.segSanityScan())"))
-        report["segSanity"] = sanity
-        if sanity.get("bad"):
-            for s in sanity.get("samples", [])[:6]:
-                failures.append("%s %s 选段 %s 长度 %.2fkm 撑不起站对直线 %.1fkm (%d 条同类)" % (
-                    s.get("nm") or "（无车名）", s.get("leg"), s.get("seg"), s.get("len", 0),
-                    s.get("chord", 0), sanity["bad"]))
-            if not sanity.get("samples"):
-                failures.append("选段几何与站对不符 %d 条" % sanity["bad"])
+        # 运転日互斥: 同一时刻只允许一条在跑，终点随冻结日期的运転日规则切换
+        cal = load_service_calendar(site_root)
+        report["calendar"] = []
+        if not cal:
+            print("[WARN] 未找到 data/service_calendar.json，跳过运転日互斥断言", file=sys.stderr)
+        else:
+            base_day = datetime.date.fromisoformat(a.freeze[:10])
+            freeze_min = int(a.freeze[11:13]) * 60 + int(a.freeze[14:16])
+            for svc in cal.get("services") or []:
+                name = svc.get("name")
+                rows = json.loads(cdp.ev("JSON.stringify(window.__mjr3d.e2e.runningNamed(%s))" %
+                                         json.dumps(name, ensure_ascii=False)))
+                rows = [r for r in rows if r.get("from") == svc.get("from")]
+                dep_h, dep_m = (int(x) for x in svc["dep"].split(":"))
+                in_window = freeze_min >= dep_h * 60 + dep_m or freeze_min <= 10 * 60 + 30
+                dates = calendar_dates(svc)
+                detail = {"service": name, "running": rows, "dates": len(dates), "ok": True}
+                if len(rows) > 1:
+                    detail["ok"] = False
+                    failures.append("运転日互斥: %s 冻结 %s 同时有 %d 条在跑: %s" % (
+                        name, a.freeze, len(rows), ", ".join((r.get("from") or "") + "→" + (r.get("to") or "") for r in rows)))
+                elif not rows and in_window:
+                    detail["ok"] = False
+                    failures.append("运転日互斥: %s 冻结 %s 在运行时段内却没有任何一条在跑（d/x 过滤误杀）" % (name, a.freeze))
+                elif rows:
+                    r = rows[0]
+                    svc_day = base_day - datetime.timedelta(days=1 if r.get("M2", 0) >= 1440 else 0)
+                    expect_to = svc.get("ext_to") if svc_day.isoformat() in dates else svc.get("base_to")
+                    detail["serviceDate"] = svc_day.isoformat()
+                    detail["expectTo"] = expect_to
+                    if r.get("to") != expect_to:
+                        detail["ok"] = False
+                        failures.append("运転日互斥: %s 冻结 %s（服务日 %s）终点应为 %s，实际 %s" % (
+                            name, a.freeze, svc_day.isoformat(), expect_to, r.get("to")))
+                report["calendar"].append(detail)
 
         errs = json.loads(cdp.ev("JSON.stringify((window.__e2eErrs||[]).slice(0,10))"))
         report["errors"] = errs
@@ -253,12 +331,15 @@ def main():
             for f in failures:
                 print("  - " + f)
             return 1
-        print("\nPASS: 线路贴合与瞬移扫描全部通过 (%d 班次数据, 瞬移扫描 %d 段)" % (n, jumps.get("moves", 0)))
+        print("\nPASS: %s (%d 班次数据, %s)" % (
+            "线路贴合与瞬移扫描全部通过" if jumps else "运転日互斥断言通过",
+            n, ("瞬移扫描 %d 段" % jumps.get("moves", 0)) if jumps else "跳过几何全量扫描"))
         return 0
     finally:
         cdp.close()
-        if tmp_page and os.path.exists(tmp_page):
-            os.remove(tmp_page)
+        for p in (tmp_page, tmp_app):
+            if p and os.path.exists(p):
+                os.remove(p)
 
 
 if __name__ == "__main__":

@@ -342,6 +342,26 @@ function bitOfDate(ms) {
   if (HOLIDAYS.has(p.key)) return 4;
   return (p.wd >= 1 && p.wd <= 5) ? 1 : (p.wd === 6 ? 2 : 4);
 }
+/* ---- 运転日(具体日期)互斥 ----
+   源数据把同一列车拆成基本/延伸两条且 rday 都是 7 时(サンライズ瀬戸 東京→高松 /
+   →琴平)，仅靠 r 位掩码无法区分。构建期按 data/service_calendar.json 烘焙：
+     d = 仅这些日期开行(延伸)  x = 除这些日期外开行(基本)
+   日期按「始发站发车日」判定，跨零点的凌晨段属于前一天。 */
+function tripRunsOn(t, key) { return (!t.rd || t.rd.has(key)) && !(t.rx && t.rx.has(key)); }
+function svcKeyBack(baseMs, back) { return jstDateParts(baseMs - back * 86400000).key; }
+/* 日级视图(日索引/车站牌)：本日或前一日跨零点尾部任一开行即纳入，帧内再精判 */
+function tripRunsForDate(t, baseMs) {
+  if (!t.rd && !t.rx) return true;
+  return tripRunsOn(t, svcKeyBack(baseMs, 0)) ||
+    (t.w1 > 1440 && tripRunsOn(t, svcKeyBack(baseMs, 1)));
+}
+/* 帧内精判：M2 是 windowShift 后的班次分钟(>=1440 即前一服务日发车的跨零点实例) */
+function tripRunsAtM(t, M2, baseMs) {
+  if (!t.rd && !t.rx) return true;
+  /* 延误折算后 M2 可能略低于发车分钟(跨零点尾段)，仍属前一服务日 */
+  const prev = M2 >= 1440 || (M2 < t.w0 && t.w1 > 1440);
+  return tripRunsOn(t, svcKeyBack(baseMs === undefined ? simNow() : baseMs, prev ? 1 : 0));
+}
 function minOfDay(ms) { return (((ms + JST) % 86400000) / 60000); }
 function simNow() {
   if (clockMode === 'live') return Date.now() + 0; // 返回 UTC epoch;JST 由 minOfDay 处理
@@ -425,7 +445,7 @@ function lmStart() {
 const FILES_PCT = 55, IDX_PCT = 78, PRS_PCT = 97;
 /* 数据版本号:segments/stations/station_map 等静态数据每次变更时必须递增,
    否则 IndexedDB 缓存可能让旧数据(如已修的幽灵直线)继续生效 */
-const DATA_VERSION = '2026-10-27a';   // 静态数据变更必须递增(refresh.yml 已自动递增)——不递增会让老访客 IDB 旧索引×新时刻表错配「乱飞」(2026-10-25 事故,见 PERF.md)
+const DATA_VERSION = '2026-10-30b';   // 静态数据变更必须递增(refresh.yml 已自动递增)——不递增会让老访客 IDB 旧索引×新时刻表错配「乱飞」(2026-10-25 事故,见 PERF.md)
 // 2026-10-15a: tokkyu.json 修正——関空快速/紀州路快速 的签名不再误标为 はるか/くろしお
 //   （二者为快速级 225系通勤电车，只在阪和線・関西空港線内运行；はるか/くろしお 必経東海道本線）
 //   修正后 t.nm 取到 関空快速/紀州路快速，命中 ATLAS.tokkyu 的通勤电车图标(215)，不再误用特急车头。
@@ -1370,7 +1390,7 @@ function parseTrip(t) {
      在此一并声明以固定对象形状(9.5 万个班次,避免运行时反复触发隐藏类迁移)。
      _k: 上次成功解算得到的线路类型(KINDS 之一),用于让「类型过滤」也走淡入淡出
      _seen: 空间网格查询的帧戳(班次跨多格时去重,避免重复入 eligible) */
-  return { t: t.t, r: t.r, i: t.i || '', g: gradeOf(t.i || ''), _f: 0, _M2: 0, _ok: 0, _fm: 0, _k: null, _seen: 0, _prof: null, nm: tripName(t.i || '', N, jas, geo.linesN), w0, w1, dep, arr, N, jas, jasN: geo.jasN, stopC: geo.stopC, lines, linesN: geo.linesN, lineSet: geo.lineSet, sStart, sRun, skX: geo.skX, skY: geo.skY, skStop: geo.skStop, skCum: geo.skCum, skLen: geo.skLen, bad: geo.bad, skUp: geo.skUp, skDn: geo.skDn, color: typeColor(t.i), mx0: geo.mx0, mx1: geo.mx1, my0: geo.my0, my1: geo.my1, tid: t._ || '', c: t.c || [] };
+  return { t: t.t, r: t.r, i: t.i || '', rd: t.d ? new Set(t.d) : null, rx: t.x ? new Set(t.x) : null, g: gradeOf(t.i || ''), _f: 0, _M2: 0, _ok: 0, _fm: 0, _k: null, _seen: 0, _prof: null, nm: tripName(t.i || '', N, jas, geo.linesN), w0, w1, dep, arr, N, jas, jasN: geo.jasN, stopC: geo.stopC, lines, linesN: geo.linesN, lineSet: geo.lineSet, sStart, sRun, skX: geo.skX, skY: geo.skY, skStop: geo.skStop, skCum: geo.skCum, skLen: geo.skLen, bad: geo.bad, skUp: geo.skUp, skDn: geo.skDn, color: typeColor(t.i), mx0: geo.mx0, mx1: geo.mx1, my0: geo.my0, my1: geo.my1, tid: t._ || '', c: t.c || [] };
 }
 
 /* 每站坐标: ① 官方权威映射(按车次+站序由官方区间折线端点拼出, 跨城同名天然消歧)
@@ -2496,7 +2516,7 @@ const eligible = [];      /* 本帧通过廉价筛选的班次(复用数组,不�
 
 /* 按日预过滤:r 掩码不随帧变化,一次过滤后每帧只遍历当日班次(省 57049×N 次 & 分支)。
    同时按等级分桶(dayGrade);等级是静态属性,故只在换日或换数据档时重建一次。 */
-let dayList = null, dayListBit = -1, dayListSrc = null, dayGrade = null, dayActiveMin = null;
+let dayList = null, dayListBit = -1, dayListSrc = null, dayListDate = '', dayGrade = null, dayActiveMin = null;
 let dayGrid = null, dayGridOcc = null; /* [g]=Map<cellKey,trip[]>(仅高倍率启用) / [g]=占用的格数 */
 /* 把分钟区间 [a,b] 各 +1(裁剪到 [0,1439]);差分数组用 */
 function addMinInterval(diff, a, b) {
@@ -2527,9 +2547,12 @@ function buildDayIndex() {
   fadeList.length = 0;
   /* 顺带用差分数组预计算每分钟的在途数:O(班次数) 建一次,O(1) 查询,帧内零成本 */
   const diff = new Int32Array(1441);
+  const dayBms = simNow();
   for (let k = 0; k < tripList.length; k++) {
     const t = tripList[k];
     if (!(t.r & dayBit)) continue;
+    /* 运転日互斥：同型跨日期(周日→祝日)时也按具体日期过滤，含前一日跨零点尾部 */
+    if (!tripRunsForDate(t, dayBms)) continue;
     dayList.push(t);
     dayGrade[t.g].push(t);
     if (!t.bad) {
@@ -2557,7 +2580,7 @@ function buildDayIndex() {
   let acc = 0;
   for (let m = 0; m < 1440; m++) { acc += diff[m]; diff[m] = acc; }
   dayActiveMin = diff;
-  dayListBit = dayBit; dayListSrc = tripList;
+  dayListBit = dayBit; dayListSrc = tripList; dayListDate = jstDateParts(dayBms).key;
   try { delayOnDayRebuild(); } catch (e) {}
   try { comfortOnDayRebuild(); } catch (e) {}
 }
@@ -2609,9 +2632,9 @@ function delayApplyData(d, genMs) {
     if (key === null || depMin === null || !delayTmapIdx) continue;
     let cands = delayTmapIdx.get(key);
     if (!cands || !cands.length) continue;
-    cands = cands.filter(t => (t.r & bit) && !t.bad && t.dep[0] === depMin);
+    cands = cands.filter(t => (t.r & bit) && !t.bad && t.dep[0] === depMin && tripRunsForDate(t, Date.now()));
     if (!cands.length)  /* 同源时刻表理应精确一致;±1 仅供边界兜底,须唯一 */
-      cands = delayTmapIdx.get(key).filter(t => (t.r & bit) && !t.bad && Math.abs(t.dep[0] - depMin) <= 1);
+      cands = delayTmapIdx.get(key).filter(t => (t.r & bit) && !t.bad && Math.abs(t.dep[0] - depMin) <= 1 && tripRunsForDate(t, Date.now()));
     if (!cands.length) continue;
     const origin = (e.scheduled && e.scheduled.origin) || '';
     if (origin) {
@@ -3254,6 +3277,7 @@ function updateTrains(M, dtms) {
     (inputChanged && nowMs - scanT0 >= 33);   /* 扫描 30Hz 上限 */
   const stamp = needScan ? ++fadeStamp : scanStamp;
   const gate = perfLod ? tierOn : TIER_ALL;
+  const scanBaseMs = simNow();   /* 运転日过滤的日期基准(扫描缓存 ≤5s，跨零点误差可忽略) */
   if (needScan) {
   eligible.length = 0;
   /* 先估算「网格访问量 vs 线性扫描量」:网格访问量 ≈ 视口覆盖格数 × 每格平均班次数。
@@ -3289,6 +3313,7 @@ function updateTrains(M, dtms) {
             if (t.mx1 < vp.mx0 || t.mx0 > vp.mx1 || t.my1 < vp.my0 || t.my0 > vp.my1) continue;
             const M2 = windowShift(t, M);
             if (M2 < t.w0 || M2 > t.w1) continue;
+            if (!tripRunsAtM(t, M2, scanBaseMs)) continue;
             if (pureLine && !t.lines.some(l => matchLineCached(l, pureLine) >= 1)) continue;
             t._M2 = M2; t._ok = stamp;
             eligible.push(t);
@@ -3309,6 +3334,7 @@ function updateTrains(M, dtms) {
       if (vp && (t.mx1 < vp.mx0 || t.mx0 > vp.mx1 || t.my1 < vp.my0 || t.my0 > vp.my1)) continue;
       const M2 = windowShift(t, M);
       if (M2 < t.w0 || M2 > t.w1) continue;
+      if (!tripRunsAtM(t, M2, scanBaseMs)) continue;
       if (pureLine && !t.lines.some(l => matchLineCached(l, pureLine) >= 1)) continue;
       t._M2 = M2; t._ok = stamp;
       eligible.push(t);
@@ -3330,6 +3356,7 @@ function updateTrains(M, dtms) {
       if (vp && (ft.mx1 < vp.mx0 || ft.mx0 > vp.mx1 || ft.my1 < vp.my0 || ft.my0 > vp.my1)) continue;
       const M2 = windowShift(ft, M);
       if (M2 < ft.w0 || M2 > ft.w1) continue;
+      if (!tripRunsAtM(ft, M2)) continue;
       ft._M2 = M2; ft._ok = stamp; ft._seen = stamp; eligible.push(ft);
     }
   }
@@ -4847,10 +4874,11 @@ async function ensureDayFile() {
     setStatus('✓ ' + T().loaded);
   } catch (e) { setStatus('ERR ' + e.message); }
 }
-setInterval(() => { // 跨日自动切换(长回放/挂机)
+setInterval(() => { // 跨日自动切换(长回放/挂机)；同日型跨日期(周日→祝日)时运転日过滤也要重建
   if (!dataReady) return;
   const want = dayMode === 'auto' ? bitOfDate(simNow()) : dayMode;
   if (want !== dayBit) ensureDayFile();
+  else if (dayListDate !== jstDateParts(simNow()).key) buildDayIndex();
 }, 30000);
 
 /* ---------------- 拾取 ---------------- */
@@ -5779,6 +5807,11 @@ function buildBoard(station, coord) {
       idx = jn.indexOf(nk);
       if (idx < 0) continue;
     }
+    /* 运転日互斥：该站时刻所属服务日不开行 → 不进站牌(跨零点行按前一日判定) */
+    if (t.rd || t.rx) {
+      const rowMin = idx > 0 ? t.arr[idx] : t.dep[idx];
+      if (!tripRunsOn(t, svcKeyBack(simNow(), rowMin >= 1440 ? 1 : 0))) continue;
+    }
     // 到达记录：idx > 0 即列车从某站开来本站（含终着 idx == N-1）。时间用 arr[idx]，方向=起点 jas[0]
     if (idx > 0) {
       const arrT = t.arr[idx], from = t.jas[0];
@@ -6062,6 +6095,22 @@ window.__mjr3d.e2e = {
       }
     }
     return { legs, bad, samples };
+  },
+  /* 运転日互斥断言：当前时刻真正在跑的「该车名」班次（含 r 日型与具体日期过滤）。
+     2026-10-30 事故：サンライズ瀬戸 基本(→高松)/延伸(→琴平) 两条记录同刻并存，
+     页面同时画出两趟。修复后任一时刻应恰好 1 条。 */
+  runningNamed(name) {
+    const M = curMin(), base = simNow(), out = [];
+    for (const t of tripList) {
+      if (!t || !t.N || t.nm !== name) continue;
+      if (!(t.r & dayBit)) continue;
+      const M2 = windowShift(t, M);
+      if (M2 < t.w0 || M2 > t.w1) continue;
+      if (!tripRunsAtM(t, M2, base)) continue;
+      out.push({ t: t.t, tid: t.tid, nm: t.nm, from: t.jasN[0], to: t.jasN[t.N - 1],
+                 w: t.w0 + ',' + t.w1, M2 });
+    }
+    return out;
   }
 };
 
@@ -6985,6 +7034,9 @@ function collectOffRail(M) {
   const out = [];
   for (const t of tripList) {
     if (t.bad) continue;
+    const M2 = windowShift(t, M);
+    if (M2 < t.w0 || M2 > t.w1) continue;
+    if (!tripRunsAtM(t, M2)) continue;   /* 运転日互斥:非本服务日开行的延伸/基本记录不算异常 */
     const p = trainPosition(t, M);
     if (!p) continue;
     const d = distToRail([p[0], p[1]]);

@@ -11,6 +11,8 @@ build_trains.py — 从本地全量时刻表构建页面用的轻量列车文件
   data/live/trains_sa.json   rday&2  （周六）
   data/live/trains_su.json   rday&4  （周日·假日）
 每班次紧凑记录：{"t":tmap_id,"r":rday,"w":"发车分,终到分","s":"schs 逗号串","i":"车种","_":"train_id"}
+可选字段：c=併结/分割元数据；d=仅这些日期开行、x=除这些日期外开行（运転日互斥，
+见 service_calendar.py 与 data/service_calendar.json）。
 schs = [dep0, run1, dwell1, run2, dwell2, ...]（长度 2N-2，终点站无停留字段），与页面解码一致。
 
 用法：
@@ -29,6 +31,7 @@ from collections import Counter
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import couplings
+import service_calendar
 
 # 参与去重的车种（优等列车/新干线）。同一 tmap 模式的特急/新干线不可能隔
 # ≤1 分钟发两趟真实列车；快速/普通在城市近郊线有真实 1-2 分钟间隔，必须排除。
@@ -189,6 +192,43 @@ def main():
     tokkyu_path = os.path.join(root, "mini-japanrail-3d", "data", "tokkyu.json")
     tmaps = json.load(open(tmaps_path, encoding="utf-8")) if os.path.exists(tmaps_path) else {}
     tokkyu = json.load(open(tokkyu_path, encoding="utf-8")) if os.path.exists(tokkyu_path) else None
+
+    # 运転日互斥（服务日历）：把日期烘焙进记录（延伸 d / 基本 x）。
+    # 数据源把同一列车拆成基本/延伸两条且 rday 都是 7，仅靠日型无法互斥；
+    # 日历由人按季维护，每周刷新重跑本函数自动生效。
+    calendar_path = os.path.join(root, "data", "service_calendar.json")
+    try:
+        calendar = service_calendar.load(calendar_path)
+    except Exception as e:
+        print("[calendar] 无法读取 %s: %s" % (calendar_path, e), file=sys.stderr)
+        sys.exit(1)
+
+    def names_of(tid):
+        tm = tmaps.get(str(recs[tid]["t"])) or {}
+        return tm.get("s_jas")
+
+    def times_of(tid):
+        return service_calendar.decode_times(recs[tid], tmaps.get(str(recs[tid]["t"])))
+
+    cal_res = service_calendar.apply_calendar(recs, names_of, calendar)
+    for w in cal_res["warnings"]:
+        print("[calendar] 警告: " + w)
+    if cal_res["active_unmatched"]:
+        print("[calendar] 运転日季度尚未结束，但以下规则匹配不到成对记录 —— 拒绝构建，防止幽灵车复活:",
+              file=sys.stderr)
+        for w in cal_res["active_unmatched"]:
+            print("  - " + w, file=sys.stderr)
+        print("  → 核对 data/service_calendar.json 的时刻/站名，或源已改单条时更新规则", file=sys.stderr)
+        sys.exit(1)
+    dups = service_calendar.prefix_dups(recs, names_of, times_of, cal_res["covered"],
+                                        MERGE_CLASSES | {"寝"})
+    if dups:
+        print("[calendar] 提示: 源数据里另有 %d 对未被日历覆盖的成对记录（与本次互斥无关，未处理）" % len(dups))
+        for d in dups[:12]:
+            print("  - %s(%s) 与 %s(%s) 同 %s %02d:%02d 发车" % (
+                d["base"], d["base_to"], d["ext"], d["ext_to"], d["origin"],
+                d["dep"] // 60, d["dep"] % 60))
+
     total_pairs = 0
     for bit, name, label in ((1, "wd", "平日"), (2, "sa", "周六"), (4, "su", "周日·假日")):
         # 拷贝：併结对齐会改写记录时刻，不能串到其它日型

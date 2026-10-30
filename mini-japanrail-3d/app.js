@@ -2800,7 +2800,8 @@ function delayOnDayRebuild() {  /* 数据加载/换日重建:按当日 dayList �
    时刻表本身锚定(与 delays.json 同一套 match_direct + resolve_direct_by_time),
    所以浏览器这侧不需要再做站序/始发站消歧:只要 (key, 始发发车分钟) 在当日唯一命中
    一趟,就是那趟车;命中 0 或 >1 趟一律放弃(宁漏不误报)。
-   时效:5 分钟重拉;数据龄 >45min 清空,日型/日期不符同样清空(同延误的双门)。 */
+   时效:5 分钟重拉,与 delay 轮询错开半个周期(150s 相位差),避免同一时刻
+   双请求 jr-delay.suki.ing 的高峰;数据龄 >45min 清空,日型/日期不符同样清空(同延误的双门)。 */
 const COMFORT_URLS = [
   // own-domain mirror, refreshed every bake run (<5 min lag); jsDelivr@main
   // and GitHub Pages can trail behind by hours, so they stay as fallbacks
@@ -2874,11 +2875,17 @@ async function comfortFetchOnce() {
 }
 function comfortStart() {
   if (comfortTimer) return;
-  comfortTimer = setInterval(() => {
+  /* 5 分钟轮询与 delay 错开半个周期(150s):两者在同一 boot/换日重建周期内启动,
+     固定相位差保证 comfort 与 delay 永不同时请求 jr-delay.suki.ing 的
+     delays.json + comfort.json(避免同一时刻双请求高峰)。
+     setTimeout 链与 setInterval 等效,但首 tick 可自由相位偏移,其后保持 5min 节奏。 */
+  const comfortTick = () => {
     if (document.hidden) return;
     if (Date.now() - comfortGenMs > COMFORT_MAX_AGE_MS) comfortClear();
     comfortFetchOnce();
-  }, COMFORT_FETCH_MS);
+    comfortTimer = setTimeout(comfortTick, COMFORT_FETCH_MS);
+  };
+  comfortTimer = setTimeout(comfortTick, COMFORT_FETCH_MS / 2);
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden && Date.now() - comfortLastFetch > COMFORT_FETCH_MS) comfortFetchOnce();
   });

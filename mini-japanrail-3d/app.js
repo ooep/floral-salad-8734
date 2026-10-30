@@ -829,15 +829,21 @@ function projToTrack(c, lineSet, sName) {
   const entry = segIndex.get(best.segKey)[best.ei];
   const co = entry.coords;
   const P = [best.a[0] + (best.b[0] - best.a[0]) * best.t, best.a[1] + (best.b[1] - best.a[1]) * best.t];
-  let i = 1;
-  for (; i < co.length; i++) {
-    const a = co[i - 1], b = co[i];
-    /* 允许投影点与折线段端点重合(>= 0):否则站坐标恰好落在段端点时
-       i 定位循环不 break, 一路走到段尾(宇都宮 P=段首 → i=603 段尾) */
+  /* 索引定位:在「投影点落在段内(t∈[0,1])」的候选里取离 P 最近的段。
+     旧实现取第一个 t∈[0,1] 命中 —— 折线密集时几乎与该点方向垂直的远段也满足 t∈[0,1],
+     首命中可能是 20km 外的段(日豊本線 小倉|中津: 行橋 的投影被判到小倉西侧第 21 点,
+     截取因此越过站 19.9km, 被端点校验否决 → ソニック 退回站间弦线, 偏离本线 2.5km)。
+     允许投影点与段端点重合(>= 0):否则 P 恰好落在段端点时循环一路走到段尾 */
+  let i = -1, iBestD = 1e18;
+  for (let j = 1; j < co.length; j++) {
+    const a = co[j - 1], b = co[j];
     if ((b[0] - a[0]) * (P[0] - a[0]) + (b[1] - a[1]) * (P[1] - a[1]) >= -1e-9 &&
-        (a[0] - b[0]) * (P[0] - b[0]) + (a[1] - b[1]) * (P[1] - b[1]) >= -1e-9) break;
+        (a[0] - b[0]) * (P[0] - b[0]) + (a[1] - b[1]) * (P[1] - b[1]) >= -1e-9) {
+      const d = distToSegmentProj(P[0], P[1], a[0], a[1], b[0], b[1]).d;
+      if (d < iBestD) { iBestD = d; i = j; if (d < 1e-4) break; } /* 度数 1e-4 ≈ 11m,精确命中即停 */
+    }
   }
-  if (i >= co.length) i = co.length - 1;
+  if (i < 0) i = co.length - 1;
   let sub = 0;
   for (let j = 1; j < i; j++) sub += geoKm(co[j - 1], co[j]);
   sub += geoKm(co[i - 1], P);
@@ -1512,13 +1518,19 @@ function bridgePath(A, B, lineSet, rawA, rawB) {
   const lsKey = lineSet ? [...lineSet].sort().join(',') : '';
   const key = A + '|' + B + '|' + lsKey;
   if (bridgeMemo.has(key)) return bridgeMemo.get(key);
-  const r = bridgePathRaw(A, B, lineSet, rawA, rawB);
+  /* 两段式:先只在本班次线路上搭桥(与 projToTrack/位置判边同机制,不依赖 stationCoord
+     的同名站消歧——'原'/'菊川' 等重名站会让站距校验失真);失败才放开全网。
+     否则本线列车会顺着平行的新幹線/私铁几何跑(サンライズ瀬戸 高松编成 横浜→熱海 等) */
+  let r = lineSet && lineSet.size ? bridgePathRaw(A, B, lineSet, rawA, rawB, true) : null;
+  if (!r) r = bridgePathRaw(A, B, lineSet, rawA, rawB, false);
   const out = r ? withLen(r) : null;
   if (bridgeMemo.size > 20000) bridgeMemo.clear();
   bridgeMemo.set(key, out);
   return out;
 }
-function bridgePathRaw(A, B, lineSet, rawA, rawB) {
+function bridgePathRaw(A, B, lineSet, rawA, rawB, ownLineOnly) {
+  /* 二十三桥 A*:全网搭桥，优先过滤线集失败则退到无限制 (填充几何洞，如東海道新幹線静岡区间沿本線走);
+     lineSet 同线路优先(ownLineOnly)版由此函数参数控制, 失败由 bridgePath 再跑全网版 */
   const ca = resolveCoord(rawA || A, lineSet) || stationCoord.get(A);
   const cb = resolveCoord(rawB || B, lineSet) || stationCoord.get(B);
   if (!ca || !cb) return null;
@@ -1529,12 +1541,12 @@ function bridgePathRaw(A, B, lineSet, rawA, rawB) {
   const projInfo = new Map();
   let sNode = A, sPos = ca, tNode = B, tPos = cb;
   if (!adj.has(A)) {
-    const p = projToTrack(ca);
+    const p = projToTrack(ca, ownLineOnly ? lineSet : null);
     if (!p) return null;
     sNode = VIR + A; sPos = p.P; projInfo.set(sNode, p);
   }
   if (!adj.has(B)) {
-    const p = projToTrack(cb);
+    const p = projToTrack(cb, ownLineOnly ? lineSet : null);
     if (!p) return null;
     tNode = VIR + B; tPos = p.P; projInfo.set(tNode, p);
   }
@@ -1593,7 +1605,7 @@ function bridgePathRaw(A, B, lineSet, rawA, rawB) {
       if (nb === cur) continue;
       if (tProj && (nb === tProj.na || nb === tProj.nb)) {
         const tArr = segIndex.get(tProj.segKey);
-        if (tArr && tArr.some(x => x === tProj.entry)) {
+        if (tArr && tArr.some(x => x === tProj.entry) && (!ownLineOnly || lineMatches(lineSet, tProj.entry.line))) {
           const e0 = tProj.entry;
           let sub2, ng2;
           if (nb === tProj.na) { sub2 = e0.coords.slice(0, tProj.i).concat([tProj.P]); ng2 = g + tProj.lenTo0; }
@@ -1611,6 +1623,7 @@ function bridgePathRaw(A, B, lineSet, rawA, rawB) {
       if (!arr) continue;
       let bestE = null, bestD = 1e18, bestEpos = null;
       for (const e of arr) {
+        if (ownLineOnly && !lineMatches(lineSet, e.line)) continue;
         const c0 = e.coords[0], cN = e.coords[e.coords.length - 1];
         const d0 = geoKm(c0, pos), dN = geoKm(cN, pos);
         if (d0 < bestD) { bestD = d0; bestE = e; bestEpos = cN; }
@@ -2004,11 +2017,28 @@ function trainPosition(t, M) {
   }
   return null;
 }
+/* 站对几何有效性(2026-10-30 とき 新潟→東京 瞬移事故):源数据存在与站对不符的残段 ——
+   高崎|熊谷 只登记了 26m 的北陸新幹線/上越線碎片(真实上越新幹線几何按 本庄早稲田 拆分登记),
+   挑中后整段长度≈0,列车在高崎停 13 分钟后瞬移到熊谷。真实几何应端点在两站上、长度不短于
+   两站直线距离;不合格候选一律剔除,全部不合格则返回 null 交给 officialPath/segSubPath 按坐标解析 */
+function segUsable(e, A, B) {
+  const ca = stationCoord.get(normName(A)), cb = stationCoord.get(normName(B));
+  if (!ca || !cb || !e.coords || e.coords.length < 2) return true;
+  const chord = geoKm(ca, cb);
+  if (chord < 3) return true;
+  const co = e.coords;
+  const d0 = geoKm(co[0], ca), d1 = geoKm(co[co.length - 1], cb);
+  if (d0 + d1 > 2 + chord * 0.5) return false;
+  if (e.len < chord * 0.3) return false;
+  return true;
+}
 /* 同一站对可能有多条平行段(不同线/上下行/异地同名站):
    优先本班次所乘线路,再按与前一停靠点的地理连续性消歧 */
 function pickSeg(t, A, B, prev) {
-  const arr = segIndex.get(A + '|' + B);
+  let arr = segIndex.get(A + '|' + B);
   if (!arr || !arr.length) return null;
+  arr = arr.filter(e => segUsable(e, A, B));
+  if (!arr.length) return null;
   if (t.lineSet && t.lineSet.size) {
     for (const e of arr) if (lineMatches(t.lineSet, e.line)) return e;
     /* 纯新干线车被塞到并行在来线段(西九州新干线諫早→長崎 vs 長崎本线、九州新干线小倉→博多 vs 鹿児島本线):
@@ -2018,6 +2048,13 @@ function pickSeg(t, A, B, prev) {
       if (ln.includes('新幹')) tripShink = true; else tripZairaishu = true; }
     for (const e of arr) if (e.line && e.line.includes('新幹')) { segShink = true; break; }
     if (tripShink && !tripZairaishu && !segShink) return null;
+    /* 反向对称(2026-10-30 串线事故):在来線班次的站对上只有并行新幹線分段时不得借用。
+       山陽本線在 姫路|岡山 / 西明石|姫路 等站对没有分段,唯一候选是山陽新幹線 ——
+       サンライズ瀬戸/出雲 因此显示成在山陽新幹線轨道上跑;成田エクスプレス 品川|東京
+       同理落到東海道新幹線。返回 null → 交给 officialPath/segSubPath 按坐标解析本线几何 */
+    if (!tripShink && tripZairaishu && segShink) return null;
+    /* 纯新干线班次的混合候选里剔除并行在来线段,只在真正的新干线几何中就近选 */
+    if (tripShink && !tripZairaishu) arr = arr.filter(e => e.line && e.line.includes('新幹'));
     if (arr.length === 1) return arr[0];
   } else if (arr.length === 1) return arr[0];
   if (prev) {
@@ -2037,8 +2074,15 @@ function lineOfPair(t, i) {
   const e = pickSeg(t, t.jasN[i], t.jasN[i+1], t.stopC[i]);
   let r = e ? e.line : '';
   if (!r && t.lines && t.lines.length) {
-    /* 该站对无本班次段(新干线整段不分站等):用本班次线路色,多线路跳过山手線 */
-    for (const ln of t.lines) { if (t.lines.length > 1 && ln === '山手線') continue; r = ln; break; }
+    /* 该站对无本班次段(官方几何兜底):不能直接取 t.lines[0] —— とき 高崎→熊谷
+       会显示成東北新幹線、サンライズ 姫路→岡山 显示成東海道本線。优先两条站名都
+       在站表里登记过的线路,都没有再退回旧规则(多线路跳过山手線)。 */
+    const sa = stationLines.get(normName(t.jasN[i])), sb = stationLines.get(normName(t.jasN[i+1]));
+    if (sa && sb) for (const ln of t.lines) {
+      if (ln === '山手線' && t.lines.length > 1) continue;
+      if (sa.has(ln) && sb.has(ln)) { r = ln; break; }
+    }
+    if (!r) for (const ln of t.lines) { if (t.lines.length > 1 && ln === '山手線') continue; r = ln; break; }
   }
   (t._lof = t._lof || [])[i] = r;
   return r;
@@ -5910,6 +5954,116 @@ window.showStationDetail = showStationDetail;  // 调试/自动化钩子：供�
 window.__mjr3d = { showTrainDetail, tripList: () => tripList, PLATMAP: () => PLATMAP, tmaps: () => tmaps, badgeKeyOfFeature, badgeEntriesOfStation, badgeEntriesOf, showStationDetail, stationCoord: () => stationCoord, stationMap: () => stationMap, badgeNorm, badgeFamilyHit, map: () => map, ormState: () => ({ enabled: ormEnabled, loaded: ormLoaded, fetching: ormFetching }), detailState: () => ({ wanted: detailWanted, fetched: stationDetailFetched }), bufState: () => ({ bytes: bufArr.byteLength, trains: Math.min(MAXT, fadeList.length) }), boardCacheStats: () => ({ size: boardCache.size, items: boardCacheItems, cap: BOARD_CACHE_MAX_ITEMS }), platState: () => ({ loaded: !!PLATMAP, pending: !!(platmapP && !PLATMAP) }), detailRetry: () => Object.assign({}, detailRetry) };
 // E2E 钩子：列车叠加弹窗（确定性验证，不依赖实时列车密度）
 window.__trPick = { n: () => visibleTrips.length, near: (x, y) => collectTrains(x, y, 14).length, open: (x, y) => showTrPick(collectTrains(x, y, 14), x, y) };
+/* E2E 回归钩子(确定性验证):两条历史事故的防线
+   - tripLegs(车名, 起点, 终点): 逐区间抽样, 返回列车位置到「本班次途经线路」几何的最大距离。
+     沿本线行驶时 ≈0; 走上平行邻线(新幹線/私铁)时 ~1km 量级 —— 用来钉住「串线」类回归。
+   - jumpScan(stride): 抽样班次逐 2 分钟解算, 返回相邻时刻位移 >40km 的异常点(乱飞类回归)。 */
+window.__mjr3d.e2e = {
+  tripLegs(name, from, to) {
+    const res = [];
+    for (const t of tripList) {
+      if (!t || !t.N) continue;
+      if (name && t.nm !== name) continue;
+      if (from && t.jasN[0] !== from) continue;
+      if (to && t.jasN[t.N - 1] !== to) continue;
+      const ls = t.lineSet || (t.lineSet = new Set(t.lines));
+      const legs = [];
+      for (let i = 0; i < t.N - 1; i++) {
+        let worst = 0, at = null;
+        for (let k = 0; k <= 4; k++) {
+          const M = t.dep[i] + (t.arr[i + 1] - t.dep[i]) * (k / 4);
+          const p = trainPosition(t, M);
+          if (!p) continue;
+          const d = distToLineSet(p[0], p[1], ls);
+          if (d > worst) { worst = d; at = [+p[0].toFixed(4), +p[1].toFixed(4)]; }
+        }
+        legs.push({ i, A: t.jasN[i], B: t.jasN[i + 1], km: worst > 900 ? null : +worst.toFixed(3), at });
+      }
+      res.push({ t: t.t, nm: t.nm, from: t.jasN[0], to: t.jasN[t.N - 1], legs });
+    }
+    return res;
+  },
+  jumpScan(stride) {
+    const s = Math.max(1, (stride | 0) || 317);
+    let trips = 0, moves = 0, jumps = 0;
+    const worst = [];
+    for (let k = 0; k < tripList.length; k += s) {
+      const t = tripList[k];
+      if (!t || !t.N) continue;
+      trips++;
+      let last = null;
+      for (let M = t.dep[0]; M <= t.arr[t.N - 1]; M += 2) {
+        const p = trainPosition(t, M);
+        if (!p) { last = null; continue; }
+        if (last) {
+          const d = geoKm([last[0], last[1]], [p[0], p[1]]);
+          moves++;
+          if (d > 40) {
+            jumps++;
+            if (worst.length < 10) worst.push({ t: t.t, nm: t.nm, from: t.jasN[0], to: t.jasN[t.N - 1], M, km: +d.toFixed(1) });
+          }
+        }
+        last = [p[0], p[1]];
+      }
+    }
+    return { trips, moves, jumps, worst };
+  },
+  /* 全线扫描:站对选段(segIndex 快速路径)给出的新幹線/在来線极性与班次线路集合不符的腿。
+     2026-10-30 串线事故(サンライズ瀬戸/出雲 姫路|岡山→山陽新幹線、NEX 品川|東京→東海道新幹線)
+     即此类的旧实现产物,修复后应恒为 0 —— 不抽样,全量 95,030 班逐腿检查 */
+  wrongPolarityScan() {
+    let legs = 0, bad = 0;
+    const samples = [];
+    for (const t of tripList) {
+      if (!t || !t.N || !t.lines || !t.lines.length) continue;
+      const ls = t.lineSet || (t.lineSet = new Set(t.lines));
+      let tripShink = false, tripZai = false;
+      for (const ln of ls) { if (!ln) continue; if (ln.includes('新幹')) tripShink = true; else tripZai = true; }
+      if (!tripShink && !tripZai) continue;
+      for (let i = 0; i < t.N - 1; i++) {
+        const arr = segIndex.get(t.jasN[i] + '|' + t.jasN[i + 1]);
+        if (!arr || !arr.length) continue;
+        legs++;
+        const e = pickSeg(t, t.jasN[i], t.jasN[i + 1], t.stopC[i]);
+        if (!e || !e.line) continue;
+        const shink = e.line.includes('新幹');
+        if ((!tripShink && shink) || (tripShink && !tripZai && !shink)) {
+          bad++;
+          if (samples.length < 10) samples.push({ nm: t.nm, leg: t.jasN[i] + '→' + t.jasN[i + 1], seg: e.line, tripShink });
+        }
+      }
+    }
+    return { legs, bad, samples };
+  },
+  /* 全线扫描:选段几何与站对不符(残段/端点错位)的腿。
+     2026-10-30 とき 新潟→東京 瞬移事故(高崎|熊谷 挑中 26m 残段, 列车在高崎停 13 分钟后
+     瞬移 40.8km)即此类的旧实现产物;修复后应恒为 0 —— 不抽样,全量逐腿检查 */
+  segSanityScan() {
+    let legs = 0, bad = 0;
+    const samples = [];
+    for (const t of tripList) {
+      if (!t || !t.N) continue;
+      for (let i = 0; i < t.N - 1; i++) {
+        const A = t.jasN[i], B = t.jasN[i + 1];
+        if (!segIndex.get(A + '|' + B)) continue;
+        legs++;
+        const e = pickSeg(t, A, B, t.stopC[i]);
+        if (!e || !e.coords || e.coords.length < 2) continue;
+        const ca = stationCoord.get(normName(A)), cb = stationCoord.get(normName(B));
+        if (!ca || !cb) continue;
+        const chord = geoKm(ca, cb);
+        if (chord < 3) continue;
+        const d0 = geoKm(e.coords[0], ca), d1 = geoKm(e.coords[e.coords.length - 1], cb);
+        if (d0 + d1 > 2 + chord * 0.5 || e.len < chord * 0.3) {
+          bad++;
+          if (samples.length < 10) samples.push({ nm: t.nm, leg: A + '→' + B, seg: e.line,
+            len: +e.len.toFixed(2), chord: +chord.toFixed(1) });
+        }
+      }
+    }
+    return { legs, bad, samples };
+  }
+};
 
 /* ============ 信息 tab（eki-wiki 百科，惰性加载，全路径防御） ============ */
 let sheetTab = 'tabGrid';

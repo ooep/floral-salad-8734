@@ -27,7 +27,7 @@ line_regression_check.py — 列车「串线 / 线路外乱飞」回归闸门（
   python3 scripts/line_regression_check.py --mutex-only --freeze 2026-11-01T03:00:00+09:00
 退出码：0 通过；1 有断言失败；2 环境/加载失败。
 """
-import argparse, base64, json, os, subprocess, sys, tempfile, time, urllib.request, datetime
+import argparse, base64, json, os, re, subprocess, sys, tempfile, time, urllib.request, datetime
 
 DEFAULT_CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 # 断言阈值(km)。サンライズ瀬戸 修复后各区间 ≤0.16；ソニック 最差 宇佐→杵築 0.86
@@ -58,6 +58,22 @@ def calendar_dates(svc):
     for season in svc.get("seasons") or []:
         out |= set(season.get("dates") or [])
     return out
+
+
+def norm_term(s):
+    """站名归一：站牌 term 用显示名（如「高松(香川県)」），班次终点用归一化站名（「高松」）。"""
+    return re.sub(r"[（(][^)）]*[)）]", "", str(s or "")).strip()
+
+
+def in_any_window(wins, minute):
+    """冻结分钟是否落在任一班次运行窗内（与页面 windowShift 的跨零点规则一致）。"""
+    for w in wins:
+        m = minute
+        if m < w["w0"] and m + 1440 <= w["w1"]:
+            m += 1440
+        if w["w0"] <= m <= w["w1"]:
+            return True
+    return False
 
 
 class CDP:
@@ -127,7 +143,7 @@ class CDP:
 def local_page(root, url_path, app_src="./app.js"):
     """index.html 里 app.js 是线上地址；本地校验时生成同目录临时页指向本地文件。
     同时生成临时 app 副本把 TRAIN_FILES 指向本地 data/（才能测到 d/x 运転日字段），
-    几何/图标等其余数据仍走线上 CDN。返回 (页面路径, app 路径)。"""
+    几何/图标等其余数据仍走线上 CDN。返回 (临时页面路径, 页面名, 临时 app 路径)。"""
     rel = (url_path or "/").lstrip("/") or "index.html"
     html_path = os.path.join(root, rel)
     if not os.path.exists(html_path):
@@ -283,9 +299,16 @@ def main():
 
         # 运転日互斥: 同一时刻只允许一条在跑，终点随冻结日期的运転日规则切换
         cal = load_service_calendar(site_root)
+        hooks = cdp.ev("!!(window.__mjr3d && window.__mjr3d.e2e && "
+                       "typeof window.__mjr3d.e2e.runningNamed === 'function' && "
+                       "typeof window.__mjr3d.e2e.namedWindows === 'function' && "
+                       "typeof window.__mjr3d.e2e.boardNamed === 'function')")
         report["calendar"] = []
         if not cal:
             print("[WARN] 未找到 data/service_calendar.json，跳过运転日互斥断言", file=sys.stderr)
+        elif not hooks:
+            print("[WARN] 页面缺少运転日互斥 e2e 钩子（线上未更新到含该修复的版本），跳过断言",
+                  file=sys.stderr)
         else:
             base_day = datetime.date.fromisoformat(a.freeze[:10])
             freeze_min = int(a.freeze[11:13]) * 60 + int(a.freeze[14:16])
@@ -294,27 +317,41 @@ def main():
                 rows = json.loads(cdp.ev("JSON.stringify(window.__mjr3d.e2e.runningNamed(%s))" %
                                          json.dumps(name, ensure_ascii=False)))
                 rows = [r for r in rows if r.get("from") == svc.get("from")]
-                dep_h, dep_m = (int(x) for x in svc["dep"].split(":"))
-                in_window = freeze_min >= dep_h * 60 + dep_m or freeze_min <= 10 * 60 + 30
+                wins = json.loads(cdp.ev("JSON.stringify(window.__mjr3d.e2e.namedWindows(%s))" %
+                                         json.dumps(name, ensure_ascii=False)))
+                wins = [w for w in wins if w.get("from") == svc.get("from")]
                 dates = calendar_dates(svc)
-                detail = {"service": name, "running": rows, "dates": len(dates), "ok": True}
-                if len(rows) > 1:
+                detail = {"service": name, "running": rows, "windows": wins, "dates": len(dates), "ok": True}
+                if not wins:
+                    detail["ok"] = False
+                    failures.append("运転日互斥: %s 在当前日型数据里找不到任何记录（数据缺失或车名变更）" % name)
+                elif len(rows) > 1:
                     detail["ok"] = False
                     failures.append("运転日互斥: %s 冻结 %s 同时有 %d 条在跑: %s" % (
                         name, a.freeze, len(rows), ", ".join((r.get("from") or "") + "→" + (r.get("to") or "") for r in rows)))
-                elif not rows and in_window:
+                elif not rows and in_any_window(wins, freeze_min):
                     detail["ok"] = False
-                    failures.append("运転日互斥: %s 冻结 %s 在运行时段内却没有任何一条在跑（d/x 过滤误杀）" % (name, a.freeze))
+                    failures.append("运転日互斥: %s 冻结 %s 在运行时段内却没有任何一条在跑（d/x 过滤误杀或车名变更）" % (name, a.freeze))
                 elif rows:
                     r = rows[0]
                     svc_day = base_day - datetime.timedelta(days=1 if r.get("M2", 0) >= 1440 else 0)
                     expect_to = svc.get("ext_to") if svc_day.isoformat() in dates else svc.get("base_to")
                     detail["serviceDate"] = svc_day.isoformat()
                     detail["expectTo"] = expect_to
-                    if r.get("to") != expect_to:
+                    if norm_term(r.get("to")) != norm_term(expect_to):
                         detail["ok"] = False
                         failures.append("运転日互斥: %s 冻结 %s（服务日 %s）终点应为 %s，实际 %s" % (
                             name, a.freeze, svc_day.isoformat(), expect_to, r.get("to")))
+                    # 站牌：始发站同刻出发行只能有当日应该开的那条记录（原始症状就在站牌上）
+                    dep_h, dep_m = (int(x) for x in svc["dep"].split(":"))
+                    brows = json.loads(cdp.ev("JSON.stringify(window.__mjr3d.e2e.boardNamed(%s, %s))" % (
+                        json.dumps(svc.get("from"), ensure_ascii=False), json.dumps(name, ensure_ascii=False))))
+                    terms = sorted({norm_term(b["term"]) for b in brows if b.get("dep") == dep_h * 60 + dep_m})
+                    detail["boardTerms"] = terms
+                    if terms != [norm_term(expect_to)]:
+                        detail["ok"] = False
+                        failures.append("运転日互斥: %s 冻结 %s 站牌 %s 同刻出发终点应为 [%s]，实际 %s" % (
+                            name, a.freeze, svc.get("from"), expect_to, terms or "空"))
                 report["calendar"].append(detail)
 
         errs = json.loads(cdp.ev("JSON.stringify((window.__e2eErrs||[]).slice(0,10))"))

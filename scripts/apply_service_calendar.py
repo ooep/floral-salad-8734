@@ -67,6 +67,7 @@ def main():
         with open(p, "w", encoding="utf-8") as f:
             json.dump(data[name], f, ensure_ascii=False, separators=(",", ":"))
         print("写入 %s (%d 班次)" % (p, len(data[name]["T"])))
+    print("提示: 线上/3D 子站还需运行 python3 scripts/sync_mini_3d.py 同步（含契约校验）")
     return 0
 
 

@@ -5807,10 +5807,14 @@ function buildBoard(station, coord) {
       idx = jn.indexOf(nk);
       if (idx < 0) continue;
     }
-    /* 运転日互斥：该站时刻所属服务日不开行 → 不进站牌(跨零点行按前一日判定) */
+    /* 运転日互斥：该站时刻取「离当前最近的那次服务日」判定。跨零点行(如 07:27 到达)
+       深夜视图属于今晚发车的服务日、清晨视图属于昨夜发车的服务日，不能只看 rowMin>=1440 */
     if (t.rd || t.rx) {
       const rowMin = idx > 0 ? t.arr[idx] : t.dep[idx];
-      if (!tripRunsOn(t, svcKeyBack(simNow(), rowMin >= 1440 ? 1 : 0))) continue;
+      const nowMs = simNow(), dayStart = nowMs - minOfDay(nowMs) * 60000;
+      const dToday = Math.abs(dayStart + rowMin * 60000 - nowMs);
+      const dPrev = Math.abs(dayStart - 86400000 + rowMin * 60000 - nowMs);
+      if (!tripRunsOn(t, svcKeyBack(nowMs, dPrev < dToday ? 1 : 0))) continue;
     }
     // 到达记录：idx > 0 即列车从某站开来本站（含终着 idx == N-1）。时间用 arr[idx]，方向=起点 jas[0]
     if (idx > 0) {
@@ -6109,6 +6113,28 @@ window.__mjr3d.e2e = {
       if (!tripRunsAtM(t, M2, base)) continue;
       out.push({ t: t.t, tid: t.tid, nm: t.nm, from: t.jasN[0], to: t.jasN[t.N - 1],
                  w: t.w0 + ',' + t.w1, M2 });
+    }
+    return out;
+  },
+  /* 运転日互斥断言辅助：该车名在当前日型数据里的运行窗（不判日期），
+     用于判断冻结时刻是否本应有车在跑（避免在停运时段误报「一条都没有」）。 */
+  namedWindows(name) {
+    const out = [];
+    for (const t of tripList) {
+      if (!t || !t.N || t.nm !== name) continue;
+      if (!(t.r & dayBit)) continue;
+      out.push({ from: t.jasN[0], to: t.jasN[t.N - 1], w0: t.w0, w1: t.w1,
+                 d: t.rd ? t.rd.size : 0, x: t.rx ? t.rx.size : 0 });
+    }
+    return out;
+  },
+  /* 站牌断言辅助：某站该车名的出发行（含线路名，便于核对重复/终点）。 */
+  boardNamed(station, name) {
+    let coord = null;
+    try { coord = (window.__mjr3d.stationCoord() || {})[station] || null; } catch (e) {}
+    const b = buildBoard(station, coord), out = [];
+    for (const op of b.ops) for (const L of op.lines) for (const r of (L.items || [])) {
+      if (r.tr && r.tr.nm === name) out.push({ line: L.name, dep: r.dep, term: r.term });
     }
     return out;
   }

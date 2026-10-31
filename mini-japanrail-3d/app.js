@@ -155,7 +155,7 @@ const I18N = {
     modeT:'列车显示', mode3d:'3D', modeIcon:'图标', modeCute:'可爱',
     iconSetT:'图标集', iSetDefault:'默认', iSetVector:'矢量', iconSetNote:'仅"图标"模式生效',
     baseT:'底图源', bOfm:'矢量', bPale:'淡色', bStd:'标准', bSat:'卫星',
-    viewT:'地图视角', vFlat:'平面 2D', vTilt:'立体 3D',
+    vTilt:'立体 3D',
     d1:'在途列车', d2:'今日班次', d3:'运行日', d4:'线路 / 车站', d5:'时刻表构建', d6:'帧率',
     now:'回到现在', station:'车站', line:'线路', stops:'站', transfers:'换乘', routeMile:'里程', routeNone:'未找到连通路径(请检查站名)',
     routeSame:'起终点相同', badStation:'找不到车站', h1:'拖动平移 · 滚轮缩放 · 右键旋转/倾斜', h2:'点击列车 = 详情 + 相机跟随 · 点空白取消',
@@ -198,7 +198,7 @@ const I18N = {
     modeT:'列車表示', mode3d:'3D', modeIcon:'アイコン', modeCute:'かわいい',
     iconSetT:'アイコンセット', iSetDefault:'標準', iSetVector:'ベクター', iconSetNote:'「アイコン」モードのみ有効',
     baseT:'ベースマップ', bOfm:'ベクター', bPale:'淡色', bStd:'標準', bSat:'衛星',
-    viewT:'地図視点', vFlat:'平面 2D', vTilt:'立体 3D',
+    vTilt:'立体 3D',
     d1:'運行中列車', d2:'本日列車', d3:'運行日', d4:'路線 / 駅', d5:'時刻表構築', d6:'フレーム率',
     now:'現在に戻る', station:'駅', line:'路線', stops:'駅', transfers:'乗換', routeMile:'距離', routeNone:'連絡経路なし(駅名確認)',
     routeSame:'同一点', badStation:'駅が見つかりません', h1:'ドラッグ移動 · ホイール拡縮 · 右回転/傾き', h2:'列車クリック = 詳細 + 追跡 · 空白で解除',
@@ -241,7 +241,7 @@ const I18N = {
     modeT:'Train display', mode3d:'3D', modeIcon:'Icon', modeCute:'Cute',
     iconSetT:'Icon set', iSetDefault:'Default', iSetVector:'Vector', iconSetNote:'Applies to "Icon" mode only',
     baseT:'Basemap', bOfm:'Vector', bPale:'Pale', bStd:'Standard', bSat:'Satellite',
-    viewT:'Map view', vFlat:'2D', vTilt:'3D',
+    vTilt:'3D',
     d1:'Active trains', d2:'Trips today', d3:'Service day', d4:'Lines / Stations', d5:'Timetable built', d6:'FPS',
     now:'Now', station:'Station', line:'Line', stops:'stops', transfers:'transfers', routeMile:'Distance', routeNone:'No connected route (check names)',
     routeSame:'Same stations', badStation:'Station not found', h1:'Drag to pan · Scroll to zoom · Right-drag rotate/tilt', h2:'Click train = detail + follow · Blank = cancel',
@@ -3900,6 +3900,11 @@ function updateTrains(M, dtms) {
    栅格源保留作备用(矢量源不可达、弱网或想看图面时切换)。
    dim=1 时应用压暗去饱和蒙版(突出轨道/列车);卫星(dim=0)保持原色高清。 */
 const OFM_STYLE_URL = 'https://tiles.openfreemap.org/styles/dark';
+/* 浅色主题:positron(低饱和浅灰,与车站/轨道高亮配色不打架)。两套样式共用同一
+   openmaptiles 源、sprite 与字形,启动时合并成一个 style,主题切换只切图层可见性,
+   不 setStyle,自定义图层与瓦片缓存都不重建。 */
+const OFM_LIGHT_STYLE_URL = 'https://tiles.openfreemap.org/styles/positron';
+function resolvedTheme() { return document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark'; }
 const BASEMAPS = {
   ofm:  { vec: 1, attr: '© OpenFreeMap · © OpenStreetMap contributors' },
   pale: { tiles: ['https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png'], attr: '© 国土地理院', dim: 1, sat: -0.85, bmax: 0.34, bmin: 0.02, ctr: 0.12, op: 0.96 },
@@ -3910,7 +3915,7 @@ let baseKey = localStorage.getItem('mjr3d_base') || 'ofm';
 if (baseKey === 'dark') baseKey = 'ofm'; /* 旧「深色(Esri 栅格)」并入矢量深色 */
 if (!BASEMAPS[baseKey]) baseKey = 'ofm';
 /* 矢量底图运行态:样式是否可用 / 原样式图层 id 与原始可见性(切栅格时整组隐藏) */
-let ofmOK = false, ofmLayerIds = [], ofmLayerVis = {};
+let ofmOK = false, ofmLayerIds = [], ofmLayerVis = {}, ofmThemeOf = {}, ofmHasLight = false;
 /* 地图视角:2D 俯视 / 3D 倾斜 + 建筑挤出;默认 2D(与原俯视行为一致) */
 let view3d = localStorage.getItem('mjr3d_view') === '3d';
 function rasterPaintOf(bm) {
@@ -3920,15 +3925,20 @@ function rasterPaintOf(bm) {
 }
 function setOfmVisible(on) {
   if (!map) return;
+  const lightOn = resolvedTheme() === 'light';
   for (const id of ofmLayerIds) {
     if (!map.getLayer(id)) continue;
-    try { map.setLayoutProperty(id, 'visibility', on ? (ofmLayerVis[id] || 'visible') : 'none'); } catch (e) {}
+    const orig = ofmLayerVis[id] || 'visible';
+    const themeOK = !ofmHasLight || (ofmThemeOf[id] === 'light') === lightOn;
+    const vis = on && themeOK && orig !== 'none' ? 'visible' : 'none';
+    try { map.setLayoutProperty(id, 'visibility', vis); } catch (e) {}
   }
 }
 function applyBuildings() {
   if (!map || !map.getLayer('bld-3d')) return;
   const on = view3d && baseKey === 'ofm' && !PERF_LOW && $('swBase').classList.contains('on');
   try { map.setLayoutProperty('bld-3d', 'visibility', on ? 'visible' : 'none'); } catch (e) {}
+  applyBld3dPaint();
 }
 /* 底图整组显隐(swBase 开关 + 矢量/栅格互斥):矢量与栅格两套底图常驻同一 style,
    切换只切 visibility,不 setStyle —— 轨道/车站/列车等自定义图层永不被重建 */
@@ -3972,7 +3982,7 @@ function baseStyle() {
       },
     },
     layers: [
-      { id: 'bg', type: 'background', paint: { 'background-color': '#07090f' } },
+      { id: 'bg', type: 'background', paint: { 'background-color': resolvedTheme() === 'light' ? '#e9ece9' : '#07090f' } },
       { id: 'basemap', type: 'raster', source: 'basemap', paint: {
         'raster-saturation': -0.85, 'raster-brightness-max': 0.34, 'raster-brightness-min': 0.02,
         'raster-contrast': 0.12, 'raster-opacity': 0.96,
@@ -3983,21 +3993,39 @@ function baseStyle() {
   };
 }
 /* OpenFreeMap 样式预取:直接以对象交给 MapLibre(省一次重复请求)。
-   4s 内不可达(弱网/被墙)则本次会话回退栅格底图,首屏不至于空白;
-   设置里仍可切到其它栅格源,矢量源可用时也可随时切回。 */
-async function loadOfmStyle() {
+   深色/浅色并行拉取,4s 内不可达(弱网/被墙)则本次会话回退栅格底图,首屏不至于空白;
+   设置里仍可切到其它栅格源,矢量源可用时也可随时切回。浅色样式缺失时深色样式兜底。 */
+async function fetchOfmStyle(url) {
   try {
     const ctl = new AbortController();
     const timer = setTimeout(() => ctl.abort(), 4000);
-    const r = await fetch(OFM_STYLE_URL, { signal: ctl.signal, cache: 'force-cache' });
+    const r = await fetch(url, { signal: ctl.signal, cache: 'force-cache' });
     clearTimeout(timer);
     if (!r.ok) return null;
     const st = await r.json();
     return (st && st.version === 8 && Array.isArray(st.layers) && st.sources && st.sources.openmaptiles) ? st : null;
   } catch (e) { return null; }
 }
-/* 3D 建筑:OpenFreeMap 的 dark 样式不带 3D,克隆 liberty 的 building-3d(z14+ 逐栋挤出),
-   配色换成与深色底图协调的石板蓝,按楼高做明度分级(远景不刺眼、近景有层次) */
+async function loadOfmStyle() {
+  const [dark, light] = await Promise.all([fetchOfmStyle(OFM_STYLE_URL), fetchOfmStyle(OFM_LIGHT_STYLE_URL)]);
+  if (!dark) return null;
+  /* 两套样式共用 openmaptiles 源/sprite/字形才合并;浅色层统一加 lt- 前缀,
+     与深色层同 id 空间隔离,主题切换只切 visibility */
+  if (light) {
+    const srcOK = Object.keys(light.sources || {}).every(k => dark.sources[k]);
+    if (srcOK && light.sprite === dark.sprite && light.glyphs === dark.glyphs)
+      dark.layers = dark.layers.concat(light.layers.map(l => ({ ...l, id: 'lt-' + l.id })));
+  }
+  return dark;
+}
+/* 3D 建筑:两套 OFM 样式都不带 3D,克隆 liberty 的 building-3d(z14+ 逐栋挤出),
+   按楼高做明度分级;深色配石板蓝、浅色配暖灰(与 positron 的浅底图协调) */
+const BLD3D_COLORS = {
+  dark: ['interpolate', ['linear'], ['coalesce', ['get', 'render_height'], 12],
+    0, '#1d2635', 30, '#243144', 90, '#31425c', 200, '#445d80'],
+  light: ['interpolate', ['linear'], ['coalesce', ['get', 'render_height'], 12],
+    0, '#e2ddd5', 30, '#d8d2c9', 90, '#c9c1b6', 200, '#b3a99c'],
+};
 const BLD3D_LAYER = {
   id: 'bld-3d', type: 'fill-extrusion', source: 'openmaptiles', 'source-layer': 'building',
   minzoom: 14, filter: ['!', ['has', 'hide_3d']],
@@ -4005,22 +4033,32 @@ const BLD3D_LAYER = {
   paint: {
     'fill-extrusion-base': ['coalesce', ['get', 'render_min_height'], 0],
     'fill-extrusion-height': ['coalesce', ['get', 'render_height'], 12],
-    'fill-extrusion-color': ['interpolate', ['linear'], ['coalesce', ['get', 'render_height'], 12],
-      0, '#1d2635', 30, '#243144', 90, '#31425c', 200, '#445d80'],
+    'fill-extrusion-color': BLD3D_COLORS.dark,
     'fill-extrusion-opacity': 0.93,
   },
 };
+function applyBld3dPaint() {
+  if (!map || !map.getLayer('bld-3d')) return;
+  const mode = ofmHasLight ? resolvedTheme() : 'dark';
+  try { map.setPaintProperty('bld-3d', 'fill-extrusion-color', BLD3D_COLORS[mode] || BLD3D_COLORS.dark); } catch (e) {}
+}
 /* 低端设备:隐藏次要标注层(市辖区/水域名/普通道路名)—— 符号碰撞检测是缩放期最贵的 CPU 项 */
-const OFM_LOW_HIDE = ['place_suburb', 'water_name', 'highway_name_other'];
+const OFM_LOW_HIDE = {
+  dark: ['place_suburb', 'water_name', 'highway_name_other'],
+  light: ['water_name_point_label', 'water_name_line_label', 'highway-name-path', 'highway-name-minor'],
+};
 function decorateBaseStyle(st) {
+  const lightOn = resolvedTheme() === 'light';
   ofmLayerIds = st.layers.map(l => l.id);
-  ofmLayerVis = {};
+  ofmLayerVis = {}; ofmThemeOf = {};
+  ofmHasLight = st.layers.some(l => l.id.startsWith('lt-'));
   for (const l of st.layers) {
+    ofmThemeOf[l.id] = l.id.startsWith('lt-') ? 'light' : 'dark';
     if (l.id === 'background') { l.paint = l.paint || {}; l.paint['background-color'] = '#07090f'; }
     if (l.layout && l.layout.visibility) ofmLayerVis[l.id] = l.layout.visibility;
     if (l.type === 'raster') { l.paint = l.paint || {}; l.paint['raster-fade-duration'] = 0; }
   }
-  if (PERF_LOW) for (const id of OFM_LOW_HIDE) {
+  if (PERF_LOW) for (const id of OFM_LOW_HIDE.dark.concat(OFM_LOW_HIDE.light)) {
     const l = st.layers.find(x => x.id === id);
     if (l) { l.layout = l.layout || {}; l.layout.visibility = 'none'; }
     ofmLayerVis[id] = 'none';
@@ -4028,13 +4066,23 @@ function decorateBaseStyle(st) {
   /* 省级标签(中俄朝等)与普通城市名在国别视图会铺满整屏、把日本列岛淹掉:
      分别推迟到 z6 / z5 出现,低倍率只留国名与首都/大城市;
      顺带少掉低倍率下最贵的一批符号碰撞计算 */
-  { const l = st.layers.find(x => x.id === 'place_state'); if (l) l.minzoom = 6; }
-  { const l = st.layers.find(x => x.id === 'place_city'); if (l) l.minzoom = 5; }
+  for (const id of ['place_state', 'lt-label_state']) { const l = st.layers.find(x => x.id === id); if (l) l.minzoom = 6; }
+  for (const id of ['place_city', 'lt-label_city']) { const l = st.layers.find(x => x.id === id); if (l) l.minzoom = 5; }
+  /* 主题互斥:深浅两套底图常驻同一 style,只让当前主题那一套参与渲染;
+     浅色样式本轮不可用时 ofmHasLight=false,深色样式继续服务两种主题 */
+  if (ofmHasLight) for (const l of st.layers) {
+    const th = ofmThemeOf[l.id];
+    if (!th) continue;
+    const orig = ofmLayerVis[l.id] || 'visible';
+    l.layout = l.layout || {};
+    l.layout.visibility = ((th === 'light') === lightOn && orig !== 'none') ? 'visible' : 'none';
+  }
   const bm = BASEMAPS[baseKey] && !BASEMAPS[baseKey].vec ? BASEMAPS[baseKey] : BASEMAPS.pale;
   st.sources.basemap = { type: 'raster', tiles: bm.tiles, tileSize: 256, minzoom: 2, maxzoom: 17, attribution: bm.attr };
   if (baseKey !== 'ofm') {
-    /* URL/记忆选的是栅格源:矢量层整组隐藏,避免半透明栅格下透出两套底图 */
-    for (const l of st.layers) if (l.id !== 'background') { l.layout = l.layout || {}; l.layout.visibility = 'none'; }
+    /* URL/记忆选的是栅格源:矢量层整组隐藏,避免半透明栅格下透出两套底图;
+       background 保留当前主题那一层,栅格未覆盖区域不至于黑边 */
+    for (const l of st.layers) if (l.type !== 'background') { l.layout = l.layout || {}; l.layout.visibility = 'none'; }
   }
   if (IS_MOBILE) BLD3D_LAYER.minzoom = 15; /* 手机端推迟一级:低倍率挤出建筑收益小、填充率开销大 */
   st.layers.push(BLD3D_LAYER);
@@ -4045,13 +4093,22 @@ function decorateBaseStyle(st) {
 /* 2D/3D 视角切换:只改俯仰角 + 建筑层可见性(投影保持 Globe,2D 时地球在低倍率仍是球面;
    高倍率下与平面无差别)。切换不 setStyle,自定义图层零重建。 */
 function syncViewUi() {
-  document.querySelectorAll('#viewRow .chip').forEach(c => c.classList.toggle('on', (c.dataset.view === '3d') === view3d));
   const qb = $('btnView3d');
   if (qb) { qb.classList.toggle('on', view3d); qb.setAttribute('aria-pressed', view3d ? 'true' : 'false'); }
+}
+/* 手势进入/退出的状态切换:只同步状态、建筑与按钮,不改相机(俯仰角由手势本身决定) */
+function setView3dFromGesture(on) {
+  if (!!on === view3d) return;
+  view3d = !!on;
+  localStorage.setItem('mjr3d_view', view3d ? '3d' : '2d');
+  syncViewUi();
+  applyBuildings();
+  stateHash();
 }
 function setView3d(on, animate) {
   view3d = !!on;
   localStorage.setItem('mjr3d_view', view3d ? '3d' : '2d');
+  viewPitchLock = Date.now() + 900; /* 程序化俯仰期间忽略 pitch 事件,避免动画中途反复切状态 */
   syncViewUi();
   if (map) {
     const pitch = view3d ? 55 : 0;
@@ -4060,6 +4117,7 @@ function setView3d(on, animate) {
   applyBuildings();
   stateHash();
 }
+let viewPitchLock = 0;
 let mapCreatedResolve; const mapCreated = new Promise(r => { mapCreatedResolve = r; });
 async function initMap() {
   /* URL 深链里的底图源优先于 localStorage(决定初始 style 里栅格层是否可见) */
@@ -4071,7 +4129,7 @@ async function initMap() {
   map = new maplibregl.Map({
     container: 'map', style: ofmStyle || baseStyle(),
     center: [137.2, 36.8], zoom: 3.4, pitch: 0, bearing: 0,
-    minZoom: 1.2, maxZoom: 16, maxPitch: 70,
+    minZoom: 1.2, maxZoom: 16, maxPitch: 70, touchPitch: true,
     /* 抗锯齿:新设备保留(线条更平滑);老旧设备关闭(减少 GPU 过绘制,明显提帧) */
     canvasContextAttributes: { antialias: !PERF_LOW, preserveDrawingBuffer: false },
     attributionControl: false,
@@ -4119,6 +4177,14 @@ async function initMap() {
   let stateSaveT = 0;
   map.on('moveend', () => { clearTimeout(stateSaveT); stateSaveT = setTimeout(stateHash, 700); });
   map.on('move', () => { viewDirty = true; }); /* 相机变化标记:暂停时也要据此重建列车顶点(见 startLoop 的 tick) */
+  /* 双指推屏(俯仰手势)直接进入 3D:超过 12° 开建筑,压回 6° 以下回 2D。
+     滞回区间避免在阈值附近抖动;按钮/深链的程序化俯仰期间由 viewPitchLock 屏蔽。 */
+  map.on('pitch', () => {
+    if (Date.now() < viewPitchLock) return;
+    const p = map.getPitch();
+    if (!view3d && p > 12) setView3dFromGesture(true);
+    else if (view3d && p < 6) setView3dFromGesture(false);
+  });
   map.on('style.load', () => { try { map.setProjection({ type: 'globe' }); } catch (e) { console.warn('globe unavailable', e); } });
   map.on('error', e => { const m = e && e.error && (e.error.message || String(e.error)) || String(e || ''); window.__errs.push('MAP ' + m.slice(0, 200)); });
   /* GPU 上下文丢失(手机切后台/显存紧张被系统回收是常态):MapLibre 会销毁并重建整个
@@ -7686,6 +7752,7 @@ function applyThemeMode() {
   document.documentElement.setAttribute('data-theme', resolved);
   document.querySelectorAll('#themeRow .chip').forEach(c => c.classList.toggle('on', c.dataset.theme === mode));
   applyThemeBrand(resolved);
+  if (map) applyBaseVisibility(); /* 深浅两套 OFM 图层随主题互斥显隐 */
 }
 // 深色模式使用深色版 logo / 标签页图标（浅色模式用浅色版）
 // 注：apple-touch-icon / icon-192 / icon-512 属应用图标（iOS 主屏 / Android），
@@ -7704,8 +7771,7 @@ mq.addEventListener('change', applyThemeMode);
 applyThemeMode();
 /* 底图源切换 */
 document.querySelectorAll('#baseSrcRow .chip').forEach(c => c.addEventListener('click', () => setBasemap(c.dataset.base)));
-/* 视角切换:设置面板 + 右上角浮动快捷键(同一状态) */
-document.querySelectorAll('#viewRow .chip').forEach(c => c.addEventListener('click', () => setView3d(c.dataset.view === '3d', true)));
+/* 视角切换:桌面右上角快捷键;手机端双指推屏(设置面板不再重复入口) */
 { const qv = $('btnView3d'); if (qv) qv.addEventListener('click', () => setView3d(!view3d, true)); }
 syncViewUi();
 $('brand').addEventListener('click', () => map.flyTo({ center: [137.2, 36.8], zoom: 3.4, pitch: 0, bearing:0, duration: 1500 }));
@@ -7748,8 +7814,6 @@ function applyLang() {
   $('tBase').textContent = t.baseT;
   if ($('bOfm')) $('bOfm').textContent = t.bOfm;
   $('bPale').textContent = t.bPale; $('bStd').textContent = t.bStd; $('bSat').textContent = t.bSat;
-  if ($('tView')) $('tView').textContent = t.viewT;
-  if ($('vFlat')) $('vFlat').textContent = t.vFlat;
   if ($('vTilt')) $('vTilt').textContent = t.vTilt;
   { const qv = $('btnView3d'); if (qv) { qv.setAttribute('aria-label', t.vTilt); qv.setAttribute('title', t.vTilt); } }
   $('tD4').textContent = t.d4; $('tD5').textContent = t.d5; $('tD6').textContent = t.d6;

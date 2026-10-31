@@ -506,7 +506,7 @@ function idbPut(key, val) {
 /* 带缓存读取:首次下载解析并写入 IDB;之后若服务端 Last-Modified 未变(304)直接用缓存(秒开),
    变化则下载新数据并回写;服务端无 Last-Modified 时以 DATA_VERSION 为准。
    5 分钟新鲜度(与服务端 max-age=300 缓存头对齐):窗口内直接用 IDB 数据,零网络零解析;
-   否则若无窗口(旧条目)走 ETag/304,有新响应则全量解析并回写。 */
+   否则若无窗口(旧条目)走 HEAD 校验头比对,有变化则全量解析并回写。 */
 const IDB_FRESH_MS = 300000;
 async function fetchJSONWithCache(url, phaseKey, fileIdx, silent) {
   const key = DATA_VERSION + '|' + url;
@@ -518,11 +518,18 @@ async function fetchJSONWithCache(url, phaseKey, fileIdx, silent) {
       if (cached.t0 && Date.now() - cached.t0 < IDB_FRESH_MS) { if (!silent) updateBar(fIdx, 1, 1); return cached.j; }
       const lm = cached.lm, etag = cached.etag;
       if (lm || etag) {
-        const hdrs = {};
-        if (lm) hdrs['If-Modified-Since'] = lm;
-        if (etag) hdrs['If-None-Match'] = etag;   /* jr-static 不返回 Last-Modified 且忽略 IMS,但 If-None-Match(ETag) 正确返回 304 */
-        const res = await fetch(url, { headers: hdrs });
-        if (res.status === 304) { if (!silent) updateBar(fIdx, 1, 1); cached.t0 = Date.now(); try { if (idb) await idbPut(key, cached); } catch (e) {} return cached.j; }
+        /* 用 HEAD 比对校验头,而不是带 If-None-Match 的 GET:自定义请求头会触发 CORS 预检,
+           而 jr-static 的静态托管对 OPTIONS 返回 405,控制台报错且白白多跑一次请求。
+           HEAD 属 CORS 安全方法不预检,ETag/Last-Modified 已在 expose-headers 里可直接读;
+           命中则续用 IDB,未命中再整取 */
+        let same = false;
+        try {
+          const head = await fetch(url, { method: 'HEAD', cache: 'no-cache' });
+          const hETag = head.headers.get('ETag'), hLM = head.headers.get('Last-Modified');
+          same = head.ok && ((!!etag && hETag === etag) || (!etag && !!lm && hLM === lm));
+        } catch (e) {}
+        if (same) { if (!silent) updateBar(fIdx, 1, 1); cached.t0 = Date.now(); try { if (idb) await idbPut(key, cached); } catch (e) {} return cached.j; }
+        const res = await fetch(url);
         if (res.ok) {
           const j = await res.json();
           if (!silent) updateBar(fIdx, 1, 1);

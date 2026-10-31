@@ -336,6 +336,10 @@ let tripsByStation = new Map();
 /* 时刻表分片状态：mode='shards' 时 tripList 只含当前/下一 30 分钟窗口的班次；
    mode='full' 为旧的全日模式（manifest 缺失、分片加载/解析失败时的兜底）。 */
 let ttState = null, ttLoading = false, ttFullLoading = null, ttDayReq = null;
+/* 断网/连续失败退避：tick 每帧都会尝试切窗口与预取；失败若不留退避，
+   会以 60fps 反复打分片 + 全日兜底（实测断网 5s 891 次请求）。 */
+const TT_RETRY_MS = 15000;
+let ttRetryAt = 0, ttRetryBucket = -1, ttPrefetchRetryAt = 0;
 /* 分片模式下车站时刻表按需取数：下载一次当日原始压缩班次（与旧端点是同一文件），
    只解析「途经该站」的班次，避免为了开一个站牌把 9 万班次全部构建几何/索引。
    解析结果按站缓存（LRU 8 站），换日时整体失效。 */
@@ -346,6 +350,7 @@ const STATION_TRIPS_MAX = 8;
    换日/回退全量时清空。 */
 const TT_RESCUE_MAX_SHARDS = 6;   /* 每次 feed 最多补几个分片，防止大面积晚点狂拉 */
 let ttRescueBusy = false, ttRescueGen = '', ttRescueFetches = 0;
+let ttRescueIndexing = false;  /* 补片后重建日索引期间，防止 delayOnDayRebuild 再次进入补片 */
 const ttRescueTried = new Set();
 function ttClearStationCache() {
   stationTripsCache.clear(); stationTripsMiss.clear();
@@ -594,6 +599,35 @@ function idbPut(key, val) {
     } catch (e) { res(); }
   });
 }
+/* 旧 DATA_VERSION 的条目永远不会再被读取（缓存键含版本）。分片模式一次会话会写入
+   几十个 1–2 MB 分片、必要时再写一份 12 MB 整包，周更版本若不清理会持续堆积，
+   最终把 IDB 配额占满、之后所有写入静默失败（每次都重新下载，性能反而更差）。
+   启动后空闲时清一次：只删「日期版本|url」与旧索引键，当前版本与其他键保留。 */
+let idbPruneP = null;
+function idbPruneOldVersions() {
+  if (idbPruneP || !idb) return;
+  idbPruneP = new Promise(res => {
+    try {
+      const tx = idb.transaction('files', 'readwrite');
+      const store = tx.objectStore('files');
+      const req = store.getAllKeys();
+      req.onsuccess = () => {
+        const keys = req.result || [];
+        for (let i = 0; i < keys.length; i++) {
+          const k = keys[i];
+          if (typeof k !== 'string') continue;
+          if (k.startsWith(DATA_VERSION + '|') || k === 'idx|' + DATA_VERSION) continue;
+          if (/^\d{4}-\d{2}-\d{2}[a-z]?\|/.test(k) || /^idx\|\d{4}-\d{2}-\d{2}/.test(k)) {
+            try { store.delete(k); } catch (e) {}
+          }
+        }
+      };
+      tx.oncomplete = () => res();
+      tx.onerror = () => res();
+      tx.onabort = () => res();
+    } catch (e) { res(); }
+  });
+}
 /* 带缓存读取:首次下载解析并写入 IDB;之后若服务端 Last-Modified 未变(304)直接用缓存(秒开),
    变化则下载新数据并回写;服务端无 Last-Modified 时以 DATA_VERSION 为准。
    5 分钟新鲜度(与服务端 max-age=300 缓存头对齐):窗口内直接用 IDB 数据,零网络零解析;
@@ -604,6 +638,7 @@ async function fetchJSONWithCache(url, phaseKey, fileIdx, silent) {
   const fIdx = fileIdx != null ? fileIdx : nextFileIdx();
   try {
     if (!idb) idb = await openIDB();
+    idbPruneOldVersions();
     const cached = await idbGet(key);
     if (cached && cached.v === DATA_VERSION && cached.j != null) {
       if (cached.t0 && Date.now() - cached.t0 < IDB_FRESH_MS) { if (!silent) updateBar(fIdx, 1, 1); return cached.j; }
@@ -749,6 +784,7 @@ function ttFallbackFull() {
     tripList = list;
     totalTripsToday = json.n || list.length;
     ttState = { mode: 'full', bit, key: TT_DAY_KEY[bit] };
+    rebindLiveTrips(list);
     ttClearStationCache(); /* 已升级为全日索引，站牌部分缓存无用，释放内存 */
     $('dBuild').textContent = json.b || '-';
     $('bCount').textContent = totalTripsToday.toLocaleString();
@@ -785,6 +821,17 @@ function ttCarryOver(prev, list, M) {
   if (carried && window.__dbgOn) console.log('[tt] carry over ' + carried + ' trip(s) past scheduled window');
   return list;
 }
+/* 切窗/降级全量后 tripList 是一批全新对象：跟随/详情仍指旧对象时会与新实例
+   同时进入渲染（同一列车画两辆），晚点 feed 也只更新新实例。按 tid 重绑。 */
+function rebindLiveTrips(list) {
+  const pick = t => {
+    if (!t || !t.tid) return t;
+    for (let i = 0; i < list.length; i++) if (list[i].tid === t.tid) return list[i];
+    return t;
+  };
+  if (followTrip) followTrip = pick(followTrip);
+  if (liveDetailTrip) liveDetailTrip = pick(liveDetailTrip);
+}
 /* 时间跨入下一个 30 分钟窗口：加载当前窗口（通常已预取），合并下一窗口，重建 tripList。
    分片是按窗口复制的，当前窗口一定包含该分钟全部在途班次，无需回看历史窗口。 */
 async function ttEnsureBucket(M) {
@@ -807,6 +854,7 @@ async function ttEnsureBucket(M) {
     ttCarryOver(prev, list, M);
     applyCouplings(list);
     tripList = list;
+    rebindLiveTrips(list);
     st.bucket = b;
     st.json = json;
     totalTripsToday = st.day.n || json.n || list.length;
@@ -820,7 +868,10 @@ async function ttEnsureBucket(M) {
   } catch (e) {
     console.warn('[tt]', e);
     /* 分片解析/合并异常：升级原全日数据，避免每帧重试同一坏窗口 */
-    try { await ttFallbackFull(); } catch (e2) { console.warn('[tt] full', e2); }
+    try { await ttFallbackFull(); } catch (e2) {
+      console.warn('[tt] full', e2);
+      ttRetryBucket = b; ttRetryAt = Date.now() + TT_RETRY_MS;  /* 失败退避：同桶 15s 后再试 */
+    }
   } finally {
     /* 分片失败会升级为 full（ttState 被替换），这里也必须复位，否则 tick 会永久跳过渲染 */
     ttLoading = false;
@@ -830,6 +881,7 @@ async function ttEnsureBucket(M) {
 function ttPrefetch(M) {
   const st = ttState;
   if (!st || st.mode !== 'shards') return;
+  if (Date.now() < ttPrefetchRetryAt) return;  /* 预取失败退避：断网时不要每帧重打 */
   const b = ttBucketOf(M);
   const ahead = (clockMode !== 'live' && speed >= 8) ? 3 : 1;
   for (let i = 1; i <= ahead; i++) {
@@ -837,11 +889,14 @@ function ttPrefetch(M) {
     if (st.loaded.has(j) || st.prefetching.has(j)) continue;
     st.prefetching.add(j);
     ttLoadShard(st.key, st.day, j, '', true).then(p => {
-      if (ttState === st && p) st.loaded.set(j, p);
+      if (p) { if (ttState === st) st.loaded.set(j, p); ttPrefetchRetryAt = 0; }
+      else ttPrefetchRetryAt = Date.now() + TT_RETRY_MS;
       st.prefetching.delete(j);
     });
   }
 }
+/* 网络恢复立即解除退避，不必等 15s 定时；断网期间保持最大 15s 一次的轻量重试 */
+addEventListener('online', () => { ttRetryAt = 0; ttRetryBucket = -1; ttPrefetchRetryAt = 0; });
 function yieldToUI() { return new Promise(r => setTimeout(r, 0)); }
 /* 索引缓存:静态数据(segments/stations/tmaps/station_map)未变时,二次访问直接从 IDB 恢复,
    跳过 ~8s 的索引构建(segment 网格/焊接/寻路图/搜索索引等) */
@@ -3125,14 +3180,15 @@ function activeCountAt(M) {
   if (m < 0) m = 0; else if (m > 1439) m = 1439;
   return dayActiveMin[m];
 }
-function buildDayIndex() {
+function buildDayIndex(keepFade) {
   dayList = [];
   dayGrade = [[], [], [], []];
   dayGrid = [new Map(), new Map(), new Map(), new Map()];
   dayGridOcc = [0, 0, 0, 0];
   /* 换运行日 / 换数据档后 tripList 是全新对象,旧 fadeList 里全是「上一档」的孤儿班次,
-     不清空会在随后 ~260ms 内用旧数据继续解算并绘制(幽灵车)。直接清空,下一帧重建。 */
-  fadeList.length = 0;
+     不清空会在随后 ~260ms 内用旧数据继续解算并绘制(幽灵车)。直接清空,下一帧重建。
+     补片后原地重建(keepFade)不换数据档,保留淡入状态避免全图闪一下。 */
+  if (!keepFade) fadeList.length = 0;
   /* 顺带用差分数组预计算每分钟的在途数:O(班次数) 建一次,O(1) 查询,帧内零成本 */
   const diff = new Int32Array(1441);
   const dayBms = simNow();
@@ -3353,7 +3409,7 @@ function delayOnDayRebuild() {  /* 数据加载/换日/切分片窗口重建:按
    下一次 buildDayIndex 会用 feed 重新打上 dly。最多补 TT_RESCUE_MAX_SHARDS 片，
    大面积晚点（如台风）时也不会把半日分片全部拉下来。 */
 async function ttRescueDelayed(feed, genMs) {
-  if (!delayOn || ttRescueBusy || !feed || !genMs) return;
+  if (!delayOn || ttRescueBusy || ttRescueIndexing || !feed || !genMs) return;
   const st = ttState;
   if (!st || st.mode !== 'shards' || ttDayReq || ttLoading || !tripList || !tripList.length) return;
   if (Date.now() - genMs > DELAY_MAX_AGE_MS) return;
@@ -3418,6 +3474,15 @@ async function ttRescueDelayed(feed, genMs) {
       if (added >= 400) break;
     }
   } finally { ttRescueBusy = false; }
+  if (added && ttState === st && !ttDayReq && tripList === base) {
+    /* 补片只 push 了 tripList：数组引用没变，updateTrains 的
+       dayListSrc !== tripList 失效检测不会触发，补回的列车就永远进不了
+       dayList/dayGrade/dayGrid（画不出来，也不计入在途数）。这里原地重建；
+       keepFade 保留淡入状态，避免全图闪一下。重建期间 delayOnDayRebuild
+       会再调本函数，用 ttRescueIndexing 挡住重入。 */
+    ttRescueIndexing = true;
+    try { buildDayIndex(true); } finally { ttRescueIndexing = false; }
+  }
   if (added && ttState === st && !ttDayReq && tripList === base && window.__dbgOn) {
     console.log('[tt] delay rescue +' + added + ' trip(s) from ' + ttRescueFetches + ' shard(s)');
   }
@@ -5552,7 +5617,10 @@ function startLoop() {
     if (dataReady && !ttDayReq && ttState && ttState.mode === 'shards') {
       const tb = ttBucketOf(M);
       if (tb !== ttState.bucket) {
-        if (!ttLoading) ttEnsureBucket(M);
+        /* 已预取的窗口不需要网络，断网也应立即切；只有需要新请求的窗口才受退避限制。
+           同一桶失败(如缓存数据解析异常)则连缓存也等到期，避免每帧重试。 */
+        const cached = !!(ttState.loaded && ttState.loaded.has(tb));
+        if (!ttLoading && ((cached && tb !== ttRetryBucket) || Date.now() >= ttRetryAt)) ttEnsureBucket(M);
         if (followTrip) tickFollow(M, dt);
         return;
       }
@@ -6711,8 +6779,73 @@ function groupDirs(items) {
 function distKm(c1, c2) {
   return Math.hypot((c1[0] - c2[0]) * 111.32 * Math.cos((c1[1] + c2[1]) / 2 * Math.PI / 180), (c1[1] - c2[1]) * 110.97);
 }
+/* 站牌条目里的 tr 在分片模式下是「解析站牌时的独立对象」，dly 只是快照：
+   晚点 feed 更新、定向补片把旧窗口班次并回 tripList 之后，快照不会跟着变，
+   重开车站/切页签就会继续显示旧徽标（或漏掉极晚点班次）。这里在每次取用
+   board（含缓存命中）时按 tid 用当前在线班次刷新，保证站牌与地图同源。
+   当前窗口外的班次（尚未发车/极晚点未被补片）不在 tripList 中，再按延误
+   feed 的 (tmap, 计划发车, 始发站/报告站) 直接匹配，与全量模式徽标对齐。 */
+let boardFeedIdx = null, boardFeedIdxSrc = null, boardFeedIdxGen = 0;
+function delayBoardFeedIndex() {
+  if (boardFeedIdxSrc === delayFeed && boardFeedIdxGen === delayGenMs) return boardFeedIdx;
+  boardFeedIdxSrc = delayFeed; boardFeedIdxGen = delayGenMs; boardFeedIdx = null;
+  if (!delayOn || !delayFeed || !delayGenMs) return null;
+  if (Date.now() - delayGenMs > DELAY_MAX_AGE_MS) return null;
+  if (delayFeed.date !== jstDateParts(Date.now()).key || dayBit !== bitOfDate(Date.now())) return null;
+  const list = Array.isArray(delayFeed.trains) ? delayFeed.trains : null;
+  if (!list || !list.length || list.length > 3000) return null;
+  const m = new Map();
+  for (let i = 0; i < list.length; i++) {
+    const e = list[i];
+    const n = Math.round(+e.delay_min);
+    if (!(n >= 1 && n <= 1440)) continue;
+    const key = (e && e.suki && e.suki[0] && e.suki[0].key != null) ? String(e.suki[0].key) : null;
+    const depMin = delayHm(e && e.scheduled && e.scheduled.dep);
+    if (key === null || depMin === null) continue;
+    let a = m.get(key);
+    if (!a) m.set(key, a = []);
+    a.push({ n, depMin, origin: (e.scheduled && e.scheduled.origin) || '', fromN: normName(e.from || '') });
+  }
+  boardFeedIdx = m;
+  return m;
+}
+/* 与 delayApplyData 同口径的站牌匹配：tmap + 计划发车(±1 兜底) + 始发站 + 报告站；
+   多解宁漏不误。 */
+function delayBoardMatch(t, idx) {
+  if (!idx || !t || t.bad || !(t.r & dayBit) || !tripRunsForDate(t, Date.now())) return 0;
+  const arr = idx.get(String(t.t));
+  if (!arr || !arr.length) return 0;
+  const dep = t.dep[0];
+  let cands = arr.filter(x => x.depMin === dep);
+  if (!cands.length) cands = arr.filter(x => Math.abs(x.depMin - dep) <= 1);
+  if (cands.length !== 1) return 0;
+  const x = cands[0];
+  if (x.origin) {
+    const o = normName(t.jas[0]);
+    if (!(o === normName(x.origin) || t.jas[0].includes(x.origin) || x.origin.includes(t.jas[0]))) return 0;
+  }
+  if (x.fromN && !(t.jasN && t.jasN.indexOf(x.fromN) >= 0)) return 0;
+  return x.n;
+}
+function boardSyncDly(board, live) {
+  const feedIdx = delayBoardFeedIndex();
+  for (let oi = 0; oi < board.ops.length; oi++) {
+    const lines = board.ops[oi].lines;
+    for (let li = 0; li < lines.length; li++) {
+      const L = lines[li];
+      for (let k = 0; k < 2; k++) {
+        const arr = k ? L.itemsArr : L.items;
+        for (let i = 0; i < arr.length; i++) {
+          const tr = arr[i].tr;
+          if (!tr || !tr.tid) continue;
+          tr.dly = live.has(tr.tid) ? (live.get(tr.tid) || 0) : delayBoardMatch(tr, feedIdx);
+        }
+      }
+    }
+  }
+}
 function buildBoard(station, coord) {
-  let nk = normName(station), stTrips;
+  let nk = normName(station), stTrips, live = null;
   if (ttState && ttState.mode === 'shards') {
     /* 分片模式：站牌数据由 ttLoadStationTrips 只解析途经本站的班次，按站缓存 */
     if (!stationTripsCache.has(nk) && STATION_ALIAS[nk]) {
@@ -6720,6 +6853,11 @@ function buildBoard(station, coord) {
       if (stationTripsCache.has(a)) nk = a;
     }
     stTrips = stationTripsCache.get(nk) || [];
+    live = new Map();
+    for (let i = 0; i < tripList.length; i++) {
+      const t = tripList[i];
+      if (t.tid) live.set(t.tid, t.dly || 0);
+    }
   } else {
     /* 站名别名兜底:地图短名在时刻表索引里查不到时,改用时刻表站名再查(如伝馬町→熱田神宮伝馬町) */
     const nkTrips0 = (tripsByStation && tripsByStation.get(nk)) || [];
@@ -6733,9 +6871,12 @@ function buildBoard(station, coord) {
   /* 缓存键必须带 dayBit + JST 日期:运行日切换(平日↔周六/周日)或跨日后若沿用旧键,
      会命中切换前构建的时刻表;d/x 行的取舍也随日期变化，只带 dayBit 会跨日命中旧行 */
   const ck = (coord ? (nk + '|' + coord[0].toFixed(3) + ',' + coord[1].toFixed(3)) : nk) +
-    '#' + dayBit + '@' + jstDateParts(simNow()).key;
+    '#' + dayBit + '@' + jstDateParts(simNow()).key + '#' + (ttState && ttState.mode || 'full');
   const hit = boardCache.get(ck);
-  if (hit) { boardCache.delete(ck); boardCache.set(ck, hit); return hit; }
+  if (hit) {
+    if (live) boardSyncDly(hit, live);
+    boardCache.delete(ck); boardCache.set(ck, hit); return hit;
+  }
   buildLineOp();
   const byLine = new Map();
   for (let k = 0; k < stTrips.length; k++) {
@@ -6792,6 +6933,7 @@ function buildBoard(station, coord) {
   let nItems = 0;
   lines.forEach(L => { nItems += L.items.length + L.itemsArr.length; });
   const board = { ops, nItems };
+  if (live) boardSyncDly(board, live);
   boardCache.set(ck, board); boardCacheItems += nItems;
   while (boardCacheItems > BOARD_CACHE_MAX_ITEMS && boardCache.size > 1) {
     const oldest = boardCache.keys().next().value;

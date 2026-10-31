@@ -432,6 +432,7 @@ let dayMode = 'auto', dayBit = 1, dayBitAuto = 1;
 let followTrip = null, selKind = Object.fromEntries(KINDS.map(k => [k, true]));
 let fps = 0, lastFrameT = 0, rafId = 0, frameC = 0; /* frameC:列车顶点隔帧重建的帧计数 */
 let glowAutoOff = false, lowFpsN = 0, frameSkip = false, adaptToastDone = false, followNullT = 0;
+let lastRenderM = -1, lastRenderList = null, lastRenderDay = null; /* 上次重建时的时刻/数据档:暂停拖时间轴或分片切窗后都必须重绘 */
 const hasWebgl2 = (() => { try { return !!document.createElement('canvas').getContext('webgl2'); } catch { return false; } })();
 
 /* ---------------- 时间 ---------------- */
@@ -845,6 +846,9 @@ async function ttEnsureBucket(M) {
     if (!p) p = await ttLoadShard(st.key, st.day, b, 'loadingTr');
     if (ttDayReq || ttState !== st) return;
     if (!p) { await ttFallbackFull(); return; }
+    /* 拖动/连续跨窗时，等分片回来用户可能已经停在别的窗口：不要再花 1-2s 解析旧窗口，
+       交给下一帧按当前时刻重新取（已下载的旧片不驻留，避免拖一次时间轴把内存撑大）。 */
+    if (ttBucketOf(curMin()) !== b) return;
     st.loaded.set(b, p);
     const pn = st.loaded.get((b + 1) % TT_BUCKETS) || null;
     const json = ttMerge([p, pn], st.day);
@@ -1064,17 +1068,29 @@ function matchLineCached(a, b) {
 }
 function lineMatches(lineSet, line) {
   if (!lineSet || !lineSet.size || !line) return false;
+  /* 同一线路集合(同 tmap 的所有班次、以及线路组成相同的不同 tmap)会反复问同一批
+     「集合里有没有这条线」:按 line 记住结果。旧实现每次都跑 normCached + matchLineCached,
+     切窗口首帧数千 tmap 的 pickSeg 反复命中时是最大热点。 */
+  let lm = lineSet._lm;
+  if (!lm) lm = lineSet._lm = new Map();
+  let hit = lm.get(line);
+  if (hit !== undefined) return hit;
   let ns = lineSet._n;
   if (!ns) {
     ns = new Set();
     for (const ln of lineSet) ns.add(normLineName(ln));
     lineSet._n = ns;
   }
-  if (ns.has(line)) return true;
-  const sn = normCached(line);
-  if (ns.has(sn)) return true;
-  for (const ln of lineSet) if (matchLineCached(ln, line) > 0) return true;
-  return false;
+  let r = false;
+  if (ns.has(line)) r = true;
+  else {
+    const sn = normCached(line);
+    if (ns.has(sn)) r = true;
+    else for (const ln of lineSet) if (matchLineCached(ln, line) > 0) { r = true; break; }
+  }
+  if (lm.size >= 64) lm.clear();
+  lm.set(line, r);
+  return r;
 }
 /* 解析站坐标:优先括号注记/线路集合消歧,多候选无信号时返回 null(不再取第一个 -> 杜绝跨城错配) */
 function resolveCoord(rawName, lineSet, prevCoord) {
@@ -1690,6 +1706,19 @@ let routeGraph = null, routeNodes = null, stationLinesAt = null;
    400km/h 错配剔除用组内首班次的时间窗判定;普查零分歧,未来若出现组内分歧,影响仅是该组
    共用首班次的剔除结果(与既有 per-trip 判定同为启发式)。 */
 const tripGeoCache = new Map();
+/* 线路集合按内容驻留:同一条运行线(线路组成相同)的不同 tmap 共享同一个 Set,
+   lineMatches 的规范化集合与按线名结果缓存也随之共享。 */
+const lineSetPool = new Map();
+function pooledLineSet(linesN) {
+  const key = linesN.join('\u0001');
+  let s = lineSetPool.get(key);
+  if (!s) {
+    s = new Set(linesN);
+    if (lineSetPool.size > 30000) lineSetPool.clear();
+    lineSetPool.set(key, s);
+  }
+  return s;
+}
 /* 班次解析(分片化):s 首项=首站发车分钟,之后为相对前一站事件的差值(arr, dep 交替,终点只有 arr) */
 async function parseTripsAsync(json, onPhase, keepGeo) {
   if (!keepGeo) tripGeoCache.clear(); /* 换日/换数据档:几何缓存随新 tmaps 重建；同一天切窗口时复用 */
@@ -1755,7 +1784,7 @@ function parseTrip(t) {
      在此一并声明以固定对象形状(9.5 万个班次,避免运行时反复触发隐藏类迁移)。
      _k: 上次成功解算得到的线路类型(KINDS 之一),用于让「类型过滤」也走淡入淡出
      _seen: 空间网格查询的帧戳(班次跨多格时去重,避免重复入 eligible) */
-  return { t: t.t, r: t.r, i: t.i || '', rd: t.d ? new Set(t.d) : null, rx: t.x ? new Set(t.x) : null, g: gradeOf(t.i || ''), _f: 0, _M2: 0, _ok: 0, _fm: 0, _k: null, _seen: 0, _prof: null, nm: tripName(t.i || '', N, jas, geo.linesN), w0, w1, dep, arr, N, jas, jasN: geo.jasN, stopC: geo.stopC, lines, linesN: geo.linesN, lineSet: geo.lineSet, sStart, sRun, skX: geo.skX, skY: geo.skY, skStop: geo.skStop, skCum: geo.skCum, skLen: geo.skLen, bad: geo.bad, skUp: geo.skUp, skDn: geo.skDn, color: typeColor(t.i), mx0: geo.mx0, mx1: geo.mx1, my0: geo.my0, my1: geo.my1, tid: t._ || '', c: t.c || [] };
+  return { t: t.t, r: t.r, i: t.i || '', rd: t.d ? new Set(t.d) : null, rx: t.x ? new Set(t.x) : null, g: gradeOf(t.i || ''), _f: 0, _M2: 0, _ok: 0, _fm: 0, _k: null, _seen: 0, _prof: null, nm: tripName(t.i || '', N, jas, geo.linesN), w0, w1, dep, arr, N, jas, jasN: geo.jasN, stopC: geo.stopC, lines, linesN: geo.linesN, lineSet: geo.lineSet, sStart, sRun, skX: geo.skX, skY: geo.skY, skStop: geo.skStop, skCum: geo.skCum, skLen: geo.skLen, bad: geo.bad, skUp: geo.skUp, skDn: geo.skDn, _g: geo, color: typeColor(t.i), mx0: geo.mx0, mx1: geo.mx1, my0: geo.my0, my1: geo.my1, tid: t._ || '', c: t.c || [] };
 }
 
 /* 每站坐标: ① 官方权威映射(按车次+站序由官方区间折线端点拼出, 跨城同名天然消歧)
@@ -1763,7 +1792,7 @@ function parseTrip(t) {
 function buildTripGeo(tid, N, jas, lines, arr, dep) {
   const linesN = lines.map(normName);
   const jasN = jas.map(normName);
-  const lineSet = new Set(linesN);
+  const lineSet = pooledLineSet(linesN);
   const smStops = officialStopsFor(tid, N);
   function stopCoordAt(i) {
     /* 两侧相邻轨道段在本站的端点若重合(同一几何流水线,差 <0.1km)= 轨道给出的站址。
@@ -2289,10 +2318,28 @@ function stopPoint(t, i) {
    吸附必须在这里做 —— stopBearing 先于 trainPosition 缓存时也拿到吸附后的几何 */
 function legSegEntry(t, i) {
   if (t._seg && t._seg[i] !== undefined) return t._seg[i];
-  let e = orientSeg(t, i, pickSeg(t, t.jasN[i], t.jasN[i + 1], t.stopC && t.stopC[i], i) || null);
-  if (e) {
-    const sn = snapToStops(t, i, e.coords);
-    if (sn) e = { coords: sn.coords, cum: sn.cum, len: sn.len, line: e.line, kind: e.kind };
+  /* 区间几何只由 tmap(停站序列/坐标/线路集合)决定,与班次的时刻无关:
+     同 tmap 的数千班次共享一份结果。旧实现按「班次×区间」缓存,首帧切窗口时
+     4k 列车各自重跑 pickSeg/lineMatches/orientSeg/snapToStops,是卡顿主因。 */
+  const g = t._g;
+  let e;
+  if (g) {
+    const sc = g.segI || (g.segI = []);
+    if (sc[i]) e = sc[i][0];
+    else {
+      e = orientSeg(t, i, pickSeg(t, t.jasN[i], t.jasN[i + 1], t.stopC && t.stopC[i], i) || null);
+      if (e) {
+        const sn = snapToStops(t, i, e.coords);
+        if (sn) e = { coords: sn.coords, cum: sn.cum, len: sn.len, line: e.line, kind: e.kind };
+      }
+      sc[i] = [e];
+    }
+  } else {
+    e = orientSeg(t, i, pickSeg(t, t.jasN[i], t.jasN[i + 1], t.stopC && t.stopC[i], i) || null);
+    if (e) {
+      const sn = snapToStops(t, i, e.coords);
+      if (sn) e = { coords: sn.coords, cum: sn.cum, len: sn.len, line: e.line, kind: e.kind };
+    }
   }
   (t._seg = t._seg || [])[i] = e;
   return e;
@@ -2306,6 +2353,14 @@ function stopBearing(t, i, c) {
   let b = cache[i];
   if (b !== undefined) return b;
   let e = legSegEntry(t, i);
+  /* 有主区间几何时朝向只由几何决定(同 tmap 共享);走兜底路径时 f0 依赖
+     本班次到站时刻与兜底时间窗,不能跨班次共享。 */
+  const g = t._g;
+  const shareB = !!(g && e);
+  if (shareB) {
+    const bc = g.brgI || (g.brgI = []);
+    if (bc[i] !== undefined) { cache[i] = bc[i]; return bc[i]; }
+  }
   let co = null, cum = null, glen = 0, f0 = 0;
   if (e) { co = e.coords; cum = e.cum; glen = e.len; }
   if (!co) {
@@ -2341,6 +2396,7 @@ function stopBearing(t, i, c) {
       ? Math.atan2(d[0] - a[0], d[1] - a[1]) : 0;
   }
   cache[i] = b;
+  if (shareB) (g.brgI || (g.brgI = []))[i] = b;
   return b;
 }
 /* 兜底路径必须真正连接 A→B:两端分别落在两站附近。bridgePath 等残段可能首尾都在
@@ -2389,6 +2445,20 @@ function fallbackSeg(t, i) {
   let fb = fc[i];
   if (fb) return fb;
   const A = t.jasN[i], B = t.jasN[i + 1];
+  /* 同 tmap 共享兜底几何:cA/cB 都来自 t.stopC 时,路径/钳制/吸附只由
+     停站序列与线路集合决定(与班次时刻无关)。只共享几何,时间窗 m0/m1 仍按班次算。
+     cA/cB 缺失时 stopPoint 会做 500km/h 时刻复核(依赖本班次运行时分),保持逐班次计算。 */
+  const g = t._g, cAs = t.stopC && t.stopC[i], cBs = t.stopC && t.stopC[i + 1];
+  const share = !!(g && cAs && cBs && geoKm(cAs, cBs) <= 300);
+  if (share) {
+    const gc = g.fbI || (g.fbI = []);
+    const slot = gc[i];
+    if (slot) {
+      fb = { coords: slot.coords, cum: slot.cum, len: slot.len, line: '', kind: '', m0: t.dep[i], m1: Math.max(t.arr[i + 1], t.dep[i] + 1), single: slot.single, clamp: slot.clamp };
+      fc[i] = fb;
+      return fb;
+    }
+  }
   let path = null;
   const lsT = t.lineSet || (t.lineSet = new Set(t.lines));
   /* 站坐标必须走 stopPoint 的线名校验 + 500km/h 相邻停站复核,不能裸用 stationCoord:
@@ -2405,7 +2475,15 @@ function fallbackSeg(t, i) {
        segSubPath 邻段投影截取退居其次 —— 市区短站距下错误邻段端点可同时落入端点容差
        (七隈線 六本松→桜坂 被 別所|六本松 段截反),官方几何在场时不应被其遮蔽 */
     let first = null;
-    for (const cd of [officialPath(t, i), segSubPath(A, B, cA, cB, lsT), findPathOnLines(A, B, lsT, t.jas[i], t.jas[i+1]), bridgePath(A, B, lsT, t.jas[i], t.jas[i+1]), routeByStops(A, B, lsT)]) {
+    /* 惰性求值:旧写法把五个候选一次性算完再循环,即使第一条 officialPath 就合格,
+       后面四次(含 routeByStops 的 BFS/路径精修)仍会白跑 —— 切窗口首帧的主要卡顿。
+       这里保持相同顺序与判定,命中即停。 */
+    for (let ci = 0; ci < 5; ci++) {
+      const cd = ci === 0 ? officialPath(t, i)
+        : ci === 1 ? segSubPath(A, B, cA, cB, lsT)
+        : ci === 2 ? findPathOnLines(A, B, lsT, t.jas[i], t.jas[i+1])
+        : ci === 3 ? bridgePath(A, B, lsT, t.jas[i], t.jas[i+1])
+        : routeByStops(A, B, lsT);
       if (!cd) continue;
       if (!first) first = cd;
       if (pathCovers(cd, cA, cB) && pathAnchors(cd, cA, cB)) { path = cd; break; }
@@ -2459,6 +2537,7 @@ function fallbackSeg(t, i) {
   /* 终点校验(成对,见 pathAnchors):同名站错配/残段路径弃用,末段落回骨架线插值 */
   if (fb.coords && cA && cB && !pathAnchors(fb, cA, cB)) { fb.coords = null; fb.cum = null; fb.len = 0; }
   fc[i] = fb;
+  if (share) (g.fbI || (g.fbI = []))[i] = { coords: fb.coords, cum: fb.cum, len: fb.len, single: fb.single, clamp: fb.clamp };
   return fb;
 }
 function trainPosition(t, M) {
@@ -4053,9 +4132,12 @@ function updateTrains(M, dtms) {
       if (areaNow < areaScan * 0.0625) vpChanged = true; /* 深度放大(面积 1/16)刷新一次 */
     }
   }
+  /* 数据换档(切分片/补片重建日索引)必须立即重扫，不能等 5s TTL；
+     dayListSrc 在 buildDayIndex 里已同步成新 tripList，故用独立的 scanList/scanDay。 */
+  const dataNew = scanList !== tripList || scanDay !== dayList;
   const inputChanged = minuteKey !== scanMinute || gatesKey !== scanGates ||
-    (pureLine || null) !== scanPure || dayListSrc !== tripList || dayListBit !== dayBit || vpChanged;
-  let needScan = scanStamp === 0 || nowMs - scanT0 > 5000 ||
+    (pureLine || null) !== scanPure || dataNew || dayListBit !== dayBit || vpChanged;
+  let needScan = dataNew || scanStamp === 0 || nowMs - scanT0 > 5000 ||
     (inputChanged && nowMs - scanT0 >= 33);   /* 扫描 30Hz 上限 */
   const stamp = needScan ? ++fadeStamp : scanStamp;
   const gate = perfLod ? tierOn : TIER_ALL;
@@ -4126,6 +4208,7 @@ function updateTrains(M, dtms) {
   }
   }
   scanStamp = stamp; scanMinute = minuteKey; scanGates = gatesKey; scanPure = pureLine || null;
+  scanList = tripList; scanDay = dayList;
   scanHasVp = !!vp;
   if (vp) { scanVp0 = vp.mx0; scanVp1 = vp.mx1; scanVp2 = vp.my0; scanVp3 = vp.my1; }
   scanT0 = nowMs;
@@ -5574,6 +5657,9 @@ let lastBuildZoom = -1;
    及时性(班次出现/消失最多迟 5s,与停站展示节奏一致) */
 let scanStamp = 0, scanMinute = -1, scanGates = -1, scanPure = null, scanHasVp = false,
     scanVp0 = 0, scanVp1 = 0, scanVp2 = 0, scanVp3 = 0, scanT0 = 0;
+/* 上次扫描所用的数据档：dayListSrc 会在 buildDayIndex 内立刻指向新 tripList，
+   不能再用它判断「数据换过」；否则新分片会被 5s 扫描缓存挡在屏幕外。 */
+let scanList = null, scanDay = null;
 /* 写矩形(z≥5 时按当前视锥+64px 余量填充;z<5 为 null 不裁切) */
 let wRect = null;
 function startLoop() {
@@ -5620,7 +5706,8 @@ function startLoop() {
         /* 已预取的窗口不需要网络，断网也应立即切；只有需要新请求的窗口才受退避限制。
            同一桶失败(如缓存数据解析异常)则连缓存也等到期，避免每帧重试。 */
         const cached = !!(ttState.loaded && ttState.loaded.has(tb));
-        if (!ttLoading && ((cached && tb !== ttRetryBucket) || Date.now() >= ttRetryAt)) ttEnsureBucket(M);
+        const settled = !sliderDragging && Date.now() >= sliderSettleAt;
+        if (settled && !ttLoading && ((cached && tb !== ttRetryBucket) || Date.now() >= ttRetryAt)) ttEnsureBucket(M);
         if (followTrip) tickFollow(M, dt);
         return;
       }
@@ -5639,7 +5726,13 @@ function startLoop() {
     /* 暂停且无跟随/详情、或页面隐藏:位置不变,跳过顶点重建与重绘(省 CPU/GPU/电量)。
        但相机若仍变化(缩放/平移/旋转),列车顶点必须重建 —— 否则列车图元停留在旧视口与旧 zoom:
        缩小到国家级后只剩旧城市附近几辆车、图标按旧 zoom 被放大,直到再次交互时间轴才恢复。 */
-    const staticFrame = (paused && !followTrip && !liveDetailTrip && !sliderDragging) || document.hidden;
+    /* 暂停 ≠ 静止:拖动时间轴后 simEpoch 变了但 paused 仍为 true,若只看 paused 会跳过
+       重建,分片数据加载完成也不上屏(旧窗口列车一直停在画面上)。时间变了、
+       分片 tripList/日索引换了,都必须重绘 —— 尤其是「暂停后再拖」时旧数据先按新时刻
+       画过一帧,单看 timeMoved 会漏掉随后到达的新窗口。 */
+    const timeMoved = lastRenderM < 0 || Math.abs(M - lastRenderM) >= 0.02;
+    const dataChanged = lastRenderList !== tripList || lastRenderDay !== dayList;
+    const staticFrame = (paused && !timeMoved && !dataChanged && !anyFading && !followTrip && !liveDetailTrip && !sliderDragging) || document.hidden;
     const viewChanged = viewDirty && !document.hidden;
     if ((staticFrame && !viewChanged) || frameSkip) {
       if (followTrip) tickFollow(M, dt);
@@ -5677,14 +5770,14 @@ function startLoop() {
       viewDirty = false;
     } else {
       let frameStride;
-      if (viewDirty || followTrip || sliderDragging) frameStride = 1;
+      if (viewDirty || followTrip || sliderDragging || timeMoved || dataChanged) frameStride = 1;
       else if (anyFading) frameStride = 4;
       else frameStride = zz < 5 ? 15 : (zz < 8 ? 6 : 2);
       needTrains = frameC++ % frameStride === 0;
       viewDirty = false; /* 相机已稳定:本帧重建后清除,恢复暂停态省电 */
       if (needTrains) lastBuildZoom = zz;
     }
-    if (needTrains) updateTrains(M, dt * 1000); /* dt 传给淡入淡出:按真实帧间隔推进 alpha,掉帧时时长不变 */
+    if (needTrains) { updateTrains(M, dt * 1000); lastRenderM = M; lastRenderList = tripList; lastRenderDay = dayList; } /* dt 传给淡入淡出:按真实帧间隔推进 alpha,掉帧时时长不变 */
     /* 徽标「在途」= 全国此时此刻在途列车数:与 LOD/等级门/视口裁剪无关,
        缩放、开关「性能改善」都不会改变这个数字(它描述事实,不是描述屏幕上画了多少) */
     const act = activeCountAt(M);
@@ -5711,10 +5804,13 @@ function startLoop() {
 }
 
 /* ---------------- 时钟 UI ---------------- */
-let sliderDragging = false;
+let sliderDragging = false, sliderSettleAt = 0;
 let lastClockStr = '', lastSliderVal = -1, lastDayStr = '';
 function refreshClockUI(M) {
-  const cs = fmtHMS(M);
+  /* 分片模式下目标窗口还没到时，时间后面加省略号：拖动时间轴后旧画面会短暂保留，
+     没有这个提示用户会以为「拖了没反应」。窗口就绪后自动消失。 */
+  const waiting = !!(dataReady && ttState && ttState.mode === 'shards' && !ttDayReq && ttState.bucket !== ttBucketOf(M));
+  const cs = fmtHMS(M) + (waiting ? ' …' : '');
   if (cs !== lastClockStr) { cTimeEl.textContent = cs; lastClockStr = cs; }
   const p = jstDateParts(simNow());
   const effBit = dayMode === 'auto' ? bitOfDate(simNow()) : dayMode;
@@ -5730,11 +5826,13 @@ function refreshClockUI(M) {
 }
 function bubSync() { const b = $('cBub'); b.textContent = fmtHMS(parseFloat(sliderEl.value)); b.style.left = Math.min(96, Math.max(4, sliderEl.value / 1439 * 100)) + '%'; const f = Math.min(1, Math.max(0, parseFloat(sliderEl.value) / 1439)); sliderEl.style.background = 'linear-gradient(to right, var(--acc) ' + (f * 100) + '%, rgba(120,140,180,.28) ' + (f * 100) + '%)'; }
 sliderEl.addEventListener('pointerdown', () => { sliderDragging = true; bubSync(); $('cBub').classList.add('show'); });
-sliderEl.addEventListener('pointerup', () => { sliderDragging = false; setTimeout(() => $('cBub').classList.remove('show'), 350); });
+sliderEl.addEventListener('pointerup', () => { sliderDragging = false; sliderSettleAt = Date.now() + 160; setTimeout(() => $('cBub').classList.remove('show'), 350); });
+sliderEl.addEventListener('pointercancel', () => { sliderDragging = false; sliderSettleAt = Date.now() + 160; $('cBub').classList.remove('show'); });
 sliderEl.addEventListener('input', () => {
   if (clockMode === 'live') enterManual(parseFloat(sliderEl.value));
   else { if (!paused) doPause(); simEpoch = simDateBase() + parseFloat(sliderEl.value) * 60000; }
   cTimeEl.textContent = fmtHMS(parseFloat(sliderEl.value));
+  sliderSettleAt = Date.now() + 160; /* 拖动过程中不切分片：等手指停下再只加载最终窗口，避免逐格追逐 */
   bubSync();
 });
 $('cNow').addEventListener('click', () => { doNow(); toast(T().liveMode);

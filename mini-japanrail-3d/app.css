@@ -606,7 +606,8 @@
   :root { --dock:46px; }
   /* 顶部 HUD:隐藏标题文字,保留在途/今日统计 */
   #topHud { top:8px; }
-  #btnView3d { top:8px; right:9px; height:31px; padding:0 9px 0 8px; font-size:10px; gap:5px; }
+  /* 右上角 3D 按钮只在桌面显示,手机端视角切换走设置面板的 #viewRow */
+  #btnView3d { display:none; }
   #brand { height:34px; padding:0 12px 0 5px; gap:7px; }
   #brand .lg { width:24px; height:24px; }
   #brand b { display:none; }

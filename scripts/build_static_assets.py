@@ -173,8 +173,8 @@ def main():
     print('[app] %d (app.css/app.js)' % n)
 
     # 5.95) 时刻表分片 —— 从周更后的 data/live/trains_*.json 生成 30 分钟活跃窗口
-    #       分片到 /data/tt/。纯静态 additive 端点；生成失败不阻断部署（客户端自动
-    #       回退原 trains_*.json，旧端点始终保留）。
+    #       （终点加 60 分钟晚点尾巴）分片到 /data/tt/。纯静态 additive 端点；生成失败
+    #       不阻断部署（客户端自动回退原 trains_*.json，旧端点始终保留）。
     tt_src = os.path.join(REPO, 'data', 'live')
     tt_out = os.path.join(out, 'data', 'tt')
     if os.path.isdir(tt_src):

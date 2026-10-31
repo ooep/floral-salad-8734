@@ -342,9 +342,15 @@ let ttState = null, ttLoading = false, ttFullLoading = null, ttDayReq = null;
 let ttRaw = null, ttRawBit = 0, ttRawP = null, ttStopNames = null;
 let stationTripsCache = new Map(), stationTripsMiss = new Set();
 const STATION_TRIPS_MAX = 8;
+/* 极端晚点定向补片状态（见 ttRescueDelayed）：按延误 feed 的 generation 复用，
+   换日/回退全量时清空。 */
+const TT_RESCUE_MAX_SHARDS = 6;   /* 每次 feed 最多补几个分片，防止大面积晚点狂拉 */
+let ttRescueBusy = false, ttRescueGen = '', ttRescueFetches = 0;
+const ttRescueTried = new Set();
 function ttClearStationCache() {
   stationTripsCache.clear(); stationTripsMiss.clear();
   ttRaw = null; ttRawBit = 0; ttRawP = null; ttStopNames = null;
+  ttRescueTried.clear(); ttRescueGen = ''; ttRescueFetches = 0;
 }
 function ttStopNameSets() {
   if (ttStopNames) return ttStopNames;
@@ -751,6 +757,34 @@ function ttFallbackFull() {
   })().finally(() => { ttFullLoading = null; });
   return ttFullLoading;
 }
+/* 晚点尾巴结转：计划窗已结束、但按实际延误（或连挂补偿）仍在途的班次。
+   分片只含「计划结束 + 烘焙晚点尾巴」内的班次；delay_min 最大可达 1440 分钟，
+   超过尾巴的极端晚点在用户已经看过它之后不能因为切窗口而凭空消失。
+   上一窗口的已解析对象自带几何/耦合/延误，直接沿用；新窗口也有的以新对象为准。
+   判定与 updateTrains 完全一致（windowShift 内部先扣 dly 再折 ±1440）。 */
+function ttCarryOver(prev, list, M) {
+  if (!prev || !prev.length) return list;
+  const have = new Set();
+  for (let i = 0; i < list.length; i++) {
+    const t = list[i];
+    have.add(t.tid || (t.t + '|' + t.w0 + '|' + t.w1));
+  }
+  let carried = 0;
+  for (let i = 0; i < prev.length; i++) {
+    const t = prev[i];
+    if (!t || !t.N) continue;
+    const k = t.tid || (t.t + '|' + t.w0 + '|' + t.w1);
+    if (have.has(k)) continue;
+    const M2 = windowShift(t, M);
+    if (M2 < t.w0 || M2 > t.w1) continue;
+    if (!tripRunsAtM(t, M2)) continue;
+    /* applyCouplings 对已挂接对象会重复 push；清空后按合并列表重建一次 */
+    t.cpl = null; t._coupleOff = 0;
+    list.push(t); have.add(k); carried++;
+  }
+  if (carried && window.__dbgOn) console.log('[tt] carry over ' + carried + ' trip(s) past scheduled window');
+  return list;
+}
 /* 时间跨入下一个 30 分钟窗口：加载当前窗口（通常已预取），合并下一窗口，重建 tripList。
    分片是按窗口复制的，当前窗口一定包含该分钟全部在途班次，无需回看历史窗口。 */
 async function ttEnsureBucket(M) {
@@ -767,8 +801,10 @@ async function ttEnsureBucket(M) {
     st.loaded.set(b, p);
     const pn = st.loaded.get((b + 1) % TT_BUCKETS) || null;
     const json = ttMerge([p, pn], st.day);
+    const prev = tripList;
     const list = await parseTripsAsync(json, undefined, true); /* 同一日型切窗口：复用 tmap 级几何缓存 */
     if (ttDayReq || ttState !== st) return;
+    ttCarryOver(prev, list, M);
     applyCouplings(list);
     tripList = list;
     st.bucket = b;
@@ -3147,6 +3183,9 @@ const DELAY_URLS = [
 const DELAY_FETCH_MS = 5 * 60 * 1000, DELAY_MAX_AGE_MS = 45 * 60 * 1000, DELAY_STALE_MS = 20 * 60 * 1000;
 let delayOn = (() => { const v = localStorage.getItem('mjr3d_delay'); return v === null ? true : v === '1'; })();
 const delayedSet = new Set(), delaySynced = new Set();
+/* 最近一次成功拉取的延误 feed 原文：分片模式下切窗口/重建 dayList 时先同步重匹配，
+   避免每 30 分钟窗口切换出现几秒「晚点全部消失」；也供极端晚点补片使用。 */
+let delayFeed = null;
 let delayTmapIdx = null, delayLastFetch = 0, delayTimer = null, delayGenMs = 0, delayBusy = false, delayPending = false, delaySyncMin = -1;
 function delayClear() {
   delaySyncMin = -1;
@@ -3165,7 +3204,7 @@ function delayHm(s) {  /* "20:23"/"24:02" → 分钟,可 >1439,与 w0/dep[0] 同
   return m ? (+m[1]) * 60 + (+m[2]) : null;
 }
 function delayApplyData(d, genMs) {
-  if (!d || !(genMs > 0) || Date.now() - genMs > DELAY_MAX_AGE_MS) { delayClear(); return 0; }
+  if (!d || !(genMs > 0) || Date.now() - genMs > DELAY_MAX_AGE_MS) { delayFeed = null; delayClear(); return 0; }
   /* 日型/日期双门(二十三轮.d):延误是「今天」的实时数据 —— 仅当 feed.date == 今日(JST)
      且当前载入的数据集日型 == 今日真实日型时才应用。手动切平日/土/休、回放跨日、
      午夜换日期间自动清空,防止今天的延误错配到其他日型的班次上(同模式同分发车的
@@ -3257,7 +3296,12 @@ async function delayFetchOnce() {
         }
       } catch (e) { /* 单源失败继续下一源 */ }
     }
-    if (best) { delayGenMs = bestGen; delayApplyData(best, bestGen); }  /* 全源失败:保留现状,由 45min 过期兜底清空 */
+    if (best) {
+      delayFeed = best;
+      delayGenMs = bestGen;
+      delayApplyData(best, bestGen);
+      try { ttRescueDelayed(best, bestGen); } catch (e) {}
+    }  /* 全源失败:保留现状,由 45min 过期兜底清空 */
     delayLastFetch = Date.now();
     delayUiNote();  /* 数据龄随每次拉取刷新(定时/回前台补拉路径同样更新,不依赖开关/语言切换) */
   } finally { delayBusy = false; if (delayPending) { delayPending = false; delayFetchOnce(); } }
@@ -3284,7 +3328,7 @@ function delayStart() {
   /* 冷加载首拉易被 10s 超时掐断(页面并发拉资源):30s 后仍无数据补试一次 */
   setTimeout(() => { if (delayOn && !delayGenMs) delayFetchOnce(); }, 30000);
 }
-function delayOnDayRebuild() {  /* 数据加载/换日重建:按当日 dayList 重建索引并重匹配 */
+function delayOnDayRebuild() {  /* 数据加载/换日/切分片窗口重建:按当日 dayList 重建索引并重匹配 */
   delayTmapIdx = new Map();
   for (const t of dayList) {
     const k = String(t.t);
@@ -3293,7 +3337,118 @@ function delayOnDayRebuild() {  /* 数据加载/换日重建:按当日 dayList �
     a.push(t);
   }
   delayClear();
-  if (delayOn) { if (delayGenMs) delayFetchOnce(); delayStart(); }
+  if (delayOn) {
+    /* 先用最近一次 feed 同步重匹配：分片模式每 30 分钟切窗口都会走到这里，
+       若等网络回来再标，晚点标记会短暂全部消失；极端晚点班次也可能因
+       当前窗口没有它而一直无 dly，被当成已到站。 */
+    if (delayFeed && delayGenMs) { try { delayApplyData(delayFeed, delayGenMs); } catch (e) {} }
+    if (!delayTimer) delayStart();  /* 定时器已在跑时不额外发请求；5 分钟轮询自会刷新 */
+    try { ttRescueDelayed(delayFeed, delayGenMs); } catch (e) {}
+  }
+}
+/* 极端晚点定向补片（仅分片模式）：delay feed 里存在一个班次，其 (tmap, 计划发车)
+   在当前 tripList 里完全匹配不到，且计划发车所属窗口早于当前窗口 —— 说明晚点
+   时长超过了烘焙尾巴（默认 60 分钟）。此时按计划发车定位到对应分片，只解析该
+   (tmap, 发车分钟) 命中的极少数记录，确认「延误后此刻仍在途」后并入 tripList；
+   下一次 buildDayIndex 会用 feed 重新打上 dly。最多补 TT_RESCUE_MAX_SHARDS 片，
+   大面积晚点（如台风）时也不会把半日分片全部拉下来。 */
+async function ttRescueDelayed(feed, genMs) {
+  if (!delayOn || ttRescueBusy || !feed || !genMs) return;
+  const st = ttState;
+  if (!st || st.mode !== 'shards' || ttDayReq || ttLoading || !tripList || !tripList.length) return;
+  if (Date.now() - genMs > DELAY_MAX_AGE_MS) return;
+  if (feed.date !== jstDateParts(Date.now()).key || dayBit !== bitOfDate(Date.now())) return;
+  const list = Array.isArray(feed.trains) ? feed.trains : [];
+  if (!list.length || list.length > 3000) return;
+  const genKey = String(feed.generated_at || genMs) + '|' + dayBit;
+  if (ttRescueGen !== genKey) { ttRescueGen = genKey; ttRescueFetches = 0; ttRescueTried.clear(); }
+  if (ttRescueFetches >= TT_RESCUE_MAX_SHARDS) return;
+  /* 当前列表已有的匹配键（与 delayApplyData 相同：tmap + 计划发车分钟） */
+  const have = new Set();
+  for (let i = 0; i < tripList.length; i++) {
+    const t = tripList[i];
+    have.add(String(t.t) + '|' + Math.round(t.dep[0]));
+  }
+  const groups = new Map();
+  for (let i = 0; i < list.length; i++) {
+    const e = list[i];
+    const n = Math.round(+e.delay_min);
+    if (!(n >= 1 && n <= 1440)) continue;
+    const key = (e && e.suki && e.suki[0] && e.suki[0].key != null) ? String(e.suki[0].key) : null;
+    const depMin = delayHm(e && e.scheduled && e.scheduled.dep);
+    if (key === null || depMin === null) continue;
+    const fp = key + '|' + depMin;
+    if (ttRescueTried.has(fp)) continue;
+    if (have.has(fp) || have.has(key + '|' + (depMin - 1)) || have.has(key + '|' + (depMin + 1))) continue;
+    const b = ttBucketOf(depMin);
+    /* 计划发车就在当前/下一窗口却仍不在列表：不是「旧窗口尾巴」，没有可补的片 */
+    if (b === st.bucket || b === (st.bucket + 1) % TT_BUCKETS) continue;
+    let a = groups.get(b);
+    if (!a) groups.set(b, a = []);
+    a.push({ e, n, key, depMin, fp });
+  }
+  if (!groups.size) return;
+  const base = tripList;
+  let added = 0;
+  ttRescueBusy = true;
+  try {
+    for (const [b, entries] of groups) {
+      if (ttRescueFetches >= TT_RESCUE_MAX_SHARDS) break;
+      let p = st.loaded.get(b);
+      if (!p) {
+        ttRescueFetches++;
+        p = await ttLoadShard(st.key, st.day, b, '', true);
+      }
+      if (!p) continue;
+      if (ttState !== st || ttDayReq || tripList !== base || dayBit !== bitOfDate(Date.now())) return;
+      for (const x of entries) {
+        if (ttRescueTried.has(x.fp)) continue;
+        ttRescueTried.add(x.fp);  /* 同一 feed 内只尝试一次，失败等下一轮刷新 */
+        const t = ttRescueFind(p.T || [], x);
+        if (!t) continue;
+        const kt = String(t.t) + '|' + Math.round(t.dep[0]);
+        if (have.has(kt)) continue;
+        t.dly = x.n; t._dlyOwn = x.n;
+        const M2 = windowShift(t, curMin());
+        if (M2 < t.w0 || M2 > t.w1) continue; /* 晚点后仍不在途（已到站/尚未开行）→ 不并入 */
+        if (!tripRunsAtM(t, M2)) continue;
+        base.push(t); have.add(kt); added++;
+        if (added >= 400) break;
+      }
+      if (added >= 400) break;
+    }
+  } finally { ttRescueBusy = false; }
+  if (added && ttState === st && !ttDayReq && tripList === base && window.__dbgOn) {
+    console.log('[tt] delay rescue +' + added + ' trip(s) from ' + ttRescueFetches + ' shard(s)');
+  }
+}
+/* 在分片原始记录里按延误源键找唯一班次：先精确 (tmap, 发车分钟)，无解才 ±1；
+   始发站/报告站复核与 delayApplyData 同口径，多解即放弃（宁漏不误）。 */
+function ttRescueFind(T, x) {
+  const origin = (x.e.scheduled && x.e.scheduled.origin) || '';
+  const fromN = normName(x.e.from || '');
+  const scan = (exact) => {
+    const out = [];
+    for (let i = 0; i < T.length; i++) {
+      const rec = T[i];
+      if (String(rec.t) !== x.key) continue;
+      const w0 = +String(rec.w || '').split(',')[0];
+      if (exact ? w0 !== x.depMin : Math.abs(w0 - x.depMin) > 1) continue;
+      const t = parseTrip(rec);
+      if (!t || t.bad || !(t.r & dayBit) || !tripRunsForDate(t, Date.now())) continue;
+      if (origin) {
+        const o = normName(t.jas[0]);
+        if (!(o === normName(origin) || t.jas[0].includes(origin) || origin.includes(t.jas[0]))) continue;
+      }
+      if (fromN && !(t.jasN && t.jasN.indexOf(fromN) >= 0)) continue;
+      out.push(t);
+      if (out.length > 1) return out;
+    }
+    return out;
+  };
+  let c = scan(true);
+  if (!c.length) c = scan(false);
+  return c.length === 1 ? c[0] : null;
 }
 /* ---------------- 车内混雑度(jr-comfortable / github ooep/jr-comfortable) ----------------
    消费 comfort.json:trains[].suki[0].key + scheduled.dep。这两项已由 baker 用主站

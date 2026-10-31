@@ -14,7 +14,7 @@ build_static_assets.py — 组装 jr-static Worker 的静态资产目录
 用法：python3 scripts/build_static_assets.py [--out DIR]
 输出后打印文件数与总大小用于验证。
 """
-import os, shutil, sys, argparse, json
+import os, shutil, sys, argparse, json, subprocess
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MINI = os.path.join(REPO, 'mini-japanrail-3d')
@@ -172,6 +172,23 @@ def main():
     total += n
     print('[app] %d (app.css/app.js)' % n)
 
+    # 5.95) 时刻表分片 —— 从周更后的 data/live/trains_*.json 生成 30 分钟活跃窗口
+    #       分片到 /data/tt/。纯静态 additive 端点；生成失败不阻断部署（客户端自动
+    #       回退原 trains_*.json，旧端点始终保留）。
+    tt_src = os.path.join(REPO, 'data', 'live')
+    tt_out = os.path.join(out, 'data', 'tt')
+    if os.path.isdir(tt_src):
+        rc = subprocess.run([sys.executable, os.path.join(REPO, 'scripts', 'build_tt_shards.py'),
+                             '--src', tt_src, '--out', tt_out], check=False, text=True)
+        if rc.returncode:
+            print('::warning::时刻表分片生成失败，客户端将回退 monolith')
+        else:
+            n_tt = sum(len(fs) for _r, _d, fs in os.walk(tt_out))
+            total += n_tt
+            print('[tt shards] %d files -> data/tt' % n_tt)
+    else:
+        print('[tt shards] SKIP (data/live not present)')
+
     # 6) _headers —— Workers Static Assets 边缘直服(不经过 fetch handler)时注入 CORS，
     #    保证浏览器 crossOrigin='anonymous' 加载图集/图标不污染 canvas（toDataURL/texImage2D 可用）。
     #    注意：此文件必须由脚本生成；rmtree 重建 assets 时手工文件会被清掉。
@@ -190,6 +207,10 @@ def main():
         f.write('/data/*.geojson\n')
         f.write('  Cache-Control: public, max-age=300\n')
         f.write('/data/*.js\n')
+        f.write('  Cache-Control: public, max-age=300\n')
+        # 时段分片（2026-10 架构优化）：manifest + 30 分钟窗口 JSON，与 monolith
+        # 相同的 5 分钟新鲜度；DATA_VERSION 变化时页面缓存键同步失效。
+        f.write('/data/tt/*\n')
         f.write('  Cache-Control: public, max-age=300\n')
         # 3D 模型(2026-10-25 十七轮):/models/<车型>/ 下 consist.json+glb+ktx2+bin,
         # 打开查看器一次拉几十个文件,此前平台默认逐个条件请求(RTT 累积);

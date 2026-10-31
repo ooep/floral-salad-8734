@@ -10,6 +10,11 @@ import * as maplibregl from 'https://jr-static.suki.ing/vendor/maplibre/maplibre
 /* ---------------- 常量 ---------------- */
 const JST = 9 * 3600 * 1000;
 const TRAIN_FILES = { 1: 'https://jr-static.suki.ing/data/trains_wd.json', 2: 'https://jr-static.suki.ing/data/trains_sa.json', 4: 'https://jr-static.suki.ing/data/trains_su.json' };
+/* 周更烘焙产出的 30 分钟活跃窗口分片（additive，旧端点保留作为兜底）。
+   manifest 只描述分片，不改变任何既有 API；分片缺失时 loadTimetable 自动回退 monolith。 */
+const TT_MANIFEST_URL = 'https://jr-static.suki.ing/data/tt/manifest.json';
+const TT_BUCKET_MIN = 30, TT_BUCKETS = 48;
+const TT_DAY_KEY = { 1: 'wd', 2: 'sa', 4: 'su' };
 const DAY_LABEL = { 1: { zh:'平日', ja:'平日', en:'Weekday' }, 2: { zh:'周六', ja:'土曜', en:'Saturday' }, 4: { zh:'周日・假', ja:'日曜・祝', en:'Sun/Holiday' } };
 const KINDS = ['鉄道','路面電車','モノレール','案内軌条式','鋼索鉄道','浮上式','無軌条電車'];
 const KIND_I18N = {
@@ -328,6 +333,86 @@ let LINES_MAP = {};
 let lineColor = new Map(), lineKind = new Map(), stationLines = new Map();
 let tripList = [], activeList = [], visibleCount = 0, totalTripsToday = 0;
 let tripsByStation = new Map();
+/* 时刻表分片状态：mode='shards' 时 tripList 只含当前/下一 30 分钟窗口的班次；
+   mode='full' 为旧的全日模式（manifest 缺失、分片加载/解析失败时的兜底）。 */
+let ttState = null, ttLoading = false, ttFullLoading = null, ttDayReq = null;
+/* 分片模式下车站时刻表按需取数：下载一次当日原始压缩班次（与旧端点是同一文件），
+   只解析「途经该站」的班次，避免为了开一个站牌把 9 万班次全部构建几何/索引。
+   解析结果按站缓存（LRU 8 站），换日时整体失效。 */
+let ttRaw = null, ttRawBit = 0, ttRawP = null, ttStopNames = null;
+let stationTripsCache = new Map(), stationTripsMiss = new Set();
+const STATION_TRIPS_MAX = 8;
+function ttClearStationCache() {
+  stationTripsCache.clear(); stationTripsMiss.clear();
+  ttRaw = null; ttRawBit = 0; ttRawP = null; ttStopNames = null;
+}
+function ttStopNameSets() {
+  if (ttStopNames) return ttStopNames;
+  const m = new Map();
+  for (const k in tmaps) {
+    const tm = tmaps[k], s = new Set(), arr = tm.s_jas || [];
+    for (let i = 0; i < arr.length; i++) s.add(normName(arr[i]));
+    m.set(+k, s);
+  }
+  ttStopNames = m;
+  return m;
+}
+function ttRawForDay() {
+  const bit = dayBit;
+  if (ttRaw && ttRawBit === bit) return Promise.resolve(ttRaw);
+  if (ttRawP && ttRawP.bit === bit) return ttRawP.p;
+  const p = (async () => {
+    const json = await fetchJSONWithCache(TRAIN_FILES[bit], 'loadingTr', 7);
+    if (dayBit !== bit) return null;
+    ttRaw = json; ttRawBit = bit; ttStopNames = null;
+    return json;
+  })();
+  const rec = { bit, p };
+  ttRawP = rec;
+  p.catch(() => {}).then(() => { if (ttRawP === rec) ttRawP = null; });
+  return p;
+}
+/* 解析某站全日班次。返回实际使用的站名 key（可能经 STATION_ALIAS 兜底）。 */
+async function ttLoadStationTrips(station) {
+  const nk0 = normName(station);
+  if (stationTripsCache.has(nk0) || stationTripsMiss.has(nk0)) return nk0;
+  const bit = dayBit;
+  const json = await ttRawForDay();
+  if (!json || dayBit !== bit) return null;
+  const sets = ttStopNameSets();
+  const hasAny = k => {
+    const T = json.T || [];
+    for (let i = 0; i < T.length; i++) {
+      const s = sets.get(T[i].t);
+      if (s && s.has(k)) return true;
+    }
+    return false;
+  };
+  let nk = nk0;
+  if (!hasAny(nk) && STATION_ALIAS[nk]) nk = STATION_ALIAS[nk];
+  const list = [], live = new Map();
+  if (tripList) for (const t of tripList) if (t.tid) live.set(t.tid, t);
+  const T = json.T || [];
+  for (let i = 0; i < T.length; i++) {
+    const rec = T[i], s = sets.get(rec.t);
+    if (!s || !s.has(nk)) continue;
+    const t = parseTrip(rec);
+    if (!t) continue;
+    const lt = live.get(t.tid);
+    if (lt && lt.dly) t.dly = lt.dly; /* 站牌延误徽标：沿用当前在线班次已同步的晚点 */
+    list.push(t);
+  }
+  if (dayBit !== bit) return null;
+  if (list.length) {
+    stationTripsCache.set(nk, list);
+    while (stationTripsCache.size > STATION_TRIPS_MAX) {
+      stationTripsCache.delete(stationTripsCache.keys().next().value);
+    }
+  } else {
+    stationTripsMiss.add(nk);
+  }
+  return nk;
+}
 let searchIndex = [], lineIndex = [];
 let NAME_I18N = null;
 let map = null, trainsLayer = null, dataReady = false, liveOn = false, booting = false;
@@ -579,6 +664,147 @@ async function fetchJSONWithCache(url, phaseKey, fileIdx, silent) {
   }
   try { if (idb) await idbPut(key, { v: DATA_VERSION, j, lm: res.headers.get('Last-Modified') || '', etag: res.headers.get('ETag') || '', t0: Date.now() }); } catch (e) {}
   return j;
+}
+
+/* ---------------- 时刻表分片（周更烘焙 / 纯静态） ----------------
+   烘焙产物: data/tt/manifest.json + data/tt/<wd|sa|su>/<00..47>.json
+   每个分片 = 该 30 分钟窗口内「任意分钟被 updateTrains 视为在途」的全部班次。
+   页面在任意时刻只下载当前窗口 + 下一窗口；窗口切换时复用已预取分片。
+   任何一步失败（manifest/分片 404、旧部署、离线）都会回退到原 trains_*.json，
+   因此既有端点与旧客户端完全不受影响。 */
+function ttBucketOf(M) {
+  const m = ((M % 1440) + 1440) % 1440;
+  return Math.max(0, Math.min(TT_BUCKETS - 1, Math.floor(m / TT_BUCKET_MIN)));
+}
+function ttShardUrl(key, i) {
+  return 'https://jr-static.suki.ing/data/tt/' + key + '/' + String(i).padStart(2, '0') + '.json';
+}
+async function ttManifest() {
+  try { return await fetchJSONWithCache(TT_MANIFEST_URL, '', 7, true); } catch (e) { return null; }
+}
+async function ttLoadShard(key, day, i, phase, silent) {
+  const url = ttShardUrl(key, i);
+  const meta = day && day.shards && day.shards[i];
+  if (meta && meta.bytes) loadSizes[url] = meta.bytes;
+  try {
+    const j = await fetchJSONWithCache(url, phase || '', 7, !!silent);
+    return (j && Array.isArray(j.T)) ? j : { T: [] };
+  } catch (e) { return null; }
+}
+function ttMerge(parts, dayMeta) {
+  const seen = new Set(), T = [];
+  for (let p = 0; p < parts.length; p++) {
+    const arr = (parts[p] && parts[p].T) || [];
+    for (let i = 0; i < arr.length; i++) {
+      const rec = arr[i];
+      const k = rec._ != null ? String(rec._) : (rec.t + '|' + rec.w + '|' + rec.s);
+      if (seen.has(k)) continue;
+      seen.add(k); T.push(rec);
+    }
+  }
+  return { b: (dayMeta && dayMeta.b) || '', n: (dayMeta && dayMeta.n) || T.length, T };
+}
+async function ttLoadWindow(bit, M) {
+  const man = await ttManifest();
+  const key = TT_DAY_KEY[bit];
+  const day = man && man.v === 1 && man.days && man.days[key];
+  if (!day || !Array.isArray(day.shards) || day.shards.length < TT_BUCKETS) return null;
+  const b = ttBucketOf(M), nb = (b + 1) % TT_BUCKETS;
+  const [p0, p1] = await Promise.all([
+    ttLoadShard(key, day, b, 'loadingTr'),
+    ttLoadShard(key, day, nb, 'loadingTr'),
+  ]);
+  if (!p0) return null;
+  const loaded = new Map();
+  loaded.set(b, p0);
+  if (p1) loaded.set(nb, p1);
+  return { mode: 'shards', bit, key, day, bucket: b, loaded, prefetching: new Set(),
+    json: ttMerge([p0, p1], day) };
+}
+/* 启动/换日：优先分片；manifest 缺失或当前窗口分片不可用时回退原 monolith */
+async function fetchTimetableBoot(bit) {
+  const w = await ttLoadWindow(bit, curMin());
+  if (w) return { json: w.json, state: w };
+  const json = await fetchJSONWithCache(TRAIN_FILES[bit], 'loadingTr', 7);
+  return { json, state: { mode: 'full', bit, key: TT_DAY_KEY[bit] } };
+}
+/* 分片不可用（窗口缺失/解析异常）时的整日兜底：回到旧行为，解析全日 tripsByStation，
+   所有班次/延误/併结逻辑与改造前完全一致。车站时刻表不再走这里（见 ttLoadStationTrips）。 */
+function ttFallbackFull() {
+  if (ttFullLoading) return ttFullLoading;
+  if (ttDayReq) return Promise.resolve(null); /* 换日加载中：由 ensureDayFile 自己决定取数方式 */
+  const bit = dayBit;
+  ttFullLoading = (async () => {
+    const json = await fetchJSONWithCache(TRAIN_FILES[bit], 'loadingTr', 7);
+    if (dayBit !== bit) return null;
+    const list = await parseTripsAsync(json);
+    if (dayBit !== bit) return null;
+    applyCouplings(list);
+    tripList = list;
+    totalTripsToday = json.n || list.length;
+    ttState = { mode: 'full', bit, key: TT_DAY_KEY[bit] };
+    ttClearStationCache(); /* 已升级为全日索引，站牌部分缓存无用，释放内存 */
+    $('dBuild').textContent = json.b || '-';
+    $('bCount').textContent = totalTripsToday.toLocaleString();
+    setStatus('✓ ' + T().loaded);
+    return list;
+  })().finally(() => { ttFullLoading = null; });
+  return ttFullLoading;
+}
+/* 时间跨入下一个 30 分钟窗口：加载当前窗口（通常已预取），合并下一窗口，重建 tripList。
+   分片是按窗口复制的，当前窗口一定包含该分钟全部在途班次，无需回看历史窗口。 */
+async function ttEnsureBucket(M) {
+  const st = ttState;
+  if (!st || st.mode !== 'shards' || ttLoading) return;
+  const b = ttBucketOf(M);
+  if (b === st.bucket) return;
+  ttLoading = true;
+  try {
+    let p = st.loaded.get(b);
+    if (!p) p = await ttLoadShard(st.key, st.day, b, 'loadingTr');
+    if (ttDayReq || ttState !== st) return;
+    if (!p) { await ttFallbackFull(); return; }
+    st.loaded.set(b, p);
+    const pn = st.loaded.get((b + 1) % TT_BUCKETS) || null;
+    const json = ttMerge([p, pn], st.day);
+    const list = await parseTripsAsync(json, undefined, true); /* 同一日型切窗口：复用 tmap 级几何缓存 */
+    if (ttDayReq || ttState !== st) return;
+    applyCouplings(list);
+    tripList = list;
+    st.bucket = b;
+    st.json = json;
+    totalTripsToday = st.day.n || json.n || list.length;
+    $('bCount').textContent = totalTripsToday.toLocaleString();
+    $('dBuild').textContent = st.day.b || json.b || '-';
+    setStatus('✓ ' + T().loaded);
+    /* 只保留当前/下一窗口，防止用户拖时间轴扫过全日时把 111MB 分片全留在内存 */
+    for (const k of st.loaded.keys()) {
+      if (k !== b && k !== (b + 1) % TT_BUCKETS) st.loaded.delete(k);
+    }
+  } catch (e) {
+    console.warn('[tt]', e);
+    /* 分片解析/合并异常：升级原全日数据，避免每帧重试同一坏窗口 */
+    try { await ttFallbackFull(); } catch (e2) { console.warn('[tt] full', e2); }
+  } finally {
+    /* 分片失败会升级为 full（ttState 被替换），这里也必须复位，否则 tick 会永久跳过渲染 */
+    ttLoading = false;
+  }
+}
+/* 空闲/临近边界预取：直播提前 1 个窗口；高速回放提前 3 个，避免 32× 跨窗口时卡顿 */
+function ttPrefetch(M) {
+  const st = ttState;
+  if (!st || st.mode !== 'shards') return;
+  const b = ttBucketOf(M);
+  const ahead = (clockMode !== 'live' && speed >= 8) ? 3 : 1;
+  for (let i = 1; i <= ahead; i++) {
+    const j = (b + i) % TT_BUCKETS;
+    if (st.loaded.has(j) || st.prefetching.has(j)) continue;
+    st.prefetching.add(j);
+    ttLoadShard(st.key, st.day, j, '', true).then(p => {
+      if (ttState === st && p) st.loaded.set(j, p);
+      st.prefetching.delete(j);
+    });
+  }
 }
 function yieldToUI() { return new Promise(r => setTimeout(r, 0)); }
 /* 索引缓存:静态数据(segments/stations/tmaps/station_map)未变时,二次访问直接从 IDB 恢复,
@@ -1374,8 +1600,8 @@ let routeGraph = null, routeNodes = null, stationLinesAt = null;
    共用首班次的剔除结果(与既有 per-trip 判定同为启发式)。 */
 const tripGeoCache = new Map();
 /* 班次解析(分片化):s 首项=首站发车分钟,之后为相对前一站事件的差值(arr, dep 交替,终点只有 arr) */
-async function parseTripsAsync(json, onPhase) {
-  tripGeoCache.clear(); /* 换日/换数据档:几何缓存随新 tmaps 重建 */
+async function parseTripsAsync(json, onPhase, keepGeo) {
+  if (!keepGeo) tripGeoCache.clear(); /* 换日/换数据档:几何缓存随新 tmaps 重建；同一天切窗口时复用 */
   const trips = [];
   const T0 = json.T || [];
   const n0 = T0.length;
@@ -4332,6 +4558,7 @@ function applyUrlState() {
 async function boot() {
   if (booting) return;
   booting = true;
+  ttState = null;
   const retryBtn = $('lRetry');
   if (retryBtn) retryBtn.style.display = 'none';
   loadTrainAtlas(); /* 提前预载图标图集(默认/矢量/可爱 3 套,异步不阻塞主流程;加载遮罩马赛克拼图要用默认图集) */
@@ -4342,7 +4569,7 @@ async function boot() {
        由 bindLazyHeavyData 在首次放大(z≥11.5)或开关打开时按需拉取,启动少下 14MB */
     dayBitAuto = bitOfDate(Date.now());
     dayBit = dayMode === 'auto' ? dayBitAuto : dayMode;
-    const [s, st, tm, lm, sm, tk, ni, tj] = await Promise.all([
+    const [s, st, tm, lm, sm, tk, ni, tt] = await Promise.all([
       fetchJSONWithCache('https://jr-static.suki.ing/data/segments3d.geojson', 'loadingSeg', 0),
       fetchJSONWithCache('https://jr-static.suki.ing/data/stations3d.geojson', 'loadingSta', 1),
       fetchJSONWithCache('https://jr-static.suki.ing/data/tmaps.json', 'loadingTm', 2),
@@ -4350,7 +4577,7 @@ async function boot() {
       fetchJSONWithCache('https://jr-static.suki.ing/data/station_map.json', 'loadingTm', 4).catch(() => null),
       fetchJSONWithCache('https://jr-static.suki.ing/data/tokkyu.json', '', 5).catch(() => null),
       fetchJSONWithCache('https://jr-static.suki.ing/data/names_i18n.json', '', 6).catch(() => null),
-      fetchJSONWithCache(TRAIN_FILES[dayBit], 'loadingTr', 7),
+      fetchTimetableBoot(dayBit),
     ]);
     segFC = s; staFC = st; tmaps = tm; LINES_MAP = lm || {}; stationMap = sm && sm.version === 2 ? sm : null; TOKKYU = tk;
     /* 新干线图标表以数据为准(时刻表新增列车名时自动纳入 G0 等级) */
@@ -4394,11 +4621,12 @@ async function boot() {
     /* 时刻表解析:分片让出主线程,进度 78→97% */
     setPhase(IDX_PCT, PRS_PCT, 0);
     setLoadMsg(T().loading + ' ' + T().loadingPr + ' …');
-    tripList = await parseTripsAsync(tj, f => setPhase(IDX_PCT, PRS_PCT, f));
+    tripList = await parseTripsAsync(tt.json, f => setPhase(IDX_PCT, PRS_PCT, f));
+    ttState = tt.state;
     applyCouplings(tripList); /* 併结/分割:消费构建期预计算元数据 */
-    totalTripsToday = tj.n || tripList.length;
+    totalTripsToday = tt.json.n || tripList.length;
     dataReady = true;
-    $('dBuild').textContent = tj.b || '-';
+    $('dBuild').textContent = tt.json.b || '-';
     $('bCount').textContent = totalTripsToday.toLocaleString();
     setPct(100);
     setLoadMsg('✓ ' + T().loaded);
@@ -5163,6 +5391,18 @@ function startLoop() {
     if (!dataReady) return;
     const M = curMin();
     refreshClockUI(M);
+    /* 分片模式：窗口边界先切数据再渲染。下一窗口通常已由 ttPrefetch 预取，
+       切换只做一次 parse+建索引（数千班次）；未就绪时保持上一帧，避免用缺失数据算出幽灵车。
+       换日加载期间（ttDayReq 非空）冻结旧日分片状态，防止旧窗口回填覆盖新日数据。 */
+    if (dataReady && !ttDayReq && ttState && ttState.mode === 'shards') {
+      const tb = ttBucketOf(M);
+      if (tb !== ttState.bucket) {
+        if (!ttLoading) ttEnsureBucket(M);
+        if (followTrip) tickFollow(M, dt);
+        return;
+      }
+      ttPrefetch(M);
+    }
     /* 併结窗口按分钟推进:到点併合/分割时不用等下一次延误拉取,立刻切换共享/独立 */
     const Mn = Math.floor(M);
     if (Mn !== delaySyncMin) { delaySyncMin = Mn; delaySyncCouples(Mn); }
@@ -5397,17 +5637,27 @@ async function ensureDayFile() {
   if (dayBit === want && tripList.length) return;
   dayBit = want;
   if (!TRAIN_FILES[want]) return;
+  ttClearStationCache(); /* 新一天开始加载即失效旧日站牌缓存，避免 dayBit 已切换但站牌仍用旧数据 */
+  const req = { want };
+  ttDayReq = req;
   setStatus(T()[DAY_LABEL[want] ? 'dayFileNote' : ''] + ' …');
   try {
-    const tj = await fetchJSONWithCache(TRAIN_FILES[want], 'loadingTr');
-    tripList = await parseTripsAsync(tj);
+    const tt = await fetchTimetableBoot(want);
+    /* 连续点日历/跨日自动切换：旧请求晚到不得覆盖新一天的数据 */
+    if (ttDayReq !== req || dayBit !== want) return;
+    const list = await parseTripsAsync(tt.json);
+    if (ttDayReq !== req || dayBit !== want) return;
+    tripList = list;
+    ttState = tt.state;
+    ttClearStationCache(); /* 站牌按站缓存绑定当日数据，换日必须整体失效 */
     applyCouplings(tripList); /* 併结/分割(跨日重算) */
-    totalTripsToday = tj.n || tripList.length;
-    $('dBuild').textContent = tj.b || '-';
+    totalTripsToday = tt.json.n || tripList.length;
+    $('dBuild').textContent = tt.json.b || '-';
     $('bCount').textContent = totalTripsToday.toLocaleString();
     followTrip = null; liveDetailTrip = null; closeDetail(); trTagEl.classList.remove('show');
     setStatus('✓ ' + T().loaded);
-  } catch (e) { setStatus('ERR ' + e.message); }
+  } catch (e) { if (ttDayReq === req) setStatus('ERR ' + e.message); }
+  finally { if (ttDayReq === req) ttDayReq = null; }
 }
 setInterval(() => { // 跨日自动切换(长回放/挂机)；同日型跨日期(周日→祝日)时运転日过滤也要重建
   if (!dataReady) return;
@@ -6307,17 +6557,26 @@ function distKm(c1, c2) {
   return Math.hypot((c1[0] - c2[0]) * 111.32 * Math.cos((c1[1] + c2[1]) / 2 * Math.PI / 180), (c1[1] - c2[1]) * 110.97);
 }
 function buildBoard(station, coord) {
-  let nk = normName(station);
-  /* 站名别名兜底:地图短名在时刻表索引里查不到时,改用时刻表站名再查(如伝馬町→熱田神宮伝馬町) */
-  const nkTrips0 = (tripsByStation && tripsByStation.get(nk)) || [];
-  if (!nkTrips0.length && STATION_ALIAS[nk]) {
-    const a = STATION_ALIAS[nk];
-    if (tripsByStation && tripsByStation.get(a)) nk = a;
+  let nk = normName(station), stTrips;
+  if (ttState && ttState.mode === 'shards') {
+    /* 分片模式：站牌数据由 ttLoadStationTrips 只解析途经本站的班次，按站缓存 */
+    if (!stationTripsCache.has(nk) && STATION_ALIAS[nk]) {
+      const a = STATION_ALIAS[nk];
+      if (stationTripsCache.has(a)) nk = a;
+    }
+    stTrips = stationTripsCache.get(nk) || [];
+  } else {
+    /* 站名别名兜底:地图短名在时刻表索引里查不到时,改用时刻表站名再查(如伝馬町→熱田神宮伝馬町) */
+    const nkTrips0 = (tripsByStation && tripsByStation.get(nk)) || [];
+    if (!nkTrips0.length && STATION_ALIAS[nk]) {
+      const a = STATION_ALIAS[nk];
+      if (tripsByStation && tripsByStation.get(a)) nk = a;
+    }
+    /* 用预索引(解析时刻表时构建)只遍历途经本站的班次,替代原 5.7 万班次全表扫描 */
+    stTrips = (tripsByStation && tripsByStation.get(nk)) || [];
   }
   /* 缓存键必须带 dayBit + JST 日期:运行日切换(平日↔周六/周日)或跨日后若沿用旧键,
      会命中切换前构建的时刻表;d/x 行的取舍也随日期变化，只带 dayBit 会跨日命中旧行 */
-  /* 用预索引(解析时刻表时构建)只遍历途经本站的班次,替代原 5.7 万班次全表扫描 */
-  const stTrips = (tripsByStation && tripsByStation.get(nk)) || [];
   const ck = (coord ? (nk + '|' + coord[0].toFixed(3) + ',' + coord[1].toFixed(3)) : nk) +
     '#' + dayBit + '@' + jstDateParts(simNow()).key;
   const hit = boardCache.get(ck);
@@ -6506,7 +6765,26 @@ function showStationDetail(name, coord, featLine, featOp) {
   $('sheet').classList.add('open');
   $('sheetMask').classList.add('open');
   closeDetail();
-  if (tripList && tripList.length) renderStationBody();
+  if (tripList && tripList.length) {
+    /* 分片模式只持有当前/下一窗口，站牌需要全日班次：
+       下载一次原压缩时刻表（既有端点不变），但只解析途经本站的班次并缓存，
+       避免为了一个站牌把 9 万班次全部构建几何/索引（旧做法要数十秒）。 */
+    if (ttState && ttState.mode === 'shards') {
+      const wantName = name;
+      $('shBody').innerHTML = '<div class="empty">' + esc(T().loading + ' ' + T().loadingTr) + '…</div>';
+      (async () => {
+        /* 换日加载中先等新的一天就绪，避免把旧日数据解析进新日站牌 */
+        while (ttDayReq) await new Promise(r => setTimeout(r, 120));
+        if (ttState && ttState.mode === 'shards') await ttLoadStationTrips(name);
+      })().then(() => {
+        if (sheetStation === wantName) renderStationBody();
+      }).catch(() => {
+        if (sheetStation === wantName) $('shBody').innerHTML = '<div class="empty">' + esc(T().failMsg) + '</div>';
+      });
+    } else {
+      renderStationBody();
+    }
+  }
   renderStationBadges(name, sheetLine, sheetOp);
   if (c) map.flyTo({ center: c, zoom: Math.max(map.getZoom(), 12), pitch: Math.min(map.getPitch(), 55), duration: 1200 });
 }
@@ -6520,7 +6798,7 @@ $('subDep').addEventListener('click', function () { sheetDepArr = 'dep'; $('subD
 $('subArr').addEventListener('click', function () { sheetDepArr = 'arr'; $('subArr').classList.add('on'); $('subDep').classList.remove('on'); renderStationBody(); });
 window.showStationDetail = showStationDetail;  // 调试/自动化钩子：供控制台与 E2E 直接打开车站抽屉
 // E2E 钩子：列车详情/站台数据（确定性验证用，只读引用）
-window.__mjr3d = { showTrainDetail, tripList: () => tripList, PLATMAP: () => PLATMAP, tmaps: () => tmaps, badgeKeyOfFeature, badgeEntriesOfStation, badgeEntriesOf, showStationDetail, stationCoord: () => stationCoord, stationMap: () => stationMap, badgeNorm, badgeFamilyHit, map: () => map, ormState: () => ({ enabled: ormEnabled, loaded: ormLoaded, fetching: ormFetching }), detailState: () => ({ wanted: detailWanted, fetched: stationDetailFetched }), bufState: () => ({ bytes: bufArr.byteLength, trains: Math.min(MAXT, fadeList.length) }), boardCacheStats: () => ({ size: boardCache.size, items: boardCacheItems, cap: BOARD_CACHE_MAX_ITEMS }), platState: () => ({ loaded: !!PLATMAP, pending: !!(platmapP && !PLATMAP) }), detailRetry: () => Object.assign({}, detailRetry) };
+window.__mjr3d = { showTrainDetail, tripList: () => tripList, PLATMAP: () => PLATMAP, tmaps: () => tmaps, badgeKeyOfFeature, badgeEntriesOfStation, badgeEntriesOf, showStationDetail, stationCoord: () => stationCoord, stationMap: () => stationMap, badgeNorm, badgeFamilyHit, map: () => map, ormState: () => ({ enabled: ormEnabled, loaded: ormLoaded, fetching: ormFetching }), detailState: () => ({ wanted: detailWanted, fetched: stationDetailFetched }), bufState: () => ({ bytes: bufArr.byteLength, trains: Math.min(MAXT, fadeList.length) }), boardCacheStats: () => ({ size: boardCache.size, items: boardCacheItems, cap: BOARD_CACHE_MAX_ITEMS }), platState: () => ({ loaded: !!PLATMAP, pending: !!(platmapP && !PLATMAP) }), detailRetry: () => Object.assign({}, detailRetry), ttState: () => (ttState ? { mode: ttState.mode, bucket: ttState.bucket, key: ttState.key } : null), ttCache: () => ({ station: stationTripsCache.size, miss: stationTripsMiss.size, raw: !!ttRaw, sets: !!ttStopNames }) };
 // E2E 钩子：列车叠加弹窗（确定性验证，不依赖实时列车密度）
 window.__trPick = { n: () => visibleTrips.length, near: (x, y) => collectTrains(x, y, 14).length, open: (x, y) => showTrPick(collectTrains(x, y, 14), x, y) };
 /* E2E 回归钩子(确定性验证):两条历史事故的防线
@@ -7892,7 +8170,7 @@ window.addEventListener('hashchange', () => {
     else if (urlState.t === 'station' && urlState.q) { try { focusStationByKey(urlState.q); } catch (e) {} }
   }
 });
-window.__dbg = () => ({ map: !!map, dataReady, tripList: tripList.length, dayBit, errs: window.__errs, msg: document.getElementById('lMsg').textContent, active: visibleCount, rc: __renderCount, glErr: __glErr, layer: !!map.getLayer('trains-gl'), variant: __lastArgs && __lastArgs.variant, cache: !!idb, glowAutoOff, stIdx: tripsByStation.size });
+window.__dbg = () => ({ map: !!map, dataReady, tripList: tripList.length, dayBit, errs: window.__errs, msg: document.getElementById('lMsg').textContent, active: visibleCount, rc: __renderCount, glErr: __glErr, layer: !!(map && map.getLayer('trains-gl')), variant: __lastArgs && __lastArgs.variant, cache: !!idb, glowAutoOff, stIdx: tripsByStation.size, tt: ttState && { mode: ttState.mode, bucket: ttState.bucket, key: ttState.key }, dayReq: ttDayReq && ttDayReq.want, fullLoading: !!ttFullLoading, stCache: stationTripsCache.size, raw: !!ttRaw });
 /* 调试钩子:外部(控制台/自动化)获取当前班次表与打开详情。只读,线上零副作用。 */
 Object.defineProperty(window, '__tripList', { get: () => tripList, configurable: true });
 Object.defineProperty(window, '__showTrainDetail', { get: () => showTrainDetail, configurable: true });

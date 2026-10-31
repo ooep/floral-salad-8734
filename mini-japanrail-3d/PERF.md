@@ -462,3 +462,72 @@ GC 后 430→453MB(修复前同口径 +20MB/次且不收敛),0 错误。
   理论代价:4×MSAA 默认帧缓冲约 26MB(780×1688 RGBA)vs 5.3MB,省的是显存/带宽与功耗,
   不是本机的帧率;真机 SoC(尤其 TBDR)结论可能不同。
   若采纳,与 PERF_LOW 一样走 `antialias:false`。对比图与探测脚本为本轮本地临时产物。
+
+## 时刻表按 30 分钟活跃窗口分片(2026-10-31,周更烘焙 / 纯静态)
+
+### 目标与约束
+
+启动时不再下载/解析全日 9.5 万班次，只取「当前 30 分钟 + 下一 30 分钟」两个窗口；
+**既有端点一律保留**（`data/trains_{wd,sa,su}.json` 等原样生成），旧客户端/旧缓存
+不受影响；不新增工作流、不新增运行时服务，全部由周更后的静态资源构建产生。
+
+### 产物(全部为 additive 新端点)
+
+- `https://jr-static.suki.ing/data/tt/manifest.json`
+  `{ v:1, bucket_min:30, buckets:48, generated_at, days:{ wd|sa|su:{ b,n,bytes,shards:[{i,f,n,bytes}] } } }`
+- `https://jr-static.suki.ing/data/tt/<wd|sa|su>/<00..47>.json`
+  `{ b, i, n, T:[...] }`，`T` 为 compact 班次记录（与 monolith 完全同构）。
+
+分片语义与页面 `windowShift` 一致（见 `buildDayIndex` / `activeCountAt`）：
+
+```
+active(M) = M∈[w0,w1] ∨ M+1440∈[w0,w1] ∨ M-1440∈[w0,w1],  M∈[0,1440)
+每个 30 分钟窗口包含窗口内任意 M 满足 active(M) 的全部班次。
+```
+
+因此当前窗口**一定**包含该分钟所有在途班次，客户端无需回看上一窗口；
+跨零点/24 时后发车的班次按第二区间 `[max(0,w0-1440), min(w0-1,w1-1440)]` 归窗。
+
+### 烘焙与部署
+
+- `scripts/build_tt_shards.py`：周更数据提交后，在 `scripts/build_static_assets.py`
+  第 5.95 步生成到 `static-worker/assets/data/tt/`；生成失败只告警，不阻断部署，
+  客户端会自动回退 monolith。
+- `_headers`：`/data/tt/*` 使用与 `trains_*.json` 相同的 `Cache-Control: public, max-age=300`。
+- 仍只有 `refresh.yml`（周更）与 `deploy.yml`（静态资产发布）两个既有工作流；
+  分片是 build 阶段的本地 Python，不消耗 Actions 额外配额，也不产生 Workers 请求计费。
+- 文件数：+145 个（manifest + 3 日型 × 48 窗口），远低于 Workers Static Assets
+  单 Worker 20,000 文件上限；单文件最大约 1.4 MB，低于 25 MiB 上限。
+
+### 客户端行为
+
+- 启动：并行取 manifest + 当前窗口 + 下一窗口，**只解析**这两窗（约 0.9–1.2 MB，
+  0.6–1.0 万班次），不再请求/解析 12–13.5 MB monolith。
+- 跨窗：`ttPrefetch` 提前 1 窗预取；回放 ≥8× 时提前 3 窗。切换复用已取 JSON，
+  只重建窗口内班次索引；窗口外缓存会被裁剪，避免扫全日把 111 MB 分片留在内存。
+- 换日：`ttDayReq` 请求令牌冻结旧日分片状态；旧请求晚到不会覆盖新日数据。
+- 任何一步失败（manifest/分片 404、旧部署、离线、解析异常）→ `ttFallbackFull()`：
+  按原路径取 monolith，行为与改造前一致。
+- 车站时刻表：分片模式仍持有当日原始 compact JSON（打开首个站牌时下载一次，
+  端点不变），但**只解析途经该站的班次**并按站缓存（LRU 8 站），
+  不再为开一个站牌把 9 万班次全部构建几何/索引；换日清空站牌缓存。
+  实测（本地 Xvfb/软件 WebGL）：新宿 4,437 班次的站牌解析约 70 ms（不含 12 MB
+  下载/JSON.parse），旧全量解析在同环境需要数十秒到数分钟；真机下载受网络支配。
+
+### 实测体积(2026-10-30 周更数据)
+
+| 日型 | 全日班次 | monolith | 48 窗合计 | 窗口平均 |
+|---|---:|---:|---:|---:|
+| 平日 wd | 95,030 | 13.5 MB | 39.1 MB | 0.81 MB |
+| 周六 sa | 86,622 | 12.4 MB | 36.1 MB | 0.75 MB |
+| 周日 su | 86,401 | 12.4 MB | 36.2 MB | 0.75 MB |
+
+manifest 7.5 KB。分片总量 111.3 MB，是全日文件的约 2.9 倍（窗口重叠复制），
+但用户每次只取 2 窗；启动负载从 12–13.5 MB 降到约 0.9–1.2 MB（约 −92%）。
+校验：`python3 scripts/build_tt_shards.py --src data/live --out <dir> --verify`
+抽检窗口首/中/尾分钟，要求期望在途集合 ⊆ 分片集合，且每个班次至少进入一个分片。
+
+### 回滚
+
+删除 `build_static_assets.py` 的 5.95 步或让 manifest/分片不可用即可：
+客户端检测到 manifest/分片不可用会自动回退原 monolith；原端点从未改动。

@@ -7652,6 +7652,7 @@ function closeMusic() {
   $('shBell').classList.remove('on');
   const p = $('panelMusic');
   const done = () => {
+    if (!p.classList.contains('mu-leave')) return; /* 关闭动画期间被重新打开则不再收尾 */
     p.hidden = true;
     p.classList.remove('mu-enter', 'mu-leave');
     $('shBadges').hidden = muBadgeHidden;
@@ -7805,7 +7806,7 @@ function muFmt(s) {
 function togglePause() {
   if (!muAudio || !muCur) return;
   if (muAudio.paused) { muAudio.play().catch(() => {}); muPlayIcoSet(false); muRafTick(); }
-  else { muAudio.pause(); muPlayIcoSet(true); }
+  else { muAudio.pause(); cancelAnimationFrame(muRaf); muPlayIcoSet(true); }
 }
 function stopMusic() {
   cancelAnimationFrame(muRaf);
@@ -7821,7 +7822,7 @@ function muPlayIcoSet(paused) {
     ? '<svg id="muPlayIco" viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>'
     : '<svg id="muPlayIco" viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M6 6h4v12H6zM14 6h4v12h-4z"/></svg>';
   const play = $('muPlay');
-  if (play) play.setAttribute('aria-label', paused ? T().muResume : T().muPause);
+  if (play) { play.setAttribute('aria-label', paused ? T().muResume : T().muPause); play.setAttribute('aria-pressed', paused ? 'false' : 'true'); }
 }
 /* 事件绑定 */
 (function () {
@@ -7843,7 +7844,7 @@ function muPlayIcoSet(paused) {
     scrub.addEventListener('pointerup', up);
     scrub.addEventListener('pointercancel', up);
   }
-  document.addEventListener('keydown', e => { if (e.key === 'Escape' && muOpen) closeMusic(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && muOpen) { e.stopImmediatePropagation(); closeMusic(); } });
 })();
 
 /* ---------- 信息 tab（eki-wiki） ---------- */
@@ -8924,6 +8925,7 @@ function applyLang() {
   if ($('shBell')) { $('shBell').setAttribute('aria-label', t.muT); $('shBell').title = t.muT; }
   if ($('muBackTxt')) $('muBackTxt').textContent = t.muBack;
   if ($('muTitleTxt')) $('muTitleTxt').textContent = t.muT;
+  if ($('muPlay')) muPlayIcoSet(muAudio ? muAudio.paused : true); /* 语言切换同步播放按钮 aria */
   $('bLiveLb').textContent = t.badgeLive; $('bCountLb').textContent = t.badgeToday;
   searchEl.placeholder = t.searchPh;
   $('rFrom').placeholder = t.routeFrom; $('rTo').placeholder = t.routeTo;

@@ -29,6 +29,8 @@ KEEP_NAMES = {
     'sitemap.xml', 'sitemap-lines.xml', 'sitemap-stations.xml', 'sitemap-pages.xml',
     'robots.txt', '404.html', 'BingSiteAuth.xml', 'baidu_verify_codeva-DigR5zzAl8.html',
     'sogousiteverification.txt',
+    # Pages 响应头:首页短缓存(60s),避免每次导航都重走慢链路 TTFB
+    '_headers',
 }
 # 防御性剔除（即便白名单遗漏也不进 Pages）
 DROP_NAMES = {

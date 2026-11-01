@@ -468,6 +468,7 @@ button { font-family:inherit; }
   <div class="grab"></div>
   <div class="sh-head">
     <div><div class="sh-nm" id="shNm">駅名</div><div class="sh-sub" id="shSub"></div></div>
+    <button class="btn icon sh-x sh-bell" id="shBell" type="button" aria-label="发车铃声" title="发车铃声"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></button>
     <button class="btn icon sh-x" id="shX"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
   </div>
   <div class="sh-badges" id="shBadges" hidden></div>
@@ -476,6 +477,28 @@ button { font-family:inherit; }
   <div class="sh-body" id="shBody"><div class="empty">時刻表を読込中…</div></div>
   <div class="sh-body tab-panel" id="panelInfo" hidden></div>
   <div class="sh-body tab-panel" id="panelGuide" hidden></div>
+  <div class="sh-body tab-panel" id="panelMusic" hidden>
+    <div class="mu-toolbar">
+      <button class="mu-back" id="muBack" type="button"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg><span id="muBackTxt">时刻表</span></button>
+      <span class="mu-title" id="muTitleTxt">发车铃声</span>
+    </div>
+    <div class="mu-lines" id="muLines" hidden></div>
+    <div class="mu-list" id="muList"></div>
+    <div class="mu-empty" id="muEmpty" hidden></div>
+    <div class="mu-player" id="muPlayer" hidden>
+      <button class="mu-play" id="muPlay" type="button" aria-label="播放">
+        <svg id="muPlayIco" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+      </button>
+      <div class="mu-pmeta">
+        <div class="mu-pname" id="muPName"></div>
+        <div class="mu-pplat" id="muPPlat"></div>
+      </div>
+      <div class="mu-prog">
+        <div class="mu-scrub" id="muScrub"><div class="mu-fill" id="muFill"></div><div class="mu-knob" id="muKnob"></div></div>
+        <div class="mu-time" id="muTime">0:00 / 0:00</div>
+      </div>
+    </div>
+  </div>
 </div>
 <div id="lineSheet">
   <div class="ls-grab" id="lsGrab"></div>

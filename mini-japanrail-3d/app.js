@@ -177,6 +177,7 @@ const I18N = {
     dayFileNote:'时刻表', paused:'暂停', liveMode:'实时', playMode:'回放', fps:'FPS',
     retry:'重试', loadingIdx:'构建索引', loadingPr:'解析时刻表', adapt:'性能模式:帧率低,已自动关闭列车光晕', cacheOn:'离线缓存已启用', failMsg:'加载失败，请检查网络后重试',
     tabGuide:'指南', gdLoading:'指南数据加载中…', gdEmpty:'本站暂无设施信息',
+    muT:'发车铃声', muBack:'时刻表', muNone:'该站暂无已收录的发车铃声', muNoAudio:'音频未收录', muLoad:'铃声数据加载中…', muFail:'铃声数据加载失败，请稍后重试', muRetry:'重试', muOther:'其他', muHint:'共 {0} 条发车铃声 · 点击试听',
     gdBasic:'基本信息', gdWheelchair:'无障碍通行', gdToilets:'卫生间', gdPlatform:'站台与屏蔽门',
     gdFloorPlan:'站内图', gdLinks:'相关链接', gdAddress:'地址', gdTel:'电话', gdOpened:'开业',
     gdInside:'闸内', gdOutside:'闸外', gdSeeFp:'查看官方站内图 ↗', gdEcomo:'ecomo 车站信息',
@@ -220,6 +221,7 @@ const I18N = {
     dayFileNote:'時刻表', paused:'一時停止', liveMode:'リアルタイム', playMode:'再生', fps:'FPS',
     retry:'再試行', loadingIdx:'索引構築', loadingPr:'時刻表解析', adapt:'省電力モード:低FPSのため列車グローをOFF', cacheOn:'オフラインキャッシュ有効', failMsg:'読み込みに失敗しました。ネットワークを確認してもう一度お試しください',
     tabGuide:'ガイド', gdLoading:'ガイド読込中…', gdEmpty:'この駅の設備情報はまだありません',
+    muT:'発車メロディ', muBack:'時刻表', muNone:'この駅に収録された発車メロディはありません', muNoAudio:'音源未収録', muLoad:'メロディデータ読込中…', muFail:'メロディデータの取得に失敗しました', muRetry:'再試行', muOther:'その他', muHint:'発車メロディ {0} 件 · タップで試聴',
     gdBasic:'基本情報', gdWheelchair:'車椅子での移動', gdToilets:'トイレ', gdPlatform:'ホーム・ドア',
     gdFloorPlan:'構内図', gdLinks:'リンク', gdAddress:'所在地', gdTel:'連絡先', gdOpened:'開業',
     gdInside:'改札内', gdOutside:'改札外', gdSeeFp:'公式構内図を見る ↗', gdEcomo:'ecomo 駅情報',
@@ -263,6 +265,7 @@ const I18N = {
     dayFileNote:'Timetable', paused:'Paused', liveMode:'Live', playMode:'Replay', fps:'FPS',
     retry:'Retry', loadingIdx:'Building index', loadingPr:'Parsing timetable', adapt:'Performance mode: low FPS, train glow off', cacheOn:'Offline cache enabled', failMsg:'Failed to load. Check your network and retry.',
     tabGuide:'Guide', gdLoading:'Loading guide…', gdEmpty:'No facility info for this station yet',
+    muT:'Departure melody', muBack:'Timetable', muNone:'No departure melody recorded for this station', muNoAudio:'No audio', muLoad:'Loading melody data…', muFail:'Failed to load melody data', muRetry:'Retry', muOther:'Others', muHint:'{0} departure melodies · tap to listen',
     gdBasic:'Basic info', gdWheelchair:'Barrier-free access', gdToilets:'Toilets', gdPlatform:'Platform / doors',
     gdFloorPlan:'Station map', gdLinks:'Links', gdAddress:'Address', gdTel:'Phone', gdOpened:'Opened',
     gdInside:'Inside gates', gdOutside:'Outside gates', gdSeeFp:'Official station map ↗', gdEcomo:'ecomo station info',
@@ -7201,7 +7204,10 @@ function bindSheet() {
     };
   });
 }
-function closeSheet() { $('sheet').classList.remove('open'); $('sheetMask').classList.remove('open'); }
+function closeSheet() {
+  $('sheet').classList.remove('open'); $('sheetMask').classList.remove('open');
+  if (muOpen) { muOpen = false; stopMusic(); $('panelMusic').hidden = true; $('shBell').classList.remove('on'); }
+}
 /* ===== 渐进式站牌（分片模式）=====
    打开车站时先用当前窗口的 tripList 把「当前时段」零等待画出来，整包（既有端点不变）
    在后台解析成全日站牌后原位置换；已经展开的线路/方向、类型过滤与滚动位置都保留。
@@ -7318,6 +7324,8 @@ function showStationDetail(name, coord, featLine, featOp) {
   if (c) setHighlight([], c);
   sheetStation = name; sheetCoord = coord || null; sheetFlat = false; sheetLine = featLine || null; sheetOp = featOp || null;
   $('shNm').textContent = name;
+  /* 换站时若处于试听面板：停止播放并复位（保持关闭铃铛高亮） */
+  if (muOpen) { muOpen = false; stopMusic(); $('panelMusic').hidden = true; $('shBell').classList.remove('on'); }
   // 新站打开：默认切回「一览」，隐藏信息面板并使懒渲染缓存失效
   sheetTab = 'tabGrid';
   ['tabList','tabGrid','tabInfo','tabGuide'].forEach(id => $(id).classList.remove('on'));
@@ -7576,6 +7584,218 @@ function switchSheetTab(tab) {
   else if (tab === 'tabInfo') renderInfoTab();
   else if (tab === 'tabGuide') renderGuideTab();
 }
+
+/* ---------- 发车铃声试听（jr-music.suki.ing） ---------- */
+const MU_BASE = 'https://jr-music.suki.ing';
+let muData = null, muPromise = null, muOpen = false, muBadgeHidden = false;
+let muAllMels = [], muLines = [], muOthers = [], muLineIdx = 0;
+let muAudio = null, muCur = null, muRaf = 0, muDrag = false;
+
+function muNorm(n) { return normName(n); }
+function loadMusicData() {
+  if (muData) return Promise.resolve(muData);
+  if (!muPromise) {
+    muPromise = fetch(MU_BASE + '/mapping.json').then(r => {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    }).then(j => {
+      const idx = new Map();
+      for (const s of (j.stations || [])) { const k = muNorm(s.name); if (k && !idx.has(k)) idx.set(k, s); }
+      muData = idx; return muData;
+    }).catch(e => { muPromise = null; throw e; });
+  }
+  return muPromise;
+}
+/* 旋律 → 线路归属：优先 line 字段，否则从 platform "N番線 -线路方向" 解析 */
+function muLineOf(m) {
+  if (m.line && String(m.line).trim()) return String(m.line).trim();
+  const p = m.platform || '';
+  const mm = p.match(/^[0-9０-９]+番線?\s*[-–—]\s*(.+)$/);
+  if (mm) {
+    let ln = mm[1].trim().replace(/(上り|下り|内回り|外回り|北行|南行|東行|西行|通過標準|通過|直通|回送)(・.*)?$/, '').replace(/[・\s]+$/, '');
+    if (ln) return ln;
+  }
+  return '';
+}
+function muPlatOf(m) {
+  const mm = (m.platform || '').match(/^[0-9０-９]+番線?/);
+  return mm ? mm[0] : '';
+}
+function muAudioUrl(m) {
+  if (!m.audio) return null;
+  return MU_BASE + '/' + String(m.audio).split('/').map(encodeURIComponent).join('/');
+}
+function openMusic() {
+  if (muOpen) return;
+  muOpen = true;
+  muBadgeHidden = $('shBadges').hidden;
+  $('shBody').hidden = true;
+  $('shSubTabs').classList.add('hidden');
+  $('shBadges').hidden = true;
+  const tabsEl = document.querySelector('#sheet .sh-tabs');
+  if (tabsEl) tabsEl.style.display = 'none';
+  ['tabList','tabGrid','tabInfo','tabGuide'].forEach(id => $(id).classList.remove('on'));
+  $('panelInfo').hidden = true; $('panelGuide').hidden = true;
+  $('panelMusic').hidden = false;
+  $('shBell').classList.add('on');
+  renderMusic();
+}
+function closeMusic() {
+  if (!muOpen) return;
+  muOpen = false;
+  stopMusic();
+  $('panelMusic').hidden = true;
+  $('shBell').classList.remove('on');
+  $('shBadges').hidden = muBadgeHidden;
+  const tabsEl = document.querySelector('#sheet .sh-tabs');
+  if (tabsEl) tabsEl.style.display = '';
+  switchSheetTab(sheetTab);
+}
+function renderMusic() {
+  const t = T(), name = sheetStation;
+  stopMusic();
+  $('muPlayer').hidden = true;
+  $('muLines').hidden = true;
+  $('muEmpty').hidden = true;
+  $('muList').innerHTML = '<div class="mu-loading">' + _escTxt(t.muLoad) + '</div>';
+  loadMusicData().then(idx => {
+    if (!muOpen || sheetStation !== name) return;
+    const st = idx.get(muNorm(name));
+    const mels = (st && st.melodies) || [];
+    if (!st || !mels.length) {
+      $('muList').innerHTML = '<div class="mu-empty"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>' + _escTxt(t.muNone) + '</div>';
+      return;
+    }
+    /* 线路分组 */
+    muAllMels = mels; muLines = []; muOthers = [];
+    const seen = new Set();
+    for (const m of mels) {
+      const ln = muLineOf(m);
+      if (ln) { if (!seen.has(ln)) { seen.add(ln); muLines.push(ln); } }
+      else muOthers.push(m);
+    }
+    muLineIdx = 0;
+    if (muLines.length <= 1) {
+      renderMuList(muLines.length ? mels : muOthers);
+    } else {
+      renderMuChips(muOthers.length > 0);
+      renderMuList(mels.filter(m => muLineOf(m) === muLines[0]));
+    }
+  }).catch(() => {
+    if (!muOpen || sheetStation !== name) return;
+    $('muList').innerHTML = '<div class="mu-empty">' + _escTxt(t.muFail) +
+      '<button class="mu-chip" id="muRetryBtn">' + _escTxt(t.muRetry) + '</button></div>';
+    const rb = $('muRetryBtn');
+    if (rb) rb.addEventListener('click', renderMusic);
+  });
+}
+function renderMuChips(withOther) {
+  const t = T(), el = $('muLines');
+  el.hidden = false;
+  el.innerHTML = muLines.map((ln, i) =>
+    '<button class="mu-chip' + (i === muLineIdx ? ' on' : '') + '" data-i="' + i + '">' + _escTxt(ln) + '</button>'
+  ).join('') + (withOther
+    ? '<button class="mu-chip' + (muLineIdx === -1 ? ' on' : '') + '" data-i="-1">' + _escTxt(t.muOther) + '</button>'
+    : '');
+  el.querySelectorAll('.mu-chip').forEach(b => b.addEventListener('click', () => {
+    muLineIdx = parseInt(b.dataset.i, 10);
+    stopMusic();
+    el.querySelectorAll('.mu-chip').forEach(x => x.classList.toggle('on', x === b));
+    renderMuList(muLineIdx === -1 ? muOthers : muAllMels.filter(m => muLineOf(m) === muLines[muLineIdx]));
+  }));
+}
+function renderMuList(list) {
+  const t = T(), el = $('muList');
+  if (!list.length) {
+    el.innerHTML = '<div class="mu-empty">' + _escTxt(t.muNone) + '</div>';
+    return;
+  }
+  el.innerHTML = '<div class="mu-hint">' + _escTxt(t.muHint).replace('{0}', list.length) + '</div>' + list.map((m, i) => {
+    const url = muAudioUrl(m), plat = muPlatOf(m);
+    return '<div class="mu-row" data-i="' + i + '">' +
+      (plat ? '<span class="mu-plat">' + _escTxt(plat) + '</span>' : '') +
+      '<span class="mu-melody">' + _escTxt(m.melody || '') + '</span>' +
+      (url ? '<span class="mu-playbtn"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>'
+           : '<span class="mu-void">' + _escTxt(t.muNoAudio) + '</span>') +
+      '</div>';
+  }).join('');
+  el.querySelectorAll('.mu-row').forEach(rowEl => rowEl.addEventListener('click', () => {
+    const m = list[parseInt(rowEl.dataset.i, 10)];
+    if (!m) return;
+    const url = muAudioUrl(m);
+    if (!url) return;
+    if (muCur && muCur.m === m) { togglePause(); return; }
+    playMusic(m, rowEl, url);
+  }));
+}
+function playMusic(m, rowEl, url) {
+  stopMusic(false);
+  muAudio = new Audio(url);
+  muAudio.addEventListener('ended', () => stopMusic(true));
+  muAudio.addEventListener('error', () => stopMusic(true));
+  muAudio.play().catch(() => stopMusic(true));
+  muCur = { m, rowEl };
+  rowEl.classList.add('playing');
+  $('muPName').textContent = m.melody || '';
+  $('muPPlat').textContent = muPlatOf(m) || '';
+  $('muPlayer').hidden = false;
+  muPlayIcoSet(false);
+  muRafTick();
+}
+function muRafTick() {
+  cancelAnimationFrame(muRaf);
+  if (!muAudio || !muCur) return;
+  const a = muAudio, d = a.duration || 0, c = a.currentTime || 0;
+  const pct = d ? Math.min(100, c / d * 100) : 0;
+  $('muFill').style.width = pct + '%';
+  $('muKnob').style.left = pct + '%';
+  $('muTime').textContent = muFmt(c) + ' / ' + (d ? muFmt(d) : '--:--');
+  muRaf = requestAnimationFrame(muRafTick);
+}
+function muFmt(s) {
+  if (!isFinite(s) || s < 0) return '0:00';
+  const m = Math.floor(s / 60), ss = Math.floor(s % 60);
+  return m + ':' + (ss < 10 ? '0' : '') + ss;
+}
+function togglePause() {
+  if (!muAudio || !muCur) return;
+  if (muAudio.paused) { muAudio.play().catch(() => {}); muPlayIcoSet(false); muRafTick(); }
+  else { muAudio.pause(); muPlayIcoSet(true); }
+}
+function stopMusic() {
+  cancelAnimationFrame(muRaf);
+  if (muAudio) { try { muAudio.pause(); } catch (e) {} muAudio = null; }
+  if (muCur && muCur.rowEl) muCur.rowEl.classList.remove('playing');
+  muCur = null;
+  $('muPlayer').hidden = true;
+  muPlayIcoSet(true);
+}
+function muPlayIcoSet(paused) {
+  $('muPlayIco').outerHTML = paused
+    ? '<svg id="muPlayIco" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>'
+    : '<svg id="muPlayIco" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M6 6h4v12H6zM14 6h4v12h-4z"/></svg>';
+}
+/* 事件绑定 */
+(function () {
+  const bell = $('shBell'); if (bell) bell.addEventListener('click', openMusic);
+  const back = $('muBack'); if (back) back.addEventListener('click', closeMusic);
+  const play = $('muPlay'); if (play) play.addEventListener('click', togglePause);
+  const scrub = $('muScrub');
+  if (scrub) {
+    function seekFrom(e) {
+      if (!muAudio || !muCur) return;
+      const r = scrub.getBoundingClientRect();
+      const pct = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
+      if (muAudio.duration) muAudio.currentTime = pct * muAudio.duration;
+    }
+    scrub.addEventListener('click', e => seekFrom(e));
+    scrub.addEventListener('pointerdown', e => { muDrag = true; scrub.classList.add('drag'); seekFrom(e); if (scrub.setPointerCapture) scrub.setPointerCapture(e.pointerId); });
+    scrub.addEventListener('pointermove', e => { if (muDrag) seekFrom(e); });
+    const up = () => { muDrag = false; scrub.classList.remove('drag'); };
+    scrub.addEventListener('pointerup', up);
+    scrub.addEventListener('pointercancel', up);
+  }
+})();
 
 /* ---------- 信息 tab（eki-wiki） ---------- */
 function _firstLine(s) { if (!s) return ''; return String(s).split('\n')[0].trim(); }
@@ -8652,6 +8872,9 @@ function applyLang() {
   $('tData').textContent = t.dataT; $('tHelp').textContent = t.helpT; if ($('tAbout')) $('tAbout').textContent = t.aboutT;
   $('tabRouteLb').textContent = t.tabRoute; $('tabLegendLb').textContent = t.legendT; $('tabSetLb').textContent = t.setT;
   if ($('tabGuide')) $('tabGuide').textContent = t.tabGuide;
+  if ($('shBell')) { $('shBell').setAttribute('aria-label', t.muT); $('shBell').title = t.muT; }
+  if ($('muBackTxt')) $('muBackTxt').textContent = t.muBack;
+  if ($('muTitleTxt')) $('muTitleTxt').textContent = t.muT;
   $('bLiveLb').textContent = t.badgeLive; $('bCountLb').textContent = t.badgeToday;
   searchEl.placeholder = t.searchPh;
   $('rFrom').placeholder = t.routeFrom; $('rTo').placeholder = t.routeTo;

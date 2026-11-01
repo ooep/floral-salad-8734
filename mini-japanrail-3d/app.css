@@ -766,6 +766,51 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
 #sheet .sh-nm { font-size:30px; font-weight:800; letter-spacing:-.5px; line-height:1.05; }
 #sheet .sh-sub { font-size:12.5px; color:var(--dim); margin-top:4px; }
 #sheet .sh-x { margin-left:auto; flex:none; }
+/* 发车铃声按钮:与关闭按钮同排同风格(铃铛在关闭钮左侧) */
+#sheet .sh-bell { margin-left:auto; flex:none; margin-right:8px; }
+#sheet .sh-bell + .sh-x { margin-left:0; }
+#sheet .sh-bell.on { color:#fff; background:rgba(50,205,102,.22); border-color:rgba(50,205,102,.55); }
+#sheet .sh-bell.on:hover { background:rgba(50,205,102,.30); }
+/* ── 发车铃声试听面板 ── */
+#sheet { --mu:#32cd66; --mu-soft:rgba(50,205,102,.16); --mu-border:rgba(50,205,102,.45); }
+#sheet .mu-toolbar { display:flex; align-items:center; gap:10px; padding:2px 4px 10px; border-bottom:1px solid var(--glass-lo); flex:none; }
+#sheet .mu-back { display:inline-flex; align-items:center; gap:5px; background:none; border:0; color:var(--dim); font-size:12.5px; font-weight:700; cursor:pointer; padding:4px 8px 4px 4px; border-radius:var(--r-sm); transition:color .12s, background .2s var(--ease-spring); font-family:inherit; }
+#sheet .mu-back:hover { color:var(--txt); background:var(--glass-2); }
+#sheet .mu-title { font-size:13px; font-weight:800; color:var(--txt); letter-spacing:.3px; }
+#sheet .mu-lines { display:flex; gap:7px; flex-wrap:wrap; padding:11px 2px 3px; flex:none; }
+#sheet .mu-chip { border:1px solid var(--glass-edge); background:var(--glass); color:var(--dim); font-size:12px; font-weight:700; padding:6px 13px; border-radius:var(--r-pill); cursor:pointer; transition:background .12s,border-color .12s,color .12s,transform .25s var(--ease-spring); font-family:inherit; }
+#sheet .mu-chip:hover { background:var(--glass-2); color:var(--txt); }
+#sheet .mu-chip.on { background:var(--mu); border-color:var(--mu); color:#fff; box-shadow:0 3px 12px var(--mu-soft); }
+#sheet .mu-list { flex:1; min-height:0; overflow-y:auto; padding:4px 2px 8px; display:flex; flex-direction:column; gap:7px; }
+#sheet .mu-row { display:flex; align-items:center; gap:11px; padding:11px 13px; border-radius:15px; background:var(--glass); border:1px solid var(--glass-edge); box-shadow:inset 0 1px 0 rgba(255,255,255,.12); transition:border-color .15s, background .2s var(--ease-spring), transform .2s var(--ease-spring); cursor:pointer; }
+#sheet .mu-row:hover { background:var(--glass-2); border-color:var(--glass-hi); transform:translateY(-1px); }
+#sheet .mu-row.playing { border-color:var(--mu-border); background:var(--mu-soft); }
+#sheet .mu-plat { flex:none; min-width:58px; text-align:center; font-size:11.5px; font-weight:800; color:var(--txt); background:var(--glass-2); border:1px solid var(--glass-edge); border-radius:9px; padding:4px 7px; font-variant-numeric:tabular-nums; }
+#sheet .mu-row.playing .mu-plat { background:var(--mu); border-color:var(--mu); color:#fff; }
+#sheet .mu-melody { flex:1; min-width:0; font-size:13.5px; font-weight:700; color:var(--txt); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#sheet .mu-playbtn { flex:none; width:34px; height:34px; border-radius:50%; border:1px solid var(--glass-edge); background:var(--glass-2); color:var(--txt); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:background .15s,border-color .15s,transform .25s var(--ease-spring); }
+#sheet .mu-row:hover .mu-playbtn { border-color:var(--mu-border); }
+#sheet .mu-playbtn:hover { background:var(--mu); border-color:var(--mu); color:#fff; transform:scale(1.06); }
+#sheet .mu-playbtn:active { transform:scale(.92); }
+#sheet .mu-row.playing .mu-playbtn { background:var(--mu); border-color:var(--mu); color:#fff; }
+#sheet .mu-void { flex:none; font-size:10.5px; font-weight:700; color:var(--dim); border:1px dashed var(--glass-edge); border-radius:var(--r-pill); padding:5px 10px; letter-spacing:.3px; }
+#sheet .mu-empty { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:9px; color:var(--dim); font-size:13px; padding:44px 20px; text-align:center; }
+#sheet .mu-empty svg { opacity:.5; }
+#sheet .mu-player { flex:none; display:flex; align-items:center; gap:12px; margin-top:9px; padding:11px 14px; border-radius:17px; background:var(--glass-panel); border:1px solid var(--glass-edge); box-shadow:inset 0 1px 0 var(--glass-hi), var(--glass-sh); backdrop-filter:blur(20px) saturate(1.6); -webkit-backdrop-filter:blur(20px) saturate(1.6); }
+#sheet .mu-play { flex:none; width:42px; height:42px; border-radius:50%; border:0; color:#fff; background:linear-gradient(180deg, rgb(74,222,128), rgb(34,172,84)); box-shadow:0 4px 14px var(--mu-soft), inset 0 1px 0 rgba(255,255,255,.45); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:transform .25s var(--ease-spring), box-shadow .2s; }
+#sheet .mu-play:hover { transform:scale(1.07); box-shadow:0 6px 20px var(--mu-soft), inset 0 1px 0 rgba(255,255,255,.5); }
+#sheet .mu-play:active { transform:scale(.92); }
+#sheet .mu-pmeta { flex:1; min-width:0; }
+#sheet .mu-pname { font-size:13px; font-weight:800; color:var(--txt); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#sheet .mu-pplat { font-size:11px; color:var(--dim); margin-top:2px; }
+#sheet .mu-prog { flex:1; min-width:0; }
+#sheet .mu-scrub { position:relative; height:5px; border-radius:3px; background:rgba(120,140,180,.22); cursor:pointer; touch-action:none; }
+#sheet .mu-fill { position:absolute; left:0; top:0; bottom:0; width:0%; border-radius:3px; background:linear-gradient(90deg, rgb(74,222,128), rgb(34,172,84)); }
+#sheet .mu-knob { position:absolute; top:50%; width:11px; height:11px; border-radius:50%; background:#fff; border:2px solid rgb(34,172,84); transform:translate(-50%,-50%); box-shadow:0 1px 4px rgba(0,0,0,.35); opacity:0; transition:opacity .15s; pointer-events:none; }
+#sheet .mu-scrub:hover .mu-knob, #sheet .mu-scrub.drag .mu-knob { opacity:1; }
+#sheet .mu-time { font-size:10.5px; color:var(--dim); font-variant-numeric:tabular-nums; margin-top:5px; }
+#sheet .mu-loading { padding:36px 20px; text-align:center; color:var(--dim); font-size:13px; }
+#sheet .mu-hint { font-size:11px; color:var(--dim); padding:8px 2px 0; }
 #sheet .sh-tabs { display:flex; border-bottom:1px solid var(--glass-lo); flex:none; margin-top:10px; padding:0 12px; }
 #sheet .sh-tabs button { flex:1; max-width:120px; padding:12px 0; background:none; border:0; color:var(--dim); font-size:13.5px; font-weight:700; cursor:pointer; border-bottom:2px solid transparent; transition:color .12s, border-color .12s; white-space:nowrap; }
 #sheet .sh-tabs button:hover { color:var(--txt); }

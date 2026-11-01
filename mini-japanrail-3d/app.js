@@ -7205,31 +7205,24 @@ function closeSheet() { $('sheet').classList.remove('open'); $('sheetMask').clas
 /* ===== 渐进式站牌（分片模式）=====
    打开车站时先用当前窗口的 tripList 把「当前时段」零等待画出来，整包（既有端点不变）
    在后台解析成全日站牌后原位置换；已经展开的线路/方向、类型过滤与滚动位置都保留。
-   失败则保留当前时段视图，横幅给「重试」，不再是一句空白「加载中」。 */
-let sheetProgKind = '', sheetProgTimer = 0;
-function setSheetProg(kind) {
-  const el = $('shProg');
-  if (!el) return;
-  clearTimeout(sheetProgTimer);
-  sheetProgKind = kind || '';
-  el.classList.remove('done', 'fail', 'out');
-  if (!kind) { el.hidden = true; el.innerHTML = ''; return; }
-  el.hidden = false;
-  if (kind === 'loading') {
-    el.innerHTML = '<span class="sp"></span><span>当前时段已显示 · 正在载入全日班次…</span>';
-  } else if (kind === 'done') {
-    el.innerHTML = '<span>已载入全日班次</span>';
-    el.classList.add('done');
-    sheetProgTimer = setTimeout(() => {
-      el.classList.add('out');
-      sheetProgTimer = setTimeout(() => { el.hidden = true; el.classList.remove('out'); sheetProgKind = ''; }, 420);
-    }, 1500);
-  } else if (kind === 'fail') {
-    el.innerHTML = '<span>全日班次载入失败 · 现时段以外暂未显示</span><span class="sp-r">重试</span>';
-    el.classList.add('fail');
-    const r = el.querySelector('.sp-r');
-    if (r) r.onclick = () => { setSheetProg('loading'); stationSheetUpgrade(sheetStation, sheetStation); };
-  }
+   全程不加横幅：取数失败静默重试两次，仍失败才在列表末尾留一行很轻的「再試行」。
+   sheetOpenSeq 用于丢弃换站前发出的升级/重试回调。 */
+let sheetOpenSeq = 0;
+function sheetRetryNote() {
+  const body = $('shBody');
+  const old = body.querySelector('.sh-note');
+  if (old) return old;
+  const d = document.createElement('div');
+  d.className = 'sh-note';
+  d.innerHTML = '全一日の時刻表を読み込めませんでした · <span class="sh-retry">再試行</span>';
+  const btn = d.querySelector('.sh-retry');
+  btn.onclick = () => { d.remove(); stationSheetUpgrade(sheetStation, sheetStation, sheetOpenSeq, 0); };
+  body.appendChild(d);
+  return d;
+}
+function clearSheetRetryNote() {
+  const n = $('shBody').querySelector('.sh-note');
+  if (n) n.remove();
 }
 function captureSheetUi() {
   const body = $('shBody');
@@ -7289,27 +7282,35 @@ function sheetFullReady(station) {
   const a = STATION_ALIAS[nk];
   return !!(a && (stationTripsCache.has(a) || stationTripsMiss.has(a)));
 }
-function stationSheetUpgrade(name, wantName) {
+function stationSheetUpgrade(name, wantName, seq, attempt) {
+  attempt = attempt || 0;
+  const retryLater = () => {
+    if (attempt < 2) {
+      setTimeout(() => stationSheetUpgrade(name, wantName, seq, attempt + 1), attempt ? 4000 : 1500);
+      return;
+    }
+    if (!sheetIsPartial) {
+      $('shBody').classList.remove('partial');
+      $('shBody').innerHTML = '<div class="empty">' + esc(T().failMsg) + '</div>';
+    }
+    sheetRetryNote();
+  };
   return (async () => {
     /* 换日加载中先等新的一天就绪，避免把旧日数据解析进新日站牌 */
     while (ttDayReq) await new Promise(r => setTimeout(r, 120));
     if (ttState && ttState.mode === 'shards') await ttLoadStationTrips(name);
   })().then(() => {
-    if (sheetStation !== wantName) return;
-    if (!sheetFullReady(wantName)) { setSheetProg('fail'); return; }
+    if (sheetStation !== wantName || seq !== sheetOpenSeq) return;
+    if (!sheetFullReady(wantName)) { retryLater(); return; }
     const snap = captureSheetUi();
     stationPartialCache.clear();
     renderStationBody();
     restoreSheetUi(snap);
-    setSheetProg('done');
+    clearSheetRetryNote();
   }).catch(e => {
     console.warn('[tt] station full load failed', e);
-    if (sheetStation !== wantName) return;
-    if (sheetIsPartial) setSheetProg('fail');
-    else {
-      $('shBody').classList.remove('partial');
-      $('shBody').innerHTML = '<div class="empty">' + esc(T().failMsg) + '</div>';
-    }
+    if (sheetStation !== wantName || seq !== sheetOpenSeq) return;
+    retryLater();
   });
 }
 function showStationDetail(name, coord, featLine, featOp) {
@@ -7328,7 +7329,7 @@ function showStationDetail(name, coord, featLine, featOp) {
   $('sheet').classList.add('open');
   $('sheetMask').classList.add('open');
   closeDetail();
-  setSheetProg(null);
+  sheetOpenSeq++;
   if (tripList && tripList.length) {
     /* 分片模式只持有当前/下一窗口，站牌需要全日班次：
        ① 先把窗口内已解析的班次按「当前时段」立即可见（0 等待）；
@@ -7345,16 +7346,14 @@ function showStationDetail(name, coord, featLine, featOp) {
         if (win.list.length) {
           stationPartialCache.clear();
           stationPartialCache.set(win.nk, win.list);
-          renderStationBody();          /* 当前时段立即出图 */
-          setSheetProg('loading');
+          renderStationBody();          /* 当前时段立即出图，不打断操作 */
         } else {
           /* 当前窗口就没有途经班次（深夜/支线）：保持原来的整包加载态 */
           sheetIsPartial = false;
           $('shBody').classList.remove('partial');
           $('shBody').innerHTML = '<div class="empty">' + esc(T().loading + ' ' + T().loadingTr) + '…</div>';
-          setSheetProg(null);
         }
-        stationSheetUpgrade(name, wantName);
+        stationSheetUpgrade(name, wantName, sheetOpenSeq, 0);
       }
     } else {
       renderStationBody();
@@ -7373,7 +7372,7 @@ $('subDep').addEventListener('click', function () { sheetDepArr = 'dep'; $('subD
 $('subArr').addEventListener('click', function () { sheetDepArr = 'arr'; $('subArr').classList.add('on'); $('subDep').classList.remove('on'); renderStationBody(); });
 window.showStationDetail = showStationDetail;  // 调试/自动化钩子：供控制台与 E2E 直接打开车站抽屉
 // E2E 钩子：列车详情/站台数据（确定性验证用，只读引用）
-window.__mjr3d = { showTrainDetail, tripList: () => tripList, PLATMAP: () => PLATMAP, tmaps: () => tmaps, badgeKeyOfFeature, badgeEntriesOfStation, badgeEntriesOf, showStationDetail, stationCoord: () => stationCoord, stationMap: () => stationMap, badgeNorm, badgeFamilyHit, map: () => map, ormState: () => ({ enabled: ormEnabled, loaded: ormLoaded, fetching: ormFetching }), detailState: () => ({ wanted: detailWanted, fetched: stationDetailFetched }), bufState: () => ({ bytes: bufArr.byteLength, trains: Math.min(MAXT, fadeList.length) }), boardCacheStats: () => ({ size: boardCache.size, items: boardCacheItems, cap: BOARD_CACHE_MAX_ITEMS }), platState: () => ({ loaded: !!PLATMAP, pending: !!(platmapP && !PLATMAP) }), detailRetry: () => Object.assign({}, detailRetry), sheetState: () => ({ partial: sheetIsPartial, prog: sheetProgKind, rows: document.querySelectorAll('#shBody .lrow').length, open: document.querySelectorAll('#shBody .lrow.open').length, scroll: $('shBody').scrollTop }), ttState: () => (ttState ? { mode: ttState.mode, bucket: ttState.bucket, key: ttState.key } : null), ttCache: () => ({ station: stationTripsCache.size, miss: stationTripsMiss.size, partial: stationPartialCache.size, raw: !!ttRaw, sets: !!ttStopNames }) };
+window.__mjr3d = { showTrainDetail, tripList: () => tripList, PLATMAP: () => PLATMAP, tmaps: () => tmaps, badgeKeyOfFeature, badgeEntriesOfStation, badgeEntriesOf, showStationDetail, stationCoord: () => stationCoord, stationMap: () => stationMap, badgeNorm, badgeFamilyHit, map: () => map, ormState: () => ({ enabled: ormEnabled, loaded: ormLoaded, fetching: ormFetching }), detailState: () => ({ wanted: detailWanted, fetched: stationDetailFetched }), bufState: () => ({ bytes: bufArr.byteLength, trains: Math.min(MAXT, fadeList.length) }), boardCacheStats: () => ({ size: boardCache.size, items: boardCacheItems, cap: BOARD_CACHE_MAX_ITEMS }), platState: () => ({ loaded: !!PLATMAP, pending: !!(platmapP && !PLATMAP) }), detailRetry: () => Object.assign({}, detailRetry), sheetState: () => ({ partial: sheetIsPartial, rows: document.querySelectorAll('#shBody .lrow').length, open: document.querySelectorAll('#shBody .lrow.open').length, scroll: $('shBody').scrollTop }), ttState: () => (ttState ? { mode: ttState.mode, bucket: ttState.bucket, key: ttState.key } : null), ttCache: () => ({ station: stationTripsCache.size, miss: stationTripsMiss.size, partial: stationPartialCache.size, raw: !!ttRaw, sets: !!ttStopNames }) };
 // E2E 钩子：列车叠加弹窗（确定性验证，不依赖实时列车密度）
 window.__trPick = { n: () => visibleTrips.length, near: (x, y) => collectTrains(x, y, 14).length, open: (x, y) => showTrPick(collectTrains(x, y, 14), x, y) };
 /* E2E 回归钩子(确定性验证):两条历史事故的防线
@@ -7571,9 +7570,6 @@ function switchSheetTab(tab) {
   const ttime = (tab === 'tabList' || tab === 'tabGrid');
   $('shBody').hidden = !ttime;
   $('shSubTabs').classList.toggle('hidden', !ttime);
-  /* 进度条只属于时刻表视图：切到信息/指南时藏起来，切回来再露出（若仍在加载/失败态） */
-  if (!ttime) $('shProg').hidden = true;
-  else if (sheetProgKind) $('shProg').hidden = false;
   $('panelInfo').hidden = (tab !== 'tabInfo');
   $('panelGuide').hidden = (tab !== 'tabGuide');
   if (ttime) renderStationBody();

@@ -5515,7 +5515,7 @@ function addMapLayers() {
     if (badgesMap || badgesLines) writeBadgeProps();
     else loadBadgesMap().then(writeBadgeProps).catch(() => writeBadgeProps());
     map.addSource('stas', { type: 'geojson', data: staFC });
-    map.addLayer({ id: 'stas', type: 'circle', source: 'stas', paint: {
+    map.addLayer({ id: 'stas', type: 'circle', source: 'stas', minzoom: 7, paint: {
       'circle-radius': ['interpolate', ['exponential', 1.5], ['zoom'], 3, 1, 9, 1.8, 13, 3.2],
       'circle-color': '#b9c3d4', 'circle-opacity': 0.55, 'circle-stroke-color': '#06080e', 'circle-stroke-width': 0.4 } });
     map.addLayer({ id: 'stas-label', type: 'symbol', source: 'stas', minzoom: 9.5, layout: {

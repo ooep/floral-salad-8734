@@ -345,6 +345,9 @@ let ttRetryAt = 0, ttRetryBucket = -1, ttPrefetchRetryAt = 0;
    解析结果按站缓存（LRU 8 站），换日时整体失效。 */
 let ttRaw = null, ttRawBit = 0, ttRawP = null, ttStopNames = null;
 let stationTripsCache = new Map(), stationTripsMiss = new Set();
+/* 渐进式站牌：整包到达前，先用当前窗口已解析的 tripList 把「当前时段」画出来，
+   整包解析完成后再换成全日数据。只存当前打开的这一站，换站/完成后即清空。 */
+const stationPartialCache = new Map();
 const STATION_TRIPS_MAX = 8;
 /* 极端晚点定向补片状态（见 ttRescueDelayed）：按延误 feed 的 generation 复用，
    换日/回退全量时清空。 */
@@ -354,6 +357,7 @@ let ttRescueIndexing = false;  /* 补片后重建日索引期间，防止 delayO
 const ttRescueTried = new Set();
 function ttClearStationCache() {
   stationTripsCache.clear(); stationTripsMiss.clear();
+  stationPartialCache.clear();
   ttRaw = null; ttRawBit = 0; ttRawP = null; ttStopNames = null;
   ttRescueTried.clear(); ttRescueGen = ''; ttRescueFetches = 0;
 }
@@ -423,6 +427,28 @@ async function ttLoadStationTrips(station) {
     stationTripsMiss.add(nk);
   }
   return nk;
+}
+/* 渐进式站牌用：直接从当前窗口的 tripList（已解析，带几何/站序）挑出途经本站的班次。
+   分片模式下 tripList 只覆盖当前+下一窗口，所以这里拿到的是「当前时段」而非全日。
+   站名兜底与 ttLoadStationTrips 一致：先按原名找，找不到再试 STATION_ALIAS。 */
+function stationWindowTrips(station) {
+  const nk0 = normName(station);
+  const pick = k => {
+    const out = [];
+    for (let i = 0; i < tripList.length; i++) {
+      const t = tripList[i];
+      if (!t || !t.N || t.bad) continue;
+      const jn = t.jasN;
+      for (let j = 0; j < jn.length; j++) if (jn[j] === k) { out.push(t); break; }
+    }
+    return out;
+  };
+  let nk = nk0, list = pick(nk);
+  if (!list.length && STATION_ALIAS[nk0]) {
+    const a = STATION_ALIAS[nk0], la = pick(a);
+    if (la.length) { nk = a; list = la; }
+  }
+  return { nk, list };
 }
 let searchIndex = [], lineIndex = [];
 let NAME_I18N = null;
@@ -6798,6 +6824,8 @@ let lineOp = null, boardCache = new Map(), boardCacheItems = 0, sheetStation = n
    buildBoard/groupDirs 分配约 11MB 且无上限随浏览站点数线性累积。
    超限按最久未用淘汰,重开旧站时重建(毫秒级);键含 dayBit,跨日旧档同样受此上限约束。 */
 const BOARD_CACHE_MAX_ITEMS = PERF_LOW ? 40000 : 100000;
+/* 当前站牌是否只含「当前时段」（整包未到，见 stationWindowTrips / stationSheetUpgrade） */
+let sheetIsPartial = false;
 /* 方向全天网格按需构建:一次开站抽屉若把所有方向的全天格子都塞进 DOM,东京站约 3.9 万节点、
    1.16MB HTML;Clarity 等 DOM 观察者会按变更量整份留内存,手机连续开站可累积数百 MB。
    d-more 展开时才生成对应网格,字符串构建与 DOM 插入都推迟。 */
@@ -6957,14 +6985,22 @@ function boardSyncDly(board, live) {
   }
 }
 function buildBoard(station, coord) {
-  let nk = normName(station), stTrips, live = null;
+  let nk = normName(station), stTrips, live = null, partial = false;
   if (ttState && ttState.mode === 'shards') {
-    /* 分片模式：站牌数据由 ttLoadStationTrips 只解析途经本站的班次，按站缓存 */
+    /* 分片模式：站牌数据由 ttLoadStationTrips 只解析途经本站的班次，按站缓存。
+       整包未到时先用当前窗口的班次（stationWindowTrips 放进 stationPartialCache）顶上，
+       只渲染「当前时段」，不动缓存键里的全日语义（partial 板不进 boardCache）。 */
     if (!stationTripsCache.has(nk) && STATION_ALIAS[nk]) {
       const a = STATION_ALIAS[nk];
       if (stationTripsCache.has(a)) nk = a;
+      else if (stationPartialCache.has(a)) nk = a;
     }
-    stTrips = stationTripsCache.get(nk) || [];
+    if (stationTripsCache.has(nk)) {
+      stTrips = stationTripsCache.get(nk);
+    } else {
+      stTrips = stationPartialCache.get(nk) || [];
+      partial = stationPartialCache.has(nk);
+    }
     live = new Map();
     for (let i = 0; i < tripList.length; i++) {
       const t = tripList[i];
@@ -6984,7 +7020,7 @@ function buildBoard(station, coord) {
      会命中切换前构建的时刻表;d/x 行的取舍也随日期变化，只带 dayBit 会跨日命中旧行 */
   const ck = (coord ? (nk + '|' + coord[0].toFixed(3) + ',' + coord[1].toFixed(3)) : nk) +
     '#' + dayBit + '@' + jstDateParts(simNow()).key + '#' + (ttState && ttState.mode || 'full');
-  const hit = boardCache.get(ck);
+  const hit = partial ? null : boardCache.get(ck);
   if (hit) {
     if (live) boardSyncDly(hit, live);
     boardCache.delete(ck); boardCache.set(ck, hit); return hit;
@@ -7044,8 +7080,9 @@ function buildBoard(station, coord) {
   lines.forEach(L => { if (!opMap.has(L.op)) { opMap.set(L.op, { op: L.op, lines: [] }); ops.push(opMap.get(L.op)); } opMap.get(L.op).lines.push(L); });
   let nItems = 0;
   lines.forEach(L => { nItems += L.items.length + L.itemsArr.length; });
-  const board = { ops, nItems };
+  const board = { ops, nItems, partial };
   if (live) boardSyncDly(board, live);
+  if (partial) return board;   /* 窗口快照只此一次，别进 LRU 把全套缓存挤掉 */
   boardCache.set(ck, board); boardCacheItems += nItems;
   while (boardCacheItems > BOARD_CACHE_MAX_ITEMS && boardCache.size > 1) {
     const oldest = boardCache.keys().next().value;
@@ -7110,6 +7147,8 @@ function renderStationBody() {
   if (!sheetStation) return;
   dayLazyBuild.clear(); dayLazySeq = 0;
   const board = buildBoard(sheetStation, sheetCoord);
+  sheetIsPartial = !!board.partial;
+  $('shBody').classList.toggle('partial', sheetIsPartial);
   $('shSub').textContent = board.ops.map(o => opShort(o.op)).join(' · ');
   const M = curMin(), hour = Math.floor(((M % 1440) + 1440) % 1440 / 60);
   let html = '';
@@ -7141,9 +7180,14 @@ function bindSheet() {
       const day = m.closest('.dir').querySelector('.day');
       if (day) {
         if (day.dataset.did && !day.firstChild) {
-          const build = dayLazyBuild.get(+day.dataset.did);
-          if (build) { day.innerHTML = build(); dayLazyBuild.delete(+day.dataset.did); }
-          applySheetTypeFilter(m.closest('.lpanel'));
+          if (sheetIsPartial) {
+            /* 只持有当前窗口：全日网格先占位，整包到达后 stationSheetUpgrade 会重建并按此展开 */
+            day.innerHTML = '<div class="dlg sh-day-wait">全一日の時刻表を読み込み中…</div>';
+          } else {
+            const build = dayLazyBuild.get(+day.dataset.did);
+            if (build) { day.innerHTML = build(); dayLazyBuild.delete(+day.dataset.did); }
+            applySheetTypeFilter(m.closest('.lpanel'));
+          }
         }
         day.classList.toggle('open');
       }
@@ -7158,6 +7202,116 @@ function bindSheet() {
   });
 }
 function closeSheet() { $('sheet').classList.remove('open'); $('sheetMask').classList.remove('open'); }
+/* ===== 渐进式站牌（分片模式）=====
+   打开车站时先用当前窗口的 tripList 把「当前时段」零等待画出来，整包（既有端点不变）
+   在后台解析成全日站牌后原位置换；已经展开的线路/方向、类型过滤与滚动位置都保留。
+   失败则保留当前时段视图，横幅给「重试」，不再是一句空白「加载中」。 */
+let sheetProgKind = '', sheetProgTimer = 0;
+function setSheetProg(kind) {
+  const el = $('shProg');
+  if (!el) return;
+  clearTimeout(sheetProgTimer);
+  sheetProgKind = kind || '';
+  el.classList.remove('done', 'fail', 'out');
+  if (!kind) { el.hidden = true; el.innerHTML = ''; return; }
+  el.hidden = false;
+  if (kind === 'loading') {
+    el.innerHTML = '<span class="sp"></span><span>当前时段已显示 · 正在载入全日班次…</span>';
+  } else if (kind === 'done') {
+    el.innerHTML = '<span>已载入全日班次</span>';
+    el.classList.add('done');
+    sheetProgTimer = setTimeout(() => {
+      el.classList.add('out');
+      sheetProgTimer = setTimeout(() => { el.hidden = true; el.classList.remove('out'); sheetProgKind = ''; }, 420);
+    }, 1500);
+  } else if (kind === 'fail') {
+    el.innerHTML = '<span>全日班次载入失败 · 现时段以外暂未显示</span><span class="sp-r">重试</span>';
+    el.classList.add('fail');
+    const r = el.querySelector('.sp-r');
+    if (r) r.onclick = () => { setSheetProg('loading'); stationSheetUpgrade(sheetStation, sheetStation); };
+  }
+}
+function captureSheetUi() {
+  const body = $('shBody');
+  const snap = { open: new Set(), off: new Map(), dirs: new Map(), scroll: body.scrollTop };
+  body.querySelectorAll('.lrow').forEach(r => {
+    const nmEl = r.querySelector('.lnm'), panel = r.nextElementSibling;
+    if (!nmEl || !panel) return;
+    const nm = nmEl.textContent || '';
+    const offs = [];
+    panel.querySelectorAll('.tc').forEach(c => { if (!c.classList.contains('on')) offs.push(c.getAttribute('data-type')); });
+    if (r.classList.contains('open')) snap.open.add(nm);
+    if (offs.length) snap.off.set(nm, offs);
+    const ds = new Set();
+    panel.querySelectorAll('.dir .d-more.on').forEach(m => {
+      const d = m.closest('.dir');
+      ds.add((d.querySelector('.d-to') || {}).textContent || '');
+    });
+    if (ds.size) snap.dirs.set(nm, ds);
+  });
+  return snap;
+}
+function restoreSheetUi(snap) {
+  if (!snap) return;
+  const body = $('shBody');
+  body.querySelectorAll('.lrow').forEach(r => {
+    const nmEl = r.querySelector('.lnm'), panel = r.nextElementSibling;
+    if (!nmEl || !panel) return;
+    const nm = nmEl.textContent || '';
+    if (snap.open.has(nm)) { r.classList.add('open'); panel.classList.add('open'); }
+    const offs = snap.off.get(nm);
+    if (offs && offs.length) {
+      const off = new Set(offs);
+      panel.querySelectorAll('.tc').forEach(c => c.classList.toggle('on', !off.has(c.getAttribute('data-type'))));
+      applySheetTypeFilter(panel);
+    }
+    const dirs = snap.dirs.get(nm);
+    if (dirs && dirs.size) {
+      panel.querySelectorAll('.dir').forEach(d => {
+        if (!dirs.has((d.querySelector('.d-to') || {}).textContent || '')) return;
+        const m = d.querySelector('.d-more'), day = d.querySelector('.day');
+        if (!m || !day) return;
+        m.classList.add('on'); m.textContent = '方向 ▾'; day.classList.add('open');
+        if (!day.firstChild) {
+          const build = dayLazyBuild.get(+day.dataset.did);
+          if (build) { day.innerHTML = build(); dayLazyBuild.delete(+day.dataset.did); }
+        }
+      });
+      applySheetTypeFilter(panel);
+    }
+  });
+  body.scrollTop = snap.scroll;
+}
+function sheetFullReady(station) {
+  if (!ttState || ttState.mode !== 'shards') return true;
+  const nk = normName(station);
+  if (stationTripsCache.has(nk) || stationTripsMiss.has(nk)) return true;
+  const a = STATION_ALIAS[nk];
+  return !!(a && (stationTripsCache.has(a) || stationTripsMiss.has(a)));
+}
+function stationSheetUpgrade(name, wantName) {
+  return (async () => {
+    /* 换日加载中先等新的一天就绪，避免把旧日数据解析进新日站牌 */
+    while (ttDayReq) await new Promise(r => setTimeout(r, 120));
+    if (ttState && ttState.mode === 'shards') await ttLoadStationTrips(name);
+  })().then(() => {
+    if (sheetStation !== wantName) return;
+    if (!sheetFullReady(wantName)) { setSheetProg('fail'); return; }
+    const snap = captureSheetUi();
+    stationPartialCache.clear();
+    renderStationBody();
+    restoreSheetUi(snap);
+    setSheetProg('done');
+  }).catch(e => {
+    console.warn('[tt] station full load failed', e);
+    if (sheetStation !== wantName) return;
+    if (sheetIsPartial) setSheetProg('fail');
+    else {
+      $('shBody').classList.remove('partial');
+      $('shBody').innerHTML = '<div class="empty">' + esc(T().failMsg) + '</div>';
+    }
+  });
+}
 function showStationDetail(name, coord, featLine, featOp) {
   const c = coord || stationCoord.get(normName(name));
   if (c) setHighlight([], c);
@@ -7174,22 +7328,34 @@ function showStationDetail(name, coord, featLine, featOp) {
   $('sheet').classList.add('open');
   $('sheetMask').classList.add('open');
   closeDetail();
+  setSheetProg(null);
   if (tripList && tripList.length) {
     /* 分片模式只持有当前/下一窗口，站牌需要全日班次：
-       下载一次原压缩时刻表（既有端点不变），但只解析途经本站的班次并缓存，
-       避免为了一个站牌把 9 万班次全部构建几何/索引（旧做法要数十秒）。 */
+       ① 先把窗口内已解析的班次按「当前时段」立即可见（0 等待）；
+       ② 后台下载一次原压缩时刻表（既有端点不变），只解析途经本站的班次，
+          完成后原位置换成全日；展开状态/过滤/滚动位置保持不变。 */
     if (ttState && ttState.mode === 'shards') {
       const wantName = name;
-      $('shBody').innerHTML = '<div class="empty">' + esc(T().loading + ' ' + T().loadingTr) + '…</div>';
-      (async () => {
-        /* 换日加载中先等新的一天就绪，避免把旧日数据解析进新日站牌 */
-        while (ttDayReq) await new Promise(r => setTimeout(r, 120));
-        if (ttState && ttState.mode === 'shards') await ttLoadStationTrips(name);
-      })().then(() => {
-        if (sheetStation === wantName) renderStationBody();
-      }).catch(() => {
-        if (sheetStation === wantName) $('shBody').innerHTML = '<div class="empty">' + esc(T().failMsg) + '</div>';
-      });
+      const win = stationWindowTrips(name);
+      const fullCached = stationTripsCache.has(win.nk) ||
+        !!(STATION_ALIAS[win.nk] && stationTripsCache.has(STATION_ALIAS[win.nk]));
+      if (fullCached) {
+        renderStationBody();
+      } else {
+        if (win.list.length) {
+          stationPartialCache.clear();
+          stationPartialCache.set(win.nk, win.list);
+          renderStationBody();          /* 当前时段立即出图 */
+          setSheetProg('loading');
+        } else {
+          /* 当前窗口就没有途经班次（深夜/支线）：保持原来的整包加载态 */
+          sheetIsPartial = false;
+          $('shBody').classList.remove('partial');
+          $('shBody').innerHTML = '<div class="empty">' + esc(T().loading + ' ' + T().loadingTr) + '…</div>';
+          setSheetProg(null);
+        }
+        stationSheetUpgrade(name, wantName);
+      }
     } else {
       renderStationBody();
     }
@@ -7207,7 +7373,7 @@ $('subDep').addEventListener('click', function () { sheetDepArr = 'dep'; $('subD
 $('subArr').addEventListener('click', function () { sheetDepArr = 'arr'; $('subArr').classList.add('on'); $('subDep').classList.remove('on'); renderStationBody(); });
 window.showStationDetail = showStationDetail;  // 调试/自动化钩子：供控制台与 E2E 直接打开车站抽屉
 // E2E 钩子：列车详情/站台数据（确定性验证用，只读引用）
-window.__mjr3d = { showTrainDetail, tripList: () => tripList, PLATMAP: () => PLATMAP, tmaps: () => tmaps, badgeKeyOfFeature, badgeEntriesOfStation, badgeEntriesOf, showStationDetail, stationCoord: () => stationCoord, stationMap: () => stationMap, badgeNorm, badgeFamilyHit, map: () => map, ormState: () => ({ enabled: ormEnabled, loaded: ormLoaded, fetching: ormFetching }), detailState: () => ({ wanted: detailWanted, fetched: stationDetailFetched }), bufState: () => ({ bytes: bufArr.byteLength, trains: Math.min(MAXT, fadeList.length) }), boardCacheStats: () => ({ size: boardCache.size, items: boardCacheItems, cap: BOARD_CACHE_MAX_ITEMS }), platState: () => ({ loaded: !!PLATMAP, pending: !!(platmapP && !PLATMAP) }), detailRetry: () => Object.assign({}, detailRetry), ttState: () => (ttState ? { mode: ttState.mode, bucket: ttState.bucket, key: ttState.key } : null), ttCache: () => ({ station: stationTripsCache.size, miss: stationTripsMiss.size, raw: !!ttRaw, sets: !!ttStopNames }) };
+window.__mjr3d = { showTrainDetail, tripList: () => tripList, PLATMAP: () => PLATMAP, tmaps: () => tmaps, badgeKeyOfFeature, badgeEntriesOfStation, badgeEntriesOf, showStationDetail, stationCoord: () => stationCoord, stationMap: () => stationMap, badgeNorm, badgeFamilyHit, map: () => map, ormState: () => ({ enabled: ormEnabled, loaded: ormLoaded, fetching: ormFetching }), detailState: () => ({ wanted: detailWanted, fetched: stationDetailFetched }), bufState: () => ({ bytes: bufArr.byteLength, trains: Math.min(MAXT, fadeList.length) }), boardCacheStats: () => ({ size: boardCache.size, items: boardCacheItems, cap: BOARD_CACHE_MAX_ITEMS }), platState: () => ({ loaded: !!PLATMAP, pending: !!(platmapP && !PLATMAP) }), detailRetry: () => Object.assign({}, detailRetry), sheetState: () => ({ partial: sheetIsPartial, prog: sheetProgKind, rows: document.querySelectorAll('#shBody .lrow').length, open: document.querySelectorAll('#shBody .lrow.open').length, scroll: $('shBody').scrollTop }), ttState: () => (ttState ? { mode: ttState.mode, bucket: ttState.bucket, key: ttState.key } : null), ttCache: () => ({ station: stationTripsCache.size, miss: stationTripsMiss.size, partial: stationPartialCache.size, raw: !!ttRaw, sets: !!ttStopNames }) };
 // E2E 钩子：列车叠加弹窗（确定性验证，不依赖实时列车密度）
 window.__trPick = { n: () => visibleTrips.length, near: (x, y) => collectTrains(x, y, 14).length, open: (x, y) => showTrPick(collectTrains(x, y, 14), x, y) };
 /* E2E 回归钩子(确定性验证):两条历史事故的防线
@@ -7405,6 +7571,9 @@ function switchSheetTab(tab) {
   const ttime = (tab === 'tabList' || tab === 'tabGrid');
   $('shBody').hidden = !ttime;
   $('shSubTabs').classList.toggle('hidden', !ttime);
+  /* 进度条只属于时刻表视图：切到信息/指南时藏起来，切回来再露出（若仍在加载/失败态） */
+  if (!ttime) $('shProg').hidden = true;
+  else if (sheetProgKind) $('shProg').hidden = false;
   $('panelInfo').hidden = (tab !== 'tabInfo');
   $('panelGuide').hidden = (tab !== 'tabGuide');
   if (ttime) renderStationBody();

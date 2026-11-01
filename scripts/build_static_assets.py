@@ -173,19 +173,28 @@ def main():
     print('[app] %d (app.css/app.js)' % n)
 
     # 5.95) 时刻表分片 —— 从周更后的 data/live/trains_*.json 生成 30 分钟活跃窗口
-    #       （终点加 60 分钟晚点尾巴）分片到 /data/tt/。纯静态 additive 端点；生成失败
-    #       不阻断部署（客户端自动回退原 trains_*.json，旧端点始终保留）。
+    #       （终点加 60 分钟晚点尾巴）分片到 /data/tt/。纯静态 additive 端点。
+    #       门禁：先生成到临时目录并跑 --verify（48 窗 × 3 日型、计数/去重/覆盖/晚点尾巴/
+    #       manifest.b 与分片 b 同源），通过才搬进正式目录。校验失败时本次只发布整包
+    #       （旧端点始终保留，客户端自动回退 monolith），并打 ::error:: 让部署后的
+    #       verify 步骤把任务标红 —— 绝不把「新整包 + 旧分片」的混版本推上线。
     tt_src = os.path.join(REPO, 'data', 'live')
     tt_out = os.path.join(out, 'data', 'tt')
+    tt_tmp = os.path.join(out, '.tt-build')
     if os.path.isdir(tt_src):
+        shutil.rmtree(tt_tmp, ignore_errors=True)
         rc = subprocess.run([sys.executable, os.path.join(REPO, 'scripts', 'build_tt_shards.py'),
-                             '--src', tt_src, '--out', tt_out], check=False, text=True)
-        if rc.returncode:
-            print('::warning::时刻表分片生成失败，客户端将回退 monolith')
-        else:
+                             '--src', tt_src, '--out', tt_tmp, '--verify'], check=False, text=True)
+        if rc.returncode == 0 and os.path.isfile(os.path.join(tt_tmp, 'manifest.json')):
+            shutil.rmtree(tt_out, ignore_errors=True)
+            os.makedirs(os.path.dirname(tt_out), exist_ok=True)
+            shutil.move(tt_tmp, tt_out)
             n_tt = sum(len(fs) for _r, _d, fs in os.walk(tt_out))
             total += n_tt
-            print('[tt shards] %d files -> data/tt' % n_tt)
+            print('[tt shards] %d files -> data/tt（已通过 --verify）' % n_tt)
+        else:
+            shutil.rmtree(tt_tmp, ignore_errors=True)
+            print('::error::时刻表分片生成/校验失败 → 本次只发布整包，客户端回退 monolith')
     else:
         print('[tt shards] SKIP (data/live not present)')
 

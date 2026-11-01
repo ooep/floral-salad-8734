@@ -142,10 +142,26 @@ def verify(src_dir, out_dir):
         T = data.get("T") or []
         by_key = {trip_key(r): r for r in T}
         seen = set()
+        if day not in man["days"]:
+            print("  [FAIL] manifest 缺少 %s" % day)
+            errors += 1
+            continue
+        day_b = man["days"][day].get("b", "")
+        if day_b != data.get("b", ""):
+            print("  [FAIL] %s manifest.b=%r 与源文件 b=%r 不一致（混版本）" % (day, day_b, data.get("b", "")))
+            errors += 1
+        shard_list = man["days"][day].get("shards") or []
+        if len(shard_list) != BUCKETS or [s.get("i") for s in shard_list] != list(range(BUCKETS)):
+            print("  [FAIL] %s manifest 分片表不是 48 个连续窗口" % day)
+            errors += 1
         for i in range(BUCKETS):
             sidx = man["days"][day]["shards"][i]
             with open(os.path.join(out_dir, sidx["f"]), encoding="utf-8") as f:
                 shard = json.load(f)
+            if shard.get("i") != i or shard.get("b") != day_b or shard.get("n") != sidx.get("n"):
+                print("  [FAIL] %s/%02d 分片头不一致 (i=%r b=%r n=%r)" % (
+                    day, i, shard.get("i"), shard.get("b"), shard.get("n")))
+                errors += 1
             keys = [trip_key(r) for r in shard.get("T") or []]
             if len(keys) != sidx["n"] or len(set(keys)) != len(keys):
                 print("  [FAIL] %s/%02d 分片计数不一致或重复" % (day, i))
@@ -215,12 +231,20 @@ def main():
     ap.add_argument("--delay-tail", type=int, default=DELAY_TAIL_MIN,
                     help="计划终点之后额外收录的分钟数（默认 %d）" % DELAY_TAIL_MIN)
     ap.add_argument("--verify", action="store_true", help="生成后抽样校验（会额外解析原文件）")
+    ap.add_argument("--verify-only", action="store_true",
+                    help="不生成，只校验 --out 里已有的分片与 --src 是否同源（部署门禁用）")
     args = ap.parse_args()
 
     src = os.path.abspath(args.src)
     out = os.path.abspath(args.out)
     if args.delay_tail < 0 or args.delay_tail > 1440:
         ap.error("--delay-tail 必须在 0..1440")
+    if args.verify_only:
+        if not os.path.isfile(os.path.join(out, "manifest.json")):
+            raise SystemExit("verify-only 失败: %s 下没有 manifest.json（分片未生成）" % out)
+        verify(src, out)
+        print("verify-only OK: %s 与 %s 同源" % (out, src))
+        return 0
     os.makedirs(out, exist_ok=True)
 
     now = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="minutes").replace("+00:00", " UTC")

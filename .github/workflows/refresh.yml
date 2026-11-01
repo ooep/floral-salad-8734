@@ -69,6 +69,14 @@ jobs:
       - name: Build station geometry map v2 (official coords + extra tracks)
         run: pip install numpy && python3 scripts/build_station_map_v2.py
 
+      - name: Preflight timetable shards (bake-time gate)
+        # 数据不合格就不提交：分片按「计划时刻 + 晚点尾巴」切窗，终点<起点、重复 id、
+        # 缺班次等问题在这里暴露，避免坏数据推上 main 之后才在 deploy 侧失败。
+        # 纯离线全量生成 + 抽样校验，约 30s，不额外产生费用。
+        run: |
+          rm -rf /tmp/tt-preflight
+          python3 scripts/build_tt_shards.py --src data/live --out /tmp/tt-preflight --verify
+
       - name: Commit refreshed data (+ DATA_VERSION bump)
         # 提交后 push 触发 deploy.yml：重新生成 SEO、重建并部署静态 Worker、部署 Pages。
         # 数据内容变了必须同时递增 DATA_VERSION——idx 索引缓存与数据文件缓存都以它为键,

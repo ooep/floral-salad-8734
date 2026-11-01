@@ -97,6 +97,15 @@ jobs:
           python3 scripts/build_static_assets.py
           npx wrangler@4 deploy --config static-worker/wrangler.toml 2>&1 | tail -12
 
+      # 时刻表分片门禁（2026-11）：周更数据与分片必须同源。上一步组装时已 --verify 过，
+      # 这里再对「实际要上传的目录」做一次只读校验（不重建），任何一项不通过就让任务变红，
+      # 避免「新整包 + 旧/缺分片」的混版本静默上线（客户端虽有 monolith 回退，但会白丢优化）。
+      - name: Verify timetable shards (jr-static payload)
+        if: ${{ env.CF_API_TOKEN != '' }}
+        run: |
+          python3 scripts/build_tt_shards.py --src data/live \
+            --out static-worker/assets/data/tt --verify-only
+
       # 车站百科(eki-wiki)与列车百科(ressha-wiki)：同为「仅资产」纯静态 Worker（无脚本，零计费）。
       # 每次主仓 push 从各自源仓库拉取最新 data/ 并同步部署（wrangler 按哈希去重，未变化秒级跳过）。
       # 前端引用: EKI_BASE=https://eki-wiki.suki.ing/data/、RESSHA_BASE=https://ressha-wiki.suki.ing/data/

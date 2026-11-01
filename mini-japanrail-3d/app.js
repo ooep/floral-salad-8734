@@ -719,7 +719,10 @@ function ttBucketOf(M) {
   return Math.max(0, Math.min(TT_BUCKETS - 1, Math.floor(m / TT_BUCKET_MIN)));
 }
 function ttShardUrl(key, i) {
-  return 'https://jr-static.suki.ing/data/tt/' + key + '/' + String(i).padStart(2, '0') + '.json';
+  /* 版本绑定：分片 URL 带 DATA_VERSION（周更提交时自动递增）。manifest 与分片都是
+     静态文件、路径每周不变，只有靠版本参数才能保证「新时刻表绝不读上一周的窗口」，
+     任何一层缓存（IDB / 边缘 / 浏览器）都按新 URL 重新取；同一次烘焙内 URL 固定，照常命中。 */
+  return 'https://jr-static.suki.ing/data/tt/' + key + '/' + String(i).padStart(2, '0') + '.json?v=' + DATA_VERSION;
 }
 async function ttManifest() {
   try { return await fetchJSONWithCache(TT_MANIFEST_URL, '', 7, true); } catch (e) { return null; }
@@ -730,7 +733,13 @@ async function ttLoadShard(key, day, i, phase, silent) {
   if (meta && meta.bytes) loadSizes[url] = meta.bytes;
   try {
     const j = await fetchJSONWithCache(url, phase || '', 7, !!silent);
-    return (j && Array.isArray(j.T)) ? j : { T: [] };
+    if (!j || !Array.isArray(j.T)) return null;
+    /* 混版本护栏：分片自带烘焙 id（b = 该份 trains_*.json 的生成时间），必须与 manifest
+       同源。不一致说明 manifest 与分片来自不同代部署（部分上传/边缘滞后/手工替换），
+       宁可回退一次整包，也不能把两代时刻表拼在一起。 */
+    const want = day && day.b;
+    if (want && j.b && j.b !== want) { console.warn('[tt] shard bake mismatch', key, i, j.b, want); return null; }
+    return j;
   } catch (e) { return null; }
 }
 function ttMerge(parts, dayMeta) {

@@ -373,7 +373,7 @@ function ttRawForDay() {
   if (ttRaw && ttRawBit === bit) return Promise.resolve(ttRaw);
   if (ttRawP && ttRawP.bit === bit) return ttRawP.p;
   const p = (async () => {
-    const json = await fetchJSONWithCache(TRAIN_FILES[bit], 'loadingTr', 7);
+    const json = await fetchJSONWithCache(trainFileUrl(bit), 'loadingTr', 7);
     if (dayBit !== bit) return null;
     ttRaw = json; ttRawBit = bit; ttStopNames = null;
     return json;
@@ -548,6 +548,11 @@ const FILES_PCT = 55, IDX_PCT = 78, PRS_PCT = 97;
 /* 数据版本号:segments/stations/station_map 等静态数据每次变更时必须递增,
    否则 IndexedDB 缓存可能让旧数据(如已修的幽灵直线)继续生效 */
 const DATA_VERSION = '2026-10-30d';   // 静态数据变更必须递增(refresh.yml 已自动递增)——不递增会让老访客 IDB 旧索引×新时刻表错配「乱飞」(2026-10-25 事故,见 PERF.md)
+/* 时刻表整包同样按版本取数。/data/*.json 是 5 分钟边缘缓存，周更后「同 URL 仍命中旧副本」
+   最长 5 分钟 —— 新索引/新站点坐标配旧时刻表正是 2026-10-25 乱飞事故的形态。
+   整包内容当周必然变化（没变则 DATA_VERSION 不递增、URL 不变，缓存照常命中），
+   所以加 ?v= 不会带来额外下载，只把「同一 URL 两代内容」这条路径彻底关掉。 */
+const trainFileUrl = bit => TRAIN_FILES[bit] + '?v=' + DATA_VERSION;
 // 2026-10-30c: register() 单侧已知站的反向段定向(成田線 久住/大戸 不在站表)→ 索引构建逻辑变更,须重建
 // 2026-10-15a: tokkyu.json 修正——関空快速/紀州路快速 的签名不再误标为 はるか/くろしお
 //   （二者为快速级 225系通勤电车，只在阪和線・関西空港線内运行；はるか/くろしお 必経東海道本線）
@@ -776,7 +781,7 @@ async function ttLoadWindow(bit, M) {
 async function fetchTimetableBoot(bit) {
   const w = await ttLoadWindow(bit, curMin());
   if (w) return { json: w.json, state: w };
-  const json = await fetchJSONWithCache(TRAIN_FILES[bit], 'loadingTr', 7);
+  const json = await fetchJSONWithCache(trainFileUrl(bit), 'loadingTr', 7);
   return { json, state: { mode: 'full', bit, key: TT_DAY_KEY[bit] } };
 }
 /* 分片不可用（窗口缺失/解析异常）时的整日兜底：回到旧行为，解析全日 tripsByStation，
@@ -786,7 +791,7 @@ function ttFallbackFull() {
   if (ttDayReq) return Promise.resolve(null); /* 换日加载中：由 ensureDayFile 自己决定取数方式 */
   const bit = dayBit;
   ttFullLoading = (async () => {
-    const json = await fetchJSONWithCache(TRAIN_FILES[bit], 'loadingTr', 7);
+    const json = await fetchJSONWithCache(trainFileUrl(bit), 'loadingTr', 7);
     if (dayBit !== bit) return null;
     const list = await parseTripsAsync(json);
     if (dayBit !== bit) return null;

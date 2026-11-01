@@ -177,7 +177,7 @@ const I18N = {
     dayFileNote:'时刻表', paused:'暂停', liveMode:'实时', playMode:'回放', fps:'FPS',
     retry:'重试', loadingIdx:'构建索引', loadingPr:'解析时刻表', adapt:'性能模式:帧率低,已自动关闭列车光晕', cacheOn:'离线缓存已启用', failMsg:'加载失败，请检查网络后重试',
     tabGuide:'指南', gdLoading:'指南数据加载中…', gdEmpty:'本站暂无设施信息',
-    muT:'发车铃声', muBack:'时刻表', muNone:'该站暂无已收录的发车铃声', muNoAudio:'音频未收录', muLoad:'铃声数据加载中…', muFail:'铃声数据加载失败，请稍后重试', muRetry:'重试', muOther:'其他', muHint:'共 {0} 条发车铃声 · 点击试听',
+    muT:'发车铃声', muBack:'时刻表', muNone:'该站暂无已收录的发车铃声', muNoAudio:'音频未收录', muLoad:'铃声数据加载中…', muFail:'铃声数据加载失败，请稍后重试', muRetry:'重试', muOther:'其他', muHint:'共 {0} 条发车铃声 · 点击试听', muPlayFail:'音频播放失败，请重试', muPause:'暂停', muResume:'播放',
     gdBasic:'基本信息', gdWheelchair:'无障碍通行', gdToilets:'卫生间', gdPlatform:'站台与屏蔽门',
     gdFloorPlan:'站内图', gdLinks:'相关链接', gdAddress:'地址', gdTel:'电话', gdOpened:'开业',
     gdInside:'闸内', gdOutside:'闸外', gdSeeFp:'查看官方站内图 ↗', gdEcomo:'ecomo 车站信息',
@@ -221,7 +221,7 @@ const I18N = {
     dayFileNote:'時刻表', paused:'一時停止', liveMode:'リアルタイム', playMode:'再生', fps:'FPS',
     retry:'再試行', loadingIdx:'索引構築', loadingPr:'時刻表解析', adapt:'省電力モード:低FPSのため列車グローをOFF', cacheOn:'オフラインキャッシュ有効', failMsg:'読み込みに失敗しました。ネットワークを確認してもう一度お試しください',
     tabGuide:'ガイド', gdLoading:'ガイド読込中…', gdEmpty:'この駅の設備情報はまだありません',
-    muT:'発車メロディ', muBack:'時刻表', muNone:'この駅に収録された発車メロディはありません', muNoAudio:'音源未収録', muLoad:'メロディデータ読込中…', muFail:'メロディデータの取得に失敗しました', muRetry:'再試行', muOther:'その他', muHint:'発車メロディ {0} 件 · タップで試聴',
+    muT:'発車メロディ', muBack:'時刻表', muNone:'この駅に収録された発車メロディはありません', muNoAudio:'音源未収録', muLoad:'メロディデータ読込中…', muFail:'メロディデータの取得に失敗しました', muRetry:'再試行', muOther:'その他', muHint:'発車メロディ {0} 件 · タップで試聴', muPlayFail:'音声の再生に失敗しました', muPause:'一時停止', muResume:'再生',
     gdBasic:'基本情報', gdWheelchair:'車椅子での移動', gdToilets:'トイレ', gdPlatform:'ホーム・ドア',
     gdFloorPlan:'構内図', gdLinks:'リンク', gdAddress:'所在地', gdTel:'連絡先', gdOpened:'開業',
     gdInside:'改札内', gdOutside:'改札外', gdSeeFp:'公式構内図を見る ↗', gdEcomo:'ecomo 駅情報',
@@ -265,7 +265,7 @@ const I18N = {
     dayFileNote:'Timetable', paused:'Paused', liveMode:'Live', playMode:'Replay', fps:'FPS',
     retry:'Retry', loadingIdx:'Building index', loadingPr:'Parsing timetable', adapt:'Performance mode: low FPS, train glow off', cacheOn:'Offline cache enabled', failMsg:'Failed to load. Check your network and retry.',
     tabGuide:'Guide', gdLoading:'Loading guide…', gdEmpty:'No facility info for this station yet',
-    muT:'Departure melody', muBack:'Timetable', muNone:'No departure melody recorded for this station', muNoAudio:'No audio', muLoad:'Loading melody data…', muFail:'Failed to load melody data', muRetry:'Retry', muOther:'Others', muHint:'{0} departure melodies · tap to listen',
+    muT:'Departure melody', muBack:'Timetable', muNone:'No departure melody recorded for this station', muNoAudio:'No audio', muLoad:'Loading melody data…', muFail:'Failed to load melody data', muRetry:'Retry', muOther:'Others', muHint:'{0} departure melodies · tap to listen', muPlayFail:'Playback failed, please retry', muPause:'Pause', muResume:'Play',
     gdBasic:'Basic info', gdWheelchair:'Barrier-free access', gdToilets:'Toilets', gdPlatform:'Platform / doors',
     gdFloorPlan:'Station map', gdLinks:'Links', gdAddress:'Address', gdTel:'Phone', gdOpened:'Opened',
     gdInside:'Inside gates', gdOutside:'Outside gates', gdSeeFp:'Official station map ↗', gdEcomo:'ecomo station info',
@@ -7636,7 +7636,12 @@ function openMusic() {
   if (tabsEl) tabsEl.style.display = 'none';
   ['tabList','tabGrid','tabInfo','tabGuide'].forEach(id => $(id).classList.remove('on'));
   $('panelInfo').hidden = true; $('panelGuide').hidden = true;
-  $('panelMusic').hidden = false;
+  const p = $('panelMusic');
+  p.classList.remove('mu-leave', 'mu-enter');
+  p.hidden = false;
+  void p.offsetWidth; /* reflow 触发进场动画 */
+  p.classList.add('mu-enter');
+  const st = $('muStation'); if (st) st.textContent = sheetStation || '';
   $('shBell').classList.add('on');
   renderMusic();
 }
@@ -7644,12 +7649,19 @@ function closeMusic() {
   if (!muOpen) return;
   muOpen = false;
   stopMusic();
-  $('panelMusic').hidden = true;
   $('shBell').classList.remove('on');
-  $('shBadges').hidden = muBadgeHidden;
-  const tabsEl = document.querySelector('#sheet .sh-tabs');
-  if (tabsEl) tabsEl.style.display = '';
-  switchSheetTab(sheetTab);
+  const p = $('panelMusic');
+  const done = () => {
+    p.hidden = true;
+    p.classList.remove('mu-enter', 'mu-leave');
+    $('shBadges').hidden = muBadgeHidden;
+    const tabsEl = document.querySelector('#sheet .sh-tabs');
+    if (tabsEl) tabsEl.style.display = '';
+    switchSheetTab(sheetTab);
+  };
+  p.classList.add('mu-leave');
+  const dur = parseFloat(getComputedStyle(p).animationDuration || '0') * 1000;
+  if (!(dur > 0)) done(); else setTimeout(done, dur + 30);
 }
 function renderMusic() {
   const t = T(), name = sheetStation;
@@ -7657,7 +7669,7 @@ function renderMusic() {
   $('muPlayer').hidden = true;
   $('muLines').hidden = true;
   $('muEmpty').hidden = true;
-  $('muList').innerHTML = '<div class="mu-loading">' + _escTxt(t.muLoad) + '</div>';
+  $('muList').innerHTML = '<div class="mu-loading"><div class="mu-skel"></div><div class="mu-skel"></div><div class="mu-skel"></div><div class="mu-loading-txt">' + _escTxt(t.muLoad) + '</div></div>';
   loadMusicData().then(idx => {
     if (!muOpen || sheetStation !== name) return;
     const st = idx.get(muNorm(name));
@@ -7710,36 +7722,63 @@ function renderMuList(list) {
     el.innerHTML = '<div class="mu-empty">' + _escTxt(t.muNone) + '</div>';
     return;
   }
-  el.innerHTML = '<div class="mu-hint">' + _escTxt(t.muHint).replace('{0}', list.length) + '</div>' + list.map((m, i) => {
+  /* 番线号升序（全角/半角数字归一），无番线排后保持原序 */
+  const numOf = m => {
+    const mm = (m.platform || '').match(/^[0-9０-９]+/);
+    if (!mm) return NaN;
+    const d = mm[0].replace(/[０-９]/g, c => '0123456789'['０１２３４５６７８９'.indexOf(c)]);
+    return parseInt(d, 10);
+  };
+  const sorted = list.slice().sort((a, b) => {
+    const na = numOf(a), nb = numOf(b);
+    if (Number.isNaN(na) && Number.isNaN(nb)) return 0;
+    if (Number.isNaN(na)) return 1;
+    if (Number.isNaN(nb)) return -1;
+    return na - nb;
+  });
+  el.innerHTML = '<div class="mu-hint">' + _escTxt(t.muHint).replace('{0}', list.length) + '</div>' + sorted.map((m, i) => {
     const url = muAudioUrl(m), plat = muPlatOf(m);
-    return '<div class="mu-row" data-i="' + i + '">' +
+    return '<div class="mu-row mu-row-in" data-i="' + i + '" style="animation-delay:' + Math.min(i * 38, 420) + 'ms">' +
       (plat ? '<span class="mu-plat">' + _escTxt(plat) + '</span>' : '') +
+      '<span class="mu-eq" aria-hidden="true"><i></i><i></i><i></i></span>' +
       '<span class="mu-melody">' + _escTxt(m.melody || '') + '</span>' +
-      (url ? '<span class="mu-playbtn"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>'
+      (url ? '<span class="mu-playbtn" data-pb="1"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>'
            : '<span class="mu-void">' + _escTxt(t.muNoAudio) + '</span>') +
       '</div>';
   }).join('');
   el.querySelectorAll('.mu-row').forEach(rowEl => rowEl.addEventListener('click', () => {
-    const m = list[parseInt(rowEl.dataset.i, 10)];
+    const m = sorted[parseInt(rowEl.dataset.i, 10)];
     if (!m) return;
     const url = muAudioUrl(m);
     if (!url) return;
     if (muCur && muCur.m === m) { togglePause(); return; }
     playMusic(m, rowEl, url);
   }));
+  /* 行内播放按钮：事件独立，避免误触行级播放 */
+  el.querySelectorAll('.mu-playbtn').forEach(pb => pb.addEventListener('click', ev => {
+    ev.stopPropagation();
+    const rowEl = pb.closest('.mu-row');
+    if (!rowEl) return;
+    const m = sorted[parseInt(rowEl.dataset.i, 10)];
+    if (!m) return;
+    if (muCur && muCur.m === m) { togglePause(); return; }
+    playMusic(m, rowEl, muAudioUrl(m));
+  }));
 }
 function playMusic(m, rowEl, url) {
   stopMusic(false);
   muAudio = new Audio(url);
   muAudio.addEventListener('ended', () => stopMusic(true));
-  muAudio.addEventListener('error', () => stopMusic(true));
-  muAudio.play().catch(() => stopMusic(true));
+  muAudio.addEventListener('error', () => { stopMusic(true); toast(T().muPlayFail, 2200); });
+  muAudio.play().catch(() => { stopMusic(true); toast(T().muPlayFail, 2200); });
   muCur = { m, rowEl };
   rowEl.classList.add('playing');
+  try { rowEl.scrollIntoView({ block: 'nearest' }); } catch (e) {}
   $('muPName').textContent = m.melody || '';
   $('muPPlat').textContent = muPlatOf(m) || '';
   $('muPlayer').hidden = false;
   muPlayIcoSet(false);
+  muRingSet(0);
   muRafTick();
 }
 function muRafTick() {
@@ -7750,7 +7789,13 @@ function muRafTick() {
   $('muFill').style.width = pct + '%';
   $('muKnob').style.left = pct + '%';
   $('muTime').textContent = muFmt(c) + ' / ' + (d ? muFmt(d) : '--:--');
+  muRingSet(pct / 100);
   muRaf = requestAnimationFrame(muRafTick);
+}
+const MU_RING_C = 2 * Math.PI * 19;
+function muRingSet(frac) {
+  const ring = $('muRing');
+  if (ring) ring.style.strokeDashoffset = String(MU_RING_C * (1 - Math.max(0, Math.min(1, frac))));
 }
 function muFmt(s) {
   if (!isFinite(s) || s < 0) return '0:00';
@@ -7769,11 +7814,14 @@ function stopMusic() {
   muCur = null;
   $('muPlayer').hidden = true;
   muPlayIcoSet(true);
+  muRingSet(0);
 }
 function muPlayIcoSet(paused) {
   $('muPlayIco').outerHTML = paused
-    ? '<svg id="muPlayIco" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>'
-    : '<svg id="muPlayIco" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M6 6h4v12H6zM14 6h4v12h-4z"/></svg>';
+    ? '<svg id="muPlayIco" viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>'
+    : '<svg id="muPlayIco" viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M6 6h4v12H6zM14 6h4v12h-4z"/></svg>';
+  const play = $('muPlay');
+  if (play) play.setAttribute('aria-label', paused ? T().muResume : T().muPause);
 }
 /* 事件绑定 */
 (function () {
@@ -7795,6 +7843,7 @@ function muPlayIcoSet(paused) {
     scrub.addEventListener('pointerup', up);
     scrub.addEventListener('pointercancel', up);
   }
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && muOpen) closeMusic(); });
 })();
 
 /* ---------- 信息 tab（eki-wiki） ---------- */

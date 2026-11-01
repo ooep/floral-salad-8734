@@ -811,6 +811,44 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
 #sheet .mu-time { font-size:10.5px; color:var(--dim); font-variant-numeric:tabular-nums; margin-top:5px; }
 #sheet .mu-loading { padding:36px 20px; text-align:center; color:var(--dim); font-size:13px; }
 #sheet .mu-hint { font-size:11px; color:var(--dim); padding:8px 2px 0; }
+/* ── 打磨：面板进出动画 / 顶部绿光氛围 ── */
+@keyframes muPanelIn { from { opacity:0; transform:translateY(16px); filter:blur(5px); } to { opacity:1; transform:none; filter:none; } }
+@keyframes muPanelOut { from { opacity:1; transform:none; filter:none; } to { opacity:0; transform:translateY(10px); filter:blur(3px); } }
+#sheet #panelMusic { position:relative; }
+#sheet #panelMusic::after { content:''; position:absolute; inset:0; pointer-events:none; background:radial-gradient(130% 56% at 50% -4%, rgba(50,205,102,.11), transparent 62%); }
+#sheet .mu-enter { animation:muPanelIn .36s var(--ease-spring) both; }
+#sheet .mu-leave { animation:muPanelOut .14s ease-out both; }
+/* ── 打磨：列表行 stagger 进场 ── */
+@keyframes muRowIn { from { opacity:0; transform:translateY(9px) scale(.985); } to { opacity:1; transform:none; } }
+#sheet .mu-row-in { animation:muRowIn .34s var(--ease-spring) both; }
+/* ── 打磨：正在播放音柱 ── */
+#sheet .mu-eq { display:none; flex:none; align-items:flex-end; gap:2.5px; height:15px; padding:2px 0; }
+#sheet .mu-row.playing .mu-eq { display:inline-flex; }
+#sheet .mu-eq i { width:3px; border-radius:2px; background:var(--mu); box-shadow:0 0 6px var(--mu-soft); animation:muEqBounce 1s ease-in-out infinite; }
+#sheet .mu-eq i:nth-child(2) { animation-delay:.18s; }
+#sheet .mu-eq i:nth-child(3) { animation-delay:.36s; }
+@keyframes muEqBounce { 0%,100% { height:4px; } 50% { height:15px; } }
+/* ── 打磨：播放按钮环形进度 ── */
+#sheet .mu-play { position:relative; }
+#sheet .mu-ring { position:absolute; inset:-1px; width:calc(100% + 2px); height:calc(100% + 2px); transform:rotate(-90deg); }
+#sheet .mu-ring-bg { fill:none; stroke:rgba(255,255,255,.30); stroke-width:2.2; }
+#sheet .mu-ring-fg { fill:none; stroke:#fff; stroke-width:2.2; stroke-linecap:round; stroke-dasharray:119.38; stroke-dashoffset:119.38; }
+/* ── 打磨：铃铛摇动 ── */
+@keyframes muBellSwing { 0%,100% { transform:rotate(0); } 20% { transform:rotate(-12deg); } 40% { transform:rotate(10deg); } 60% { transform:rotate(-6deg); } 80% { transform:rotate(3deg); } }
+#sheet .sh-bell:hover svg, #sheet .sh-bell:active svg { animation:muBellSwing .6s var(--ease-spring); }
+/* ── 打磨：站名徽标（toolbar 右侧） ── */
+#sheet .mu-station { margin-left:auto; min-width:0; font-size:11.5px; font-weight:600; color:var(--dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+/* ── 打磨：空状态浮动 + chips 按压 ── */
+@keyframes muFloatY { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-6px); } }
+#sheet .mu-empty svg { animation:muFloatY 2.6s ease-in-out infinite; }
+#sheet .mu-chip:active { transform:scale(.94); }
+/* ── 打磨：加载骨架 shimmer ── */
+#sheet .mu-loading { display:flex; flex-direction:column; gap:9px; padding:26px 6px 12px; color:var(--dim); font-size:12.5px; }
+#sheet .mu-skel { height:52px; border-radius:15px; background:linear-gradient(100deg, var(--glass) 40%, var(--glass-2) 50%, var(--glass) 60%); background-size:200% 100%; animation:muShimmer 1.3s linear infinite; }
+@keyframes muShimmer { to { background-position:-200% 0; } }
+#sheet .mu-loading-txt { text-align:center; padding-top:4px; }
+/* ── 打磨：正在播放行增强 ── */
+#sheet .mu-row.playing { box-shadow:0 0 0 1px var(--mu-soft), 0 4px 16px var(--mu-soft); }
 #sheet .sh-tabs { display:flex; border-bottom:1px solid var(--glass-lo); flex:none; margin-top:10px; padding:0 12px; }
 #sheet .sh-tabs button { flex:1; max-width:120px; padding:12px 0; background:none; border:0; color:var(--dim); font-size:13.5px; font-weight:700; cursor:pointer; border-bottom:2px solid transparent; transition:color .12s, border-color .12s; white-space:nowrap; }
 #sheet .sh-tabs button:hover { color:var(--txt); }

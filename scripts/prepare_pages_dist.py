@@ -25,6 +25,7 @@ def is_indexnow_key(name):
 # 前端可发布条目白名单（html/css/js + SEO 生成页 + 站点基础设施）
 KEEP_NAMES = {
     'index.html', 'journey.html', 'privacy.html', 'orm-demo.html', 'quest-atlas.html',
+    'quest-stamps',
     'lines', 'stations',
     'sitemap.xml', 'sitemap-lines.xml', 'sitemap-stations.xml', 'sitemap-pages.xml',
     'robots.txt', '404.html', 'BingSiteAuth.xml', 'baidu_verify_codeva-DigR5zzAl8.html',

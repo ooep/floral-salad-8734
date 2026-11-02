@@ -347,12 +347,48 @@ nav.tabs button.active{background:#171410;color:#fff}
 .spin{width:34px;height:34px;border-radius:50%;border:3.5px solid var(--ring-track);border-top-color:var(--accent);animation:sp 0.8s linear infinite;margin:30px auto}
 @keyframes sp{to{transform:rotate(360deg)}}
 .empty-box{padding:44px 20px;text-align:center;color:var(--ink-muted);font-size:13.5px;line-height:1.9}
+
+/* ── Refinement layer: ledger tables, ticket, sticky tools, motion ── */
+.ledger{background:var(--card);border:1px solid var(--card-line);border-radius:10px;padding:4px 18px}
+.lrow{display:flex;align-items:center;gap:14px;padding:11px 0;border-bottom:1px solid var(--line-soft)}
+.lrow:last-child{border-bottom:none}
+.lrow .lb{flex:0 0 138px;font-weight:800;font-size:13.5px;display:flex;align-items:center;gap:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lrow .bar{flex:1;height:7px;border-radius:99px;background:var(--ring-track);overflow:hidden}
+.lrow .bar i{display:block;height:100%;border-radius:99px;transition:width .7s var(--ease)}
+.lrow .vl{font-weight:900;font-size:15px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.lrow .vl small{color:var(--ink-muted);font-weight:600;font-size:12px}
+.lrow .pc{flex:0 0 54px;text-align:right;font-weight:800;font-size:12.5px;color:var(--ink-dim);font-variant-numeric:tabular-nums}
+@media (max-width:560px){ .lrow .lb{flex-basis:96px;font-size:12.5px} .lrow{gap:10px} .lrow .pc{flex-basis:46px} }
+.ticket-band{flex:0 0 auto;width:calc(100% + 48px);margin:-24px -24px 20px;padding:9px 24px;white-space:nowrap;background:#14120e;color:#f3ecd9;display:flex;justify-content:space-between;gap:10px;font-size:11px;font-weight:800;letter-spacing:2.2px;border-bottom:4px solid var(--accent)}
+.toolbar{position:sticky;top:var(--head-h);z-index:25;background:var(--paper);padding:12px 0 10px;margin-top:-14px}
+.view.active{animation:viewIn .28s var(--ease)}
+@keyframes viewIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+.btn:active,.fchip:active,.stamp-card:active,.medal-cell:active,.rec-card:active,.train-card:active{transform:scale(.975)}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:2.5px solid var(--blue);outline-offset:2px}
+#toast{background:#14120e!important;border-bottom:3.5px solid var(--accent);border-radius:7px!important;letter-spacing:.4px}
+.sheet::before{content:"";display:block;width:46px;height:5px;border-radius:99px;background:var(--card-line);margin:0 auto 12px}
+.op-head{position:sticky;top:0;z-index:3;background:var(--map-panel);padding-top:8px}
+.rec-card{border-left:5px solid var(--spine,#ccc)}
+::selection{background:#ffb000;color:#14120e}
+#mp-list::-webkit-scrollbar,.coll-list::-webkit-scrollbar{width:5px}
+#mp-list::-webkit-scrollbar-thumb,.coll-list::-webkit-scrollbar-thumb{background:rgba(140,130,110,.45);border-radius:99px}
+.stamp-hero h2{font-size:23px;letter-spacing:.2px}
+.hero-main h1{letter-spacing:.1px}
+.medal-cell .medal-ic{box-shadow:inset 0 0 0 2px rgba(255,255,255,.35), 0 3px 8px rgba(64,48,16,.18)}
+@media (prefers-reduced-motion: reduce){ *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important} }
+
+.brand{min-width:0}
+.brand>div{min-width:0}
+.brand .t1{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:560px){ .level-pill .lp-pt{display:none} .ticket-band{letter-spacing:1.4px;font-size:10px} }
 </style>
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
 <filter id="ink-rough" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency="0.08" numOctaves="2" seed="7" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="2.4"/></filter>
 <filter id="ink-rough2" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency="0.11" numOctaves="2" seed="23" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="1.8"/></filter>
+<path id="arc-cw" d="M 60,60 m -44,0 a 44,44 0 1,1 88,0 a 44,44 0 1,1 -88,0" fill="none"/>
+<path id="arc-ccw" d="M 60,60 m -44,0 a 44,44 0 1,0 88,0 a 44,44 0 1,0 -88,0" fill="none"/>
 </defs></svg>
 <div id="app">
   <header class="top">
@@ -393,15 +429,15 @@ nav.tabs button.active{background:#171410;color:#fff}
       </div>
 
       <div class="sec-t"><h2 data-i18n="myProgress">我的进度</h2><span class="sub" data-i18n="myProgressSub">全部保存在本机浏览器</span></div>
-      <div class="stat-grid" id="home-stats"></div>
+      <div class="ledger" id="home-stats"></div>
 
       <div class="sec-t"><h2 data-i18n="jrStamps">JR 六社 · 印章进度</h2><span class="sub">TRAIN TRIP</span>
         <button class="more" data-goto="stamps" data-i18n="viewAll">查看全部 →</button></div>
-      <div class="prog-list" id="home-jr"></div>
+      <div class="ledger" id="home-jr"></div>
 
       <div class="sec-t"><h2 data-i18n="opProgress">运营商 · 线路进度</h2><span class="sub" data-i18n="opProgressSub">按已乘区间数排序</span>
         <button class="more" data-goto="map" data-i18n="viewAll2">去地图 →</button></div>
-      <div class="prog-list" id="home-ops"><div class="empty-box" data-i18n="loadingLines">线路数据加载中…</div></div>
+      <div class="ledger" id="home-ops"><div class="empty-box" data-i18n="loadingLines">线路数据加载中…</div></div>
 
       <div class="sec-t"><h2 data-i18n="recentStamps">最近盖下的印章</h2><button class="more" data-goto="stamps" data-i18n="viewAll">查看全部 →</button></div>
       <div class="rec-row" id="home-recent"><div class="empty-box" data-i18n="noStampsYet">还没有印章 — 去印章册盖下第一枚吧。</div></div>
@@ -489,7 +525,7 @@ nav.tabs button.active{background:#171410;color:#fff}
 
     <!-- ═══ ME ═══ -->
     <section class="view pad" id="view-me"><div class="wrap">
-      <div class="profile-card">
+      <div class="profile-card"><div class="ticket-band"><span>乗車券 · TICKET · QUEST ATLAS</span><span>NO. 001482</span></div>
         <div class="avatar-lg" id="pf-avatar">铁</div>
         <div class="pf-b">
           <div class="nick-row">
@@ -651,28 +687,78 @@ const TYPE_ORDER=['normal','ikimono','ekisoba','ekiben','face','tetsuai','150th'
 function spotName(s){ return LANG==='ja'? s.ja : s.zh; }
 const GROUP_INK={'JR北海道':'#2e7d32','JR东日本':'#3e7c2b','JR東海':'#c05a00','JR西日本':'#00579e','JR四国':'#0077a8','JR九州':'#b30d1e'};
 function stampInk(s){ return GROUP_INK[s.group] || '#4a4a48'; }
-/* Original stamp artwork, drawn per station from its own data:
-   double ink ring, station name, the line-colour stripes of the lines that
-   actually serve the station, area + company, and our own masthead.
-   Two turbulence filters give it a rubber-stamp ink texture. */
+/* Line-art motifs, drawn in a 44x22 box. Chosen per station from its own
+   data: type, creature taxonomy, name keywords, Shinkansen service. */
+const MOTIFS={
+building:'<path d="M8 20 V9 l14-6 14 6 v11"/><path d="M3 20 h38"/><path d="M18 20 v-6 h8 v6"/><path d="M13 12h.5 M31 12h.5"/>',
+shinkansen:'<path d="M3 15 C10 8 24 5.5 41 7.5 L41 15 C28 17.5 12 17.5 3 15 Z"/><path d="M27 8.2 L39 9"/><path d="M6 18.5 h32"/>',
+train:'<rect x="10" y="3" width="24" height="15" rx="4"/><path d="M10 10.5 h24"/><circle cx="16.5" cy="14.5" r="1.3" fill="INK" stroke="none"/><circle cx="27.5" cy="14.5" r="1.3" fill="INK" stroke="none"/><path d="M14 21 l2.5-3 M30 21 l-2.5-3"/>',
+castle:'<path d="M13 20 v-4.5 h18 V20"/><path d="M10.5 15.5 L22 12 l11.5 3.5"/><path d="M16.5 12 V9 h11 v3"/><path d="M13.5 9 L22 5.5 L30.5 9"/>',
+mountain:'<path d="M3 19 L16 5.5 L23 12.5 L29 7.5 L41 19 Z"/><path d="M12.8 9.2 L16 5.5 L19.2 9.2 L16 11 Z"/>',
+sea:'<path d="M3 13.5 q4.5-4.5 9 0 t9 0 t9 0 t9 0"/><path d="M7.5 19 q4.5-4.5 9 0 t9 0 t9 0"/><circle cx="34" cy="6" r="3"/>',
+bridge:'<path d="M3 16.5 Q22 4.5 41 16.5"/><path d="M2 19.5 h40"/><path d="M12 13.2 V19.5 M22 11.3 V19.5 M32 13.2 V19.5"/>',
+onsen:'<path d="M14 2.5 c-2 3 2 4.2 0 7.2 M22 2.5 c-2 3 2 4.2 0 7.2 M30 2.5 c-2 3 2 4.2 0 7.2"/><path d="M5 14.5 h34"/><path d="M8.5 14.5 v3.5 h27 v-3.5"/>',
+plane:'<path d="M3 13.5 Q20 8 41 12 Q20 15.5 3 13.5 Z"/><path d="M17 10.8 L23.5 4.5 h3 L23.5 10"/><path d="M17.5 14.8 L23 19.5 h3 L23 15"/>',
+torii:'<path d="M5 5.5 h34"/><path d="M8.5 10.5 h27"/><path d="M12.5 5.5 V20 M31.5 5.5 V20"/><path d="M22 10.5 v5.5"/>',
+sakura:'<g><path d="M22 3.5 C25.5 7.5 25.5 11 22 13 C18.5 11 18.5 7.5 22 3.5 Z"/><path d="M22 3.5 C25.5 7.5 25.5 11 22 13 C18.5 11 18.5 7.5 22 3.5 Z" transform="rotate(72 22 12)"/><path d="M22 3.5 C25.5 7.5 25.5 11 22 13 C18.5 11 18.5 7.5 22 3.5 Z" transform="rotate(144 22 12)"/><path d="M22 3.5 C25.5 7.5 25.5 11 22 13 C18.5 11 18.5 7.5 22 3.5 Z" transform="rotate(216 22 12)"/><path d="M22 3.5 C25.5 7.5 25.5 11 22 13 C18.5 11 18.5 7.5 22 3.5 Z" transform="rotate(288 22 12)"/><circle cx="22" cy="12" r="1.6" fill="INK" stroke="none"/></g>',
+snow:'<path d="M22 3 V21 M14.2 7.5 L29.8 16.5 M29.8 7.5 L14.2 16.5"/><path d="M19 5.5 L22 8 L25 5.5 M19 18.5 L22 16 L25 18.5"/>',
+fish:'<path d="M4 12 Q16 4.5 29 12 Q16 19.5 4 12 Z"/><path d="M29 12 L39 6.5 V17.5 Z"/><circle cx="11" cy="11" r="1.3" fill="INK" stroke="none"/>',
+bird:'<path d="M4 15 Q13 6.5 22 13 Q31 6.5 40 15"/><path d="M22 13 v3.5"/>',
+paw:'<g fill="INK" stroke="none"><ellipse cx="22" cy="15.5" rx="5" ry="4"/><circle cx="12.5" cy="10" r="2.3"/><circle cx="18" cy="6.8" r="2.3"/><circle cx="24.5" cy="6.8" r="2.3"/><circle cx="30.5" cy="10" r="2.3"/></g>',
+butterfly:'<path d="M21.5 11 C14 3.5 5.5 5.5 7.5 11 C5.5 16.5 14 18.5 21.5 13 C29 18.5 38.5 16.5 36.5 11 C38.5 5.5 29 3.5 22.5 11"/><path d="M22 7.5 V18"/>',
+crab:'<circle cx="22" cy="13.5" r="6"/><path d="M11 8.5 L4.5 4.5 M33 8.5 L39.5 4.5"/><path d="M13 18.5 L9 21.5 M19 19.5 L17.5 22 M25 19.5 L26.5 22 M31 18.5 L35 21.5"/><circle cx="19" cy="11" r="1.1" fill="INK" stroke="none"/><circle cx="25" cy="11" r="1.1" fill="INK" stroke="none"/>',
+shell:'<path d="M9 20 L22 4.5 L35 20 Z"/><path d="M22 4.5 V20 M15.8 7.8 L13.5 20 M28.2 7.8 L30.5 20"/>',
+turtle:'<ellipse cx="20" cy="13" rx="10.5" ry="6"/><circle cx="33.5" cy="11.5" r="2.8"/><path d="M12.5 8 L9 5.5 M12.5 18 L9 20.5 M27 18.5 L30 21"/>',
+bowl:'<path d="M7 10.5 h30 c0 5.8-5.2 9.5-15 9.5 S7 16.3 7 10.5 Z"/><path d="M27 2.5 L36 7.5 M30.5 1.5 L39 6.5"/><path d="M13.5 4.5 c-1.4 1.8 1.4 2.2 0 4"/>',
+leaf:'<path d="M22 3.5 C32.5 7.5 34.5 15.5 22 20 C9.5 15.5 11.5 7.5 22 3.5 Z"/><path d="M22 6 V18.5 M22 11 L27 8.5 M22 14.5 L17 12"/>'
+};
+function stampMotif(s){
+  if(s.type==='face') return 'train';
+  if(s.type==='ekisoba'||s.type==='ekiben') return 'bowl';
+  const iki=(typeof SPECIALS!=='undefined')? SPECIALS.ikimono.find(x=>String(x.stamp_id)===String(s.id)) : null;
+  if(iki){ const c=iki.category||'';
+    if(c.includes('哺乳')) return 'paw'; if(c.includes('鸟')) return 'bird'; if(c.includes('鱼')) return 'fish';
+    if(c.includes('昆虫')) return 'butterfly'; if(c.includes('甲壳')||c.includes('蟹')) return 'crab';
+    if(c.includes('爬行')) return 'turtle'; if(c.includes('头足')||c.includes('双壳')||c.includes('贝')) return 'shell';
+    return 'leaf'; }
+  const ja=s.ja||'';
+  if(/空港/.test(ja)) return 'plane';
+  if(/城/.test(ja)) return 'castle';
+  if(/温泉/.test(ja)) return 'onsen';
+  if(/(神社|大社|神宮)/.test(ja)) return 'torii';
+  if(/桜/.test(ja)) return 'sakura';
+  if(/海|浜|港|岬|湾/.test(ja)) return 'sea';
+  if(/山|岳|高原|峠/.test(ja)) return 'mountain';
+  if(/川|橋|河/.test(ja)) return 'bridge';
+  if((s.lines||[]).some(l=>/新幹線/.test(l.n))) return 'shinkansen';
+  return 'building';
+}
+/* Original stamp artwork v2, drawn per station from its own data: ring text,
+   a motif pictogram for the place, the station name, the colour bands of the
+   lines that actually serve it, area/company on the lower arc, and a small
+   hanko seal. Ink texture from two shared turbulence filters. */
 function stampSVG(s){
   const ink=stampInk(s);
   const name=(s.ja||'').replace(/駅$/,'');
-  const fs=name.length<=2?34:name.length===3?30:name.length===4?25:name.length===5?21:18;
+  const fs=name.length<=2?31:name.length===3?26:name.length===4?21:name.length===5?18:15.5;
   const lines=(s.lines&&s.lines.length)? s.lines.slice(0,4) : [{c:ink},{c:ink}];
-  const tw=lines.length===1?34:lines.length===2?52:66, sw=tw/lines.length;
-  const stripes=lines.map((l,i)=>`<rect x="${(60-tw/2+i*sw).toFixed(1)}" y="74" width="${(sw-1.5).toFixed(1)}" height="5.5" fill="${l.c}"/>`).join('');
-  const sub=[s.area||'', (s.group||'').replace('JR東','JR东').replace('JR東','JR东')].filter(Boolean).join(' · ') || (s.typeZh||'');
+  const tw=lines.length===1?30:lines.length===2?46:60, sw=tw/lines.length;
+  const stripes=lines.map((l,i)=>`<rect x="${(60-tw/2+i*sw).toFixed(1)}" y="76.5" width="${(sw-1.5).toFixed(1)}" height="5" fill="${l.c}"/>`).join('');
   const zh=(s.zh||'').replace(/站$/,'');
+  const motif=(MOTIFS[stampMotif(s)]||MOTIFS.building).replaceAll('INK',ink);
+  const arcB=[s.area&&s.area!=='-'? s.area:'', s.group||''].filter(Boolean).join(' ・ ');
   return `<svg class="stamp-svg" viewBox="0 0 120 120" role="img" aria-label="${esc(s.ja)}">
-  <g filter="url(#ink-rough)" opacity="0.94">
-    <circle cx="60" cy="60" r="55" fill="none" stroke="${ink}" stroke-width="3.4"/>
-    <circle cx="60" cy="60" r="48.6" fill="none" stroke="${ink}" stroke-width="1"/>
-    <text x="60" y="30" text-anchor="middle" font-size="6.4" letter-spacing="1.5" fill="${ink}" font-weight="700">MINI JAPANRAIL</text>
-    <text x="60" y="66" text-anchor="middle" font-size="${fs}" fill="${ink}" font-weight="900" style="font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Noto Sans JP',sans-serif">${esc(name)}</text>
+  <g filter="url(#ink-rough)" opacity="0.95">
+    <circle cx="60" cy="60" r="55.5" fill="none" stroke="${ink}" stroke-width="3.2"/>
+    <circle cx="60" cy="60" r="51" fill="none" stroke="${ink}" stroke-width="0.9"/>
+    <text font-size="6.1" letter-spacing="1.6" fill="${ink}" font-weight="700"><textPath href="#arc-cw" startOffset="25%" text-anchor="middle">MINI JAPANRAIL</textPath></text>
+    <text font-size="6.6" letter-spacing="1" fill="${ink}" font-weight="600"><textPath href="#arc-ccw" startOffset="25%" text-anchor="middle">${esc(arcB)}</textPath></text>
+    <g transform="translate(36,23.5) scale(1.09)" stroke="${ink}" stroke-width="1.75" fill="none" stroke-linecap="round" stroke-linejoin="round">${motif}</g>
+    <text x="60" y="72.5" text-anchor="middle" font-size="${fs}" fill="${ink}" font-weight="900" style="font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Noto Sans JP',sans-serif">${esc(name)}</text>
+    <rect x="12.8" y="57.8" width="4.4" height="4.4" transform="rotate(45 15 60)" fill="${ink}"/><rect x="102.8" y="57.8" width="4.4" height="4.4" transform="rotate(45 105 60)" fill="${ink}"/>
     ${stripes}
-    <text x="60" y="95" text-anchor="middle" font-size="8.2" fill="${ink}" font-weight="600">${esc(zh&&zh!==name? zh : sub)}</text>
-    <text x="60" y="102" text-anchor="middle" font-size="5.2" letter-spacing="1" fill="${ink}">QUEST ATLAS</text>
+    <text x="60" y="93.5" text-anchor="middle" font-size="8" fill="${ink}" font-weight="600">${esc(zh&&zh!==name? zh : (s.typeZh||''))}</text>
+    <g transform="rotate(8 90.5 87.5)"><rect x="84.3" y="81.3" width="12.5" height="12.5" fill="${ink}"/><text x="90.5" y="91.7" text-anchor="middle" font-size="8.6" fill="#fdfaf1" font-weight="900">駅</text></g>
   </g></svg>`;
 }
 function stampImg(s){ return stampSVG(s); }
@@ -790,20 +876,18 @@ const STAT_DEFS=[
 function renderHome(){
   const {st}=refreshLevel();
   $('#home-stats').innerHTML=STAT_DEFS.map(d=>{ const [a,b]=d.get(st); const pct=b? (a/b*100):0;
-    return `<div class="stat-card"><div class="ic" style="background:${d.bg};color:${d.fg}">${MICON[d.icon]||''}</div>
-    <div class="v">${a.toLocaleString()} <small>/ ${b? b.toLocaleString(): '—'}${d.unit?' '+d.unit:''}</small></div>
-    <div class="l">${d.label()}</div><div class="p" style="color:${d.fg}">${pct.toFixed(1)}%</div></div>`; }).join('');
+    return `<div class="lrow"><span class="lb">${d.label()}</span><span class="bar"><i style="width:${Math.min(100,pct).toFixed(1)}%;background:${d.fg}"></i></span><span class="vl">${a.toLocaleString()}<small> / ${b? b.toLocaleString(): '—'}${d.unit?' '+d.unit:''}</small></span><span class="pc">${pct.toFixed(1)}%</span></div>`; }).join('');
   // JR stamp progress
   $('#home-jr').innerHTML=GROUP_ORDER.map(g=>{ const list=SPOTS.filter(s=>s.group===g); const got=list.filter(s=>stampData[s.id]).length;
     const pct=list.length? got/list.length*100:0;
-    return `<div class="prog-card"><div class="prog-head"><span class="dot" style="background:${JR_COLORS[{'JR北海道':'北海道旅客鉄道','JR东日本':'東日本旅客鉄道','JR东海':'東海旅客鉄道','JR西日本':'西日本旅客鉄道','JR四国':'四国旅客鉄道','JR九州':'九州旅客鉄道'}[g]||'#888']}"></span>${esc(g)}<span class="n">${got} / ${list.length}</span></div>
-    <div class="prog-bar"><i style="width:${pct}%;background:${JR_COLORS[{'JR北海道':'北海道旅客鉄道','JR东日本':'東日本旅客鉄道','JR东海':'東海旅客鉄道','JR西日本':'西日本旅客鉄道','JR四国':'四国旅客鉄道','JR九州':'九州旅客鉄道'}[g]||'#888']}"></i></div></div>`; }).join('') || '<div class="empty-box">—</div>';
+    const gc=JR_COLORS[{'JR北海道':'北海道旅客鉄道','JR东日本':'東日本旅客鉄道','JR东海':'東海旅客鉄道','JR西日本':'西日本旅客鉄道','JR四国':'四国旅客鉄道','JR九州':'九州旅客鉄道'}[g]||'#888'];
+    return `<div class="lrow"><span class="lb"><span class="dot" style="background:${gc}"></span>${esc(g)}</span><span class="bar"><i style="width:${pct.toFixed(1)}%;background:${gc}"></i></span><span class="vl">${got}<small> / ${list.length}</small></span><span class="pc">${pct.toFixed(1)}%</span></div>`; }).join('') || '<div class="empty-box">—</div>';
   // Operators by segments
   if(linesLoaded){
     const ops=[...allOperators.keys()].map(op=>{ let r=0,tt=0; for(const line of allOperators.get(op).lines){ const p=lineProgress(op,line); r+=p.r; tt+=p.total; } return {op,r,tt}; })
       .sort((a,b)=>b.r-a.r).slice(0,8);
-    $('#home-ops').innerHTML=ops.map(o=>`<div class="prog-card"><div class="prog-head"><span class="dot" style="background:${opColor(o.op)}"></span>${esc(opLabel(o.op))}<span class="n">${o.r} / ${o.tt}</span></div>
-      <div class="prog-bar"><i style="width:${o.tt? o.r/o.tt*100:0}%;background:${opColor(o.op)}"></i></div></div>`).join('');
+    $('#home-ops').innerHTML=ops.map(o=>{ const pct=o.tt? o.r/o.tt*100:0;
+      return `<div class="lrow"><span class="lb"><span class="dot" style="background:${opColor(o.op)}"></span>${esc(opLabel(o.op))}</span><span class="bar"><i style="width:${pct.toFixed(1)}%;background:${opColor(o.op)}"></i></span><span class="vl">${o.r}<small> / ${o.tt}</small></span><span class="pc">${pct.toFixed(1)}%</span></div>`; }).join('');
   }
   // Recent stamps
   const recent=Object.entries(stampData).sort((a,b)=>b[1].t-a[1].t).slice(0,4).map(([id])=>SPOTS.find(s=>s.id===id)).filter(Boolean);
@@ -817,7 +901,7 @@ function renderHome(){
 }
 function recCard(s,got){
   const d=stampData[s.id];
-  return `<button class="rec-card" data-spot="${esc(s.id)}"><div class="rc-img">${stampImg(s)}</div>
+  return `<button class="rec-card" style="--spine:${(s.lines&&s.lines[0]&&s.lines[0].c)||stampInk(s)}" data-spot="${esc(s.id)}"><div class="rc-img">${stampImg(s)}</div>
     <div class="rc-b"><div class="rc-n">${esc(spotName(s))}</div><div class="rc-m">${esc(s.group||'')} · ${esc(s.area||'')} · ${esc(s.typeZh||'')}</div>
     <div style="margin-top:7px">${got? `<span class="chip">✓ ${new Date(d.t).toLocaleDateString()}${d.v?' · '+T.verified:''}</span>` : `<span class="chip blue">${T.nextStation}</span>`}</div></div></button>`;
 }

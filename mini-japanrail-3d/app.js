@@ -177,7 +177,7 @@ const I18N = {
     dayFileNote:'时刻表', paused:'暂停', liveMode:'实时', playMode:'回放', fps:'FPS',
     retry:'重试', loadingIdx:'构建索引', loadingPr:'解析时刻表', adapt:'性能模式:帧率低,已自动关闭列车光晕', cacheOn:'离线缓存已启用', failMsg:'加载失败，请检查网络后重试',
     tabGuide:'指南', gdLoading:'指南数据加载中…', gdEmpty:'本站暂无设施信息',
-    muT:'发车铃声', muBack:'时刻表', muNone:'该站暂无已收录的发车铃声', muNoAudio:'音频未收录', muLoad:'铃声数据加载中…', muFail:'铃声数据加载失败，请稍后重试', muRetry:'重试', muOther:'其他', muAll:'全部', muCount:'{0} 首', muCountOne:'1 首', muAuto:'连播', muPrev:'上一首', muNext:'下一首', muSeek:'拖动试听进度', muPlayFail:'音频播放失败，请重试', muPause:'暂停', muResume:'播放',
+    muT:'发车铃声', muBack:'返回', muNone:'该站暂无已收录的发车铃声', muNoAudio:'音频未收录', muLoad:'铃声数据加载中…', muFail:'铃声数据加载失败，请稍后重试', muRetry:'重试', muOther:'其他', muAll:'全部', muCount:'{0} 首', muCountOne:'1 首', muAuto:'连播', muPrev:'上一首', muNext:'下一首', muSeek:'拖动试听进度', muPlayFail:'音频播放失败，请重试', muPause:'暂停', muResume:'播放',
     gdBasic:'基本信息', gdWheelchair:'无障碍通行', gdToilets:'卫生间', gdPlatform:'站台与屏蔽门',
     gdFloorPlan:'站内图', gdLinks:'相关链接', gdAddress:'地址', gdTel:'电话', gdOpened:'开业',
     gdInside:'闸内', gdOutside:'闸外', gdSeeFp:'查看官方站内图 ↗', gdEcomo:'ecomo 车站信息',
@@ -221,7 +221,7 @@ const I18N = {
     dayFileNote:'時刻表', paused:'一時停止', liveMode:'リアルタイム', playMode:'再生', fps:'FPS',
     retry:'再試行', loadingIdx:'索引構築', loadingPr:'時刻表解析', adapt:'省電力モード:低FPSのため列車グローをOFF', cacheOn:'オフラインキャッシュ有効', failMsg:'読み込みに失敗しました。ネットワークを確認してもう一度お試しください',
     tabGuide:'ガイド', gdLoading:'ガイド読込中…', gdEmpty:'この駅の設備情報はまだありません',
-    muT:'発車メロディ', muBack:'時刻表', muNone:'この駅に収録された発車メロディはありません', muNoAudio:'音源未収録', muLoad:'メロディデータ読込中…', muFail:'メロディデータの取得に失敗しました', muRetry:'再試行', muOther:'その他', muAll:'すべて', muCount:'{0}曲', muCountOne:'1曲', muAuto:'連続', muPrev:'前のメロディ', muNext:'次のメロディ', muSeek:'再生位置を調整', muPlayFail:'音声の再生に失敗しました', muPause:'一時停止', muResume:'再生',
+    muT:'発車メロディ', muBack:'戻る', muNone:'この駅に収録された発車メロディはありません', muNoAudio:'音源未収録', muLoad:'メロディデータ読込中…', muFail:'メロディデータの取得に失敗しました', muRetry:'再試行', muOther:'その他', muAll:'すべて', muCount:'{0}曲', muCountOne:'1曲', muAuto:'連続', muPrev:'前のメロディ', muNext:'次のメロディ', muSeek:'再生位置を調整', muPlayFail:'音声の再生に失敗しました', muPause:'一時停止', muResume:'再生',
     gdBasic:'基本情報', gdWheelchair:'車椅子での移動', gdToilets:'トイレ', gdPlatform:'ホーム・ドア',
     gdFloorPlan:'構内図', gdLinks:'リンク', gdAddress:'所在地', gdTel:'連絡先', gdOpened:'開業',
     gdInside:'改札内', gdOutside:'改札外', gdSeeFp:'公式構内図を見る ↗', gdEcomo:'ecomo 駅情報',
@@ -265,7 +265,7 @@ const I18N = {
     dayFileNote:'Timetable', paused:'Paused', liveMode:'Live', playMode:'Replay', fps:'FPS',
     retry:'Retry', loadingIdx:'Building index', loadingPr:'Parsing timetable', adapt:'Performance mode: low FPS, train glow off', cacheOn:'Offline cache enabled', failMsg:'Failed to load. Check your network and retry.',
     tabGuide:'Guide', gdLoading:'Loading guide…', gdEmpty:'No facility info for this station yet',
-    muT:'Departure melody', muBack:'Timetable', muNone:'No departure melody recorded for this station', muNoAudio:'No audio', muLoad:'Loading melody data…', muFail:'Failed to load melody data', muRetry:'Retry', muOther:'Others', muAll:'All', muCount:'{0} tracks', muCountOne:'1 track', muAuto:'Auto', muPrev:'Previous melody', muNext:'Next melody', muSeek:'Seek playback position', muPlayFail:'Playback failed, please retry', muPause:'Pause', muResume:'Play',
+    muT:'Departure melody', muBack:'Back', muNone:'No departure melody recorded for this station', muNoAudio:'No audio', muLoad:'Loading melody data…', muFail:'Failed to load melody data', muRetry:'Retry', muOther:'Others', muAll:'All', muCount:'{0} tracks', muCountOne:'1 track', muAuto:'Auto', muPrev:'Previous melody', muNext:'Next melody', muSeek:'Seek playback position', muPlayFail:'Playback failed, please retry', muPause:'Pause', muResume:'Play',
     gdBasic:'Basic info', gdWheelchair:'Barrier-free access', gdToilets:'Toilets', gdPlatform:'Platform / doors',
     gdFloorPlan:'Station map', gdLinks:'Links', gdAddress:'Address', gdTel:'Phone', gdOpened:'Opened',
     gdInside:'Inside gates', gdOutside:'Outside gates', gdSeeFp:'Official station map ↗', gdEcomo:'ecomo station info',
@@ -7930,7 +7930,7 @@ const MU_LC_MAP = {
 
 /* 线路代表色：优先内置的官方/图标取色表，其次线路几何数据，最后按名称散列。
    音乐面板的每个平台、线路 chip、播放甲板都从这里取色。 */
-const MU_LC_BRAND = '#32CD66', MU_LC_NEUTRAL = '#8A94A6';
+const MU_LC_BRAND = '#2F6DE8', MU_LC_NEUTRAL = '#8A94A6';
 const muLcCache = new Map();
 function muLcHex(c) {
   c = String(c || '').trim();
@@ -7942,11 +7942,6 @@ function muLcRgb(hex) {
   const c = muLcHex(hex) || MU_LC_BRAND;
   return [parseInt(c.slice(1, 3), 16), parseInt(c.slice(3, 5), 16), parseInt(c.slice(5, 7), 16)];
 }
-function muLcMix(hex, to, k) {
-  const [r, g, b] = muLcRgb(hex);
-  const m = v => Math.round(v + (to - v) * k).toString(16).padStart(2, '0');
-  return '#' + m(r) + m(g) + m(b);
-}
 function muLcInk(hex) {
   const [r, g, b] = muLcRgb(hex);
   const f = v => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); };
@@ -7956,18 +7951,7 @@ function muLcInk(hex) {
 }
 function muLcVars(hex) {
   const c = muLcHex(hex) || MU_LC_BRAND;
-  const [r, g, b] = muLcRgb(c);
-  return '--lc:' + c +
-    ';--lc-soft:rgba(' + r + ',' + g + ',' + b + ',.18)' +
-    ';--lc-wash:rgba(' + r + ',' + g + ',' + b + ',.09)' +
-    ';--lc-faint:rgba(' + r + ',' + g + ',' + b + ',.055)' +
-    ';--lc-border:rgba(' + r + ',' + g + ',' + b + ',.55)' +
-    ';--lc-edge:rgba(' + r + ',' + g + ',' + b + ',.28)' +
-    ';--lc-glow:rgba(' + r + ',' + g + ',' + b + ',.30)' +
-    ';--lc-hi:' + muLcMix(c, 255, .34) +
-    ';--lc-lo:' + muLcMix(c, 0, .12) +
-    ';--lc-dark:' + muLcMix(c, 0, .84) +
-    ';--lc-ink:' + muLcInk(c);
+  return '--lc:' + c + ';--lc-ink:' + muLcInk(c);
 }
 function muLcApply(el, hex) {
   if (!el) return;
@@ -8016,9 +8000,6 @@ function muLineColorFor(ln) {
 function muLineColor(m) {
   const ln = muLineOf(m);
   return ln ? muLineColorFor(ln) : MU_LC_NEUTRAL;
-}
-function muTintPanel(hex) {
-  muLcApply($('panelMusic'), hex || MU_LC_BRAND);
 }
 /* JR 东日本曲库编号不适合直接当曲名：JRE-…(首都圏11番) → 首都圏11番 */
 function muLabel(m) {
@@ -8091,7 +8072,7 @@ function openMusic() {
   $('sheet').classList.add('mu-open');
   muPreconnect();
   renderMusic();
-  requestAnimationFrame(() => { const b = $('muBack'); if (b) { try { b.focus({ preventScroll: true }); } catch (e) {} } });
+  requestAnimationFrame(() => { const el = $('panelMusic'); if (el) { try { el.focus({ preventScroll: true }); } catch (e) {} } });
 }
 function closeMusic() {
   if (!muOpen) return;
@@ -8159,27 +8140,30 @@ function renderMusic() {
     if (rb) rb.addEventListener('click', renderMusic);
   });
 }
-function muChipHTML(label, i, n, lineName) {
+function muChipHTML(label, i, lineName) {
   const c = i === -2 ? MU_LC_BRAND : (i === -1 ? MU_LC_NEUTRAL : muLineColorFor(lineName));
   return '<button class="mu-chip' + (i === -2 ? ' mu-all' : '') + (i === -1 ? ' mu-other' : '') +
-    (i === muLineIdx ? ' on' : '') + '" type="button" data-i="' + i + '" style="' + muLcVars(c) + '">' +
-    _escTxt(label) + '<em>' + n + '</em></button>';
+    (i === muLineIdx ? ' on' : '') + '" type="button" data-i="' + i + '" aria-pressed="' +
+    (i === muLineIdx ? 'true' : 'false') + '" style="' + muLcVars(c) + '">' +
+    _escTxt(label) + '</button>';
 }
 function renderMuChips(withOther) {
   const t = T(), el = $('muLines');
   el.hidden = false;
-  const allChip = muChipHTML(t.muAll, -2, muAllMels.length);
-  el.innerHTML = allChip + muLines.map((ln, i) =>
-    muChipHTML(ln, i, muAllMels.filter(m => muLineOf(m) === ln).length, ln)
-  ).join('') + (withOther ? muChipHTML(t.muOther, -1, muOthers.length) : '');
+  const allChip = muChipHTML(t.muAll, -2);
+  el.innerHTML = allChip + muLines.map((ln, i) => muChipHTML(ln, i, ln)).join('') +
+    (withOther ? muChipHTML(t.muOther, -1) : '');
   el.scrollLeft = 0;
   el.querySelectorAll('.mu-chip').forEach(b => b.addEventListener('click', () => {
     const i = parseInt(b.dataset.i, 10);
     if (i === muLineIdx && b.classList.contains('on')) return;
     muLineIdx = i;
     stopMusic();
-    muTintPanel(i === -2 ? MU_LC_BRAND : (i === -1 ? MU_LC_NEUTRAL : muLineColorFor(muLines[i])));
-    el.querySelectorAll('.mu-chip').forEach(x => x.classList.toggle('on', x === b));
+    el.querySelectorAll('.mu-chip').forEach(x => {
+      const on = x === b;
+      x.classList.toggle('on', on);
+      x.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
     const list = i === -2 ? muAllMels : (i === -1 ? muOthers : muAllMels.filter(m => muLineOf(m) === muLines[i]));
     renderMuList(list);
     try { b.scrollIntoView({ inline: 'center', block: 'nearest' }); } catch (e) {}
@@ -8252,11 +8236,7 @@ function muSkipSet() {
   ['muPrev', 'muNext'].forEach(id => { const b = $(id); if (b) b.disabled = off; });
 }
 function muSetDeck(m) {
-  const num = muPlatNum(m);
   const lc = muLineColor(m), hasLine = !!muLineOf(m);
-  $('muPPlateN').textContent = num || '♪';
-  $('muPPlateU').textContent = num ? (muPlatUnit(m) || '番線') : '';
-  $('muPPlateU').hidden = !num;
   const label = muLabel(m);
   $('muPName').textContent = label;
   $('muPName').title = String(m.melody || '');
@@ -8267,7 +8247,6 @@ function muSetDeck(m) {
   $('muPPlat').classList.toggle('has-lc', hasLine);
   const p = $('muPlayer');
   muLcApply(p, lc);
-  muTintPanel(lc);
   p.hidden = false;
   p.classList.remove('mu-deck-in');
   void p.offsetWidth;
@@ -8337,7 +8316,6 @@ function stopMusic() {
   muErr = false;
   const p = $('muPlayer');
   if (p) { p.hidden = true; p.classList.remove('mu-deck-in'); }
-  muTintPanel(MU_LC_BRAND);
   muPlayIcoSet(true);
   muLastCurTxt = muLastTotTxt = '';
   muPaint(0);
@@ -8484,11 +8462,6 @@ function muPaint(frac) {
   const curTxt = muFmt(cur), totTxt = d ? muFmt(d) : '0:00';
   if (curTxt !== muLastCurTxt) { const el = $('muTimeCur'); if (el) el.textContent = curTxt; muLastCurTxt = curTxt; }
   if (totTxt !== muLastTotTxt) { const el = $('muTimeTot'); if (el) el.textContent = totTxt; muLastTotTxt = totTxt; }
-  const bub = $('muBubble');
-  if (bub) {
-    bub.textContent = curTxt;
-    bub.style.left = Math.max(3, Math.min(97, frac * 100)) + '%';
-  }
   const s = $('muScrub');
   if (s) {
     s.setAttribute('aria-valuemax', String(Math.round(d)));

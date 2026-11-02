@@ -117,13 +117,15 @@ function applyCouplings(trips) {
 }
 /* 日本节假日 2024–2030(固定日 + 春分/秋分),振替休日与国民の休日按规则推导 */
 const HOLIDAY_BASE = {
-  2024: [[1,1],[1,8],[2,12],[2,23],[3,20],[4,29],[5,3],[5,4],[5,5],[5,6],[7,15],[8,11],[9,16],[9,23],[10,14],[11,4],[11,23]],
-  2025: [[1,1],[1,13],[2,11],[2,23],[3,20],[4,29],[5,3],[5,4],[5,5],[5,6],[7,21],[8,11],[9,15],[9,23],[10,13],[11,3],[11,24]],
-  2026: [[1,1],[1,12],[2,11],[2,23],[3,20],[4,29],[5,3],[5,4],[5,5],[5,6],[7,20],[8,11],[9,21],[9,22],[9,23],[10,12],[11,3],[11,23]],
-  2027: [[1,1],[1,11],[2,11],[2,23],[3,22],[4,29],[5,3],[5,4],[5,5],[7,19],[8,11],[9,20],[9,23],[10,11],[11,3],[11,23]],
+  /* 基表只列法定假日(含落在周日的假日与国民の休日);振替休日一律由下方算法推导,
+     不得手工重复列入,否则会与算法重复生成(如 2026-05-07 假振替)。 */
+  2024: [[1,1],[1,8],[2,11],[2,23],[3,20],[4,29],[5,3],[5,4],[5,5],[7,15],[8,11],[9,16],[9,22],[10,14],[11,3],[11,23]],
+  2025: [[1,1],[1,13],[2,11],[2,23],[3,20],[4,29],[5,3],[5,4],[5,5],[7,21],[8,11],[9,15],[9,23],[10,13],[11,3],[11,23]],
+  2026: [[1,1],[1,12],[2,11],[2,23],[3,20],[4,29],[5,3],[5,4],[5,5],[7,20],[8,11],[9,21],[9,22],[9,23],[10,12],[11,3],[11,23]],
+  2027: [[1,1],[1,11],[2,11],[2,23],[3,21],[4,29],[5,3],[5,4],[5,5],[7,19],[8,11],[9,20],[9,23],[10,11],[11,3],[11,23]],
   2028: [[1,1],[1,10],[2,11],[2,23],[3,20],[4,29],[5,3],[5,4],[5,5],[7,17],[8,11],[9,18],[9,22],[10,9],[11,3],[11,23]],
-  2029: [[1,1],[1,8],[2,11],[2,12],[2,23],[3,20],[4,29],[5,3],[5,4],[5,5],[7,16],[8,11],[9,17],[9,23],[10,8],[11,3],[11,23]],
-  2030: [[1,1],[1,14],[2,11],[2,23],[3,21],[4,29],[5,3],[5,4],[5,5],[5,6],[7,15],[8,11],[9,16],[9,23],[10,14],[11,4],[11,23]],
+  2029: [[1,1],[1,8],[2,11],[2,23],[3,20],[4,29],[5,3],[5,4],[5,5],[7,16],[8,11],[9,17],[9,23],[10,8],[11,3],[11,23]],
+  2030: [[1,1],[1,14],[2,11],[2,23],[3,20],[4,29],[5,3],[5,4],[5,5],[7,15],[8,11],[9,16],[9,23],[10,14],[11,3],[11,23]],
 };
 const HOLIDAYS = (() => {
   const set = new Set();
@@ -463,6 +465,59 @@ let fps = 0, lastFrameT = 0, rafId = 0, frameC = 0; /* frameC:列车顶点隔帧
 let glowAutoOff = false, lowFpsN = 0, frameSkip = false, adaptToastDone = false, followNullT = 0;
 let lastRenderM = -1, lastRenderList = null, lastRenderDay = null; /* 上次重建时的时刻/数据档:暂停拖时间轴或分片切窗后都必须重绘 */
 const hasWebgl2 = (() => { try { return !!document.createElement('canvas').getContext('webgl2'); } catch { return false; } })();
+
+/* ---------------- 诊断错误环:安全入环 ----------------
+   环体为 window.__errs(index.html 定义,FIFO 上限 300),诊断面板经 __dbg()/__m3dState() 读取,
+   此处不改变面板 UI,只收敛入环方式。两个已实测的故障:
+   1) MAP 瓦片错误不去重:故障期 4.1 条/秒,约 73 秒填满 300 条,把 CTX 等关键错误挤出;
+   2) __pushErr 定义在 index.html、模块之前,一旦缺失/抛异常,会沿 webgl 自愈的 catch 传播,
+      把 setTimeout(readd,400/800/2400) 重试链整体抛掉,3D 列车永久不恢复。
+   因此所有错误记录都走下面的安全入口:记录失败只静默降级,绝不影响业务与自愈。 */
+const ERR_RING_MAX = 300;      /* 与 index.html __pushErr 的上限一致 */
+const ERR_MAP_CAP = 120;       /* MAP 类在环内最多占用条数,为 CTX/REJ/CERR 保留名额 */
+const ERR_MAP_WINDOW = 10000;  /* 同一 MAP 错误(URL)的去重窗口 ms */
+const errMapState = new Map(); /* key -> { t0:窗口起点ms, n:窗口内出现次数 } */
+function errRingPush(entry) {
+  try {
+    const arr = window.__errs;
+    if (!Array.isArray(arr)) return;
+    arr.push(entry);
+    if (arr.length > ERR_RING_MAX) {
+      /* 裁剪优先淘汰最旧 MAP 条,避免盲目 shift 把 CTX 等关键错误挤掉 */
+      let idx = -1;
+      for (let i = 0; i < arr.length; i++) { if (typeof arr[i] === 'string' && arr[i].slice(0, 4) === 'MAP ') { idx = i; break; } }
+      if (idx >= 0) arr.splice(idx, 1); else arr.shift();
+    }
+  } catch (e) { /* 静默降级 */ }
+}
+function pushMapErr(msg) {
+  try {
+    const now = Date.now();
+    const key = String(msg).slice(0, 200);
+    const st = errMapState.get(key);
+    if (st && now - st.t0 < ERR_MAP_WINDOW) { st.n++; return; } /* 窗口内同一 URL 只入环一条 */
+    const prevN = st ? st.n : 0; /* 上一窗口累计次数,以 ×N 聚合计数带入新条目 */
+    errMapState.set(key, { t0: now, n: 1 });
+    if (errMapState.size > 400) { for (const [k, v] of errMapState) if (now - v.t0 > 60000) errMapState.delete(k); }
+    const arr = window.__errs;
+    if (Array.isArray(arr)) {
+      let mapN = 0, firstMap = -1;
+      for (let i = 0; i < arr.length; i++) if (typeof arr[i] === 'string' && arr[i].slice(0, 4) === 'MAP ') { if (firstMap < 0) firstMap = i; mapN++; }
+      if (mapN >= ERR_MAP_CAP && firstMap >= 0) arr.splice(firstMap, 1); /* 超配额先淘汰最旧 MAP,不挤 CTX */
+    }
+    errRingPush('MAP ' + (prevN > 1 ? '\u00d7' + prevN + ' ' : '') + key);
+  } catch (e) { /* 静默降级 */ }
+}
+function pushCtxErr(msg) { errRingPush('CTX ' + String(msg).slice(0, 160)); }
+function pushErrSafe(s) {
+  try {
+    const str = String(s == null ? '' : s).slice(0, 500);
+    if (typeof window.__pushErr === 'function') {
+      try { window.__pushErr(str); return; } catch (e) { /* 异常则改走本地等价入环 */ }
+    }
+    errRingPush(str); /* __pushErr 缺失时的兜底:同规格 FIFO 300 */
+  } catch (e) { /* 静默降级 */ }
+}
 
 /* ---------------- 时间 ---------------- */
 function jstDateParts(ms) { const d = new Date(ms + JST); return { y: d.getUTCFullYear(), m: d.getUTCMonth()+1, d: d.getUTCDate(), wd: d.getUTCDay(), key: d.toISOString().slice(0,10) }; }
@@ -4789,7 +4844,7 @@ async function initMap() {
     else if (view3d && p < 6) setView3dFromGesture(false);
   });
   map.on('style.load', () => { try { map.setProjection({ type: 'globe' }); } catch (e) { console.warn('globe unavailable', e); } });
-  map.on('error', e => { const m = e && e.error && (e.error.message || String(e.error)) || String(e || ''); window.__errs.push('MAP ' + m.slice(0, 200)); });
+  map.on('error', e => { const m = e && e.error && (e.error.message || String(e.error)) || String(e || ''); pushMapErr(m); });
   /* GPU 上下文丢失(手机切后台/显存紧张被系统回收是常态):MapLibre 会销毁并重建整个
      style,自定义 GL 层不在其序列化范围内 —— 不处理则恢复后底图正常、列车却永远消失。
      丢失时丢弃全部 GL 句柄与已编译程序(旧上下文的 program/buffer 均已失效);
@@ -4812,15 +4867,20 @@ async function initMap() {
       try {
         map.addLayer(trainShaderLayer, before);
       } catch (e) {
-        const m = String(e && e.message || e);
-        /* 样式重装是异步的,首次 addLayer 报 "Style is not done loading." 属预期,重试即可 */
-        if (!/Style is not done loading/.test(m)) window.__errs.push('CTX ' + m.slice(0, 160));
-        setTimeout(readd, 400);
+        /* 记错与自愈解耦:即使记录通道(__pushErr/__errs)缺失或抛异常,重试也必须排上 ——
+           放 finally 保证自愈链不被记错异常打断(历史故障:attempts=1, restored=false) */
+        try {
+          const m = String(e && e.message || e);
+          /* 样式重装是异步的,首次 addLayer 报 "Style is not done loading." 属预期,重试即可 */
+          if (!/Style is not done loading/.test(m)) pushCtxErr(m);
+        } catch (e2) { /* 静默降级 */ }
+        finally { setTimeout(readd, 400); }
         return;
       }
       try { map.triggerRepaint(); } catch (e) {}
     };
-    readd();
+    /* 首次 readd() 若意外抛出,也不得连累 800/2400ms 兜底重试的排程 */
+    try { readd(); } catch (e) {}
     setTimeout(readd, 800);
     setTimeout(readd, 2400);
   });
@@ -6369,6 +6429,50 @@ function isMinamiasoThroughTrip(t) {
   t._mas = mas;
   return mas;
 }
+/* ===== 同名异司消歧(round1b, 2026-11-03) =====
+ * 图集键按几何命名空间建键(山陽線=JR西 / 山陽本線=JR九 / 東海道線=JR西 / 東北線=JR東…),
+ * 图标查找却按时刻表命名空间(tmaps lines)精确查单键平表,同名异司键必有一方错配
+ * (错配规模与证据见 icon-audit 2026-11-03: 三日型合计约 9.7k 班次)。
+ * 此处做「事后重定向」: 仅当旧逻辑命中的键恰为 5 个错配键(山陽本線/東海道本線/東北本線/
+ * 中央本線/総武本線)且站序属于被错配运营商时才改判; 直通统一图标/ JK / 大阪メトロ中央 /
+ * 成田線 / 特急爱称等既有路径不经过本层, 行为保持不变。
+ * 站集由 segments3d 段属性 op 多数决真值推导(2026-11-03):
+ *   SANYO_WEST_STA = JR西 山陽線段站(剔除下関, 避免误捕 JR九 下関↔門司)
+ *                    ∪ 山陰本線 下関→長門市 直通站(该段几何缺失, station_map 补段缺口);
+ *   TOKAIDO_EC_STA = JR東+JR東海 東海道線段站 − JR西 関西段站(米原为 JR西/東海交界, 已剔除);
+ *   CHUO_TOKAI_STA = JR東海 中央線+飯田線段站 − JR東 中央線段站(塩尻为交界, 已剔除);
+ *   SOBU_EAST_STA  = 総武線几何段去枢纽「千葉」后东千葉可达连通分量 ∪ 旭→銚子几何缺段站。
+ * 判定结果按班次记忆(t._r1b*), 热路径无按帧字符串扫描。 */
+const SANYO_WEST_STA = new Set(['はりま勝原','ひめじ別所','万富','三原','三石','上道','上郡','下松','中庄','中野東','五日市','人丸','倉敷','備後赤坂','光','入野','八本松','兵庫','前空','加古川','北長瀬','南岩国','厚東','厚狭','吉永','向洋','和木','和気','和田岬','嘉川','四辻','土山','垂水','埴生','塩屋','大久保','大畠','大竹','大道','大野浦','大門','天神川','姫路','宇部','安芸中野','宝殿','宮内串戸','宮島口','富海','寺家','小串','小月','小野田','尾道','岡山','岩国','岩田','島田','川棚温泉','幡生','広島','庭瀬','廿日市','御着','徳山','戸田','新下関','新井口','新倉敷','新南陽','新山口','新白島','新長田','明石','曽根','有年','朝霧','本由良','本郷','東加古川','東尾道','東岡山','東福山','松永','柳井','柳井港','横川','櫛ヶ浜','河内','海田市','滝部','瀬戸','瀬野','熊山','特牛','玖波','田布施','由宇','白市','相生','神代','神戸','福山','福川','竜野','笠岡','糸崎','網干','舞子','英賀保','藤生','西川原','西広島','西明石','西条','西阿知','西高屋','通津','里庄','金光','長府','長門市','防府','阿品','阿川','須磨','須磨海浜公園','高島','魚住','鴨方','鷹取']);
+const TOKAIDO_EC_STA = new Set(['三ヶ根','三島','三河三谷','三河塩津','三河大塚','三河安城','二宮','二川','六合','共和','函南','刈谷','南大高','原','吉原','名古屋','品川','国府津','垂井','大井町','大垣','大崎','大府','大森','大磯','大船','大高','天竜川','安倍川','安城','富士','富士川','小田原','尾張一宮','尾頭橋','岐阜','岡崎','島田','川崎','平塚','幸田','弁天島','御厨','恵比寿','愛知御津','愛野','戸塚','掛川','新子安','新居町','新川崎','新所原','新橋','新蒲原','早川','有楽町','木曽川','東京','東刈谷','東田子の浦','東神奈川','東静岡','枇杷島','柏原','根府川','横浜','武蔵小杉','沼津','浜松','浜松町','清水','清洲','湯河原','焼津','熱田','片浜','用宗','田町','由比','相見','真鶴','磐田','稲沢','穂積','笠寺','美濃赤坂','興津','舞阪','茅ヶ崎','草薙','荒尾','菊川','蒲原','蒲田','蒲郡','藤枝','藤沢','袋井','西大井','西小坂井','西岐阜','西岡崎','西焼津','豊橋','豊田町','辻堂','近江長岡','逢妻','醒ヶ井','野田新町','金山','金谷','関ヶ原','静岡','高塚','鴨宮','鶴見','鷲津']);
+const CHUO_TOKAI_STA = new Set(['七久保','三河一宮','三河大野','三河川合','三河東郷','三河槙原','上市場','上松','上片桐','下地','下山村','下島','下川合','下市田','下平','中井侍','中津川','中部天竜','伊那上郷','伊那八幡','伊那北','伊那大島','伊那小沢','伊那市','伊那本郷','伊那松島','伊那田島','伊那福岡','佐久間','倉本','元善光寺','出馬','切石','勝川','北殿','十二兼','千代','千種','南木曽','原野','古虎渓','名古屋','向市場','唐笠','土岐市','坂下','城西','多治見','大嵐','大曽根','大桑','大海','大田切','天竜峡','奈良井','定光寺','宮ノ越','宮田','小和田','小坂井','小町屋','山吹','川路','市田','平岡','恵那','新城','新守山','日出塩','早瀬','春日井','時又','木ノ下','木曽平沢','木曽福島','本長篠','東上','東新町','東栄','柿平','桜町','武並','毛賀','水窪','江島','池場','沢','沢渡','洗馬','浦川','温田','湯谷温泉','為栗','牛久保','瑞浪','田切','田本','田畑','田立','相月','神領','美乃坂本','羽場','船町','茶臼山','落合川','藪原','豊川','豊橋','贄川','赤木','野尻','金山','金野','釜戸','長山','長篠城','門島','須原','飯島','飯田','駄科','駒ヶ根','高蔵寺','高遠原','鳥居','鶯巣','鶴舞','鼎']);
+const SOBU_EAST_STA = new Set(['佐倉','倉橋','八日市場','八街','南酒々井','四街道','干潟','成東','日向','旭','東千葉','松尾','松岸','榎戸','横芝','物井','猿田','都賀','銚子','飯岡']);
+function _r1bHas(t, set, memo) {
+  if (t[memo] !== undefined) return t[memo];
+  const jas = t.jasN || [];
+  let hit = false;
+  for (let i = 0; i < jas.length; i++) if (set.has(jas[i])) { hit = true; break; }
+  t[memo] = hit;
+  return hit;
+}
+/* key = 旧逻辑刚命中的图集键; 返回重定向目标: '山陽線' / '__FB__'(图集兜底) / null(不重定向)。
+   東北本線在来线班次几何 op 单值=JR東(宇都宮線/利府支線), 无需站序判定直接改判兜底(湘南色)。 */
+function r1bKeyOf(t, key) {
+  if (key === '山陽本線') return _r1bHas(t, SANYO_WEST_STA, '_r1bS') ? '山陽線' : null;
+  if (key === '東海道本線') return _r1bHas(t, TOKAIDO_EC_STA, '_r1bT') ? '__FB__' : null;
+  if (key === '東北本線') return '__FB__';
+  if (key === '中央本線') return _r1bHas(t, CHUO_TOKAI_STA, '_r1bC') ? '__FB__' : null;
+  if (key === '総武本線') return _r1bHas(t, SOBU_EAST_STA, '_r1bB') ? '__FB__' : null;
+  return null;
+}
+/* v = 旧逻辑该键对应的索引; 命中重定向时返回新索引, 否则原样返回 */
+function r1bIdx(t, key, v) {
+  const rk = r1bKeyOf(t, key);
+  if (!rk) return v;
+  if (rk === '__FB__') return ATLAS.fallback !== undefined ? ATLAS.fallback : v;
+  const w = ATLAS.line[rk];
+  return w !== undefined ? w : v;
+}
 function lineIconFor(t) {
   if (!ATLAS || !t || !t.lines) return -1;
   /* 山手線本线列车（运行段起终点都在山手环上）统一 E235 绿头：
@@ -6386,7 +6490,7 @@ function lineIconFor(t) {
     if (t.lines.includes('横須賀線') && yv !== undefined) return yv;
     /* 総武快速系: 多线路含'総武本線'且不含緩行特征(中央本線/東京メトロ東西線) = 東京⇔成田/千葉/房総直通快速, 车体为湘南色(E217等), 非総武緩行黄色(E235so) */
     if (t.lines.includes('総武本線') && !t.lines.includes('中央本線') && !t.lines.includes('東京メトロ東西線') && yv !== undefined) return yv;
-    for (const ln of t.lines) { if (ICON_SKIP_LINES.has(ln)) continue; const v = ATLAS.line[ln]; if (v !== undefined) return v; }
+    for (const ln of t.lines) { if (ICON_SKIP_LINES.has(ln)) continue; const v = ATLAS.line[ln]; if (v !== undefined) return r1bIdx(t, ln, v); }
     /* 多线路但全是共享干道(上野東京線/宇都宮線等直通, 如 [東海道本線,東北本線]):
        不再取'東海道本線'的西日本W223(143, 灰+黄绿带, 与山手线E235视觉混淆),
        改用东日本E217湘南色通用通勤车兜底图 */
@@ -6396,7 +6500,7 @@ function lineIconFor(t) {
   if (t.lines.length === 1 && t.lines[0] === '成田線' && ATLAS.fallback !== undefined) return ATLAS.fallback;
   for (let li = 0; li < t.lines.length; li++) {
     if (t.lines.length > 1 && t.lines[li] === '山手線') continue;
-    const v = ATLAS.line[t.lines[li]]; if (v !== undefined) return v;
+    const v = ATLAS.line[t.lines[li]]; if (v !== undefined) return r1bIdx(t, t.lines[li], v);
   }
   return -1;
 }
@@ -6416,7 +6520,7 @@ function trainIconIdx(t, lineName) {
   if (t.lines.length > 1 && t.lines.every(ln => ICON_SKIP_LINES.has(ln)) && ATLAS.fallback !== undefined) return ATLAS.fallback;
   /* 多线路直通列车(湘南新宿線/武藏野線/総武快速等): 整趟车统一用 lineIconFor 的车系图标,
      不走 p[3] 当前区段(否则东北段取E701/山手段取山手线E235/东海道段取W223, 一段一换错配) */
-  if (t.lines.length === 1 && lineName && ATLAS.line[lineName] !== undefined) return ATLAS.line[lineName];
+  if (t.lines.length === 1 && lineName && ATLAS.line[lineName] !== undefined) return r1bIdx(t, lineName, ATLAS.line[lineName]);
   const li = lineIconFor(t);
   if (li >= 0) return li;
   return ATLAS.fallback;
@@ -6467,7 +6571,12 @@ function _iconKeyOf(t) {
     for (const p of ICON_PRIORITY_LINES) if (lines.includes(p) && has(p)) { l = p; break; }
     if (!l) for (const x of lines) { if (ICON_SKIP_LINES.has(x) || !has(x)) continue; l = x; break; }
   } else if (lines.length === 1 && has(lines[0])) l = lines[0];
-  if (l && has(l)) return { k: 'ln', v: l };
+  if (l && has(l)) {
+    /* 与车头图标同序重定向: 百科车型跟随消歧结果(山陽本線→山陽線; 其余错配键→兜底车型清单) */
+    const rk = r1bKeyOf(t, l);
+    if (rk) { if (rk === '__FB__') return null; if (has(rk)) return { k: 'ln', v: rk }; }
+    return { k: 'ln', v: l };
+  }
   return null;
 }
 
@@ -9858,7 +9967,7 @@ const M3D = (() => {
       ktx2 = new KTX2LoaderC.KTX2Loader().setTranscoderPath(u('/basis/')).detectSupport(boot);
       ktx2.__boot = boot; /* 持有引用防 GC(1×1 canvas 未挂载) */
       return THREE;
-    })().catch(e => { libsP = null; __pushErr('M3D.libs ' + (e && e.message || e)); throw e; });
+    })().catch(e => { libsP = null; pushErrSafe('M3D.libs ' + (e && e.message || e)); throw e; });
     return libsP;
   }
   /* ── 纹理缓存(url|colorSpace → Promise<Texture>),按 URL 去重 ── */
@@ -10268,7 +10377,7 @@ const M3D = (() => {
       cancelAnimationFrame(d.raf);
       d.raf = requestAnimationFrame(drLoop);
     } catch (e) {
-      __pushErr('M3D.viewer ' + (e && e.message || e));
+      pushErrSafe('M3D.viewer ' + (e && e.message || e));
       if ($('m3dLoadTx')) $('m3dLoadTx').textContent = '⚠ ' + (e && e.message || 'load fail');
     }
   }

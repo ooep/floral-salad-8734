@@ -177,7 +177,7 @@ const I18N = {
     dayFileNote:'时刻表', paused:'暂停', liveMode:'实时', playMode:'回放', fps:'FPS',
     retry:'重试', loadingIdx:'构建索引', loadingPr:'解析时刻表', adapt:'性能模式:帧率低,已自动关闭列车光晕', cacheOn:'离线缓存已启用', failMsg:'加载失败，请检查网络后重试',
     tabGuide:'指南', gdLoading:'指南数据加载中…', gdEmpty:'本站暂无设施信息',
-    muT:'发车铃声', muBack:'返回', muNone:'该站暂无已收录的发车铃声', muNoAudio:'音频未收录', muLoad:'铃声数据加载中…', muFail:'铃声数据加载失败，请稍后重试', muRetry:'重试', muOther:'其他', muAll:'全部', muCount:'{0} 首', muCountOne:'1 首', muAuto:'连播', muPrev:'上一首', muNext:'下一首', muSeek:'拖动试听进度', muPlayFail:'音频播放失败，请重试', muPause:'暂停', muResume:'播放',
+    muT:'发车铃声', muBack:'返回时刻表', muNone:'该站暂无已收录的发车铃声', muNoAudio:'音频未收录', muLoad:'铃声数据加载中…', muFail:'铃声数据加载失败，请稍后重试', muRetry:'重试', muOther:'其他', muAll:'全部', muCount:'{0} 首', muCountOne:'1 首', muAuto:'连播', muPrev:'上一首', muNext:'下一首', muSeek:'拖动试听进度', muPlayFail:'音频播放失败，请重试', muPause:'暂停', muResume:'播放',
     gdBasic:'基本信息', gdWheelchair:'无障碍通行', gdToilets:'卫生间', gdPlatform:'站台与屏蔽门',
     gdFloorPlan:'站内图', gdLinks:'相关链接', gdAddress:'地址', gdTel:'电话', gdOpened:'开业',
     gdInside:'闸内', gdOutside:'闸外', gdSeeFp:'查看官方站内图 ↗', gdEcomo:'ecomo 车站信息',
@@ -221,7 +221,7 @@ const I18N = {
     dayFileNote:'時刻表', paused:'一時停止', liveMode:'リアルタイム', playMode:'再生', fps:'FPS',
     retry:'再試行', loadingIdx:'索引構築', loadingPr:'時刻表解析', adapt:'省電力モード:低FPSのため列車グローをOFF', cacheOn:'オフラインキャッシュ有効', failMsg:'読み込みに失敗しました。ネットワークを確認してもう一度お試しください',
     tabGuide:'ガイド', gdLoading:'ガイド読込中…', gdEmpty:'この駅の設備情報はまだありません',
-    muT:'発車メロディ', muBack:'戻る', muNone:'この駅に収録された発車メロディはありません', muNoAudio:'音源未収録', muLoad:'メロディデータ読込中…', muFail:'メロディデータの取得に失敗しました', muRetry:'再試行', muOther:'その他', muAll:'すべて', muCount:'{0}曲', muCountOne:'1曲', muAuto:'連続', muPrev:'前のメロディ', muNext:'次のメロディ', muSeek:'再生位置を調整', muPlayFail:'音声の再生に失敗しました', muPause:'一時停止', muResume:'再生',
+    muT:'発車メロディ', muBack:'時刻表に戻る', muNone:'この駅に収録された発車メロディはありません', muNoAudio:'音源未収録', muLoad:'メロディデータ読込中…', muFail:'メロディデータの取得に失敗しました', muRetry:'再試行', muOther:'その他', muAll:'すべて', muCount:'{0}曲', muCountOne:'1曲', muAuto:'連続', muPrev:'前のメロディ', muNext:'次のメロディ', muSeek:'再生位置を調整', muPlayFail:'音声の再生に失敗しました', muPause:'一時停止', muResume:'再生',
     gdBasic:'基本情報', gdWheelchair:'車椅子での移動', gdToilets:'トイレ', gdPlatform:'ホーム・ドア',
     gdFloorPlan:'構内図', gdLinks:'リンク', gdAddress:'所在地', gdTel:'連絡先', gdOpened:'開業',
     gdInside:'改札内', gdOutside:'改札外', gdSeeFp:'公式構内図を見る ↗', gdEcomo:'ecomo 駅情報',
@@ -265,7 +265,7 @@ const I18N = {
     dayFileNote:'Timetable', paused:'Paused', liveMode:'Live', playMode:'Replay', fps:'FPS',
     retry:'Retry', loadingIdx:'Building index', loadingPr:'Parsing timetable', adapt:'Performance mode: low FPS, train glow off', cacheOn:'Offline cache enabled', failMsg:'Failed to load. Check your network and retry.',
     tabGuide:'Guide', gdLoading:'Loading guide…', gdEmpty:'No facility info for this station yet',
-    muT:'Departure melody', muBack:'Back', muNone:'No departure melody recorded for this station', muNoAudio:'No audio', muLoad:'Loading melody data…', muFail:'Failed to load melody data', muRetry:'Retry', muOther:'Others', muAll:'All', muCount:'{0} tracks', muCountOne:'1 track', muAuto:'Auto', muPrev:'Previous melody', muNext:'Next melody', muSeek:'Seek playback position', muPlayFail:'Playback failed, please retry', muPause:'Pause', muResume:'Play',
+    muT:'Departure melody', muBack:'Back to timetable', muNone:'No departure melody recorded for this station', muNoAudio:'No audio', muLoad:'Loading melody data…', muFail:'Failed to load melody data', muRetry:'Retry', muOther:'Others', muAll:'All', muCount:'{0} tracks', muCountOne:'1 track', muAuto:'Auto', muPrev:'Previous melody', muNext:'Next melody', muSeek:'Seek playback position', muPlayFail:'Playback failed, please retry', muPause:'Pause', muResume:'Play',
     gdBasic:'Basic info', gdWheelchair:'Barrier-free access', gdToilets:'Toilets', gdPlatform:'Platform / doors',
     gdFloorPlan:'Station map', gdLinks:'Links', gdAddress:'Address', gdTel:'Phone', gdOpened:'Opened',
     gdInside:'Inside gates', gdOutside:'Outside gates', gdSeeFp:'Official station map ↗', gdEcomo:'ecomo station info',
@@ -8028,6 +8028,14 @@ function muSetCount(n) {
   if (n > 0) { el.hidden = false; el.textContent = (n === 1 ? T().muCountOne : T().muCount).replace('{0}', String(n)); }
   else { el.hidden = true; el.textContent = ''; }
 }
+function muSetBell(on) {
+  const b = $('shBell'); if (!b) return;
+  b.classList.toggle('on', !!on);
+  b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  const label = on ? T().muBack : T().muT;
+  b.setAttribute('aria-label', label);
+  b.title = label;
+}
 function muEmptyHTML(kind, txt, retry) {
   const ico = kind === 'err'
     ? '<svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/><path d="M4 4l16 16" stroke-width="1.8"/></svg>'
@@ -8044,7 +8052,7 @@ function muResetPanel() {
   stopMusic();
   const p = $('panelMusic');
   if (p) { p.hidden = true; p.classList.remove('mu-enter', 'mu-leave', 'mu-deck-in'); }
-  if ($('shBell')) $('shBell').classList.remove('on');
+  muSetBell(false);
   $('sheet').classList.remove('mu-open');
   if ($('shBadges')) $('shBadges').hidden = muBadgeHidden;
   const tabsEl = document.querySelector('#sheet .sh-tabs');
@@ -8068,7 +8076,7 @@ function openMusic() {
   p.hidden = false;
   void p.offsetWidth; /* reflow 触发进场动画 */
   p.classList.add('mu-enter');
-  $('shBell').classList.add('on');
+  muSetBell(true);
   $('sheet').classList.add('mu-open');
   muPreconnect();
   renderMusic();
@@ -8080,7 +8088,7 @@ function closeMusic() {
   muLoadSeq++;
   clearTimeout(muEndTimer);
   stopMusic();
-  $('shBell').classList.remove('on');
+  muSetBell(false);
   const p = $('panelMusic');
   const done = () => {
     if (!p.classList.contains('mu-leave')) return; /* 关闭动画期间被重新打开则不再收尾 */
@@ -8207,18 +8215,17 @@ function renderMuList(list) {
     const url = muAudioUrl(m), plat = muPlatNum(m), sub = muSubOf(m) || muPlatOf(m) || T().muT;
     const label = muLabel(m), raw = String(m.melody || '');
     const unit = muPlatUnit(m) || '番線';
-    const lc = muLineColor(m), hasLine = !!muLineOf(m);
+    const lc = muLineColor(m);
     const plate = '<span class="mu-plat" aria-hidden="true"><span class="mu-plat-in"><b>' + (plat || '♪') + '</b>' + (plat ? '<i>' + unit + '</i>' : '') + '</span></span>';
     const meta = '<span class="mu-meta"><span class="mu-melody"' + (raw && raw !== label ? ' title="' + _escTxt(raw) + '"' : '') + '>' + _escTxt(label) + '</span>' +
       '<span class="mu-msub"><span class="mu-eq" aria-hidden="true"><i></i><i></i><i></i></span>' +
-      (hasLine ? '<span class="mu-sub-dot" aria-hidden="true"></span>' : '') +
       '<span class="mu-line-txt" title="' + _escTxt(sub) + '">' + _escTxt(sub) + '</span></span></span>';
     const act = url
       ? '<span class="mu-act" aria-hidden="true"><svg class="a-play" viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M8 5v14l11-7z"/></svg><svg class="a-pause" viewBox="0 0 24 24" width="11" height="11" fill="currentColor"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/></svg></span>'
       : '<span class="mu-void">' + _escTxt(T().muNoAudio) + '</span>';
-    const style = ' style="animation-delay:' + Math.min(i * 28, 360) + 'ms;' + muLcVars(lc) + '"';
-    if (!url) return '<div class="mu-row mu-row-in off" aria-disabled="true"' + style + '>' + plate + meta + act + '</div>';
-    return '<button class="mu-row mu-row-in" type="button" data-i="' + i + '" aria-pressed="false"' + style + '>' + plate + meta + act + '</button>';
+    const style = ' style="' + muLcVars(lc) + '"';
+    if (!url) return '<div class="mu-row off" aria-disabled="true"' + style + '>' + plate + meta + act + '</div>';
+    return '<button class="mu-row" type="button" data-i="' + i + '" aria-pressed="false"' + style + '>' + plate + meta + act + '</button>';
   }).join('');
   el.querySelectorAll('button.mu-row').forEach(rowEl => {
     const m = sorted[parseInt(rowEl.dataset.i, 10)];
@@ -8236,7 +8243,7 @@ function muSkipSet() {
   ['muPrev', 'muNext'].forEach(id => { const b = $(id); if (b) b.disabled = off; });
 }
 function muSetDeck(m) {
-  const lc = muLineColor(m), hasLine = !!muLineOf(m);
+  const lc = muLineColor(m);
   const label = muLabel(m);
   $('muPName').textContent = label;
   $('muPName').title = String(m.melody || '');
@@ -8244,7 +8251,6 @@ function muSetDeck(m) {
   $('muPPlat').textContent = sub;
   $('muPPlat').title = sub;
   $('muPPlat').hidden = !sub;
-  $('muPPlat').classList.toggle('has-lc', hasLine);
   const p = $('muPlayer');
   muLcApply(p, lc);
   p.hidden = false;
@@ -8496,8 +8502,7 @@ function muScrubPreview(pct) {
 }
 /* 事件绑定 */
 (function () {
-  const bell = $('shBell'); if (bell) bell.addEventListener('click', openMusic);
-  const back = $('muBack'); if (back) back.addEventListener('click', closeMusic);
+  const bell = $('shBell'); if (bell) bell.addEventListener('click', () => { if (muOpen) closeMusic(); else openMusic(); });
   const play = $('muPlay'); if (play) play.addEventListener('click', togglePause);
   const prev = $('muPrev'); if (prev) prev.addEventListener('click', () => { muNext(-1); });
   const next = $('muNext'); if (next) next.addEventListener('click', () => { muNext(1); });
@@ -9662,8 +9667,7 @@ function applyLang() {
   $('tData').textContent = t.dataT; $('tHelp').textContent = t.helpT; if ($('tAbout')) $('tAbout').textContent = t.aboutT;
   $('tabRouteLb').textContent = t.tabRoute; $('tabLegendLb').textContent = t.legendT; $('tabSetLb').textContent = t.setT;
   if ($('tabGuide')) $('tabGuide').textContent = t.tabGuide;
-  if ($('shBell')) { $('shBell').setAttribute('aria-label', t.muT); $('shBell').title = t.muT; }
-  if ($('muBackTxt')) $('muBackTxt').textContent = t.muBack;
+  if ($('shBell')) muSetBell(muOpen);
   if ($('muTitleTxt')) $('muTitleTxt').textContent = t.muT;
   if ($('muPlay')) muPlayIcoSet(muAudio ? muAudio.paused : true); /* 语言切换同步播放按钮 aria */
   if ($('muCount')) muSetCount(muCountN);

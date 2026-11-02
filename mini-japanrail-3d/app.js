@@ -5098,6 +5098,114 @@ const BADGES_BASE = 'https://jr-static.suki.ing/data/badges';
 const BADGE_FETCH_MAX = 4; /* 图集并发下载上限:避免网络风暴拖垮底图瓦片与页面帧率 */
 const BADGE_MAX_ONMAP = 3; /* 多线站地图上最多并排徽章数(其余进抽屉完整列表) */
 let badgeInFlight = 0, badgesLines = null;
+/* ── Round4:cap 硬上限 + 分层保护淘汰 + 异步回读 ─────────────────────────────
+   cap 是硬上限不是建议:任何时刻(含空闲期)注册数 ≤ BADGE_ICON_CAP ——
+   淘汰收敛在 ① updateBadgeIcons 末尾 ② badgeEnsureIcon 异步完成回调
+   ③ map idle 三处触发(节流 + 尾随补一次,见 badgeEnforceCap)。
+   保护分层:① 锚点投影落在画布内 ② queryRenderedFeatures 实际渲染集
+   (软保护,pitch/bearing 下准确);候选 = 两者都不在,按 LRU 最久未访问先删。
+   注册口径同步从 ±400px 外扩收紧为画布内(0 外扩,见 updateBadgeIcons):
+   旧口径 pitch 58° 单视野注册 677 枚(实际渲染 33),是 cap 失效 10 倍的主因。 */
+const BADGE_ICON_CAP = 320;      /* 注册图标数硬上限(单视野密集实测 ≤~200) */
+const BADGE_LRU_KEEP = 16;       /* 最近淘汰图标 LRU bitmap 缓存槽数:回访免重建、免 1s 级空白 */
+const badgeIconPos = new Map();  /* key -> [lon,lat] 锚点坐标(注册时记录,淘汰前投影判在屏保护) */
+const badgeIconLastUse = new Map(); /* key -> performance.now() 最近访问(注册/在屏命中刷新) */
+const badgeBitmaps = new Map();  /* key -> 已注册图标持有的 ImageBitmap|ImageData(淘汰时移入 LRU) */
+const badgeBitmapLRU = new Map(); /* key -> 最近淘汰图标位图(插入序 = LRU 序,回访直接复用) */
+let badgeIconBytes = 0;          /* 注册图标 RGBA 总字节(内存探针) */
+const _badgeStats = { evicted: 0, rebuilds: 0, cacheHits: 0, missing: 0, peak: 0, tl: [] };
+/* 只读探针(不刷 DOM):window.__badgeStats →
+   registered/cap/evicted/rebuilds/cacheHits/hitRate/bytes/peak/missing/timeline
+   hitRate = LRU 命中 / (命中 + 重建);timeline = [performance.now()ms, registered] 环形 512 点 */
+window.__badgeStats = Object.freeze({
+  get registered() { return badgesIcons.size; },
+  get cap() { return BADGE_ICON_CAP; },
+  get evicted() { return _badgeStats.evicted; },
+  get rebuilds() { return _badgeStats.rebuilds; },
+  get cacheHits() { return _badgeStats.cacheHits; },
+  get hitRate() { const n = _badgeStats.cacheHits + _badgeStats.rebuilds; return n ? _badgeStats.cacheHits / n : 0; },
+  get bytes() { return badgeIconBytes; },
+  get peak() { return _badgeStats.peak; },
+  get missing() { return _badgeStats.missing; },
+  get timeline() { return _badgeStats.tl.slice(); },
+});
+function _badgeMarkRegistered() {
+  const n = badgesIcons.size;
+  if (n > _badgeStats.peak) _badgeStats.peak = n;
+  const tl = _badgeStats.tl;
+  const last = tl[tl.length - 1];
+  if (!last || last[1] !== n) { tl.push([Math.round(performance.now()), n]); if (tl.length > 512) tl.splice(0, tl.length - 512); }
+}
+/* LRU 位图缓存:淘汰图标入池,回访直接 addImage 复用(免 canvas 合成与图集重读);
+   超槽数从最旧开始释放(ImageBitmap.close();ImageData 无 close,靠 GC) */
+function _badgeLRUPut(k, img) {
+  if (!img) return;
+  if (badgeBitmapLRU.has(k)) badgeBitmapLRU.delete(k);
+  badgeBitmapLRU.set(k, img);
+  while (badgeBitmapLRU.size > BADGE_LRU_KEEP) {
+    const oldest = badgeBitmapLRU.keys().next();
+    if (oldest.done) break;
+    const oi = badgeBitmapLRU.get(oldest.value);
+    badgeBitmapLRU.delete(oldest.value);
+    if (oi && typeof oi.close === 'function') { try { oi.close(); } catch (e) {} }
+  }
+}
+function _badgeLRUTake(k) {
+  const img = badgeBitmapLRU.get(k);
+  if (!img) return null;
+  badgeBitmapLRU.delete(k);
+  return img;
+}
+/* cap 强制(硬上限):每次注册完成/扫描结束/idle 都立即收敛,不做时间节流 ——
+   收敛成本 = ≤320 次投影 + 一次 queryRenderedFeatures(实测 ~2–3ms),
+   风暴期注册速率 ~20/s,强制成本 ≤5% CPU,换来「任何时刻 ≤ cap」:
+   旧节流窗口内的 +30 过冲(实测峰值 351/353)被压到 +1(同一同步块内 add 后即收敛)。 */
+function badgeEnforceCap() {
+  if (badgesIcons.size > BADGE_ICON_CAP) badgeEvictNow();
+}
+/* 立即淘汰收敛:保护 = ① 锚点在画布内 ∪ ② 实际渲染集;
+   第一遍删「不在画布且不在渲染集」的 LRU 尾部;极端密集视野下第一遍删空仍超限,
+   第二遍放宽画布保护,但绝不删渲染集(正在被 icon-optional 引用且在屏的图标)。 */
+function badgeEvictNow() {
+  if (!map || badgesIcons.size <= BADGE_ICON_CAP) return;
+  let cw = 1280, chh = 800;
+  try { const cv = map.getCanvas(); if (cv && cv.clientWidth) { cw = cv.clientWidth; chh = cv.clientHeight || chh; } } catch (e) {}
+  const protCanvas = new Set(), protRendered = new Set();
+  for (const k of badgesIcons) {
+    const g = badgeIconPos.get(k);
+    if (!g) continue;
+    let pt = null;
+    try { pt = map.project(g); } catch (e) {}
+    if (pt && pt.x >= 0 && pt.x <= cw && pt.y >= 0 && pt.y <= chh) protCanvas.add(k);
+  }
+  try {
+    if (map.getLayer && map.getLayer('stas-badge')) {
+      const rf = map.queryRenderedFeatures([[0, 0], [cw, chh]], { layers: ['stas-badge'] });
+      if (rf) for (const f of rf) { const bi = f.properties && f.properties.badgeIcon; if (bi) protRendered.add(bi); }
+    }
+  } catch (e) {}
+  const evictOne = (k) => {
+    if (map.hasImage(k)) { try { map.removeImage(k); } catch (e) {} } /* hasImage 守卫保留 */
+    badgesIcons.delete(k);
+    badgeIconPos.delete(k);
+    badgeIconLastUse.delete(k);
+    const img = badgeBitmaps.get(k);
+    badgeBitmaps.delete(k);
+    if (img) { badgeIconBytes -= img.width * img.height * 4; _badgeLRUPut(k, img); }
+    _badgeStats.evicted++;
+  };
+  let cands = [];
+  for (const k of badgesIcons) if (!protCanvas.has(k) && !protRendered.has(k)) cands.push(k);
+  cands.sort((a, b) => (badgeIconLastUse.get(a) || 0) - (badgeIconLastUse.get(b) || 0));
+  for (const k of cands) { if (badgesIcons.size <= BADGE_ICON_CAP) break; evictOne(k); }
+  if (badgesIcons.size > BADGE_ICON_CAP) {
+    cands = [];
+    for (const k of badgesIcons) if (!protRendered.has(k)) cands.push(k);
+    cands.sort((a, b) => (badgeIconLastUse.get(a) || 0) - (badgeIconLastUse.get(b) || 0));
+    for (const k of cands) { if (badgesIcons.size <= BADGE_ICON_CAP) break; evictOne(k); }
+  }
+  _badgeMarkRegistered();
+}
 
 async function loadBadgesMap() {
   if (badgesMap) return badgesMap;
@@ -5323,12 +5431,32 @@ async function badgeCanvas(e) {
   return null;
 }
 /* 站徽章 icon 注册:取前 BADGE_MAX_ONMAP 枚并排合成一张 canvas(间 6px,垂直居中)→ addImage。
-   各枚保持原始宽高比;单枚站输出与旧版一致(直接裁剪尺寸)。 */
-async function badgeEnsureIcon(name, featLine, featOp, key) {
+   各枚保持原始宽高比;单枚站输出与旧版一致(直接裁剪尺寸)。
+   Round4:① 回访快路径 —— 最近被淘汰的图标位图留在 LRU 缓存,直接 addImage 复用,
+   免 canvas 重合成、免图集重读(消除回访 0.59–2.01s 的迟到空白);
+   ② 回读改 createImageBitmap 异步路径(消除同步 getImageData 的主线程阻塞),
+   MapLibre 不接受裸 canvas/OffscreenCanvas,ImageBitmap 可直接 addImage;
+   createImageBitmap 不可用/失败(老 WebKit)时 try/catch 回退原 getImageData 路径;
+   ③ 完成回调里做一次 cap 收敛 —— 快速平移停下后异步注册继续到达时,
+   cap 仍被强制执行(旧版只在 updateBadgeIcons 淘汰,空闲时注册数悬在 cap 之上)。 */
+async function badgeEnsureIcon(name, featLine, featOp, key, coords) {
   const k = key || 'bd_' + name;
   if (badgesIcons.has(k) || badgesBusy.has(k) || !map || !badgesMap) return;
   const entries = badgeEntriesOfStation(name, featLine, featOp);
   if (!entries) return;
+  if (coords) badgeIconPos.set(k, coords);
+  const cached = _badgeLRUTake(k);
+  if (cached) { /* 回访快路径:位图仍在 LRU,直接重新注册 */
+    try { if (!map.hasImage(k)) map.addImage(k, cached); } catch (e) { badgeEnforceCap(); return; }
+    badgesIcons.add(k);
+    badgeBitmaps.set(k, cached);
+    badgeIconBytes += cached.width * cached.height * 4;
+    badgeIconLastUse.set(k, performance.now());
+    _badgeStats.cacheHits++;
+    _badgeMarkRegistered();
+    badgeEnforceCap();
+    return;
+  }
   badgesBusy.add(k);
   try {
     const picks = entries.slice(0, BADGE_MAX_ONMAP);
@@ -5341,10 +5469,22 @@ async function badgeEnsureIcon(name, featLine, featOp, key) {
     const ctx = c.getContext('2d');
     let x = 0;
     for (const one of cs) { ctx.drawImage(one, x, (c.height - one.height) / 2); x += one.width + GAP; }
-    if (!map.hasImage(k)) map.addImage(k, ctx.getImageData(0, 0, c.width, c.height));
+    /* 异步回读:优先 createImageBitmap(canvas) → ImageBitmap;
+       不可用/失败(老 WebKit/污染画布)回退同步 ImageData,功能不退化 */
+    let img = null;
+    if (typeof createImageBitmap === 'function') {
+      try { img = await createImageBitmap(c); } catch (e) { img = null; }
+    }
+    if (!img) img = ctx.getImageData(0, 0, c.width, c.height);
+    if (!map.hasImage(k)) map.addImage(k, img);
     badgesIcons.add(k);
+    badgeBitmaps.set(k, img);
+    badgeIconBytes += c.width * c.height * 4;
+    badgeIconLastUse.set(k, performance.now());
+    _badgeStats.rebuilds++;
+    _badgeMarkRegistered();
   } catch (e) { /* 单个徽章失败不影响整体 */ }
-  finally { badgesBusy.delete(k); }
+  finally { badgesBusy.delete(k); badgeEnforceCap(); }
 }
 /* 把「视野内」站的 badgeIcon 写回 GeoJSON 并确保 icon 注册(懒加载:仅放大后按视野补,
    避免全量 4,669 站一次 addImage + 图集风暴拖垮帧率与底图加载)。
@@ -5359,12 +5499,16 @@ function updateBadgeIcons() {
   if (!b) return;
   /* globe 模式下 getBounds 会退化为全世界,导致全量 4,669 站排队注册(限流后东京
      先注册、远处排队到死) —— 改用 viewport 投影(project)过滤:站投影落点
-     在画布(外扩 400px)内才补注册,globe/2D 均准确 */
+     在画布内才补注册,globe/2D 均准确 */
   const cw = map.getCanvas() ? map.getCanvas().clientWidth : 1280;
   const ch = map.getCanvas() ? map.getCanvas().clientHeight : 800;
-  const pad = 400;
+  /* Round4:注册口径从「画布外扩 400px」收紧为画布内(0 外扩)——
+     ±400px 在 pitch 58° 覆盖 677 站而实际渲染仅 33,单视野即可注册 677 枚,
+     是注册数冲到 3,339 / cap 失效 10 倍的主因;画布口径 + 淘汰侧渲染集保护
+     使注册集 ≈ 渲染集。边缘刚出画布的站随下一帧 moveend(200ms 防抖)补注册。 */
   let changed = false;
   const seen = new Set(); /* 同站多 feature:仅第一个挂 icon(预写/历史 setData 可能漏挂或多挂) */
+  const nowT = performance.now();
   for (const f of data.features) {
     const p = f.properties || {};
     const nm = p.station;
@@ -5381,23 +5525,24 @@ function updateBadgeIcons() {
       continue;
     }
     seen.add(dk);
-    /* 稳态快速通道:属性已写且 icon 已注册 → 什么都不用做。
+    /* 稳态快速通道:属性已写且 icon 已注册 → 刷新 LRU 访问时间后跳过。
        此前 project 在最前,z13+ 驻留时每 200ms 对 ~4k 站全量投影(常驻 ~2% CPU),
        现在稳态只剩属性字符串比较,零投影 */
-    if (p.badgeIcon && badgesIcons.has(p.badgeIcon)) continue;
+    if (p.badgeIcon && badgesIcons.has(p.badgeIcon)) { badgeIconLastUse.set(p.badgeIcon, nowT); continue; }
     const g = f.geometry && f.geometry.coordinates;
     if (!g) continue;
     let pt = null;
     try { pt = map.project(g); } catch (e) {}
-    if (!pt || pt.x < -pad || pt.x > cw + pad || pt.y < -pad || pt.y > ch + pad) continue;
+    if (!pt || pt.x < 0 || pt.x > cw || pt.y < 0 || pt.y > ch) continue;
     if (!p.badgeIcon) {
       p.badgeIcon = 'bd_' + dk; p.badgeN = ent.length;
       delete p.fbBadge; /* 从兜底色圆升级为专属徽章(addMapLayers 预写时 map 未就绪的场景) */
       changed = true;
     }
-    badgeEnsureIcon(nm, p.line, p.op, p.badgeIcon); /* 属性已有但 image 未注册时同样补注册(内部去重,不重复下载) */
+    badgeEnsureIcon(nm, p.line, p.op, p.badgeIcon, g); /* 属性已有但 image 未注册时同样补注册(内部去重,不重复下载);coords 供淘汰在屏判定 */
   }
   if (changed) map.getSource('stas').setData(data);
+  badgeEnforceCap(); /* 注册侧收敛:cap 是硬上限(异步回调完成时还会再收敛一次) */
 }
 function badgesBindView() {
   if (!map) return;
@@ -5407,7 +5552,9 @@ function badgesBindView() {
   const run = () => { clearTimeout(t); t = setTimeout(updateBadgeIcons, 200); };
   map.on('moveend', run);
   map.on('zoomend', run);
-  map.on('idle', () => { if (map.getZoom() >= BADGES_MIN_ZOOM) run(); });
+  map.on('idle', () => { if (map.getZoom() >= BADGES_MIN_ZOOM) run(); badgeEnforceCap(); /* 空闲收敛:空闲期也强制 cap */ });
+  /* 探针:统计徽章键缺图事件(回归口径:不应异常增长;正常压力下的瞬时缺图见 REPORT) */
+  map.on('styleimagemissing', (e) => { if (e && typeof e.id === 'string' && e.id.indexOf('bd_') === 0) _badgeStats.missing++; });
 }
 /* 徽章开关(设置面板 swBadge):默认开;关闭时隐藏徽章层与兜底色圆层,仅保留灰点 */
 function applyBadgeVisible(v) {
@@ -6504,25 +6651,21 @@ function lineIconFor(t) {
   }
   return -1;
 }
-/* 图集车头贴图:特急爱称 → JK优先 → 当前线路 → 班次线路 → fallback */
+/* 图集车头贴图(详情卡/浮窗与地图同源, round5 2026-11-03):
+   旧版此处有单线几何名捷径(t.lines.length===1 && ATLAS.line[lineName] 直查),
+   详情卡以几何段名(東海道線/中央線…)为键查图集, 绕过 lineIconFor 内的同名异司
+   重定向层(round1b)——单线東海道本線/中央本線等班次地图已改判兜底湘南色,
+   详情卡仍显示旧键(141/22), 两路径不同源(auditC §5.1)。
+   现统一为与渲染循环完全相同的解析链: 爱称 → lineIconFor → ATLAS.line[lineName] → fallback,
+   其中 lineName(详情卡传当前几何段名 p[3]、浮窗传 lines[0])仅在 lineIconFor 无解时查,
+   对应渲染循环的第三级 ATLAS.line[p[3]]; JK/大阪メトロ中央/南阿蘇/山手环/直通优先/
+   総武快速/成田線/r1b 重定向等分支全部在 lineIconFor 内, 行为与地图逐班次一致。 */
 function trainIconIdx(t, lineName) {
   if (!ATLAS) return -1;
   if (t.nm && ATLAS.tokkyu[t.nm] !== undefined) return ATLAS.tokkyu[t.nm];
-  if (isKeihinTohokuTrip(t)) { const v = ATLAS.line['根岸線']; if (v !== undefined) return v; }
-  /* 大阪地铁中央线:必须在 lineName 查找之前 —— showTrPick 传入的 lineName 就是裸「中央線」,
-     直接查会命中 JR 东日本 E233(22);此处强制改判大阪地铁中央线图标 */
-  if (isOsakaMetroChuoTrip(t)) { const v = ATLAS.line['大阪メトロ中央線']; if (v !== undefined) return v; }
-  if (isMinamiasoThroughTrip(t)) { const v = ATLAS.line['高森線']; if (v !== undefined) return v; }
-  /* 山手線:选中时共享段直通(宇都宮線/東海道線等 lines=[東海道,東北,山手])也统一 E235 绿头,
-     必须在 allSkip→fallback 之前, 否则先命中 E217 湘南色兜底 */
-  if (lineName === '山手線' && ATLAS.line['山手線'] !== undefined) return ATLAS.line['山手線'];
-  /* 纯共享干道直通(上野東京線等): 优先E217湘南色兜底, 防止 p[3]='東海道線' 绕过兜底取到西日本W223(143) */
-  if (t.lines.length > 1 && t.lines.every(ln => ICON_SKIP_LINES.has(ln)) && ATLAS.fallback !== undefined) return ATLAS.fallback;
-  /* 多线路直通列车(湘南新宿線/武藏野線/総武快速等): 整趟车统一用 lineIconFor 的车系图标,
-     不走 p[3] 当前区段(否则东北段取E701/山手段取山手线E235/东海道段取W223, 一段一换错配) */
-  if (t.lines.length === 1 && lineName && ATLAS.line[lineName] !== undefined) return r1bIdx(t, lineName, ATLAS.line[lineName]);
   const li = lineIconFor(t);
   if (li >= 0) return li;
+  if (lineName) { const pv = ATLAS.line[lineName]; if (pv !== undefined) return pv; }
   return ATLAS.fallback;
 }
 function iconStyle(icIdx) {
@@ -6732,8 +6875,20 @@ function updateDetailLive(t, p, M, rebuild) {
   if (rebuild || detailEl.dataset.tid != String(t.t) + t.w0) {
     detailEl.dataset.tid = String(t.t) + t.w0;
     const uniqLines = t.lines || [];
+    const dIc = trainIconIdx(t, p && p[3]);
+    if (window.__dbgOn) {
+      /* 同源金丝雀(round5): 详情卡与地图渲染必须解析出同一图标(同一 p[3] 输入、
+         同一解析链, 见 trainIconIdx 头注)。镜像渲染循环取图序(爱称→lineIconFor→
+         ATLAS.line[p[3]]→fallback); 仅调试开关(__dbgOn)下断言, 生产默认路径零日志。 */
+      let mIc = -1;
+      if (t.nm) { const tv = ATLAS.tokkyu[t.nm]; if (tv !== undefined) mIc = tv; }
+      if (mIc < 0) mIc = lineIconFor(t);
+      if (mIc < 0) { const pv = p && p[3] ? ATLAS.line[p[3]] : undefined; if (pv !== undefined) mIc = pv; }
+      if (mIc < 0) mIc = ATLAS.fallback !== undefined ? ATLAS.fallback : -1;
+      if (mIc !== dIc) console.warn('[icon-src] drawer/map mismatch t=' + t.t + ' drawer=' + dIc + ' map=' + mIc + ' p3=' + (p && p[3]));
+    }
     detailEl.innerHTML =
-      '<div class="d-h">' + (trainIconIdx(t, p && p[3]) >= 0 ? '<span class="d-ic d-ic-img" style="' + iconStyle(trainIconIdx(t, p && p[3])) + '"></span>' : '<span class="d-ic" style="color:' + col + ';background:' + col + '22">' + ICO.train + '</span>') +
+      '<div class="d-h">' + (dIc >= 0 ? '<span class="d-ic d-ic-img" style="' + iconStyle(dIc) + '"></span>' : '<span class="d-ic" style="color:' + col + ';background:' + col + '22">' + ICO.train + '</span>') +
       '<div class="d-t"><div class="d-nm">' + (t.nm || p[3] || uniqLines[0] || t.i) + '</div>' +
       '<div class="d-sb">' + t.jas[0] + ' → ' + t.jas[N-1] + ' · ' + fmtHm(t.dep[0]) + '–' + fmtHm(t.arr[N-1]) + '</div></div>' +
       '<button class="btn icon d-x" id="dClose">' + ICO.close + '</button></div>' +

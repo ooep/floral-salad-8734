@@ -6,6 +6,8 @@
  *  时钟:JST 每帧推算全部在途列车位置,运行时零数据请求
  * ================================================================== */
 import * as maplibregl from 'https://jr-static.suki.ing/vendor/maplibre/maplibre-gl.mjs';
+/* 供 index.html 启动看门狗判定:模块已执行(静态 import 失败时本行不会运行) */
+window.__appJsLoaded = true;
 
 /* ---------------- 常量 ---------------- */
 const JST = 9 * 3600 * 1000;
@@ -177,7 +179,7 @@ const I18N = {
     wikiNoLocal:'暂无中文词条，以下为日文原文', wikiOper:'运营',
     loadingSeg:'轨道网络', loadingSta:'车站', loadingTm:'班次映射', loadingTr:'时刻表', loaded:'完成', goLive:'数据就绪 — 点击右上实时开始',
     dayFileNote:'时刻表', paused:'暂停', liveMode:'实时', playMode:'回放', fps:'FPS',
-    retry:'重试', loadingIdx:'构建索引', loadingPr:'解析时刻表', adapt:'性能模式:帧率低,已自动关闭列车光晕', cacheOn:'离线缓存已启用', failMsg:'加载失败，请检查网络后重试',
+    retry:'重试', loadingIdx:'构建索引', loadingPr:'解析时刻表', adapt:'性能模式:帧率低,已自动关闭列车光晕', cacheOn:'离线缓存已启用', failMsg:'加载失败，请检查网络后重试', smapSkip:'网络较慢，官方补缺线路本次跳过',
     tabGuide:'指南', gdLoading:'指南数据加载中…', gdEmpty:'本站暂无设施信息',
     muT:'发车铃声', muBack:'返回时刻表', muNone:'该站暂无已收录的发车铃声', muNoAudio:'音频未收录', muLoad:'铃声数据加载中…', muFail:'铃声数据加载失败，请稍后重试', muRetry:'重试', muOther:'其他', muAll:'全部', muCount:'{0} 首', muCountOne:'1 首', muAuto:'连播', muPrev:'上一首', muNext:'下一首', muSeek:'拖动试听进度', muPlayFail:'音频播放失败，请重试', muPause:'暂停', muResume:'播放',
     gdBasic:'基本信息', gdWheelchair:'无障碍通行', gdToilets:'卫生间', gdPlatform:'站台与屏蔽门',
@@ -221,7 +223,7 @@ const I18N = {
     wikiNoLocal:'日本語版記事がないため他言語版を表示', wikiOper:'運行事業者',
     loadingSeg:'軌道網', loadingSta:'駅', loadingTm:'列車マップ', loadingTr:'時刻表', loaded:'完了', goLive:'準備完了 — 右上 リアルタイム で開始',
     dayFileNote:'時刻表', paused:'一時停止', liveMode:'リアルタイム', playMode:'再生', fps:'FPS',
-    retry:'再試行', loadingIdx:'索引構築', loadingPr:'時刻表解析', adapt:'省電力モード:低FPSのため列車グローをOFF', cacheOn:'オフラインキャッシュ有効', failMsg:'読み込みに失敗しました。ネットワークを確認してもう一度お試しください',
+    retry:'再試行', loadingIdx:'索引構築', loadingPr:'時刻表解析', adapt:'省電力モード:低FPSのため列車グローをOFF', cacheOn:'オフラインキャッシュ有効', failMsg:'読み込みに失敗しました。ネットワークを確認してもう一度お試しください', smapSkip:'回線が遅いため、公式補完路線は今回はスキップ',
     tabGuide:'ガイド', gdLoading:'ガイド読込中…', gdEmpty:'この駅の設備情報はまだありません',
     muT:'発車メロディ', muBack:'時刻表に戻る', muNone:'この駅に収録された発車メロディはありません', muNoAudio:'音源未収録', muLoad:'メロディデータ読込中…', muFail:'メロディデータの取得に失敗しました', muRetry:'再試行', muOther:'その他', muAll:'すべて', muCount:'{0}曲', muCountOne:'1曲', muAuto:'連続', muPrev:'前のメロディ', muNext:'次のメロディ', muSeek:'再生位置を調整', muPlayFail:'音声の再生に失敗しました', muPause:'一時停止', muResume:'再生',
     gdBasic:'基本情報', gdWheelchair:'車椅子での移動', gdToilets:'トイレ', gdPlatform:'ホーム・ドア',
@@ -265,7 +267,7 @@ const I18N = {
     wikiNoLocal:'No Japanese article — showing another language', wikiOper:'Operator',
     loadingSeg:'Track network', loadingSta:'Stations', loadingTm:'Trip map', loadingTr:'Timetable', loaded:'done', goLive:'Ready — tap Live top-right',
     dayFileNote:'Timetable', paused:'Paused', liveMode:'Live', playMode:'Replay', fps:'FPS',
-    retry:'Retry', loadingIdx:'Building index', loadingPr:'Parsing timetable', adapt:'Performance mode: low FPS, train glow off', cacheOn:'Offline cache enabled', failMsg:'Failed to load. Check your network and retry.',
+    retry:'Retry', loadingIdx:'Building index', loadingPr:'Parsing timetable', adapt:'Performance mode: low FPS, train glow off', cacheOn:'Offline cache enabled', failMsg:'Failed to load. Check your network and retry.', smapSkip:'Slow network: official extra lines skipped this time',
     tabGuide:'Guide', gdLoading:'Loading guide…', gdEmpty:'No facility info for this station yet',
     muT:'Departure melody', muBack:'Back to timetable', muNone:'No departure melody recorded for this station', muNoAudio:'No audio', muLoad:'Loading melody data…', muFail:'Failed to load melody data', muRetry:'Retry', muOther:'Others', muAll:'All', muCount:'{0} tracks', muCountOne:'1 track', muAuto:'Auto', muPrev:'Previous melody', muNext:'Next melody', muSeek:'Seek playback position', muPlayFail:'Playback failed, please retry', muPause:'Pause', muResume:'Play',
     gdBasic:'Basic info', gdWheelchair:'Barrier-free access', gdToilets:'Toilets', gdPlatform:'Platform / doors',
@@ -333,6 +335,7 @@ let segFC = null, staFC = null, tmaps = null, PLATMAP = null;
    tmap_stops[t] = 每车次每站 [lng,lat](与 tmaps[t].s_jas 等长等序),
    tmap_lids[t] = 每区间官方线段 ID(符号=方向), segments[id] = 官方折线坐标 */
 let stationMap = null;
+let stationMapPromise = null; /* boot 期并行发起、不阻塞首帧的 station_map 加载承诺 */
 let segIndex = null, edgeInfo = null, adj = null, stationCoord = null, stationCoordLine = null;
 let LINES_MAP = {};
 let lineColor = new Map(), lineKind = new Map(), stationLines = new Map();
@@ -644,9 +647,9 @@ const trainFileUrl = bit => TRAIN_FILES[bit] + '?v=' + DATA_VERSION;
 const loadSizes = { 'https://jr-static.suki.ing/data/segments3d.geojson': 11347006, 'https://jr-static.suki.ing/data/stations3d.geojson': 1881446, 'https://jr-static.suki.ing/data/tmaps.json': 3158412, 'https://jr-static.suki.ing/data/station_map.json': 12090306, 'https://jr-static.suki.ing/data/tokkyu.json': 62335, 'https://jr-static.suki.ing/data/names_i18n.json': 482556, 'https://jr-static.suki.ing/data/trains_wd.json': 13494947, 'https://jr-static.suki.ing/data/trains_sa.json': 12228166, 'https://jr-static.suki.ing/data/trains_su.json': 12284312, 'https://jr-static.suki.ing/data/station_overall_footprints.geojson': 6902234, 'https://jr-static.suki.ing/data/station_entrances.geojson': 2787587, 'https://jr-static.suki.ing/data/station_platforms.geojson': 4254264 };
 let _fileTotal = 8, _fileIdx = 0;
 function nextFileIdx() { return _fileIdx++; }
-function setPct(p) { const pc = Math.min(100, p); lPctEl.textContent = Math.round(pc) + '%';
+function setPct(p) { window.__bootTick = Date.now(); const pc = Math.min(100, p); lPctEl.textContent = Math.round(pc) + '%';
   const tr = $('ltrain'); if (tr) tr.style.setProperty('--p', pc); } /* 方盒列车随进度行驶:0%左端并线路左端,100%右端并线路右端 */
-function setLoadMsg(s) { loaderMsg.textContent = s; }
+function setLoadMsg(s) { window.__bootTick = Date.now(); loaderMsg.textContent = s; }
 function setPhase(lo, hi, f) { setPct(lo + (hi - lo) * Math.max(0, Math.min(1, f))); }
 function updateBar(fileIdx, got, size) {
   const per = FILES_PCT / _fileTotal;
@@ -723,7 +726,65 @@ function idbPruneOldVersions() {
    5 分钟新鲜度(与服务端 max-age=300 缓存头对齐):窗口内直接用 IDB 数据,零网络零解析;
    否则若无窗口(旧条目)走 HEAD 校验头比对,有变化则全量解析并回写。 */
 const IDB_FRESH_MS = 300000;
-async function fetchJSONWithCache(url, phaseKey, fileIdx, silent) {
+/* 抓取闲置超时:两段制 ——
+   ① 首字节等待 FETCH_HEAD_MS:从 fetch() 调用起算,覆盖连接池排队 + 服务端 TTFB。
+      排队期间若本页其它请求近期(FETCH_ALIVE_MS 内)仍有字节流入(连接池饱和、网络活着),
+      说明"无流入"只是排队而非挂起 → 延展等待,直到 FETCH_QUEUE_CAP_MS 硬上限(旧版从
+      fetch() 起算 20s 且不延展,连接池满时排队的小请求零字节就被中止——它们排上连接
+      几秒就能完成);真挂起时全网无字节,新鲜度过期,仍按本阈值量级判死。
+   ② 段间闲置 FETCH_IDLE_MS:首字节(响应头)到达后,该请求连续这么久无字节流入才 abort;
+      全网仍有新鲜字节(本请求只是被调度饥饿)时同样延展至硬上限。
+   相比"总时长超时"不会误杀 3G 等慢速但持续有数据的下载(11MB 整包在 50KB/s 下
+   约需 4 分钟,只要字节在流就不触发);请求真挂起时 abort 使 boot() 的 catch 能显示重试,
+   而不是 Promise.all 永不 settle、加载器永久停在 0%。 */
+const FETCH_HEAD_MS = 20000;
+const FETCH_IDLE_MS = 20000;
+const FETCH_QUEUE_CAP_MS = 300000;
+const FETCH_ALIVE_MS = 30000; /* "网络活着"的新鲜度阈值(须 > 最坏块间隔 19s 与 TTFB 期静默) */
+let lastNetByte = Date.now(); /* 最近一次"任意请求"有字节流入:排队延展的存活证据 */
+function netBeat() { lastNetByte = Date.now(); window.__bootTick = Date.now(); }
+function idleCtl(headMs, idleMs, strict) {
+  if (typeof AbortController === 'undefined') return null; /* 极老浏览器退化为原行为 */
+  const ctl = new AbortController();
+  let first = false, t = null, lastOwn = Date.now();
+  const arm = () => {
+    clearTimeout(t);
+    t = setTimeout(() => {
+      /* 本请求暂无字节,但页面其它请求近期仍有字节流入 → 网络活着,无流入只是排队/调度
+         饥饿,不是挂起 → 延展。真挂起场景没有任何字节在流,新鲜度立刻过期,不会误延展。
+         但本请求连续 FETCH_QUEUE_CAP_MS 无任何进度时仍判死(网络活着也不无限等单请求)。
+         strict(HEAD 校验)永不延展 */
+      if (!strict && Date.now() - lastNetByte < FETCH_ALIVE_MS && Date.now() - lastOwn < FETCH_QUEUE_CAP_MS) { arm(); return; }
+      ctl.abort();
+    }, first ? idleMs : headMs);
+  };
+  arm();
+  ctl.first = () => { if (!first) { first = true; lastOwn = Date.now(); arm(); } }; /* 响应头到达:切入较短的段间闲置 */
+  ctl.kick = () => { lastOwn = Date.now(); arm(); };
+  ctl.disarm = () => clearTimeout(t);
+  return ctl;
+}
+/* 流式读取 JSON 主体:每读一块重置闲置计时;onChunk 用于进度条。无 res.body 的极老环境
+   退化为 res.json()(无中途进度,头部等待仍受闲置计时保护由调用方保证)。 */
+async function readJsonIdle(res, ctl, onChunk) {
+  const reader = res.body.getReader(), chunks = [];
+  let got = 0;
+  if (ctl) ctl.first(); /* 响应头已到达 = 首字节阶段结束,此后按段间闲置计时 */
+  try {
+    for (;;) {
+      if (ctl) ctl.kick();
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value); got += value.length;
+      netBeat(); /* 静默(silent)下载也喂看门狗,并作为"网络活着"的排队延展证据 */
+      if (onChunk) onChunk(got);
+    }
+  } finally {
+    if (ctl) ctl.disarm(); /* 异常路径(闲置中止等)同样解除定时器,不留空转计时 */
+  }
+  return JSON.parse(new TextDecoder().decode(await new Blob(chunks).arrayBuffer()));
+}
+async function fetchJSONWithCache(url, phaseKey, fileIdx, silent, outCtl) {
   const key = DATA_VERSION + '|' + url;
   const fIdx = fileIdx != null ? fileIdx : nextFileIdx();
   try {
@@ -738,19 +799,43 @@ async function fetchJSONWithCache(url, phaseKey, fileIdx, silent) {
            而 jr-static 的静态托管对 OPTIONS 返回 405,控制台报错且白白多跑一次请求。
            HEAD 属 CORS 安全方法不预检,ETag/Last-Modified 已在 expose-headers 里可直接读;
            命中则续用 IDB,未命中再整取 */
-        let same = false;
+        let same = false, headDone = false;
         try {
-          const head = await fetch(url, { method: 'HEAD', cache: 'no-cache' });
+          const hctl = idleCtl(10000, 10000, true); /* HEAD 无主体,头部等待即全部等待,10s 足够 */
+          const head = await fetch(url, { method: 'HEAD', cache: 'no-cache', signal: hctl ? hctl.signal : undefined });
+          if (hctl) hctl.disarm();
+          headDone = true;
           const hETag = head.headers.get('ETag'), hLM = head.headers.get('Last-Modified');
           same = head.ok && ((!!etag && hETag === etag) || (!etag && !!lm && hLM === lm));
         } catch (e) {}
         if (same) { if (!silent) updateBar(fIdx, 1, 1); cached.t0 = Date.now(); try { if (idb) await idbPut(key, cached); } catch (e) {} return cached.j; }
-        const res = await fetch(url);
-        if (res.ok) {
-          const j = await res.json();
+        if (!headDone) {
+          /* HEAD 超时/网络错误:校验请求不该阻塞启动 —— 直接用旧缓存并续期,后台再校验。
+             (旧行为落到下方整取:整取再挂起/再中止 → 启动硬失败) */
           if (!silent) updateBar(fIdx, 1, 1);
-          await idbPut(key, { v: DATA_VERSION, j, lm: res.headers.get('Last-Modified') || lm, etag: res.headers.get('ETag') || etag, t0: Date.now() });
-          return j;
+          cached.t0 = Date.now();
+          try { if (idb) await idbPut(key, cached); } catch (e) {}
+          setTimeout(() => bgRevalidate(url, key, lm, etag), 8000);
+          return cached.j;
+        }
+        try {
+          const ctl = idleCtl(FETCH_HEAD_MS, FETCH_IDLE_MS);
+          if (outCtl) outCtl.ctl = ctl;
+          const res = await fetch(url, ctl ? { signal: ctl.signal } : undefined);
+          if (res.ok) {
+            const j = res.body ? await readJsonIdle(res, ctl) : ((ctl && ctl.disarm()), await res.json());
+            if (!silent) updateBar(fIdx, 1, 1);
+            await idbPut(key, { v: DATA_VERSION, j, lm: res.headers.get('Last-Modified') || lm, etag: res.headers.get('ETag') || etag, t0: Date.now() });
+            return j;
+          }
+          if (ctl) ctl.disarm();
+        } catch (e) {
+          /* 整取被中止(闲置/排队超时)或网络错误:续用旧缓存并续期,不再落到最终整取 ——
+             旧行为会再打一次整取、再被中止,级联 50s+ 硬失败 */
+          if (!silent) updateBar(fIdx, 1, 1);
+          cached.t0 = Date.now();
+          try { if (idb) await idbPut(key, cached); } catch (e2) {}
+          return cached.j;
         }
       } else {
         /* 无校验头(ETag/Last-Modified 皆无)的条目:原先永不重验证 —— 数据已更新仍钉死旧版,
@@ -758,14 +843,17 @@ async function fetchJSONWithCache(url, phaseKey, fileIdx, silent) {
            改为 24h 后强制重取;离线/失败回退旧缓存并再续 24h(保住离线可用性,不逐次重试) */
         if (!cached.t0 || Date.now() - cached.t0 < 86400000) { if (!silent) updateBar(fIdx, 1, 1); return cached.j; }
         try {
-          const res2 = await fetch(url);
+          const ctl2 = idleCtl(FETCH_HEAD_MS, FETCH_IDLE_MS);
+          if (outCtl) outCtl.ctl = ctl2;
+          const res2 = await fetch(url, ctl2 ? { signal: ctl2.signal } : undefined);
           if (res2.ok) {
-            const j2 = await res2.json();
+            const j2 = res2.body ? await readJsonIdle(res2, ctl2) : ((ctl2 && ctl2.disarm()), await res2.json());
             if (!silent) updateBar(fIdx, 1, 1);
             await idbPut(key, { v: DATA_VERSION, j: j2, lm: res2.headers.get('Last-Modified') || '', etag: res2.headers.get('ETag') || '', t0: Date.now() });
             return j2;
           }
-        } catch (e) {}
+          if (ctl2) ctl2.disarm();
+        } catch (e) {} /* 含闲置超时中止:回退旧缓存(下方),保住离线可用 */
         if (!silent) updateBar(fIdx, 1, 1);
         cached.t0 = Date.now();
         try { if (idb) await idbPut(key, cached); } catch (e) {}
@@ -773,28 +861,35 @@ async function fetchJSONWithCache(url, phaseKey, fileIdx, silent) {
       }
     }
   } catch (e) { console.warn('[cache]', e); }
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(url + ' HTTP ' + res.status);
+  const ctl3 = idleCtl(FETCH_HEAD_MS, FETCH_IDLE_MS);
+  if (outCtl) outCtl.ctl = ctl3;
+  const res = await fetch(url, ctl3 ? { signal: ctl3.signal } : undefined);
+  if (!res.ok) { if (ctl3) ctl3.disarm(); throw new Error(url + ' HTTP ' + res.status); }
   const est = loadSizes[url] || 0;
   const total = +res.headers.get('content-length') || est;
   let j;
-  if (!res.body) { j = await res.json(); if (!silent) updateBar(fIdx, 1, 1); }
+  if (!res.body) { j = await res.json(); if (ctl3) ctl3.disarm(); if (!silent) updateBar(fIdx, 1, 1); }
   else {
-    const reader = res.body.getReader(), chunks = [];
-    let got = 0;
-    for (;;) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      chunks.push(value); got += value.length;
+    j = await readJsonIdle(res, ctl3, got => {
       if (!silent) updateBar(fIdx, got, total);
       if (phaseKey && T()[phaseKey]) setLoadMsg(T().loading + ' ' + T()[phaseKey] + ' — ' + (got / 1048576).toFixed(1) + ' MB');
-    }
-    const buf = new TextDecoder().decode(await new Blob(chunks).arrayBuffer());
-    j = JSON.parse(buf);
+    });
     if (!silent) updateBar(fIdx, 1, 1);
   }
   try { if (idb) await idbPut(key, { v: DATA_VERSION, j, lm: res.headers.get('Last-Modified') || '', etag: res.headers.get('ETag') || '', t0: Date.now() }); } catch (e) {}
   return j;
+}
+/* 后台再校验:HEAD 校验超时/失败时已先用旧缓存续期,启动后静默把新版本取回写入 IDB。
+   失败不打扰(缓存已续期,下次访问会再试);绝不阻塞启动路径。 */
+function bgRevalidate(url, key, lm, etag) {
+  try {
+    const ctl = idleCtl(FETCH_HEAD_MS, FETCH_IDLE_MS);
+    fetch(url, ctl ? { signal: ctl.signal } : undefined).then(async res => {
+      if (!res.ok) { if (ctl) ctl.disarm(); return; }
+      const j = res.body ? await readJsonIdle(res, ctl) : ((ctl && ctl.disarm()), await res.json());
+      try { if (idb) await idbPut(key, { v: DATA_VERSION, j, lm: res.headers.get('Last-Modified') || lm || '', etag: res.headers.get('ETag') || etag || '', t0: Date.now() }); } catch (e) {}
+    }).catch(() => {});
+  } catch (e) {}
 }
 
 /* ---------------- 时刻表分片（周更烘焙 / 纯静态） ----------------
@@ -1498,7 +1593,20 @@ async function buildStaticIndexAsync(onPhase) {
   const report = f => { if (onPhase) onPhase(f); };
   /* 基于时间的分片:连续工作 >16ms 才让出一次主线程(界面不卡,开销≈0) */
   let lastYieldT = performance.now();
-  const ck = async () => { const n = performance.now(); if (n - lastYieldT > 16) { lastYieldT = n; await yieldToUI(); } };
+  let lastHbT = 0;
+  /* 心跳:0→0.4 全量扫描阶段低端 CPU 可达 50s+,期间没有 setPct ——
+     按 500ms 节流喂一次看门狗,防止"正在构建"被误判为"卡死" */
+  const hb = () => { const n = performance.now(); if (n - lastHbT > 500) { lastHbT = n; window.__bootTick = Date.now(); } return n; };
+  const ck = async () => {
+    const n = hb();
+    if (n - lastYieldT > 16) { lastYieldT = n; await yieldToUI(); }
+  };
+  /* 热循环版:同步心跳,仅在需要让出时返回 Promise —— 调用处 `const _y = ckHot(); if (_y) await _y;`,
+     常态零微任务开销(逐要素循环上百万次,async 包装会累积可感知的 1-2s) */
+  const ckHot = () => {
+    const n = hb();
+    if (n - lastYieldT > 16) { lastYieldT = n; return yieldToUI(); }
+  };
   stationCoord = new Map(); stationCoordLine = new Map(); stationLines = new Map();
   endCoord = new Map(); nameOf = new Map();
   staFC.features.forEach(f => {
@@ -1578,6 +1686,7 @@ async function buildStaticIndexAsync(onPhase) {
       const rev = co.slice().reverse();
       register(p.to, p.from, rev, p.line, p.color, p.kind);
     }
+    const _y = ckHot(); if (_y) await _y;
   }
   /* ===== 修复:同名站候选表(站表 line/op + 几何段端点反哺) ===== */
   stationCands.clear();
@@ -1607,6 +1716,7 @@ async function buildStaticIndexAsync(onPhase) {
       if (okA) addCand(fm, '', p.line, c0);
       if (okN) addCand(to, '', p.line, cN);
     }
+    const _y2 = ckHot(); if (_y2) await _y2;
   }
   /* ===== 修复:轨道段网格索引(投影接入) ===== */
   segGrid = new Map();
@@ -4988,6 +5098,7 @@ function applyUrlState() {
 async function boot() {
   if (booting) return;
   booting = true;
+  window.__booting = true; /* 供 index.html 看门狗:重试点击时判断 boot 是否仍卡在途(在途则整页刷新) */
   ttState = null;
   const retryBtn = $('lRetry');
   if (retryBtn) retryBtn.style.display = 'none';
@@ -4999,36 +5110,32 @@ async function boot() {
        由 bindLazyHeavyData 在首次放大(z≥11.5)或开关打开时按需拉取,启动少下 14MB */
     dayBitAuto = bitOfDate(Date.now());
     dayBit = dayMode === 'auto' ? dayBitAuto : dayMode;
-    const [s, st, tm, lm, sm, tk, ni, tt] = await Promise.all([
+    /* station_map.json(2.7MB gz)移出首帧关键路径:它只用于官方坐标补缺/股道底图/徽章限定键,
+       首帧(轨道/车站渲染)不依赖。并行发起但不 await;归位时设 8s 限期(自发起时起算,见下),
+       保证补缺几何与索引指纹(idxFingerprint 含 generated_at/补缺数)和现状完全一致 */
+    const smapCtl = {}; /* 归位超时时用于中止在途请求,释放连接 */
+    stationMapPromise = fetchJSONWithCache('https://jr-static.suki.ing/data/station_map.json', 'loadingTm', 4, false, smapCtl)
+      .then(sm => (stationMap = sm && sm.version === 2 ? sm : null))
+      .catch(() => null);
+    /* 8s 限期自发起时起算(不是等到归位 await 才开始),弱网下进度条停留在文件阶段的
+       总时长被压在限期之内 */
+    const SMAP_TIMEOUT = {};
+    let smapTimer;
+    const smapDeadline = new Promise(r => { smapTimer = setTimeout(() => r(SMAP_TIMEOUT), 8000); });
+    let smapSkipped = false;
+    const [s, st, tm, lm, tk, ni, tt] = await Promise.all([
       fetchJSONWithCache('https://jr-static.suki.ing/data/segments3d.geojson', 'loadingSeg', 0),
       fetchJSONWithCache('https://jr-static.suki.ing/data/stations3d.geojson', 'loadingSta', 1),
       fetchJSONWithCache('https://jr-static.suki.ing/data/tmaps.json', 'loadingTm', 2),
       fetchJSONWithCache('https://jr-static.suki.ing/data/lines_map.json', '', 3).catch(() => ({})),
-      fetchJSONWithCache('https://jr-static.suki.ing/data/station_map.json', 'loadingTm', 4).catch(() => null),
       fetchJSONWithCache('https://jr-static.suki.ing/data/tokkyu.json', '', 5).catch(() => null),
       fetchJSONWithCache('https://jr-static.suki.ing/data/names_i18n.json', '', 6).catch(() => null),
       fetchTimetableBoot(dayBit),
     ]);
-    segFC = s; staFC = st; tmaps = tm; LINES_MAP = lm || {}; stationMap = sm && sm.version === 2 ? sm : null; TOKKYU = tk;
+    segFC = s; staFC = st; tmaps = tm; LINES_MAP = lm || {}; TOKKYU = tk;
     /* 新干线图标表以数据为准(时刻表新增列车名时自动纳入 G0 等级) */
     if (tk && tk.sh) for (const k in tk.sh) GRADE_SH.add(k);
     NAME_I18N = ni;
-    /* 官方补缺轨道/车站(地图遗漏的新开线/私铁, 如西鉄甘木線/北大阪急行延伸/夢洲):
-       合并进同一 GeoJSON, 渲染/索引/寻路自动一致; 不改任何既有几何 */
-    if (stationMap && Array.isArray(stationMap.extra_segments)) {
-      for (const e of stationMap.extra_segments) {
-        segFC.features.push({ type: 'Feature',
-          properties: { from: e.from, to: e.to, line: e.line, color: e.color, kind: e.kind || 'rail', op: '', official: 1 },
-          geometry: { type: 'LineString', coordinates: e.coords } });
-      }
-      for (const z of (stationMap.extra_stations || [])) {
-        staFC.features.push({ type: 'Feature',
-          properties: { station: z.name, op: '', line: z.line, official: 1 },
-          geometry: { type: 'Point', coordinates: z.coord } });
-      }
-      console.log('[station_map] official extra: +' + stationMap.extra_segments.length + ' segs +' +
-        (stationMap.extra_stations || []).length + ' stations');
-    }
     /* 地图先行:轨道/车站网络先渲染(仅需原始 GeoJSON),索引与时刻表随后分片构建 */
     await mapReadyPromise();
     await styleReadyPromise();
@@ -5036,6 +5143,42 @@ async function boot() {
     /* 车站徽章(DokoRail 迁移):异步加载映射,绑定视野更新;不阻塞主流程 */
     loadBadgesMap().then(() => { badgesBindView(); updateBadgeIcons(); });
     bindLazyHeavyData(); /* ORM 44MB + 站房/站台/出入口 14MB + platform_map 3.3MB:全部延后到启动空闲期(见函数注释) */
+    /* station_map 归位(8s 限期,自发起时起算):首帧已过,索引构建前合并官方补缺轨道/车站
+       (地图遗漏的新开线/私铁,如西鉄甘木線/北大阪急行延伸/夢洲)——合并进同一 GeoJSON,
+       渲染/索引/寻路自动一致;不改任何既有几何。已建的 source 用 setData 增量更新,徽章属性随之重写。
+       限期理由:它是补缺几何、不是必需品 —— 旧行为在弱网下 `await` 无限等它,
+       进度条 28%↔55% 振荡最长 ~37 分钟且无任何提示。超时则中止在途请求、释放连接,
+       明确走"无补缺几何"路径并给一句提示(索引构建期间保留该提示,不被覆盖);
+       8s 内到达则合并流程不变。 */
+    const sm = await Promise.race([stationMapPromise, smapDeadline]);
+    clearTimeout(smapTimer);
+    if (sm === SMAP_TIMEOUT) {
+      smapSkipped = true;
+      stationMap = null;
+      if (smapCtl.ctl) { try { smapCtl.ctl.abort(); } catch (e) {} }
+      console.warn('[station_map] not ready within 8s: proceeding without official extra geometry');
+      setLoadMsg('⚠ ' + T().smapSkip);
+    } else {
+      stationMap = sm && sm.version === 2 ? sm : null;
+      if (stationMap && Array.isArray(stationMap.extra_segments)) {
+        for (const e of stationMap.extra_segments) {
+          segFC.features.push({ type: 'Feature',
+            properties: { from: e.from, to: e.to, line: e.line, color: e.color, kind: e.kind || 'rail', op: '', official: 1 },
+            geometry: { type: 'LineString', coordinates: e.coords } });
+        }
+        for (const z of (stationMap.extra_stations || [])) {
+          staFC.features.push({ type: 'Feature',
+            properties: { station: z.name, op: '', line: z.line, official: 1 },
+            geometry: { type: 'Point', coordinates: z.coord } });
+        }
+        try {
+          if (map && map.getSource('segs')) map.getSource('segs').setData(segFC);
+          if (map && map.getSource('stas')) map.getSource('stas').setData(staFC);
+        } catch (e) {}
+        console.log('[station_map] official extra (deferred): +' + stationMap.extra_segments.length + ' segs +' +
+          (stationMap.extra_stations || []).length + ' stations');
+      }
+    }
     /* 索引构建/恢复:进度 55→78%(fp 指纹不匹配 = 输入数据变了但版本没递增 → 重建) */
     setPhase(FILES_PCT, IDX_PCT, 0);
     const idxCache = await idbGet(IDX_CACHE_KEY);
@@ -5043,7 +5186,7 @@ async function boot() {
       restoreIndexes(idxCache); /* 二次访问:直接恢复索引,秒过 */
       setPhase(FILES_PCT, IDX_PCT, 1);
     } else {
-      setLoadMsg(T().loading + ' ' + T().loadingIdx + ' …');
+      if (!smapSkipped) setLoadMsg(T().loading + ' ' + T().loadingIdx + ' …'); /* 跳过补缺时保留提示文案 */
       await buildStaticIndexAsync(f => setPhase(FILES_PCT, IDX_PCT, f));
       saveIndexes();
       applyLoaderLineColor();
@@ -5060,6 +5203,10 @@ async function boot() {
     $('bCount').textContent = totalTripsToday.toLocaleString();
     setPct(100);
     setLoadMsg('✓ ' + T().loaded);
+    /* 启动成功:清掉看门狗失败标记与会话重试计次 —— 避免上一轮失败残留的
+       __wdFail/重试按钮状态干扰本轮,并让后续失败仍有完整的 2 次刷新额度 */
+    window.__wdFail = false;
+    if (window.__wdClear) { try { window.__wdClear(); } catch (e) {} }
     setTimeout(() => { $('loader').classList.add('hide'); }, 350);
     setTimeout(() => { if (window.__tourApi) window.__tourApi.maybeStart(); }, 1500);   /* 首次访问:数据就绪后弹出欢迎引导 */
     applyUrlState();
@@ -5077,7 +5224,7 @@ async function boot() {
     setLoadMsg('⚠ ' + T().failMsg);
     setStatus('ERR ' + (err.message || err));
     if (retryBtn) retryBtn.style.display = 'flex';
-  } finally { booting = false; }
+  } finally { booting = false; window.__booting = false; }
 }
 $('lRetry').addEventListener('click', () => { boot(); });
 
@@ -5746,8 +5893,11 @@ function addMapLayers() {
       }
       if (map.getSource('stas')) map.getSource('stas').setData(staFC);
     };
-    if (badgesMap || badgesLines) writeBadgeProps();
-    else loadBadgesMap().then(writeBadgeProps).catch(() => writeBadgeProps());
+    /* 徽章属性写入等 badges 与 station_map 双就绪:限定键(同名跨城站消歧,如神戸大倉山/東京大倉山)
+       依赖 stationMap.stations;station_map 延后加载后,未就绪时写入会退化为按普通站名匹配 */
+    const badgesWait = (badgesMap || badgesLines) ? Promise.resolve() : loadBadgesMap();
+    Promise.all([badgesWait, stationMapPromise || Promise.resolve()])
+      .then(() => writeBadgeProps()).catch(() => writeBadgeProps());
     map.addSource('stas', { type: 'geojson', data: staFC });
     map.addLayer({ id: 'stas', type: 'circle', source: 'stas', minzoom: 7, paint: {
       'circle-radius': ['interpolate', ['exponential', 1.5], ['zoom'], 3, 1, 9, 1.8, 13, 3.2],

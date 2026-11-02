@@ -550,6 +550,139 @@ window.addEventListener('error', e => { __pushErr(String(e.message || e) + ' @ '
 window.addEventListener('unhandledrejection', e => { __pushErr('REJ ' + (e.reason && e.reason.message || e.reason)); });
 (() => { const oc = console.error; console.error = function () { __pushErr('CERR ' + Array.from(arguments).map(a => (a && a.message) ? a.message : String(a)).join(' ;; ').slice(0, 300)); return oc.apply(console, arguments); }; })();
 </script>
+<script>
+/* 启动看门狗:兜底「永久 0% 且无重试」死锁。
+   成因:① 资源错误事件不冒泡 —— app.js 模块脚本加载失败时,上面按冒泡注册的 window error
+   监听收不到;② 重试按钮只在 app.js boot() 的 catch 里显示,模块没执行就永远不出现。
+   因此本页自己兜底:
+   ① 捕获阶段监听资源错误:主模块脚本加载失败 → 立即显示本地化失败文案 + 重试(点击=刷新);
+   ② 进度看门狗(双预算):
+      - 模块未执行期(!__appJsLoaded):2G 下光 app.js 下载就要 4 分钟以上,期间没有任何
+        进度信号,固定阈值必误杀。改用较短的 BOOT 预算,到期不直接判死,而是对关键脚本
+        (defer + 主模块)发 HEAD 探针:全部有响应 = 网络活着、下载仍在推进 → 续等;
+        任一超时无响应 = 真挂起 → 判死。
+      - 模块已执行期:app.js 的 setPct/setLoadMsg/下载字节/索引心跳都会刷新 __bootTick,
+        前台连续 RUN 预算无进度信号才判死(抓取闲置中止已先于此兜住真挂起)。
+      后台标签页不计时;回前台(visible)立即重置基准并给予完整宽限,不因后台定时器节流
+      造成的 lastAlive 过期而在首拍误判。
+   遮罩隐藏(启动成功)后看门狗自动终止。重试点击:整页刷新按会话计次、最多 2 次;
+   boot 在途时首次点击先给在途闲置超时一次自我裁决的机会;模块已执行且 boot 已落定时
+   交给 app.js 自己的重试监听(原地 boot(),更快)。 */
+(function () {
+  var TXT = {
+    zh: { fail: '加载失败，请检查网络后重试', retry: '重试', capped: '重试次数已达上限，请检查网络后手动刷新页面' },
+    ja: { fail: '読み込みに失敗しました。ネットワークを確認してもう一度お試しください', retry: '再試行', capped: '再試行回数が上限に達しました。ネットワークを確認してから手動で更新してください' },
+    en: { fail: 'Failed to load. Check your network and retry.', retry: 'Retry', capped: 'Retry limit reached. Check your network and refresh manually.' }
+  };
+  var lang = 'zh';
+  try {
+    var saved = localStorage.getItem('mjr3d_lang'), nav = String(navigator.language || '').toLowerCase();
+    if (saved && TXT[saved]) lang = saved;
+    else if (nav.indexOf('ja') === 0) lang = 'ja';
+    else if (nav.indexOf('zh') !== 0) lang = 'en';
+  } catch (e) {}
+  var BOOT_BUDGET_MS = 22000; /* 模块期:开始探针的阈值(模块下载本身不产生进度信号) */
+  var RUN_BUDGET_MS = 60000;  /* 模块已执行期:无进度判死阈值(抓取闲置中止先于此兜底) */
+  var PROBE_MS = 28000;       /* HEAD 探针单项超时(须大于实测最坏 TTFB 25s) */
+  var RELOAD_KEY = 'mjr3d_wdReloads', MAX_RELOADS = 2;
+  window.__bootTick = Date.now();
+  var failed = false, probing = false, chance = false, lastTick = window.__bootTick, lastAlive = Date.now();
+  function showFail() {
+    if (failed) return; failed = true; chance = false; window.__wdFail = true;
+    var msg = document.getElementById('lMsg'), btn = document.getElementById('lRetry');
+    if (msg) msg.textContent = '⚠ ' + TXT[lang].fail;
+    if (btn) {
+      var svg = btn.querySelector('svg');
+      btn.innerHTML = (svg ? svg.outerHTML + ' ' : '') + TXT[lang].retry;
+      btn.style.display = 'flex';
+      btn.addEventListener('click', function () {
+        /* boot 在途:首次点击不刷新 —— 给在途请求的闲置超时一次自我裁决的机会,
+           避免掐掉可能成功的在途下载;再次点击仍在途 → 落到下方刷新路径 */
+        if (window.__booting && !chance) { chance = true; return; }
+        /* 模块没执行 → 不存在 boot(),只能刷新;模块已执行但 boot 仍卡在途 → 刷新。
+           整页刷新按会话计次、最多 2 次:连点 3 次不再是 3 次整页刷新 */
+        if (!window.__appJsLoaded || window.__booting) {
+          var n = 0; try { n = +(sessionStorage.getItem(RELOAD_KEY) || 0); } catch (e) {}
+          if (n >= MAX_RELOADS) { if (msg) msg.textContent = '⚠ ' + TXT[lang].capped; return; }
+          try { sessionStorage.setItem(RELOAD_KEY, String(n + 1)); } catch (e) {}
+          location.reload();
+        }
+      }, true);
+    }
+  }
+  window.__wdClear = function () { /* app.js boot() 成功后调用:清失败态与刷新计次 */
+    failed = false; chance = false; window.__wdFail = false;
+    lastAlive = Date.now(); lastTick = window.__bootTick;
+    try { sessionStorage.removeItem(RELOAD_KEY); } catch (e) {}
+  };
+  window.addEventListener('error', function (e) {
+    var t = e.target;
+    /* 资源错误只在捕获阶段可见;仅模块脚本致命(经典脚本如统计/图标表失败有各自兜底) */
+    if (t && t !== window && t.tagName === 'SCRIPT' && t.type === 'module') { window.__scriptFail = true; showFail(); }
+  }, true);
+  function probeUrls() {
+    /* 模块执行关键路径上的资源:defer 脚本(先于模块执行)与主模块脚本。
+       任一挂起都会使 app.js 永不执行 —— 探针正是针对"会不会被卡住"的资源。
+       追加独立查询参数:与在途 GET 不同缓存条目,避免 no-cache 校验把正在下载的同名
+       请求打断(实测会中止 app.js/line_icons 的在途 GET,模块将永不执行) */
+    var urls = [];
+    try {
+      var d = document.querySelector('script[defer][src]');
+      var m = document.querySelector('script[type="module"][src]');
+      var tag = function (u) { return u + (u.indexOf('?') >= 0 ? '&' : '?') + '__wdprobe=1'; };
+      if (d && d.src) urls.push(tag(d.src));
+      if (m && m.src) urls.push(tag(m.src));
+    } catch (e) {}
+    return urls;
+  }
+  function probeAlive(cb) {
+    var urls = probeUrls(), pending = urls.length, alive = true;
+    if (!pending || typeof fetch === 'undefined') return cb(false);
+    urls.forEach(function (u) {
+      var ctl = null, timer = null, done = false;
+      var finish = function (ok) {
+        if (done) return; done = true;
+        if (timer) clearTimeout(timer);
+        if (!ok) alive = false;
+        if (--pending === 0) cb(alive);
+      };
+      try { ctl = new AbortController(); } catch (e) {}
+      timer = setTimeout(function () { try { if (ctl) ctl.abort(); } catch (e) {} finish(false); }, PROBE_MS);
+      try {
+        fetch(u, { method: 'HEAD', cache: 'no-cache', signal: ctl ? ctl.signal : undefined })
+          .then(function () { finish(true); }, function () { finish(false); });
+      } catch (e) { finish(false); }
+    });
+  }
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible') { lastAlive = Date.now(); lastTick = window.__bootTick; }
+  });
+  setTimeout(function tick() {
+    var loader = document.getElementById('loader');
+    if (!loader || loader.classList.contains('hide') || failed) return; /* 启动成功或已判失败:终止 */
+    var now = Date.now();
+    if (document.visibilityState === 'hidden') lastAlive = now; /* 后台不计时 */
+    else if (window.__bootTick !== lastTick) { lastTick = window.__bootTick; lastAlive = now; }
+    else if (window.__scriptFail) showFail();
+    else {
+      var budget = window.__appJsLoaded ? RUN_BUDGET_MS : BOOT_BUDGET_MS;
+      if (now - lastAlive > budget && !probing) {
+        if (!window.__appJsLoaded) {
+          /* 模块未执行:先探针确认网络是否还活着(慢下载 ≠ 挂起),再决定是否判死 */
+          probing = true;
+          probeAlive(function (ok) {
+            probing = false;
+            if (failed) return;
+            if (ok) { lastAlive = Date.now(); lastTick = window.__bootTick; }
+            else showFail();
+          });
+        } else showFail();
+      }
+    }
+    if (!failed) setTimeout(tick, 3000);
+  }, 3000);
+})();
+</script>
 
 <!-- line_icons.js:线路小图标 URL 表,仅车站抽屉时刻表行使用(LINE_ICON 消费处已有缺省兜底)。
      defer 解除解析阻塞:执行顺序仍在 module 之前,行为不变 -->

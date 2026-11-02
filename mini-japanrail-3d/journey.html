@@ -346,7 +346,6 @@ button,input,select { font-family:inherit; }
 .tcard .nxt { display:flex; align-items:center; gap:5px; width:100%; padding:6px 10px; border:0; border-top:1px solid var(--line);
   background:transparent; color:var(--acc-txt); font-size:10.5px; font-weight:800; cursor:pointer; transition:background .15s; }
 @media (hover:hover) { .tcard .nxt:hover { background:var(--acc-soft); } }
-.tcard .nxt .cv { margin-left:auto; color:var(--dim); font-weight:600; font-size:9px; transition:transform .3s var(--ease-spring), color .15s; }
 .tcard .nxt.open .cv { color:var(--acc-txt); }   /* 原样式把提示文字整段旋转 90°(展开后续班次后文字竖排到卡片外), 箭头旋转已由内联 svg 承担 */
 /* 后续班次列表 */
 .nlist { border-top:1px solid var(--line); background:var(--glass-lo); animation:nlistIn .26s var(--ease-smooth) both; }
@@ -585,8 +584,6 @@ button { touch-action:manipulation; }
 <body>
 <div id="map"></div>
 <div id="mapCtl">
-  <button id="mcZin" type="button" title="放大" aria-label="放大"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
-  <button id="mcZout" type="button" title="缩小" aria-label="缩小"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
   <button id="mcFit" type="button" title="适配路线" aria-label="适配路线"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
 </div>
 
@@ -661,10 +658,6 @@ button { touch-action:manipulation; }
     <div id="sug" role="listbox"></div>
   </div>
   <div id="quick">
-    <div class="q-sec">
-      <div class="q-lb" id="qPopLb">热门路线</div>
-      <div class="q-row" id="qPop"></div>
-    </div>
     <div class="q-sec" id="qRecSec" style="display:none">
       <div class="q-lb"><span id="qRecLb">最近</span><button id="qClear" type="button">清除</button></div>
       <div class="q-row" id="qRec"></div>
@@ -753,13 +746,13 @@ const I18N = {
     tagFast: '最快', tagEasy: '乗換少', tagAlt: '备选',
     nextTrips: '后续班次', nextNone: '今日已无后续班次', arriveAt: '到达 {0}', noConn: '改乘后无法到达',
     walkMin: '徒步 {0} 分', xfrAt: '乗換 {0} 分', legInfo: '{0} 駅 · {1} {2}', boarding: '乗', alighting: '降',
-    emptyLegs: '未找到可连接的班次', dayAuto: '自动', tapTrains: '点击列车卡可查看后续班次',
+    emptyLegs: '未找到可连接的班次', dayAuto: '自动',
     backList: '返回',
     midStops: '途中 {0} 駅',
     detail: '詳細条件', catAll: '全種別', optLb: '列车种别', catSk: '新幹線', catTk: '特急', catLn: 'Liner', catEx: '急行・快速', catLo: '普通',
     xfrLb: '乗換', xfrFew: '少', xfrStd: '标准', xfrAny: '不限', optTip: '关闭的种别不参与检索', optMin: '至少保留一种列车种别',
-    qPop: '热门路线', qRecent: '最近', qClear: '清除', themeDark: '暗', themeLight: '亮', themeAuto: '自动',
-    mapZin: '放大', mapZout: '缩小', mapFit: '适配路线',
+    qRecent: '最近', qClear: '清除', themeDark: '暗', themeLight: '亮', themeAuto: '自动',
+    mapFit: '适配路线',
     badTime: '请选择出发/到达时刻', errSearch: '搜索出错，请重试', stations: '车站',
     nrTitle: '未找到连通路径', nrHint: '试试放宽列车种别 / 换乘条件，或确认起终点站名是否正确。',
     nrRelax: '放宽条件重试', nrSwap: '交换起终点',
@@ -785,13 +778,13 @@ const I18N = {
     tagFast: '最速', tagEasy: '乗換少', tagAlt: '別経路',
     nextTrips: '後の便', nextNone: '本日の便はもうありません', arriveAt: '{0} 着', noConn: 'この便では到着できません',
     walkMin: '徒歩 {0} 分', xfrAt: '乗換 {0} 分', legInfo: '{0} 駅 · {1} {2}', boarding: '乗', alighting: '降',
-    emptyLegs: '接続できる便が見つかりません', dayAuto: '自動', tapTrains: '列車カードをタップで後の便を表示',
+    emptyLegs: '接続できる便が見つかりません', dayAuto: '自動',
     backList: '戻る',
     midStops: '途中{0}駅',
     detail: '詳細条件', catAll: '全種別', optLb: '列車種別', catSk: '新幹線', catTk: '特急', catLn: 'ライナー', catEx: '急行・快速', catLo: '普通',
     xfrLb: '乗換', xfrFew: '少なめ', xfrStd: '標準', xfrAny: '制限なし', optTip: 'オフの種別は検索対象外です', optMin: '列車種別は1つ以上選んでください',
-    qPop: '人気のルート', qRecent: '最近', qClear: '消去', themeDark: '暗い', themeLight: '明るい', themeAuto: '自動',
-    mapZin: '拡大', mapZout: '縮小', mapFit: '全体表示',
+    qRecent: '最近', qClear: '消去', themeDark: '暗い', themeLight: '明るい', themeAuto: '自動',
+    mapFit: '全体表示',
     badTime: '時刻を選んでください', errSearch: '検索でエラーが発生しました', stations: '駅',
     nrTitle: '連絡経路が見つかりません', nrHint: '列車種別・乗換条件を緩めるか、駅名をご確認ください。',
     nrRelax: '条件を緩めて再検索', nrSwap: '出発/到着を入れ替え',
@@ -817,13 +810,13 @@ const I18N = {
     tagFast: 'Fastest', tagEasy: 'Fewest', tagAlt: 'Alt',
     nextTrips: 'Later trains', nextNone: 'No later trains today', arriveAt: 'arr {0}', noConn: 'Cannot arrive on this train',
     walkMin: 'Walk {0} min', xfrAt: 'Change {0} min', legInfo: '{0} stops · {1} {2}', boarding: 'board', alighting: 'alight',
-    emptyLegs: 'No connecting services found', dayAuto: 'Auto', tapTrains: 'Tap a train card to see later departures',
+    emptyLegs: 'No connecting services found', dayAuto: 'Auto',
     backList: 'Back',
     midStops: '{0} intermediate stops',
     detail: 'Options', catAll: 'All types', optLb: 'Train type', catSk: 'Shinkansen', catTk: 'Ltd. Exp.', catLn: 'Liner', catEx: 'Rapid', catLo: 'Local',
     xfrLb: 'Changes', xfrFew: 'Few', xfrStd: 'Normal', xfrAny: 'Any', optTip: 'Disabled types are excluded from search', optMin: 'Keep at least one train type',
-    qPop: 'Popular routes', qRecent: 'Recent', qClear: 'Clear', themeDark: 'Dark', themeLight: 'Light', themeAuto: 'Auto',
-    mapZin: 'Zoom in', mapZout: 'Zoom out', mapFit: 'Fit route',
+    qRecent: 'Recent', qClear: 'Clear', themeDark: 'Dark', themeLight: 'Light', themeAuto: 'Auto',
+    mapFit: 'Fit route',
     badTime: 'Pick a departure/arrival time', errSearch: 'Search failed, please retry', stations: 'Stations',
     nrTitle: 'No connected route found', nrHint: 'Try relaxing train-type / change limits, or check the station names.',
     nrRelax: 'Relax filters & retry', nrSwap: 'Swap from/to',
@@ -900,10 +893,9 @@ function applyI18n() {
   /* 空态 + 地图控件 + 主题按钮(依赖语言) */
   $('nrTitle').textContent = t.nrTitle; $('nrHint').textContent = t.nrHint;
   $('nrRelax').textContent = t.nrRelax; $('nrSwap').textContent = t.nrSwap;
-  $('qPopLb').textContent = t.qPop; $('qRecLb').textContent = t.qRecent;
+  $('qRecLb').textContent = t.qRecent;
   $('qClear').textContent = t.qClear;
-  $('mcZin').title = t.mapZin; $('mcZout').title = t.mapZout; $('mcFit').title = t.mapFit;
-  $('mcZin').setAttribute('aria-label', t.mapZin); $('mcZout').setAttribute('aria-label', t.mapZout); $('mcFit').setAttribute('aria-label', t.mapFit);
+  $('mcFit').title = t.mapFit; $('mcFit').setAttribute('aria-label', t.mapFit);
   updateDocTitle();
   applyThemeMode();
 }
@@ -2146,7 +2138,7 @@ function renderLegs(r) {
       stopsHtml +
       '<button class="nxt' + (openNext === li ? ' open' : '') + '" data-li="' + li + '">' +
       '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .2s var(--ease-smooth);transform:rotate(' + (openNext === li ? 90 : 0) + 'deg)"><path d="M9 6l6 6-6 6"/></svg>' +
-      esc(t.nextTrips) + '<span class="cv">' + esc(t.tapTrains) + '</span></button>' +
+      esc(t.nextTrips) + '</button>' +
       (openNext === li ? renderNextList(li, lg) : '') +
       '</div></div></div>';
     /* 换乘 / 终到徒步 */
@@ -2454,9 +2446,7 @@ function highlightOnMap(r) {
   }
 }
 
-/* ══════════════════ 空态: 快速开始(热门路线 + 最近搜索) ══════════════════ */
-const POP_ROUTES = [['東京', '京都'], ['新宿', '箱根湯本'], ['大阪', '京都'],
-  ['品川', '熱海'], ['名古屋', '金沢'], ['博多', '長崎']];
+/* ══════════════════ 空态: 快速开始(最近搜索) ══════════════════ */
 function recentList() {
   try { return (JSON.parse(store.get('mjrj_recent') || '[]') || []).filter(x => x && ST.D[x.f] && ST.D[x.t]); }
   catch (e) { return []; }
@@ -2475,12 +2465,8 @@ function quickChip(f, t) {
 function renderQuick() {
   if (!ST.D || !ST.D.length) return;
   const t = T();
-  $('qPopLb').textContent = t.qPop; $('qRecLb').textContent = t.qRecent;
+  $('qRecLb').textContent = t.qRecent;
   $('qClear').textContent = t.qClear;
-  $('qPop').innerHTML = POP_ROUTES.map(([a, b]) => {
-    const ia = nodeIdx(a), ib = nodeIdx(b);
-    return (ia >= 0 && ib >= 0) ? quickChip(ia, ib) : '';
-  }).join('');
   const rec = recentList().slice(0, 4);
   $('qRecSec').style.display = rec.length ? '' : 'none';
   $('qRec').innerHTML = rec.map(x => quickChip(x.f, x.t)).join('');
@@ -2497,10 +2483,8 @@ $('qClear').addEventListener('click', () => {
   try { store.del('mjrj_recent'); } catch (e) { }
   renderQuick();
 });
-/* 地图玻璃控件: 缩放/适配(桌面无捏合手势时的入口) */
+/* 地图控件: 只留「适配路线」(缩放交给滚轮/捏合手势) */
 function bindMapCtl() {
-  $('mcZin').addEventListener('click', () => { if (mapReady) map.zoomIn({ duration: 260 }); });
-  $('mcZout').addEventListener('click', () => { if (mapReady) map.zoomOut({ duration: 260 }); });
   $('mcFit').addEventListener('click', () => {
     if (!mapReady) return;
     if (curResult) highlightOnMap(curResult.cands[curResult.idx].r);

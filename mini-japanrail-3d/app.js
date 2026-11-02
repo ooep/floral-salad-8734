@@ -8122,7 +8122,6 @@ function renderMusic() {
       if (ln) { if (!seen.has(ln)) { seen.add(ln); muLines.push(ln); } }
       else muOthers.push(m);
     }
-    muSetCount(mels.length);
     const grouped = muLines.length + (muOthers.length ? 1 : 0) > 1;
     muLineIdx = grouped ? -2 : 0; /* 多线路时默认「全部」，先给完整视野，再按线路筛选 */
     if (!muLines.length) {
@@ -8181,6 +8180,7 @@ function renderMuChips(withOther) {
 }
 function renderMuList(list) {
   const el = $('muList');
+  muSetCount(list.length);
   /* 番线号升序（全角/半角数字归一），无番线排后保持原序；
      「全部」里不同公司的同号站台相邻，靠副标题区分线路。 */
   const numOf = m => {

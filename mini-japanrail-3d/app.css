@@ -785,9 +785,9 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
 #sheet .mu-count { margin-left:auto; flex:none; font-size:11px; font-weight:600; color:var(--dim); white-space:nowrap; font-variant-numeric:tabular-nums; }
 #sheet .mu-lines { display:flex; flex-wrap:nowrap; gap:14px; overflow-x:auto; padding:2px 0 0; border-bottom:1px solid var(--line); flex:none; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
 #sheet .mu-lines::-webkit-scrollbar { display:none; }
-#sheet .mu-lines.scroll-l { -webkit-mask-image:linear-gradient(90deg, transparent 0, #000 14px, #000 100%); mask-image:linear-gradient(90deg, transparent 0, #000 14px, #000 100%); }
-#sheet .mu-lines.scroll-r { -webkit-mask-image:linear-gradient(90deg, #000 0, #000 calc(100% - 16px), transparent 100%); mask-image:linear-gradient(90deg, #000 0, #000 calc(100% - 16px), transparent 100%); }
-#sheet .mu-lines.scroll-l.scroll-r { -webkit-mask-image:linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 16px), transparent 100%); mask-image:linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 16px), transparent 100%); }
+#sheet .mu-lines.scroll-l { -webkit-mask-image:linear-gradient(90deg, transparent 0, #000 16px, #000 100%); mask-image:linear-gradient(90deg, transparent 0, #000 16px, #000 100%); }
+#sheet .mu-lines.scroll-r { -webkit-mask-image:linear-gradient(90deg, #000 0, #000 calc(100% - 20px), transparent 100%); mask-image:linear-gradient(90deg, #000 0, #000 calc(100% - 20px), transparent 100%); }
+#sheet .mu-lines.scroll-l.scroll-r { -webkit-mask-image:linear-gradient(90deg, transparent 0, #000 16px, #000 calc(100% - 20px), transparent 100%); mask-image:linear-gradient(90deg, transparent 0, #000 16px, #000 calc(100% - 20px), transparent 100%); }
 #sheet .mu-chip { position:relative; flex:none; display:inline-flex; align-items:center; gap:6px; height:35px; border:0; background:transparent; color:var(--dim); font-size:12.5px; font-weight:600; padding:0; border-radius:0; cursor:pointer; transition:color .12s; font-family:inherit; white-space:nowrap; -webkit-tap-highlight-color:transparent; }
 #sheet .mu-chip::before { content:''; flex:none; width:6px; height:6px; border-radius:50%; background:var(--lc); box-shadow:0 0 0 1px color-mix(in srgb, var(--txt) 20%, transparent); transition:box-shadow .15s,opacity .15s; opacity:.8; }
 #sheet .mu-chip::after { content:''; position:absolute; left:0; right:0; bottom:0; height:2px; border-radius:1px; background:var(--lc); opacity:0; transition:opacity .12s; }
@@ -827,6 +827,7 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
 #sheet .mu-line-txt { overflow:hidden; text-overflow:ellipsis; }
 #sheet .mu-eq { display:none; flex:none; align-items:flex-end; gap:2px; height:9px; padding-bottom:1px; }
 #sheet .mu-row.playing .mu-eq { display:inline-flex; }
+#sheet .mu-row.playing .mu-sub-dot { display:none; }
 #sheet .mu-eq i { width:2px; border-radius:1px; background:var(--lc); height:4px; animation:muEqBounce .9s ease-in-out infinite; }
 #sheet .mu-eq i:nth-child(2) { animation-delay:.16s; }
 #sheet .mu-eq i:nth-child(3) { animation-delay:.32s; }
@@ -860,9 +861,11 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
 #sheet .mu-pname { font-size:13.5px; font-weight:800; color:var(--txt); line-height:1.35; letter-spacing:-.15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 #sheet .mu-pplat { font-size:10.5px; color:var(--dim); margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 #sheet .mu-pplat.has-lc::before { content:''; display:inline-block; width:5px; height:5px; border-radius:50%; background:var(--lc); margin-right:5px; vertical-align:1px; }
-#sheet .mu-auto { flex:none; display:inline-flex; align-items:center; gap:4px; height:26px; padding:0 8px; border-radius:var(--r-pill); border:1px solid var(--line); background:transparent; color:var(--dim); font-size:10px; font-weight:600; font-family:inherit; cursor:pointer; transition:background .15s,border-color .15s,color .15s; -webkit-tap-highlight-color:transparent; }
+#sheet .mu-auto { flex:none; display:inline-flex; align-items:center; gap:4px; height:28px; padding:0 4px; border-radius:6px; border:0; background:transparent; color:var(--dim); font-size:10.5px; font-weight:600; font-family:inherit; cursor:pointer; transition:color .15s; -webkit-tap-highlight-color:transparent; }
 #sheet .mu-auto svg { width:11px; height:11px; flex:none; }
-#sheet .mu-auto[aria-pressed="true"] { background:var(--acc-soft); border-color:var(--acc-border); color:var(--acc-txt); }
+#sheet .mu-auto:hover { color:var(--txt); }
+#sheet .mu-auto[aria-pressed="true"] { color:var(--acc-txt); }
+#sheet .mu-auto:focus-visible { outline:2px solid var(--acc); outline-offset:2px; }
 #sheet .mu-auto:active { transform:scale(.94); }
 #sheet .mu-scrub { position:relative; height:22px; margin:9px 0 0; display:flex; align-items:center; cursor:pointer; touch-action:none; outline:none; }
 #sheet .mu-rail { position:relative; width:100%; height:3px; border-radius:2px; background:color-mix(in srgb, var(--txt) 14%, transparent); }
@@ -911,11 +914,22 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
 /* ── 明亮主题 ── */
 :root[data-theme="light"] #sheet .mu-chip::before { box-shadow:0 0 0 1px rgba(15,23,42,.16); }
 :root[data-theme="light"] #sheet .mu-chip.on::before { box-shadow:none; }
+:root[data-theme="light"] #sheet .mu-chip::before,
+:root[data-theme="light"] #sheet .mu-sub-dot,
+:root[data-theme="light"] #sheet .mu-eq i,
+:root[data-theme="light"] #sheet .mu-pplat.has-lc::before { background:color-mix(in srgb, var(--lc) 72%, #0b1220); }
+:root[data-theme="light"] #sheet .mu-chip::after,
+:root[data-theme="light"] #sheet .mu-fill,
+:root[data-theme="light"] #sheet .mu-knob { background:color-mix(in srgb, var(--lc) 78%, #0b1220); }
+:root[data-theme="light"] #sheet .mu-plat { background:color-mix(in srgb, var(--lc) 16%, transparent); }
+:root[data-theme="light"] #sheet .mu-plat b { color:color-mix(in srgb, var(--lc) 50%, #0b1220 50%); }
+:root[data-theme="light"] #sheet .mu-plat i { color:color-mix(in srgb, var(--lc) 32%, #334155 68%); }
+:root[data-theme="light"] #sheet .mu-row.playing { background:color-mix(in srgb, var(--lc) 7%, transparent); border-color:color-mix(in srgb, var(--lc) 38%, transparent); }
+:root[data-theme="light"] #sheet .mu-row.playing .mu-act { background:color-mix(in srgb, var(--lc) 14%, transparent); border-color:color-mix(in srgb, var(--lc) 42%, transparent); color:color-mix(in srgb, var(--lc) 40%, #0b1220 60%); }
 
 /* ── 小屏 / 矮屏 ── */
 @media (max-width:360px) {
-  #sheet .mu-auto span { display:none; }
-  #sheet .mu-auto { padding:0 7px; }
+  #sheet .mu-auto { padding:0 2px; }
   #sheet .mu-transport { gap:18px; }
   #sheet .mu-skip { width:30px; height:30px; }
   #sheet .mu-play { width:44px; height:44px; }

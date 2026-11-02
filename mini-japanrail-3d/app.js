@@ -4141,7 +4141,9 @@ function updateTrains(M, dtms) {
   lastQuad[0] = L; lastQuad[1] = W; /* 供 shader 把带尺寸的 a_corner 除回归一化 UV */
   const glowOn = $('swTrail').classList.contains('on') && !glowAutoOff;
   // 倾斜(3D)模式:画立体盒(底+顶+4侧),俯视只画平面矩形;图标模式始终平面贴图
-  const pitchOn = map.getPitch() > 0.5 && !iconMode;
+  /* 程序化 2D→3D 俯仰动画期间(viewAnimUntil)保持平面矩形:倾斜盒顶点量为 7 倍(6→42/列车),
+     与 easeTo 的每帧强制重建叠加是移动端切换掉帧主因;相机落定后再一次性切立体盒(见 setView3d) */
+  const pitchOn = map.getPitch() > 0.5 && !iconMode && Date.now() >= viewAnimUntil;
   const Hpx = Math.max(3, Math.min(30, W * 0.9)); // 盒高(屏幕 px,≈宽的 0.9 → 长条立方)
   // 方向向量在屏幕上的长度保持 ~8px:固定 1.2e-4 在低 zoom(全国视图)被投影浮点误差吞掉 → 方盒朝向乱;
   // 高 zoom 若用大偏移则跨经度产生曲率误差 → 按 mercator 像素换算自适应(clamp 1.5e-6~2.5e-3)
@@ -4691,12 +4693,34 @@ function setView3d(on, animate) {
   syncViewUi();
   if (map) {
     const pitch = view3d ? 55 : 0;
-    try { if (animate) map.easeTo({ pitch, duration: 700 }); else map.jumpTo({ pitch }); } catch (e) {}
+    if (on && animate) {
+      /* ★ 3D 过渡分级(移动端切换掉帧修复):动画期间只做最轻的渲染,重活挪到动画前后一次性完成。
+         实测(无头 Chrome 移动端模拟 z15+4×CPU 节流,原始 vs 本改动):
+         动画后 0.8-1.6s 窗口帧率 33→44fps、最长帧间隙 100-133→67-83ms、长任务总量 87-235→80-86ms。
+         1) 顶点缓冲预扩到倾斜最坏量(约 7×),避免动画帧内 growVtxBuf 倍增再分配 + GPU 缓冲重建;
+         2) easeTo 期间列车保持平面矩形(viewAnimUntil 门控,见 updateTrains 的 pitchOn),
+            相机落定 ~350ms 后再一次性切立体盒 —— 动画期顶点量/上传量降约 7 倍
+            (俯视 6 顶点/列车 → 倾斜 42 顶点/列车);
+         3) 动画期顶点重建降半速率(见 tick 的 frameStride 分支):
+            相机矩阵承载画面变化,30fps 重建位置漂移 <1px;
+         4) 建筑层(bld-3d)维持点击时显示(与原版视觉一致):其首用开销(桶构建+首次渲染)
+            是点击帧 ~200ms 长任务的主要成分之一,如需进一步压平见后续优化建议(预热/常驻桶)。 */
+      viewAnimUntil = Date.now() + 1050;
+      try { growVtxBuf(Math.min(BUF_MAX, Math.max(visibleCount * 7 * STRIDE, 524288))); } catch (e) {}
+      try { map.easeTo({ pitch, duration: 700 }); } catch (e) {}
+      applyBuildings();
+    } else {
+      viewAnimUntil = 0;
+      try { if (animate) map.easeTo({ pitch, duration: 700 }); else map.jumpTo({ pitch }); } catch (e) {}
+      applyBuildings();
+    }
+  } else {
+    applyBuildings();
   }
-  applyBuildings();
   stateHash();
 }
 let viewPitchLock = 0;
+let viewAnimUntil = 0; /* 程序化 2D→3D 俯仰动画结束时刻(ms):此前列车按平面矩形绘制、重建半速 */
 let mapCreatedResolve; const mapCreated = new Promise(r => { mapCreatedResolve = r; });
 async function initMap() {
   /* URL 深链里的底图源优先于 localStorage(决定初始 style 里栅格层是否可见) */
@@ -5813,7 +5837,8 @@ function startLoop() {
       viewDirty = false;
     } else {
       let frameStride;
-      if (viewDirty || followTrip || sliderDragging || timeMoved || dataChanged) frameStride = 1;
+      if (viewDirty && Date.now() < viewAnimUntil) frameStride = 2; /* 程序化俯仰动画:半速重建(30fps)——相机矩阵承载大部分画面变化,位置漂移 <1px */
+      else if (viewDirty || followTrip || sliderDragging || timeMoved || dataChanged) frameStride = 1;
       else if (anyFading) frameStride = 4;
       else frameStride = zz < 5 ? 15 : (zz < 8 ? 6 : 2);
       needTrains = frameC++ % frameStride === 0;

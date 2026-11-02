@@ -50,16 +50,10 @@ DEFAULT_CONFIG = {
 FALLBACK_COLOR = '#4f8ef7'
 FALLBACK_KIND = '鉄道'
 
-# Microsoft Clarity 行为分析（Bing Webmaster 推荐），所有 SEO 静态页统一注入
-CLARITY_SCRIPT = '''<!-- Clarity tracking code for https://jr.suki.ing/ -->
-<script>
-    (function(c,l,a,r,i,t,y){
-        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i+"?ref=bwt";
-        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-    })(window, document, "clarity", "script", "yxc9o63w5s");
-</script>
-'''
+# SEO 静态页不注入任何统计/追踪脚本（2026-11 隐私合规修订）：
+# 原此处统一注入 Microsoft Clarity（项目 yxc9o63w5s），与隐私政策声明冲突，
+# 且静态页以爬虫流量为主、无交互价值，会话录制无意义。现已整体移除；
+# 统计仅保留在 index.html / journey.html，且须经页面内同意提示后才加载。
 
 
 def load_config(path):
@@ -1014,7 +1008,7 @@ def page_head(cfg, title, desc, url, og_img_url, keywords='', robots='index,foll
               .replace('__BRAND_LOGO_DARK__', STATIC_BASE + '/logo-dark.png'))
     return (
         '<!DOCTYPE html>\n<html lang="zh-Hans">\n<head>\n'
-        '<meta charset="utf-8">\n' + CLARITY_SCRIPT +
+        '<meta charset="utf-8">\n'
         '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
         '<title>' + esc(title) + '</title>\n'
         '<meta name="description" content="' + esc(desc) + '">\n'

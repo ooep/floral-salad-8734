@@ -5217,8 +5217,9 @@ async function boot() {
     if (!liveOn) setTimeout(() => { if (!liveOn) { setLive(true); } }, 600);
     startLoop();
     /* 统计脚本延后注入(见 head 注释);手机端停用:会话录制按 DOM 变更量整份留档,
-       开站/方向网格展开会持续累积(实测同序列 10 次开站 +20MB/次不收敛) */
-    if (window.__loadClarity && !IS_MOBILE) setTimeout(window.__loadClarity, 4000);
+       开站/方向网格展开会持续累积(实测同序列 10 次开站 +20MB/次不收敛);
+       同意门禁:仅当用户在提示中明确同意(mjr3d_consent='1')才注入,见 index.html head */
+    if (!IS_MOBILE) setTimeout(() => { if (window.__clarityGate) window.__clarityGate(); }, 4000);
   } catch (err) {
     console.error(err);
     setLoadMsg('⚠ ' + T().failMsg);
@@ -9474,7 +9475,7 @@ function runSearch(q) {
   const sts = [], lns = [];
   for (const s of searchIndex) { const m = matchSearch(s, q); if (m) { sts.push(m); if (sts.length >= 7) break; } }
   for (const l of lineIndex) { const m = matchSearch(l, q); if (m) { lns.push(m); if (lns.length >= 4) break; } }
-  if (!sts.length && !lns.length) { sugEl.innerHTML = '<div class="sug-empty">' + esc(T().noMatch) + ' <span class="sug-q">' + esc(q) + '</span></div>'; sugEl.style.display = 'block'; return; }
+  if (!sts.length && !lns.length) { sugEl.innerHTML = '<div class="sug-empty">' + esc(T().noMatch) + ' <span class="sug-q" data-clarity-mask="true">' + esc(q) + '</span></div>'; sugEl.style.display = 'block'; return; }
   const langTag = { n: '', zh: '中', kana: '仮', en: 'EN' };
   const dispNameFor = (m) => { const f = m.field, v = m.item[f]; return (f === 'n') ? v : v; };
   const htmlParts = [];

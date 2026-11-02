@@ -2,16 +2,149 @@
 <html lang="zh-Hans">
 <head>
 <meta charset="utf-8">
-<!-- Clarity tracking code for https://jr.suki.ing/ —— 延后到数据就绪后 4s 注入(boot 时不再与
-     核心数据下载/解析抢主线程与带宽;会话录制从启动完成后开始,对分析覆盖影响可忽略) -->
+<!-- Microsoft Clarity (yxc9o63w5s) —— 仅在用户明确同意后加载(PIPL/APPI 合规)。
+     同意状态存 localStorage: mjr3d_consent '1'=同意 '0'=拒绝,未设置=展示提示且不加载。
+     同意后仍沿用原策略:数据就绪后 4s 注入、手机端停用(见 app.js)。
+     SEO 静态页(stations/ lines/)与 privacy.html / orm-demo.html 完全不加载统计脚本。 -->
 <script>
-window.__loadClarity = function () {
+(function () {
+  var KEY = 'mjr3d_consent';
+  var MOBILE_OK = false; /* 主地图:手机端停用(会话录制按 DOM 变更量累积内存) */
+  var AUTO_IF_CONSENTED = false; /* 主地图不在 head 立即加载:由 app.js 在数据就绪后 4s 调度 */
+  var IS_MOBILE = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
+  window.__loadClarity = function () {
     (function(c,l,a,r,i,t,y){
         c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
         t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i+"?ref=bwt";
         y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
     })(window, document, "clarity", "script", "yxc9o63w5s");
-};
+  };
+  window.__clarityConsented = function () {
+    try { return localStorage.getItem(KEY) === '1'; } catch (e) { return false; }
+  };
+  /* 受同意门禁的统计入口:由 app.js 在数据就绪后延时调用,或用户点击"同意"时调用 */
+  window.__clarityGate = function () {
+    if ((MOBILE_OK || !IS_MOBILE) && window.__clarityConsented()) window.__loadClarity();
+  };
+  function raw() { try { return localStorage.getItem(KEY); } catch (e) { return null; } }
+  function save(v) { try { localStorage.setItem(KEY, v); } catch (e) {} }
+  var I18N = {
+    zh: { t:'使用统计', b:'为改进体验，我们希望在您同意后加载 Microsoft Clarity 统计脚本（使用分析与会话回放，不含广告）。您可随时更改选择，拒绝不影响任何功能。', ok:'同意', no:'拒绝', more:'隐私政策' },
+    ja: { t:'利用統計', b:'体験改善のため、ご同意いただいた場合のみ Microsoft Clarity 統計スクリプト（利用分析とセッション再生、広告なし）を読み込みます。選択はいつでも変更でき、拒否しても機能はそのまま利用できます。', ok:'同意する', no:'拒否する', more:'プライバシーポリシー' },
+    en: { t:'Analytics', b:'With your consent we load Microsoft Clarity (usage analytics and session replays, no advertising) to improve the experience. You can change your choice anytime; declining does not affect functionality.', ok:'Accept', no:'Decline', more:'Privacy Policy' }
+  };
+  function lang() {
+    try {
+      var k = localStorage.getItem('mjr3d_lang') || localStorage.getItem('mjrj_lang');
+      if (k === 'zh' || k === 'ja' || k === 'en') return k;
+    } catch (e) {}
+    var n = (navigator.language || '').slice(0, 2);
+    return (n === 'ja' || n === 'en') ? n : 'zh';
+  }
+  /* ── 安全落位:同意条永不覆盖交互控件 ──
+     旧版固定 bottom:14px 居中,竖屏遮挡 60.9%、横屏 56.1% 的控件(时间轴滑杆/手柄、
+     播放键、速度钮全被盖住,真实点击会误触同意/拒绝)。现改为动态测量:
+     - KEEP_HARD 受保护控件(时间轴滑杆/手柄、播放键、速度钮、侧栏与搜索输入等):
+       任何候选位只要与它们重叠即一票否决;
+     - KEEP_SOFT 软障碍(dock/HUD/侧栏/详情卡等面板):在零硬冲突的候选位里挑软重叠最小者;
+     窗口尺寸变化、dock 形态(时间胶囊展开/收起)、侧栏/详情卡开合时重新测量。 */
+  var KEEP_HARD = ['#btnPlay', '#cSlider', '#spMain', '#btnSide', '#btnSearch', '#brand', '#btnView3d', '#rFrom', '#rTo', '#rGo', '#search', '#spClear'];
+  var KEEP_SOFT = ['#dock', '#dockCenter', '#clock', '#side', '#topHud', '#detail', '#sheet', '#searchPanel', '#lineSheet'];
+  var WATCH = ['#dock', '#side', '#detail', '#searchPanel', '#sheet', '#topHud'];
+  function visibleRects(sels) {
+    var out = [], vw = window.innerWidth, vh = window.innerHeight;
+    sels.forEach(function (sel) {
+      var el = document.querySelector(sel);
+      if (!el) return;
+      var cs = window.getComputedStyle(el);
+      if (cs.display === 'none' || cs.visibility === 'hidden') return;
+      var r = el.getBoundingClientRect();
+      if (r.width < 2 || r.height < 2 || r.bottom <= 0 || r.top >= vh || r.right <= 0 || r.left >= vw) return;
+      out.push(r);
+    });
+    return out;
+  }
+  function placeSafe(d) {
+    var vw = window.innerWidth, vh = window.innerHeight;
+    var bw = Math.min(520, vw - 24);
+    d.style.width = bw + 'px';
+    var bh = d.offsetHeight || 130;
+    var hard = visibleRects(KEEP_HARD), soft = visibleRects(KEEP_SOFT);
+    function area(x, y, R) {
+      var a = 0;
+      R.forEach(function (r) {
+        var ox = Math.min(x + bw, r.right) - Math.max(x, r.left);
+        var oy = Math.min(y + bh, r.bottom) - Math.max(y, r.top);
+        if (ox > 0 && oy > 0) a += ox * oy;
+      });
+      return a;
+    }
+    /* 候选位:垂直取"每个障碍上方/下方 + 屏幕中/上/下",水平取"居中 + 每个障碍左右两侧空档" */
+    var all = hard.concat(soft);
+    var xs = [(vw - bw) / 2], ys = [(vh - bh) / 2, 10, vh - bh - 10];
+    all.forEach(function (r) {
+      xs.push(r.right + 12, r.left - bw - 12);
+      ys.push(r.top - bh - 10, r.bottom + 10);
+    });
+    var best = null;
+    ys.forEach(function (y) {
+      y = Math.max(8, Math.min(y, vh - bh - 8));
+      xs.forEach(function (x) {
+        x = Math.max(12, Math.min(x, vw - bw - 12));
+        var h = area(x, y, hard);
+        var s = area(x, y, soft) + (Math.abs(y - (vh - bh) / 2) + Math.abs(x - (vw - bw) / 2)) * 0.25;
+        var score = h * 1e12 + s; /* 硬重叠一票否决 */
+        if (!best || score < best.score) best = { x: x, y: y, score: score };
+      });
+    });
+    d.style.left = best.x + 'px';
+    d.style.top = best.y + 'px';
+    d.style.right = 'auto';
+    d.style.bottom = 'auto';
+    d.style.transform = 'none';
+  }
+  function init() {
+    var chosen = raw();
+    if (chosen === '1') { if (AUTO_IF_CONSENTED) window.__clarityGate(); return; } /* 曾同意→由 app.js 按计划加载 */
+    if (chosen === '0') return; /* 曾拒绝→永不加载,不再提示 */
+    var t = I18N[lang()];
+    var d = document.createElement('div');
+    d.id = 'mjrConsent';
+    d.setAttribute('role', 'dialog');
+    d.setAttribute('aria-label', t.t);
+    d.style.cssText = 'position:fixed;z-index:2147483647;box-sizing:border-box;padding:12px 14px 10px;border-radius:16px;background:rgba(16,21,31,.92);color:#e8edf4;border:1px solid rgba(255,255,255,.14);box-shadow:0 8px 32px rgba(0,0,0,.35);backdrop-filter:blur(18px) saturate(1.6);-webkit-backdrop-filter:blur(18px) saturate(1.6);font:12px/1.7 -apple-system,"PingFang SC","Hiragino Sans GB","Yu Gothic UI","Noto Sans CJK SC",sans-serif;opacity:0;transition:opacity .22s ease;';
+    d.innerHTML = '<div style="font-weight:800;margin-bottom:4px">' + t.t + '</div>'
+      + '<div style="color:#bccbdd">' + t.b + '</div>'
+      + '<div style="display:flex;gap:8px;margin-top:10px;align-items:center">'
+      + '<button id="mjrCAccept" style="padding:6px 16px;border-radius:999px;border:0;background:#2f6de8;color:#fff;font-weight:700;font-size:12px;cursor:pointer">' + t.ok + '</button>'
+      + '<button id="mjrCDecline" style="padding:6px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.22);background:transparent;color:#e8edf4;font-weight:600;font-size:12px;cursor:pointer">' + t.no + '</button>'
+      + '<a href="privacy.html" style="margin-left:auto;color:#6da9ff;font-size:11px;text-decoration:none">' + t.more + '</a>'
+      + '</div>';
+    document.body.appendChild(d);
+    placeSafe(d);
+    requestAnimationFrame(function () { d.style.opacity = '1'; });
+    document.getElementById('mjrCAccept').onclick = function () { save('1'); d.remove(); window.__clarityGate(); };
+    document.getElementById('mjrCDecline').onclick = function () { save('0'); d.remove(); };
+    /* 几何变化时重新落位:视口尺寸、时间胶囊展开/收起、侧栏/详情卡/搜索层开合 */
+    var rt = null;
+    window.addEventListener('resize', function () {
+      clearTimeout(rt);
+      rt = setTimeout(function () { if (d.isConnected) placeSafe(d); }, 120);
+    });
+    var pending = false;
+    var mo = new MutationObserver(function () {
+      if (pending || !d.isConnected) return;
+      pending = true;
+      requestAnimationFrame(function () { pending = false; if (d.isConnected) placeSafe(d); });
+    });
+    WATCH.forEach(function (sel) {
+      var el = document.querySelector(sel);
+      if (el) mo.observe(el, { subtree: true, attributes: true, attributeFilter: ['class', 'style'] });
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Mini JapanRail｜全日本列车实时运行可视化地图・列車走行位置・運行情報 | Japan Train Live Map</title>
@@ -233,7 +366,7 @@ button { font-family:inherit; }
      慢网络下要等整包才出现加载条。 -->
 <link rel="preload" as="style" href="https://jr-static.suki.ing/app/app.css?v=20261105" onload="this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://jr-static.suki.ing/app/app.css?v=20261105"></noscript>
-<link rel="modulepreload" href="https://jr-static.suki.ing/app/app.js?v=20261106" crossorigin="anonymous">
+<link rel="modulepreload" href="https://jr-static.suki.ing/app/app.js?v=20261106-consent1" crossorigin="anonymous">
 
 </head>
 <body>
@@ -322,9 +455,9 @@ button { font-family:inherit; }
       <div class="sec">
         <div class="sec-t" id="tRoute">路线搜索</div>
         <div id="routeRow">
-          <input id="rFrom" class="tbox" type="text" autocomplete="off" spellcheck="false" placeholder="起点">
+          <input id="rFrom" class="tbox" type="text" autocomplete="off" spellcheck="false" placeholder="起点" data-clarity-mask="true">
           <span class="route-arrow"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h14M13 6l6 6-6 6"/></svg></span>
-          <input id="rTo" class="tbox" type="text" autocomplete="off" spellcheck="false" placeholder="终点">
+          <input id="rTo" class="tbox" type="text" autocomplete="off" spellcheck="false" placeholder="终点" data-clarity-mask="true">
           <button id="rGo" class="btn"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h14M13 6l6 6-6 6"/></svg></button>
         </div>
         <div id="routeRes">
@@ -424,7 +557,7 @@ button { font-family:inherit; }
 <div id="dock">
   <div id="dockCenter">
     <button class="gcircle" id="btnSide" type="button" title="Panel" aria-label="菜单"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg></button>
-<div id="clock">
+<div id="clock" data-clarity-mask="true">
   <div class="r1">
     <span class="ldot" id="cDot"></span>
     <button id="btnPlay" type="button" aria-label="播放或暂停"><svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M7 5.5v13a.8.8 0 0 0 1.22.68l10.6-6.5a.8.8 0 0 0 0-1.36L8.22 4.82A.8.8 0 0 0 7 5.5z"/></svg></button>
@@ -452,13 +585,13 @@ button { font-family:inherit; }
 <div id="searchPanel">
   <div class="sp-bar">
     <span class="sp-ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg></span>
-    <input id="search" class="tbox" type="text" autocomplete="off" spellcheck="false" placeholder="搜索车站或线路">
+    <input id="search" class="tbox" type="text" autocomplete="off" spellcheck="false" placeholder="搜索车站或线路" data-clarity-mask="true">
     <button id="spClear" type="button" aria-label="清除"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><circle cx="12" cy="12" r="10"/><path d="M8.5 8.5l7 7M15.5 8.5l-7 7" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg></button>
   </div>
   <div id="sug"></div>
 </div>
 
-<div id="detail"></div>
+<div id="detail" data-clarity-mask="true"></div>
 <div id="trTag"></div>
 <div id="tip"></div>
 <div id="trPick"></div>
@@ -693,7 +826,7 @@ window.addEventListener('unhandledrejection', e => { __pushErr('REJ ' + (e.reaso
     "three/addons/": "https://jr-static.suki.ing/vendor/three/jsm/"
 } }
 </script>
-<script type="module" src="https://jr-static.suki.ing/app/app.js?v=20261106"></script>
+<script type="module" src="https://jr-static.suki.ing/app/app.js?v=20261106-consent1"></script>
 <div id="m3dMask"></div>
 <div id="m3dViewer">
   <canvas id="m3dCanvas"></canvas>

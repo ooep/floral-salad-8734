@@ -2,14 +2,7 @@
 <html lang="zh-Hans">
 <head>
 <meta charset="utf-8">
-<!-- Clarity tracking code for https://jr.suki.ing/ -->
-<script>
-    (function(c,l,a,r,i,t,y){
-        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i+"?ref=bwt";
-        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-    })(window, document, "clarity", "script", "yxc9o63w5s");
-</script>
+<!-- 本页不加载任何统计/追踪脚本(隐私政策页本身必须无追踪)。 -->
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>隐私政策 — Mini JapanRail</title>
 <meta name="description" content="Mini JapanRail 隐私政策:本地时刻表驱动的全日本列车实时运行可视化地图（列車走行位置・運行情報）,数据与隐私说明。">
@@ -120,6 +113,19 @@ a.link { color:var(--acc-txt); text-decoration:none; font-weight:600; border-bot
 a.link:hover { color:var(--acc); border-bottom-style:solid; }
 .foot { margin-top:22px; padding-top:14px; border-top:1px solid var(--glass-edge); font-size:11px; color:var(--dim); line-height:1.7; }
 .foot b { color:var(--txt); }
+/* 同意管理按钮(液态玻璃胶囊,与全站同一设计语言) */
+.cbtn { display:inline-flex; align-items:center; height:30px; padding:0 14px; border-radius:var(--r-pill);
+  border:1px solid var(--glass-edge); background:var(--glass); color:var(--txt); font-size:12px; font-weight:700;
+  cursor:pointer; transition:transform .3s var(--ease-spring), background .2s var(--ease-smooth), border-color .2s var(--ease-smooth); }
+.cbtn:hover { background:var(--glass-2); border-color:var(--glass-hi); }
+.cbtn:active { transform:scale(.94); transition:transform .12s ease-in; }
+.cbtn.primary { background:var(--acc); border-color:var(--acc); color:#fff; }
+.cbtn.primary:hover { filter:brightness(1.08); }
+.cbtn:disabled { opacity:.45; cursor:default; }
+.crow { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:2px 0 8px; font-size:12.5px; color:var(--txt); }
+.crow b { color:var(--acc-txt); }
+#cNote { min-height:0; }
+#cNote.show { color:var(--acc-txt); font-weight:600; }
 @media (max-width:640px) {
   .g-card-inner { padding:18px 16px 22px; }
   .h1 { font-size:19px; }
@@ -140,17 +146,26 @@ a.link:hover { color:var(--acc); border-bottom-style:solid; }
       <p class="h-sub" id="docSub">Mini JapanRail — 全日本列车实时运行可视化地图</p>
 
       <div class="sec-t" id="s1">我们收集什么</div>
-      <p class="para" id="p1">本站不收集、不存储、不上传任何个人信息。您在使用过程中产生的偏好设置（语言、主题、显示开关、跟随状态等）仅保存在您自己的浏览器本地存储（localStorage）中，用于下次访问时恢复界面状态，不会发送到任何服务器。</p>
+      <p class="para" id="p1">本站无需注册、不登录账号，不主动收集、存储或上传您的个人身份信息。您在使用过程中产生的偏好设置（语言、主题、显示开关、跟随状态、同意选择等）仅保存在您自己的浏览器本地存储（localStorage）中，用于下次访问时恢复界面状态，不会发送到任何服务器。若您选择同意加载可选的使用统计（见下方「第三方服务」），相关的交互与会话数据将由 Microsoft Clarity 按其隐私政策处理。</p>
 
       <div class="sec-t" id="s2">数据来源</div>
-      <p class="para" id="p2">列车运行数据基于日本全国铁路的<span class="badge" id="p2b">计划时刻表</span>构建：由每周定时任务从公开时刻表源抓取，打包为紧凑的静态数据文件随站点发布。页面运行时使用这些本地数据驱动渲染，不依赖实时外部请求。</p>
+      <p class="para" id="p2">列车运行数据基于日本全国铁路的<span class="badge" id="p2b">计划时刻表</span>构建：由每周定时任务从公开时刻表源抓取，打包为紧凑的静态数据文件随站点发布。页面核心渲染使用这些本地数据驱动，不依赖实时外部请求；实时延误叠加、地图瓦片与车辆/车站百科等可选功能会在启用时产生相应的外部请求。</p>
 
       <div class="sec-t" id="s3">第三方服务</div>
       <ul class="list">
         <li id="l1">地图渲染使用开源库 MapLibre GL JS（通过公共 CDN 加载，您的浏览器会向该 CDN 发起请求）。</li>
         <li id="l2">底图瓦片来自日本国土地理院 / OpenFreeMap / OpenStreetMap 等公开服务，加载时可能向相应服务器请求地图图片。</li>
-        <li id="l3">除上述必要资源外，本站不接入任何广告、统计或追踪脚本。</li>
+        <li id="l3">除上述必要资源外，本站不接入任何广告脚本。</li>
+        <li id="l4">使用统计（可选，须经同意）：主地图与换乘案内页仅在您于页面提示中明确同意后，才加载 Microsoft Clarity（Microsoft 提供，项目 ID yxc9o63w5s）进行使用统计与会话回放，用于改进界面体验；会话回放会按遮蔽规则遮盖搜索输入框、时间轴、列车详情与侧栏输入等区域。您可以随时拒绝或撤回同意，拒绝、撤回或清除浏览器本地数据后脚本不会再加载。车站/线路等 SEO 静态页与本页不加载任何统计脚本。Clarity 的数据处理请参阅 <a class="link" href="https://learn.microsoft.com/ja-jp/clarity/privacy-and-security-clarity" target="_blank" rel="noopener">Microsoft Clarity 隐私说明</a>。</li>
       </ul>
+
+      <div class="sec-t" id="s6">同意管理</div>
+      <p class="para dim" id="cIntro">您可以随时更改使用统计的同意选择。撤回同意后，本站将清除浏览器本地存储中的同意记录（mjr3d_consent），统计脚本不再加载；已打开的页面需要刷新后才会完全停止采集。</p>
+      <div class="crow"><span id="cStat">当前状态：</span><b id="cStatVal">—</b>
+        <button id="cRevoke" class="cbtn" type="button">撤回同意</button>
+        <button id="cReload" class="cbtn primary" type="button" style="display:none">立即刷新</button>
+      </div>
+      <p class="para dim" id="cNote" role="status" aria-live="polite"></p>
 
       <div class="sec-t" id="s4">缓存说明</div>
       <p class="para" id="p4">为加快重复访问速度，部分静态数据可能由浏览器缓存（含 IndexedDB / HTTP 缓存）。这些缓存仅存在于您的设备上，可随时通过浏览器设置清除。</p>
@@ -158,7 +173,9 @@ a.link:hover { color:var(--acc); border-bottom-style:solid; }
       <div class="sec-t" id="s5">联系方式</div>
       <p class="para" id="p5">如果您对本隐私政策有任何疑问，可通过 GitHub 仓库提交 Issue 与我们联系。</p>
 
-      <div class="foot" id="footT">© 2026 Mini JapanRail <span id="footS">· 本地时刻表驱动 · 运行时零外部数据请求</span></div>
+      <!-- footT/footS 拆为平级两个 span:旧结构把 footS 嵌在 footT 内部,i18n 对 footT
+           赋 textContent 会把 footS 节点整个清掉(footS 变 null、footer 只剩半句) -->
+      <div class="foot"><span id="footT">© 2026 Mini JapanRail</span> <span id="footS">· 本地时刻表驱动 · 统计脚本仅经同意后加载</span></div>
     </div>
   </div>
 </div>
@@ -178,37 +195,90 @@ const lang = (localStorage.getItem('mjr3d_lang') || 'zh');
 document.documentElement.lang = lang === 'zh' ? 'zh-Hans' : lang;
 const I18N = {
   zh: { backLb:'返回地图', docT:'隐私政策', docH:'隐私政策', docSub:'Mini JapanRail — 全日本列车实时运行可视化地图',
-    s1:'我们收集什么', p1:'本站不收集、不存储、不上传任何个人信息。您在使用过程中产生的偏好设置（语言、主题、显示开关、跟随状态等）仅保存在您自己的浏览器本地存储（localStorage）中，用于下次访问时恢复界面状态，不会发送到任何服务器。',
-    s2:'数据来源', p2:'列车运行数据基于日本全国铁路的计划时刻表构建：由每周定时任务从公开时刻表源抓取，打包为紧凑的静态数据文件随站点发布。页面运行时使用这些本地数据驱动渲染，不依赖实时外部请求。', p2b:'计划时刻表',
+    s1:'我们收集什么', p1:'本站无需注册、不登录账号，不主动收集、存储或上传您的个人身份信息。您在使用过程中产生的偏好设置（语言、主题、显示开关、跟随状态、同意选择等）仅保存在您自己的浏览器本地存储（localStorage）中，用于下次访问时恢复界面状态，不会发送到任何服务器。若您选择同意加载可选的使用统计（见下方「第三方服务」），相关的交互与会话数据将由 Microsoft Clarity 按其隐私政策处理。',
+    s2:'数据来源', p2:'列车运行数据基于日本全国铁路的计划时刻表构建：由每周定时任务从公开时刻表源抓取，打包为紧凑的静态数据文件随站点发布。页面核心渲染使用这些本地数据驱动，不依赖实时外部请求；实时延误叠加、地图瓦片与车辆/车站百科等可选功能会在启用时产生相应的外部请求。', p2b:'计划时刻表',
     s3:'第三方服务', l1:'地图渲染使用开源库 MapLibre GL JS（通过公共 CDN 加载，您的浏览器会向该 CDN 发起请求）。',
     l2:'底图瓦片来自日本国土地理院 / OpenFreeMap / OpenStreetMap 等公开服务，加载时可能向相应服务器请求地图图片。',
-    l3:'除上述必要资源外，本站不接入任何广告、统计或追踪脚本。',
+    l3:'除上述必要资源外，本站不接入任何广告脚本。',
+    l4:'使用统计（可选，须经同意）：主地图与换乘案内页仅在您于页面提示中明确同意后，才加载 Microsoft Clarity（Microsoft 提供，项目 ID yxc9o63w5s）进行使用统计与会话回放，用于改进界面体验；会话回放会按遮蔽规则遮盖搜索输入框、时间轴、列车详情与侧栏输入等区域。您可以随时拒绝或撤回同意，拒绝、撤回或清除浏览器本地数据后脚本不会再加载。车站/线路等 SEO 静态页与本页不加载任何统计脚本。Clarity 的数据处理请参阅 ',
+    l4Link:'Microsoft Clarity 隐私说明', l4Tail:'。',
+    s6:'同意管理', cIntro:'您可以随时更改使用统计的同意选择。撤回同意后，本站将清除浏览器本地存储中的同意记录（mjr3d_consent），统计脚本不再加载；已打开的页面需要刷新后才会完全停止采集。',
+    cStat:'当前状态：', cYes:'已同意', cNo:'已拒绝', cNone:'未选择（访问地图时将显示提示）',
+    cRevoke:'撤回同意', cDone:'已撤回同意。请刷新页面（或返回地图后刷新）以完全停止采集，之后会重新显示选择提示。', cReload:'立即刷新',
     s4:'缓存说明', p4:'为加快重复访问速度，部分静态数据可能由浏览器缓存（含 IndexedDB / HTTP 缓存）。这些缓存仅存在于您的设备上，可随时通过浏览器设置清除。',
     s5:'联系方式', p5:'如果您对本隐私政策有任何疑问，可通过 GitHub 仓库提交 Issue 与我们联系。',
-    footT:'© 2026 Mini JapanRail', footS:'· 本地时刻表驱动 · 运行时零外部数据请求' },
+    footT:'© 2026 Mini JapanRail', footS:'· 本地时刻表驱动 · 统计脚本仅经同意后加载' },
   ja: { backLb:'マップに戻る', docT:'プライバシーポリシー', docH:'プライバシーポリシー', docSub:'ミニ日本鉄道 — 全国鉄道リアルタイムマップ',
-    s1:'収集する情報', p1:'当サイトは個人情報を収集・保存・送信しません。利用中の設定（言語・テーマ・表示スイッチ・追跡状態など）はブラウザのローカルストレージにのみ保存され、次回アクセス時に復元されるだけで、サーバーへ送信されることはありません。',
-    s2:'データソース', p2:'列車運行データは日本全国の鉄道の計画時刻表に基づき、毎週の定期タスクで公開時刻表ソースから取得し、静的データファイルとして公開しています。ページ実行時はこのローカルデータで描画し、外部リクエストに依存しません。', p2b:'計画時刻表',
+    s1:'収集する情報', p1:'当サイトは登録・アカウント不要で、個人識別情報を積極的に収集・保存・送信することはありません。利用中の設定（言語・テーマ・表示スイッチ・追跡状態・同意の選択など）はブラウザのローカルストレージ（localStorage）にのみ保存され、次回アクセス時に画面状態を復元するためのもので、サーバーへ送信されることはありません。任意の利用統計（下記「サードパーティサービス」参照）の読み込みに同意された場合、関連する操作・セッションデータは Microsoft Clarity によりそのプライバシーポリシーに従って処理されます。',
+    s2:'データソース', p2:'列車運行データは日本全国の鉄道の計画時刻表に基づき、毎週の定期タスクで公開時刻表ソースから取得し、静的データファイルとして公開しています。ページの中核描画はこのローカルデータで駆動し、リアルタイムの外部リクエストに依存しません。リアルタイム遅延情報・地図タイル・車両/駅百科などの任意機能は、有効化時にそれぞれの外部リクエストを行います。', p2b:'計画時刻表',
     s3:'サードパーティサービス', l1:'地図描画はオープンソースの MapLibre GL JS（パブリックCDN経由で読み込み）を使用します。',
     l2:'背景タイルは国土地理院 / OpenFreeMap / OpenStreetMap 等の公開サービスから取得します。',
-    l3:'上記の必要なリソース以外に、広告・統計・トラッキングスクリプトは一切組み込んでいません。',
+    l3:'上記の必要なリソース以外に、広告スクリプトは一切組み込んでいません。',
+    l4:'利用統計（任意・同意が必要）：メインマップと乗換案内ページは、ページ内の提示でお客様の明確な同意を得た場合のみ Microsoft Clarity（Microsoft 提供、プロジェクト ID yxc9o63w5s）を読み込み、利用統計とセッション再生で体験改善に活用します。セッション再生ではマスクルールに従い、検索入力欄・タイムライン・列車詳細・サイドバー入力などの領域を遮蔽します。同意はいつでも拒否または撤回でき、拒否・撤回後やブラウザのローカルデータ削除後は読み込まれません。駅・路線などの SEO 静的ページと本ページには統計スクリプトは一切ありません。Clarity のデータ処理については ',
+    l4Link:'Microsoft Clarity プライバシーに関する説明', l4Tail:' をご覧ください。',
+    s6:'同意の管理', cIntro:'利用統計への同意はいつでも変更できます。同意を撤回すると、ブラウザのローカルストレージ内の同意記録（mjr3d_consent）を削除し、統計スクリプトは読み込まれなくなります。すでに開いているページは、更新後にのみ収集が完全に停止します。',
+    cStat:'現在の状態：', cYes:'同意済み', cNo:'拒否済み', cNone:'未選択（マップ訪問時に提示を表示）',
+    cRevoke:'同意を撤回', cDone:'同意を撤回しました。ページを更新（またはマップに戻ってから更新）すると収集が完全に停止し、以降は選択の提示が再度表示されます。', cReload:'今すぐ更新',
     s4:'キャッシュについて', p4:'再訪を高速化するため、一部の静的データはブラウザキャッシュ（IndexedDB / HTTPキャッシュ含む）に保存される場合があります。これらはお使いの端末にのみ存在し、ブラウザ設定からいつでも削除できます。',
     s5:'お問い合わせ', p5:'本ポリシーについてご質問がある場合は、GitHubリポジトリのIssueにてご連絡ください。',
-    footT:'© 2026 ミニ日本鉄道', footS:'· ローカル時刻表駆動 · 実行時は外部データリクエストなし' },
+    footT:'© 2026 ミニ日本鉄道', footS:'· ローカル時刻表駆動 · 統計は同意後にのみ読み込み' },
   en: { backLb:'Back to map', docT:'Privacy Policy', docH:'Privacy Policy', docSub:'Mini JapanRail — Japan Train Live Map',
-    s1:'What we collect', p1:'This site does not collect, store, or upload any personal information. Preference settings (language, theme, display toggles, follow state, etc.) are saved only in your browser\'s localStorage to restore the interface on your next visit; nothing is sent to any server.',
-    s2:'Data source', p2:'Train operations are driven by scheduled timetables for all Japan railways: a weekly task fetches public timetable sources and packages them into compact static data files shipped with the site. Rendering at runtime uses only this local data and makes no live external requests.', p2b:'Scheduled timetables',
+    s1:'What we collect', p1:'This site requires no account or login and does not actively collect, store, or upload your personal identity information. Preference settings generated while you use the site (language, theme, display toggles, follow state, consent choice, etc.) are saved only in your browser\'s localStorage to restore the interface on your next visit; nothing is sent to any server. If you choose to allow the optional analytics (see "Third-party services" below), the related interaction and session data will be processed by Microsoft Clarity under its privacy policy.',
+    s2:'Data source', p2:'Train operations are driven by scheduled timetables for all Japan railways: a weekly task fetches public timetable sources and packages them into compact static data files shipped with the site. Core rendering uses only this local data and makes no live external requests; optional features such as live delay overlays, map tiles and train/station encyclopedias make their own requests when enabled.', p2b:'Scheduled timetables',
     s3:'Third-party services', l1:'Map rendering uses the open-source MapLibre GL JS library (loaded from a public CDN, so your browser requests it from that CDN).',
     l2:'Basemap tiles come from public services such as GSI Japan / OpenFreeMap / OpenStreetMap.',
-    l3:'Apart from the necessary resources above, this site embeds no ads, analytics, or tracking scripts.',
+    l3:'Apart from the necessary resources above, this site embeds no advertising scripts.',
+    l4:'Analytics (optional, consent required): the main map and journey planner load Microsoft Clarity (provided by Microsoft, project ID yxc9o63w5s) for usage statistics and session replays only after your explicit consent via the on-page prompt, to help improve the experience. Session replays mask areas such as search inputs, the timeline, train details and sidebar inputs according to masking rules. You may decline or withdraw consent at any time; nothing loads after declining, withdrawing, or clearing local browser data. Station/line SEO static pages and this page contain no analytics scripts. For Clarity data handling see ',
+    l4Link:'Microsoft Clarity Privacy Statement', l4Tail:'.',
+    s6:'Manage consent', cIntro:'You can change your analytics consent at any time. Withdrawing consent removes the consent record (mjr3d_consent) from your browser\'s localStorage and the analytics script will no longer load; already-open pages stop collecting only after a reload.',
+    cStat:'Current state: ', cYes:'consented', cNo:'declined', cNone:'not chosen (prompt will be shown when visiting the map)',
+    cRevoke:'Withdraw consent', cDone:'Consent withdrawn. Reload the page (or go back to the map and reload) to fully stop collection; the choice prompt will be shown again.', cReload:'Reload now',
     s4:'Caching', p4:'To speed up repeat visits, some static data may be cached by the browser (including IndexedDB / HTTP cache). These caches live only on your device and can be cleared anytime via browser settings.',
     s5:'Contact', p5:'If you have any questions about this policy, please reach out via an Issue on the GitHub repository.',
-    footT:'© 2026 Mini JapanRail', footS:'· Local timetable driven · zero external data requests at runtime' },
+    footT:'© 2026 Mini JapanRail', footS:'· Local timetable driven · analytics only after consent' },
 };
 const t = I18N[lang] || I18N.zh;
-['backLb','docT','docH','docSub','s1','p1','s2','p2','p2b','s3','l1','l2','l3','s4','p4','s5','p5','footT','footS'].forEach(k => {
+/* l4 不走 textContent:旧实现对 l4 整体赋 textContent 会把静态 HTML 里的 <a> 锚点清掉
+   (hasAnchor=false)。现改为文本 + 动态构建的真实 <a> 节点,三语一致保留可点击链接。
+   footT/footS 已拆为平级 span(见正文),可安全走 textContent。 */
+const CLARITY_DOC = 'https://learn.microsoft.com/ja-jp/clarity/privacy-and-security-clarity';
+['backLb','docT','docH','docSub','s1','p1','s2','p2','p2b','s3','l1','l2','l3','s4','p4','s5','p5','footT','footS','s6','cIntro','cStat','cRevoke','cReload'].forEach(k => {
   const el = document.getElementById(k); if (el) el.textContent = t[k];
 });
+{
+  const el = document.getElementById('l4');
+  if (el) {
+    el.textContent = t.l4;
+    const a = document.createElement('a');
+    a.className = 'link'; a.href = CLARITY_DOC; a.target = '_blank'; a.rel = 'noopener';
+    a.textContent = t.l4Link;
+    el.appendChild(a);
+    el.appendChild(document.createTextNode(t.l4Tail));
+  }
+}
+/* ── 同意管理:撤回入口 ──
+   撤回 = 删除 localStorage 的 mjr3d_consent(回到"未选择"态,下次访问重新提示)。
+   统计脚本在页面加载时按同意键决定是否注入,运行中的实例无法在页内卸载,
+   因此撤回后必须刷新页面才能完全停止采集 —— 文案中已写明,并提供刷新按钮。 */
+const CONSENT_KEY = 'mjr3d_consent';
+function consentRaw() { try { return localStorage.getItem(CONSENT_KEY); } catch (e) { return null; } }
+function renderConsent() {
+  const v = consentRaw();
+  const val = document.getElementById('cStatVal');
+  if (val) val.textContent = v === '1' ? t.cYes : v === '0' ? t.cNo : t.cNone;
+  const btn = document.getElementById('cRevoke');
+  if (btn) btn.disabled = v !== '1';
+}
+document.getElementById('cRevoke').addEventListener('click', () => {
+  try { localStorage.removeItem(CONSENT_KEY); } catch (e) {}
+  const note = document.getElementById('cNote');
+  if (note) { note.textContent = t.cDone; note.classList.add('show'); }
+  const rb = document.getElementById('cReload');
+  if (rb) rb.style.display = 'inline-flex';
+  renderConsent();
+});
+document.getElementById('cReload').addEventListener('click', () => location.reload());
+renderConsent();
 </script>
 </body>
 </html>

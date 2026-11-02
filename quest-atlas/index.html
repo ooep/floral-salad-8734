@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Mini JapanRail · 铁路制霸 Quest Atlas</title>
+<meta name="description" content="日本全国铁路制霸：线路・区间・列车・车站印章，一本属于你的铁道冒险手帐。">
+<meta name="theme-color" content="#f6f1e5">
+<meta property="og:title" content="Mini JapanRail · 铁路制霸 Quest Atlas">
+<meta property="og:description" content="Track your railway journey across Japan — lines, trains and station stamps.">
+<link rel="icon" type="image/png" sizes="64x64" href="https://jr-static.suki.ing/favicon.png">
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+<style>
+/* ══════════ Design tokens — TRAIN TRIP 手帐感 × 制霸站液态玻璃 ══════════ */
+:root{
+  --paper:#f7f2e7; --paper-2:#fffdf6; --ink:#23202b; --ink-dim:#5c576b; --ink-muted:#8d879c;
+  --card:#ffffff; --card-line:#e9e0cd; --accent:#e60012; --accent-soft:#fdecec;
+  --jr-blue:#2f6de8; --green:#1faa59; --gold:#e8a33d; --violet:#7a5af8;
+  --ring-track:#eee5d0;
+  --glass:rgba(255,255,255,.72); --glass-line:rgba(35,32,43,.10);
+  --shadow:none;
+  --shadow-lg:0 24px 60px rgba(64,48,16,.18);
+  --r:8px; --r-sm:6px; --r-xs:5px; --r-pill:999px;
+  --head-h:60px; --tab-h:64px;
+  --ease:cubic-bezier(.16,1,.3,1); --spring:cubic-bezier(.34,1.45,.44,1);
+  --map-panel:#101216; --map-text:#f0f4fa; --map-dim:#c8d4e6; --map-muted:#94a4bc;
+  --map-line:rgba(255,255,255,.13); --map-card:rgba(255,255,255,.09);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --paper:#12101a; --paper-2:#17141f; --ink:#f2efe9; --ink-dim:#c9c3d6; --ink-muted:#8f89a3;
+    --card:#1e1a2a; --card-line:#332d47; --accent-soft:#3d1520; --ring-track:#2c2740;
+    --glass:rgba(23,20,31,.78); --glass-line:rgba(255,255,255,.10);
+    --shadow:0 10px 30px rgba(0,0,0,.35), 0 2px 8px rgba(0,0,0,.3);
+    --shadow-lg:0 24px 60px rgba(0,0,0,.5);
+  }
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  font-family:-apple-system,"SF Pro SC","PingFang SC","Hiragino Sans GB","Noto Sans CJK SC","Yu Gothic UI","Noto Sans JP",system-ui,sans-serif;
+  background:var(--paper); color:var(--ink); overflow:hidden;
+  -webkit-tap-highlight-color:transparent;
+}
+button{font-family:inherit;cursor:pointer;touch-action:manipulation}
+input,select{font-family:inherit}
+::selection{background:#ffd9dc}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-thumb{background:rgba(140,130,110,.35);border-radius:3px}
+::-webkit-scrollbar-track{background:transparent}
+
+/* ══════════ App frame ══════════ */
+#app{display:flex;flex-direction:column;height:100vh;height:100dvh}
+header.top{
+  height:var(--head-h);flex:none;display:flex;align-items:center;gap:12px;padding:0 16px;
+  background:var(--paper-2);
+  border-bottom:2.5px solid #171410;z-index:60;position:relative;
+}
+.logo-mark{width:38px;height:38px;flex:none;border-radius:6px;background:#171410;
+  display:flex;align-items:center;justify-content:center}
+.logo-mark svg{width:24px;height:24px;color:#fff}
+.brand{min-width:0}
+.brand .t1{font-size:16px;font-weight:900;letter-spacing:.4px;white-space:nowrap}
+.brand .t1 em{font-style:normal;color:var(--accent)}
+.brand .t2{font-size:10.5px;color:var(--ink-muted);letter-spacing:1.6px;text-transform:uppercase;white-space:nowrap}
+.top-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.level-pill{display:flex;align-items:center;gap:8px;border:1px solid var(--card-line);background:var(--card);
+  border-radius:var(--r-pill);padding:5px 12px 5px 6px;box-shadow:var(--shadow)}
+.level-pill .lv{width:26px;height:26px;border-radius:50%;background:linear-gradient(145deg,#ffc24d,#e8871e);color:#fff;
+  font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center}
+.level-pill .lt{font-size:12px;font-weight:700;white-space:nowrap}
+.level-pill .lp{font-size:11px;color:var(--ink-muted);white-space:nowrap}
+@media(max-width:560px){.level-pill .lp{display:none}.brand .t2{display:none}}
+
+main{flex:1;position:relative;overflow:hidden}
+.view{position:absolute;inset:0;display:none;overflow-y:auto;overscroll-behavior:contain}
+.view.active{display:block}
+.view.pad{padding:20px 16px calc(var(--tab-h) + 28px)}
+.wrap{max-width:1080px;margin:0 auto}
+
+/* Tab bar — TRAIN TRIP 式底部导航 */
+nav.tabs{
+  position:fixed;left:0;right:0;bottom:0;z-index:70;
+  display:flex;gap:2px;padding:6px 10px calc(6px + env(safe-area-inset-bottom));
+  background:var(--paper-2);border-top:2.5px solid #171410;
+}
+nav.tabs button{
+  border:none;background:transparent;color:var(--ink-dim);border-radius:var(--r-pill);
+  padding:8px 16px;font-size:12.5px;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:2px;
+  transition:all .25s var(--ease);min-width:62px;
+}
+nav.tabs button svg{width:21px;height:21px}
+nav.tabs button{flex:1;border-radius:5px}
+nav.tabs button.active{background:#171410;color:#fff}
+@media(max-width:560px){nav.tabs button{min-width:56px;padding:8px 10px}}
+
+/* ══════════ Home ══════════ */
+.hero{
+  border-radius:26px;padding:26px;position:relative;overflow:hidden;color:#fff;
+  background:#14120e;
+  border-radius:10px;
+}
+.hero::after{content:"";position:absolute;left:0;right:0;bottom:0;height:5px;background:var(--accent)}
+.hero-grid{display:flex;gap:26px;align-items:center;position:relative;z-index:1;flex-wrap:wrap}
+.ring-box{flex:none;text-align:center}
+.ring{width:158px;height:158px;transform:rotate(-90deg)}
+.ring .trk{stroke:rgba(255,255,255,.18)} .ring .val{stroke:#ffb000;stroke-linecap:round;transition:stroke-dashoffset 1s var(--ease)}
+.ring-num{margin-top:-104px;font-size:34px;font-weight:900}
+.ring-lab{font-size:11px;opacity:.85;letter-spacing:2px;margin-top:2px}
+.hero-main{flex:1;min-width:250px}
+.hero-main h1{font-size:clamp(22px,4vw,32px);font-weight:900;line-height:1.25;letter-spacing:.5px}
+.hero-main h1 .hl{color:#ffb000}
+.hero-main p{margin-top:8px;font-size:13.5px;line-height:1.7;opacity:.92;max-width:520px}
+.hero-next{margin-top:16px;background:transparent;border:1px solid rgba(255,255,255,.35);border-radius:var(--r-sm);padding:12px 14px}
+.hero-next .hn-t{font-size:11px;letter-spacing:1.6px;opacity:.8;text-transform:uppercase}
+.hero-next .hn-b{display:flex;justify-content:space-between;align-items:baseline;margin-top:4px;font-weight:800;font-size:15px}
+.hero-next .bar{height:7px;border-radius:99px;background:rgba(255,255,255,.2);margin-top:8px;overflow:hidden}
+.hero-next .bar i{display:block;height:100%;border-radius:99px;background:#ffb000;transition:width .8s var(--ease)}
+.hero-cta{margin-top:16px;display:flex;gap:10px;flex-wrap:wrap}
+.btn{border:none;border-radius:6px;padding:11px 20px;font-size:13.5px;font-weight:800;transition:transform .2s var(--spring), box-shadow .2s}
+.btn:active{transform:scale(.95)}
+.btn.red{background:var(--accent);color:#fff}
+.btn.ghost{background:rgba(255,255,255,.16);color:#fff;border:1px solid rgba(255,255,255,.3)}
+.btn.ink{background:var(--ink);color:var(--paper-2)}
+.btn.soft{background:var(--card);color:var(--ink);border:1px solid var(--card-line);box-shadow:var(--shadow)}
+.btn.sm{padding:8px 14px;font-size:12.5px}
+
+.sec-t{display:flex;align-items:baseline;gap:10px;margin:28px 2px 14px}
+.sec-t h2{font-size:18px;font-weight:900;border-left:5px solid var(--accent);padding-left:10px}
+.stat-card .v,.prog-head .n,.ring-num,.stat-card .p{font-variant-numeric:tabular-nums}
+.sec-t .sub{font-size:12px;color:var(--ink-muted)}
+.sec-t .more{margin-left:auto;font-size:12.5px;color:var(--jr-blue);background:none;border:none;font-weight:700}
+
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat-card{background:var(--card);border:1px solid var(--card-line);border-radius:var(--r);padding:16px;box-shadow:var(--shadow);transition:transform .25s var(--spring)}
+.stat-card:hover{transform:translateY(-3px)}
+.stat-card .ic{width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;margin-bottom:10px}
+.stat-card .ic svg{width:19px;height:19px}
+.stat-card .v{font-size:23px;font-weight:900}
+.stat-card .v small{font-size:13px;color:var(--ink-muted);font-weight:600}
+.stat-card .l{font-size:12px;color:var(--ink-dim);margin-top:2px}
+.stat-card .p{font-size:11.5px;font-weight:800;margin-top:6px}
+
+.prog-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.prog-card{background:var(--card);border:1px solid var(--card-line);border-radius:var(--r);padding:15px 17px;box-shadow:var(--shadow)}
+.prog-head{display:flex;align-items:center;gap:9px;font-weight:800;font-size:14px}
+.prog-head .dot{width:11px;height:11px;border-radius:4px;flex:none}
+.prog-head .n{margin-left:auto;font-size:12.5px;color:var(--ink-dim);font-weight:700}
+.prog-bar{height:8px;background:var(--ring-track);border-radius:99px;margin-top:11px;overflow:hidden}
+.prog-bar i{display:block;height:100%;border-radius:99px;transition:width .8s var(--ease)}
+
+.rec-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.rec-card{background:var(--card);border:1px solid var(--card-line);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow);text-align:left;padding:0;transition:transform .25s var(--spring)}
+.rec-card:hover{transform:translateY(-3px)}
+.rec-card .rc-img{height:118px;display:flex;align-items:center;justify-content:center;background:var(--paper);position:relative}
+.rec-card .rc-img .stamp-svg{width:104px;height:104px}
+.rec-card .rc-b{padding:12px 14px}
+.rec-card .rc-n{font-weight:800;font-size:14.5px}
+.rec-card .rc-m{font-size:12px;color:var(--ink-muted);margin-top:3px}
+.chip{display:inline-block;font-size:10.5px;font-weight:800;padding:2.5px 8px;border-radius:4px;background:var(--accent-soft);color:var(--accent)}
+.chip.blue{background:#e3ecff;color:var(--jr-blue)} .chip.green{background:#dcf5e7;color:#0d7a3f}
+.chip.gold{background:#fdf0d5;color:#9a6206} .chip.grey{background:var(--ring-track);color:var(--ink-dim)}
+
+/* ══════════ Map view ══════════ */
+#view-map{overflow:hidden}
+#map{position:absolute;inset:0}
+#map-panel{
+  position:absolute;top:12px;left:12px;bottom:calc(var(--tab-h) + 22px);width:372px;max-width:calc(100vw - 24px);z-index:20;
+  background:var(--map-panel);backdrop-filter:blur(24px) saturate(1.7);-webkit-backdrop-filter:blur(24px) saturate(1.7);
+  border:1px solid var(--map-line);border-radius:22px;color:var(--map-text);display:flex;flex-direction:column;overflow:hidden;
+  box-shadow:0 24px 60px rgba(0,0,0,.45);transition:transform .45s var(--ease), opacity .3s;
+}
+#map-panel.hidden{transform:translateX(-110%);opacity:0;pointer-events:none}
+#map-panel .mp-head{padding:14px 16px 10px;border-bottom:1px solid var(--map-line)}
+#map-panel .mp-title{font-size:15px;font-weight:900;display:flex;align-items:center;gap:8px}
+#map-panel .mp-stats{display:flex;gap:14px;margin-top:9px;font-size:12px;color:var(--map-dim);flex-wrap:wrap}
+#map-panel .mp-stats b{color:#fff;font-size:14px}
+.mp-prog{height:6px;background:rgba(255,255,255,.14);border-radius:99px;margin-top:10px;overflow:hidden}
+.mp-prog i{display:block;height:100%;background:linear-gradient(90deg,#2eb35a,#2f6de8);border-radius:99px;transition:width .6s var(--ease)}
+.seg-ctl{display:flex;gap:6px;padding:10px 14px 0}
+.seg-ctl button{flex:1;border:1px solid var(--map-line);background:transparent;color:var(--map-dim);border-radius:99px;padding:7px 4px;font-size:12px;font-weight:700;transition:all .2s}
+.seg-ctl button.active{background:#fff;color:#131722;border-color:#fff}
+.mp-search{margin:10px 14px 4px;position:relative}
+.mp-search input{width:100%;background:var(--map-card);border:1px solid var(--map-line);border-radius:12px;color:#fff;padding:10px 12px 10px 36px;font-size:13.5px;outline:none}
+.mp-search input::placeholder{color:var(--map-muted)}
+.mp-search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:17px;height:17px;color:var(--map-muted)}
+.mp-tools{display:flex;gap:6px;padding:8px 14px;border-bottom:1px solid var(--map-line);flex-wrap:wrap}
+.mp-tools button{border:1px solid var(--map-line);background:transparent;color:var(--map-dim);border-radius:99px;padding:5px 11px;font-size:11.5px;font-weight:700}
+.mp-tools button.active{background:var(--jr-blue);border-color:var(--jr-blue);color:#fff}
+#mp-list{flex:1;overflow-y:auto;padding:6px 8px 14px}
+#map-fab{position:absolute;top:12px;left:12px;z-index:19;width:44px;height:44px;border-radius:50%;border:1px solid var(--map-line);
+  background:var(--map-panel);color:#fff;display:none;align-items:center;justify-content:center;backdrop-filter:blur(16px);box-shadow:0 10px 26px rgba(0,0,0,.4)}
+#map-fab.show{display:flex}
+#map-fab svg{width:20px;height:20px}
+@media(max-width:700px){
+  #map-panel{top:auto;bottom:calc(var(--tab-h) + 16px);left:8px;right:8px;width:auto;max-height:52dvh}
+}
+.op-group{margin-top:6px}
+.op-head{display:flex;align-items:center;gap:8px;padding:9px 8px;border-radius:12px;cursor:pointer;font-weight:800;font-size:13.5px}
+.op-head:hover{background:var(--map-card)}
+.op-head .oc{width:10px;height:10px;border-radius:3.5px;flex:none}
+.op-head .ocnt{margin-left:auto;font-size:11.5px;color:var(--map-muted);font-weight:700}
+.op-head .chev{transition:transform .3s;color:var(--map-muted)} .op-head.closed .chev{transform:rotate(-90deg)}
+.op-head .chev svg{width:15px;height:15px;display:block}
+.op-lines{overflow:hidden;transition:max-height .35s var(--ease)}
+.line-item{display:flex;align-items:center;gap:9px;padding:8px;border-radius:12px;cursor:pointer}
+.line-item:hover{background:var(--map-card)}
+.line-item .ld{width:9px;height:9px;border-radius:50%;flex:none}
+.line-item .ln{flex:1;min-width:0}
+.line-item .ln .a{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.line-item .ln .b{font-size:11px;color:var(--map-muted)}
+.ck{width:24px;height:24px;flex:none;border-radius:8px;border:1.5px solid var(--map-line);display:flex;align-items:center;justify-content:center;color:transparent;transition:all .2s;background:transparent}
+.ck svg{width:14px;height:14px}
+.ck.on{background:var(--green);border-color:var(--green);color:#fff}
+.ck.part{background:var(--gold);border-color:var(--gold);color:#fff}
+.seg-list{margin:2px 0 6px 26px;border-left:2px solid var(--map-line);padding-left:10px}
+.seg-item{display:flex;align-items:center;gap:8px;padding:6px 6px;border-radius:9px;cursor:pointer;font-size:12.5px;color:var(--map-dim)}
+.seg-item:hover{background:var(--map-card)} .seg-item.ridden{color:#fff}
+.seg-item .km{margin-left:auto;font-size:11px;color:var(--map-muted)}
+.seg-item .ck{width:20px;height:20px;border-radius:6px}
+.svc-card{display:flex;gap:11px;align-items:center;background:var(--map-card);border:1px solid var(--map-line);border-radius:16px;padding:11px;margin:8px 4px}
+.svc-card .si{width:42px;height:42px;border-radius:12px;flex:none;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:11px;color:#fff;text-align:center;line-height:1.15}
+.svc-card .sb{flex:1;min-width:0}
+.svc-card .sn{font-weight:800;font-size:14px}
+.svc-card .sm{font-size:11.5px;color:var(--map-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.svc-group{font-size:11px;letter-spacing:1.6px;color:var(--map-muted);text-transform:uppercase;margin:14px 8px 2px;font-weight:800}
+.mp-empty{padding:34px 18px;text-align:center;color:var(--map-muted);font-size:13px;line-height:1.8}
+.maplibregl-ctrl-group{background:var(--map-panel)!important;backdrop-filter:blur(14px);border:1px solid var(--map-line)!important;border-radius:12px!important}
+.maplibregl-ctrl-group button{background:transparent!important;width:34px!important;height:34px!important}
+@media (prefers-color-scheme: dark){.maplibregl-ctrl-group button .maplibregl-ctrl-icon{filter:invert(1) brightness(1.4)}}
+.maplibregl-popup-content{background:var(--map-panel)!important;color:var(--map-text)!important;border:1px solid var(--map-line);border-radius:16px!important;padding:14px!important;backdrop-filter:blur(16px);box-shadow:0 16px 40px rgba(0,0,0,.45)!important;min-width:210px}
+.maplibregl-popup-tip{display:none}
+.maplibregl-popup-close-button{color:var(--map-dim)!important;font-size:16px!important;padding:4px 8px!important}
+
+/* ══════════ Stamps ══════════ */
+.stamp-hero{background:var(--card);border:1.5px solid #171410;border-radius:10px;padding:22px}
+.stamp-hero .sh-flex{display:flex;gap:20px;align-items:center;flex-wrap:wrap}
+.stamp-hero h2{font-size:22px;font-weight:900}
+.stamp-hero p{color:var(--ink-dim);font-size:13px;line-height:1.7;margin-top:6px;max-width:560px}
+.mini-ring{position:relative;width:92px;height:92px;flex:none}
+.mini-ring svg{width:92px;height:92px;transform:rotate(-90deg)}
+.mini-ring .trk{stroke:var(--ring-track)} .mini-ring .val{stroke:var(--accent);stroke-linecap:round;transition:stroke-dashoffset .8s var(--ease)}
+.mini-ring .mr-n{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:900;font-size:17px}
+.mini-ring .mr-n small{font-size:10px;color:var(--ink-muted);font-weight:700}
+.toolbar{position:sticky;top:0;z-index:5;background:var(--paper);padding:14px 0 10px}
+.search-box{display:flex;align-items:center;gap:9px;background:var(--card);border:1px solid var(--card-line);border-radius:8px;padding:11px 16px;box-shadow:var(--shadow)}
+.search-box svg{width:18px;height:18px;color:var(--ink-muted);flex:none}
+.search-box input{border:none;outline:none;background:transparent;font-size:14.5px;width:100%;color:var(--ink)}
+.chip-row{display:flex;gap:7px;overflow-x:auto;padding:11px 2px 2px;scrollbar-width:none}
+.chip-row::-webkit-scrollbar{display:none}
+.fchip{flex:none;border:1px solid var(--card-line);background:var(--card);color:var(--ink-dim);border-radius:6px;padding:7px 14px;font-size:12.5px;font-weight:700;transition:all .2s;white-space:nowrap}
+.fchip.active{background:var(--ink);color:var(--paper-2);border-color:var(--ink)}
+.fchip.red.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.stamp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:13px;padding-bottom:10px}
+.stamp-card{content-visibility:auto;contain-intrinsic-size:auto 208px;background:var(--card);border:1px solid var(--card-line);border-radius:var(--r);padding:14px 12px 12px;text-align:center;cursor:pointer;box-shadow:var(--shadow);transition:transform .25s var(--spring);position:relative;border:none;width:100%}
+.stamp-card:hover{transform:translateY(-3px) rotate(-.4deg)}
+.stamp-fig{width:112px;height:112px;margin:2px auto 10px;position:relative;border:1.5px dashed #c9bb96;border-radius:50%;padding:6px;background:var(--paper-2)}
+.stamp-card.got .stamp-fig{border-color:#a5935c}
+.stamp-svg{width:100%;height:100%;display:block}
+.stamp-card .stamp-svg{opacity:.26;filter:saturate(.3)}
+.stamp-card.got .stamp-svg{opacity:1;filter:none}
+.stamp-fig .stamp-svg{transition:opacity .3s}
+.stamp-fallback{width:100%;height:100%;border-radius:50%;border:3px dashed var(--card-line);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:900;color:var(--ink-muted);background:var(--paper)}
+.stamp-card.got .stamp-fallback{border-style:solid}
+.ink-seal{position:absolute;right:-7px;bottom:-5px;width:44px;height:44px;border-radius:50%;border:2.5px solid var(--accent);color:var(--accent);
+  display:none;align-items:center;justify-content:center;font-size:10px;font-weight:900;line-height:1.25;text-align:center;background:rgba(255,255,255,.82);
+  transform:rotate(-12deg);letter-spacing:1px}
+.stamp-card.got .ink-seal{display:flex}
+.stamp-n{font-weight:800;font-size:14px;line-height:1.35}
+.stamp-j{font-size:11px;color:var(--ink-muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stamp-m{display:flex;gap:5px;justify-content:center;margin-top:8px;flex-wrap:wrap}
+.stamp-date{font-size:10.5px;color:var(--accent);font-weight:800;margin-top:6px}
+.load-more{display:block;margin:18px auto 6px}
+
+/* ══════════ Book (图鉴) ══════════ */
+.book-tabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px}
+.train-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.train-card{background:var(--card);border:1px solid var(--card-line);border-radius:var(--r);padding:15px;box-shadow:var(--shadow);display:flex;gap:12px;align-items:flex-start;text-align:left;width:100%;transition:transform .2s var(--spring)}
+.train-card:hover{transform:translateY(-2px)}
+.train-card .ti{width:46px;height:46px;border-radius:13px;flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:11px;text-align:center;line-height:1.2}
+.train-card .tb{flex:1;min-width:0}
+.train-card .tn{font-weight:800;font-size:15px}
+.train-card .tm{font-size:12px;color:var(--ink-muted);margin-top:3px;line-height:1.55}
+.train-card.ridden{outline:2px solid var(--green);outline-offset:-2px}
+.coll-card{background:var(--card);border:1px solid var(--card-line);border-radius:var(--r);padding:17px;box-shadow:var(--shadow);margin-bottom:12px}
+.coll-card h3{font-size:16px;font-weight:900;display:flex;gap:9px;align-items:center}
+.coll-card .cd{font-size:12.5px;color:var(--ink-dim);line-height:1.75;margin-top:7px}
+.coll-item{border-top:1px dashed var(--card-line);padding:11px 2px}
+.coll-item:first-of-type{margin-top:8px}
+.coll-item .ci-t{font-weight:800;font-size:13.5px}
+.coll-item .ci-m{font-size:11.5px;color:var(--ink-muted);margin-top:2px}
+.coll-item .ci-x{font-size:12.5px;color:var(--ink-dim);line-height:1.7;margin-top:5px}
+
+/* ══════════ Me ══════════ */
+.profile-card{background:var(--card);border:1.5px solid #171410;border-radius:10px;padding:24px;box-shadow:var(--shadow);display:flex;gap:20px;align-items:center;flex-wrap:wrap}
+.avatar-lg{width:76px;height:76px;border-radius:8px;flex:none;background:#171410;color:#fff;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:900}
+.profile-card .pf-b{flex:1;min-width:210px}
+.nick-row{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.nick-row input{font-size:19px;font-weight:900;border:none;border-bottom:2px dashed var(--card-line);background:transparent;color:var(--ink);outline:none;padding:3px 2px;max-width:230px}
+.nick-row input:focus{border-color:var(--accent)}
+.pf-meta{font-size:12.5px;color:var(--ink-dim);margin-top:7px;line-height:1.7}
+.medal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:11px}
+.medal-cell{content-visibility:auto;contain-intrinsic-size:auto 118px;background:var(--card);border:1px solid var(--card-line);border-radius:18px;padding:14px 8px 11px;text-align:center;box-shadow:var(--shadow);cursor:pointer;transition:transform .2s var(--spring);border:none;width:100%}
+.medal-cell:hover{transform:translateY(-2px)}
+.medal-ic{width:52px;height:52px;margin:0 auto 8px;border-radius:50%;display:flex;align-items:center;justify-content:center;position:relative}
+.medal-ic svg{width:27px;height:27px}
+.medal-cell .mn{font-size:11.5px;font-weight:800;line-height:1.4}
+.medal-cell .mp2{font-size:10.5px;color:var(--ink-muted);margin-top:3px}
+.medal-cell.locked .medal-ic{filter:grayscale(1);opacity:.4}
+.medal-cell.locked .mn{color:var(--ink-muted)}
+.tier-platinum .medal-ic, .medal-ic.tier-platinum{background:linear-gradient(145deg,#e8f4ff,#b9d7ff);color:#2f6de8;box-shadow:inset 0 0 0 2.5px #9ec2ff}
+.tier-gold .medal-ic, .medal-ic.tier-gold{background:linear-gradient(145deg,#fff3d1,#ffd97a);color:#9a6206;box-shadow:inset 0 0 0 2.5px #eec25e}
+.tier-silver .medal-ic, .medal-ic.tier-silver{background:linear-gradient(145deg,#f4f6fa,#d9e0ec);color:#5b6b84;box-shadow:inset 0 0 0 2.5px #bfcbdd}
+.tier-bronze .medal-ic, .medal-ic.tier-bronze{background:linear-gradient(145deg,#ffe9d6,#f3c39a);color:#8a5220;box-shadow:inset 0 0 0 2.5px #e0aa72}
+.data-card{background:var(--card);border:1px solid var(--card-line);border-radius:var(--r);padding:18px;box-shadow:var(--shadow)}
+.data-row{display:flex;gap:9px;flex-wrap:wrap;margin-top:12px}
+.note{font-size:12px;color:var(--ink-muted);line-height:1.75}
+
+/* ══════════ Modal / toast ══════════ */
+.overlay{position:fixed;inset:0;background:rgba(18,14,10,.55);backdrop-filter:blur(6px);z-index:100;display:none;align-items:flex-end;justify-content:center}
+.overlay.show{display:flex}
+.sheet{border-top:4px solid #171410;background:var(--paper-2);width:min(560px,100%);max-height:88dvh;overflow-y:auto;border-radius:28px 28px 0 0;padding:26px 24px calc(24px + env(safe-area-inset-bottom));animation:up .38s var(--ease);position:relative}
+@media(min-width:700px){.overlay{align-items:center}.sheet{border-radius:28px}}
+@keyframes up{from{transform:translateY(46px);opacity:0}to{transform:none;opacity:1}}
+.sheet .x{position:absolute;top:14px;right:14px;width:36px;height:36px;border-radius:50%;border:1px solid var(--card-line);background:var(--card);font-size:16px;color:var(--ink-dim)}
+.stamp-big{width:230px;height:230px;margin:8px auto;position:relative}
+.stamp-big .stamp-svg{width:100%;height:100%}
+.stamp-big.slam .stamp-svg{animation:slam .45s var(--spring)}
+@keyframes slam{0%{transform:scale(1.7) rotate(4deg);opacity:.4}100%{transform:scale(1) rotate(0)}}
+.sheet h3{font-size:21px;font-weight:900;text-align:center}
+.sheet .s-ja{text-align:center;color:var(--ink-muted);font-size:13px;margin-top:4px}
+.sheet .s-meta{display:flex;gap:6px;justify-content:center;margin-top:12px;flex-wrap:wrap}
+.sheet .s-desc{background:var(--card);border:1px solid var(--card-line);border-radius:var(--r-sm);padding:13px 15px;font-size:13px;line-height:1.8;color:var(--ink-dim);margin-top:14px}
+.sheet .s-actions{display:flex;gap:9px;margin-top:18px}
+.sheet .s-actions .btn{flex:1}
+.dist-hint{text-align:center;font-size:12px;color:var(--ink-muted);margin-top:10px;min-height:17px}
+#toast{position:fixed;left:50%;bottom:calc(var(--tab-h) + 26px);transform:translate(-50%,20px);z-index:200;background:var(--ink);color:var(--paper-2);
+  padding:12px 20px;border-radius:var(--r-pill);font-size:13.5px;font-weight:700;box-shadow:var(--shadow-lg);opacity:0;pointer-events:none;transition:all .35s var(--ease);max-width:88vw;text-align:center}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+#medal-toast{position:fixed;top:calc(var(--head-h) + 12px);left:50%;transform:translate(-50%,-16px);z-index:190;background:var(--card);border:1px solid var(--gold);
+  border-radius:18px;padding:12px 18px;display:none;gap:12px;align-items:center;box-shadow:var(--shadow-lg);transition:all .4s var(--spring)}
+#medal-toast.show{display:flex;transform:translate(-50%,0)}
+#medal-toast .mt-ic{width:40px;height:40px;border-radius:50%;background:linear-gradient(145deg,#fff3d1,#ffd97a);color:#9a6206;display:flex;align-items:center;justify-content:center}
+#medal-toast .mt-ic svg{width:21px;height:21px}
+#medal-toast .mt-k{font-size:10px;letter-spacing:1.6px;color:var(--gold);font-weight:900}
+#medal-toast .mt-n{font-size:14px;font-weight:900}
+.spin{width:34px;height:34px;border-radius:50%;border:3.5px solid var(--ring-track);border-top-color:var(--accent);animation:sp 0.8s linear infinite;margin:30px auto}
+@keyframes sp{to{transform:rotate(360deg)}}
+.empty-box{padding:44px 20px;text-align:center;color:var(--ink-muted);font-size:13.5px;line-height:1.9}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<filter id="ink-rough" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency="0.08" numOctaves="2" seed="7" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="2.4"/></filter>
+<filter id="ink-rough2" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency="0.11" numOctaves="2" seed="23" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="1.8"/></filter>
+</defs></svg>
+<div id="app">
+  <header class="top">
+    <div class="logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="13" rx="3"/><path d="M5 11h14"/><circle cx="9" cy="7.4" r="1.1" fill="currentColor" stroke="none"/><circle cx="15" cy="7.4" r="1.1" fill="currentColor" stroke="none"/><path d="M8.2 16 6.8 20M15.8 16l1.4 4M9.5 16h5"/></svg></div>
+    <div class="brand">
+      <div class="t1">Mini JapanRail · <em data-i18n="brand">铁路制霸</em></div>
+      <div class="t2">Quest Atlas — Japan Railway Conquest</div>
+    </div>
+    <div class="top-right">
+      <div class="level-pill"><span class="lv" id="pill-lv">1</span><span class="lt" id="pill-title">—</span><span class="lp" id="pill-pts">0 pt</span></div>
+    </div>
+  </header>
+
+  <main>
+    <!-- ═══ HOME ═══ -->
+    <section class="view pad active" id="view-home"><div class="wrap">
+      <div class="hero">
+        <div class="hero-grid">
+          <div class="ring-box">
+            <svg class="ring" viewBox="0 0 120 120"><circle class="trk" cx="60" cy="60" r="52" fill="none" stroke-width="10"/><circle class="val" id="hero-ring" cx="60" cy="60" r="52" fill="none" stroke-width="10" stroke-dasharray="326.7" stroke-dashoffset="326.7"/></svg>
+            <div class="ring-num"><span id="hero-pct">0</span>%</div>
+            <div class="ring-lab" data-i18n="overall">综合制霸率</div>
+          </div>
+          <div class="hero-main">
+            <h1 data-i18n-html="heroH">把日本的铁道，<span class="hl">一站一站</span>盖满你的手帐。</h1>
+            <p data-i18n="heroP">线路制霸 × 车站印章 — 参考 JR「TRAIN TRIP」印章手帐，把 4,729 个区间、全部特急新干线与 1,482 枚车站印章装进同一个冒险里。</p>
+            <div class="hero-next">
+              <div class="hn-t" data-i18n="nextLevel">下一等级</div>
+              <div class="hn-b"><span id="next-title">—</span><span id="next-pts"></span></div>
+              <div class="bar"><i id="next-bar" style="width:0%"></i></div>
+            </div>
+            <div class="hero-cta">
+              <button class="btn red" data-goto="map" data-i18n="ctaMap">打开制霸地图</button>
+              <button class="btn ghost" data-goto="stamps" data-i18n="ctaStamps">去盖印章</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec-t"><h2 data-i18n="myProgress">我的进度</h2><span class="sub" data-i18n="myProgressSub">全部保存在本机浏览器</span></div>
+      <div class="stat-grid" id="home-stats"></div>
+
+      <div class="sec-t"><h2 data-i18n="jrStamps">JR 六社 · 印章进度</h2><span class="sub">TRAIN TRIP</span>
+        <button class="more" data-goto="stamps" data-i18n="viewAll">查看全部 →</button></div>
+      <div class="prog-list" id="home-jr"></div>
+
+      <div class="sec-t"><h2 data-i18n="opProgress">运营商 · 线路进度</h2><span class="sub" data-i18n="opProgressSub">按已乘区间数排序</span>
+        <button class="more" data-goto="map" data-i18n="viewAll2">去地图 →</button></div>
+      <div class="prog-list" id="home-ops"><div class="empty-box" data-i18n="loadingLines">线路数据加载中…</div></div>
+
+      <div class="sec-t"><h2 data-i18n="recentStamps">最近盖下的印章</h2><button class="more" data-goto="stamps" data-i18n="viewAll">查看全部 →</button></div>
+      <div class="rec-row" id="home-recent"><div class="empty-box" data-i18n="noStampsYet">还没有印章 — 去印章册盖下第一枚吧。</div></div>
+
+      <div class="sec-t"><h2 data-i18n="nextStations">下一站，去这里</h2><span class="sub" data-i18n="nextStationsSub">为你挑的未到访印章站</span></div>
+      <div class="rec-row" id="home-rec"></div>
+    </div></section>
+
+    <!-- ═══ MAP ═══ -->
+    <section class="view" id="view-map">
+      <div id="map"></div>
+      <button id="map-fab" title="Panel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg></button>
+      <div id="map-panel">
+        <div class="mp-head">
+          <div class="mp-title"><span data-i18n="mapTitle">制霸地图</span>
+            <button class="fchip" id="panel-hide" style="margin-left:auto;padding:4px 11px;font-size:11px" data-i18n="collapse">收起</button></div>
+          <div class="mp-stats">
+            <span><span data-i18n="lines">线路</span> <b id="ms-lines">0/0</b></span>
+            <span><span data-i18n="segs">区间</span> <b id="ms-segs">0/0</b></span>
+            <span><b id="ms-km">0</b> km</span>
+          </div>
+          <div class="mp-prog"><i id="ms-bar" style="width:0%"></i></div>
+        </div>
+        <div class="seg-ctl" id="mode-ctl">
+          <button data-mode="quick" class="active" data-i18n="modeQuick">快速 · 整线</button>
+          <button data-mode="detailed" data-i18n="modeDetail">详细 · 区间</button>
+          <button data-mode="ride" data-i18n="modeRide">列车 · 乘车</button>
+        </div>
+        <div class="mp-search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input id="mp-q" type="text" data-i18n-ph="searchPh" placeholder="搜索线路 / 车站 / 列车…">
+        </div>
+        <div class="mp-tools">
+          <button data-view2="all" class="active" data-i18n="showAll">显示全部</button>
+          <button data-view2="ridden" data-i18n="showRidden">只看已制霸</button>
+          <button id="tool-stamps" data-i18n="stampPins">印章点</button>
+        </div>
+        <div id="mp-list"><div class="mp-empty"><div class="spin"></div><span data-i18n="loadingLines">线路数据加载中…</span></div></div>
+      </div>
+    </section>
+
+    <!-- ═══ STAMPS ═══ -->
+    <section class="view pad" id="view-stamps"><div class="wrap">
+      <div class="stamp-hero"><div class="sh-flex">
+        <div class="mini-ring">
+          <svg viewBox="0 0 92 92"><circle class="trk" cx="46" cy="46" r="40" fill="none" stroke-width="8"/><circle class="val" id="stamp-ring" cx="46" cy="46" r="40" fill="none" stroke-width="8" stroke-dasharray="251.3" stroke-dashoffset="251.3"/></svg>
+          <div class="mr-n"><span id="stamp-count">0</span><small>/ 1,482</small></div>
+        </div>
+        <div style="flex:1;min-width:240px">
+          <h2 data-i18n="stampBook">车站印章册</h2>
+          <p data-i18n="stampBookP">数据源自 JR 集团「TRAIN TRIP」数字印章（本地化镜像）：1,482 个印章点覆盖 JR 六社与全国各地。点开任意车站即可盖章；到了车站附近，还能用定位留下「实地」印记。</p>
+          <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+            <span class="chip green" id="stamp-verified">实地 0</span>
+            <span class="chip gold" id="stamp-types">—</span>
+          </div>
+        </div>
+      </div></div>
+
+      <div class="toolbar">
+        <div class="search-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input id="stamp-q" type="text" data-i18n-ph="stampSearchPh" placeholder="搜索车站（中文 / 日文）…">
+        </div>
+        <div class="chip-row" id="stamp-groups"></div>
+        <div class="chip-row" id="stamp-types-row"></div>
+      </div>
+      <div class="note" id="stamp-count-line" style="margin:2px 2px 10px"></div>
+      <div class="stamp-grid" id="stamp-grid"></div>
+      <button class="btn soft load-more" id="stamp-more" data-i18n="loadMore">加载更多</button>
+    </div></section>
+
+    <!-- ═══ BOOK ═══ -->
+    <section class="view pad" id="view-book"><div class="wrap">
+      <div class="sec-t" style="margin-top:2px"><h2 data-i18n="book">图鉴</h2><span class="sub" data-i18n="bookSub">列车 · 线路 · TRAIN TRIP 特别收藏</span></div>
+      <div class="book-tabs" id="book-tabs">
+        <button class="fchip active" data-book="trains" data-i18n="bookTrains">列车图鉴</button>
+        <button class="fchip" data-book="lines" data-i18n="bookLines">线路图鉴</button>
+        <button class="fchip" data-book="ikimono" data-i18n="bookIkimono">生物图鉴</button>
+        <button class="fchip" data-book="ekisoba" data-i18n="bookEkisoba">站荞麦面</button>
+        <button class="fchip" data-book="ekiben" data-i18n="bookEkiben">站便当</button>
+        <button class="fchip" data-book="face" data-i18n="bookFace">列车之脸</button>
+      </div>
+      <div id="book-body"><div class="empty-box"><div class="spin"></div></div></div>
+    </div></section>
+
+    <!-- ═══ ME ═══ -->
+    <section class="view pad" id="view-me"><div class="wrap">
+      <div class="profile-card">
+        <div class="avatar-lg" id="pf-avatar">铁</div>
+        <div class="pf-b">
+          <div class="nick-row">
+            <input id="pf-nick" maxlength="16" data-i18n-ph="nickPh" placeholder="给自己起个旅人名">
+            <span class="chip gold" id="pf-level">Lv.1</span>
+          </div>
+          <div class="pf-meta" id="pf-meta">—</div>
+        </div>
+        <button class="btn ink" id="btn-poster" data-i18n="poster">生成制霸海报</button>
+      </div>
+
+      <div class="sec-t"><h2 data-i18n="medals">勋章墙</h2><span class="sub" id="medal-count"></span></div>
+      <div class="medal-grid" id="medal-grid"></div>
+
+      <div class="sec-t"><h2 data-i18n="dataTitle">数据与备份</h2></div>
+      <div class="data-card">
+        <p class="note" data-i18n="dataNote">进度保存在浏览器本地（与旧版制霸站共用同一份线路记录，印章独立保存）。导出文件包含线路、区间、列车与印章全部进度，可在其他设备导入。</p>
+        <div class="data-row">
+          <button class="btn soft sm" id="btn-export" data-i18n="export">导出进度</button>
+          <button class="btn soft sm" id="btn-import" data-i18n="import">导入进度</button>
+          <button class="btn soft sm" id="btn-share" data-i18n="share">复制分享文案</button>
+          <button class="btn soft sm" id="btn-clear" style="color:var(--accent)" data-i18n="clear">清空全部</button>
+        </div>
+        <input type="file" id="import-file" accept=".json" style="display:none">
+      </div>
+
+      <div class="sec-t"><h2 data-i18n="about">关于</h2></div>
+      <div class="data-card"><p class="note" data-i18n="aboutP">Quest Atlas 是 Mini JapanRail（jr.suki.ing）制霸站的大型化改版：保留原有线路/区间/列车制霸与数据格式，参考 JR「TRAIN TRIP」加入车站印章册、等级与特别图鉴。地图与时刻数据为计划时刻表推算，仅供参考。</p></div>
+      <div style="height:10px"></div>
+    </div></section>
+  </main>
+
+  <nav class="tabs" id="tabs">
+    <button data-view="home" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg><span data-i18n="tabHome">首页</span></button>
+    <button data-view="map"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg><span data-i18n="tabMap">地图</span></button>
+    <button data-view="stamps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/></svg><span data-i18n="tabStamps">印章册</span></button>
+    <button data-view="book"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5v14z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/></svg><span data-i18n="tabBook">图鉴</span></button>
+    <button data-view="me"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 5-5.5 8-5.5s6.5 1.5 8 5.5"/></svg><span data-i18n="tabMe">我的</span></button>
+  </nav>
+</div>
+
+<!-- Stamp detail sheet -->
+<div class="overlay" id="sheet-stamp"><div class="sheet">
+  <button class="x" data-close="sheet-stamp">✕</button>
+  <div class="stamp-big" id="sd-fig"></div>
+  <h3 id="sd-name">—</h3>
+  <div class="s-ja" id="sd-ja"></div>
+  <div class="s-meta" id="sd-meta"></div>
+  <div class="s-desc" id="sd-desc" style="display:none"></div>
+  <div class="s-actions">
+    <button class="btn red" id="sd-collect">盖章</button>
+    <button class="btn soft" id="sd-locate">定位盖章</button>
+    <button class="btn soft" id="sd-fly">在地图上看</button>
+  </div>
+  <div class="dist-hint" id="sd-dist"></div>
+</div></div>
+
+<!-- Medal detail sheet -->
+<div class="overlay" id="sheet-medal"><div class="sheet" style="text-align:center">
+  <button class="x" data-close="sheet-medal">✕</button>
+  <div id="md-ic" style="margin:10px auto 14px;width:96px"></div>
+  <h3 id="md-name">—</h3>
+  <div class="s-ja" id="md-desc"></div>
+  <div class="prog-bar" style="max-width:320px;margin:18px auto 6px"><i id="md-bar" style="background:linear-gradient(90deg,#e8a33d,#ff8a3d)"></i></div>
+  <div class="note" id="md-prog"></div>
+</div></div>
+
+<!-- Poster sheet -->
+<div class="overlay" id="sheet-poster"><div class="sheet">
+  <button class="x" data-close="sheet-poster">✕</button>
+  <h3 style="text-align:left" data-i18n="poster">生成制霸海报</h3>
+  <canvas id="poster-canvas" style="width:100%;border-radius:16px;margin-top:14px;box-shadow:var(--shadow)"></canvas>
+  <div class="s-actions"><button class="btn red" id="poster-dl" data-i18n="posterDl">下载 PNG</button></div>
+</div></div>
+
+<div id="medal-toast"><span class="mt-ic" id="mt-ic"></span><span><span class="mt-k" data-i18n="medalGot">新勋章</span><br><span class="mt-n" id="mt-name"></span></span></div>
+<div id="toast"></div>
+
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script>
+'use strict';
+/* ════════════════ i18n（语言自动决定，不放切换钮） ════════════════ */
+const LANG = (navigator.language || 'zh').toLowerCase().startsWith('ja') ? 'ja'
+  : (navigator.language || 'zh').toLowerCase().startsWith('zh') ? 'zh' : 'en';
+const I18N = {
+zh:{brand:'铁路制霸',overall:'综合制霸率',heroH:'把日本的铁道，<span class="hl">一站一站</span>盖满你的手帐。',heroP:'4,729 个区间 · 143 种特急与新干线 · 1,482 个印章点。印章由本站按各站的站名、公司色与停靠线路当场绘制，进度只保存在本机。',nextLevel:'下一等级',ctaMap:'打开制霸地图',ctaStamps:'去盖印章',myProgress:'我的进度',myProgressSub:'全部保存在本机浏览器',jrStamps:'JR 六社 · 印章进度',viewAll:'查看全部 →',viewAll2:'去地图 →',opProgress:'运营商 · 线路进度',opProgressSub:'按已乘区间数排序',recentStamps:'最近盖下的印章',noStampsYet:'还没有印章 — 去印章册盖下第一枚吧。',nextStations:'下一站，去这里',nextStationsSub:'为你挑的未到访印章站',loadingLines:'线路数据加载中…',mapTitle:'制霸地图',collapse:'收起',lines:'线路',segs:'区间',modeQuick:'快速 · 整线',modeDetail:'详细 · 区间',modeRide:'列车 · 乘车',searchPh:'搜索线路 / 车站 / 列车…',showAll:'显示全部',showRidden:'只看已制霸',stampPins:'印章点',stampBook:'车站印章册',stampBookP:'全 1,482 个印章点（车站名与位置为公开事实数据）。每枚印章都由本站当场绘制：站名、所属公司的墨色、以及这座车站实际停靠线路的色带——所以没有两枚完全相同。点开车站即可盖章；到了车站附近，还能用定位留下「实地」印记。',stampSearchPh:'搜索车站（中文 / 日文）…',loadMore:'加载更多',book:'图鉴',bookSub:'列车 · 线路 · TRAIN TRIP 特别收藏',bookTrains:'列车图鉴',bookLines:'线路图鉴',bookIkimono:'生物图鉴',bookEkisoba:'站荞麦面',bookEkiben:'站便当',bookFace:'列车之脸',nickPh:'给自己起个旅人名',poster:'生成制霸海报',posterDl:'下载 PNG',medals:'勋章墙',medalGot:'新勋章',dataTitle:'数据与备份',dataNote:'进度保存在浏览器本地（与旧版制霸站共用同一份线路记录，印章独立保存）。导出文件包含线路、区间、列车与印章全部进度，可在其他设备导入。',export:'导出进度',import:'导入进度',share:'复制分享文案',clear:'清空全部',about:'关于',aboutP:'Quest Atlas 是 Mini JapanRail（jr.suki.ing）制霸站的大型化改版：保留原有线路/区间/列车制霸与数据格式。收集玩法受 JR「TRAIN TRIP」启发，但印章图样与全部文案均为本站原创，印章点仅使用车站名、位置等事实数据。地图与时刻为计划时刻表推算，仅供参考。',tabHome:'首页',tabMap:'地图',tabStamps:'印章册',tabBook:'图鉴',tabMe:'我的',
+  sLines:'已乘线路',sSegs:'已乘区间',sKm:'已乘里程',sTrains:'已乘列车',sStamps:'已盖印章',sMedals:'已获勋章',all:'全部',onlyLeft:'只看未盖',got:'已盖',stampIt:'盖章',unstamp:'取消印章',stampGps:'定位盖章',fly:'在地图上看',verified:'实地',collectedOn:'盖于',pts:'点',nextStation:'下一站',shinkansen:'新干线',limited:'特急',stops:'站',confirmClear:'确定要清空全部进度吗？线路、列车与印章记录都会被删除。',cleared:'已清空',exported:'已导出',imported:'导入成功',importFail:'导入失败：文件格式不对',copied:'分享文案已复制',shareText:(n,s)=>`🇯🇵 我的日本铁路制霸进度\n线路 ${s.lines} 条 · 区间 ${s.segs} 个 · ${s.km} km\n列车 ${s.trains} 种 · 印章 ${s.stamps} 枚 · 等级 Lv.${s.lv} ${s.title}\n— Mini JapanRail · Quest Atlas`,gpsFar:d=>`距车站还有 ${d}，到站附近（1.5 km 内）再试试`,gpsNear:'就在车站附近，可以实地盖章！',gpsFail:'定位失败，可以先用普通盖章',levelTitles:['见习旅人','车站漫游者','线路探索者','特急骑士','全国行脚者','新干线使者','铁道地理学家','制霸挑战者','传说旅人','铁道完全制霸者'],medalProgress:'进度'},
+ja:{brand:'鉄道制覇',overall:'総合制覇率',heroH:'日本の鉄道を、<span class="hl">一駅ずつ</span>手帳に刻もう。',heroP:'4,729区間 · 特急・新幹線143種 · スタンプ1,482地点。スタンプは駅名・会社色・停車路線からその場で描画し、進捗はブラウザにのみ保存されます。',nextLevel:'次のレベル',ctaMap:'制覇マップを開く',ctaStamps:'スタンプを押しに行く',myProgress:'マイ進捗',myProgressSub:'すべてブラウザに保存',jrStamps:'JR六社 · スタンプ進捗',viewAll:'すべて見る →',viewAll2:'マップへ →',opProgress:'事業者 · 路線進捗',opProgressSub:'乗車区間数順',recentStamps:'最近押したスタンプ',noStampsYet:'まだスタンプがありません — スタンプ帳で最初の一枚を。',nextStations:'次の駅は、ここ',nextStationsSub:'未訪問のスタンプ駅から',loadingLines:'路線データ読込中…',mapTitle:'制覇マップ',collapse:'閉じる',lines:'路線',segs:'区間',modeQuick:'クイック · 路線',modeDetail:'詳細 · 区間',modeRide:'列車 · 乗車',searchPh:'路線 / 駅 / 列車を検索…',showAll:'すべて表示',showRidden:'制覇済みのみ',stampPins:'スタンプ地点',stampBook:'駅スタンプ帳',stampBookP:'全1,482地点（駅名と位置は公開の事実データ）。スタンプは駅ごとに、駅名・会社の色・実際に停まる路線の帯から描くオリジナルです。駅を開いて押印。近くでは位置情報で「現地」印も残せます。',stampSearchPh:'駅を検索（日本語 / 中国語）…',loadMore:'もっと見る',book:'図鑑',bookSub:'列車 · 路線 · TRAIN TRIP 特別コレクション',bookTrains:'列車図鑑',bookLines:'路線図鑑',bookIkimono:'いきもの図鑑',bookEkisoba:'駅そば',bookEkiben:'駅弁',bookFace:'列車の顔',nickPh:'旅人の名前を入力',poster:'制覇ポスターを作る',posterDl:'PNGを保存',medals:'勲章ウォール',medalGot:'新しい勲章',dataTitle:'データとバックアップ',dataNote:'進捗はブラウザに保存されます（路線記録は旧制覇サイトと共通、スタンプは独立保存）。書き出しファイルには全進捗が含まれます。',export:'書き出し',import:'読み込み',share:'シェア文をコピー',clear:'すべて消去',about:'このサイトについて',aboutP:'Quest Atlas は Mini JapanRail（jr.suki.ing）鉄道制覇の大型化リニューアルです。従来の路線・区間・列車制覇とデータ形式を保ち、JR「TRAIN TRIP」を参考に駅スタンプ帳・レベル・特別図鑑を追加しました。',tabHome:'ホーム',tabMap:'マップ',tabStamps:'スタンプ',tabBook:'図鑑',tabMe:'マイ',
+  sLines:'乗車路線',sSegs:'乗車区間',sKm:'乗車距離',sTrains:'乗車列車',sStamps:'スタンプ',sMedals:'勲章',all:'すべて',onlyLeft:'未収集のみ',got:'収集済',stampIt:'スタンプを押す',unstamp:'取り消す',stampGps:'位置情報で押す',fly:'マップで見る',verified:'現地',collectedOn:'取得日',pts:'pt',nextStation:'次の駅',shinkansen:'新幹線',limited:'特急',stops:'駅',confirmClear:'全ての進捗を消去しますか？路線・列車・スタンプの記録が削除されます。',cleared:'消去しました',exported:'書き出しました',imported:'読み込みました',importFail:'読み込み失敗：形式が違います',copied:'シェア文をコピーしました',shareText:(n,s)=>`🇯🇵 日本鉄道制覇の進捗\n路線 ${s.lines} · 区間 ${s.segs} · ${s.km} km\n列車 ${s.trains} · スタンプ ${s.stamps} · Lv.${s.lv} ${s.title}\n— Mini JapanRail · Quest Atlas`,gpsFar:d=>`駅まであと ${d}。1.5km以内で現地スタンプが押せます`,gpsNear:'駅の近くです。現地スタンプを押せます！',gpsFail:'位置情報に失敗しました。通常スタンプでどうぞ',levelTitles:['見習い旅人','駅の放浪者','路線探索者','特急ナイト','全国行脚','新幹線の使者','鉄道地理学者','制覇チャレンジャー','伝説の旅人','鉄道完全制覇者'],medalProgress:'進捗'},
+en:{brand:'Railway Conquest',overall:'Overall Conquest',heroH:'Stamp Japan\'s railways into your notebook, <span class="hl">one station at a time</span>.',heroP:'4,729 segments · 143 limited expresses & Shinkansen · 1,482 stamp spots. Every stamp is drawn on the spot from the station\'s name, company ink and the lines that serve it. Progress lives only in your browser.',nextLevel:'Next level',ctaMap:'Open conquest map',ctaStamps:'Collect stamps',myProgress:'My Progress',myProgressSub:'All saved in your browser',jrStamps:'JR Six · Stamp Progress',viewAll:'View all →',viewAll2:'To map →',opProgress:'Operators · Line Progress',opProgressSub:'By segments ridden',recentStamps:'Latest Stamps',noStampsYet:'No stamps yet — collect your first in the stamp book.',nextStations:'Next Stop: Here',nextStationsSub:'Unvisited stamp stations picked for you',loadingLines:'Loading line data…',mapTitle:'Conquest Map',collapse:'Hide',lines:'Lines',segs:'Segments',modeQuick:'Quick · Lines',modeDetail:'Detailed · Segments',modeRide:'Ride · Trains',searchPh:'Search lines / stations / trains…',showAll:'Show all',showRidden:'Ridden only',stampPins:'Stamp pins',stampBook:'Station Stamp Book',stampBookP:'All 1,482 spots (station names and locations are public factual data). Each stamp is original artwork drawn by this site — the station name, its company\'s ink colour, and the colour bands of the lines that actually stop there — so no two are alike. Open a station to stamp it; near the station, GPS leaves an on-site mark.',stampSearchPh:'Search stations…',loadMore:'Load more',book:'Collection',bookSub:'Trains · Lines · TRAIN TRIP specials',bookTrains:'Trains',bookLines:'Lines',bookIkimono:'Creatures',bookEkisoba:'Station Soba',bookEkiben:'Ekiben',bookFace:'Train Faces',nickPh:'Your traveller name',poster:'Make a poster',posterDl:'Download PNG',medals:'Honours Wall',medalGot:'New Honour',dataTitle:'Data & Backup',dataNote:'Progress lives in your browser (line records shared with the classic conquest site; stamps stored separately). The export file contains everything.',export:'Export',import:'Import',share:'Copy share text',clear:'Clear all',about:'About',aboutP:'Quest Atlas is the large-scale renewal of Mini JapanRail\'s conquest site (jr.suki.ing): same line/segment/train conquest and data format. The collecting format was inspired by JR\'s TRAIN TRIP, but all stamp artwork and text here are original to this site; stamp spots use factual data only (names, locations).',tabHome:'Home',tabMap:'Map',tabStamps:'Stamps',tabBook:'Book',tabMe:'Me',
+  sLines:'Lines ridden',sSegs:'Segments',sKm:'Distance',sTrains:'Trains ridden',sStamps:'Stamps',sMedals:'Honours',all:'All',onlyLeft:'Uncollected only',got:'Collected',stampIt:'Stamp it',unstamp:'Remove stamp',stampGps:'GPS stamp',fly:'View on map',verified:'On-site',collectedOn:'Collected',pts:'pt',nextStation:'Next stop',shinkansen:'Shinkansen',limited:'Limited Express',stops:'stops',confirmClear:'Clear ALL progress? Lines, trains and stamps will be deleted.',cleared:'Cleared',exported:'Exported',imported:'Imported',importFail:'Import failed: bad file',copied:'Share text copied',shareText:(n,s)=>`🇯🇵 My Japan railway conquest\nLines ${s.lines} · Segments ${s.segs} · ${s.km} km\nTrains ${s.trains} · Stamps ${s.stamps} · Lv.${s.lv} ${s.title}\n— Mini JapanRail · Quest Atlas`,gpsFar:d=>`${d} to the station — on-site stamping works within 1.5 km`,gpsNear:'You are at the station — stamp it on-site!',gpsFail:'Location failed — use a normal stamp',levelTitles:['Novice Traveller','Station Wanderer','Line Explorer','Express Knight','Nationwide Pilgrim','Shinkansen Envoy','Rail Geographer','Conquest Challenger','Legendary Traveller','Railway Conqueror'],medalProgress:'Progress'}
+};
+const T = I18N[LANG] || I18N.zh;
+document.title = LANG==='ja' ? 'Mini JapanRail · 日本鉄道制覇 Quest Atlas' : LANG==='en' ? 'Mini JapanRail · Japan Railway Conquest — Quest Atlas' : 'Mini JapanRail · 日本铁路制霸 Quest Atlas';
+function applyI18n(){
+  document.querySelectorAll('[data-i18n]').forEach(el=>{ const k=el.dataset.i18n; if(T[k]) el.textContent=T[k]; });
+  document.querySelectorAll('[data-i18n-html]').forEach(el=>{ const k=el.dataset.i18nHtml; if(T[k]) el.innerHTML=T[k]; });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el=>{ const k=el.dataset.i18nPh; if(T[k]) el.placeholder=T[k]; });
+}
+const $ = s => document.querySelector(s);
+const esc = s => String(s??'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let toastTimer=null;
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),2600); }
+
+/* ════════════════ State（与旧版制霸站完全兼容） ════════════════ */
+const STORAGE_KEY='minijapanrail_quest_data';
+const STAMP_KEY='minijapanrail_stampbook_v1';
+const PROFILE_KEY='minijapanrail_profile_v1';
+let questData={lines:{},segments:{},trains:{}};
+let stampData={};           // id -> {t:ts, tilt:deg, v:1 if GPS-verified}
+let profile={nick:''};
+function loadAll(){
+  try{
+    let raw=localStorage.getItem(STORAGE_KEY);
+    const OLD='japanrail_quest_data';
+    if(!raw && localStorage.getItem(OLD)){ raw=localStorage.getItem(OLD); localStorage.setItem(STORAGE_KEY,raw); localStorage.removeItem(OLD); }
+    if(raw){ const p=JSON.parse(raw); questData={lines:p.lines||{},segments:p.segments||{},trains:p.trains||{}}; }
+  }catch(e){}
+  try{ stampData=JSON.parse(localStorage.getItem(STAMP_KEY)||'{}')||{}; }catch(e){ stampData={}; }
+  try{ profile=Object.assign(profile, JSON.parse(localStorage.getItem(PROFILE_KEY)||'{}')); }catch(e){}
+}
+function saveQuest(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(questData)); }catch(e){} }
+function saveStamps(){ try{ localStorage.setItem(STAMP_KEY, JSON.stringify(stampData)); }catch(e){} }
+function saveProfile(){ try{ localStorage.setItem(PROFILE_KEY, JSON.stringify(profile)); }catch(e){} }
+const lineKey=(op,line)=>op+'||'+line;
+const segKey=(op,line,f,t)=>op+'||'+line+'||'+f+'||'+t;
+const isLineRidden=(op,line)=>!!questData.lines[lineKey(op,line)];
+const isSegRidden=(op,line,f,t)=>!!questData.segments[segKey(op,line,f,t)];
+const isTrainRidden=n=>!!questData.trains[n];
+
+/* ════════════════ Line / segment data ════════════════ */
+let segmentsByLine=new Map(), allOperators=new Map(), allFeats=[], fcData=null, namesData={operators:{},lines:{},stations:{}};
+let TRAINS=[], trainsLoaded=false, linesLoaded=false;
+const JR_COLORS={'北海道旅客鉄道':'#44AF35','東日本旅客鉄道':'#80C241','東海旅客鉄道':'#F18A1D','西日本旅客鉄道':'#0072BC','四国旅客鉄道':'#00A0E9','九州旅客鉄道':'#E60012'};
+function hashColor(str){ let h=0; for(let i=0;i<str.length;i++) h=(h*31+str.charCodeAt(i))>>>0; return `hsl(${h%360} 62% 52%)`; }
+const opColor=op=>JR_COLORS[op]||hashColor(op);
+function opLabel(op){ return (namesData.operators&&namesData.operators[op])||op; }
+function lineLabel(op,line){ const m=namesData.lines||{}; return m[op+'||'+line]||m[line]||line; }
+function getStats(){
+  let totalSegs=0,totalKm=0,riddenSegs=0,riddenKm=0,totalLines=0,riddenLines=0;
+  for(const [k,segs] of segmentsByLine){
+    totalLines++; const [op,line]=k.split('||');
+    let all=true;
+    for(const s of segs){ totalSegs++; totalKm+=s.km; if(isSegRidden(op,line,s.from,s.to)){riddenSegs++; riddenKm+=s.km;} else all=false; }
+    if(all&&segs.length) riddenLines++;
+  }
+  return {totalSegs,totalKm,riddenSegs,riddenKm,totalLines,riddenLines,
+    trains:Object.keys(questData.trains).length, trainsTotal:TRAINS.length,
+    stamps:Object.keys(stampData).length, stampsTotal:SPOTS.length};
+}
+function lineProgress(op,line){ const segs=segmentsByLine.get(lineKey(op,line))||[]; let r=0,km=0,tkm=0;
+  for(const s of segs){ tkm+=s.km; if(isSegRidden(op,line,s.from,s.to)){r++; km+=s.km;} } return {r,total:segs.length,km,tkm}; }
+
+/* ════════════════ Stamps data (TRAIN TRIP) ════════════════ */
+let SPOTS=[], SPECIALS={ikimono:[],ekisoba:[],ekiben:[],face:[]};
+const GROUP_ORDER=['JR北海道','JR东日本','JR东海','JR西日本','JR四国','JR九州'];
+const TYPE_ORDER=['normal','ikimono','ekisoba','ekiben','face','tetsuai','150th','18','limit'];
+function spotName(s){ return LANG==='ja'? s.ja : s.zh; }
+const GROUP_INK={'JR北海道':'#2e7d32','JR东日本':'#3e7c2b','JR東海':'#c05a00','JR西日本':'#00579e','JR四国':'#0077a8','JR九州':'#b30d1e'};
+function stampInk(s){ return GROUP_INK[s.group] || '#4a4a48'; }
+/* Original stamp artwork, drawn per station from its own data:
+   double ink ring, station name, the line-colour stripes of the lines that
+   actually serve the station, area + company, and our own masthead.
+   Two turbulence filters give it a rubber-stamp ink texture. */
+function stampSVG(s){
+  const ink=stampInk(s);
+  const name=(s.ja||'').replace(/駅$/,'');
+  const fs=name.length<=2?34:name.length===3?30:name.length===4?25:name.length===5?21:18;
+  const lines=(s.lines&&s.lines.length)? s.lines.slice(0,4) : [{c:ink},{c:ink}];
+  const tw=lines.length===1?34:lines.length===2?52:66, sw=tw/lines.length;
+  const stripes=lines.map((l,i)=>`<rect x="${(60-tw/2+i*sw).toFixed(1)}" y="74" width="${(sw-1.5).toFixed(1)}" height="5.5" fill="${l.c}"/>`).join('');
+  const sub=[s.area||'', (s.group||'').replace('JR東','JR东').replace('JR東','JR东')].filter(Boolean).join(' · ') || (s.typeZh||'');
+  const zh=(s.zh||'').replace(/站$/,'');
+  return `<svg class="stamp-svg" viewBox="0 0 120 120" role="img" aria-label="${esc(s.ja)}">
+  <g filter="url(#ink-rough)" opacity="0.94">
+    <circle cx="60" cy="60" r="55" fill="none" stroke="${ink}" stroke-width="3.4"/>
+    <circle cx="60" cy="60" r="48.6" fill="none" stroke="${ink}" stroke-width="1"/>
+    <text x="60" y="30" text-anchor="middle" font-size="6.4" letter-spacing="1.5" fill="${ink}" font-weight="700">MINI JAPANRAIL</text>
+    <text x="60" y="66" text-anchor="middle" font-size="${fs}" fill="${ink}" font-weight="900" style="font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Noto Sans JP',sans-serif">${esc(name)}</text>
+    ${stripes}
+    <text x="60" y="95" text-anchor="middle" font-size="8.2" fill="${ink}" font-weight="600">${esc(zh&&zh!==name? zh : sub)}</text>
+    <text x="60" y="102" text-anchor="middle" font-size="5.2" letter-spacing="1" fill="${ink}">QUEST ATLAS</text>
+  </g></svg>`;
+}
+function stampImg(s){ return stampSVG(s); }
+async function loadStamps(){
+  try{ const d=await (await fetch('data/stamps.json')).json(); SPOTS=d.spots||[]; SPECIALS={ikimono:d.ikimono||[],ekisoba:d.ekisoba||[],ekiben:d.ekiben||[],face:d.face||[]}; }
+  catch(e){ SPOTS=[]; }
+  renderStampFilters(); renderStamps(); renderHome(); updateStampPins();
+}
+
+/* ════════════════ Levels & points ════════════════ */
+const LEVEL_XP=[0,120,350,800,1600,3000,5200,8500,14000,23000,999999];
+function computePoints(st){
+  return Math.floor(st.riddenSegs*10 + st.riddenLines*40 + st.riddenKm + st.trains*30 + st.stamps*25);
+}
+function levelOf(pts){ let lv=1; for(let i=0;i<LEVEL_XP.length-1;i++) if(pts>=LEVEL_XP[i]) lv=i+1; return Math.min(lv,10); }
+function refreshLevel(){
+  const st=getStats(); const pts=computePoints(st); const lv=levelOf(pts);
+  const title=T.levelTitles[lv-1];
+  $('#pill-lv').textContent=lv; $('#pill-title').textContent=title; $('#pill-pts').textContent=pts.toLocaleString()+' pt';
+  const cur=LEVEL_XP[lv-1], next=LEVEL_XP[lv];
+  $('#next-title').textContent = lv>=10 ? title : `Lv.${lv+1} · ${T.levelTitles[lv]}`;
+  $('#next-pts').textContent = lv>=10 ? `${pts.toLocaleString()} pt` : `${pts.toLocaleString()} / ${next.toLocaleString()} pt`;
+  $('#next-bar').style.width = lv>=10 ? '100%' : Math.min(100,(pts-cur)/(next-cur)*100)+'%';
+  const overall = st.totalSegs ? ( (st.riddenSegs/st.totalSegs) + (st.trainsTotal? st.trains/st.trainsTotal:0) + (st.stampsTotal? st.stamps/st.stampsTotal:0) ) / 3 * 100 : 0;
+  $('#hero-pct').textContent = overall.toFixed(1);
+  $('#hero-ring').style.strokeDashoffset = 326.7*(1-overall/100);
+  return {st,pts,lv,title,overall};
+}
+
+/* ════════════════ Medals（原制覇站 19 枚 + 印章 8 枚） ════════════════ */
+const MICON={
+  train:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="13" rx="3"/><path d="M5 11h14"/><circle cx="9" cy="7.4" r="1.15" fill="currentColor" stroke="none"/><circle cx="15" cy="7.4" r="1.15" fill="currentColor" stroke="none"/><path d="M8.2 16l-1.4 4M15.8 16l1.4 4M9.5 16h5"/></svg>',
+  crown:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 8l4.2 3.8L12 5l4.8 6.8L21 8l-2 10.5H5L3 8z"/></svg>',
+  ticket:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M3 8.5A2.5 2.5 0 0 1 5.5 6h13A2.5 2.5 0 0 1 21 8.5v.5a2.5 2.5 0 0 0 0 5v.5a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 15.5V15a2.5 2.5 0 0 0 0-5v-.5z"/><path d="M14 6v12" stroke-dasharray="2 2.2"/></svg>',
+  stamp:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/></svg>',
+  paw:'<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="7" cy="8.2" r="2.1"/><circle cx="12" cy="6.2" r="2.1"/><circle cx="17" cy="8.2" r="2.1"/><path d="M12 11c-3.1 0-5.2 2.2-5.2 5 0 2.1 2.1 3.1 5.2 3.1s5.2-1 5.2-3.1c0-2.8-2.1-5-5.2-5z"/></svg>',
+  trophy:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.5h10V9a5 5 0 0 1-10 0V3.5z"/><path d="M7 5H4.2v1.6A3.2 3.2 0 0 0 7 9.8M17 5h2.8v1.6A3.2 3.2 0 0 1 17 9.8M12 14v3.2M8.5 20.5h7M9.5 17.2h5"/></svg>',
+  globe:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.7 3.8 9S14.5 18.4 12 21c-2.5-2.6-3.8-5.7-3.8-9S9.5 5.6 12 3z"/></svg>',
+  noodle:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 12h16a8 8 0 0 1-16 0z"/><path d="M7 8c1.5-2 3.5 1 5-1s3.5 1 5-1M15 3l4 5"/></svg>',
+  face:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="4" y="4" width="16" height="14" rx="4"/><circle cx="9" cy="11" r="1" fill="currentColor"/><circle cx="15" cy="11" r="1" fill="currentColor"/><path d="M8.5 15c1 1.2 2.2 1.8 3.5 1.8s2.5-.6 3.5-1.8"/></svg>',
+  pin:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-5.6-7-11a7 7 0 0 1 14 0c0 5.4-7 11-7 11z"/><circle cx="12" cy="10" r="2.6"/></svg>'
+};
+function stampTypeCount(type){ let n=0,g=0; for(const s of SPOTS){ if(s.type===type){ n++; if(stampData[s.id]) g++; } } return {g,n}; }
+function medalCtx(){
+  const set=new Set(Object.keys(questData.trains));
+  let sh=0,ltd=0,shT=0,ltdT=0;
+  for(const s of TRAINS){ if(s.type==='shinkansen'){shT++; if(set.has(s.name)) sh++;} else {ltdT++; if(set.has(s.name)) ltd++;} }
+  const groups=new Set(); for(const id in stampData){ const sp=SPOTS.find(x=>x.id===id); if(sp&&sp.group) groups.add(sp.group); }
+  return {set,sh,ltd,shT,ltdT,total:set.size,totalAll:TRAINS.length,
+    stamps:Object.keys(stampData).length, verified:Object.values(stampData).filter(x=>x.v).length,
+    jrGroups:groups.size, ikimono:stampTypeCount('ikimono'), face:stampTypeCount('face')};
+}
+const mkNames=(c,names)=>{ const n=names.filter(x=>c.set.has(x)).length; return {got:n>=names.length,cur:n,max:names.length}; };
+const mkOne=(c,names)=>{ const n=names.filter(x=>c.set.has(x)).length; return {got:n>=1,cur:Math.min(n,1),max:1}; };
+const cnt=(cur,max)=>({got:cur>=max,cur:Math.min(cur,max),max});
+const MEDALS=[
+ {id:'sh1',icon:'train',tier:'bronze',name:{zh:'新干线首乘',ja:'新幹線デビュー',en:'Shinkansen Debut'},desc:{zh:'乘坐至少 1 种新干线',ja:'新幹線に1本以上乗車',en:'Ride 1+ Shinkansen'},check:c=>cnt(c.sh,1)},
+ {id:'sh5',icon:'train',tier:'silver',name:{zh:'新干线收藏家',ja:'新幹線コレクター',en:'Shinkansen Collector'},desc:{zh:'乘坐 5 种以上新干线',ja:'新幹線に5本以上乗車',en:'Ride 5+ Shinkansen'},check:c=>cnt(c.sh,5)},
+ {id:'sh10',icon:'train',tier:'gold',name:{zh:'新干线大师',ja:'新幹線マスター',en:'Shinkansen Master'},desc:{zh:'乘坐 10 种以上新干线',ja:'新幹線に10本以上乗車',en:'Ride 10+ Shinkansen'},check:c=>cnt(c.sh,10)},
+ {id:'shall',icon:'crown',tier:'platinum',name:{zh:'新干线完全制霸',ja:'新幹線完全制覇',en:'Shinkansen Complete'},desc:{zh:'乘坐全部新干线',ja:'すべての新幹線に乗車',en:'Ride every Shinkansen'},check:c=>cnt(c.sh,c.shT||1)},
+ {id:'ltd1',icon:'ticket',tier:'bronze',name:{zh:'特急首乘',ja:'特急デビュー',en:'Limited Express Debut'},desc:{zh:'乘坐至少 1 种特急',ja:'特急に1本以上乗車',en:'Ride 1+ limited express'},check:c=>cnt(c.ltd,1)},
+ {id:'ltd10',icon:'ticket',tier:'silver',name:{zh:'特急爱好者',ja:'特急ファン',en:'Limited Express Fan'},desc:{zh:'乘坐 10 种以上特急',ja:'特急に10本以上乗車',en:'Ride 10+ limited express'},check:c=>cnt(c.ltd,10)},
+ {id:'ltd30',icon:'ticket',tier:'gold',name:{zh:'特急大师',ja:'特急マスター',en:'Limited Express Master'},desc:{zh:'乘坐 30 种以上特急',ja:'特急に30本以上乗車',en:'Ride 30+ limited express'},check:c=>cnt(c.ltd,30)},
+ {id:'ltd60',icon:'ticket',tier:'platinum',name:{zh:'特急达人',ja:'特急コンプリート',en:'Limited Express Pro'},desc:{zh:'乘坐 60 种以上特急',ja:'特急に60本以上乗車',en:'Ride 60+ limited express'},check:c=>cnt(c.ltd,60)},
+ {id:'tokaido',icon:'train',tier:'gold',name:{zh:'东海道之主',ja:'東海道の主',en:'Lord of the Tōkaidō'},desc:{zh:'乘坐 のぞみ・ひかり・こだま',ja:'のぞみ・ひかり・こだま に乗車',en:'Ride Nozomi, Hikari & Kodama'},check:c=>mkNames(c,['のぞみ','ひかり','こだま'])},
+ {id:'tohoku',icon:'train',tier:'gold',name:{zh:'东北之主',ja:'東北の主',en:'Lord of Tōhoku'},desc:{zh:'乘坐 はやぶさ・はやて・やまびこ・なすの',ja:'はやぶさ・はやて・やまびこ・なすの に乗車',en:'Ride Hayabusa, Hayate, Yamabiko & Nasuno'},check:c=>mkNames(c,['はやぶさ','はやて','やまびこ','なすの'])},
+ {id:'sleeper',icon:'ticket',tier:'gold',name:{zh:'卧铺特急',ja:'寝台特急',en:'Sleeper Express'},desc:{zh:'乘坐 サンライズ瀬戸 或 サンライズ出雲',ja:'サンライズ瀬戸 または サンライズ出雲 に乗車',en:'Ride Sunrise Seto or Izumo'},check:c=>mkOne(c,['サンライズ瀬戸','サンライズ出雲'])},
+ {id:'all50',icon:'globe',tier:'gold',name:{zh:'全国旅人',ja:'全国の旅人',en:'National Traveller'},desc:{zh:'累计乘坐 50 种列车',ja:'合計50本の列車に乗車',en:'Ride 50 services in total'},check:c=>cnt(c.total,50)},
+ {id:'complete',icon:'trophy',tier:'platinum',name:{zh:'铁道完全制霸',ja:'鉄道完全制覇',en:'Railway Complete'},desc:{zh:'乘坐全部列车',ja:'すべての列車に乗車',en:'Ride every service'},check:c=>cnt(c.total,c.totalAll||1)},
+ {id:'st1',icon:'stamp',tier:'bronze',name:{zh:'第一枚印章',ja:'最初の一枚',en:'First Stamp'},desc:{zh:'盖下第一枚车站印章',ja:'最初の駅スタンプを押す',en:'Collect your first station stamp'},check:c=>cnt(c.stamps,1)},
+ {id:'st10',icon:'stamp',tier:'bronze',name:{zh:'印章新手上路',ja:'スタンプ入門',en:'Stamp Starter'},desc:{zh:'收集 10 枚印章',ja:'スタンプ10枚',en:'Collect 10 stamps'},check:c=>cnt(c.stamps,10)},
+ {id:'st50',icon:'stamp',tier:'silver',name:{zh:'印章收藏家',ja:'スタンプコレクター',en:'Stamp Collector'},desc:{zh:'收集 50 枚印章',ja:'スタンプ50枚',en:'Collect 50 stamps'},check:c=>cnt(c.stamps,50)},
+ {id:'st200',icon:'stamp',tier:'gold',name:{zh:'印章猎人',ja:'スタンプハンター',en:'Stamp Hunter'},desc:{zh:'收集 200 枚印章',ja:'スタンプ200枚',en:'Collect 200 stamps'},check:c=>cnt(c.stamps,200)},
+ {id:'st500',icon:'stamp',tier:'platinum',name:{zh:'印章大师',ja:'スタンプマスター',en:'Stamp Master'},desc:{zh:'收集 500 枚印章',ja:'スタンプ500枚',en:'Collect 500 stamps'},check:c=>cnt(c.stamps,500)},
+ {id:'gps10',icon:'pin',tier:'silver',name:{zh:'实地行脚',ja:'現地行脚',en:'On-site Pilgrim'},desc:{zh:'完成 10 次定位实地盖章',ja:'現地スタンプ10回',en:'10 GPS on-site stamps'},check:c=>cnt(c.verified,10)},
+ {id:'jr6',icon:'globe',tier:'gold',name:{zh:'JR 六社制霸',ja:'JR六社制覇',en:'JR Six Complete'},desc:{zh:'在 JR 六社各盖至少 1 枚印章',ja:'JR六社すべてでスタンプ',en:'Stamp at all six JR companies'},check:c=>cnt(c.jrGroups,6)},
+ {id:'iki',icon:'paw',tier:'silver',name:{zh:'生物观察员',ja:'いきもの観察員',en:'Creature Watcher'},desc:{zh:'集齐生物图鉴印章 30 枚',ja:'いきものスタンプ30枚',en:'30 creature stamps'},check:c=>cnt(c.ikimono.g,30)},
+ {id:'face10',icon:'face',tier:'silver',name:{zh:'列车脸识别者',ja:'列車の顔博士',en:'Train Face Spotter'},desc:{zh:'收集 10 枚列车之脸印章',ja:'列車の顔スタンプ10枚',en:'10 train-face stamps'},check:c=>cnt(c.face.g,10)},
+];
+let knownMedals=new Set(JSON.parse(localStorage.getItem('minijapanrail_medals_seen')||'[]'));
+function computeMedals(){ const c=medalCtx(); return MEDALS.map(m=>Object.assign({},m,{res:m.check(c)})); }
+function checkNewMedals(){
+  const now=computeMedals().filter(m=>m.res.got).map(m=>m.id);
+  for(const id of now){ if(!knownMedals.has(id)){ const m=MEDALS.find(x=>x.id===id);
+    $('#mt-ic').innerHTML=MICON[m.icon]||MICON.stamp; $('#mt-name').textContent=(m.name[LANG]||m.name.zh);
+    const mt=$('#medal-toast'); mt.classList.add('show'); setTimeout(()=>mt.classList.remove('show'),3600);
+  }}
+  knownMedals=new Set(now); localStorage.setItem('minijapanrail_medals_seen', JSON.stringify(now));
+}
+
+/* ════════════════ Navigation ════════════════ */
+let curView='home', mapInit=false;
+function goto(view){
+  curView=view;
+  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active', v.id==='view-'+view));
+  document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('active', b.dataset.view===view));
+  if(view==='map'){ initMap(); setTimeout(()=>{ if(window._map) _map.resize(); },60); }
+  if(view==='home') renderHome();
+  if(view==='me') renderMe();
+  if(view==='book') renderBook();
+  document.querySelector('#view-'+view).scrollTop=0;
+}
+document.querySelectorAll('#tabs button').forEach(b=>b.addEventListener('click',()=>goto(b.dataset.view)));
+document.querySelectorAll('[data-goto]').forEach(b=>b.addEventListener('click',()=>goto(b.dataset.goto)));
+
+/* ════════════════ Home ════════════════ */
+const STAT_DEFS=[
+ {k:'lines',icon:'train',bg:'#e3ecff',fg:'#2f6de8',label:()=>T.sLines,get:st=>[st.riddenLines,st.totalLines]},
+ {k:'segs',icon:'globe',bg:'#dcf5e7',fg:'#0d7a3f',label:()=>T.sSegs,get:st=>[st.riddenSegs,st.totalSegs]},
+ {k:'km',icon:'pin',bg:'#fdf0d5',fg:'#9a6206',label:()=>T.sKm,get:st=>[Math.round(st.riddenKm),Math.round(st.totalKm)],unit:'km'},
+ {k:'trains',icon:'ticket',bg:'#fdecec',fg:'#e60012',label:()=>T.sTrains,get:st=>[st.trains,st.trainsTotal]},
+ {k:'stamps',icon:'stamp',bg:'#eee9ff',fg:'#7a5af8',label:()=>T.sStamps,get:st=>[st.stamps,st.stampsTotal]},
+ {k:'medals',icon:'trophy',bg:'#fff3d1',fg:'#9a6206',label:()=>T.sMedals,get:()=>{ const ms=computeMedals(); return [ms.filter(m=>m.res.got).length, ms.length]; }},
+];
+function renderHome(){
+  const {st}=refreshLevel();
+  $('#home-stats').innerHTML=STAT_DEFS.map(d=>{ const [a,b]=d.get(st); const pct=b? (a/b*100):0;
+    return `<div class="stat-card"><div class="ic" style="background:${d.bg};color:${d.fg}">${MICON[d.icon]||''}</div>
+    <div class="v">${a.toLocaleString()} <small>/ ${b? b.toLocaleString(): '—'}${d.unit?' '+d.unit:''}</small></div>
+    <div class="l">${d.label()}</div><div class="p" style="color:${d.fg}">${pct.toFixed(1)}%</div></div>`; }).join('');
+  // JR stamp progress
+  $('#home-jr').innerHTML=GROUP_ORDER.map(g=>{ const list=SPOTS.filter(s=>s.group===g); const got=list.filter(s=>stampData[s.id]).length;
+    const pct=list.length? got/list.length*100:0;
+    return `<div class="prog-card"><div class="prog-head"><span class="dot" style="background:${JR_COLORS[{'JR北海道':'北海道旅客鉄道','JR东日本':'東日本旅客鉄道','JR东海':'東海旅客鉄道','JR西日本':'西日本旅客鉄道','JR四国':'四国旅客鉄道','JR九州':'九州旅客鉄道'}[g]||'#888']}"></span>${esc(g)}<span class="n">${got} / ${list.length}</span></div>
+    <div class="prog-bar"><i style="width:${pct}%;background:${JR_COLORS[{'JR北海道':'北海道旅客鉄道','JR东日本':'東日本旅客鉄道','JR东海':'東海旅客鉄道','JR西日本':'西日本旅客鉄道','JR四国':'四国旅客鉄道','JR九州':'九州旅客鉄道'}[g]||'#888']}"></i></div></div>`; }).join('') || '<div class="empty-box">—</div>';
+  // Operators by segments
+  if(linesLoaded){
+    const ops=[...allOperators.keys()].map(op=>{ let r=0,tt=0; for(const line of allOperators.get(op).lines){ const p=lineProgress(op,line); r+=p.r; tt+=p.total; } return {op,r,tt}; })
+      .sort((a,b)=>b.r-a.r).slice(0,8);
+    $('#home-ops').innerHTML=ops.map(o=>`<div class="prog-card"><div class="prog-head"><span class="dot" style="background:${opColor(o.op)}"></span>${esc(opLabel(o.op))}<span class="n">${o.r} / ${o.tt}</span></div>
+      <div class="prog-bar"><i style="width:${o.tt? o.r/o.tt*100:0}%;background:${opColor(o.op)}"></i></div></div>`).join('');
+  }
+  // Recent stamps
+  const recent=Object.entries(stampData).sort((a,b)=>b[1].t-a[1].t).slice(0,4).map(([id])=>SPOTS.find(s=>s.id===id)).filter(Boolean);
+  if(recent.length) $('#home-recent').innerHTML=recent.map(s=>recCard(s,true)).join('');
+  // Recommendations: deterministic pseudo-random uncollected with images
+  const pool=SPOTS.filter(s=>!stampData[s.id]);
+  const recs=[]; if(pool.length){ let seed=Object.keys(stampData).length*97+pool.length;
+    for(let i=0;i<Math.min(4,pool.length);i++){ seed=(seed*1103515245+12345)%2147483648; recs.push(pool[seed%pool.length]); } }
+  $('#home-rec').innerHTML=recs.map(s=>recCard(s,false)).join('') || '<div class="empty-box">—</div>';
+  bindRecCards();
+}
+function recCard(s,got){
+  const d=stampData[s.id];
+  return `<button class="rec-card" data-spot="${esc(s.id)}"><div class="rc-img">${stampImg(s)}</div>
+    <div class="rc-b"><div class="rc-n">${esc(spotName(s))}</div><div class="rc-m">${esc(s.group||'')} · ${esc(s.area||'')} · ${esc(s.typeZh||'')}</div>
+    <div style="margin-top:7px">${got? `<span class="chip">✓ ${new Date(d.t).toLocaleDateString()}${d.v?' · '+T.verified:''}</span>` : `<span class="chip blue">${T.nextStation}</span>`}</div></div></button>`;
+}
+function bindRecCards(){ document.querySelectorAll('[data-spot]').forEach(el=>el.addEventListener('click',()=>openStamp(el.dataset.spot))); }
+
+/* ════════════════ Stamp book ════════════════ */
+let stampFilter={group:'',type:'',q:'',onlyLeft:false};
+let stampShown=120;
+function renderStampFilters(){
+const groups=['',...GROUP_ORDER,'__other'];
+$('#stamp-groups').innerHTML=groups.map(g=>{
+const label=g===''? T.all: g==='__other'? (LANG==='ja'?'その他':LANG==='en'?'Others':'其他'): g.replace('JR','JR ');
+return `<button class="fchip ${stampFilter.group===g?'active':''}" data-sg="${g}">${esc(label)}</button>`;}).join('')
++`<button class="fchip red ${stampFilter.onlyLeft?'active':''}" data-sg="__left">${T.onlyLeft}</button>`;
+document.querySelectorAll('[data-sg]').forEach(b=>b.addEventListener('click',()=>{
+if(b.dataset.sg==='__left') stampFilter.onlyLeft=!stampFilter.onlyLeft; else stampFilter.group=b.dataset.sg;
+stampShown=120; renderStampFilters(); renderStamps();
+}));
+const types=['',...TYPE_ORDER.filter(t=>SPOTS.some(s=>s.type===t))];
+const typeLabel=t=>{ const s=SPOTS.find(x=>x.type===t); return s? s.typeZh: t;};
+$('#stamp-types-row').innerHTML=types.map(t=>`<button class="fchip ${stampFilter.type===t?'active':''}" data-st="${t}">${t===''? T.all: esc(typeLabel(t))}</button>`).join('');
+document.querySelectorAll('[data-st]').forEach(b=>b.addEventListener('click',()=>{ stampFilter.type=b.dataset.st; stampShown=120; renderStampFilters(); renderStamps();}));
+}
+function filteredSpots(){
+const q=stampFilter.q.trim().toLowerCase();
+return SPOTS.filter(s=>{
+if(stampFilter.group==='__other' && GROUP_ORDER.includes(s.group)) return false;
+if(stampFilter.group && stampFilter.group!=='__other' && s.group!==stampFilter.group) return false;
+if(stampFilter.type && s.type!==stampFilter.type) return false;
+if(stampFilter.onlyLeft && stampData[s.id]) return false;
+if(q &&!(s.ja.toLowerCase().includes(q)||s.zh.toLowerCase().includes(q)||(s.area||'').includes(q))) return false;
+return true;
+});
+}
+function renderStamps(){
+const total=SPOTS.length, got=Object.keys(stampData).length;
+$('#stamp-count').textContent=got;
+$('#stamp-ring').style.strokeDashoffset=251.3*(1-(total? got/total:0));
+const ver=Object.values(stampData).filter(x=>x.v).length;
+$('#stamp-verified').textContent=`${T.verified} ${ver}`;
+const typesGot=new Set(Object.keys(stampData).map(id=>{ const s=SPOTS.find(x=>x.id===id); return s? s.type:'';}));
+$('#stamp-types').textContent=`${typesGot.size} / ${new Set(SPOTS.map(s=>s.type)).size} ${LANG==='en'?'kinds':'类图鉴'}`;
+const list=filteredSpots();
+$('#stamp-count-line').textContent = list.length===SPOTS.length ? '' :
+  (LANG==='en'? list.length+' spots' : LANG==='ja'? list.length+' 件' : '共 '+list.length+' 个印章点');
+const slice=list.slice(0,stampShown);
+$('#stamp-grid').innerHTML=slice.map(s=>{ const d=stampData[s.id];
+return `<button class="stamp-card ${d?'got':''}" data-spot="${esc(s.id)}">
+<div class="stamp-fig">${stampImg(s)}<span class="ink-seal">${T.got}${d&&d.v?'<br>'+T.verified:''}</span></div>
+<div class="stamp-n">${esc(spotName(s))}</div><div class="stamp-j">${esc(LANG==='ja'? s.zh: s.ja)}</div>
+<div class="stamp-m"><span class="chip grey">${esc(s.group||s.area||'')}</span><span class="chip ${s.type==='normal'?'grey':'gold'}">${esc(s.typeZh||'')}</span></div>
+${d? `<div class="stamp-date">${new Date(d.t).toLocaleDateString()}</div>`:''}</button>`;}).join('')
+|| `<div class="empty-box" style="grid-column:1/-1">${T.noStampsYet}</div>`;
+$('#stamp-more').style.display=list.length>stampShown? 'block':'none';
+bindRecCards();
+}
+$('#stamp-q').addEventListener('input',e=>{ stampFilter.q=e.target.value; stampShown=120; renderStamps();});
+$('#stamp-more').addEventListener('click',()=>{ stampShown+=240; renderStamps();});
+
+/* ── Stamp detail & collecting ── */
+let curSpot=null;
+function specialText(s){
+  const parts=[];
+  const iki=SPECIALS.ikimono.find(x=>String(x.stamp_id)===String(s.id));
+  if(iki) parts.push(`【${T.bookIkimono}】${iki.title}${iki.category? '（'+iki.category+'）':''}`);
+  const soba=SPECIALS.ekisoba.find(x=>String(x.stamp_id)===String(s.id));
+  if(soba) parts.push(`【${T.bookEkisoba}】${soba.shop_name||''} · ${soba.prefectures||''}`);
+  const ben=SPECIALS.ekiben.find(x=>String(x.stationId)===String(s.id));
+  if(ben) parts.push(`【${T.bookEkiben}】${ben.title} — ${ben.shop||''}`);
+  const face=SPECIALS.face.find(x=>String(x.stamp_id)===String(s.id));
+  if(face) parts.push(`【${T.bookFace}】${face.title} · ${(face.parts||[]).join(' / ')}`);
+  if(s.lines&&s.lines.length) parts.push(`【${LANG==='en'?'Lines':'停靠线路'}】${s.lines.map(l=>l.n).join(' · ')}`);
+  return parts.join('\n');
+}
+function openStamp(id){
+const s=SPOTS.find(x=>String(x.id)===String(id)); if(!s) return;
+curSpot=s;
+const d=stampData[s.id];
+const fig=$('#sd-fig'); fig.classList.remove('slam');
+fig.innerHTML=stampImg(s);
+$('#sd-name').textContent=spotName(s);
+$('#sd-ja').textContent=LANG==='ja'? (s.zh||''): s.ja;
+$('#sd-meta').innerHTML=`<span class="chip grey">${esc(s.group||'')}</span><span class="chip gold">${esc(s.typeZh||'')}</span>`
++(s.area? `<span class="chip blue">${esc(s.area)}</span>`:'')
++(d? `<span class="chip green">${T.collectedOn} ${new Date(d.t).toLocaleDateString()}${d.v?' · '+T.verified:''}</span>`:'');
+const txt=specialText(s); const desc=$('#sd-desc');
+if(txt){ desc.style.display='block'; desc.style.whiteSpace='pre-wrap'; desc.textContent=txt;} else desc.style.display='none';
+$('#sd-collect').textContent=d? T.unstamp: T.stampIt;
+$('#sd-dist').textContent='';
+$('#sheet-stamp').classList.add('show');
+}
+function collectSpot(verified){
+if(!curSpot) return;
+const id=curSpot.id;
+const wasNew=!stampData[id];
+if(stampData[id]){ delete stampData[id];}
+else{ stampData[id]={t:Date.now(), tilt:Math.round((Math.random()*14-7)*10)/10, v:verified?1:0}; }
+saveStamps(); openStamp(id); renderStamps(); renderHome(); checkNewMedals(); updateStampPins();
+if(wasNew) requestAnimationFrame(()=>{ const fig=$('#sd-fig'); fig.classList.remove('slam'); void fig.offsetWidth; fig.classList.add('slam'); });
+}
+$('#sd-collect').addEventListener('click',()=>collectSpot(false));
+function haversine(a,b,c,d){ const R=6371,r=x=>x*Math.PI/180; const h=Math.sin(r(c-a)/2)**2+Math.cos(r(a))*Math.cos(r(c))*Math.sin(r(d-b)/2)**2; return 2*R*Math.asin(Math.sqrt(h));}
+function fmtDist(km){ return km<1? Math.round(km*1000)+' m': km.toFixed(1)+' km';}
+$('#sd-locate').addEventListener('click',()=>{
+if(!curSpot) return;
+if(!curSpot.lat){ $('#sd-dist').textContent=T.gpsFail; return;}
+if(!navigator.geolocation){ $('#sd-dist').textContent=T.gpsFail; return;}
+$('#sd-dist').textContent='…';
+navigator.geolocation.getCurrentPosition(pos=>{
+const km=haversine(pos.coords.latitude,pos.coords.longitude,curSpot.lat,curSpot.lng);
+if(km<=1.5){ $('#sd-dist').textContent=T.gpsNear; if(!stampData[curSpot.id]) collectSpot(true); else if(!stampData[curSpot.id].v){ stampData[curSpot.id].v=1; saveStamps(); openStamp(curSpot.id); renderStamps();}}
+else $('#sd-dist').textContent=T.gpsFar(fmtDist(km));
+},()=>{ $('#sd-dist').textContent=T.gpsFail;},{timeout:10000});
+});
+$('#sd-fly').addEventListener('click',()=>{
+if(!curSpot||!curSpot.lat) return;
+$('#sheet-stamp').classList.remove('show'); goto('map');
+pendingCam={spot:[curSpot.lng,curSpot.lat]};
+if(window._map&&fcData) applyPendingCam();
+});
+document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>$('#'+b.dataset.close).classList.remove('show')));
+document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{ if(e.target===o) o.classList.remove('show');}));
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') document.querySelectorAll('.overlay.show').forEach(o=>o.classList.remove('show')); });
+
+/* ════════════════ Map & line conquest ════════════════ */
+let mapMode='quick', viewMode='all', expandedOps=new Set(), expandedLines=new Set(), stampPinsOn=false;
+let lineDataPromise=null;
+function loadLineData(){
+  if(lineDataPromise) return lineDataPromise;
+  lineDataPromise=(async()=>{
+    let fc=null, names=null;
+    try{ [fc,names]=await Promise.all([
+      fetch('https://jr-static.suki.ing/data/segments.geojson').then(r=>{ if(!r.ok) throw 0; return r.json(); }),
+      fetch('https://jr-static.suki.ing/data/names_en.json').then(r=>r.ok? r.json():{}).catch(()=>({})) ]); }catch(e){}
+    if(!fc){ try{ fc=await (await fetch('data/segments.geojson')).json(); }catch(e){} }
+    if(names) namesData=Object.assign(namesData,names||{});
+    try{ const d=await fetch('https://jr-static.suki.ing/data/tokkyu_services.json').then(r=>r.ok? r.json():null);
+      if(d&&d.services){ TRAINS=d.services; trainsLoaded=true; } }catch(e){}
+    if(!trainsLoaded){ try{ const d=await (await fetch('data/tokkyu_services.json')).json(); TRAINS=d.services||[]; trainsLoaded=true; }catch(e){} }
+    if(!fc) return null;
+    for(let i=0;i<fc.features.length;i++){
+      const f=fc.features[i]; f.id=i+1; const p=f.properties;
+      p.realColor=p.color||opColor(p.op); p.color='#6b7280';
+      const k=lineKey(p.op,p.line);
+      if(!segmentsByLine.has(k)) segmentsByLine.set(k,[]);
+      segmentsByLine.get(k).push({from:p.from,to:p.to,km:Number(p.km)||0});
+      if(!allOperators.has(p.op)) allOperators.set(p.op,{color:opColor(p.op),lines:new Set()});
+      allOperators.get(p.op).lines.add(p.line);
+    }
+    allFeats=fc.features; fcData=fc; linesLoaded=true;
+    afterData();
+    return fc;
+  })();
+  return lineDataPromise;
+}
+let pendingCam=null;
+function applyPendingCam(){
+  if(!pendingCam||!window._map) return;
+  const c=pendingCam; pendingCam=null;
+  if(c.spot) window._map.flyTo({center:c.spot,zoom:11,duration:1600});
+  else if(c.line) flyToLine(c.line[0],c.line[1]);
+}
+function initMap(){
+  if(mapInit) return; mapInit=true;
+  if(typeof maplibregl==='undefined'){ $('#mp-list').innerHTML='<div class="mp-empty">MapLibre failed to load.</div>'; return; }
+  const dark=window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const map=new maplibregl.Map({
+    container:'map',
+    style:{version:8,sources:{'gsi-pale':{type:'raster',tiles:['https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png'],tileSize:256,attribution:'国土地理院',maxzoom:18}},
+      layers:[{id:'bg',type:'background',paint:{'background-color':dark?'#0a0d14':'#dfe5ee'}},
+      {id:'gsi',type:'raster',source:'gsi-pale',paint:{'raster-opacity':.95,'raster-saturation':-.8,'raster-brightness-min':dark?.02:.35,'raster-brightness-max':dark?.34:1,'raster-contrast':.1}}]},
+    center:[137.7,37.6], zoom:4.6, minZoom:3.2, fadeDuration:0, preserveDrawingBuffer:true,
+    attributionControl:{compact:true}
+  });
+  window._map=map;
+  map.addControl(new maplibregl.NavigationControl({showCompass:false}),'top-right');
+  map.on('load', async()=>{
+    const fc=await loadLineData();
+    if(!fc){ $('#mp-list').innerHTML='<div class="mp-empty">⚠ '+(LANG==='en'?'Line data failed to load. Check your connection.':LANG==='ja'?'路線データの読込に失敗しました。':'线路数据加载失败，请检查网络后刷新。')+'</div>'; return; }
+    map.addSource('segs',{type:'geojson',data:fc});
+    map.addLayer({id:'segs-line',type:'line',source:'segs',paint:{'line-color':['get','color'],'line-width':['interpolate',['linear'],['zoom'],4,1.1,7,2.2,11,3.6],'line-opacity':.92},layout:{'line-cap':'round','line-join':'round'}});
+    updateMapState(); updateStampPins();
+    const pop=new maplibregl.Popup({closeButton:true,closeOnClick:true,maxWidth:'280px'});
+    map.on('click','segs-line',e=>{
+      const p=e.features[0].properties; const ridden=isSegRidden(p.op,p.line,p.from,p.to)||isLineRidden(p.op,p.line);
+      pop.setLngLat(e.lngLat).setHTML(`<div style="font-weight:900;font-size:14px;color:${p.realColor}">${esc(opLabel(p.op))} · ${esc(lineLabel(p.op,p.line))}</div>
+        <div style="margin-top:3px;font-size:13px">${esc(p.from)} → ${esc(p.to)} · ${Number(p.km).toFixed(1)} km ${ridden?'✓':''}</div>
+        <button id="pop-seg" style="margin-top:10px;width:100%;border:none;border-radius:99px;padding:8px;background:${ridden?'#5b6472':'#1faa59'};color:#fff;font-weight:800;font-size:12.5px">${ridden? T.unstamp : '✓ '+(LANG==='en'?'Mark ridden':LANG==='ja'?'乗車済みにする':'标记已乘')}</button>`).addTo(map);
+      setTimeout(()=>{ const b=document.getElementById('pop-seg'); if(b) b.onclick=()=>{ toggleSeg(p.op,p.line,p.from,p.to); pop.remove(); }; },30);
+    });
+    map.on('mouseenter','segs-line',()=>map.getCanvas().style.cursor='pointer');
+    map.on('mouseleave','segs-line',()=>map.getCanvas().style.cursor='');
+    applyPendingCam();
+  });
+}
+function afterData(){ renderMapList(); refreshMapStats(); renderHome(); if(curView==='book') renderBook(); }
+function refreshMapStats(){
+  const st=getStats();
+  $('#ms-lines').textContent=`${st.riddenLines}/${st.totalLines}`;
+  $('#ms-segs').textContent=`${st.riddenSegs}/${st.totalSegs}`;
+  $('#ms-km').textContent=Math.round(st.riddenKm).toLocaleString();
+  $('#ms-bar').style.width=(st.totalSegs? st.riddenSegs/st.totalSegs*100:0)+'%';
+}
+function updateMapState(){
+  if(!window._map||!fcData) return;
+  for(const f of allFeats){ const p=f.properties;
+    const ridden=isSegRidden(p.op,p.line,p.from,p.to)||isLineRidden(p.op,p.line);
+    p.color=ridden? p.realColor : (viewMode==='ridden'? '#3d4453':'#6b7280'); }
+  const src=window._map.getSource('segs'); if(src) src.setData(JSON.parse(JSON.stringify(fcData)));
+}
+function updateStampPins(){
+  if(!window._map||!window._map.isStyleLoaded&&!fcData) return;
+  try{
+    const feats=SPOTS.filter(s=>s.lat).map(s=>({type:'Feature',geometry:{type:'Point',coordinates:[s.lng,s.lat]},properties:{id:s.id,name:spotName(s),got:stampData[s.id]?1:0}}));
+    const data={type:'FeatureCollection',features:feats};
+    const src=window._map.getSource('stamps');
+    if(src) src.setData(data);
+    else if(window._map.getSource('segs')){
+      window._map.addSource('stamps',{type:'geojson',data});
+      window._map.addLayer({id:'stamps-pt',type:'circle',source:'stamps',layout:{visibility:'none'},
+        paint:{'circle-radius':['interpolate',['linear'],['zoom'],5,3,10,6],'circle-color':['case',['==',['get','got'],1],'#e60012','#8d99ae'],'circle-stroke-color':'#fff','circle-stroke-width':1.2,'circle-opacity':.92}});
+      window._map.on('click','stamps-pt',e=>{ const id=e.features[0].properties.id;
+        const s=SPOTS.find(x=>String(x.id)===String(id)); const d=stampData[s.id];
+        new maplibregl.Popup({closeButton:true,maxWidth:'260px'}).setLngLat(e.lngLat)
+          .setHTML(`<div style="font-weight:900;font-size:14px">${esc(spotName(s))}</div><div style="font-size:12px;opacity:.75;margin-top:2px">${esc(s.group||'')} · ${esc(s.typeZh||'')}</div>
+          <button onclick="document.querySelector('#sheet-stamp').classList.contains('show')||window.__openStamp('${esc(s.id)}')" style="margin-top:9px;width:100%;border:none;border-radius:99px;padding:8px;background:${d?'#5b6472':'#e60012'};color:#fff;font-weight:800;font-size:12.5px">${d? '✓ '+T.got : T.stampIt}</button>`).addTo(window._map);
+      });
+    }
+    if(stampPinsOn && window._map.getLayer('stamps-pt')) window._map.setLayoutProperty('stamps-pt','visibility','visible');
+  }catch(e){}
+}
+window.__openStamp=id=>openStamp(id);
+function toggleSeg(op,line,from,to){
+  const v=!isSegRidden(op,line,from,to);
+  const k=segKey(op,line,from,to); if(v) questData.segments[k]=true; else delete questData.segments[k];
+  const segs=segmentsByLine.get(lineKey(op,line))||[];
+  if(segs.length&&segs.every(s=>isSegRidden(op,line,s.from,s.to))) questData.lines[lineKey(op,line)]=true; else delete questData.lines[lineKey(op,line)];
+  saveQuest(); updateMapState(); refreshMapStats(); renderMapList(); checkNewMedals();
+}
+function toggleLine(op,line){
+  const v=!isLineRidden(op,line); const k=lineKey(op,line);
+  const segs=segmentsByLine.get(k)||[];
+  for(const s of segs){ const sk=segKey(op,line,s.from,s.to); if(v) questData.segments[sk]=true; else delete questData.segments[sk]; }
+  if(v) questData.lines[k]=true; else delete questData.lines[k];
+  saveQuest(); updateMapState(); refreshMapStats(); renderMapList(); checkNewMedals();
+}
+function flyToLine(op,line){
+  if(!window._map||!fcData) return;
+  let minX=1e9,minY=1e9,maxX=-1e9,maxY=-1e9,found=false;
+  for(const f of allFeats){ const p=f.properties; if(p.op===op&&p.line===line){ found=true;
+    const walk=c=>{ if(typeof c[0]==='number'){ minX=Math.min(minX,c[0]);maxX=Math.max(maxX,c[0]);minY=Math.min(minY,c[1]);maxY=Math.max(maxY,c[1]); } else c.forEach(walk); };
+    walk(f.geometry.coordinates); } }
+  if(found) window._map.fitBounds([[minX,minY],[maxX,maxY]],{padding:70,duration:1400,maxZoom:9});
+}
+function renderMapList(){
+  const el=$('#mp-list'); const q=($('#mp-q').value||'').trim().toLowerCase();
+  if(mapMode==='ride'){ renderRideList(el,q); return; }
+  if(!linesLoaded){ el.innerHTML='<div class="mp-empty"><div class="spin"></div>'+T.loadingLines+'</div>'; return; }
+  let html='';
+  const ops=[...allOperators.keys()].sort((a,b)=>opLabel(a).localeCompare(opLabel(b),'ja'));
+  for(const op of ops){
+    const lines=[...allOperators.get(op).lines].filter(line=>{
+      if(!q) return true;
+      return lineLabel(op,line).toLowerCase().includes(q)||line.toLowerCase().includes(q)||opLabel(op).toLowerCase().includes(q)
+        || (segmentsByLine.get(lineKey(op,line))||[]).some(s=>s.from.includes(q)||s.to.includes(q));
+    });
+    if(!lines.length) continue;
+    const pAll=lines.map(l=>lineProgress(op,l)); const riddenN=pAll.filter(p=>p.total&&p.r===p.total).length;
+    const open=expandedOps.has(op)||!!q;
+    html+=`<div class="op-group"><div class="op-head ${open?'':'closed'}" data-ophead="${esc(op)}">
+      <span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg></span>
+      <span class="oc" style="background:${opColor(op)}"></span><span>${esc(opLabel(op))}</span><span class="ocnt">${riddenN}/${lines.length}</span></div>
+      <div class="op-lines" style="${open?'':'display:none'}">`;
+    for(const line of lines.sort((a,b)=>lineLabel(op,a).localeCompare(lineLabel(op,b),'ja'))){
+      const p=lineProgress(op,line); const full=p.total&&p.r===p.total; const part=p.r>0&&!full;
+      const exp=expandedLines.has(lineKey(op,line));
+      html+=`<div class="line-item" data-line="${esc(lineKey(op,line))}">
+        <span class="ld" style="background:${(segmentsByLine.get(lineKey(op,line))&&allFeats.find(f=>f.properties.op===op&&f.properties.line===line)?.properties.realColor)||opColor(op)}"></span>
+        <span class="ln"><span class="a">${esc(lineLabel(op,line))}</span><br><span class="b">${p.r}/${p.total} · ${p.tkm.toFixed(0)} km</span></span>
+        ${mapMode==='detailed'? `<button class="ck" style="border-radius:50%;width:22px;height:22px" data-expand="${esc(lineKey(op,line))}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" style="color:var(--map-muted);transform:rotate(${exp?180:0}deg)"><path d="m6 9 6 6 6-6"/></svg></button>`:''}
+        <button class="ck ${full?'on':part?'part':''}" data-toggle-line="${esc(lineKey(op,line))}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></button></div>`;
+      if(mapMode==='detailed'&&exp){
+        html+=`<div class="seg-list">`+ (segmentsByLine.get(lineKey(op,line))||[]).map(s=>{ const r=isSegRidden(op,line,s.from,s.to);
+          return `<div class="seg-item ${r?'ridden':''}" data-seg="${esc(segKey(op,line,s.from,s.to))}"><span class="ck ${r?'on':''}" style="width:20px;height:20px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg></span><span>${esc(s.from)} → ${esc(s.to)}</span><span class="km">${s.km.toFixed(1)} km</span></div>`; }).join('')+`</div>`;
+      }
+    }
+    html+='</div></div>';
+  }
+  el.innerHTML=html||'<div class="mp-empty">—</div>';
+  el.querySelectorAll('[data-ophead]').forEach(h=>h.addEventListener('click',()=>{ const op=h.dataset.ophead;
+    if(expandedOps.has(op)) expandedOps.delete(op); else expandedOps.add(op); renderMapList(); }));
+  el.querySelectorAll('[data-toggle-line]').forEach(b=>b.addEventListener('click',e=>{ e.stopPropagation(); const [op,line]=b.dataset.toggleLine.split('||'); toggleLine(op,line); }));
+  el.querySelectorAll('[data-expand]').forEach(b=>b.addEventListener('click',e=>{ e.stopPropagation(); const k=b.dataset.expand;
+    if(expandedLines.has(k)) expandedLines.delete(k); else expandedLines.add(k); renderMapList(); }));
+  el.querySelectorAll('[data-seg]').forEach(it=>it.addEventListener('click',()=>{ const [op,line,f,t]=it.dataset.seg.split('||'); toggleSeg(op,line,f,t); }));
+  el.querySelectorAll('.line-item').forEach(it=>it.addEventListener('click',()=>{ const [op,line]=it.dataset.line.split('||'); flyToLine(op,line); }));
+}
+function trainColor(s){ return s.type==='shinkansen'? '#2f6de8':'#e8871e'; }
+function renderRideList(el,q){
+  if(!trainsLoaded){ el.innerHTML='<div class="mp-empty"><div class="spin"></div>'+T.loadingLines+'</div>'; return; }
+  const groups=[['shinkansen',T.shinkansen],['limited',T.limited]];
+  let html='';
+  for(const [type,label] of groups){
+    const list=TRAINS.filter(s=>(s.type===type||(type==='limited'&&s.type!=='shinkansen'))&&(!q||s.name.includes(q)||(s.nameEn||'').toLowerCase().includes(q)));
+    if(!list.length) continue;
+    html+=`<div class="svc-group">${label} · ${list.filter(s=>isTrainRidden(s.name)).length}/${list.length}</div>`;
+    html+=list.map(s=>{ const r=isTrainRidden(s.name); const r0=(s.routes&&s.routes[0])||{from:'',to:''};
+      return `<div class="svc-card"><span class="si" style="background:${trainColor(s)}">${esc((s.nameEn||s.name).slice(0,4))}</span>
+      <span class="sb"><span class="sn">${esc(s.name)}</span> <span style="color:var(--map-muted);font-size:12px">${esc(s.nameEn||'')}</span><br>
+      <span class="sm">${esc(r0.from)} → ${esc(r0.to)} · ${(s.routes||[]).length} ${LANG==='en'?'patterns':'パターン'}</span></span>
+      <button class="ck ${r?'on':''}" data-train="${esc(s.name)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></button></div>`; }).join('');
+  }
+  el.innerHTML=html||'<div class="mp-empty">—</div>';
+  el.querySelectorAll('[data-train]').forEach(b=>b.addEventListener('click',()=>{
+    const n=b.dataset.train; if(questData.trains[n]) delete questData.trains[n]; else questData.trains[n]=true;
+    saveQuest(); renderMapList(); refreshMapStats(); checkNewMedals();
+  }));
+}
+document.querySelectorAll('#mode-ctl button').forEach(b=>b.addEventListener('click',()=>{
+  mapMode=b.dataset.mode; document.querySelectorAll('#mode-ctl button').forEach(x=>x.classList.toggle('active',x===b)); renderMapList();
+}));
+document.querySelectorAll('[data-view2]').forEach(b=>b.addEventListener('click',()=>{
+  viewMode=b.dataset.view2; document.querySelectorAll('[data-view2]').forEach(x=>x.classList.toggle('active',x===b)); updateMapState();
+}));
+$('#tool-stamps').addEventListener('click',()=>{
+  stampPinsOn=!stampPinsOn; $('#tool-stamps').classList.toggle('active',stampPinsOn);
+  if(window._map&&window._map.getLayer('stamps-pt')) window._map.setLayoutProperty('stamps-pt','visibility',stampPinsOn?'visible':'none');
+  else if(stampPinsOn) updateStampPins();
+});
+$('#mp-q').addEventListener('input',()=>renderMapList());
+$('#panel-hide').addEventListener('click',()=>{ $('#map-panel').classList.add('hidden'); $('#map-fab').classList.add('show'); });
+$('#map-fab').addEventListener('click',()=>{ $('#map-panel').classList.remove('hidden'); $('#map-fab').classList.remove('show'); });
+
+/* ════════════════ Book ════════════════ */
+let curBook='trains';
+document.querySelectorAll('#book-tabs .fchip').forEach(b=>b.addEventListener('click',()=>{
+  curBook=b.dataset.book; document.querySelectorAll('#book-tabs .fchip').forEach(x=>x.classList.toggle('active',x===b)); renderBook();
+}));
+function renderBook(){
+  const el=$('#book-body');
+  if(curBook==='trains'){
+    if(!trainsLoaded){ el.innerHTML='<div class="empty-box"><div class="spin"></div>'+T.loadingLines+'</div>'; return; }
+    el.innerHTML=['shinkansen','limited'].map(type=>{
+      const list=TRAINS.filter(s=>type==='shinkansen'? s.type==='shinkansen' : s.type!=='shinkansen');
+      return `<div class="svc-group" style="color:var(--ink-muted);margin:16px 2px 10px">${type==='shinkansen'? T.shinkansen : T.limited} · ${list.filter(s=>isTrainRidden(s.name)).length}/${list.length}</div>
+      <div class="train-grid">${list.map(s=>{ const r=isTrainRidden(s.name); const r0=(s.routes&&s.routes[0])||{from:'',to:'',stops:[]};
+        return `<button class="train-card ${r?'ridden':''}" data-btrain="${esc(s.name)}"><span class="ti" style="background:${trainColor(s)}">${esc((s.nameEn||s.name).slice(0,5))}</span>
+        <span class="tb"><span class="tn">${esc(s.name)}</span> <span style="color:var(--ink-muted);font-size:12px">${esc(s.nameEn||'')}</span>
+        <span class="tm" style="display:block">${esc(r0.from)} → ${esc(r0.to)} · ${(r0.stops||[]).length} ${T.stops}${r? ' · ✓':''}</span></span></button>`; }).join('')}</div>`;
+    }).join('');
+    el.querySelectorAll('[data-btrain]').forEach(b=>b.addEventListener('click',()=>{
+      const n=b.dataset.btrain; if(questData.trains[n]) delete questData.trains[n]; else questData.trains[n]=true;
+      saveQuest(); renderBook(); checkNewMedals();
+    }));
+    return;
+  }
+  if(curBook==='lines'){
+    if(!linesLoaded){ el.innerHTML='<div class="empty-box"><div class="spin"></div>'+T.loadingLines+'</div>'; return; }
+    el.innerHTML=[...allOperators.keys()].sort((a,b)=>opLabel(a).localeCompare(opLabel(b),'ja')).map(op=>{
+      const lines=[...allOperators.get(op).lines];
+      let r=0,tt=0; for(const l of lines){ const p=lineProgress(op,l); r+=p.r; tt+=p.total; }
+      return `<div class="coll-card"><h3><span class="dot" style="width:11px;height:11px;border-radius:4px;background:${opColor(op)};display:inline-block"></span>${esc(opLabel(op))}<span style="margin-left:auto;font-size:12.5px;color:var(--ink-muted)">${r}/${tt}</span></h3>
+      <div class="prog-bar"><i style="width:${tt? r/tt*100:0}%;background:${opColor(op)}"></i></div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px">${lines.sort((a,b)=>lineLabel(op,a).localeCompare(lineLabel(op,b),'ja')).map(l=>{ const p=lineProgress(op,l); const full=p.total&&p.r===p.total;
+        return `<button class="fchip" data-bline="${esc(lineKey(op,l))}" style="${full?'background:var(--green);border-color:var(--green);color:#fff':p.r?'background:#fdf0d5;border-color:#eec25e':''}">${esc(lineLabel(op,l))} ${p.r}/${p.total}</button>`; }).join('')}</div></div>`;
+    }).join('');
+    el.querySelectorAll('[data-bline]').forEach(b=>b.addEventListener('click',()=>{ const [op,line]=b.dataset.bline.split('||'); goto('map'); pendingCam={line:[op,line]}; if(window._map&&fcData) applyPendingCam(); }));
+    return;
+  }
+  // TRAIN TRIP special collections
+  const head=(title,desc)=>`<div class="coll-card"><h3>${title}</h3><p class="cd">${desc}</p>`;
+  if(curBook==='ikimono'){
+    el.innerHTML=head(T.bookIkimono, LANG==='en'?'120 creature stamps from TRAIN TRIP, with the localized Chinese notes.':'TRAIN TRIP「生物图鉴」全 120 种，附本地化中文解说。')
+      + SPECIALS.ikimono.map(x=>`<div class="coll-item"><div class="ci-t">${esc(x.title)} <span style="color:var(--ink-muted);font-weight:600;font-size:12px">${esc(x.station_name||'')}</span></div>
+        <div class="ci-m">${esc(x.group||'')} · ${esc(x.category||'')}</div></div>`).join('')+'</div>';
+  } else if(curBook==='ekisoba'){
+    el.innerHTML=head(T.bookEkisoba, LANG==='en'?'138 station soba shops from TRAIN TRIP.':'TRAIN TRIP 收录的 138 家站内荞麦面店。')
+      + SPECIALS.ekisoba.map(x=>`<div class="coll-item"><div class="ci-t">${esc(x.shop_name||x.station_name||'')}</div>
+        <div class="ci-m">${esc(x.station_name||'')} · ${esc(x.prefectures||'')}</div></div>`).join('')+'</div>';
+  } else if(curBook==='ekiben'){
+    el.innerHTML=head(T.bookEkiben, LANG==='en'?'15 classic ekiben from TRAIN TRIP.':'TRAIN TRIP 收录的 15 种经典站便当。')
+      + SPECIALS.ekiben.map(x=>`<div class="coll-item"><div class="ci-t">${esc(x.title)}</div>
+        <div class="ci-m">${esc(x.shop||'')} · ${esc(x.stationName||'')}</div></div>`).join('')+'</div>';
+  } else if(curBook==='face'){
+    el.innerHTML=head(T.bookFace, LANG==='en'?'24 train faces from TRAIN TRIP — collect their parts at three stations each.':'TRAIN TRIP「列车之脸」全 24 种车型 — 在三座车站集齐部件拼成完整印章。')
+      + SPECIALS.face.map(x=>`<div class="coll-item"><div class="ci-t">${esc(x.title)} <span style="color:var(--ink-muted);font-weight:600;font-size:12px">${esc(x.group||'')}</span></div>
+        <div class="ci-m">${(x.parts||[]).map(esc).join(' · ')}</div></div>`).join('')+'</div>';
+  }
+}
+
+/* ════════════════ Me: profile, medals, data, poster ════════════════ */
+function renderMe(){
+  const {st,pts,lv,title}=refreshLevel();
+  $('#pf-avatar').textContent=(profile.nick||'铁').trim().slice(0,1)||'铁';
+  const nickEl=$('#pf-nick'); if(document.activeElement!==nickEl) nickEl.value=profile.nick||'';
+  $('#pf-level').textContent=`Lv.${lv} · ${title}`;
+  $('#pf-meta').innerHTML=`${pts.toLocaleString()} pt · ${T.sSegs} ${st.riddenSegs}/${st.totalSegs} · ${Math.round(st.riddenKm).toLocaleString()} km · ${T.sStamps} ${st.stamps}/${st.stampsTotal}`;
+  const medals=computeMedals(); const gotN=medals.filter(m=>m.res.got).length;
+  $('#medal-count').textContent=`${gotN} / ${medals.length}`;
+  $('#medal-grid').innerHTML=medals.map(m=>`<button class="medal-cell tier-${m.tier} ${m.res.got?'':'locked'}" data-medal="${m.id}">
+    <span class="medal-ic">${MICON[m.icon]||MICON.stamp}</span><span class="mn" style="display:block">${esc(m.name[LANG]||m.name.zh)}</span>
+    <span class="mp2" style="display:block">${m.res.cur} / ${m.res.max}</span></button>`).join('');
+  document.querySelectorAll('[data-medal]').forEach(b=>b.addEventListener('click',()=>{
+    const m=computeMedals().find(x=>x.id===b.dataset.medal); if(!m) return;
+    $('#md-ic').innerHTML=`<span class="medal-ic tier-${m.tier}" style="width:96px;height:96px;margin:0 auto">${MICON[m.icon]||''}</span>`;
+    const mdSvg=$('#md-ic').querySelector('svg'); if(mdSvg) mdSvg.style.cssText='width:48px;height:48px';
+    $('#md-name').textContent=m.name[LANG]||m.name.zh;
+    $('#md-desc').textContent=m.desc[LANG]||m.desc.zh;
+    $('#md-bar').style.width=(m.res.max? m.res.cur/m.res.max*100:0)+'%';
+    $('#md-prog').textContent=`${T.medalProgress} ${m.res.cur} / ${m.res.max}`;
+    $('#sheet-medal').classList.add('show');
+  }));
+}
+$('#pf-nick').addEventListener('input',e=>{ profile.nick=e.target.value; saveProfile(); $('#pf-avatar').textContent=(profile.nick||'铁').trim().slice(0,1)||'铁'; });
+$('#btn-export').addEventListener('click',()=>{
+  const blob=new Blob([JSON.stringify({quest:questData,stamps:stampData,profile},null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='quest_atlas_'+new Date().toISOString().slice(0,10)+'.json'; a.click(); URL.revokeObjectURL(a.href); toast(T.exported);
+});
+$('#btn-import').addEventListener('click',()=>$('#import-file').click());
+$('#import-file').addEventListener('change',e=>{
+  const f=e.target.files[0]; if(!f) return;
+  f.text().then(txt=>{ try{ const d=JSON.parse(txt);
+      if(d.quest&&(d.quest.lines||d.quest.segments)){ questData={lines:d.quest.lines||{},segments:d.quest.segments||{},trains:d.quest.trains||{}}; }
+      else if(d.lines||d.segments){ questData={lines:d.lines||{},segments:d.segments||{},trains:d.trains||{}}; }  // legacy quest export
+      else throw 0;
+      if(d.stamps) stampData=d.stamps; if(d.profile) profile=Object.assign(profile,d.profile);
+      saveQuest(); saveStamps(); saveProfile(); updateMapState(); refreshMapStats(); renderMapList(); renderStamps(); renderMe(); renderHome(); toast(T.imported);
+    }catch(err){ toast(T.importFail); } });
+  e.target.value='';
+});
+$('#btn-share').addEventListener('click',()=>{
+  const {st,lv,title}=refreshLevel();
+  const txt=T.shareText(profile.nick,{lines:st.riddenLines,segs:st.riddenSegs,km:Math.round(st.riddenKm),trains:st.trains,stamps:st.stamps,lv,title});
+  if(navigator.clipboard) navigator.clipboard.writeText(txt).then(()=>toast(T.copied)); else toast(txt);
+});
+$('#btn-clear').addEventListener('click',()=>{
+  if(!confirm(T.confirmClear)) return;
+  questData={lines:{},segments:{},trains:{}}; stampData={};
+  saveQuest(); saveStamps(); updateMapState(); refreshMapStats(); renderMapList(); renderStamps(); renderMe(); renderHome(); toast(T.cleared);
+});
+$('#btn-poster').addEventListener('click',()=>{
+  const {st,pts,lv,title,overall}=refreshLevel();
+  const cv=$('#poster-canvas'); const W=1080,H=1350; cv.width=W; cv.height=H;
+  const x=cv.getContext('2d');
+  x.fillStyle='#14120e'; x.fillRect(0,0,W,H); x.fillStyle='#e60012'; x.fillRect(0,H-14,W,14);
+  x.fillStyle='rgba(255,255,255,.14)'; for(let i=0;i<130;i++){ x.beginPath(); x.arc(Math.random()*W,Math.random()*H,1.6,0,7); x.fill(); }
+  x.fillStyle='#ffb000'; x.font='900 44px sans-serif'; x.fillText('Mini JapanRail',70,110);
+  x.fillStyle='#fff'; x.font='900 76px sans-serif'; x.fillText(LANG==='ja'?'鉄道制覇':LANG==='en'?'RAILWAY CONQUEST':'铁路制霸',70,205);
+  x.font='700 34px sans-serif'; x.fillStyle='rgba(255,255,255,.85)';
+  x.fillText((profile.nick||'—')+`  ·  Lv.${lv} ${title}`,70,275);
+  x.strokeStyle='#ffb000'; x.lineWidth=26; x.beginPath(); x.arc(W/2,650,215,0,7); x.stroke();
+  x.strokeStyle='rgba(255,255,255,.16)'; x.lineWidth=26; x.beginPath(); x.arc(W/2,650,215,0,7); x.stroke();
+  x.strokeStyle='#ffb000'; x.beginPath(); x.arc(W/2,650,215,-Math.PI/2,-Math.PI/2+overall/100*Math.PI*2); x.stroke();
+  x.fillStyle='#fff'; x.font='900 120px sans-serif'; x.textAlign='center'; x.fillText(overall.toFixed(1)+'%',W/2,690);
+  x.font='700 30px sans-serif'; x.fillStyle='rgba(255,255,255,.85)'; x.fillText(T.overall,W/2,745); x.textAlign='left';
+  const rows=[[T.sLines,`${st.riddenLines} / ${st.totalLines}`],[T.sSegs,`${st.riddenSegs} / ${st.totalSegs}`],[T.sKm,`${Math.round(st.riddenKm).toLocaleString()} km`],[T.sTrains,`${st.trains} / ${st.trainsTotal}`],[T.sStamps,`${st.stamps} / ${st.stampsTotal}`],[LANG==='en'?'Points':LANG==='ja'?'ポイント':'积分',pts.toLocaleString()]];
+  x.font='700 36px sans-serif'; let y=1010;
+  for(const [k,v] of rows){ x.fillStyle='rgba(255,255,255,.75)'; x.fillText(k,90,y); x.fillStyle='#fff'; x.textAlign='right'; x.fillText(v,W-90,y); x.textAlign='left'; y+=64; }
+  x.font='500 26px sans-serif'; x.fillStyle='rgba(255,255,255,.55)';
+  x.fillText('jr.suki.ing · Quest Atlas · '+new Date().toLocaleDateString(),70,H-56);
+  $('#sheet-poster').classList.add('show');
+});
+$('#poster-dl').addEventListener('click',()=>{
+  const a=document.createElement('a'); a.href=$('#poster-canvas').toDataURL('image/png');
+  a.download='quest_atlas_poster_'+new Date().toISOString().slice(0,10)+'.png'; a.click();
+});
+
+/* ════════════════ Boot ════════════════ */
+loadAll(); applyI18n(); refreshLevel(); renderHome(); renderMe();
+loadLineData();
+loadStamps().then(()=>{ renderStamps(); });
+renderBook();
+</script>
+</body>
+</html>

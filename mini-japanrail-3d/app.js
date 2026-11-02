@@ -177,7 +177,7 @@ const I18N = {
     dayFileNote:'时刻表', paused:'暂停', liveMode:'实时', playMode:'回放', fps:'FPS',
     retry:'重试', loadingIdx:'构建索引', loadingPr:'解析时刻表', adapt:'性能模式:帧率低,已自动关闭列车光晕', cacheOn:'离线缓存已启用', failMsg:'加载失败，请检查网络后重试',
     tabGuide:'指南', gdLoading:'指南数据加载中…', gdEmpty:'本站暂无设施信息',
-    muT:'发车铃声', muBack:'时刻表', muNone:'该站暂无已收录的发车铃声', muNoAudio:'音频未收录', muLoad:'铃声数据加载中…', muFail:'铃声数据加载失败，请稍后重试', muRetry:'重试', muOther:'其他', muHint:'共 {0} 条发车铃声 · 点击试听', muPlayFail:'音频播放失败，请重试', muPause:'暂停', muResume:'播放',
+    muT:'发车铃声', muBack:'时刻表', muNone:'该站暂无已收录的发车铃声', muNoAudio:'音频未收录', muLoad:'铃声数据加载中…', muFail:'铃声数据加载失败，请稍后重试', muRetry:'重试', muOther:'其他', muAll:'全部', muCount:'{0} 首', muCountOne:'1 首', muAuto:'连播', muPrev:'上一首', muNext:'下一首', muSeek:'拖动试听进度', muPlayFail:'音频播放失败，请重试', muPause:'暂停', muResume:'播放',
     gdBasic:'基本信息', gdWheelchair:'无障碍通行', gdToilets:'卫生间', gdPlatform:'站台与屏蔽门',
     gdFloorPlan:'站内图', gdLinks:'相关链接', gdAddress:'地址', gdTel:'电话', gdOpened:'开业',
     gdInside:'闸内', gdOutside:'闸外', gdSeeFp:'查看官方站内图 ↗', gdEcomo:'ecomo 车站信息',
@@ -221,7 +221,7 @@ const I18N = {
     dayFileNote:'時刻表', paused:'一時停止', liveMode:'リアルタイム', playMode:'再生', fps:'FPS',
     retry:'再試行', loadingIdx:'索引構築', loadingPr:'時刻表解析', adapt:'省電力モード:低FPSのため列車グローをOFF', cacheOn:'オフラインキャッシュ有効', failMsg:'読み込みに失敗しました。ネットワークを確認してもう一度お試しください',
     tabGuide:'ガイド', gdLoading:'ガイド読込中…', gdEmpty:'この駅の設備情報はまだありません',
-    muT:'発車メロディ', muBack:'時刻表', muNone:'この駅に収録された発車メロディはありません', muNoAudio:'音源未収録', muLoad:'メロディデータ読込中…', muFail:'メロディデータの取得に失敗しました', muRetry:'再試行', muOther:'その他', muHint:'発車メロディ {0} 件 · タップで試聴', muPlayFail:'音声の再生に失敗しました', muPause:'一時停止', muResume:'再生',
+    muT:'発車メロディ', muBack:'時刻表', muNone:'この駅に収録された発車メロディはありません', muNoAudio:'音源未収録', muLoad:'メロディデータ読込中…', muFail:'メロディデータの取得に失敗しました', muRetry:'再試行', muOther:'その他', muAll:'すべて', muCount:'{0}曲', muCountOne:'1曲', muAuto:'連続', muPrev:'前のメロディ', muNext:'次のメロディ', muSeek:'再生位置を調整', muPlayFail:'音声の再生に失敗しました', muPause:'一時停止', muResume:'再生',
     gdBasic:'基本情報', gdWheelchair:'車椅子での移動', gdToilets:'トイレ', gdPlatform:'ホーム・ドア',
     gdFloorPlan:'構内図', gdLinks:'リンク', gdAddress:'所在地', gdTel:'連絡先', gdOpened:'開業',
     gdInside:'改札内', gdOutside:'改札外', gdSeeFp:'公式構内図を見る ↗', gdEcomo:'ecomo 駅情報',
@@ -265,7 +265,7 @@ const I18N = {
     dayFileNote:'Timetable', paused:'Paused', liveMode:'Live', playMode:'Replay', fps:'FPS',
     retry:'Retry', loadingIdx:'Building index', loadingPr:'Parsing timetable', adapt:'Performance mode: low FPS, train glow off', cacheOn:'Offline cache enabled', failMsg:'Failed to load. Check your network and retry.',
     tabGuide:'Guide', gdLoading:'Loading guide…', gdEmpty:'No facility info for this station yet',
-    muT:'Departure melody', muBack:'Timetable', muNone:'No departure melody recorded for this station', muNoAudio:'No audio', muLoad:'Loading melody data…', muFail:'Failed to load melody data', muRetry:'Retry', muOther:'Others', muHint:'{0} departure melodies · tap to listen', muPlayFail:'Playback failed, please retry', muPause:'Pause', muResume:'Play',
+    muT:'Departure melody', muBack:'Timetable', muNone:'No departure melody recorded for this station', muNoAudio:'No audio', muLoad:'Loading melody data…', muFail:'Failed to load melody data', muRetry:'Retry', muOther:'Others', muAll:'All', muCount:'{0} tracks', muCountOne:'1 track', muAuto:'Auto', muPrev:'Previous melody', muNext:'Next melody', muSeek:'Seek playback position', muPlayFail:'Playback failed, please retry', muPause:'Pause', muResume:'Play',
     gdBasic:'Basic info', gdWheelchair:'Barrier-free access', gdToilets:'Toilets', gdPlatform:'Platform / doors',
     gdFloorPlan:'Station map', gdLinks:'Links', gdAddress:'Address', gdTel:'Phone', gdOpened:'Opened',
     gdInside:'Inside gates', gdOutside:'Outside gates', gdSeeFp:'Official station map ↗', gdEcomo:'ecomo station info',
@@ -7206,7 +7206,7 @@ function bindSheet() {
 }
 function closeSheet() {
   $('sheet').classList.remove('open'); $('sheetMask').classList.remove('open');
-  if (muOpen) { muOpen = false; stopMusic(); $('panelMusic').hidden = true; $('shBell').classList.remove('on'); }
+  if (muOpen) muResetPanel();
 }
 /* ===== 渐进式站牌（分片模式）=====
    打开车站时先用当前窗口的 tripList 把「当前时段」零等待画出来，整包（既有端点不变）
@@ -7325,12 +7325,13 @@ function showStationDetail(name, coord, featLine, featOp) {
   sheetStation = name; sheetCoord = coord || null; sheetFlat = false; sheetLine = featLine || null; sheetOp = featOp || null;
   $('shNm').textContent = name;
   /* 换站时若处于试听面板：停止播放并复位（保持关闭铃铛高亮） */
-  if (muOpen) { muOpen = false; stopMusic(); $('panelMusic').hidden = true; $('shBell').classList.remove('on'); }
+  if (muOpen) muResetPanel();
   // 新站打开：默认切回「一览」，隐藏信息面板并使懒渲染缓存失效
   sheetTab = 'tabGrid';
   ['tabList','tabGrid','tabInfo','tabGuide'].forEach(id => $(id).classList.remove('on'));
   $('tabGrid').classList.add('on');
   $('shBody').hidden = false;
+  $('shSubTabs').classList.remove('hidden');
   $('panelInfo').hidden = true;
   $('panelGuide').hidden = true;
   _infoKey = null;
@@ -7586,19 +7587,43 @@ function switchSheetTab(tab) {
 }
 
 /* ---------- 发车铃声试听（jr-music.suki.ing） ---------- */
-const MU_BASE = 'https://jr-music.suki.ing';
+const MU_BASES = ['https://jr-music.suki.ing', 'https://jr-music.2930024519.workers.dev'];
+let muBase = MU_BASES[0];
 let muData = null, muPromise = null, muOpen = false, muBadgeHidden = false;
 let muAllMels = [], muLines = [], muOthers = [], muLineIdx = 0;
-let muAudio = null, muCur = null, muRaf = 0, muDrag = false;
+let muView = [], muPlayables = [], muRowMap = new Map();
+let muAudio = null, muEl = null, muCur = null, muRaf = 0, muScrubDrag = false, muScrubWasPlaying = false, muScrubLastPct = 0;
+let muAuto = true, muEndTimer = 0, muErr = false, muCountN = 0, muLoadSeq = 0;
+let muLastCurTxt = '', muLastTotTxt = '', muPreconnected = false, muFadeSeq = 0;
+try { muAuto = localStorage.getItem('mjr_mu_auto') !== '0'; } catch (e) {}
 
 function muNorm(n) { return normName(n); }
-function loadMusicData() {
-  if (muData) return Promise.resolve(muData);
-  if (!muPromise) {
-    muPromise = fetch(MU_BASE + '/mapping.json').then(r => {
+function muHalf(s) { return String(s).replace(/[０-９]/g, c => '0123456789'['０１２３４５６７８９'.indexOf(c)]); }
+function muHaptic(ms) { try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) {} }
+function muFetchJSON(url, ms) {
+  return new Promise((resolve, reject) => {
+    let done = false;
+    const ctl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const tm = setTimeout(() => { if (done) return; done = true; if (ctl) ctl.abort(); reject(new Error('timeout')); }, ms || 12000);
+    fetch(url, ctl ? { signal: ctl.signal } : undefined).then(r => {
       if (!r.ok) throw new Error('HTTP ' + r.status);
       return r.json();
     }).then(j => {
+      if (done) return; done = true; clearTimeout(tm); resolve(j);
+    }, e => {
+      if (done) return; done = true; clearTimeout(tm); reject(e);
+    });
+  });
+}
+function loadMusicData() {
+  if (muData) return Promise.resolve(muData);
+  if (!muPromise) {
+    const attempt = i => {
+      if (i >= MU_BASES.length) throw new Error('music hosts unavailable');
+      muBase = MU_BASES[i];
+      return muFetchJSON(muBase + '/mapping.json', 12000).catch(() => attempt(i + 1));
+    };
+    muPromise = attempt(0).then(j => {
       const idx = new Map();
       for (const s of (j.stations || [])) { const k = muNorm(s.name); if (k && !idx.has(k)) idx.set(k, s); }
       muData = idx; return muData;
@@ -7606,11 +7631,21 @@ function loadMusicData() {
   }
   return muPromise;
 }
+function muPreconnect() {
+  if (muPreconnected) return;
+  muPreconnected = true;
+  MU_BASES.forEach((b, i) => {
+    if (document.getElementById('muPre' + i)) return;
+    const l = document.createElement('link');
+    l.id = 'muPre' + i; l.rel = 'preconnect'; l.href = b; l.crossOrigin = '';
+    document.head.appendChild(l);
+  });
+}
 /* 旋律 → 线路归属：优先 line 字段，否则从 platform "N番線 -线路方向" 解析 */
 function muLineOf(m) {
   if (m.line && String(m.line).trim()) return String(m.line).trim();
   const p = m.platform || '';
-  const mm = p.match(/^[0-9０-９]+番線?\s*[-–—]\s*(.+)$/);
+  const mm = p.match(/^[0-9０-９]+(?:番線|号線)?\s*[-–—]\s*(.+)$/);
   if (mm) {
     let ln = mm[1].trim().replace(/(上り|下り|内回り|外回り|北行|南行|東行|西行|通過標準|通過|直通|回送)(・.*)?$/, '').replace(/[・\s]+$/, '');
     if (ln) return ln;
@@ -7618,47 +7653,460 @@ function muLineOf(m) {
   return '';
 }
 function muPlatOf(m) {
-  const mm = (m.platform || '').match(/^[0-9０-９]+番線?/);
+  const mm = (m.platform || '').match(/^[0-9０-９]+(?:番線|号線)?/);
   return mm ? mm[0] : '';
 }
+function muPlatNum(m) {
+  const mm = muPlatOf(m).match(/^[0-9０-９]+/);
+  return mm ? muHalf(mm[0]) : '';
+}
+function muPlatUnit(m) {
+  const mm = (m.platform || '').match(/^[0-9０-９]+(番線|号線)/);
+  return mm ? mm[1] : '';
+}
+/* 番线下的实际系统名优先于 line 字段：东海的「上野东京ライン」不会被吞掉 */
+function muSubOf(m) {
+  const line = muLineOf(m), p = String(m.platform || '');
+  const i = p.indexOf('-');
+  if (i < 0) return line || p;
+  const route = p.slice(i + 1).trim();
+  if (!route) return line;
+  if (!line) return route;
+  if (route.indexOf(line) === 0) return [line, route.slice(line.length).trim()].filter(Boolean).join(' · ');
+  /* 「中央線快速」×「中央線下り」这类同一系统的不同写法：只补方向，避免重复 */
+  const dm = route.match(/(上り|下り|内回り|外回り|北行|南行|東行|西行|上下)(?:・.*)?$/);
+  const base = dm ? route.slice(0, dm.index).trim() : route;
+  const squash = x => x.replace(/[・\s]/g, '');
+  const bl = squash(base), ll = squash(line);
+  if (bl && (ll.indexOf(bl) === 0 || bl.indexOf(ll) === 0)) return [line, dm ? dm[0] : ''].filter(Boolean).join(' · ');
+  return line + ' · ' + route;
+}
+const MU_LC_MAP = {
+  "いわて銀河鉄道線":"#000080",
+  "おおさか東線":"#3B7293",
+  "こどもの国線":"#0071BE",
+  "しなの鉄道線":"#F39700",
+  "つくばエクスプレス線":"#00A3D9",
+  "りんかい線":"#38257D",
+  "グリーンライン":"#28846E",
+  "ニューシャトル":"#0068B7",
+  "ブルーライン":"#2F56A5",
+  "ブルーライン線":"#2F56A5",
+  "三田線":"#006AB8",
+  "上信電鉄線":"#E60012",
+  "上田電鉄別所線":"#E60012",
+  "上越・北陸新幹線":"#006600",
+  "上越新幹線":"#006600",
+  "上越線":"#00ACD1",
+  "上越線臨時":"#00ACD1",
+  "上高地線":"#2C3E8D",
+  "両毛線":"#378640",
+  "中央・総武線各駅停車":"#FFD900",
+  "中央本線":"#DD6935",
+  "中央本線上下":"#DD6935",
+  "中央総武線":"#FFD900",
+  "中央線":"#DD6935",
+  "中央線上下":"#DD6935",
+  "中央線快速":"#DD6935",
+  "丸ノ内線":"#F62E36",
+  "丸ノ内線A線":"#F62E36",
+  "丸ノ内線B線":"#F62E36",
+  "九州新幹線・博多南線":"#E60012",
+  "九頭竜線":"#00A6E9",
+  "五日市線":"#DD6935",
+  "京急久里浜線":"#33C2E4",
+  "京急本線":"#33C2E4",
+  "京急空港線":"#33C2E4",
+  "京急線":"#33C2E4",
+  "京浜東北線":"#00B2E5",
+  "京王井の頭線":"#103675",
+  "京王新線":"#D5007F",
+  "京王線":"#D5007F",
+  "京葉線":"#D01827",
+  "京都線":"#0071BE",
+  "仙台空港アクセス線":"#006BAB",
+  "仙山線":"#378640",
+  "仙石東北ライン上り 休日":"#378640",
+  "仙石東北ライン上り 平日":"#378640",
+  "仙石線":"#378640",
+  "仙石線上り 休日":"#378640",
+  "仙石線上り 平日":"#378640",
+  "伊東線":"#F0862B",
+  "伊豆急行線":"#0068B6",
+  "使用停止":"#9AA0A6",
+  "信越本線":"#00A7E3",
+  "八高線":"#B3AA96",
+  "内房線":"#378640",
+  "内房線上下":"#378640",
+  "副都心線":"#9C5E31",
+  "北上線・東北本線":"#378640",
+  "北陸新幹線":"#006600",
+  "北陸新幹線上下":"#006600",
+  "千代田線":"#00BB85",
+  "千代田線A線":"#00BB85",
+  "千代田線B線":"#00BB85",
+  "半蔵門線":"#8F76D6",
+  "半蔵門線A線":"#8F76D6",
+  "南北線":"#00AC9B",
+  "南北線A線":"#00AC9B",
+  "南北線B線":"#00AC9B",
+  "南武支線":"#F2D01F",
+  "南武線":"#F2D01F",
+  "南武線上下":"#F2D01F",
+  "南海空港線":"#3B73C2",
+  "吾妻線":"#378640",
+  "城端線":"#0065B1",
+  "埼京線":"#00AC9A",
+  "外房線":"#378640",
+  "外房線上下":"#378640",
+  "大和路線":"#33A94A",
+  "大糸線":"#773C97",
+  "大船渡線":"#378640",
+  "大阪モノレール線":"#000080",
+  "大阪環状線":"#E73042",
+  "宇都宮線":"#F18E41",
+  "宇都宮線上下":"#F18E41",
+  "宝塚線":"#007AC2",
+  "富士急行線":"#0068B6",
+  "小田急小田原線":"#0D82C7",
+  "小田急江ノ島線":"#0D82C7",
+  "小田急江ノ島線上下":"#0D82C7",
+  "小田急線":"#0D82C7",
+  "山形新幹線":"#F18E41",
+  "山形新幹線上下":"#F18E41",
+  "山形線":"#F18E41",
+  "山手線":"#B1CB39",
+  "山手貨物線":"#B1CB39",
+  "山田線":"#378640",
+  "山陽新幹線":"#1E2877",
+  "山陽本線":"#E8373D",
+  "山陽本線・赤穂線":"#E8373D",
+  "川越線":"#00AC9A",
+  "川越線上下":"#00AC9A",
+  "左沢線":"#378640",
+  "常磐線":"#1DAF7E",
+  "常磐線上下":"#1DAF7E",
+  "常磐線快速":"#1DAF7E",
+  "常磐緩行線":"#B5B5AC",
+  "常磐緩行線上下":"#B5B5AC",
+  "御堂筋線":"#E5171F",
+  "御殿場線":"#477543",
+  "成田線":"#1069B4",
+  "成田線上下":"#1069B4",
+  "我孫子支線":"#1DAF7E",
+  "我孫子支線上下":"#1DAF7E",
+  "日光線":"#A65449",
+  "日比谷線":"#B5B5AC",
+  "日比谷線A線":"#B5B5AC",
+  "日比谷線B線":"#B5B5AC",
+  "有楽町線":"#C1A470",
+  "有楽町線・副都心線A線":"#C1A470",
+  "有楽町線降車専用":"#C1A470",
+  "東京モノレール":"#26326A",
+  "東北・上越新幹線":"#006600",
+  "東北・秋田新幹線":"#006600",
+  "東北新幹線":"#006600",
+  "東北新幹線上下":"#006600",
+  "東北本線":"#378640",
+  "東北本線上下":"#378640",
+  "東北本線上下・北上線":"#378640",
+  "東急大井町線":"#F18C43",
+  "東急新横浜線":"#890D84",
+  "東急東横線":"#DA0042",
+  "東急東横線・東急新横浜線":"#DA0042",
+  "東急田園とし線":"#00AA8D",
+  "東急田園都市線":"#00AA8D",
+  "東急目黒線":"#009CD3",
+  "東武アーバンパークライン":"#00A28A",
+  "東武スカイツリーライン":"#006CBA",
+  "東武伊勢崎線":"#006CBA",
+  "東武伊勢崎線上下":"#006CBA",
+  "東武佐野線":"#006CBA",
+  "東武小泉線":"#006CBA",
+  "東武小泉線上下":"#006CBA",
+  "東武日光線":"#F5A200",
+  "東武東上線":"#006CBA",
+  "東武桐生線":"#006CBA",
+  "東武線":"#006CBA",
+  "東武野田線":"#00A28A",
+  "東武鬼怒川線":"#F5A200",
+  "東武鬼怒川線上下":"#F5A200",
+  "東海道新幹線":"#1D5BA9",
+  "東海道本線":"#F0862B",
+  "東海道線":"#F0862B",
+  "東海道貨物線":"#F0862B",
+  "東西線":"#009BBF",
+  "東西線A線":"#009BBF",
+  "東西線A線･B線":"#009BBF",
+  "東金線":"#378640",
+  "東金線上下":"#378640",
+  "根岸線":"#1DAED1",
+  "桃太郎線":"#FF8E1F",
+  "横浜線":"#B1CB39",
+  "横浜線上下":"#B1CB39",
+  "横須賀線":"#1069B4",
+  "武蔵野線":"#EB5A28",
+  "水戸線":"#378640",
+  "水郡線":"#378640",
+  "津山線":"#FCC800",
+  "湘南新宿ライン":"#E60012",
+  "瀬戸大橋線":"#0071BE",
+  "烏山線":"#378640",
+  "特急はるか号":"#9AA0A6",
+  "田沢湖線":"#378640",
+  "相模線":"#1DAED1",
+  "相鉄いずみ野線":"#0071C1",
+  "相鉄新横浜線":"#0068B7",
+  "相鉄新横浜線上下":"#0068B7",
+  "相鉄･JR直通線":"#0068B7",
+  "石巻線上下":"#378640",
+  "磐越東線":"#378640",
+  "磐越西線":"#378640",
+  "神戸線":"#0071BE",
+  "福北ゆたか線":"#F8B500",
+  "秩父鉄道線":"#E60012",
+  "篠ノ井線":"#D56A29",
+  "総武快速線":"#1069B4",
+  "総武本線":"#1069B4",
+  "総武本線・成田線上下":"#1069B4",
+  "総武本線上下":"#1069B4",
+  "能勢電鉄妙見線":"#277C35",
+  "臨時ホーム":"#9AA0A6",
+  "舞鶴線":"#FF8E1F",
+  "西武国分寺線":"#20A288",
+  "西武国分寺線・西武西武園線上下":"#20A288",
+  "西武多摩川線":"#F17C24",
+  "西武多摩湖線":"#F7AA2C",
+  "西武山口線":"#EC4840",
+  "西武拝島線":"#00A6BF",
+  "西武拝島線・西武多摩湖線":"#00A6BF",
+  "西武新宿線":"#20A288",
+  "西武有楽町線":"#EF7A00",
+  "西武池袋線":"#EF7A00",
+  "西武池袋線・西武豊島線":"#EF7A00",
+  "西武池袋線降車専用":"#EF7A00",
+  "西武狭山線":"#EF7A00",
+  "西武狭山線上下":"#EF7A00",
+  "西武秩父線":"#EF7A00",
+  "西武西武園線":"#20A288",
+  "谷町線":"#660066",
+  "身延線":"#773C97",
+  "都営大江戸線":"#CE045B",
+  "都営大江戸線A線":"#CE045B",
+  "都営大江戸線B線":"#CE045B",
+  "都営新宿線":"#B0BF1E",
+  "都営新宿線 本八幡方面":"#B0BF1E",
+  "都営浅草線 押上方面":"#EC6E65",
+  "都営浅草線 西馬込方面":"#EC6E65",
+  "銀座線":"#FF9500",
+  "銀座線A線":"#FF9500",
+  "銀座線B線":"#FF9500",
+  "関西空港線":"#0071BE",
+  "阪和線":"#FF8E1F",
+  "阪和線・大和路線":"#FF8E1F",
+  "阪急京都線":"#871F41",
+  "阪急今津線":"#007AC2",
+  "阪急伊丹線":"#007AC2",
+  "阪急千里線":"#34B580",
+  "阪急宝塚線":"#007AC2",
+  "阪急嵐山線":"#871F41",
+  "阪急甲陽線":"#007AC2",
+  "阪急神戸線":"#007AC2",
+  "阪急箕面線":"#007AC2",
+  "阪神本線":"#1F64B1",
+  "降車専用":"#9AA0A6",
+  "青梅線":"#DD6935",
+  "青梅線・五日市線":"#DD6935",
+  "青梅線・五日市線上下":"#DD6935",
+  "青梅線上下":"#DD6935",
+  "飯山線":"#378640",
+  "高崎線":"#F18E41",
+  "高崎線上下":"#F18E41",
+  "鶴見線":"#F2D01F",
+  "鹿児島本線":"#E8373D",
+  "鹿島線":"#8B5A2B",
+  "鹿島臨海鉄道線":"#00A0DE"
+};
+
+/* 线路代表色：优先内置的官方/图标取色表，其次线路几何数据，最后按名称散列。
+   音乐面板的每个平台、线路 chip、播放甲板都从这里取色。 */
+const MU_LC_BRAND = '#32CD66', MU_LC_NEUTRAL = '#8A94A6';
+const muLcCache = new Map();
+function muLcHex(c) {
+  c = String(c || '').trim();
+  if (/^#[0-9a-f]{6}$/i.test(c)) return c.toUpperCase();
+  if (/^#[0-9a-f]{3}$/i.test(c)) return ('#' + c[1] + c[1] + c[2] + c[2] + c[3] + c[3]).toUpperCase();
+  return '';
+}
+function muLcRgb(hex) {
+  const c = muLcHex(hex) || MU_LC_BRAND;
+  return [parseInt(c.slice(1, 3), 16), parseInt(c.slice(3, 5), 16), parseInt(c.slice(5, 7), 16)];
+}
+function muLcMix(hex, to, k) {
+  const [r, g, b] = muLcRgb(hex);
+  const m = v => Math.round(v + (to - v) * k).toString(16).padStart(2, '0');
+  return '#' + m(r) + m(g) + m(b);
+}
+function muLcInk(hex) {
+  const [r, g, b] = muLcRgb(hex);
+  const f = v => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); };
+  const L = .2126 * f(r) + .7152 * f(g) + .0722 * f(b);
+  const cw = 1.05 / (L + .05), cb = (L + .05) / .05;
+  return cb >= cw ? '#07130b' : '#FFFFFF';
+}
+function muLcVars(hex) {
+  const c = muLcHex(hex) || MU_LC_BRAND;
+  const [r, g, b] = muLcRgb(c);
+  return '--lc:' + c +
+    ';--lc-soft:rgba(' + r + ',' + g + ',' + b + ',.18)' +
+    ';--lc-wash:rgba(' + r + ',' + g + ',' + b + ',.09)' +
+    ';--lc-faint:rgba(' + r + ',' + g + ',' + b + ',.055)' +
+    ';--lc-border:rgba(' + r + ',' + g + ',' + b + ',.55)' +
+    ';--lc-edge:rgba(' + r + ',' + g + ',' + b + ',.28)' +
+    ';--lc-glow:rgba(' + r + ',' + g + ',' + b + ',.30)' +
+    ';--lc-hi:' + muLcMix(c, 255, .34) +
+    ';--lc-lo:' + muLcMix(c, 0, .12) +
+    ';--lc-dark:' + muLcMix(c, 0, .84) +
+    ';--lc-ink:' + muLcInk(c);
+}
+function muLcApply(el, hex) {
+  if (!el) return;
+  muLcVars(hex).split(';').forEach(s => {
+    const i = s.indexOf(':');
+    if (i > 0) el.style.setProperty(s.slice(0, i), s.slice(i + 1));
+  });
+}
+function muLcNorm(ln) {
+  return String(ln || '').trim()
+    .replace(/(?:A線･B線|A線|B線|上下|降車専用|臨時| 西馬込方面| 押上方面| 本八幡方面|上り 平日|上り 休日)$/, '')
+    .trim();
+}
+function muLcHash(ln) {
+  let h = 2166136261;
+  for (const ch of String(ln || '')) { h ^= ch.codePointAt(0); h = Math.imul(h, 16777619) >>> 0; }
+  const hue = h % 360, sat = 60 + ((h >>> 9) % 10), light = 60 + ((h >>> 17) % 6);
+  const s = sat / 100, l = light / 100, a = s * Math.min(l, 1 - l);
+  const f = n => {
+    const k = (n + hue / 30) % 12;
+    const v = l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1));
+    return Math.round(255 * v).toString(16).padStart(2, '0');
+  };
+  return ('#' + f(0) + f(8) + f(4)).toUpperCase();
+}
+function muLineColorFor(ln) {
+  const key = String(ln || '').trim();
+  if (!key) return MU_LC_NEUTRAL;
+  if (muLcCache.has(key)) return muLcCache.get(key);
+  let c = muLcHex(MU_LC_MAP[key]);
+  if (!c) c = muLcHex(MU_LC_MAP[muLcNorm(key)]);
+  if (!c) {
+    for (const part of key.split(/[・･]/)) {
+      c = muLcHex(MU_LC_MAP[part]) || muLcHex(MU_LC_MAP[muLcNorm(part)]);
+      if (c) break;
+    }
+  }
+  if (!c) c = muLcHex(MU_LC_MAP[key.replace(/(快速|各駅停車|緩行)$/, '')]);
+  if (!c && typeof lineColor !== 'undefined' && lineColor) {
+    c = muLcHex(lineColor.get(key)) || muLcHex(lineColor.get(muLcNorm(key)));
+  }
+  if (!c) c = muLcHash(key);
+  muLcCache.set(key, c);
+  return c;
+}
+function muLineColor(m) {
+  const ln = muLineOf(m);
+  return ln ? muLineColorFor(ln) : MU_LC_NEUTRAL;
+}
+function muTintPanel(hex) {
+  muLcApply($('panelMusic'), hex || MU_LC_BRAND);
+}
+/* JR 东日本曲库编号不适合直接当曲名：JRE-…(首都圏11番) → 首都圏11番 */
+function muLabel(m) {
+  const s = String(m.melody || '').trim();
+  if (!s) return '♪';
+  /* 复合片段里〈発車〉之后才是发车铃本体（大阪环状线等） */
+  const dep = s.indexOf('〈発車〉');
+  if (dep >= 0) {
+    const tail = s.slice(dep + 4).trim();
+    if (tail) return tail;
+  }
+  if (/^[A-Z]{2,6}-/.test(s)) {
+    const pm = s.match(/\(([^()]*)\)/);
+    if (pm && pm[1].trim()) return pm[1].trim();
+  }
+  return s;
+}
 function muAudioUrl(m) {
-  if (!m.audio) return null;
-  return MU_BASE + '/' + String(m.audio).split('/').map(encodeURIComponent).join('/');
+  if (!m || !m.audio) return null;
+  return muBase + '/' + String(m.audio).split('/').map(encodeURIComponent).join('/');
+}
+function muSetCount(n) {
+  muCountN = n;
+  const el = $('muCount');
+  if (!el) return;
+  if (n > 0) { el.hidden = false; el.textContent = (n === 1 ? T().muCountOne : T().muCount).replace('{0}', String(n)); }
+  else { el.hidden = true; el.textContent = ''; }
+}
+function muEmptyHTML(kind, txt, retry) {
+  const ico = kind === 'err'
+    ? '<svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/><path d="M4 4l16 16" stroke-width="1.8"/></svg>'
+    : '<svg viewBox="0 0 24 24" width="42" height="42" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>';
+  return '<div class="mu-empty">' + ico + '<div class="mu-empty-txt">' + _escTxt(txt) + '</div>' +
+    (retry ? '<button class="mu-retry" id="muRetryBtn" type="button">' + _escTxt(T().muRetry) + '</button>' : '') + '</div>';
+}
+
+/* 立即复位面板：关闭抽屉 / 换站时使用，避免标签栏与徽章停留在试听态 */
+function muResetPanel() {
+  muOpen = false;
+  muLoadSeq++;
+  clearTimeout(muEndTimer);
+  stopMusic();
+  const p = $('panelMusic');
+  if (p) { p.hidden = true; p.classList.remove('mu-enter', 'mu-leave', 'mu-deck-in'); }
+  if ($('shBell')) $('shBell').classList.remove('on');
+  $('sheet').classList.remove('mu-open');
+  if ($('shBadges')) $('shBadges').hidden = muBadgeHidden;
+  const tabsEl = document.querySelector('#sheet .sh-tabs');
+  if (tabsEl) tabsEl.style.display = '';
+  const sub = $('shSubTabs');
+  if (sub) sub.classList.toggle('hidden', !(sheetTab === 'tabList' || sheetTab === 'tabGrid'));
 }
 function openMusic() {
   if (muOpen) return;
   muOpen = true;
-  muBadgeHidden = $('shBadges').hidden;
+  muBadgeHidden = $('shBadges') ? $('shBadges').hidden : false;
   $('shBody').hidden = true;
   $('shSubTabs').classList.add('hidden');
-  $('shBadges').hidden = true;
+  if ($('shBadges')) $('shBadges').hidden = true;
   const tabsEl = document.querySelector('#sheet .sh-tabs');
   if (tabsEl) tabsEl.style.display = 'none';
-  ['tabList','tabGrid','tabInfo','tabGuide'].forEach(id => $(id).classList.remove('on'));
+  ['tabList', 'tabGrid', 'tabInfo', 'tabGuide'].forEach(id => { const b = $(id); if (b) b.classList.remove('on'); });
   $('panelInfo').hidden = true; $('panelGuide').hidden = true;
   const p = $('panelMusic');
   p.classList.remove('mu-leave', 'mu-enter');
   p.hidden = false;
   void p.offsetWidth; /* reflow 触发进场动画 */
   p.classList.add('mu-enter');
-  const st = $('muStation'); if (st) st.textContent = sheetStation || '';
   $('shBell').classList.add('on');
+  $('sheet').classList.add('mu-open');
+  muPreconnect();
   renderMusic();
+  requestAnimationFrame(() => { const b = $('muBack'); if (b) { try { b.focus({ preventScroll: true }); } catch (e) {} } });
 }
 function closeMusic() {
   if (!muOpen) return;
   muOpen = false;
+  muLoadSeq++;
+  clearTimeout(muEndTimer);
   stopMusic();
   $('shBell').classList.remove('on');
   const p = $('panelMusic');
   const done = () => {
     if (!p.classList.contains('mu-leave')) return; /* 关闭动画期间被重新打开则不再收尾 */
-    p.hidden = true;
-    p.classList.remove('mu-enter', 'mu-leave');
-    $('shBadges').hidden = muBadgeHidden;
-    const tabsEl = document.querySelector('#sheet .sh-tabs');
-    if (tabsEl) tabsEl.style.display = '';
+    muResetPanel();
     switchSheetTab(sheetTab);
+    const b = $('shBell');
+    if (b) { try { b.focus({ preventScroll: true }); } catch (e) {} }
   };
   p.classList.add('mu-leave');
   const dur = parseFloat(getComputedStyle(p).animationDuration || '0') * 1000;
@@ -7666,17 +8114,23 @@ function closeMusic() {
 }
 function renderMusic() {
   const t = T(), name = sheetStation;
+  const seq = ++muLoadSeq;
   stopMusic();
-  $('muPlayer').hidden = true;
-  $('muLines').hidden = true;
-  $('muEmpty').hidden = true;
-  $('muList').innerHTML = '<div class="mu-loading"><div class="mu-skel"></div><div class="mu-skel"></div><div class="mu-skel"></div><div class="mu-loading-txt">' + _escTxt(t.muLoad) + '</div></div>';
+  muAllMels = []; muLines = []; muOthers = []; muLineIdx = 0;
+  muView = []; muPlayables = []; muRowMap = new Map();
+  muSetCount(0);
+  const linesEl = $('muLines');
+  linesEl.hidden = true; linesEl.innerHTML = '';
+  const skel = '<div class="mu-skel-row"><span class="mu-skel-plat"></span><span class="mu-skel-lines"><i class="mu-skel-l1"></i><i class="mu-skel-l2"></i></span><span class="mu-skel-act"></span></div>';
+  $('muList').innerHTML = '<div class="mu-loading" aria-busy="true">' + skel.repeat(3) +
+    '<div class="mu-loading-txt">' + _escTxt(t.muLoad) + '</div></div>';
+  $('muList').scrollTop = 0;
   loadMusicData().then(idx => {
-    if (!muOpen || sheetStation !== name) return;
+    if (!muOpen || seq !== muLoadSeq || sheetStation !== name) return;
     const st = idx.get(muNorm(name));
     const mels = (st && st.melodies) || [];
     if (!st || !mels.length) {
-      $('muList').innerHTML = '<div class="mu-empty"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>' + _escTxt(t.muNone) + '</div>';
+      $('muList').innerHTML = muEmptyHTML('none', t.muNone);
       return;
     }
     /* 线路分组 */
@@ -7687,48 +8141,68 @@ function renderMusic() {
       if (ln) { if (!seen.has(ln)) { seen.add(ln); muLines.push(ln); } }
       else muOthers.push(m);
     }
-    muLineIdx = 0;
-    if (muLines.length <= 1) {
-      renderMuList(muLines.length ? mels : muOthers);
+    muSetCount(mels.length);
+    const grouped = muLines.length + (muOthers.length ? 1 : 0) > 1;
+    muLineIdx = grouped ? -2 : 0; /* 多线路时默认「全部」，先给完整视野，再按线路筛选 */
+    if (!muLines.length) {
+      renderMuList(muOthers);
+    } else if (muLines.length === 1 && !muOthers.length) {
+      renderMuList(mels);
     } else {
       renderMuChips(muOthers.length > 0);
-      renderMuList(mels.filter(m => muLineOf(m) === muLines[0]));
+      renderMuList(mels);
     }
   }).catch(() => {
-    if (!muOpen || sheetStation !== name) return;
-    $('muList').innerHTML = '<div class="mu-empty">' + _escTxt(t.muFail) +
-      '<button class="mu-chip" id="muRetryBtn">' + _escTxt(t.muRetry) + '</button></div>';
+    if (!muOpen || seq !== muLoadSeq || sheetStation !== name) return;
+    $('muList').innerHTML = muEmptyHTML('err', t.muFail, true);
     const rb = $('muRetryBtn');
     if (rb) rb.addEventListener('click', renderMusic);
   });
 }
+function muChipHTML(label, i, n, lineName) {
+  const c = i === -2 ? MU_LC_BRAND : (i === -1 ? MU_LC_NEUTRAL : muLineColorFor(lineName));
+  return '<button class="mu-chip' + (i === -2 ? ' mu-all' : '') + (i === -1 ? ' mu-other' : '') +
+    (i === muLineIdx ? ' on' : '') + '" type="button" data-i="' + i + '" style="' + muLcVars(c) + '">' +
+    _escTxt(label) + '<em>' + n + '</em></button>';
+}
 function renderMuChips(withOther) {
   const t = T(), el = $('muLines');
   el.hidden = false;
-  el.innerHTML = muLines.map((ln, i) =>
-    '<button class="mu-chip' + (i === muLineIdx ? ' on' : '') + '" data-i="' + i + '">' + _escTxt(ln) + '</button>'
-  ).join('') + (withOther
-    ? '<button class="mu-chip' + (muLineIdx === -1 ? ' on' : '') + '" data-i="-1">' + _escTxt(t.muOther) + '</button>'
-    : '');
+  const allChip = muChipHTML(t.muAll, -2, muAllMels.length);
+  el.innerHTML = allChip + muLines.map((ln, i) =>
+    muChipHTML(ln, i, muAllMels.filter(m => muLineOf(m) === ln).length, ln)
+  ).join('') + (withOther ? muChipHTML(t.muOther, -1, muOthers.length) : '');
+  el.scrollLeft = 0;
   el.querySelectorAll('.mu-chip').forEach(b => b.addEventListener('click', () => {
-    muLineIdx = parseInt(b.dataset.i, 10);
+    const i = parseInt(b.dataset.i, 10);
+    if (i === muLineIdx && b.classList.contains('on')) return;
+    muLineIdx = i;
     stopMusic();
+    muTintPanel(i === -2 ? MU_LC_BRAND : (i === -1 ? MU_LC_NEUTRAL : muLineColorFor(muLines[i])));
     el.querySelectorAll('.mu-chip').forEach(x => x.classList.toggle('on', x === b));
-    renderMuList(muLineIdx === -1 ? muOthers : muAllMels.filter(m => muLineOf(m) === muLines[muLineIdx]));
+    const list = i === -2 ? muAllMels : (i === -1 ? muOthers : muAllMels.filter(m => muLineOf(m) === muLines[i]));
+    renderMuList(list);
+    try { b.scrollIntoView({ inline: 'center', block: 'nearest' }); } catch (e) {}
+    muHaptic(4);
   }));
+  /* 两端渐隐，提示这一行可以横滑 */
+  const sync = () => {
+    const max = el.scrollWidth - el.clientWidth;
+    el.classList.toggle('scroll-l', el.scrollLeft > 4);
+    el.classList.toggle('scroll-r', el.scrollLeft < max - 4);
+  };
+  el.onscroll = sync;
+  sync();
+  requestAnimationFrame(sync);
 }
 function renderMuList(list) {
-  const t = T(), el = $('muList');
-  if (!list.length) {
-    el.innerHTML = '<div class="mu-empty">' + _escTxt(t.muNone) + '</div>';
-    return;
-  }
-  /* 番线号升序（全角/半角数字归一），无番线排后保持原序 */
+  const el = $('muList');
+  /* 番线号升序（全角/半角数字归一），无番线排后保持原序；
+     「全部」里不同公司的同号站台相邻，靠副标题区分线路。 */
   const numOf = m => {
     const mm = (m.platform || '').match(/^[0-9０-９]+/);
     if (!mm) return NaN;
-    const d = mm[0].replace(/[０-９]/g, c => '0123456789'['０１２３４５６７８９'.indexOf(c)]);
-    return parseInt(d, 10);
+    return parseInt(muHalf(mm[0]), 10);
   };
   const sorted = list.slice().sort((a, b) => {
     const na = numOf(a), nb = numOf(b);
@@ -7737,115 +8211,408 @@ function renderMuList(list) {
     if (Number.isNaN(nb)) return -1;
     return na - nb;
   });
-  el.innerHTML = '<div class="mu-hint">' + _escTxt(t.muHint).replace('{0}', list.length) + '</div>' + sorted.map((m, i) => {
-    const url = muAudioUrl(m), plat = muPlatOf(m);
-    return '<div class="mu-row mu-row-in" data-i="' + i + '" style="animation-delay:' + Math.min(i * 38, 420) + 'ms">' +
-      (plat ? '<span class="mu-plat">' + _escTxt(plat) + '</span>' : '') +
-      '<span class="mu-eq" aria-hidden="true"><i></i><i></i><i></i></span>' +
-      '<span class="mu-melody">' + _escTxt(m.melody || '') + '</span>' +
-      (url ? '<span class="mu-playbtn" data-pb="1"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>'
-           : '<span class="mu-void">' + _escTxt(t.muNoAudio) + '</span>') +
-      '</div>';
+  muView = sorted;
+  muPlayables = sorted.filter(m => muAudioUrl(m));
+  muRowMap = new Map();
+  muSkipSet();
+  if (!sorted.length) {
+    el.innerHTML = muEmptyHTML('none', T().muNone);
+    return;
+  }
+  el.innerHTML = sorted.map((m, i) => {
+    const url = muAudioUrl(m), plat = muPlatNum(m), sub = muSubOf(m) || muPlatOf(m) || T().muT;
+    const label = muLabel(m), raw = String(m.melody || '');
+    const unit = muPlatUnit(m) || '番線';
+    const lc = muLineColor(m), hasLine = !!muLineOf(m);
+    const plate = '<span class="mu-plat" aria-hidden="true"><span class="mu-plat-in"><b>' + (plat || '♪') + '</b>' + (plat ? '<i>' + unit + '</i>' : '') + '</span></span>';
+    const meta = '<span class="mu-meta"><span class="mu-melody"' + (raw && raw !== label ? ' title="' + _escTxt(raw) + '"' : '') + '>' + _escTxt(label) + '</span>' +
+      '<span class="mu-msub"><span class="mu-eq" aria-hidden="true"><i></i><i></i><i></i></span>' +
+      (hasLine ? '<span class="mu-sub-dot" aria-hidden="true"></span>' : '') +
+      '<span class="mu-line-txt" title="' + _escTxt(sub) + '">' + _escTxt(sub) + '</span></span></span>';
+    const act = url
+      ? '<span class="mu-act" aria-hidden="true"><svg class="a-play" viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M8 5v14l11-7z"/></svg><svg class="a-pause" viewBox="0 0 24 24" width="11" height="11" fill="currentColor"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/></svg></span>'
+      : '<span class="mu-void">' + _escTxt(T().muNoAudio) + '</span>';
+    const style = ' style="animation-delay:' + Math.min(i * 28, 360) + 'ms;' + muLcVars(lc) + '"';
+    if (!url) return '<div class="mu-row mu-row-in off" aria-disabled="true"' + style + '>' + plate + meta + act + '</div>';
+    return '<button class="mu-row mu-row-in" type="button" data-i="' + i + '" aria-pressed="false"' + style + '>' + plate + meta + act + '</button>';
   }).join('');
-  el.querySelectorAll('.mu-row').forEach(rowEl => rowEl.addEventListener('click', () => {
+  el.querySelectorAll('button.mu-row').forEach(rowEl => {
     const m = sorted[parseInt(rowEl.dataset.i, 10)];
     if (!m) return;
-    const url = muAudioUrl(m);
-    if (!url) return;
-    if (muCur && muCur.m === m) { togglePause(); return; }
-    playMusic(m, rowEl, url);
-  }));
-  /* 行内播放按钮：事件独立，避免误触行级播放 */
-  el.querySelectorAll('.mu-playbtn').forEach(pb => pb.addEventListener('click', ev => {
-    ev.stopPropagation();
-    const rowEl = pb.closest('.mu-row');
-    if (!rowEl) return;
-    const m = sorted[parseInt(rowEl.dataset.i, 10)];
-    if (!m) return;
-    if (muCur && muCur.m === m) { togglePause(); return; }
-    playMusic(m, rowEl, muAudioUrl(m));
-  }));
+    muRowMap.set(m, rowEl);
+    rowEl.addEventListener('click', () => {
+      if (muCur && muCur.m === m) togglePause();
+      else playMusic(m, rowEl, muAudioUrl(m));
+    });
+  });
+  el.scrollTop = 0;
+}
+function muSkipSet() {
+  const off = muPlayables.length < 2;
+  ['muPrev', 'muNext'].forEach(id => { const b = $(id); if (b) b.disabled = off; });
+}
+function muSetDeck(m) {
+  const num = muPlatNum(m);
+  const lc = muLineColor(m), hasLine = !!muLineOf(m);
+  $('muPPlateN').textContent = num || '♪';
+  $('muPPlateU').textContent = num ? (muPlatUnit(m) || '番線') : '';
+  $('muPPlateU').hidden = !num;
+  const label = muLabel(m);
+  $('muPName').textContent = label;
+  $('muPName').title = String(m.melody || '');
+  const sub = muSubOf(m) || muPlatOf(m) || '';
+  $('muPPlat').textContent = sub;
+  $('muPPlat').title = sub;
+  $('muPPlat').hidden = !sub;
+  $('muPPlat').classList.toggle('has-lc', hasLine);
+  const p = $('muPlayer');
+  muLcApply(p, lc);
+  muTintPanel(lc);
+  p.hidden = false;
+  p.classList.remove('mu-deck-in');
+  void p.offsetWidth;
+  p.classList.add('mu-deck-in');
+  muLastCurTxt = muLastTotTxt = '';
+  muPaint(0);
+}
+function muPlayIcoSet(paused) {
+  const b = $('muPlay');
+  if (!b) return;
+  b.classList.toggle('playing', !paused);
+  b.setAttribute('aria-label', muErr ? T().muRetry : (paused ? T().muResume : T().muPause));
+  b.setAttribute('aria-pressed', paused ? 'false' : 'true');
+}
+function muSetRowPaused(paused) {
+  if (muCur && muCur.rowEl) muCur.rowEl.classList.toggle('paused', !!paused);
+}
+function muFadeIn(a) {
+  const t0 = performance.now(), seq = ++muFadeSeq;
+  const step = now => {
+    if (muAudio !== a || seq !== muFadeSeq) return;
+    const k = Math.min(1, (now - t0) / 160);
+    try { a.volume = k; } catch (e) {}
+    if (k < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+function muHalt() {
+  muFadeSeq++;
+  cancelAnimationFrame(muRaf);
+  clearTimeout(muEndTimer);
+  const old = muCur;
+  if (old && old.rowEl) {
+    old.rowEl.classList.remove('playing', 'paused', 'err', 'scrubbing');
+    old.rowEl.setAttribute('aria-pressed', 'false');
+  }
+  const a = muAudio;
+  muAudio = null;
+  if (a) { try { a.pause(); } catch (e) {} }
+  muCur = null;
+  const p = $('muPlay');
+  if (p) p.classList.remove('playing', 'buffering');
+  muMediaSet(false);
+}
+/* 复用同一个 Audio：iOS 只在用户手势里解锁一次，换曲时新建元素会导致连播被拦截 */
+function muIsCur(a) {
+  return muAudio === a && muCur && a.getAttribute('src') === muCur.url;
+}
+function muEnsureAudio() {
+  if (muEl) return muEl;
+  const a = new Audio();
+  a.preload = 'auto';
+  a.addEventListener('ended', () => { if (muIsCur(a)) muEnded(); });
+  a.addEventListener('error', () => { if (muIsCur(a)) muAudioFail(); });
+  a.addEventListener('loadedmetadata', () => { if (muIsCur(a)) muPaint(0); });
+  a.addEventListener('waiting', () => { if (muIsCur(a)) { const b = $('muPlay'); if (b) b.classList.add('buffering'); } });
+  const ready = () => { if (muIsCur(a)) { const b = $('muPlay'); if (b) b.classList.remove('buffering'); } };
+  a.addEventListener('playing', ready);
+  a.addEventListener('canplay', ready);
+  muEl = a;
+  return a;
+}
+function stopMusic() {
+  muHalt();
+  muScrubDrag = false; muScrubWasPlaying = false;
+  const sc = $('muScrub'); if (sc) sc.classList.remove('drag');
+  muErr = false;
+  const p = $('muPlayer');
+  if (p) { p.hidden = true; p.classList.remove('mu-deck-in'); }
+  muTintPanel(MU_LC_BRAND);
+  muPlayIcoSet(true);
+  muLastCurTxt = muLastTotTxt = '';
+  muPaint(0);
+  const pp = $('muPPlat');
+  if (pp) pp.hidden = true;
+  try { if ('mediaSession' in navigator) navigator.mediaSession.metadata = null; } catch (e) {}
 }
 function playMusic(m, rowEl, url) {
-  stopMusic(false);
-  muAudio = new Audio(url);
-  muAudio.addEventListener('ended', () => stopMusic(true));
-  muAudio.addEventListener('error', () => { stopMusic(true); toast(T().muPlayFail, 2200); });
-  muAudio.play().catch(() => { stopMusic(true); toast(T().muPlayFail, 2200); });
-  muCur = { m, rowEl };
-  rowEl.classList.add('playing');
-  try { rowEl.scrollIntoView({ block: 'nearest' }); } catch (e) {}
-  $('muPName').textContent = m.melody || '';
-  $('muPPlat').textContent = muPlatOf(m) || '';
-  $('muPlayer').hidden = false;
+  if (!url) return;
+  clearTimeout(muEndTimer);
+  muHalt();
+  muErr = false;
+  muCur = { m, rowEl, url };
+  const a = muEnsureAudio();
+  muAudio = a;
+  try { a.pause(); } catch (e) {}
+  a.src = url;
+  a.volume = 0;
+  if (rowEl) {
+    rowEl.classList.remove('err');
+    rowEl.classList.add('playing', 'paused');
+    rowEl.setAttribute('aria-pressed', 'true');
+  }
+  muSetDeck(m);
   muPlayIcoSet(false);
-  muRingSet(0);
-  muRafTick();
+  const pb = $('muPlay');
+  if (pb) pb.classList.add('buffering');
+  a.play().then(() => {
+    if (!muIsCur(a)) return;
+    if (pb) pb.classList.remove('buffering');
+    muFadeIn(a);
+    muSetRowPaused(false);
+    cancelAnimationFrame(muRaf);
+    muRafTick();
+    muMediaMeta(m);
+    muMediaSet(true);
+  }).catch(() => { if (muIsCur(a)) muAudioFail(); });
+  try { if (rowEl) rowEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (e) {}
+  muHaptic(6);
+}
+function muAudioFail() {
+  cancelAnimationFrame(muRaf);
+  const a = muAudio;
+  muAudio = null;
+  if (a) { try { a.pause(); } catch (e) {} }
+  muErr = true;
+  if (muCur && muCur.rowEl) {
+    muCur.rowEl.classList.add('err', 'paused');
+    muCur.rowEl.setAttribute('aria-pressed', 'true');
+  }
+  const pb = $('muPlay');
+  if (pb) pb.classList.remove('buffering');
+  muPlayIcoSet(true);
+  const pp = $('muPPlat');
+  if (pp) { pp.hidden = false; pp.textContent = T().muPlayFail; }
+  muPaint(0);
+  muLastTotTxt = '--:--';
+  const tt = $('muTimeTot');
+  if (tt) tt.textContent = '--:--';
+  muMediaSet(false);
+}
+function togglePause() {
+  clearTimeout(muEndTimer);
+  if (!muAudio) {
+    if (muCur) playMusic(muCur.m, muCur.rowEl, muCur.url);
+    return;
+  }
+  if (muAudio.paused) {
+    const a = muAudio;
+    if (a.ended) { try { a.currentTime = 0; } catch (e) {} }
+    a.volume = 1;
+    const pb = $('muPlay');
+    if (pb) pb.classList.add('buffering');
+    muPlayIcoSet(false);
+    a.play().then(() => {
+      if (!muIsCur(a)) return;
+      if (pb) pb.classList.remove('buffering');
+      muSetRowPaused(false);
+      muMediaSet(true);
+      cancelAnimationFrame(muRaf);
+      muRafTick();
+    }).catch(() => { if (muIsCur(a)) muAudioFail(); });
+    muHaptic(5);
+  } else {
+    muAudio.pause();
+    cancelAnimationFrame(muRaf);
+    muPlayIcoSet(true);
+    muSetRowPaused(true);
+    muMediaSet(false);
+    muHaptic(3);
+  }
+}
+function muEnded() {
+  cancelAnimationFrame(muRaf);
+  muPaint(1);
+  muSetRowPaused(true);
+  muPlayIcoSet(true);
+  muMediaSet(false);
+  if (muAuto && muPlayables.length > 1) {
+    muEndTimer = setTimeout(() => { if (muOpen) muNext(1); }, 420);
+  }
+}
+function muNext(delta) {
+  if (!muPlayables.length) return;
+  clearTimeout(muEndTimer);
+  let i = muCur ? muPlayables.indexOf(muCur.m) : -1;
+  if (i < 0) i = delta > 0 ? -1 : 0;
+  const n = (i + delta + muPlayables.length) % muPlayables.length;
+  const m = muPlayables[n];
+  if (!m) return;
+  playMusic(m, muRowMap.get(m) || null, muAudioUrl(m));
+}
+function muSetAuto(on) {
+  muAuto = !!on;
+  try { localStorage.setItem('mjr_mu_auto', muAuto ? '1' : '0'); } catch (e) {}
+  const b = $('muAuto');
+  if (b) {
+    b.setAttribute('aria-pressed', muAuto ? 'true' : 'false');
+    b.title = T().muAuto;
+    b.setAttribute('aria-label', T().muAuto);
+  }
+  const tx = $('muAutoTxt');
+  if (tx) tx.textContent = T().muAuto;
+  muHaptic(4);
 }
 function muRafTick() {
-  cancelAnimationFrame(muRaf);
   if (!muAudio || !muCur) return;
-  const a = muAudio, d = a.duration || 0, c = a.currentTime || 0;
-  const pct = d ? Math.min(100, c / d * 100) : 0;
-  $('muFill').style.width = pct + '%';
-  $('muKnob').style.left = pct + '%';
-  $('muTime').textContent = muFmt(c) + ' / ' + (d ? muFmt(d) : '--:--');
-  muRingSet(pct / 100);
-  muRaf = requestAnimationFrame(muRafTick);
-}
-const MU_RING_C = 2 * Math.PI * 19;
-function muRingSet(frac) {
-  const ring = $('muRing');
-  if (ring) ring.style.strokeDashoffset = String(MU_RING_C * (1 - Math.max(0, Math.min(1, frac))));
+  const d = muAudio.duration;
+  muPaint(d ? muAudio.currentTime / d : 0);
+  if (!muAudio.paused && !muAudio.ended) muRaf = requestAnimationFrame(muRafTick);
 }
 function muFmt(s) {
   if (!isFinite(s) || s < 0) return '0:00';
   const m = Math.floor(s / 60), ss = Math.floor(s % 60);
   return m + ':' + (ss < 10 ? '0' : '') + ss;
 }
-function togglePause() {
-  if (!muAudio || !muCur) return;
-  if (muAudio.paused) { muAudio.play().catch(() => {}); muPlayIcoSet(false); muRafTick(); }
-  else { muAudio.pause(); cancelAnimationFrame(muRaf); muPlayIcoSet(true); }
+function muPaint(frac) {
+  frac = Math.max(0, Math.min(1, frac || 0));
+  const f = $('muFill'), k = $('muKnob');
+  if (f) f.style.width = (frac * 100) + '%';
+  if (k) k.style.left = (frac * 100) + '%';
+  const d = muAudio && isFinite(muAudio.duration) ? muAudio.duration : 0;
+  const cur = muScrubDrag ? frac * d : (muAudio && isFinite(muAudio.currentTime) ? muAudio.currentTime : 0);
+  const curTxt = muFmt(cur), totTxt = d ? muFmt(d) : '0:00';
+  if (curTxt !== muLastCurTxt) { const el = $('muTimeCur'); if (el) el.textContent = curTxt; muLastCurTxt = curTxt; }
+  if (totTxt !== muLastTotTxt) { const el = $('muTimeTot'); if (el) el.textContent = totTxt; muLastTotTxt = totTxt; }
+  const bub = $('muBubble');
+  if (bub) {
+    bub.textContent = curTxt;
+    bub.style.left = Math.max(3, Math.min(97, frac * 100)) + '%';
+  }
+  const s = $('muScrub');
+  if (s) {
+    s.setAttribute('aria-valuemax', String(Math.round(d)));
+    s.setAttribute('aria-valuenow', String(Math.round(cur)));
+    s.setAttribute('aria-valuetext', curTxt + ' / ' + (d ? totTxt : '--:--'));
+  }
 }
-function stopMusic() {
-  cancelAnimationFrame(muRaf);
-  if (muAudio) { try { muAudio.pause(); } catch (e) {} muAudio = null; }
-  if (muCur && muCur.rowEl) muCur.rowEl.classList.remove('playing');
-  muCur = null;
-  $('muPlayer').hidden = true;
-  muPlayIcoSet(true);
-  muRingSet(0);
+function muMediaMeta(m) {
+  if (!('mediaSession' in navigator) || !window.MediaMetadata) return;
+  try {
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: muLabel(m),
+      artist: sheetStation || '',
+      album: muLineOf(m) || T().muT,
+      artwork: [{ src: 'https://jr-static.suki.ing/icon-192.png', sizes: '192x192', type: 'image/png' }]
+    });
+  } catch (e) {}
 }
-function muPlayIcoSet(paused) {
-  $('muPlayIco').outerHTML = paused
-    ? '<svg id="muPlayIco" viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>'
-    : '<svg id="muPlayIco" viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M6 6h4v12H6zM14 6h4v12h-4z"/></svg>';
-  const play = $('muPlay');
-  if (play) { play.setAttribute('aria-label', paused ? T().muResume : T().muPause); play.setAttribute('aria-pressed', paused ? 'false' : 'true'); }
+function muMediaSet(playing) {
+  if (!('mediaSession' in navigator)) return;
+  try { navigator.mediaSession.playbackState = playing ? 'playing' : 'paused'; } catch (e) {}
+}
+function muScrubPctAt(e) {
+  const s = $('muScrub');
+  if (!s) return 0;
+  const r = s.getBoundingClientRect();
+  return Math.max(0, Math.min(1, (e.clientX - r.left) / Math.max(1, r.width)));
+}
+function muScrubPreview(pct) {
+  muScrubLastPct = pct;
+  muPaint(pct);
 }
 /* 事件绑定 */
 (function () {
   const bell = $('shBell'); if (bell) bell.addEventListener('click', openMusic);
   const back = $('muBack'); if (back) back.addEventListener('click', closeMusic);
   const play = $('muPlay'); if (play) play.addEventListener('click', togglePause);
+  const prev = $('muPrev'); if (prev) prev.addEventListener('click', () => { muNext(-1); });
+  const next = $('muNext'); if (next) next.addEventListener('click', () => { muNext(1); });
+  const auto = $('muAuto');
+  if (auto) {
+    auto.setAttribute('aria-pressed', muAuto ? 'true' : 'false');
+    auto.title = T().muAuto;
+    auto.setAttribute('aria-label', T().muAuto);
+    auto.addEventListener('click', () => muSetAuto(!muAuto));
+  }
+  const autoTx = $('muAutoTxt'); if (autoTx) autoTx.textContent = T().muAuto;
   const scrub = $('muScrub');
   if (scrub) {
-    function seekFrom(e) {
-      if (!muAudio || !muCur) return;
-      const r = scrub.getBoundingClientRect();
-      const pct = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
-      if (muAudio.duration) muAudio.currentTime = pct * muAudio.duration;
-    }
-    scrub.addEventListener('click', e => seekFrom(e));
-    scrub.addEventListener('pointerdown', e => { muDrag = true; scrub.classList.add('drag'); seekFrom(e); if (scrub.setPointerCapture) scrub.setPointerCapture(e.pointerId); });
-    scrub.addEventListener('pointermove', e => { if (muDrag) seekFrom(e); });
-    const up = () => { muDrag = false; scrub.classList.remove('drag'); };
-    scrub.addEventListener('pointerup', up);
-    scrub.addEventListener('pointercancel', up);
+    scrub.addEventListener('pointerdown', e => {
+      if (!muAudio || !isFinite(muAudio.duration)) return;
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      muScrubDrag = true;
+      muScrubWasPlaying = !muAudio.paused;
+      if (muScrubWasPlaying) { muAudio.pause(); cancelAnimationFrame(muRaf); }
+      scrub.classList.add('drag');
+      if (muCur && muCur.rowEl) muCur.rowEl.classList.add('scrubbing');
+      muScrubPreview(muScrubPctAt(e));
+      try { scrub.setPointerCapture(e.pointerId); } catch (er) {}
+      e.preventDefault();
+    });
+    scrub.addEventListener('pointermove', e => { if (muScrubDrag) muScrubPreview(muScrubPctAt(e)); });
+    const endScrub = () => {
+      if (!muScrubDrag) return;
+      muScrubDrag = false;
+      scrub.classList.remove('drag');
+      if (muCur && muCur.rowEl) muCur.rowEl.classList.remove('scrubbing');
+      const a = muAudio;
+      if (a && isFinite(a.duration)) {
+        try { a.currentTime = muScrubLastPct * a.duration; } catch (e) {}
+      }
+      if (a && muScrubWasPlaying) {
+        a.play().then(() => {
+          if (!muIsCur(a)) return;
+          muSetRowPaused(false);
+          cancelAnimationFrame(muRaf);
+          muRafTick();
+        }).catch(() => { if (muIsCur(a)) muAudioFail(); });
+      } else {
+        muSetRowPaused(true);
+        muPaint(muScrubLastPct);
+      }
+      muScrubWasPlaying = false;
+      muHaptic(3);
+    };
+    scrub.addEventListener('pointerup', endScrub);
+    scrub.addEventListener('pointercancel', endScrub);
+    scrub.addEventListener('keydown', e => {
+      if (!muAudio || !isFinite(muAudio.duration)) return;
+      const d = muAudio.duration;
+      let t = null;
+      if (e.key === 'ArrowLeft') t = muAudio.currentTime - 2;
+      else if (e.key === 'ArrowRight') t = muAudio.currentTime + 2;
+      else if (e.key === 'Home') t = 0;
+      else if (e.key === 'End') t = d;
+      if (t !== null) {
+        e.preventDefault(); e.stopPropagation();
+        muAudio.currentTime = Math.max(0, Math.min(d, t));
+        muPaint(muAudio.currentTime / d);
+      }
+    });
   }
-  document.addEventListener('keydown', e => { if (e.key === 'Escape' && muOpen) { e.stopImmediatePropagation(); closeMusic(); } });
+  if ('mediaSession' in navigator) {
+    const set = (a, fn) => { try { navigator.mediaSession.setActionHandler(a, fn); } catch (e) {} };
+    set('play', () => { if (muOpen) togglePause(); });
+    set('pause', () => { if (muOpen && muAudio && !muAudio.paused) togglePause(); });
+    set('previoustrack', () => { if (muOpen) muNext(-1); });
+    set('nexttrack', () => { if (muOpen) muNext(1); });
+  }
+  /* 捕获阶段拦截：Space 只控制试听，ESC 只退出音乐面板 */
+  document.addEventListener('keydown', e => {
+    if (!muOpen) return;
+    const tag = e.target && e.target.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (e.target && e.target.isContentEditable)) return;
+    if (e.key === 'Escape') {
+      e.preventDefault(); e.stopImmediatePropagation(); closeMusic();
+    } else if (e.code === 'Space' || e.key === ' ' || e.key === 'Spacebar') {
+      /* 焦点在按钮/链接上时交给原生激活，避免空格被劫持成播放键 */
+      if (e.target.closest && e.target.closest('button, a')) return;
+      e.preventDefault(); e.stopImmediatePropagation(); togglePause();
+    }
+  }, true);
 })();
+
 
 /* ---------- 信息 tab（eki-wiki） ---------- */
 function _firstLine(s) { if (!s) return ''; return String(s).split('\n')[0].trim(); }
@@ -8926,6 +9693,21 @@ function applyLang() {
   if ($('muBackTxt')) $('muBackTxt').textContent = t.muBack;
   if ($('muTitleTxt')) $('muTitleTxt').textContent = t.muT;
   if ($('muPlay')) muPlayIcoSet(muAudio ? muAudio.paused : true); /* 语言切换同步播放按钮 aria */
+  if ($('muCount')) muSetCount(muCountN);
+  if (muOpen && $('muLines')) {
+    $('muLines').querySelectorAll('.mu-chip').forEach(b => {
+      const i = parseInt(b.dataset.i, 10);
+      if (i === -2 && b.firstChild) b.firstChild.nodeValue = t.muAll;
+      else if (i === -1 && b.firstChild) b.firstChild.nodeValue = t.muOther;
+    });
+  }
+  if ($('muAuto')) { $('muAuto').title = t.muAuto; $('muAuto').setAttribute('aria-label', t.muAuto); }
+  if ($('muAutoTxt')) $('muAutoTxt').textContent = t.muAuto;
+  if ($('muPrev')) { $('muPrev').title = t.muPrev; $('muPrev').setAttribute('aria-label', t.muPrev); }
+  if ($('muNext')) { $('muNext').title = t.muNext; $('muNext').setAttribute('aria-label', t.muNext); }
+  if ($('muScrub')) $('muScrub').setAttribute('aria-label', t.muSeek);
+  document.querySelectorAll('#muList .mu-void').forEach(el => { el.textContent = t.muNoAudio; });
+  if (muErr && $('muPPlat')) $('muPPlat').textContent = t.muPlayFail;
   $('bLiveLb').textContent = t.badgeLive; $('bCountLb').textContent = t.badgeToday;
   searchEl.placeholder = t.searchPh;
   $('rFrom').placeholder = t.routeFrom; $('rTo').placeholder = t.routeTo;

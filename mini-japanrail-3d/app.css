@@ -757,10 +757,12 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
   z-index:21; display:flex; flex-direction:column;
   opacity:0; visibility:hidden; pointer-events:none;
   backdrop-filter:blur(0) saturate(1); -webkit-backdrop-filter:blur(0) saturate(1); transform:translate(-50%,26px);
-  transition:opacity .3s var(--ease-smooth), backdrop-filter .3s var(--ease-smooth), -webkit-backdrop-filter .3s var(--ease-smooth), transform .42s var(--ease-spring), visibility 0s linear .3s; }
+  transition:opacity .3s var(--ease-smooth), backdrop-filter .3s var(--ease-smooth), -webkit-backdrop-filter .3s var(--ease-smooth), transform .42s var(--ease-spring), height .42s var(--ease-spring), visibility 0s linear .3s; }
+#sheet.mu-open { height:90vh; }
+@supports (height:1dvh) { #sheet.mu-open { height:90dvh; } }
 #sheet.open { opacity:1; visibility:visible; pointer-events:auto; transform:translate(-50%,0);
   backdrop-filter:blur(34px) saturate(1.9); -webkit-backdrop-filter:blur(34px) saturate(1.9);
-  transition:opacity .3s var(--ease-smooth), backdrop-filter .3s var(--ease-smooth), -webkit-backdrop-filter .3s var(--ease-smooth), transform .42s var(--ease-spring), visibility 0s linear 0s; }
+  transition:opacity .3s var(--ease-smooth), backdrop-filter .3s var(--ease-smooth), -webkit-backdrop-filter .3s var(--ease-smooth), transform .42s var(--ease-spring), height .42s var(--ease-spring), visibility 0s linear 0s; }
 #sheet .grab { width:44px; height:5px; border-radius:3px; background:rgba(150,170,200,.5); margin:11px auto 3px; flex:none; }
 #sheet .sh-head { padding:13px 20px 4px; display:flex; align-items:flex-start; flex:none; }
 #sheet .sh-nm { font-size:30px; font-weight:800; letter-spacing:-.5px; line-height:1.05; }
@@ -771,84 +773,189 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
 #sheet .sh-bell + .sh-x { margin-left:0; }
 #sheet .sh-bell.on { color:#fff; background:rgba(50,205,102,.22); border-color:rgba(50,205,102,.55); }
 #sheet .sh-bell.on:hover { background:rgba(50,205,102,.30); }
-/* ── 发车铃声试听面板 ── */
-#sheet { --mu:#32cd66; --mu-soft:rgba(50,205,102,.16); --mu-border:rgba(50,205,102,.45); }
-#sheet .mu-toolbar { display:flex; align-items:center; gap:10px; padding:2px 4px 10px; border-bottom:1px solid var(--glass-lo); flex:none; }
-#sheet .mu-back { display:inline-flex; align-items:center; gap:5px; background:none; border:0; color:var(--dim); font-size:12.5px; font-weight:700; cursor:pointer; padding:4px 8px 4px 4px; border-radius:var(--r-sm); transition:color .12s, background .2s var(--ease-spring); font-family:inherit; }
+/* ── 发车铃声试听面板 · 発車メロディー・デッキ ── */
+#sheet { --mu:#32cd66; --mu-soft:rgba(50,205,102,.16); --mu-border:rgba(50,205,102,.45); --mu-ink:#07130b;
+  --lc:#32cd66; --lc-soft:rgba(50,205,102,.18); --lc-wash:rgba(50,205,102,.09); --lc-faint:rgba(50,205,102,.055);
+  --lc-border:rgba(50,205,102,.55); --lc-edge:rgba(50,205,102,.28); --lc-glow:rgba(50,205,102,.30);
+  --lc-hi:#7fe6a4; --lc-lo:#25b456; --lc-dark:#07130b; --lc-ink:#07130b; }
+#panelMusic [hidden] { display:none !important; }
+#sheet .mu-toolbar { display:flex; align-items:center; gap:10px; padding:2px 4px 9px; border-bottom:1px solid var(--glass-lo); flex:none; }
+#sheet .mu-back { display:inline-flex; align-items:center; gap:5px; background:none; border:0; color:var(--dim); font-size:12.5px; font-weight:700; cursor:pointer; padding:4px 8px 4px 4px; border-radius:var(--r-sm); transition:color .12s, background .2s var(--ease-spring); font-family:inherit; flex:none; }
+#sheet .mu-back svg { transition:transform .25s var(--ease-spring); }
 #sheet .mu-back:hover { color:var(--txt); background:var(--glass-2); }
+#sheet .mu-back:hover svg { transform:translateX(-2px); }
 #sheet .mu-title { font-size:13px; font-weight:800; color:var(--txt); letter-spacing:.3px; flex:none; }
-#sheet .mu-lines { display:flex; gap:7px; flex-wrap:wrap; padding:11px 2px 3px; flex:none; }
-#sheet .mu-chip { border:1px solid var(--glass-edge); background:var(--glass); color:var(--dim); font-size:12px; font-weight:700; padding:6px 13px; border-radius:var(--r-pill); cursor:pointer; transition:background .12s,border-color .12s,color .12s,transform .25s var(--ease-spring); font-family:inherit; }
-#sheet .mu-chip:hover { background:var(--glass-2); color:var(--txt); }
-#sheet .mu-chip.on { background:var(--mu); border-color:var(--mu); color:#fff; box-shadow:0 3px 12px var(--mu-soft); }
-#sheet .mu-list { flex:1; min-height:0; overflow-y:auto; padding:4px 2px 8px; display:flex; flex-direction:column; gap:7px; }
-#sheet .mu-row { display:flex; align-items:center; gap:11px; padding:11px 13px; border-radius:15px; background:var(--glass); border:1px solid var(--glass-edge); box-shadow:inset 0 1px 0 rgba(255,255,255,.12); transition:border-color .15s, background .2s var(--ease-spring), transform .2s var(--ease-spring); cursor:pointer; }
-#sheet .mu-row:hover { background:var(--glass-2); border-color:var(--glass-hi); transform:translateY(-1px); }
-#sheet .mu-row.playing { border-color:var(--mu-border); background:var(--mu-soft); }
-#sheet .mu-plat { flex:none; min-width:58px; text-align:center; font-size:11.5px; font-weight:800; color:var(--txt); background:var(--glass-2); border:1px solid var(--glass-edge); border-radius:9px; padding:4px 7px; font-variant-numeric:tabular-nums; }
-#sheet .mu-row.playing .mu-plat { background:var(--mu); border-color:var(--mu); color:#fff; }
-#sheet .mu-melody { flex:1; min-width:0; font-size:13.5px; font-weight:700; color:var(--txt); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-#sheet .mu-playbtn { flex:none; width:34px; height:34px; border-radius:50%; border:1px solid var(--glass-edge); background:var(--glass-2); color:var(--txt); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:background .15s,border-color .15s,transform .25s var(--ease-spring); }
-#sheet .mu-row:hover .mu-playbtn { border-color:var(--mu-border); }
-#sheet .mu-playbtn:hover { background:var(--mu); border-color:var(--mu); color:#fff; transform:scale(1.06); }
-#sheet .mu-playbtn:active { transform:scale(.92); }
-#sheet .mu-row.playing .mu-playbtn { background:var(--mu); border-color:var(--mu); color:#fff; }
-#sheet .mu-void { flex:none; font-size:10.5px; font-weight:700; color:var(--dim); border:1px dashed var(--glass-edge); border-radius:var(--r-pill); padding:5px 10px; letter-spacing:.3px; }
-#sheet .mu-empty { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:9px; color:var(--dim); font-size:13px; padding:44px 20px; text-align:center; }
+#sheet .mu-count { margin-left:auto; flex:none; font-size:10.5px; font-weight:800; color:var(--mu); background:rgba(50,205,102,.12); border:1px solid rgba(50,205,102,.26); padding:3px 8px; border-radius:999px; white-space:nowrap; font-variant-numeric:tabular-nums; }
+#sheet .mu-lines { display:flex; flex-wrap:nowrap; gap:7px; overflow-x:auto; padding:10px 2px 2px; flex:none; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+#sheet .mu-lines::-webkit-scrollbar { display:none; }
+#sheet .mu-lines.scroll-l { -webkit-mask-image:linear-gradient(90deg, transparent 0, #000 14px, #000 100%); mask-image:linear-gradient(90deg, transparent 0, #000 14px, #000 100%); }
+#sheet .mu-lines.scroll-r { -webkit-mask-image:linear-gradient(90deg, #000 0, #000 calc(100% - 16px), transparent 100%); mask-image:linear-gradient(90deg, #000 0, #000 calc(100% - 16px), transparent 100%); }
+#sheet .mu-lines.scroll-l.scroll-r { -webkit-mask-image:linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 16px), transparent 100%); mask-image:linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 16px), transparent 100%); }
+#sheet .mu-chip { flex:none; display:inline-flex; align-items:center; gap:6px; border:1px solid var(--glass-edge); background:var(--glass); color:var(--dim); font-size:12px; font-weight:700; padding:6px 10px 6px 9px; border-radius:var(--r-pill); cursor:pointer; transition:background .12s,border-color .12s,color .12s,transform .25s var(--ease-spring),box-shadow .2s; font-family:inherit; white-space:nowrap; }
+#sheet .mu-chip::before { content:''; flex:none; width:7px; height:7px; border-radius:50%; background:var(--lc); box-shadow:0 0 0 1px rgba(255,255,255,.28), 0 0 8px var(--lc-glow); transition:background .15s,box-shadow .15s,opacity .15s; }
+#sheet .mu-chip.mu-all::before { background:conic-gradient(from 210deg,#32cd66,#3aa0ff,#ffd900,#32cd66); }
+#sheet .mu-chip.on::before { background:var(--lc-ink); box-shadow:none; opacity:.72; }
+#sheet .mu-chip.mu-all.on::before { background:conic-gradient(from 210deg,#32cd66,#3aa0ff,#ffd900,#32cd66); opacity:1; box-shadow:0 0 0 1px rgba(0,0,0,.18); }
+#sheet .mu-chip em { font-style:normal; font-size:9.5px; font-weight:800; line-height:1.1; color:var(--dim); background:rgba(255,255,255,.09); border-radius:999px; padding:2px 5px; font-variant-numeric:tabular-nums; }
+#sheet .mu-chip:hover { background:var(--glass-2); color:var(--txt); border-color:var(--lc-edge); }
+#sheet .mu-chip.on { background:var(--lc); border-color:var(--lc); color:var(--lc-ink); box-shadow:0 4px 16px var(--lc-glow), inset 0 1px 0 rgba(255,255,255,.28); }
+#sheet .mu-chip.on em { background:rgba(0,0,0,.18); color:inherit; }
+#sheet .mu-chip:active { transform:scale(.94); }
+#sheet .mu-chip:focus-visible { outline:2px solid var(--lc); outline-offset:2px; }
+#sheet .mu-list { flex:1; min-height:0; overflow-y:auto; padding:6px 2px 8px; display:flex; flex-direction:column; gap:7px; overscroll-behavior:contain; scrollbar-width:none; scroll-padding-bottom:8px; -webkit-mask-image:linear-gradient(to bottom, transparent 0, #000 8px, #000 calc(100% - 8px), transparent 100%); mask-image:linear-gradient(to bottom, transparent 0, #000 8px, #000 calc(100% - 8px), transparent 100%); }
+#sheet .mu-list::-webkit-scrollbar { display:none; }
+#sheet .mu-row { position:relative; display:flex; align-items:center; gap:11px; width:100%; padding:9px 11px 9px 10px; border-radius:16px; background:var(--glass); border:1px solid var(--glass-edge); color:var(--txt); font-family:inherit; text-align:left; cursor:pointer; box-shadow:inset 0 1px 0 rgba(255,255,255,.12); transition:border-color .18s, background .22s var(--ease-spring), transform .22s var(--ease-spring), box-shadow .22s; -webkit-appearance:none; }
+@media (hover:hover) {
+  #sheet .mu-row:hover { background:var(--glass-2); border-color:var(--glass-hi); transform:translateY(-1px); }
+  #sheet .mu-row:hover .mu-act { background:var(--lc); border-color:var(--lc); color:var(--lc-ink); transform:scale(1.06); }
+}
+#sheet .mu-row:active { transform:scale(.985); transition-duration:.09s; }
+#sheet .mu-row:focus-visible { outline:2px solid var(--lc); outline-offset:2px; }
+#sheet .mu-row.playing { background:linear-gradient(90deg, var(--lc-soft), var(--lc-faint)); border-color:var(--lc-border); box-shadow:0 0 0 1px var(--lc-faint), 0 6px 22px var(--lc-glow), inset 0 1px 0 rgba(255,255,255,.18); }
+#sheet .mu-row.off { opacity:.56; cursor:default; }
+#sheet .mu-row.off:hover { background:var(--glass); border-color:var(--glass-edge); transform:none; }
+#sheet .mu-row.err { border-color:rgba(255,110,110,.5); background:linear-gradient(90deg, rgba(255,110,110,.10), rgba(255,110,110,.03)); }
+#sheet .mu-plat { flex:none; width:42px; height:42px; border-radius:9px; padding:2.5px; background:linear-gradient(180deg,var(--lc-hi),var(--lc-lo)); box-shadow:0 3px 10px var(--lc-glow), inset 0 1px 0 rgba(255,255,255,.42); }
+#sheet .mu-plat-in { display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; height:100%; border-radius:6.5px; background:var(--lc-dark); line-height:1; overflow:hidden; }
+#sheet .mu-plat b { font-size:17px; font-weight:800; letter-spacing:-.01em; color:#fff; font-variant-numeric:tabular-nums; }
+#sheet .mu-plat i { font-style:normal; font-size:6.5px; font-weight:700; letter-spacing:.08em; color:rgba(255,255,255,.52); margin-top:2.5px; }
+#sheet .mu-row.playing .mu-plat { background:linear-gradient(180deg,var(--lc-hi),var(--lc)); box-shadow:0 0 0 1px var(--lc-edge), 0 4px 16px var(--lc-glow); }
+#sheet .mu-row.playing .mu-plat-in { background:var(--lc-dark); }
+#sheet .mu-row.off .mu-plat { filter:grayscale(1); opacity:.52; box-shadow:none; }
+#sheet .mu-meta { flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
+#sheet .mu-melody { font-size:13px; font-weight:700; color:var(--txt); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; letter-spacing:-.1px; }
+#sheet .mu-msub { display:flex; align-items:center; gap:6px; min-width:0; font-size:10.5px; color:var(--dim); white-space:nowrap; overflow:hidden; }
+#sheet .mu-sub-dot { flex:none; width:6px; height:6px; border-radius:50%; background:var(--lc); box-shadow:0 0 0 1px rgba(255,255,255,.22), 0 0 6px var(--lc-glow); }
+#sheet .mu-line-txt { overflow:hidden; text-overflow:ellipsis; }
+#sheet .mu-eq { display:none; flex:none; align-items:flex-end; gap:2px; height:9px; padding-bottom:1px; }
+#sheet .mu-row.playing .mu-eq { display:inline-flex; }
+#sheet .mu-eq i { width:2px; border-radius:1px; background:var(--lc); height:4px; animation:muEqBounce .9s ease-in-out infinite; }
+#sheet .mu-eq i:nth-child(2) { animation-delay:.16s; }
+#sheet .mu-eq i:nth-child(3) { animation-delay:.32s; }
+#sheet .mu-row.playing.paused .mu-eq i, #sheet .mu-row.playing.scrubbing .mu-eq i { animation-play-state:paused; height:4px; }
+@keyframes muEqBounce { 0%,100% { height:4px; } 50% { height:9px; } }
+#sheet .mu-act { flex:none; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--txt); background:var(--glass-2); border:1px solid var(--glass-edge); transition:background .15s,border-color .15s,color .15s,transform .25s var(--ease-spring); }
+#sheet .mu-act .a-pause { display:none; }
+#sheet .mu-row.playing:not(.paused) .mu-act .a-play { display:none; }
+#sheet .mu-row.playing:not(.paused) .mu-act .a-pause { display:block; }
+#sheet .mu-row.playing .mu-act { background:var(--lc); border-color:var(--lc); color:var(--lc-ink); }
+#sheet .mu-void { flex:none; font-size:9.5px; font-weight:700; color:var(--dim); border:1px dashed var(--glass-edge); border-radius:var(--r-pill); padding:4px 8px; letter-spacing:.2px; white-space:nowrap; }
+#sheet .mu-row.playing.err .mu-eq { display:none; }
+#sheet .mu-row.err .mu-act, #sheet .mu-row.playing.err .mu-act { background:rgba(255,110,110,.16); border-color:rgba(255,110,110,.42); color:#ffb4b4; }
+#sheet .mu-row.err .mu-act .a-pause, #sheet .mu-row.playing.err .mu-act .a-pause { display:none; }
+#sheet .mu-row.err .mu-act .a-play, #sheet .mu-row.playing.err .mu-act .a-play { display:block; }
+#sheet .mu-empty { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:11px; color:var(--dim); font-size:13px; padding:40px 20px; text-align:center; }
 #sheet .mu-empty svg { opacity:.5; }
-#sheet .mu-player { flex:none; display:flex; align-items:center; gap:12px; margin-top:9px; padding:11px 14px; border-radius:17px; background:var(--glass-panel); border:1px solid var(--glass-edge); box-shadow:inset 0 1px 0 var(--glass-hi), var(--glass-sh); backdrop-filter:blur(20px) saturate(1.6); -webkit-backdrop-filter:blur(20px) saturate(1.6); }
-#sheet .mu-play { flex:none; width:42px; height:42px; border-radius:50%; border:0; color:#fff; background:linear-gradient(180deg, rgb(74,222,128), rgb(34,172,84)); box-shadow:0 4px 14px var(--mu-soft), inset 0 1px 0 rgba(255,255,255,.45); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:transform .25s var(--ease-spring), box-shadow .2s; }
-#sheet .mu-play:hover { transform:scale(1.07); box-shadow:0 6px 20px var(--mu-soft), inset 0 1px 0 rgba(255,255,255,.5); }
-#sheet .mu-play:active { transform:scale(.92); }
+#sheet .mu-empty-txt { max-width:260px; line-height:1.55; }
+#sheet .mu-retry { margin-top:2px; padding:7px 18px; border-radius:var(--r-pill); border:1px solid var(--mu-border); background:var(--mu-soft); color:var(--mu); font-size:12px; font-weight:800; font-family:inherit; cursor:pointer; transition:background .2s, transform .2s var(--ease-spring); }
+#sheet .mu-retry:hover { background:rgba(50,205,102,.24); }
+#sheet .mu-retry:active { transform:scale(.94); }
+
+/* ── 底部播放甲板 ── */
+#sheet .mu-player { position:relative; flex:none; margin-top:10px; padding:11px 13px 9px; border-radius:20px; overflow:hidden;
+  background:radial-gradient(120% 95% at 10% 0%, var(--lc-wash), transparent 62%), linear-gradient(180deg, rgba(255,255,255,.13), rgba(255,255,255,.045)), rgba(12,20,15,.72);
+  border:1px solid var(--lc-edge);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.22), 0 12px 34px rgba(0,0,0,.38);
+  backdrop-filter:blur(24px) saturate(1.5); -webkit-backdrop-filter:blur(24px) saturate(1.5); }
+#sheet .mu-player.mu-deck-in { animation:muDeckIn .36s var(--ease-spring) both; }
+@keyframes muDeckIn { from { opacity:0; transform:translateY(14px) scale(.98); } to { opacity:1; transform:none; } }
+#sheet .mu-player::before { content:''; position:absolute; top:0; left:14px; right:14px; height:1px; background:linear-gradient(90deg, transparent, var(--lc), transparent); opacity:.72; pointer-events:none; }
+#sheet .mu-now { display:flex; align-items:center; gap:10px; min-width:0; }
 #sheet .mu-pmeta { flex:1; min-width:0; }
-#sheet .mu-pname { font-size:13px; font-weight:800; color:var(--txt); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-#sheet .mu-pplat { font-size:11px; color:var(--dim); margin-top:2px; }
-#sheet .mu-prog { flex:1; min-width:0; }
-#sheet .mu-scrub { position:relative; height:5px; border-radius:3px; background:rgba(120,140,180,.22); cursor:pointer; touch-action:none; }
-#sheet .mu-fill { position:absolute; left:0; top:0; bottom:0; width:0%; border-radius:3px; background:linear-gradient(90deg, rgb(74,222,128), rgb(34,172,84)); }
-#sheet .mu-knob { position:absolute; top:50%; width:11px; height:11px; border-radius:50%; background:#fff; border:2px solid rgb(34,172,84); transform:translate(-50%,-50%); box-shadow:0 1px 4px rgba(0,0,0,.35); opacity:0; transition:opacity .15s; pointer-events:none; }
-#sheet .mu-scrub:hover .mu-knob, #sheet .mu-scrub.drag .mu-knob { opacity:1; }
-#sheet .mu-time { font-size:10.5px; color:var(--dim); font-variant-numeric:tabular-nums; margin-top:5px; }
-#sheet .mu-loading { padding:36px 20px; text-align:center; color:var(--dim); font-size:13px; }
-#sheet .mu-hint { font-size:11px; color:var(--dim); padding:8px 2px 0; }
-/* ── 打磨：面板进出动画 / 顶部绿光氛围 ── */
+#sheet .mu-pname { font-size:13.5px; font-weight:800; color:var(--txt); line-height:1.3; letter-spacing:-.15px; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+#sheet .mu-pplat { font-size:10.5px; color:var(--dim); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#sheet .mu-pplat.has-lc::before { content:''; display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--lc); margin-right:5px; vertical-align:1px; box-shadow:0 0 0 1px rgba(255,255,255,.22), 0 0 6px var(--lc-glow); }
+#sheet .mu-plat-deck { width:38px; height:38px; border-radius:8px; padding:2px; }
+#sheet .mu-plat-deck b { font-size:15.5px; }
+#sheet .mu-plat-deck i { font-size:6px; margin-top:2px; }
+#sheet .mu-auto { flex:none; display:inline-flex; align-items:center; gap:4px; height:27px; padding:0 9px; border-radius:999px; border:1px solid var(--glass-edge); background:var(--glass); color:var(--dim); font-size:10px; font-weight:800; font-family:inherit; cursor:pointer; transition:background .15s,border-color .15s,color .15s,transform .25s var(--ease-spring); -webkit-tap-highlight-color:transparent; }
+#sheet .mu-auto svg { width:11px; height:11px; flex:none; }
+#sheet .mu-auto[aria-pressed="true"] { background:rgba(50,205,102,.16); border-color:rgba(50,205,102,.42); color:var(--mu); box-shadow:inset 0 1px 0 rgba(255,255,255,.12); }
+#sheet .mu-auto:active { transform:scale(.92); }
+#sheet .mu-scrub { position:relative; height:26px; margin:13px 0 0; display:flex; align-items:center; cursor:pointer; touch-action:none; outline:none; }
+#sheet .mu-rail { position:relative; width:100%; height:4px; background-image:repeating-linear-gradient(90deg, rgba(255,255,255,.22) 0 9px, transparent 9px 13px); }
+#sheet .mu-fill { position:absolute; left:0; top:0; bottom:0; width:0%; background:linear-gradient(90deg,var(--lc-hi),var(--lc)); -webkit-mask-image:repeating-linear-gradient(90deg,#000 0 9px,transparent 9px 13px); mask-image:repeating-linear-gradient(90deg,#000 0 9px,transparent 9px 13px); }
+#sheet .mu-knob { position:absolute; left:0; top:50%; width:3px; height:16px; border-radius:2px; background:#fff; transform:translate(-50%,-50%); box-shadow:0 0 0 3px rgba(9,16,11,.62), 0 0 10px var(--lc); pointer-events:none; transition:height .15s; }
+#sheet .mu-scrub:hover .mu-knob, #sheet .mu-scrub.drag .mu-knob { height:18px; }
+#sheet .mu-scrub:focus-visible .mu-rail { box-shadow:0 0 0 2px var(--lc-soft); border-radius:2px; }
+#sheet .mu-bubble { position:absolute; bottom:15px; transform:translateX(-50%) scale(.9); padding:2px 7px; border-radius:7px; background:var(--lc); color:var(--lc-ink); font-size:10px; font-weight:800; font-variant-numeric:tabular-nums; opacity:0; pointer-events:none; transition:opacity .12s,transform .12s; white-space:nowrap; z-index:2; }
+#sheet .mu-scrub.drag .mu-bubble { opacity:1; transform:translateX(-50%) scale(1); }
+#sheet .mu-times { display:flex; justify-content:space-between; font-size:10px; color:var(--dim); font-variant-numeric:tabular-nums; letter-spacing:.2px; margin-top:-3px; padding:0 1px; }
+#sheet .mu-transport { display:flex; align-items:center; justify-content:center; gap:20px; margin-top:2px; padding-bottom:2px; }
+#sheet .mu-skip { width:36px; height:36px; border-radius:50%; border:1px solid var(--glass-edge); background:linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.05)); color:var(--txt); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:background .15s,transform .22s var(--ease-spring),opacity .2s; box-shadow:inset 0 1px 0 rgba(255,255,255,.18); }
+#sheet .mu-skip:hover { background:var(--glass-2); transform:translateY(-1px); }
+#sheet .mu-skip:active { transform:scale(.88); }
+#sheet .mu-skip:disabled { opacity:.3; cursor:default; transform:none; }
+#sheet .mu-play { position:relative; width:54px; height:54px; border-radius:50%; border:0; color:var(--lc-ink); background:linear-gradient(180deg,var(--lc-hi),var(--lc-lo)); box-shadow:0 6px 20px var(--lc-glow), inset 0 1px 0 rgba(255,255,255,.55), 0 0 0 6px var(--lc-faint); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:transform .22s var(--ease-spring), box-shadow .2s; -webkit-tap-highlight-color:transparent; }
+#sheet .mu-play:hover { transform:scale(1.05); box-shadow:0 8px 26px var(--lc-glow), inset 0 1px 0 rgba(255,255,255,.6), 0 0 0 7px var(--lc-soft); }
+#sheet .mu-play:active { transform:scale(.9); }
+#sheet .mu-play svg { display:block; position:relative; z-index:1; }
+#sheet .mu-play .ico-pause { display:none; }
+#sheet .mu-play.playing .ico-play { display:none; }
+#sheet .mu-play.playing .ico-pause { display:block; }
+#sheet .mu-play.buffering::after { content:''; position:absolute; inset:-4px; border-radius:50%; border:1.5px solid rgba(255,255,255,.18); border-top-color:var(--lc-ink); animation:muSpin .8s linear infinite; }
+@keyframes muSpin { to { transform:rotate(360deg); } }
+
+/* ── 加载骨架 ── */
+#sheet .mu-loading { display:flex; flex-direction:column; gap:7px; padding:2px 0 8px; }
+#sheet .mu-skel-row { display:flex; align-items:center; gap:11px; padding:9px 11px 9px 10px; border-radius:16px; background:var(--glass); border:1px solid var(--glass-edge); }
+#sheet .mu-skel-plat, #sheet .mu-skel-l1, #sheet .mu-skel-l2, #sheet .mu-skel-act { background:linear-gradient(100deg, var(--glass) 40%, var(--glass-2) 50%, var(--glass) 60%); background-size:200% 100%; animation:muShimmer 1.3s linear infinite; }
+#sheet .mu-skel-plat { width:42px; height:42px; border-radius:9px; flex:none; }
+#sheet .mu-skel-lines { flex:1; display:flex; flex-direction:column; gap:6px; min-width:0; }
+#sheet .mu-skel-l1 { height:9px; width:52%; border-radius:4px; }
+#sheet .mu-skel-l2 { height:7px; width:34%; border-radius:4px; }
+#sheet .mu-skel-act { width:29px; height:29px; border-radius:50%; flex:none; }
+#sheet .mu-loading-txt { text-align:center; color:var(--dim); font-size:11.5px; padding-top:3px; }
+@keyframes muShimmer { to { background-position:-200% 0; } }
+
+/* ── 面板进出 / 铃铛 / 空态 ── */
 @keyframes muPanelIn { from { opacity:0; transform:translateY(16px); filter:blur(5px); } to { opacity:1; transform:none; filter:none; } }
 @keyframes muPanelOut { from { opacity:1; transform:none; filter:none; } to { opacity:0; transform:translateY(10px); filter:blur(3px); } }
-#sheet #panelMusic { position:relative; }
-#sheet #panelMusic::after { content:''; position:absolute; inset:0; pointer-events:none; background:radial-gradient(130% 56% at 50% -4%, rgba(50,205,102,.11), transparent 62%); }
+#sheet #panelMusic { position:relative; display:flex; flex-direction:column; min-height:0; overflow:hidden; padding-bottom:max(14px, env(safe-area-inset-bottom)); }
+#sheet #panelMusic[hidden] { display:none !important; }
+#sheet #panelMusic::after { content:''; position:absolute; inset:0; pointer-events:none; background:radial-gradient(130% 56% at 50% -4%, var(--lc-wash), transparent 62%); }
 #sheet .mu-enter { animation:muPanelIn .36s var(--ease-spring) both; }
 #sheet .mu-leave { animation:muPanelOut .14s ease-out both; }
-/* ── 打磨：列表行 stagger 进场 ── */
 @keyframes muRowIn { from { opacity:0; transform:translateY(9px) scale(.985); } to { opacity:1; transform:none; } }
 #sheet .mu-row-in { animation:muRowIn .34s var(--ease-spring) both; }
-/* ── 打磨：正在播放音柱 ── */
-#sheet .mu-eq { display:none; flex:none; align-items:flex-end; gap:2.5px; height:15px; padding:2px 0; }
-#sheet .mu-row.playing .mu-eq { display:inline-flex; }
-#sheet .mu-eq i { width:3px; border-radius:2px; background:var(--mu); box-shadow:0 0 6px var(--mu-soft); animation:muEqBounce 1s ease-in-out infinite; }
-#sheet .mu-eq i:nth-child(2) { animation-delay:.18s; }
-#sheet .mu-eq i:nth-child(3) { animation-delay:.36s; }
-@keyframes muEqBounce { 0%,100% { height:4px; } 50% { height:15px; } }
-/* ── 打磨：播放按钮环形进度 ── */
-#sheet .mu-play { position:relative; }
-#sheet .mu-ring { position:absolute; inset:-1px; width:calc(100% + 2px); height:calc(100% + 2px); transform:rotate(-90deg); }
-#sheet .mu-ring-bg { fill:none; stroke:rgba(255,255,255,.30); stroke-width:2.2; }
-#sheet .mu-ring-fg { fill:none; stroke:#fff; stroke-width:2.2; stroke-linecap:round; stroke-dasharray:119.38; stroke-dashoffset:119.38; }
-/* ── 打磨：铃铛摇动 ── */
 @keyframes muBellSwing { 0%,100% { transform:rotate(0); } 20% { transform:rotate(-12deg); } 40% { transform:rotate(10deg); } 60% { transform:rotate(-6deg); } 80% { transform:rotate(3deg); } }
-#sheet .sh-bell:hover svg, #sheet .sh-bell:active svg { animation:muBellSwing .6s var(--ease-spring); }
-/* ── 打磨：站名徽标（toolbar 右侧） ── */
-#sheet .mu-station { margin-left:auto; min-width:0; font-size:11.5px; font-weight:600; color:var(--dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-/* ── 打磨：空状态浮动 + chips 按压 ── */
+#sheet .sh-bell:hover svg, #sheet .sh-bell:active svg, #sheet .sh-bell.on svg { animation:muBellSwing .6s var(--ease-spring); }
 @keyframes muFloatY { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-6px); } }
 #sheet .mu-empty svg { animation:muFloatY 2.6s ease-in-out infinite; }
-#sheet .mu-chip:active { transform:scale(.94); }
-/* ── 打磨：加载骨架 shimmer ── */
-#sheet .mu-loading { display:flex; flex-direction:column; gap:9px; padding:26px 6px 12px; color:var(--dim); font-size:12.5px; }
-#sheet .mu-skel { height:52px; border-radius:15px; background:linear-gradient(100deg, var(--glass) 40%, var(--glass-2) 50%, var(--glass) 60%); background-size:200% 100%; animation:muShimmer 1.3s linear infinite; }
-@keyframes muShimmer { to { background-position:-200% 0; } }
-#sheet .mu-loading-txt { text-align:center; padding-top:4px; }
-/* ── 打磨：正在播放行增强 ── */
-#sheet .mu-row.playing { box-shadow:0 0 0 1px var(--mu-soft), 0 4px 16px var(--mu-soft); }
+
+/* ── 明亮主题 ── */
+:root[data-theme="light"] #sheet .mu-player { background:radial-gradient(120% 95% at 10% 0%, var(--lc-wash), transparent 62%), linear-gradient(180deg, rgba(255,255,255,.94), rgba(255,255,255,.72)), rgba(255,255,255,.62); border-color:var(--lc-edge); box-shadow:inset 0 1px 0 #fff, 0 10px 28px rgba(15,23,42,.14); }
+:root[data-theme="light"] #sheet .mu-player::before { background:linear-gradient(90deg, transparent, var(--lc), transparent); }
+:root[data-theme="light"] #sheet .mu-rail { background-image:repeating-linear-gradient(90deg, rgba(15,23,42,.20) 0 9px, transparent 9px 13px); }
+:root[data-theme="light"] #sheet .mu-knob { background:#1a2333; box-shadow:0 0 0 3px rgba(255,255,255,.9), 0 0 10px var(--lc); }
+:root[data-theme="light"] #sheet .mu-skip { background:linear-gradient(180deg, rgba(255,255,255,.95), rgba(255,255,255,.62)); box-shadow:inset 0 1px 0 #fff, 0 2px 8px rgba(15,23,42,.10); }
+:root[data-theme="light"] #sheet .mu-chip::before,
+:root[data-theme="light"] #sheet .mu-sub-dot,
+:root[data-theme="light"] #sheet .mu-pplat.has-lc::before { box-shadow:0 0 0 1px rgba(15,23,42,.22); }
+:root[data-theme="light"] #sheet .mu-row.playing { background:linear-gradient(90deg, var(--lc-soft), var(--lc-faint)); box-shadow:0 0 0 1px var(--lc-edge), 0 6px 18px var(--lc-glow), inset 0 1px 0 #fff; }
+
+/* ── 小屏 / 矮屏 ── */
+@media (max-width:360px) {
+  #sheet .mu-auto span { display:none; }
+  #sheet .mu-auto { padding:0 7px; }
+  #sheet .mu-transport { gap:15px; }
+  #sheet .mu-skip { width:32px; height:32px; }
+  #sheet .mu-play { width:50px; height:50px; }
+}
+@media (max-height:700px) {
+  #sheet .mu-player { padding:8px 12px 6px; margin-top:7px; border-radius:17px; }
+  #sheet .mu-now { gap:8px; }
+  #sheet .mu-plat-deck { width:34px; height:34px; }
+  #sheet .mu-play { width:48px; height:48px; }
+  #sheet .mu-skip { width:32px; height:32px; }
+  #sheet .mu-scrub { height:20px; margin-top:2px; }
+  #sheet .mu-transport { gap:16px; margin-top:0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #sheet .mu-enter, #sheet .mu-row-in, #sheet .mu-player.mu-deck-in, #sheet .mu-empty svg,
+  #sheet .mu-eq i, #sheet .sh-bell.on svg, #sheet .mu-skel-row > * { animation:none !important; }
+}
+
 #sheet .sh-tabs { display:flex; border-bottom:1px solid var(--glass-lo); flex:none; margin-top:10px; padding:0 12px; }
 #sheet .sh-tabs button { flex:1; max-width:120px; padding:12px 0; background:none; border:0; color:var(--dim); font-size:13.5px; font-weight:700; cursor:pointer; border-bottom:2px solid transparent; transition:color .12s, border-color .12s; white-space:nowrap; }
 #sheet .sh-tabs button:hover { color:var(--txt); }

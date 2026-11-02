@@ -79,6 +79,82 @@ def dedup_express_dups(recs):
                 anchor_tid = tid
     return merged, dropped
 
+# ---------------------------------------------------------------------------
+# ic='直' 图标修复 override（round6b 新增）
+#
+# 背景：源站把 JR西 大阪環状線直通快速的 11 个班次实例（6 个 tmap：
+# 1299/1757/2196/5436/5565/11884，仅平日档）误标为 icon='直'（直通）。
+# 页面取图链路里 '直' 不在 TOKKYU_ICONS → tripName 返回 null → 班次落回
+# lines 首击 大阪環状線（323 系环状线图），而正确车体是与同 lines 模式下
+# 687 个带名标班次同族的 225 系：紀州路快速('紀') / 関空快速('関')。
+# round6 曾直接改产物 data/live/trains_wd.json 的 11 个字符，但本文件由
+# 每周流水线全量重建（refresh.yml → fetch_timetables.py → 本脚本），改产物
+# 会在下次刷新被写回；故把修复落到生成逻辑（审计 round6b §A 依据）。
+#
+# 表键 = 归一化签名，格式与页面 tripSig / tokkyu.nm 键完全一致：
+#   normName(起点) + '>' + normName(终点) + '|' + 各线名归一化后升序、'|' 连接。
+# 为什么是这 6 个签名（前 5 个即审计所述"tokkyu.nm 已有签名"）：
+#   - 和歌山>京橋 / 和歌山>天王寺 / 海南>京橋 / 関西空港>天王寺 / 関西空港>京橋
+#     五条签名在 mini-japanrail-3d/data/tokkyu.json 的 nm 表里已有同签名条目，
+#     分别映射 紀州路快速/関空快速 —— 签名表自证目标爱称（round6 REPORT §二.1
+#     证据层 2）；
+#   - 御坊>京橋 无 tokkyu.nm 条目，但页面兜底 ICON_NAME['紀']='紀州路快速'
+#     给出同值，且与上 5 签名同服务族（同族主流标记统计与逐班抽查见
+#     round6 REPORT §二.1、auditI §2.3）。补入该签名以覆盖全部 11 实例
+#     （紀×5 / 関×6）；若只取 tokkyu.nm 已有的 5 条，tmap 11884 的 2 班漏修。
+# 生效条件（同时满足，不误伤其它班次）：
+#   1) 班次 i == '直'（直通）；
+#   2) 该班次 tmap 的单路线签名命中本表（tmap 模板即单一直通路线）；
+#   3) 只改写字段 i，不动任何其它字段、不改记录顺序。
+# 自愈性：源站改正 icon 后 i≠'直'，条目自动失效；签名不再命中时构建打
+# warn 而非 fail（源数据波动不阻断流水线，见 main 末尾校验）。
+ICON_OVERRIDE_BY_SIG = {
+    "和歌山>京橋|大阪環状線|阪和線": "紀",                # tmap 1299（tokkyu.nm 同签名→紀州路快速）
+    "和歌山>天王寺|大阪環状線|阪和線": "紀",              # tmap 2196（tokkyu.nm 同签名→紀州路快速）
+    "海南>京橋|大阪環状線|紀勢本線|阪和線": "紀",         # tmap 5565（tokkyu.nm 同签名→紀州路快速）
+    "御坊>京橋|大阪環状線|紀勢本線|阪和線": "紀",         # tmap 11884（tokkyu.nm 无条目，ICON_NAME['紀'] 兜底同值）
+    "関西空港>天王寺|大阪環状線|関西空港線|阪和線": "関", # tmap 1757（tokkyu.nm 同签名→関空快速）
+    "関西空港>京橋|大阪環状線|関西空港線|阪和線": "関",   # tmap 5436（tokkyu.nm 同签名→関空快速）
+}
+
+def _ov_norm(n):
+    """与页面 normName 一致：去括号注记、ケ→ヶ、去尾部「駅」。"""
+    return re.sub(r"\([^)]*\)", "", str(n)).replace("ケ", "ヶ").rstrip("駅").strip()
+
+def _icon_override_sig(tmaps, tmap_id):
+    """tmap 单路线的归一化签名（同页面 tripSig 口径）；tmap 缺失/站数不足返回 None。"""
+    tm = tmaps.get(str(tmap_id))
+    if not tm:
+        return None
+    jas = tm.get("s_jas") or []
+    if len(jas) < 2:
+        return None
+    o = _ov_norm(jas[0])
+    d = _ov_norm(jas[-1])
+    lines = sorted(_ov_norm(l) for l in (tm.get("lines") or []))
+    return o + ">" + d + "|" + "|".join(lines)
+
+def apply_icon_overrides(day_recs, tmaps, hits):
+    """按 ICON_OVERRIDE_BY_SIG 把命中的 i='直' 覆写为 紀/関（表注释见上）。
+
+    day_recs: {tid: rec}（当日档记录拷贝）；hits: {sig: 次数} 跨日型累计，
+    供构建期 warn 校验。返回本档覆写实例数。
+    位置约束：必须在 couplings.compute_couplings 之后（'紀'/'関' 是
+    関空快速×紀州路快速@日根野 併结事件的成员判定值，提前改写会给这 11 班
+    新增 c 字段、改变既有併结输出）、文件写出之前（tt 分片从写出的
+    trains_*.json 烘焙、整记录复制含 i，override 必须先于分片存在）。
+    """
+    n = 0
+    for rec in day_recs.values():
+        if rec.get("i") != "直":
+            continue
+        sig = _icon_override_sig(tmaps, rec.get("t"))
+        if sig in ICON_OVERRIDE_BY_SIG:
+            rec["i"] = ICON_OVERRIDE_BY_SIG[sig]
+            hits[sig] = hits.get(sig, 0) + 1
+            n += 1
+    return n
+
 def mn(s):
     if not s:
         return None
@@ -230,12 +306,17 @@ def main():
                 d["dep"] // 60, d["dep"] % 60))
 
     total_pairs = 0
+    ov_hits = {}  # round6b: ic='直' override 跨日型命中计数（构建期 warn 校验用）
     for bit, name, label in ((1, "wd", "平日"), (2, "sa", "周六"), (4, "su", "周日·假日")):
         # 拷贝：併结对齐会改写记录时刻，不能串到其它日型
         day_recs = {tid: dict(r) for tid, r in recs.items() if r["r"] & bit}
         c_by_tid, stats, warns = couplings.compute_couplings(day_recs, tmaps, tokkyu)
         n_pairs = sum(len(v) for v in c_by_tid.values()) // 2
         total_pairs += n_pairs
+        # round6b: ic='直' 图标修复 override —— 位于 couplings 之后（避免 '紀'/'関'
+        # 进入 関空快速×紀州路快速@日根野 併结判定而给这 11 班新增 c 字段）、
+        # 文件写出之前（tt 分片从写出的 trains_*.json 烘焙，必须先于分片存在）。
+        ov_n = apply_icon_overrides(day_recs, tmaps, ov_hits)
         out_recs = []
         for tid, r in day_recs.items():
             item = dict(r)
@@ -245,12 +326,27 @@ def main():
         path = os.path.join(args.out, f"trains_{name}.json")
         with open(path, "w", encoding="utf-8") as f:
             json.dump({"b": now, "n": len(out_recs), "T": out_recs}, f, ensure_ascii=False, separators=(",", ":"))
-        print(f"trains_{name}.json ({label}): {len(out_recs)} 班次 (併结/分割 {n_pairs} 对) -> {path} ({os.path.getsize(path)/1e6:.1f}MB)")
+        print(f"trains_{name}.json ({label}): {len(out_recs)} 班次 (併结/分割 {n_pairs} 对"
+              + (f", ic='直' override {ov_n} 实例" if ov_n else "") + f") -> {path} ({os.path.getsize(path)/1e6:.1f}MB)")
         for (ev_name, kind), (n, cand) in sorted(stats.items()):
             if n or cand:
                 print(f"  [c] {ev_name} {'併结' if kind == 'j' else '分割'}: {n}/{cand}")
         for w in warns:
             print(f"  [coupling] {w}")
+
+    # round6b: override 构建期校验 —— 某签名在本轮源数据里一个 i='直' 实例都
+    # 没命中时打 warn：可能是源站改正了 icon 字段（修复自然失效，好事）或
+    # 改了路线/签名（需人工复核）。只 warn 不 fail —— 源数据波动不应阻断
+    # 整条流水线（与 tmaps ensure 失败、journey 构建失败的同款"降级不阻断"口径）。
+    for sig in ICON_OVERRIDE_BY_SIG:
+        if sig not in ov_hits:
+            print("[icon-override] WARN 签名本轮未命中任何 i='直' 班次"
+                  "（源站可能已改正 icon 或路线/签名已变化，请复核）: " + sig)
+    if ov_hits:
+        print("[icon-override] i='直' → 紀/関 覆写合计 %d 实例: %s" % (
+            sum(ov_hits.values()),
+            ", ".join("%s→%s×%d" % (s, ICON_OVERRIDE_BY_SIG[s], ov_hits[s])
+                      for s in sorted(ov_hits))))
 
     print(f"唯一班次总数: {len(recs)} | 跳过: {skipped} | 负区间钳制: {neg_clamped} | 保守去重合并: {deduped}")
     print(f"併结/分割检测合计: {total_pairs} 对")

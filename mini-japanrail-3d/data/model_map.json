@@ -55,7 +55,6 @@
   "浅草線": "/models/toei-5300-series/consist.json",
   "三田線": "/models/6500-train-8-car/consist.json",
   "JR東日本": "/models/toden-8900-blue-tram-ver/consist.json",
-  "東北新幹線": "/models/tf2-e5-10car/consist.json",
   "山形新幹線": "/models/tf2-e3-2000-7car/consist.json",
   "秋田新幹線": "/models/tf2-e6-7car/consist.json",
   "上越新幹線": "/models/shinkansen-w7-jr/consist.json",
@@ -281,6 +280,30 @@
   "西武有楽町線": "/models/tokyu5050-8cars/consist.json"
  },
  "rules": [
+  {
+   "comment": "東北新幹線线内(はやぶさ/やまびこ/なすの;北海道直通由北海道新幹線键先判)",
+   "exact": [
+    "東北新幹線"
+   ],
+   "model": "/models/tf2-e5-10car/consist.json"
+  },
+  {
+   "comment": "山形新幹線 つばさ(借道東北新幹線+奥羽本線,迷你断面 E3-2000)",
+   "exact": [
+    "東北新幹線",
+    "奥羽本線"
+   ],
+   "model": "/models/tf2-e3-2000-7car/consist.json"
+  },
+  {
+   "comment": "秋田新幹線 こまち(借道東北新幹線+奥羽本線+田沢湖線,迷你断面 E6)",
+   "exact": [
+    "東北新幹線",
+    "奥羽本線",
+    "田沢湖線"
+   ],
+   "model": "/models/tf2-e6-7car/consist.json"
+  },
   {
    "comment": "山手線环线普通车(停站全部∈山手30站)",
    "stopsIn": [

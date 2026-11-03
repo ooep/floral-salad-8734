@@ -7,11 +7,11 @@
    "name": "Urban Flyer_2Cars_Data",
    "model": "Cube.glb",
    "texture": "MainTex.ktx2",
-   "flip": false,
+   "flip": true,
    "shader": "Custom/Props/Prop/Default",
    "couple": [
     7.745,
-    7.745
+    7.708
    ],
    "lod": {
     "model": "Cube.stand-in.glb",
@@ -187,11 +187,11 @@
    "name": "TrailerUrban Flyer_2Cars0",
    "model": "CubeUrban_Flyer_2CarsUrban_Flyer_2CarsUrban_Flyer_2Cars.glb",
    "texture": "MainTex.ktx2",
-   "flip": true,
+   "flip": false,
    "shader": "Custom/Props/Prop/Default",
    "couple": [
     7.745,
-    7.645
+    7.708
    ],
    "lod": {
     "model": "CubeUrban_Flyer_2CarsUrban_Flyer_2CarsUrban_Flyer_2Cars.stand-in.glb",

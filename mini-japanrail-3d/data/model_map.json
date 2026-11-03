@@ -49,7 +49,10 @@
   "特急 しまかぜ": "/models/kintetsu-50000-series/consist.json",
   "ミュースカイ": "/models/meitetsu-2000-series/consist.json",
   "μSKY": "/models/meitetsu-2000-series/consist.json",
-  "MuSKY": "/models/meitetsu-2000-series/consist.json"
+  "MuSKY": "/models/meitetsu-2000-series/consist.json",
+  "さくら": "/models/tf2-n700-8000-8car/consist.json",
+  "みずほ": "/models/tf2-n700-8000-8car/consist.json",
+  "つばめ": "/models/tf2-n700-8000-8car/consist.json"
  },
  "lines": {
   "浅草線": "/models/toei-5300-series/consist.json",
@@ -386,8 +389,7 @@
     "大船",
     "藤沢",
     "平塚",
-    "小田原",
-    "熱海"
+    "小田原"
    ],
    "none": [
     "根岸線",
@@ -537,11 +539,94 @@
    "model": "/models/jr-east-e231-3000-series/consist.json"
   },
   {
-   "comment": "東海道本線(JR東海区间,313系;由东京圏规则的 none 避让)",
+   "comment": "東海道本線 JR西日本区段(京都大阪神戸姫路方向锚点;先于JR东海规则)",
    "all": [
     "東海道本線"
    ],
-   "model": "/models/jr-central-313-series-1912805926-jrc-313-6-crp-39ac872d/consist.json"
+   "hasStop": [
+    "京都",
+    "大阪",
+    "神戸",
+    "姫路",
+    "山科",
+    "大津",
+    "草津",
+    "野洲",
+    "守山",
+    "栗東",
+    "南草津",
+    "瀬田",
+    "石山",
+    "膳所",
+    "彦根",
+    "芦屋",
+    "三ノ宮",
+    "尼崎",
+    "明石",
+    "西明石",
+    "加古川",
+    "元町",
+    "六甲道",
+    "住吉",
+    "灘",
+    "摩耶",
+    "新長田",
+    "須磨",
+    "垂水",
+    "舞子",
+    "朝霧",
+    "西大路",
+    "桂川",
+    "向日町",
+    "長岡京",
+    "山崎",
+    "島本",
+    "高槻",
+    "茨木",
+    "千里丘",
+    "岸辺",
+    "吹田"
+   ],
+   "model": "/models/223-2000-8/consist.json"
+  },
+  {
+   "comment": "東海道本線(JR東海区段,313系;锚点防误吸JR西)",
+   "all": [
+    "東海道本線"
+   ],
+   "model": "/models/jr-central-313-series-1912805926-jrc-313-6-crp-39ac872d/consist.json",
+   "hasStop": [
+    "名古屋",
+    "浜松",
+    "静岡",
+    "沼津",
+    "熱海",
+    "岐阜",
+    "大垣",
+    "米原",
+    "豊橋",
+    "岡崎",
+    "刈谷",
+    "大府",
+    "金山",
+    "尾頭橋",
+    "三河安城",
+    "蒲郡",
+    "幸田",
+    "掛川",
+    "磐田",
+    "焼津",
+    "藤枝",
+    "島田",
+    "富士",
+    "三島",
+    "関ケ原",
+    "垂井",
+    "穂積",
+    "醒ケ井",
+    "近江長岡",
+    "柏原"
+   ]
   },
   {
    "comment": "山陽本線(223/225 混在,取 225-100)",

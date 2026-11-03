@@ -10384,6 +10384,7 @@ const M3D = (() => {
         if (r.exact) { if (ls.size !== r.exact.length || !r.exact.every(x => ls.has(x))) continue; }
         if (r.all && !r.all.every(x => ls.has(x))) continue;
         if (r.none && r.none.some(x => ls.has(x))) continue;
+        if (r.hasStop && (!t.jas || !r.hasStop.some(s => t.jas.includes(s)))) continue; /* hasStop: 至少一站命中(与 model_map 声明对齐) */
         if (r.stopsIn) {
           if (!t.jas || t.jas.length < 2) continue;
           const ok2 = t.jas.every(s => r.stopsIn.includes(s));

@@ -7,11 +7,11 @@
    "name": "JRW321-AALoc-7cars_Data",
    "model": "Mc321.glb",
    "texture": "MainTex.ktx2",
-   "flip": false,
+   "flip": true,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    10.181,
-    9.841
+    10.11,
+    10.181
    ],
    "lod": {
     "model": "Mc321.stand-in.glb",
@@ -242,8 +242,8 @@
    "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    10.181,
-    9.841
+    10.163,
+    10.181
    ],
    "lod": {
     "model": "M320JRW321-AALoc-7carsJRW321-AALoc-7cars.stand-in.glb",
@@ -360,8 +360,8 @@
    "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    10.181,
-    9.841
+    10.163,
+    10.181
    ],
    "lod": {
     "model": "M321FJRW321-AALoc-7carsJRW321-AALoc-7cars.stand-in.glb",
@@ -478,8 +478,8 @@
    "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    10.181,
-    9.841
+    10.163,
+    10.181
    ],
    "lod": {
     "model": "M320JRW321-AALoc-7carsJRW321-AALoc-7cars.stand-in.glb",
@@ -596,8 +596,8 @@
    "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    10.181,
-    9.841
+    10.163,
+    10.181
    ],
    "lod": {
     "model": "T321JRW321-AALoc-7carsJRW321-AALoc-7cars.stand-in.glb",
@@ -714,8 +714,8 @@
    "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    10.181,
-    9.851
+    10.163,
+    10.181
    ],
    "lod": {
     "model": "M321JRW321-AALoc-7carsJRW321-AALoc-7cars.stand-in.glb",
@@ -829,10 +829,10 @@
    "name": "TrailerJRW321-AALoc-7cars4",
    "model": "Mc320JRW321-AALoc-7carsJRW321-AALoc-7cars.glb",
    "texture": "MainTex.ktx2",
-   "flip": true,
+   "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    10.181,
+    10.11,
     10.181
    ],
    "lod": {

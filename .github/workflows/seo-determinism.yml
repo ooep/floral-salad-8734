@@ -22,11 +22,23 @@ name: SEO determinism guard
 # （29 处线名唯一归属锁定 + 1 处地理最近＝京阪黄檗）。早期描述 53(20+33)/26/20
 # 为误报，以本行为准。
 #
-# 判定分支（2026-11-03 增补）：paths 同时覆盖生成器输入（data 五件 + index.html +
-# app.js）。若本次变更只涉及这些输入、不涉及生成器脚本/配置/本护栏，则只跑
-# seed1 vs seed2 互比（要求 0 差异），跳过 EXPECTED 指纹比对，避免预期内产物
-# 变更误报；无法确定差异范围时（workflow_dispatch/新分支/基线获取失败）按完整
-# 检查处理。
+# 触发面（2026-11-03 收窄）：paths = 生成器三件（脚本/配置/本护栏）+ 数据五件
+# （station_map/segments3d/names_i18n/lines_map/station_key_index）。index.html 与
+# app.js 虽是生成器输入，但只被正则提取 JP2CN/KANA2ZH 两张字面量表（站名/线名中文
+# 转写），字段不变则输出不变（实测多次 app.js 变更 FP_STABLE 不动），且仓库内无
+# 其派生物可盯——故移出 paths，改由每周定时全量兜底；近 30 天频率因此从
+# ~100 次/周 降至 ~8 次/周。
+#
+# 判定分支与种子分级：
+#   * 生成器/配置/护栏变更 → 种子 1 2 3 4 全量互比 + EXPECTED（完整检查）；
+#   * 仅数据五件变更 → 种子 1 与 4 互比（要求 0 差异），跳过 EXPECTED，避免预期
+#     内产物变更误报。(1,4) 为跨盆地种子对：实测 set() 回归变体的种子划分为
+#     {1,2,3,6,7}=A 盆、{4,5}=B 盆，该对横跨两盆，2 次构建即可捕获已知分盆形态；
+#     未知盆地形态的顺序敏感逻辑只可能来自生成器代码改动，由上一档全覆盖。
+#   * 无法确定差异范围（schedule/workflow_dispatch/新分支/基线获取失败）→ 完整检查。
+#
+# 定时兜底：每周日 03:00 UTC 全量检查（含 EXPECTED）。即使 paths 漏掉某类输入，
+# 一周内必有一次完整比对；定时运行按「不可判」路径走完整检查。
 
 on:
   push:
@@ -40,8 +52,6 @@ on:
       - 'mini-japanrail-3d/data/names_i18n.json'
       - 'mini-japanrail-3d/data/lines_map.json'
       - 'mini-japanrail-3d/data/station_key_index.json'
-      - 'mini-japanrail-3d/index.html'
-      - 'mini-japanrail-3d/app.js'
   pull_request:
     paths:
       - 'mini-japanrail-3d/seo/build_seo_static.py'
@@ -52,8 +62,8 @@ on:
       - 'mini-japanrail-3d/data/names_i18n.json'
       - 'mini-japanrail-3d/data/lines_map.json'
       - 'mini-japanrail-3d/data/station_key_index.json'
-      - 'mini-japanrail-3d/index.html'
-      - 'mini-japanrail-3d/app.js'
+  schedule:
+    - cron: '0 3 * * 0'
   workflow_dispatch: {}
 
 permissions:
@@ -93,13 +103,16 @@ jobs:
           fi
           if [ -z "$CHANGED" ]; then
             echo "generator_touched=true" >> "$GITHUB_OUTPUT"
-            echo "scope: 无法确定差异范围（workflow_dispatch/新分支/基线获取失败）→ 完整检查（含 EXPECTED）"
+            echo "seeds=1 2 3 4" >> "$GITHUB_OUTPUT"
+            echo "scope: 无法确定差异范围（schedule/workflow_dispatch/新分支/基线获取失败）→ 完整检查（含 EXPECTED）"
           elif printf '%s\n' "$CHANGED" | grep -qE '^(mini-japanrail-3d/seo/build_seo_static\.py|mini-japanrail-3d/seo/seo_config\.json|\.github/workflows/seo-determinism\.yml)$'; then
             echo "generator_touched=true" >> "$GITHUB_OUTPUT"
-            echo "scope: 生成器/配置/护栏自身变更 → 完整检查（含 EXPECTED）"
+            echo "seeds=1 2 3 4" >> "$GITHUB_OUTPUT"
+            echo "scope: 生成器/配置/护栏自身变更 → 完整检查（种子 1 2 3 4 + EXPECTED）"
           else
             echo "generator_touched=false" >> "$GITHUB_OUTPUT"
-            echo "scope: 仅数据/前端输入变更 → 只跑多种子互比，跳过 EXPECTED"
+            echo "seeds=1 4" >> "$GITHUB_OUTPUT"
+            echo "scope: 仅数据五件变更 → 跨盆地种子对 1/4 互比，跳过 EXPECTED"
           fi
 
       - name: Set up Python
@@ -155,7 +168,11 @@ jobs:
                   robots.txt 404.html og-image.png
           }
 
-          for SEED in 1 2 3 4; do
+          SEEDS='${{ steps.scope.outputs.seeds }}'
+          GENERATOR_TOUCHED='${{ steps.scope.outputs.generator_touched }}'
+          echo "seeds=[$SEEDS] generator_touched=$GENERATOR_TOUCHED"
+
+          for SEED in $SEEDS; do
             clean
             PYTHONHASHSEED=$SEED python3 seo/build_seo_static.py
             fingerprint | tee /tmp/fp$SEED.txt
@@ -166,10 +183,9 @@ jobs:
           echo "seed1 FP_FULL=$FP1_FULL"
           echo "seed1 FP_STABLE=$FP1_STABLE"
 
-          GENERATOR_TOUCHED='${{ steps.scope.outputs.generator_touched }}'
-
           fail=0
-          for SEED in 2 3 4; do
+          for SEED in $SEEDS; do
+            if [ "$SEED" = "1" ]; then continue; fi
             FPN_FULL=$(sed -n 's/^FP_FULL=//p' /tmp/fp$SEED.txt)
             FPN_STABLE=$(sed -n 's/^FP_STABLE=//p' /tmp/fp$SEED.txt)
             echo "seed$SEED FP_FULL=$FPN_FULL"
@@ -184,7 +200,7 @@ jobs:
             fi
           done
           if [ "$GENERATOR_TOUCHED" = "false" ]; then
-            echo "仅输入（data/index.html/app.js）变更：跳过 EXPECTED 指纹比对（本次 FP_STABLE=$FP1_STABLE）"
+            echo "仅数据五件变更：跳过 EXPECTED 指纹比对（本次 FP_STABLE=$FP1_STABLE）"
           elif [ "$FP1_STABLE" != "$EXPECTED_FP_STABLE" ]; then
             echo "::error::FP_STABLE 与期望值不符（期望 $EXPECTED_FP_STABLE）。若为预期内输出变更，请更新本 workflow 的 EXPECTED_FP_STABLE"
             fail=1

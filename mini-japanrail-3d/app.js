@@ -535,8 +535,12 @@ function bitOfDate(ms) {
    时也必须用服务日而非日历日,否则 00:00–04:00 窗口内:
      ① 前一日跨零点班次(如周六 00:02 仍在开的平日车)被按新日历日错杀 → 消失;
      ② 新日历日的班次被提前 24h 显示 → 幽灵车。
-   注意:延误/舒适度门禁用「日历日」与 feed 的 date 字段配对(当日实时数据),
-   口径不同,切勿改用本组函数(见 delayApplyData/comfortApplyData)。 */
+   口径纪律(两套口径并存,比较必须同口径,不可直接互比):
+     feed.date / jstDateParts(ms).key = 日历日 —— 实时数据源按「今天」配对;
+     dayBit / serviceBitOf(ms) / serviceKeyOf(ms) = 服务日 —— 日型文件选择/时钟 chip/站牌。
+   延误/舒适度门禁:日期子句以日历日对日历日(feed.date ↔ jstDateParts(Date.now()).key);
+   日型子句左右两侧都必须是服务日 —— dayBit 已是服务日,故与 serviceBitOf(simNow()) 比,
+   不可与 bitOfDate(日历日) 比,否则窗口内恒 FAIL(见 delayApplyData)。 */
 const SVC_DAY_OFF = 14400000; /* 04:00 = 4h */
 function serviceBitOf(ms) { return bitOfDate(ms - SVC_DAY_OFF); }
 function serviceKeyOf(ms) { return jstDateParts(ms - SVC_DAY_OFF).key; }
@@ -3557,14 +3561,31 @@ function delayHm(s) {  /* "20:23"/"24:02" → 分钟,可 >1439,与 w0/dep[0] 同
   const m = /^(\d{1,2}):(\d{2})$/.exec(String(s || '').trim());
   return m ? (+m[1]) * 60 + (+m[2]) : null;
 }
+/* 凌晨窗(00:00–04:00)候选在途判定:此时载入的是「前一服务日」数据集,feed 的
+   (tmap+depMin) 会在其中命中前一天的同名班次 —— 如 dep=05:00 指今天尚未发车的车,
+   前一天文件里同 tmap 的 05:00 班次早已终到。depMin 阈值无法判别:跨零点仍在途的
+   班次发车分钟可以 <1440(如サンライズ瀬戸 dep=1286,03:00 仍在跑),阈值会错杀。
+   故以「候选此刻确实在途」判定:windowShift 折回后落在 [w0,w1],再过与引擎帧内同口径的
+   tripRunsAtM(含 d/x 运転日互斥,防止基本/延伸孪生记录互串);窗口外恒真,零变化。
+   供 delayApplyData/comfortApplyData/delayBoardMatch 使用;
+   ttRescueDelayed 在并入前已有等价在途检查,不重复。 */
+function realtimeCandOk(t, ms) {
+  if (minOfDay(ms) >= 240) return true;
+  const m = minOfDay(ms);
+  const M2 = windowShift(t, m);
+  if (M2 < t.w0 || M2 > t.w1) return false;
+  return tripRunsAtM(t, M2, ms);
+}
 function delayApplyData(d, genMs) {
   if (!d || !(genMs > 0) || Date.now() - genMs > DELAY_MAX_AGE_MS) { delayFeed = null; delayClear(); return 0; }
-  /* 日型/日期双门(二十三轮.d):延误是「今天」的实时数据 —— 仅当 feed.date == 今日(JST)
-     且当前载入的数据集日型 == 今日真实日型时才应用。手动切平日/土/休、回放跨日、
-     午夜换日期间自动清空,防止今天的延误错配到其他日型的班次上(同模式同分发车的
-     周六班次会被误标)。午夜后至 feed 滚日的 ~10 分钟空窗是可接受代价,宁可短暂
-     无延误也不错日应用。 */
-  if (d.date !== jstDateParts(Date.now()).key || dayBit !== bitOfDate(Date.now())) { delayClear(); return 0; }
+  /* 日型/日期双门(二十三轮.d):延误是「今天」的实时数据 —— 仅当 feed.date == 今日(JST,日历日)
+     且当前载入的数据集日型 == 当前服务日日型时才应用。第二子句两侧同口径:dayBit 对
+     serviceBitOf(simNow()) —— 与 ensureDayFile/30s 定时器的驱动口径逐字对齐(回放/手动时钟
+     下也一致;323dfcfa 起 dayBit 是服务日,与 bitOfDate 日历日直接比会在 00:00–04:00 恒 FAIL)。
+     手动切平日/土/休、回放跨日、午夜换日期间自动清空,防止今天的延误错配到其他日型的
+     班次上(同模式同分发车的周六班次会被误标)。午夜后至 feed 滚日的 ~10 分钟空窗是
+     可接受代价,宁可短暂无延误也不错日应用。 */
+  if (d.date !== jstDateParts(Date.now()).key || dayBit !== serviceBitOf(simNow())) { delayClear(); return 0; }
   const list = Array.isArray(d.trains) ? d.trains : null;
   if (!list || list.length > 3000) { delayClear(); return 0; }
   const bit = dayBit, next = new Set();
@@ -3577,9 +3598,9 @@ function delayApplyData(d, genMs) {
     if (key === null || depMin === null || !delayTmapIdx) continue;
     let cands = delayTmapIdx.get(key);
     if (!cands || !cands.length) continue;
-    cands = cands.filter(t => (t.r & bit) && !t.bad && t.dep[0] === depMin && tripRunsForDate(t, Date.now()));
+    cands = cands.filter(t => (t.r & bit) && !t.bad && t.dep[0] === depMin && tripRunsForDate(t, Date.now()) && realtimeCandOk(t, simNow()));
     if (!cands.length)  /* 同源时刻表理应精确一致;±1 仅供边界兜底,须唯一 */
-      cands = delayTmapIdx.get(key).filter(t => (t.r & bit) && !t.bad && Math.abs(t.dep[0] - depMin) <= 1 && tripRunsForDate(t, Date.now()));
+      cands = delayTmapIdx.get(key).filter(t => (t.r & bit) && !t.bad && Math.abs(t.dep[0] - depMin) <= 1 && tripRunsForDate(t, Date.now()) && realtimeCandOk(t, simNow()));
     if (!cands.length) continue;
     const origin = (e.scheduled && e.scheduled.origin) || '';
     if (origin) {
@@ -3711,7 +3732,7 @@ async function ttRescueDelayed(feed, genMs) {
   const st = ttState;
   if (!st || st.mode !== 'shards' || ttDayReq || ttLoading || !tripList || !tripList.length) return;
   if (Date.now() - genMs > DELAY_MAX_AGE_MS) return;
-  if (feed.date !== jstDateParts(Date.now()).key || dayBit !== bitOfDate(Date.now())) return;
+  if (feed.date !== jstDateParts(Date.now()).key || dayBit !== serviceBitOf(simNow())) return;
   const list = Array.isArray(feed.trains) ? feed.trains : [];
   if (!list.length || list.length > 3000) return;
   const genKey = String(feed.generated_at || genMs) + '|' + dayBit;
@@ -3754,7 +3775,7 @@ async function ttRescueDelayed(feed, genMs) {
         p = await ttLoadShard(st.key, st.day, b, '', true);
       }
       if (!p) continue;
-      if (ttState !== st || ttDayReq || tripList !== base || dayBit !== bitOfDate(Date.now())) return;
+      if (ttState !== st || ttDayReq || tripList !== base || dayBit !== serviceBitOf(simNow())) return;
       for (const x of entries) {
         if (ttRescueTried.has(x.fp)) continue;
         ttRescueTried.add(x.fp);  /* 同一 feed 内只尝试一次，失败等下一轮刷新 */
@@ -3841,7 +3862,7 @@ function comfortClear() {
 }
 function comfortApplyData(d, genMs) {
   if (!d || !(genMs > 0) || Date.now() - genMs > COMFORT_MAX_AGE_MS) { comfortClear(); return 0; }
-  if (d.date !== jstDateParts(Date.now()).key || dayBit !== bitOfDate(Date.now())) { comfortClear(); return 0; }
+  if (d.date !== jstDateParts(Date.now()).key || dayBit !== serviceBitOf(simNow())) { comfortClear(); return 0; }
   const list = Array.isArray(d.trains) ? d.trains : null;
   if (!list || !dayList || list.length > 8000) { comfortClear(); return 0; }
   const idx = new Map();
@@ -3856,7 +3877,7 @@ function comfortApplyData(d, genMs) {
     const key = (e && e.suki && e.suki[0] && e.suki[0].key != null) ? String(e.suki[0].key) : null;
     const depMin = delayHm(e && e.scheduled && e.scheduled.dep);
     if (key === null || depMin === null || !e.comfort) continue;
-    const cands = (idx.get(key) || []).filter(t => (t.r & bit) && !t.bad && t.dep[0] === depMin);
+    const cands = (idx.get(key) || []).filter(t => (t.r & bit) && !t.bad && t.dep[0] === depMin && realtimeCandOk(t, simNow()));
     if (cands.length !== 1) continue;
     const t = cands[0];
     if (next.has(t)) continue;
@@ -7424,7 +7445,7 @@ function delayBoardFeedIndex() {
   boardFeedIdxSrc = delayFeed; boardFeedIdxGen = delayGenMs; boardFeedIdx = null;
   if (!delayOn || !delayFeed || !delayGenMs) return null;
   if (Date.now() - delayGenMs > DELAY_MAX_AGE_MS) return null;
-  if (delayFeed.date !== jstDateParts(Date.now()).key || dayBit !== bitOfDate(Date.now())) return null;
+  if (delayFeed.date !== jstDateParts(Date.now()).key || dayBit !== serviceBitOf(simNow())) return null;
   const list = Array.isArray(delayFeed.trains) ? delayFeed.trains : null;
   if (!list || !list.length || list.length > 3000) return null;
   const m = new Map();
@@ -7445,7 +7466,7 @@ function delayBoardFeedIndex() {
 /* 与 delayApplyData 同口径的站牌匹配：tmap + 计划发车(±1 兜底) + 始发站 + 报告站；
    多解宁漏不误。 */
 function delayBoardMatch(t, idx) {
-  if (!idx || !t || t.bad || !(t.r & dayBit) || !tripRunsForDate(t, Date.now())) return 0;
+  if (!idx || !t || t.bad || !(t.r & dayBit) || !tripRunsForDate(t, Date.now()) || !realtimeCandOk(t, simNow())) return 0;
   const arr = idx.get(String(t.t));
   if (!arr || !arr.length) return 0;
   const dep = t.dep[0];
@@ -10274,7 +10295,7 @@ window.addEventListener('hashchange', () => {
     else if (urlState.t === 'station' && urlState.q) { try { focusStationByKey(urlState.q); } catch (e) {} }
   }
 });
-window.__dbg = () => ({ map: !!map, dataReady, tripList: tripList.length, dayBit, errs: window.__errs, msg: document.getElementById('lMsg').textContent, active: visibleCount, rc: __renderCount, glErr: __glErr, layer: !!(map && map.getLayer('trains-gl')), variant: __lastArgs && __lastArgs.variant, cache: !!idb, glowAutoOff, stIdx: tripsByStation.size, tt: ttState && { mode: ttState.mode, bucket: ttState.bucket, key: ttState.key }, dayReq: ttDayReq && ttDayReq.want, fullLoading: !!ttFullLoading, stCache: stationTripsCache.size, raw: !!ttRaw });
+window.__dbg = () => ({ map: !!map, dataReady, tripList: tripList.length, dayBit, svcKey: serviceKeyOf(simNow()), calKey: jstDateParts(simNow()).key, errs: window.__errs, msg: document.getElementById('lMsg').textContent, active: visibleCount, rc: __renderCount, glErr: __glErr, layer: !!(map && map.getLayer('trains-gl')), variant: __lastArgs && __lastArgs.variant, cache: !!idb, glowAutoOff, stIdx: tripsByStation.size, tt: ttState && { mode: ttState.mode, bucket: ttState.bucket, key: ttState.key }, dayReq: ttDayReq && ttDayReq.want, fullLoading: !!ttFullLoading, stCache: stationTripsCache.size, raw: !!ttRaw });
 /* 调试钩子:外部(控制台/自动化)获取当前班次表与打开详情。只读,线上零副作用。 */
 Object.defineProperty(window, '__tripList', { get: () => tripList, configurable: true });
 Object.defineProperty(window, '__showTrainDetail', { get: () => showTrainDetail, configurable: true });

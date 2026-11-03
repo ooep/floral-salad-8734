@@ -7,7 +7,7 @@
    "name": "Kanto Railway DC2100 DMU_Data",
    "model": "Object002_Instance_602f55cc.glb",
    "texture": "MainTex.ktx2",
-   "flip": false,
+   "flip": true,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
     9.206,
@@ -131,7 +131,7 @@
    "name": "DC2100Rear_Data",
    "model": "Object002_Instance.glb",
    "texture": "MainTex.ktx2",
-   "flip": false,
+   "flip": true,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
     9.206,

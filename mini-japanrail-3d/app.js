@@ -7686,6 +7686,13 @@ function bindSheet() {
 function closeSheet() {
   $('sheet').classList.remove('open'); $('sheetMask').classList.remove('open');
   if (muOpen) muResetPanel();
+  /* 关闭即卸载站牌 DOM:大站单面板约 3.9 万节点/1.16MB HTML 且每行挂 onclick,
+     旧实现只摘 open class,内容会一直附着到下次换站,成为 Nodes/堆高位常驻。
+     boardCache 不动,重开走缓存毫秒级重建;dayLazyBuild 里未展开的方向网格闭包一并释放。
+     sheetOpenSeq++ 使在途的全日升级/重试回调作废,防止关闭后异步回写空面板。 */
+  $('shBody').innerHTML = '';
+  dayLazyBuild.clear();
+  sheetOpenSeq++;
 }
 /* ===== 渐进式站牌（分片模式）=====
    打开车站时先用当前窗口的 tripList 把「当前时段」零等待画出来，整包（既有端点不变）

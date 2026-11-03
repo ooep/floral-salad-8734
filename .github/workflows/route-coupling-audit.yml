@@ -1,0 +1,397 @@
+name: route-coupling-audit
+on:
+  workflow_dispatch: {}
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - name: deps
+        run: pip install numpy
+      - name: write glbdump
+        run: |
+          cat > /tmp/glbdump.mjs <<'MJSEOF'
+          import fs from 'fs';
+          import readline from 'readline';
+          import { pathToFileURL } from 'url';
+          const VENDOR = process.argv[2];
+          const meshDst = '/tmp/meshopt_decoder.mjs';
+          if (!fs.existsSync(meshDst)) fs.copyFileSync(VENDOR + '/jsm/libs/meshopt_decoder.module.js', meshDst);
+          const { MeshoptDecoder } = await import(pathToFileURL(meshDst).href);
+          await MeshoptDecoder.ready;
+          function parseGLB(buf) {
+            if (buf.readUInt32LE(0) !== 0x46546C67) throw new Error('not glTF');
+            const total = buf.readUInt32LE(8);
+            let off = 12, json = null, bin = null;
+            while (off < total) {
+              const clen = buf.readUInt32LE(off), ctype = buf.toString('ascii', off + 4, off + 8);
+              if (ctype === 'JSON') json = JSON.parse(buf.toString('utf8', off + 8, off + 8 + clen));
+              else if (ctype === 'BIN\u0000') bin = buf.subarray(off + 8, off + 8 + clen);
+              off += 8 + clen + (clen & 1);
+            }
+            return { json, bin };
+          }
+          const TYPE_N = { SCALAR: 1, VEC2: 2, VEC3: 3, VEC4: 4, MAT4: 16 };
+          const CTYPE = { 5120: Int8Array, 5121: Uint8Array, 5122: Int16Array, 5123: Uint16Array, 5125: Uint32Array, 5126: Float32Array };
+          function makeLoader(json, bin) {
+            const bvCache = new Array(json.bufferViews ? json.bufferViews.length : 0).fill(null);
+            const accCache = new Map();
+            function bufferViewData(bvi) {
+              if (bvCache[bvi]) return bvCache[bvi];
+              const bv = json.bufferViews[bvi];
+              let data;
+              const ext = bv.extensions && bv.extensions.EXT_meshopt_compression;
+              if (ext) {
+                const srcBuf = ext.buffer === 0 ? bin : Buffer.from(json.buffers[ext.buffer].uri || '', 'base64');
+                const source = new Uint8Array(srcBuf.buffer, srcBuf.byteOffset + (ext.byteOffset || 0), ext.byteLength);
+                const res = new ArrayBuffer(ext.count * ext.byteStride);
+                MeshoptDecoder.decodeGltfBuffer(new Uint8Array(res), ext.count, ext.byteStride, source, ext.mode, ext.filter);
+                data = { bytes: new Uint8Array(res), stride: ext.byteStride };
+              } else {
+                const b = bv.buffer === 0 ? bin : Buffer.from(json.buffers[bv.buffer].uri.split(',')[1] || '', 'base64');
+                data = { bytes: new Uint8Array(b.buffer, b.byteOffset + (bv.byteOffset || 0), bv.byteLength), stride: bv.byteStride || 0 };
+              }
+              bvCache[bvi] = data;
+              return data;
+            }
+            function accessor(ai) {
+              if (accCache.has(ai)) return accCache.get(ai);
+              const acc = json.accessors[ai];
+              const { bytes, stride } = bufferViewData(acc.bufferView);
+              const n = acc.count, tn = TYPE_N[acc.type];
+              const TA = CTYPE[acc.componentType];
+              const esize = TA.BYTES_PER_ELEMENT;
+              const out = new TA(n * tn);
+              const st = stride || esize * tn;
+              const off0 = acc.byteOffset || 0;
+              if (st === esize * tn) out.set(new TA(bytes.buffer, bytes.byteOffset + off0, n * tn));
+              else for (let i = 0; i < n; i++) for (let k = 0; k < tn; k++) out[i * tn + k] = new TA(bytes.buffer, bytes.byteOffset + off0 + i * st + k * esize, 1)[0];
+              let arr = out;
+              if (acc.normalized && acc.componentType !== 5126) {
+                const f = new Float32Array(out.length);
+                const d = acc.componentType === 5120 ? 127 : acc.componentType === 5121 ? 255 : acc.componentType === 5122 ? 32767 : 65535;
+                for (let i = 0; i < out.length; i++) f[i] = Math.max(out[i] / d, -1);
+                arr = f;
+              }
+              accCache.set(ai, arr);
+              return arr;
+            }
+            return accessor;
+          }
+          function quatMat(q) {
+            const [x, y, z, w] = q;
+            return [1 - 2 * (y * y + z * z), 2 * (x * y + z * w), 2 * (x * z - y * w), 0, 2 * (x * y - z * w), 1 - 2 * (x * x + z * z), 2 * (y * z + x * w), 0, 2 * (x * z + y * w), 2 * (y * z - x * w), 1 - 2 * (x * x + y * y), 0, 0, 0, 0, 1];
+          }
+          function mul4(a, b) {
+            const o = new Array(16).fill(0);
+            for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) { let s = 0; for (let k = 0; k < 4; k++) s += a[k * 4 + r] * b[c * 4 + k]; o[c * 4 + r] = s; }
+            return o;
+          }
+          function nodeLocal(n) {
+            if (n.matrix) return n.matrix.slice();
+            let m = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+            if (n.scale) m = mul4(m, [n.scale[0], 0, 0, 0, 0, n.scale[1], 0, 0, 0, 0, n.scale[2], 0, 0, 0, 0, 1]);
+            if (n.rotation) m = mul4(quatMat(n.rotation), m);
+            if (n.translation) m = mul4([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, n.translation[0], n.translation[1], n.translation[2], 1], m);
+            return m;
+          }
+          function dumpOne(path, outChunks) {
+            const buf = fs.readFileSync(path);
+            const { json, bin } = parseGLB(buf);
+            const accessor = makeLoader(json, bin);
+            const nodes = json.nodes || [];
+            const parent = new Array(nodes.length).fill(-1);
+            nodes.forEach((n, i) => (n.children || []).forEach(c => parent[c] = i));
+            const world = new Array(nodes.length), done = new Array(nodes.length).fill(false);
+            function compute(i) { if (done[i]) return world[i]; let m = nodeLocal(nodes[i]); if (parent[i] >= 0) m = mul4(compute(parent[i]), m); world[i] = m; done[i] = true; return m; }
+            for (let i = 0; i < nodes.length; i++) compute(i);
+            const scene = (json.scenes || [{}])[json.scene || 0];
+            const vis = [];
+            (scene.nodes || [0]).forEach(r => (function walk(ni) { vis.push(ni); (nodes[ni].children || []).forEach(walk); })(r));
+            const meshes = [];
+            for (const ni of vis) {
+              const n = nodes[ni];
+              if (n.mesh == null) continue;
+              const wm = world[ni];
+              const det = wm[0] * (wm[5] * wm[10] - wm[6] * wm[9]) - wm[1] * (wm[4] * wm[10] - wm[6] * wm[8]) + wm[2] * (wm[4] * wm[9] - wm[5] * wm[8]);
+              for (const prim of (json.meshes[n.mesh].primitives || [])) {
+                if ((prim.mode ?? 4) !== 4) continue;
+                const pos = accessor(prim.attributes.POSITION);
+                const vc = pos.length / 3;
+                const verts = new Float32Array(vc * 3);
+                for (let i = 0; i < vc; i++) {
+                  const x = pos[i * 3], y = pos[i * 3 + 1], z = pos[i * 3 + 2];
+                  verts[i * 3] = wm[0] * x + wm[4] * y + wm[8] * z + wm[12];
+                  verts[i * 3 + 1] = wm[1] * x + wm[5] * y + wm[9] * z + wm[13];
+                  verts[i * 3 + 2] = wm[2] * x + wm[6] * y + wm[10] * z + wm[14];
+                }
+                let tris;
+                if (prim.indices != null) { const idx = accessor(prim.indices); tris = new Int32Array(idx.length); for (let i = 0; i < idx.length; i++) tris[i] = idx[i]; }
+                else { tris = new Int32Array(vc); for (let i = 0; i < vc; i++) tris[i] = i; }
+                if (det < 0) { for (let i = 0; i + 2 < tris.length; i += 3) { const t = tris[i + 1]; tris[i + 1] = tris[i + 2]; tris[i + 2] = t; } }
+                meshes.push({ verts, tris });
+              }
+            }
+            const head = Buffer.alloc(8); head.write('GLBD', 0); head.writeUInt32LE(0, 4);
+            outChunks.push(head);
+            const mc = Buffer.alloc(4); mc.writeUInt32LE(meshes.length, 0); outChunks.push(mc);
+            for (const m of meshes) {
+              const h = Buffer.alloc(8); h.writeUInt32LE(m.verts.length / 3, 0); h.writeUInt32LE(m.tris.length / 3, 4);
+              outChunks.push(h, Buffer.from(m.verts.buffer), Buffer.from(m.tris.buffer));
+            }
+          }
+          const rl = readline.createInterface({ input: process.stdin, crlfDelay: Infinity });
+          for await (const line of rl) {
+            const p = line.trim();
+            if (!p) continue;
+            const chunks = [];
+            try { dumpOne(p, chunks); } catch (e) {
+              const head = Buffer.alloc(8); head.write('GLBD', 0); head.writeUInt32LE(1, 4);
+              const msg = Buffer.from(String(e.message || e).slice(0, 500));
+              const lb = Buffer.alloc(4); lb.writeUInt32LE(msg.length, 0);
+              process.stdout.write(Buffer.concat([head, lb, msg]));
+              continue;
+            }
+            process.stdout.write(Buffer.concat(chunks));
+          }
+          MJSEOF
+      - name: write audit script
+        run: |
+          cat > /tmp/audit.py <<'PYEOF'
+          # -*- coding: utf-8 -*-
+          import os, sys, json, subprocess, threading
+          import numpy as np
+          ROOT = os.getcwd()
+          MODELS = os.path.join(ROOT, 'mini-japanrail-3d', 'models')
+          VENDOR = os.path.join(ROOT, 'mini-japanrail-3d', 'vendor', 'three')
+          OUT = os.path.join(ROOT, 'audit-out'); os.makedirs(OUT, exist_ok=True)
+          GAP = 0.03
+          SHINKANSEN_SLUGS = {'shinkansen-n700-2-jr','shinkansen-n700-2-jr-1781004934-n700-jrc-8-crp-f43837e2','shinkansen-w7-jr','tf2-e3-2000-7car','tf2-e5-10car','tf2-e6-7car','tf2-h5-10car','tf2-n700-8000-8car','tf2-n700s-16car','tf2-n700s-8000-kamome'}
+          def is_shinkansen(slug): return slug.startswith('shinkansen-') or slug in SHINKANSEN_SLUGS
+          class Dumper:
+              def __init__(self):
+                  self.p = subprocess.Popen(['node','/tmp/glbdump.mjs',VENDOR], stdin=subprocess.PIPE, stdout=subprocess.PIPE, bufsize=0)
+              def _rd(self, n):
+                  parts=[]; got=0
+                  while got<n:
+                      b=self.p.stdout.read(n-got)
+                      if not b: raise RuntimeError('dumper EOF')
+                      parts.append(b); got+=len(b)
+                  return b''.join(parts)
+              def dump(self, path):
+                  self.p.stdin.write((path+'\n').encode()); self.p.stdin.flush()
+                  head=self._rd(8); assert head[:4]==b'GLBD'
+                  st=struct.unpack('<I',head[4:8])[0]
+                  if st==1:
+                      ln=struct.unpack('<I',self._rd(4))[0]; raise RuntimeError(self._rd(ln).decode())
+                  mc=struct.unpack('<I',self._rd(4))[0]; ms=[]
+                  for _ in range(mc):
+                      vc,tc=struct.unpack('<II',self._rd(8))
+                      v=np.frombuffer(self._rd(vc*12),dtype=np.float32).astype(np.float64).reshape(-1,3)
+                      t=np.frombuffer(self._rd(tc*12),dtype=np.int32).astype(np.int64).reshape(-1,3)
+                      ms.append((v,t))
+                  return ms
+          import struct
+          _d=None; _lock=threading.Lock(); _cache={}
+          def meshes(path):
+              global _d
+              with _lock:
+                  if path in _cache: return _cache[path]
+                  if _d is None: _d=Dumper()
+                  m=_d.dump(path); _cache[path]=m; return m
+          def bbox(ms):
+              allv=np.vstack([v for v,_ in ms]); return allv.min(0), allv.max(0)
+          def face_data(ms):
+              cs,ns,ars=[],[],[]
+              for v,t in ms:
+                  a,b,c=v[t[:,0]],v[t[:,1]],v[t[:,2]]
+                  cr=np.cross(b-a,c-a); ar2=np.linalg.norm(cr,axis=1); keep=ar2>1e-16
+                  cs.append((a[keep]+b[keep]+c[keep])/3.0); ns.append(cr[keep]/ar2[keep,None]); ars.append(ar2[keep]/2.0)
+                  if not cs: return np.zeros((0,3)),np.zeros((0,3)),np.zeros(0)
+              return np.vstack(cs),np.vstack(ns),np.concatenate(ars)
+          def rot_pi(mn,mx): return np.array([-mx[0],mn[1],-mx[2]]),np.array([-mn[0],mx[1],-mn[2]])
+          def rot_p90(mn,mx): return np.array([mn[2],mn[1],-mx[0]]),np.array([mx[2],mx[1],-mn[0]])
+          def rot_270(mn,mx): return np.array([-mx[2],mn[1],mn[0]]),np.array([-mn[2],mx[1],mx[0]])
+          def nose_end(ms):
+              allv=np.vstack([v for v,_ in ms]); mn,mx=allv.min(0),allv.max(0); sz=mx-mn
+              axis=0 if sz[0]>sz[2] else 2; N=12; w=np.zeros(N); lo,hi=mn[axis],mx[axis]
+              if hi-lo<1e-9: return None
+              for v,_ in ms:
+                  vv=v[::3]; t=vv[:,axis]; half=np.abs(vv[:,2] if axis==0 else vv[:,0])
+                  k=np.clip(((t-lo)/(hi-lo+1e-9)*N).astype(int),0,N-1); np.maximum.at(w,k,half)
+              def tip(d):
+                  i=0 if d>0 else N-1
+                  while 0<=i<N and w[i]<=0: i+=d
+                  return w[i] if 0<=i<N else None
+              h,t2=tip(1),tip(-1)
+              if h is None or t2 is None: return None
+              if abs(h-t2)<max(h,t2)*0.08: return None
+              return 'minus' if h<t2 else 'plus'
+          def normalize(ms, car, lenM, scale_couple=True):
+              mn,mx=bbox(ms); flip=bool(car.get('flip'))
+              if flip: mn,mx=rot_pi(mn,mx)
+              sz=mx-mn
+              if sz[0]>sz[2]:
+                  mn,mx=(rot_p90(mn,mx) if not flip else rot_270(mn,mx)); sz=mx-mn
+              s=lenM/sz[2] if sz[2]>1e-6 else 1.0
+              c=(mn+mx)/2*s
+              fr=car.get('couple') or [lenM/2+0.05,lenM/2+0.05]
+              f,r=fr[0],fr[1]
+              if flip: f,r=r,f
+              if scale_couple: cF,cR=f*s-c[2], r*s+c[2]
+              else: cF,cR=f-c[2], r+c[2]
+              return cF,cR,s,c[2]
+          def simulate(slug, cars, lenM_end, lenM_mid, scale_couple=True, want_nose=True):
+              n=len(cars); cars=[dict(c) for c in cars]
+              swapped=False
+              if n>=2 and not is_shinkansen(slug):
+                  cars[0],cars[n-1]=cars[n-1],cars[0]; swapped=True
+              lenOf=lambda i: lenM_end if i in (0,n-1) else lenM_mid
+              out=[]
+              for ci,car in enumerate(cars):
+                  ms=meshes(os.path.join(MODELS,slug,car['model']))
+                  ne=nose_end(ms) if ci in (0,n-1) else None
+                  tog=False
+                  if want_nose and ci in (0,n-1):
+                      want='minus' if ci==0 else 'plus'; neF=ne
+                      if neF and car.get('flip'): neF='minus' if neF=='plus' else 'plus'
+                      if neF:
+                          mn0,mx0=bbox(ms); s0=mx0-mn0
+                          if s0[0]>s0[2]: neF='minus' if neF=='plus' else 'plus'
+                      if neF and neF!=want: car['flip']=not car.get('flip',False); tog=True
+                  cF,cR,s,cz=normalize(ms,car,lenOf(ci),scale_couple)
+                  out.append({'ci':ci,'car':car,'ne':ne,'tog':tog,'cF':cF,'cR':cR,'s':s,'cz':cz,'lenM':lenOf(ci)})
+              z=0.0; prevR=0.0; gaps=[]
+              for i in range(n):
+                  if i>0:
+                      z+=prevR+GAP+out[i]['cF']
+                      gaps.append(out[i]['cF']+prevR+GAP-(out[i]['lenM']+out[i-1]['lenM'])/2)
+                  out[i]['z']=z; prevR=out[i]['cR']
+              return out,gaps,swapped
+          # ---------- 方向判定器(F1/F2/F3) ----------
+          ENDFACE_NL=0.55
+          def car_features(ms):
+              allv=np.vstack([v for v,_ in ms]); mn,mx=allv.min(0),allv.max(0); sz=mx-mn
+              ai=0 if sz[0]>sz[2] else 2; si=2 if ai==0 else 0
+              L,W,H=sz[ai],sz[si],sz[1]
+              c,n,a=face_data(ms); nl=n[:,ai]
+              ns_=np.abs(n[:,si]); relh_all=(c[:,1]-mn[1])/H
+              sw=(ns_>0.7)&(relh_all>0.4)&(relh_all<0.9)&(a>0.004*W*H)
+              ends={}
+              for end,sgn in (('minus',-1.0),('plus',1.0)):
+                  d_v=(allv[:,ai]-mn[ai]) if sgn<0 else (mx[ai]-allv[:,ai])
+                  d_f=(c[:,ai]-mn[ai]) if sgn<0 else (mx[ai]-c[:,ai])
+                  r_win=None
+                  if sw.sum():
+                      dsw=(c[sw,ai]-mn[ai]) if sgn<0 else (mx[ai]-c[sw,ai]); r_win=float(dsw.min())/L
+                  thin=(nl*sgn>ENDFACE_NL)&(d_f>=0)&(d_f<0.03*L); ae=a[thin]; wa=float(ae.sum())
+                  r_det=float(np.median(ae)/wa) if len(ae)>=8 and wa>1e-9 else None
+                  s1=(d_v>=0.005*L)&(d_v<0.03*L); s2=(d_v>=0.03*L)&(d_v<0.08*L); s3=(d_v>=0.10*L)&(d_v<0.16*L)
+                  ctr=(mn[si]+mx[si])/2
+                  hw1=float(np.abs(allv[s1,si]-ctr).max()) if s1.sum()>20 else None
+                  hw2=float(np.abs(allv[s2,si]-ctr).max()) if s2.sum()>20 else None
+                  hw3=float(np.abs(allv[s3,si]-ctr).max()) if s3.sum()>20 else None
+                  r_tube=None
+                  if hw1 is not None and hw3 is not None and hw3>1e-6:
+                      r_tube=1.0 if (hw1/hw3<0.70 and hw2 is not None and hw2/hw3>=0.90) else 0.0
+                  ends[end]={'r_win':r_win,'r_det':r_det,'r_tube':r_tube}
+              return {'L':L,'axis':'xz'[ai==2],'sw':int(sw.sum()),'ends':ends}
+          def scores(feat):
+              sc={}
+              for end,e in feat['ends'].items():
+                  f1=0.0 if e['r_win'] is None else float(np.clip((e['r_win']-0.06)/0.09,0,1))
+                  f2=0.0 if e['r_det'] is None else float(np.clip((0.004-e['r_det'])/0.003,0,1))
+                  f3=0.0 if e['r_tube'] is None else e['r_tube']
+                  sc[end]=f1+f2-f3
+              return sc
+          def classify(sc):
+              sp,sm=sc['plus'],sc['minus']; d=sp-sm
+              if sp>0.9 and sm>0.9 and abs(d)<0.35: return 'both'
+              if max(sp,sm)<0.35 and abs(d)<0.25: return 'mid'
+              if d>0.35 and sp>0.6: return 'plus'
+              if d<-0.35 and sm>0.6: return 'minus'
+              return 'unsure'
+          def final_dir(vd, flip, xaxis):
+              if vd=='both': return 'both'
+              if vd in ('mid','unsure'): return 'na'
+              if not xaxis:
+                  return ('minus' if flip else 'plus') if vd=='plus' else ('plus' if flip else 'minus')
+              return ('plus' if flip else 'minus') if vd=='plus' else ('minus' if flip else 'plus')
+          def color(g):
+              if g < -0.15 or g > 0.50: return 'red'
+              if g < -0.05 or g > 0.30: return 'amber'
+              return 'green'
+          def main():
+              slugs=sorted(d for d in os.listdir(MODELS) if os.path.isfile(os.path.join(MODELS,d,'consist.json')))
+              new_rows=[]; old_rows=[]; svals={}; nose_stats={'det':0,'tog':0,'flat':0}
+              orient=[]; controls={}
+              for slug in slugs:
+                  cj=json.load(open(os.path.join(MODELS,slug,'consist.json')))
+                  cars=cj['cars']; lenM=cj.get('car_length_m') or 20; mid=cj.get('middle_car_length_m') or lenM
+                  outN,gapsN,_=simulate(slug,cars,lenM,mid,True)
+                  outO,gapsO,_=simulate(slug,cars,lenM,mid,False)
+                  svals[slug]=[round(o['s'],4) for o in outN]
+                  for i,g in enumerate(gapsN):
+                      new_rows.append({'slug':slug,'j':i,'gap':round(g,4),'color':color(g)})
+                  for i,g in enumerate(gapsO):
+                      old_rows.append({'slug':slug,'j':i,'gap':round(g,4),'color':color(g)})
+                  n=len(cars)
+                  for ci in ((0,n-1) if n>1 else (0,)):
+                      o=outN[ci]
+                      if o['ne'] is not None: nose_stats['det']+=1
+                      else: nose_stats['flat']+=1
+                      if o['tog']: nose_stats['tog']+=1
+                  # 方向(按位置序)
+                  for ci in range(n):
+                      o=outN[ci]
+                      ms=meshes(os.path.join(MODELS,slug,o['car']['model']))
+                      feat=car_features(ms); sc=scores(feat); vd=classify(sc)
+                      if ci in (0,n-1):
+                          fd=final_dir(vd,bool(o['car'].get('flip')),feat['axis']=='x')
+                          want='minus' if ci==0 else 'plus'
+                          st='ok' if fd in (want,'both') else ('na' if fd=='na' else 'INWARD')
+                          orient.append({'slug':slug,'pos':ci,'model':o['car']['model'],'verdict':vd,'final':fd,'want':want,'status':st,'ne':o['ne'],'tog':o['tog'],'flip':bool(o['car'].get('flip')),'scores':{k:round(v,3) for k,v in sc.items()}})
+                  print(slug, flush=True)
+              # 对照样例
+              def ctl(slug, expect_lo, expect_hi, note):
+                  cj=json.load(open(os.path.join(MODELS,slug,'consist.json')))
+                  lenM=cj.get('car_length_m') or 20; mid=cj.get('middle_car_length_m') or lenM
+                  _,g,_=simulate(slug,cj['cars'],lenM,mid,True)
+                  ok=all(expect_lo<=x<=expect_hi for x in g)
+                  controls[note]={'gaps':[round(x,4) for x in g],'pass':ok}
+              ctl('jr-east-kiha-e130-100',0.029,0.031,'kiha 应 +0.0300')
+              ctl('tf2-e5-10car',-0.10,0.10,'e5 应接近 0')
+              # 构造 -1.0 重叠样例(kiha couple 各缩 0.515)
+              cj=json.load(open(os.path.join(MODELS,'jr-east-kiha-e130-100','consist.json')))
+              fake=[dict(c) for c in cj['cars']]
+              for c in fake: c['couple']=[round(c['couple'][0]-0.515,3),round(c['couple'][1]-0.515,3)]
+              lenM=cj.get('car_length_m') or 20
+              _,g,_=simulate('jr-east-kiha-e130-100',fake,lenM,lenM,True)
+              controls['构造-1.0重叠 应报红']={'gaps':[round(x,4) for x in g],'pass':all(color(x)=='red' and x<-0.5 for x in g)}
+              # 汇总
+              from collections import Counter
+              nc=Counter(r['color'] for r in new_rows); oc=Counter(r['color'] for r in old_rows)
+              old_by={(r['slug'],r['j']):r['color'] for r in old_rows}
+              trans=Counter((old_by[(r['slug'],r['j'])],r['color']) for r in new_rows)
+              summary={'new_colors':dict(nc),'old_colors':dict(oc),'transition':{f'{a}->{b}':n for (a,b),n in trans.items()},
+                       'junctions':len(new_rows),'consists':len(slugs),'nose_stats':nose_stats,'controls':controls,
+                       'structural_new':[r for r in new_rows if abs(r['gap'])>0.5],
+                       'orient_inward':[o for o in orient if o['status']=='INWARD'],
+                       'orient_status':dict(Counter(o['status'] for o in orient))}
+              json.dump(new_rows,open(f'{OUT}/coupling_new.json','w'),ensure_ascii=False)
+              json.dump(old_rows,open(f'{OUT}/coupling_old_recon.json','w'),ensure_ascii=False)
+              json.dump(orient,open(f'{OUT}/orientation.json','w'),ensure_ascii=False)
+              json.dump(svals,open(f'{OUT}/s_values.json','w'),ensure_ascii=False)
+              json.dump(summary,open(f'{OUT}/summary.json','w'),ensure_ascii=False,indent=1)
+              print(json.dumps(summary,ensure_ascii=False,indent=1)[:4000])
+          main()
+          PYEOF
+      - name: run audit
+        run: cd $GITHUB_WORKSPACE && python3 /tmp/audit.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: audit-results
+          path: audit-out/

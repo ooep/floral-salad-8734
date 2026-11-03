@@ -7,11 +7,11 @@
    "name": "JR East E657 Series (10)_Data",
    "model": "Cube.glb",
    "texture": "MainTex.ktx2",
-   "flip": false,
+   "flip": true,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
     11.426,
-    10.376
+    10.333
    ],
    "lod": {
     "model": "Cube.stand-in.glb",
@@ -844,11 +844,11 @@
    "name": "TrailerJRE_E657_108",
    "model": "Cube.005JRE_E657_6JRE_E657_6JRE_E657_10JRE_E657_10.glb",
    "texture": "MainTex.ktx2",
-   "flip": true,
+   "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
     11.426,
-    10.276
+    10.334
    ],
    "lod": {
     "model": "Cube.005JRE_E657_6JRE_E657_6JRE_E657_10JRE_E657_10.stand-in.glb",

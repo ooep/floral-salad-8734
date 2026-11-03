@@ -3,18 +3,30 @@ name: SEO determinism guard
 # 回归护栏（2026-11 增补）：build_seo_static.py 的 resolve_line_adj 曾存在顺序敏感
 # 消歧——nodes=set() 之后 pending 按 set 迭代序（= 字符串哈希序，随 PYTHONHASHSEED
 # 漂移）处理，同一输入会产出不同页面。修复后（pending 按 sorted(nodes) + 线名唯一
-# 归属锁定）输出必须与种子无关。本护栏以 PYTHONHASHSEED=1 与 =2 各构建一次整站并
-# 比对整树指纹，不一致即失败。
+# 归属锁定）输出必须与种子无关。本护栏以 PYTHONHASHSEED=1..4 各构建一次整站并
+# 比对整树指纹，不一致即失败。用 4 个种子而非 2 个：实测 set() 回归变体的顺序
+# 敏感盆地按种子分群（seed 1/2/3 同盆地、seed 4 异盆地），仅比双种子会漏检。
 #
 # 指纹口径：lines/ 与 stations/ 全部产物 + 根级 sitemap*.xml/robots.txt/404.html，
 # 逐文件 sha256 得 "<hash>  <relpath>" 行，按 relpath 排序后整体再 sha256（FP_STABLE）。
-# og-image.png 受 PIL 版本/字体环境影响，不计入 FP_STABLE，仅参与同环境内两种子
+# og-image.png 受 PIL 版本/字体环境影响，不计入 FP_STABLE，仅参与同环境内多种子
 # 互比（FP_FULL）。EXPECTED 为 2026-11-03 在 head 3c07eefc 基线上的实测值
 # （Python 3.12、无配线图数据、无 CJK 字体环境亦不影响 FP_STABLE）；
 # 生成器输出发生预期内变更时须同步更新该值。
 #
 # 本 workflow 为只读构建比对：不产出部署物、不触发任何部署；
 # deploy.yml / refresh.yml 等现有部署链的触发条件未做任何改动。
+#
+# 统计口径更正（2026-11-03 独立复核实测，基线 3c07eefc seed0 vs 补丁 seed0）：
+# 差异闭包为 56 文件（22 线路页 + 34 车站页），归属翻转 30 处 / 涉及 22 条线路
+# （29 处线名唯一归属锁定 + 1 处地理最近＝京阪黄檗）。早期描述 53(20+33)/26/20
+# 为误报，以本行为准。
+#
+# 判定分支（2026-11-03 增补）：paths 同时覆盖生成器输入（data 五件 + index.html +
+# app.js）。若本次变更只涉及这些输入、不涉及生成器脚本/配置/本护栏，则只跑
+# seed1 vs seed2 互比（要求 0 差异），跳过 EXPECTED 指纹比对，避免预期内产物
+# 变更误报；无法确定差异范围时（workflow_dispatch/新分支/基线获取失败）按完整
+# 检查处理。
 
 on:
   push:
@@ -23,11 +35,25 @@ on:
       - 'mini-japanrail-3d/seo/build_seo_static.py'
       - 'mini-japanrail-3d/seo/seo_config.json'
       - '.github/workflows/seo-determinism.yml'
+      - 'mini-japanrail-3d/data/station_map.json'
+      - 'mini-japanrail-3d/data/segments3d.geojson'
+      - 'mini-japanrail-3d/data/names_i18n.json'
+      - 'mini-japanrail-3d/data/lines_map.json'
+      - 'mini-japanrail-3d/data/station_key_index.json'
+      - 'mini-japanrail-3d/index.html'
+      - 'mini-japanrail-3d/app.js'
   pull_request:
     paths:
       - 'mini-japanrail-3d/seo/build_seo_static.py'
       - 'mini-japanrail-3d/seo/seo_config.json'
       - '.github/workflows/seo-determinism.yml'
+      - 'mini-japanrail-3d/data/station_map.json'
+      - 'mini-japanrail-3d/data/segments3d.geojson'
+      - 'mini-japanrail-3d/data/names_i18n.json'
+      - 'mini-japanrail-3d/data/lines_map.json'
+      - 'mini-japanrail-3d/data/station_key_index.json'
+      - 'mini-japanrail-3d/index.html'
+      - 'mini-japanrail-3d/app.js'
   workflow_dispatch: {}
 
 permissions:
@@ -48,6 +74,33 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
+
+      - name: Detect change scope (generator vs inputs-only)
+        id: scope
+        run: |
+          set -euo pipefail
+          BASE=""
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE="${{ github.event.pull_request.base.sha }}"
+          elif [ "${{ github.event_name }}" = "push" ]; then
+            BASE="${{ github.event.before }}"
+          fi
+          CHANGED=""
+          if [ -n "$BASE" ] && [ "$BASE" != "0000000000000000000000000000000000000000" ]; then
+            if git fetch --quiet --depth=1 origin "$BASE" 2>/dev/null; then
+              CHANGED=$(git diff --name-only "$BASE" HEAD)
+            fi
+          fi
+          if [ -z "$CHANGED" ]; then
+            echo "generator_touched=true" >> "$GITHUB_OUTPUT"
+            echo "scope: 无法确定差异范围（workflow_dispatch/新分支/基线获取失败）→ 完整检查（含 EXPECTED）"
+          elif printf '%s\n' "$CHANGED" | grep -qE '^(mini-japanrail-3d/seo/build_seo_static\.py|mini-japanrail-3d/seo/seo_config\.json|\.github/workflows/seo-determinism\.yml)$'; then
+            echo "generator_touched=true" >> "$GITHUB_OUTPUT"
+            echo "scope: 生成器/配置/护栏自身变更 → 完整检查（含 EXPECTED）"
+          else
+            echo "generator_touched=false" >> "$GITHUB_OUTPUT"
+            echo "scope: 仅数据/前端输入变更 → 只跑多种子互比，跳过 EXPECTED"
+          fi
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -102,33 +155,37 @@ jobs:
                   robots.txt 404.html og-image.png
           }
 
-          clean
-          PYTHONHASHSEED=1 python3 seo/build_seo_static.py
-          fingerprint | tee /tmp/fp1.txt
-          clean
-          PYTHONHASHSEED=2 python3 seo/build_seo_static.py
-          fingerprint | tee /tmp/fp2.txt
+          for SEED in 1 2 3 4; do
+            clean
+            PYTHONHASHSEED=$SEED python3 seo/build_seo_static.py
+            fingerprint | tee /tmp/fp$SEED.txt
+          done
 
           FP1_FULL=$(sed -n 's/^FP_FULL=//p' /tmp/fp1.txt)
-          FP2_FULL=$(sed -n 's/^FP_FULL=//p' /tmp/fp2.txt)
           FP1_STABLE=$(sed -n 's/^FP_STABLE=//p' /tmp/fp1.txt)
-          FP2_STABLE=$(sed -n 's/^FP_STABLE=//p' /tmp/fp2.txt)
-
           echo "seed1 FP_FULL=$FP1_FULL"
-          echo "seed2 FP_FULL=$FP2_FULL"
           echo "seed1 FP_STABLE=$FP1_STABLE"
-          echo "seed2 FP_STABLE=$FP2_STABLE"
+
+          GENERATOR_TOUCHED='${{ steps.scope.outputs.generator_touched }}'
 
           fail=0
-          if [ "$FP1_FULL" != "$FP2_FULL" ]; then
-            echo "::error::整树指纹（含 og-image）两种子不一致 → 存在顺序敏感回归"
-            fail=1
-          fi
-          if [ "$FP1_STABLE" != "$FP2_STABLE" ]; then
-            echo "::error::整树指纹（FP_STABLE）两种子不一致 → 存在顺序敏感回归"
-            fail=1
-          fi
-          if [ "$FP1_STABLE" != "$EXPECTED_FP_STABLE" ]; then
+          for SEED in 2 3 4; do
+            FPN_FULL=$(sed -n 's/^FP_FULL=//p' /tmp/fp$SEED.txt)
+            FPN_STABLE=$(sed -n 's/^FP_STABLE=//p' /tmp/fp$SEED.txt)
+            echo "seed$SEED FP_FULL=$FPN_FULL"
+            echo "seed$SEED FP_STABLE=$FPN_STABLE"
+            if [ "$FPN_FULL" != "$FP1_FULL" ]; then
+              echo "::error::整树指纹（含 og-image）seed$SEED 与 seed1 不一致 → 存在顺序敏感回归"
+              fail=1
+            fi
+            if [ "$FPN_STABLE" != "$FP1_STABLE" ]; then
+              echo "::error::整树指纹（FP_STABLE）seed$SEED 与 seed1 不一致 → 存在顺序敏感回归"
+              fail=1
+            fi
+          done
+          if [ "$GENERATOR_TOUCHED" = "false" ]; then
+            echo "仅输入（data/index.html/app.js）变更：跳过 EXPECTED 指纹比对（本次 FP_STABLE=$FP1_STABLE）"
+          elif [ "$FP1_STABLE" != "$EXPECTED_FP_STABLE" ]; then
             echo "::error::FP_STABLE 与期望值不符（期望 $EXPECTED_FP_STABLE）。若为预期内输出变更，请更新本 workflow 的 EXPECTED_FP_STABLE"
             fail=1
           fi

@@ -22,6 +22,9 @@ sitemap / robots / 404 / OG 分享图等搜索引擎基础设施。
   * 输出 robots.txt、404.html、og-image.png。
 
 只依赖 Python 标准库（PIL 可选，仅用于生成 og-image.png，缺失时跳过并告警）。
+
+确定性红线：顺序敏感点唯一：L444 `sorted(nodes)`（resolve_line_adj 的 pending 消费序）；
+改动前必读——去掉 sorted 会使输出随 PYTHONHASHSEED 漂移（护栏见 .github/workflows/seo-determinism.yml）。
 """
 import argparse
 import base64
@@ -428,6 +431,7 @@ def resolve_line_adj(rec, st, name_groups, skj):
         return best
 
     resolved = {}
+    # 此处顺序无关（无跨节点写入：resolved[n] 只由 n 自身的候选决定）
     for n in nodes:
         if n in st:
             resolved[n] = n
@@ -436,6 +440,7 @@ def resolve_line_adj(rec, st, name_groups, skj):
             if cands and len(cands) == 1:
                 resolved[n] = cands[0]
 
+    # 必须 sorted：set 迭代序随 PYTHONHASHSEED 漂移，会改变 hint 级联与页面输出（见 seo-determinism.yml）
     pending = [n for n in sorted(nodes) if n not in resolved]
     while pending:
         progressed = False

@@ -2,6 +2,7 @@
  "source": "1781004934",
  "name": "Shinkansen N700.2 JR (8)_Data",
  "car_length_m": 28.26,
+ "middle_car_length_m": 25.0,
  "cars": [
   {
    "name": "Shinkansen N700.2 JR (8)_Data",

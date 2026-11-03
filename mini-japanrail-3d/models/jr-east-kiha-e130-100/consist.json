@@ -214,11 +214,11 @@
    "name": "TrailerJR East Kiha E130-100 (2 Cars)0",
    "model": "front1JR_East_Kiha_E130-100_2Cars_JR_East_Kiha_E130-100_2Cars_JR_East_Kiha_E130-100_2_Cars.glb",
    "texture": "MainTex.ktx2",
-   "flip": true,
+   "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
     10.13,
-    9.75
+    10.13
    ],
    "lod": {
     "model": "front1JR_East_Kiha_E130-100_2Cars_JR_East_Kiha_E130-100_2Cars_JR_East_Kiha_E130-100_2_Cars.stand-in.glb",

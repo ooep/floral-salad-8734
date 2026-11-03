@@ -7,11 +7,11 @@
    "name": "Enoden305_Data",
    "model": "Cube.glb",
    "texture": "MainTex_5d777e1a.ktx2",
-   "flip": false,
+   "flip": true,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
     6.23,
-    4.47
+    5.595
    ],
    "lod": {
     "model": "Cube.stand-in.glb",
@@ -113,11 +113,11 @@
    "name": "TrailerEnoden3051",
    "model": "Cube.001Enoden305.glb",
    "texture": "MainTex_cfec5d14.ktx2",
-   "flip": true,
+   "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
     6.23,
-    4.47
+    5.595
    ],
    "lod": {
     "model": "Cube.001Enoden305.stand-in.glb",

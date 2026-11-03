@@ -7,11 +7,11 @@
    "name": "ShonanMono-5601F Series5000_Data",
    "model": "5603-1ofuna.glb",
    "texture": "MainTex.ktx2",
-   "flip": false,
+   "flip": true,
    "shader": "Custom/Buildings/Building/Default",
    "couple": [
     6.836,
-    6.836
+    6.722
    ],
    "lod": {
     "model": "engine_lod.glb",
@@ -149,8 +149,8 @@
    "flip": false,
    "shader": "Custom/Buildings/Building/Default",
    "couple": [
-    6.433,
-    6.433
+    6.777,
+    6.793
    ],
    "lod": {
     "model": "passenger_lod_ShonanMono-5601F_Series5000.glb",
@@ -205,11 +205,11 @@
    "name": "TrailerShonanMono-5601F Series50001",
    "model": "5603-3_ShonanMono-5601F_Series5000.glb",
    "texture": "MainTex.ktx2",
-   "flip": true,
+   "flip": false,
    "shader": "Custom/Buildings/Building/Default",
    "couple": [
     6.836,
-    6.836
+    6.722
    ],
    "lod": {
     "model": "engine_lod_ShonanMono-5601F_Series5000.glb",

@@ -529,6 +529,17 @@ function bitOfDate(ms) {
   if (HOLIDAYS.has(p.key)) return 4;
   return (p.wd >= 1 && p.wd <= 5) ? 1 : (p.wd === 6 ? 2 : 4);
 }
+/* ---- 服务日口径(04:00 切日) ----
+   铁路惯例:04:00 前的凌晨段属于「前一天」的运营日。数据生成器已按此口径烘焙
+   (「日期按始发站发车日判定,跨零点的凌晨段属于前一天」),站点渲染层选日型文件
+   时也必须用服务日而非日历日,否则 00:00–04:00 窗口内:
+     ① 前一日跨零点班次(如周六 00:02 仍在开的平日车)被按新日历日错杀 → 消失;
+     ② 新日历日的班次被提前 24h 显示 → 幽灵车。
+   注意:延误/舒适度门禁用「日历日」与 feed 的 date 字段配对(当日实时数据),
+   口径不同,切勿改用本组函数(见 delayApplyData/comfortApplyData)。 */
+const SVC_DAY_OFF = 14400000; /* 04:00 = 4h */
+function serviceBitOf(ms) { return bitOfDate(ms - SVC_DAY_OFF); }
+function serviceKeyOf(ms) { return jstDateParts(ms - SVC_DAY_OFF).key; }
 /* ---- 运転日(具体日期)互斥 ----
    源数据把同一列车拆成基本/延伸两条且 rday 都是 7 时(サンライズ瀬戸 東京→高松 /
    →琴平)，仅靠 r 位掩码无法区分。构建期按 data/service_calendar.json 烘焙：
@@ -5108,7 +5119,7 @@ async function boot() {
     /* 当日时刻表与静态核心数据并行下载(tokkyu 特急爱称表、names_i18n 多语站名表等)。
        站房轮廓/出入口/站台三件(共 14MB,z12+ 才有视觉意义的层)不进关键路径 ——
        由 bindLazyHeavyData 在首次放大(z≥11.5)或开关打开时按需拉取,启动少下 14MB */
-    dayBitAuto = bitOfDate(Date.now());
+    dayBitAuto = serviceBitOf(Date.now());
     dayBit = dayMode === 'auto' ? dayBitAuto : dayMode;
     /* station_map.json(2.7MB gz)移出首帧关键路径:它只用于官方坐标补缺/股道底图/徽章限定键,
        首帧(轨道/车站渲染)不依赖。并行发起但不 await;归位时设 8s 限期(自发起时起算,见下),
@@ -6238,8 +6249,8 @@ function refreshClockUI(M) {
   const waiting = !!(dataReady && ttState && ttState.mode === 'shards' && !ttDayReq && ttState.bucket !== ttBucketOf(M));
   const cs = fmtHMS(M) + (waiting ? ' …' : '');
   if (cs !== lastClockStr) { cTimeEl.textContent = cs; lastClockStr = cs; }
-  const p = jstDateParts(simNow());
-  const effBit = dayMode === 'auto' ? bitOfDate(simNow()) : dayMode;
+  const p = jstDateParts(simNow() - SVC_DAY_OFF);
+  const effBit = dayMode === 'auto' ? serviceBitOf(simNow()) : dayMode;
   const label = DAY_LABEL[effBit];
   const ds = (clockMode === 'live' ? '● ' : '⏵ ') + (label ? label[lang] : '') + ' ' + pad(p.m) + '/' + pad(p.d);
   if (ds !== lastDayStr) { cDayEl.textContent = ds; cDayEl.title = (label ? label[lang] : '') + ' · ' + T().dayT; lastDayStr = ds; }
@@ -6380,7 +6391,7 @@ document.querySelectorAll('#dayRow .chip').forEach(c => c.addEventListener('clic
   stateHash();
 }));
 async function ensureDayFile() {
-  const want = dayMode === 'auto' ? bitOfDate(simNow()) : dayMode;
+  const want = dayMode === 'auto' ? serviceBitOf(simNow()) : dayMode;
   if (dayBit === want && tripList.length) return;
   dayBit = want;
   if (!TRAIN_FILES[want]) return;
@@ -6408,7 +6419,7 @@ async function ensureDayFile() {
 }
 setInterval(() => { // 跨日自动切换(长回放/挂机)；同日型跨日期(周日→祝日)时运転日过滤也要重建
   if (!dataReady) return;
-  const want = dayMode === 'auto' ? bitOfDate(simNow()) : dayMode;
+  const want = dayMode === 'auto' ? serviceBitOf(simNow()) : dayMode;
   if (want !== dayBit) ensureDayFile();
   else if (dayListDate !== jstDateParts(simNow()).key) buildDayIndex();
 }, 30000);
@@ -7501,7 +7512,7 @@ function buildBoard(station, coord) {
   /* 缓存键必须带 dayBit + JST 日期:运行日切换(平日↔周六/周日)或跨日后若沿用旧键,
      会命中切换前构建的时刻表;d/x 行的取舍也随日期变化，只带 dayBit 会跨日命中旧行 */
   const ck = (coord ? (nk + '|' + coord[0].toFixed(3) + ',' + coord[1].toFixed(3)) : nk) +
-    '#' + dayBit + '@' + jstDateParts(simNow()).key + '#' + (ttState && ttState.mode || 'full');
+    '#' + dayBit + '@' + serviceKeyOf(simNow()) + '#' + (ttState && ttState.mode || 'full');
   const hit = partial ? null : boardCache.get(ck);
   if (hit) {
     if (live) boardSyncDly(hit, live);
@@ -7531,7 +7542,7 @@ function buildBoard(station, coord) {
     /* 运転日互斥：站牌是「当日 0–31 时」时刻表，所有行(含跨零点的 31 时到达行)
        都按当日服务日判定。按 rowMin>=1440 归前一日会把今晚发车的 21:26 行配错终点 */
     if (t.rd || t.rx) {
-      if (!tripRunsOn(t, svcKeyBack(simNow(), 0))) continue;
+      if (!tripRunsOn(t, serviceKeyOf(simNow()))) continue;
     }
     // 到达记录：idx > 0 即列车从某站开来本站（含终着 idx == N-1）。时间用 arr[idx]，方向=起点 jas[0]
     if (idx > 0) {

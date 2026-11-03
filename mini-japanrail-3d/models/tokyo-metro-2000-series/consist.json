@@ -10,8 +10,8 @@
    "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    10.713,
-    7.003
+    7.72,
+    10.713
    ],
    "lod": {
     "model": "2103.stand-in.glb",
@@ -207,8 +207,8 @@
    "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    10.713,
-    7.003
+    7.594,
+    10.713
    ],
    "lod": {
     "model": "2203TM2000SeriesMetro.stand-in.glb",
@@ -332,8 +332,8 @@
    "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    10.713,
-    7.003
+    7.594,
+    10.713
    ],
    "lod": {
     "model": "2303TM2000SeriesMetro.stand-in.glb",
@@ -457,8 +457,8 @@
    "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    10.713,
-    7.003
+    7.594,
+    10.713
    ],
    "lod": {
     "model": "2403TM2000SeriesMetro.stand-in.glb",
@@ -582,8 +582,8 @@
    "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    10.713,
-    10.113
+    7.594,
+    10.713
    ],
    "lod": {
     "model": "2503TM2000SeriesMetro.stand-in.glb",
@@ -707,7 +707,7 @@
    "flip": true,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    10.125,
+    7.72,
     10.125
    ],
    "lod": {

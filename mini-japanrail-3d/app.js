@@ -10514,8 +10514,14 @@ const M3D = (() => {
             if (half > w[k]) w[k] = half;
           }
         });
-        const h = w.slice(0, 3).reduce((a, b) => a + b, 0), t2 = w.slice(-3).reduce((a, b) => a + b, 0);
-        if (Math.abs(h - t2) < Math.max(h, t2) * 0.02) return null; /* 无收窄(中间车) */
+        /* 读数守卫:顶点按环分布、平头车门袋凹槽会污染多箱窗口,产生噪声读数误翻平头车;
+           只比两端最外 1 个非空箱,且要求强收窄(≥8%,流线鼻锥级别)才判;平头车交给 consist flip(约定已对齐) */
+        const sideTip = d => { let i = d > 0 ? 0 : N - 1;
+          while (i >= 0 && i < N && w[i] <= 0) i += d;
+          return i >= 0 && i < N ? w[i] : null; };
+        const h = sideTip(1), t2 = sideTip(-1);
+        if (h === null || t2 === null) return null; /* 端部顶点不足,不判 */
+        if (Math.abs(h - t2) < Math.max(h, t2) * 0.08) return null; /* 无强收窄(中间车/平头车) */
         return h < t2 ? 'minus' : 'plus';
       } catch (e) { return null; }
     }
@@ -10523,11 +10529,19 @@ const M3D = (() => {
       const gltf = await loader.loadAsync(base + car.model).then(r => { progTick(); return r; });
       const gScene = gltf.scene;
       gScene.traverse(o => { if (o.isMesh) o.frustumCulled = false; });
-      /* 端车鼻端朝外修正:首车需朝 -z、末车需朝 +z;翻转会同步对调 couple(见 normalizeCar) */
+      /* 端车鼻端朝外修正:首车需朝 -z、末车需朝 +z;翻转会同步对调 couple(见 normalizeCar)
+         flip-blind 修正:ne 是原始系读数,须先按既有 flip(π) 与长轴 X 时的 +90° 换算到最终系再与 want 比较 */
       if (ci === 0 || ci === cars.length - 1) {
         const ne = noseEnd(gScene);
         const want = ci === 0 ? 'minus' : 'plus';
-        if (ne && ne !== want) car = { ...car, flip: !car.flip };
+        let neF = ne;
+        if (neF && car.flip) neF = neF === 'plus' ? 'minus' : 'plus';
+        if (neF) {
+          gScene.updateMatrixWorld(true);
+          const s0 = new THREE.Box3().setFromObject(gScene).getSize(new THREE.Vector3());
+          if (s0.x > s0.z) neF = neF === 'plus' ? 'minus' : 'plus'; /* 长轴在 X:normalizeCar 还会 +90° */
+        }
+        if (neF && neF !== want) car = { ...car, flip: !car.flip };
       }
       const norm = normalizeCar(gScene, car, lenOf(ci));
       /* B) 纯几何 glb:consist 声明外部贴图 → 整节车统一材质 */

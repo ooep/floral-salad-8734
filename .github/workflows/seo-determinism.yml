@@ -1,0 +1,135 @@
+name: SEO determinism guard
+
+# 回归护栏（2026-11 增补）：build_seo_static.py 的 resolve_line_adj 曾存在顺序敏感
+# 消歧——nodes=set() 之后 pending 按 set 迭代序（= 字符串哈希序，随 PYTHONHASHSEED
+# 漂移）处理，同一输入会产出不同页面。修复后（pending 按 sorted(nodes) + 线名唯一
+# 归属锁定）输出必须与种子无关。本护栏以 PYTHONHASHSEED=1 与 =2 各构建一次整站并
+# 比对整树指纹，不一致即失败。
+#
+# 指纹口径：lines/ 与 stations/ 全部产物 + 根级 sitemap*.xml/robots.txt/404.html，
+# 逐文件 sha256 得 "<hash>  <relpath>" 行，按 relpath 排序后整体再 sha256（FP_STABLE）。
+# og-image.png 受 PIL 版本/字体环境影响，不计入 FP_STABLE，仅参与同环境内两种子
+# 互比（FP_FULL）。EXPECTED 为 2026-11-03 在 head 3c07eefc 基线上的实测值
+# （Python 3.12、无配线图数据、无 CJK 字体环境亦不影响 FP_STABLE）；
+# 生成器输出发生预期内变更时须同步更新该值。
+#
+# 本 workflow 为只读构建比对：不产出部署物、不触发任何部署；
+# deploy.yml / refresh.yml 等现有部署链的触发条件未做任何改动。
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'mini-japanrail-3d/seo/build_seo_static.py'
+      - 'mini-japanrail-3d/seo/seo_config.json'
+      - '.github/workflows/seo-determinism.yml'
+  pull_request:
+    paths:
+      - 'mini-japanrail-3d/seo/build_seo_static.py'
+      - 'mini-japanrail-3d/seo/seo_config.json'
+      - '.github/workflows/seo-determinism.yml'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: seo-determinism
+  cancel-in-progress: false
+
+jobs:
+  determinism:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      EXPECTED_FP_STABLE: '91f5051db82b0a4e80d87ff442c19a6263fccc3d8907b1798019ff4bf24482ec'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Pillow (og-image)
+        run: python3 -m pip install --quiet pillow
+
+      - name: Build twice (PYTHONHASHSEED=1 / 2) and fingerprint
+        run: |
+          set -euo pipefail
+          cd mini-japanrail-3d
+
+          fingerprint() {
+            python3 - <<'PY'
+          import hashlib, os
+          ROOT = '.'
+          ROOT_ARTIFACTS = ['sitemap.xml', 'sitemap-lines.xml', 'sitemap-stations.xml',
+                            'sitemap-pages.xml', 'robots.txt', '404.html', 'og-image.png']
+          rels = []
+          for sub in ('lines', 'stations'):
+              for dp, dns, fns in os.walk(sub):
+                  dns.sort()
+                  for fn in sorted(fns):
+                      rels.append(os.path.join(dp, fn))
+          for fn in ROOT_ARTIFACTS:
+              if os.path.exists(fn):
+                  rels.append(fn)
+          rels = sorted(set(rels))
+          def sha(p):
+              h = hashlib.sha256()
+              with open(p, 'rb') as f:
+                  for chunk in iter(lambda: f.read(1 << 20), b''):
+                      h.update(chunk)
+              return h.hexdigest()
+          full, stable = [], []
+          for rp in rels:
+              line = '%s  %s' % (sha(rp), rp)
+              full.append(line)
+              if rp != 'og-image.png':
+                  stable.append(line)
+          print('FP_FULL=%s' % hashlib.sha256('\n'.join(full).encode()).hexdigest())
+          print('FP_STABLE=%s' % hashlib.sha256('\n'.join(stable).encode()).hexdigest())
+          print('files=%d' % len(rels))
+          PY
+          }
+
+          clean() {
+            rm -rf lines stations
+            rm -f sitemap.xml sitemap-lines.xml sitemap-stations.xml sitemap-pages.xml \
+                  robots.txt 404.html og-image.png
+          }
+
+          clean
+          PYTHONHASHSEED=1 python3 seo/build_seo_static.py
+          fingerprint | tee /tmp/fp1.txt
+          clean
+          PYTHONHASHSEED=2 python3 seo/build_seo_static.py
+          fingerprint | tee /tmp/fp2.txt
+
+          FP1_FULL=$(sed -n 's/^FP_FULL=//p' /tmp/fp1.txt)
+          FP2_FULL=$(sed -n 's/^FP_FULL=//p' /tmp/fp2.txt)
+          FP1_STABLE=$(sed -n 's/^FP_STABLE=//p' /tmp/fp1.txt)
+          FP2_STABLE=$(sed -n 's/^FP_STABLE=//p' /tmp/fp2.txt)
+
+          echo "seed1 FP_FULL=$FP1_FULL"
+          echo "seed2 FP_FULL=$FP2_FULL"
+          echo "seed1 FP_STABLE=$FP1_STABLE"
+          echo "seed2 FP_STABLE=$FP2_STABLE"
+
+          fail=0
+          if [ "$FP1_FULL" != "$FP2_FULL" ]; then
+            echo "::error::整树指纹（含 og-image）两种子不一致 → 存在顺序敏感回归"
+            fail=1
+          fi
+          if [ "$FP1_STABLE" != "$FP2_STABLE" ]; then
+            echo "::error::整树指纹（FP_STABLE）两种子不一致 → 存在顺序敏感回归"
+            fail=1
+          fi
+          if [ "$FP1_STABLE" != "$EXPECTED_FP_STABLE" ]; then
+            echo "::error::FP_STABLE 与期望值不符（期望 $EXPECTED_FP_STABLE）。若为预期内输出变更，请更新本 workflow 的 EXPECTED_FP_STABLE"
+            fail=1
+          fi
+          exit $fail

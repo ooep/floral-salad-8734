@@ -387,6 +387,8 @@ def resolve_line_adj(rec, st, name_groups, skj):
     station_key_index（含 ヶ/ケ 等写法变体）；多候选用已解析邻居坐标取最近，
     最后无上下文的多候选取首项兜底（保证有独立页面）。
     """
+    # 消歧基准：记录名本身 + 其「・」分段中以「線」结尾的线名（排除城市/县名短段）
+    _line_parts = [rec['name']] + [x for x in rec['name'].split('・') if x.endswith('線')]
     edges, nodes = [], set()
     for f in rec['seg_features']:
         p = f['properties']
@@ -397,12 +399,24 @@ def resolve_line_adj(rec, st, name_groups, skj):
         nodes.add(a)
         nodes.add(b)
 
+    def on_line(k):
+        # 站所属线路与本记录线名精确相等、或以其结尾（如 TKJ城北線 ⊃ 城北線）
+        for sl in st[k]['lines']:
+            for pt in _line_parts:
+                if sl == pt or sl.endswith(pt):
+                    return True
+        return False
+
     def cands_of(n):
         c = name_groups.get(n)
-        if c:
-            return c
-        idx = skj.get(n)
-        return [d['k'] for d in idx] if idx else None
+        if not c:
+            idx = skj.get(n)
+            c = [d['k'] for d in idx] if idx else None
+        if c and len(c) > 1:
+            on = [k for k in c if on_line(k)]  # 保序过滤（JSON 序确定）
+            if len(on) == 1:                   # 唯一归属才锁定；多归属交给地理最近
+                c = on
+        return c
 
     def nearest(cands, hint):
         best, bd = None, None
@@ -422,7 +436,7 @@ def resolve_line_adj(rec, st, name_groups, skj):
             if cands and len(cands) == 1:
                 resolved[n] = cands[0]
 
-    pending = [n for n in nodes if n not in resolved]
+    pending = [n for n in sorted(nodes) if n not in resolved]
     while pending:
         progressed = False
         for n in list(pending):

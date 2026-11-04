@@ -134,8 +134,8 @@
    "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Ship",
    "couple": [
-    4.933,
-    7.373
+    6.17,
+    6.17
    ],
    "lod": {
     "model": "Layer0_001TokyoMonorail10000Series.stand-in.glb",
@@ -216,8 +216,8 @@
    "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Ship",
    "couple": [
-    4.933,
-    7.373
+    6.17,
+    6.17
    ],
    "lod": {
     "model": "Layer0_001TokyoMonorail10000Series.stand-in.glb",
@@ -298,8 +298,8 @@
    "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Ship",
    "couple": [
-    4.706,
-    6.586
+    5.94,
+    7.17
    ],
    "lod": {
     "model": "Layer0_001TokyoMonorail10000Series_661aca01.stand-in.glb",

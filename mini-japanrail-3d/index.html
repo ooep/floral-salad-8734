@@ -364,10 +364,10 @@ button { font-family:inherit; }
 <!-- 性能(2026-10-28): 首页只内联基础变量与加载遮罩的关键 CSS;其余约 87KB 样式和
      约 481KB 主程序拆到 jr-static(边缘缓存快路径)。此前首页 621KB/205KB(br) 单包,
      慢网络下要等整包才出现加载条。 -->
-<!-- 抽屉改版(2026-11-04 合并):CDN 引用已还原并 bump ?v=20261104-drawer2(与 perf 的 20261108-perf1 并存避让) -->
-<link rel="preload" as="style" href="https://jr-static.suki.ing/app/app.css?v=20261104-drawer2" onload="this.rel='stylesheet'">
-<noscript><link rel="stylesheet" href="https://jr-static.suki.ing/app/app.css?v=20261104-drawer2"></noscript>
-<link rel="modulepreload" href="https://jr-static.suki.ing/app/app.js?v=20261104-drawer2" crossorigin="anonymous">
+<!-- 抽屉改版(2026-11-04 合并):CDN 引用已还原并 bump ?v=20261104-td1(与 perf 的 20261108-perf1 并存避让) -->
+<link rel="preload" as="style" href="https://jr-static.suki.ing/app/app.css?v=20261104-td1" onload="this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://jr-static.suki.ing/app/app.css?v=20261104-td1"></noscript>
+<link rel="modulepreload" href="https://jr-static.suki.ing/app/app.js?v=20261104-td1" crossorigin="anonymous">
 
 </head>
 <body>
@@ -826,7 +826,7 @@ window.addEventListener('unhandledrejection', e => { __pushErr('REJ ' + (e.reaso
     "three/addons/": "https://jr-static.suki.ing/vendor/three/jsm/"
 } }
 </script>
-<script type="module" src="https://jr-static.suki.ing/app/app.js?v=20261104-drawer2"></script>
+<script type="module" src="https://jr-static.suki.ing/app/app.js?v=20261104-td1"></script>
 <div id="m3dMask"></div>
 <div id="m3dViewer">
   <canvas id="m3dCanvas"></canvas>

@@ -4280,7 +4280,45 @@ function applyVnCompact() {
   detailEl.querySelectorAll('.vn .stop-badge, .vn .dst-ic, .vn .dot').forEach(b => {
     b.setAttribute('aria-pressed', vnCompact ? 'true' : 'false');
   });
+  placeGapns();
 }
+/* 分钟数垂直位置 = 相邻两徽标中心连线的真中点(行高可能不等,行边界 top:100% 会有
+   |Δh|/4 偏差):直接量两徽标 rect 中心取均值,覆写 gapn.style.top;水平仍走 CSS
+   left:50% 竖线轴线。rotateY 不改变徽标垂直中心,量测与收/展态无关;滚动时两侧
+   同量平移,差值不变。重建/切换/resize 后由 applyVnCompact 与本监听刷新。 */
+function placeGapns() {
+  const rows = detailEl.querySelectorAll('.dstop');
+  for (let k = 0; k < rows.length - 1; k++) {
+    const g = rows[k].querySelector('.gapn');
+    const dn = rows[k].querySelector('.vln.dn');
+    const up = rows[k + 1].querySelector('.vln.up');
+    const b0 = rows[k].querySelector('.vn .stop-badge, .vn .dst-ic, .vn .dot');
+    const b1 = rows[k + 1].querySelector('.vn .stop-badge, .vn .dst-ic, .vn .dot');
+    const vn0 = rows[k].querySelector('.vn'), vn1 = rows[k + 1].querySelector('.vn');
+    if (!g || !b0 || !b1 || !vn0 || !vn1) continue;
+    const r0 = b0.getBoundingClientRect(), r1 = b1.getBoundingClientRect(), v0 = vn0.getBoundingClientRect();
+    const c0 = r0.top + r0.height / 2, c1 = r1.top + r1.height / 2;
+    const m = (c0 + c1) / 2;
+    g.style.top = (m - v0.top) + 'px';
+    /* 收起态在竖线上给数字留缺口("线在缺口中间"):dn 止于数字上缘-2px、
+       up 起于数字下缘+2px,任何视口下数字 bbox 与线段 bbox 相交面积=0;
+       展开态清除内联恢复连续线。dn 基线为 bottom:0,改 top 锚定需同时 bottom:auto。 */
+    if (dn && up) {
+      if (vnCompact) {
+        const hh = g.getBoundingClientRect().height / 2, clr = 2;
+        dn.style.top = '50%'; dn.style.bottom = 'auto';
+        dn.style.height = Math.max(0, (m - hh - clr) - c0) + 'px';
+        const v1 = vn1.getBoundingClientRect();
+        up.style.top = (m + hh + clr - v1.top) + 'px';
+        up.style.height = Math.max(0, c1 - (m + hh + clr)) + 'px';
+      } else {
+        dn.style.top = ''; dn.style.bottom = ''; dn.style.height = '';
+        up.style.top = ''; up.style.height = '';
+      }
+    }
+  }
+}
+window.addEventListener('resize', placeGapns);
 function toggleVnCompact() {
   vnCompact = !vnCompact;
   try { localStorage.setItem('mjr3d_vncmp', vnCompact ? '1' : '0'); } catch (e) {}
@@ -7236,20 +7274,23 @@ function updateDetailLive(t, p, M, rebuild) {
           const tm = [];
           if (k > 0) tm.push('<span class="t-arr">' + T().colArr + fmtHm(t.arr[k]) + dlyTag + '</span>');
           if (k < N - 1) tm.push('<span class="t-dep">' + T().colDep + fmtHm(t.dep[k]) + dlyTag + '</span>');
-          /* 徽章开关:站间间隔 = 本站发车 dep[k] → 下一站到着 arr[k+1] 的分钟差。
-             连续分钟轴上直接相减(跨零点不折叠,不会出现负数/24h 错位);时刻数据为整数分钟,
-             差值即整数,不再取整;时刻缺失或差值非正显示 –;终着站无下一段,不产生节点。
-             gapn 注入在 .vn 内,CSS 定位 top:100%(行边界=相邻两站中点)→ 居中排在两站之间。 */
+          /* 徽章开关分钟数口径(第七版):分两种
+             - 已驶过站(k+1 ≤ i,i 为当前站):相邻间隔 dep[k] → arr[k+1];
+             - 未到达站(k+1 > i,含跨当前站那段):累加时间 arr[k+1] - dep[i],
+               即自当前站发车起到该站所需总分钟(后续第 n 站显示到第 n 站所需分钟);
+               k=i 时累加值 == 间隔 dep[i]→arr[i+1],与当前站段既有约定一致。
+             连续分钟轴直接相减(跨零点不折叠);时刻缺失或差值非正显 –;终着站无节点。
+             数字右上角带分钟单位 ′(.gunit,11px 次要字号)。gapn 注入 .vn 内,
+             top 由 placeGapns() 精确覆写为相邻两徽标中心中点,并在竖线上留出缺口。 */
           let gapTxt = null;
           if (k < N - 1) {
-            const g0 = t.dep[k], g1 = t.arr[k + 1];
-            const gd = (Number.isFinite(g0) && Number.isFinite(g1)) ? g1 - g0 : NaN;
+            const gd = (k + 1 <= i) ? (t.arr[k + 1] - t.dep[k]) : (t.arr[k + 1] - t.dep[i]);
             gapTxt = (Number.isFinite(gd) && gd > 0) ? String(Math.round(gd)) : '–';
           }
           s += '<div class="dstop" data-i="' + k + '"><span class="vn">' +
             (k > 0 ? '<span class="vln up" style="background:' + upCol + '"></span>' : '') +
             midHtml +
-            (gapTxt !== null ? '<span class="gapn">' + gapTxt + '</span>' : '') +
+            (gapTxt !== null ? '<span class="gapn">' + gapTxt + (gapTxt !== '–' ? '<i class="gunit">′</i>' : '') + '</span>' : '') +
             (k < N - 1 ? '<span class="vln dn" style="background:' + dnCol + '"></span>' : '') +
             '</span><span class="vc"><span class="vnm">' + esc(t.jas[k]) + '</span><span class="vmeta">' +
             (_platAt(PLATMAP && PLATMAP.t && PLATMAP.t[t.t], k) ? '<span class="vplat" title="' + T().colPlat + '">' + _platAt(PLATMAP && PLATMAP.t && PLATMAP.t[t.t], k).replace(/;/g, '/') + '</span>' : '') +

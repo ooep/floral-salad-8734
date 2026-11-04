@@ -527,22 +527,23 @@
 #detail .vtm { font-size:11px; color:var(--dim); font-variant-numeric:tabular-nums; white-space:nowrap; font-weight:600; }
 #detail .vtm .sep { margin:0 5px; opacity:.5; }
 #detail .vplat { font-size:10px; font-weight:700; color:var(--acc); background:var(--acc-soft); border:1px solid color-mix(in srgb, var(--acc) 45%, transparent); border-radius:7px; padding:0 6px; letter-spacing:.3px; font-variant-numeric:tabular-nums; white-space:nowrap; max-width:100%; }
-/* ---------- 徽章开关:站徽绕竖直中轴翻隐 → 站间运行分钟(2026-11-04,应用户要求第五版) ----------
+/* ---------- 徽章开关:站徽绕竖直中轴翻隐 → 站间运行分钟(2026-11-04,应用户要求第六版) ----------
    点停靠站模块里的车站徽标(.stop-badge/.dst-ic/.dot 本体):徽标绕自身竖直中心轴
    rotateY(90deg) 真 3D 牌面翻转——90° 时侧立成一条边、正面视觉归零(backface-visibility:hidden),
-   动画停在该消失态不转回;站名/右侧列(.vnm/.vmeta)淡出,两站之间的运行分钟数(gapn)
-   淡入并居中在原徽标所在位置(竖线轴线上);再点反向翻回。
+   动画停在该消失态不转回;两站之间的运行分钟数(gapn)淡入,垂直落在相邻两徽标中心
+   连线的真中点(placeGapns 精确覆写 top)、水平在竖线轴线上。
+   第六版口径:站名(.vnm)与右侧列(.vmeta:站台/到发时刻)收起态保持完全可见、排版与
+   展开态一致零重排——仅徽标被分钟数替代,其余文字一律不动。
    仅 transform+opacity(240ms cubic-bezier(.4,0,.2,1),取 3636c60 基线原参数,无 overshoot),
    行高/列宽全部保留 → 无重排、无尺寸跳变。 */
 #detail .vn .stop-badge, #detail .vn .dst-ic, #detail .vn .dot { cursor:pointer; backface-visibility:hidden; -webkit-backface-visibility:hidden; transition:transform .24s cubic-bezier(.4,0,.2,1), opacity .24s cubic-bezier(.4,0,.2,1); }
 #detail .vn .stop-badge:focus-visible, #detail .vn .dst-ic:focus-visible, #detail .vn .dot:focus-visible { outline:2px solid var(--acc); outline-offset:2px; border-radius:6px; }
-#detail .vn .gapn { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); z-index:3; font-size:12.5px; font-weight:800; color:var(--txt); font-variant-numeric:tabular-nums; background:var(--glass-solid); padding:1px 5px; border-radius:8px; opacity:0; pointer-events:none; transition:opacity .24s cubic-bezier(.4,0,.2,1); }
-#detail .vc .vnm, #detail .vc .vmeta { transition:opacity .24s cubic-bezier(.4,0,.2,1), visibility 0s linear 0s; }
+#detail .vn .gapn { position:absolute; left:50%; top:100%; transform:translate(-50%,-50%); z-index:3; font-size:12.5px; font-weight:800; color:var(--txt); font-variant-numeric:tabular-nums; background:var(--glass-solid); padding:1px 5px; border-radius:8px; opacity:0; pointer-events:none; transition:opacity .24s cubic-bezier(.4,0,.2,1); } /* top 由 placeGapns() 精确覆写为相邻两徽标中心中点;100% 仅为无 JS 测量时的行边界兜底 */
+#detail .vn .gapn .gunit { font-style:normal; font-size:11px; line-height:1; color:var(--dim); margin-left:1px; position:relative; top:-2px; } /* 分钟单位 ′ 右上角:与次要文字同字号(11px)、弱色不抢视觉 */
 #detail.vn-compact .vn .stop-badge, #detail.vn-compact .vn .dst-ic, #detail.vn-compact .vn .dot { transform:translate(-50%,-50%) rotateY(90deg); }
-#detail.vn-compact .vc .vnm, #detail.vn-compact .vc .vmeta { opacity:0; visibility:hidden; transition:opacity .24s cubic-bezier(.4,0,.2,1), visibility 0s linear .24s; }
 #detail.vn-compact .vn .gapn { opacity:1; }
 @media (prefers-reduced-motion: reduce) {
-  #detail .vn .stop-badge, #detail .vn .dst-ic, #detail .vn .dot, #detail .vn .gapn, #detail .vc .vnm, #detail .vc .vmeta { transition:none; }
+  #detail .vn .stop-badge, #detail .vn .dst-ic, #detail .vn .dot, #detail .vn .gapn { transition:none; }
 }
 #detail .dstop.here { background:var(--acc-soft); }
 #detail .dstop.here .dot { background:var(--acc); border-color:var(--acc); box-shadow:0 0 0 4px var(--acc-soft); }

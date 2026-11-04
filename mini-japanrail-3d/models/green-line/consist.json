@@ -10,8 +10,8 @@
    "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    7.878,
-    7.878
+    7.14,
+    7.88
    ],
    "lod": {
     "model": "asset_ada89bf4.stand-in.glb",
@@ -135,7 +135,7 @@
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
     7.175,
-    7.175
+    7.126
    ],
    "lod": {
     "model": "asset.stand-in.glb",
@@ -221,7 +221,7 @@
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
     7.175,
-    7.175
+    7.126
    ],
    "lod": {
     "model": "asset.stand-in.glb",
@@ -306,8 +306,8 @@
    "flip": true,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    7.878,
-    7.878
+    7.14,
+    7.88
    ],
    "lod": {
     "model": "asset_ada89bf4.stand-in.glb",

@@ -9546,7 +9546,7 @@ async function _fillTrackDiagrams(sec, name, coord) {
         img.onerror = kill;
         const tmo = setTimeout(() => { if (!img.complete || img.naturalWidth === 0) kill(); }, 12000);
         img.addEventListener('load', () => clearTimeout(tmo));
-        img.src = TRACK_DIAGRAM_BASE + f;
+        img.src = TRACK_DIAGRAM_BASE + (resolvedTheme() === 'dark' ? f.replace(/\.svg$/, '.dk.svg') : f);
         fig.appendChild(img);
       });
       wrap.appendChild(fig);
@@ -10311,6 +10311,10 @@ function applyThemeMode() {
   document.documentElement.setAttribute('data-theme', resolved);
   document.querySelectorAll('#themeRow .chip').forEach(c => c.classList.toggle('on', c.dataset.theme === mode));
   applyThemeBrand(resolved);
+  /* 配线图双变体：切主题时同步换 .dk.svg / .svg */
+  document.querySelectorAll('img.gd-td-img').forEach(im => {
+    im.src = im.src.replace(/(\.dk)?\.svg(\?.*)?$/, (resolved === 'dark' ? '.dk.svg' : '.svg') + '$2');
+  });
   if (map) applyBaseVisibility(); /* 深浅两套 OFM 图层随主题互斥显隐 */
 }
 // 深色模式使用深色版 logo / 标签页图标（浅色模式用浅色版）

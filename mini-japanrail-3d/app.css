@@ -1106,9 +1106,11 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
    SVG 发布副本已后处理为透明底（scripts/postprocess_track_diagrams.py），
    图块叠一层半透明浅衬底保证线条/文字在深浅玻璃上的对比度；块间仅靠 gap 分隔。 */
 .gd-td-wrap { display:flex; flex-direction:column; gap:10px; }
-.gd-td-fig { border:1px solid var(--glass-edge); border-radius:10px; overflow:hidden; background:rgba(255,255,255,.55); }
+.gd-td-fig { border:1px solid var(--glass-edge); border-radius:10px; overflow:hidden; background:rgba(255,255,255,.62); }
 .gd-td-line { font-size:12px; font-weight:700; color:#16181d; padding:7px 10px; border-bottom:1px solid #d8dce3; background:rgba(255,255,255,.7); }
 .gd-td-img { display:block; width:100%; max-height:240px; object-fit:contain; background:transparent; }
+[data-theme='dark'] .gd-td-fig { background:rgba(16,18,22,.62); }
+[data-theme='dark'] .gd-td-line { color:#e8eaed; border-bottom-color:#3a4150; background:rgba(16,18,22,.7); }
 
 /* --- 信息面板 --- */
 #panelInfo { color:var(--txt); }

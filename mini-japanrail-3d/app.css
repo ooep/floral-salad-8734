@@ -789,12 +789,15 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
   z-index:21; display:flex; flex-direction:column;
   opacity:0; visibility:hidden; pointer-events:none;
   backdrop-filter:blur(0) saturate(1); -webkit-backdrop-filter:blur(0) saturate(1); transform:translate(-50%,102%);
-  transition:opacity .3s var(--ease-smooth), backdrop-filter .3s var(--ease-smooth), -webkit-backdrop-filter .3s var(--ease-smooth), transform .42s var(--ease-spring), height .32s var(--ease-smooth), visibility 0s linear .3s; }
+  transition:opacity .24s cubic-bezier(.4,0,.2,1), transform .24s cubic-bezier(.4,0,.2,1), height .24s cubic-bezier(.4,0,.2,1), visibility 0s linear .3s; }
 #sheet.open { opacity:1; visibility:visible; pointer-events:auto; transform:translate(-50%,0);
   backdrop-filter:blur(34px) saturate(1.9); -webkit-backdrop-filter:blur(34px) saturate(1.9);
-  transition:opacity .3s var(--ease-smooth), backdrop-filter .3s var(--ease-smooth), -webkit-backdrop-filter .3s var(--ease-smooth), transform .42s var(--ease-spring), height .32s var(--ease-smooth), visibility 0s linear 0s; }
+  transition:opacity .24s cubic-bezier(.4,0,.2,1), transform .24s cubic-bezier(.4,0,.2,1), height .24s cubic-bezier(.4,0,.2,1), visibility 0s linear 0s; }
 #sheet .grab { width:44px; height:5px; border-radius:3px; background:rgba(150,170,200,.5); margin:11px auto 3px; flex:none; }
-#sheet .sh-head { padding:13px 20px 4px; display:flex; align-items:flex-start; flex:none; }
+#sheet .sh-head { padding:9px 20px 4px; display:flex; align-items:flex-start; flex:none; } /* 第十二版:顶部空隙 13→9 上提 */
+#sheet .sh-titles { flex:1; min-width:0; }
+#sheet .sh-nmrow { display:flex; align-items:center; gap:8px; min-width:0; } /* 徽标与站名同行、纵向居中 */
+#sheet .sh-nmrow .sh-nm { flex:none; white-space:nowrap; } /* 站名不换行;空间不足由徽标条内部横滚让位 */
 #sheet .sh-nm { font-size:30px; font-weight:800; letter-spacing:-.5px; line-height:1.05; }
 #sheet .sh-sub { font-size:12.5px; color:var(--dim); margin-top:4px; }
 #sheet .sh-x { margin-left:auto; flex:none; }
@@ -973,7 +976,8 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
 #sheet .sh-tabs button:hover { color:var(--txt); }
 #sheet .sh-tabs button.on { color:var(--txt); border-bottom-color:var(--acc); }
 /* 车站徽章条:抽屉头部与 tabs 之间,该站全部线路徽章完整横排(可横滚) */
-#sheet .sh-badges { display:flex; gap:7px; padding:7px 14px 0; overflow-x:auto; flex:none; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+#sheet .sh-badges { display:flex; gap:7px; padding:0; margin-left:2px; overflow-x:auto; flex:0 1 auto; min-width:0; align-items:center; scrollbar-width:none; -webkit-overflow-scrolling:touch; } /* 第十二版:移入站名行;空间不足内部横滚,不挤按钮不换行 */
+#sheet .sh-badges[hidden] { display:none; }
 #sheet .sh-badges::-webkit-scrollbar { display:none; }
 #sheet .sh-badges img { height:37px; width:auto; flex:none; background:rgba(120,140,180,.10); user-select:none; }
 /* 多线大站徽章超宽时:右缘渐隐,提示可继续横滑 */
@@ -1043,8 +1047,8 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
   transform:translate(-50%,105%); background:var(--glass-panel); border:1px solid var(--glass-edge); border-bottom:0;
   border-radius:26px 26px 0 0; box-shadow:0 -10px 30px rgba(15,23,42,.28), inset 0 1px 0 var(--glass-hi);
   z-index:22; display:flex; flex-direction:column; overflow:hidden;
-  opacity:0; visibility:hidden; transition:transform .38s var(--ease-smooth), opacity .28s ease, visibility 0s linear .38s; }
-#lineSheet.open { opacity:1; visibility:visible; pointer-events:auto; transform:translate(-50%,0); transition:transform .38s var(--ease-spring), opacity .28s ease, visibility 0s linear 0s; }
+  opacity:0; visibility:hidden; transition:transform .24s cubic-bezier(.4,0,.2,1), opacity .24s cubic-bezier(.4,0,.2,1), visibility 0s linear .24s; }
+#lineSheet.open { opacity:1; visibility:visible; pointer-events:auto; transform:translate(-50%,0); transition:transform .24s cubic-bezier(.4,0,.2,1), opacity .24s cubic-bezier(.4,0,.2,1), visibility 0s linear 0s; }
 #lineSheet .ls-grab { width:100%; height:22px; flex:none; cursor:ns-resize; touch-action:none; position:relative; display:flex; align-items:center; justify-content:center; }
 #lineSheet .ls-grab::before { content:""; width:44px; height:5px; border-radius:3px; background:rgba(150,170,200,.5); }
 #lineSheet .ls-grab:active::before { background:var(--acc); }

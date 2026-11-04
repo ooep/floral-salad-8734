@@ -7279,6 +7279,11 @@ function updateDetailLive(t, p, M, rebuild) {
           if (k < N - 1) {
             const gd = (k + 1 <= i) ? (t.arr[k + 1] - t.dep[k]) : (t.arr[k + 1] - t.dep[i]);
             gapTxt = (Number.isFinite(gd) && gd > 0) ? String(Math.round(gd)) : '–';
+          } else if (N >= 2) {
+            /* 终点站行(第十一版):数字取"进入末站那段"——未到达=累加 arr[last]-dep[i],
+               已驶过=间隔 dep[last-1]→arr[last];缺口/坑位/′/同水平线规则与其它行一致 */
+            const gd = (k <= i) ? (t.arr[k] - t.dep[k - 1]) : (t.arr[k] - t.dep[i]);
+            gapTxt = (Number.isFinite(gd) && gd > 0) ? String(Math.round(gd)) : '–';
           }
           s += '<div class="dstop" data-i="' + k + '"><span class="vn">' +
             (k > 0 ? '<span class="vln up" style="background:' + upCol + '"></span>' : '') +

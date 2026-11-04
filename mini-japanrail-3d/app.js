@@ -1783,6 +1783,10 @@ async function buildStaticIndexAsync(onPhase) {
             if (!cell) continue;
             for (const [ex, ey, nm] of cell) {
               if (nm === na || nm === nb) continue;
+              /* 距离预筛:任一分量差 >0.0025° 时,该分量本身已 ≥0.194km(日本纬度
+                 cos≥0.6947,0.0025×0.6947×111.32=0.1932;纬度 0.0025×110.57=0.2764),
+                 必大于 WELD_KM=0.18,不可能命中 —— 免掉绝大多数 geoKm 调用,结果等价 */
+              if (Math.abs(ex - co[i][0]) > 0.0025 || Math.abs(ey - co[i][1]) > 0.0025) continue;
               const d = geoKm([ex, ey], co[i]);
               if (d < hitD) { hitD = d; hit = nm; }
             }

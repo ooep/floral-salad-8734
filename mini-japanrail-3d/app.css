@@ -538,7 +538,7 @@
    行高/列宽全部保留 → 无重排、无尺寸跳变。 */
 #detail .vn .stop-badge, #detail .vn .dst-ic, #detail .vn .dot { cursor:pointer; backface-visibility:hidden; -webkit-backface-visibility:hidden; transition:transform .24s cubic-bezier(.4,0,.2,1), opacity .24s cubic-bezier(.4,0,.2,1); }
 #detail .vn .stop-badge:focus-visible, #detail .vn .dst-ic:focus-visible, #detail .vn .dot:focus-visible { outline:2px solid var(--acc); outline-offset:2px; border-radius:6px; }
-#detail .vn .gapn { position:absolute; left:50%; top:100%; transform:translate(-50%,-50%); z-index:3; font-size:12.5px; font-weight:800; color:var(--txt); font-variant-numeric:tabular-nums; background:var(--glass-solid); padding:1px 5px; border-radius:8px; opacity:0; pointer-events:none; transition:opacity .24s cubic-bezier(.4,0,.2,1); } /* top 由 placeGapns() 精确覆写为相邻两徽标中心中点;100% 仅为无 JS 测量时的行边界兜底 */
+#detail .vn .gapn { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); z-index:3; font-size:12.5px; font-weight:800; color:var(--txt); font-variant-numeric:tabular-nums; background:var(--glass-solid); padding:1px 5px; border-radius:8px; opacity:0; pointer-events:none; transition:opacity .24s cubic-bezier(.4,0,.2,1); } /* 第九版:正对本行徽标坑位(top:50%=徽标中心,与站名同一水平线),不做上下偏移;缺口由 placeGapns() 在同位置留出 */
 #detail .vn .gapn .gunit { font-style:normal; font-size:11px; line-height:1; color:var(--dim); margin-left:1px; position:relative; top:-2px; } /* 分钟单位 ′ 右上角:与次要文字同字号(11px)、弱色不抢视觉 */
 #detail.vn-compact .vn .stop-badge, #detail.vn-compact .vn .dst-ic, #detail.vn-compact .vn .dot { transform:translate(-50%,-50%) rotateY(90deg); }
 #detail.vn-compact .vn .gapn { opacity:1; }

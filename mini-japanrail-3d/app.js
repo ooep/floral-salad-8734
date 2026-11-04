@@ -4282,39 +4282,29 @@ function applyVnCompact() {
   });
   placeGapns();
 }
-/* 分钟数垂直位置 = 相邻两徽标中心连线的真中点(行高可能不等,行边界 top:100% 会有
-   |Δh|/4 偏差):直接量两徽标 rect 中心取均值,覆写 gapn.style.top;水平仍走 CSS
-   left:50% 竖线轴线。rotateY 不改变徽标垂直中心,量测与收/展态无关;滚动时两侧
-   同量平移,差值不变。重建/切换/resize 后由 applyVnCompact 与本监听刷新。 */
+/* 分钟数位置(第九版):正对本行徽标坑位——CSS top:50% 即徽标中心(与站名同一水平线),
+   无需 JS 覆写;placeGapns 只负责在竖线上同位置留缺口:"线在缺口中间"——
+   本行 .vln.up 止于数字上缘-2px、.vln.dn 起于数字下缘+2px,任何视口下数字 bbox
+   与线段 bbox 相交面积=0;展开态清除内联恢复连续线。重建/切换/resize 后刷新。 */
 function placeGapns() {
   const rows = detailEl.querySelectorAll('.dstop');
-  for (let k = 0; k < rows.length - 1; k++) {
+  for (let k = 0; k < rows.length; k++) {
     const g = rows[k].querySelector('.gapn');
+    if (!g) continue;
+    const b = rows[k].querySelector('.vn .stop-badge, .vn .dst-ic, .vn .dot');
+    const vn = rows[k].querySelector('.vn');
+    const up = rows[k].querySelector('.vln.up');
     const dn = rows[k].querySelector('.vln.dn');
-    const up = rows[k + 1].querySelector('.vln.up');
-    const b0 = rows[k].querySelector('.vn .stop-badge, .vn .dst-ic, .vn .dot');
-    const b1 = rows[k + 1].querySelector('.vn .stop-badge, .vn .dst-ic, .vn .dot');
-    const vn0 = rows[k].querySelector('.vn'), vn1 = rows[k + 1].querySelector('.vn');
-    if (!g || !b0 || !b1 || !vn0 || !vn1) continue;
-    const r0 = b0.getBoundingClientRect(), r1 = b1.getBoundingClientRect(), v0 = vn0.getBoundingClientRect();
-    const c0 = r0.top + r0.height / 2, c1 = r1.top + r1.height / 2;
-    const m = (c0 + c1) / 2;
-    g.style.top = (m - v0.top) + 'px';
-    /* 收起态在竖线上给数字留缺口("线在缺口中间"):dn 止于数字上缘-2px、
-       up 起于数字下缘+2px,任何视口下数字 bbox 与线段 bbox 相交面积=0;
-       展开态清除内联恢复连续线。dn 基线为 bottom:0,改 top 锚定需同时 bottom:auto。 */
-    if (dn && up) {
-      if (vnCompact) {
-        const hh = g.getBoundingClientRect().height / 2, clr = 2;
-        dn.style.top = '50%'; dn.style.bottom = 'auto';
-        dn.style.height = Math.max(0, (m - hh - clr) - c0) + 'px';
-        const v1 = vn1.getBoundingClientRect();
-        up.style.top = (m + hh + clr - v1.top) + 'px';
-        up.style.height = Math.max(0, c1 - (m + hh + clr)) + 'px';
-      } else {
-        dn.style.top = ''; dn.style.bottom = ''; dn.style.height = '';
-        up.style.top = ''; up.style.height = '';
-      }
+    if (!b || !vn || (!up && !dn)) continue;
+    const r = b.getBoundingClientRect(), v = vn.getBoundingClientRect();
+    const hh = g.getBoundingClientRect().height / 2, clr = 2;
+    const c = r.top + r.height / 2;
+    if (vnCompact) {
+      if (up) up.style.height = Math.max(0, (c - hh - clr) - v.top) + 'px';
+      if (dn) { dn.style.top = (c + hh + clr - v.top) + 'px'; dn.style.bottom = '0'; dn.style.height = 'auto'; }
+    } else {
+      if (up) up.style.height = '';
+      if (dn) { dn.style.top = ''; dn.style.bottom = ''; dn.style.height = ''; }
     }
   }
 }

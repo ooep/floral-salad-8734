@@ -532,27 +532,26 @@
 #detail .vtm { font-size:11px; color:var(--dim); font-variant-numeric:tabular-nums; white-space:nowrap; font-weight:600; }
 #detail .vtm .sep { margin:0 5px; opacity:.5; }
 #detail .vplat { font-size:10px; font-weight:700; color:var(--acc); background:var(--acc-soft); border:1px solid color-mix(in srgb, var(--acc) 45%, transparent); border-radius:7px; padding:0 6px; letter-spacing:.3px; font-variant-numeric:tabular-nums; white-space:nowrap; max-width:100%; }
-/* ---------- 竖线开关:站名牌收起 → 站间间隔数字(2026-11-04,应用户要求) ----------
-   点击 .vn:整组站名牌/徽章同向 rotate(90deg) 淡出,收为线上 ≤6px 小圆点(cdot);
-   中间栏淡出站名、淡入纯数字站间运行间隔(gapn);再点反向转回。仅 transform+opacity
-   (240ms 同一 cubic-bezier,进出对称),行高/列宽保留 → 无重排、无尺寸跳变。
+/* ---------- 竖线开关:徽章列收起 → 站间间隔数字(2026-11-04,应用户要求) ----------
+   点击 .vn:徽章/终点图标/圆点绕自身竖直中轴翻转 90°(perspective+rotateY,侧身即隐),
+   徽章原来占的位置居中出现纯数字站间运行间隔(gapn);站名/站台/时刻保持可见;再点反向翻回。
+   仅 transform+opacity(180ms cubic-bezier(.2,0,.2,1),无 overshoot),行高/列宽保留 → 无重排。
+   有 gapn 的行收起态不重复画 cdot 小圆点(:has 抑制);终着站无 gapn 时仍以 cdot 为收起标记。
    命中区由 .vn::before 透明扩展(32px,触屏 44px),不额外占布局。 */
 #detail .dstop .vn { cursor:pointer; }
 #detail .dstop .vn::before { content:''; position:absolute; left:50%; top:0; bottom:0; width:32px; transform:translateX(-50%); }
 #detail .vn:focus-visible { outline:2px solid var(--acc); outline-offset:1px; border-radius:8px; }
-#detail .vn .stop-badge, #detail .vn .dst-ic, #detail .vn .dot { transition:transform .24s cubic-bezier(.4,0,.2,1), opacity .24s cubic-bezier(.4,0,.2,1); }
-#detail .vn .cdot { position:absolute; left:50%; top:50%; width:6px; height:6px; border-radius:50%; transform:translate(-50%,-50%); z-index:3; opacity:0; pointer-events:none; transition:opacity .24s cubic-bezier(.4,0,.2,1); }
-#detail .vc { position:relative; }
-#detail .vc .gapn { position:absolute; left:0; top:50%; transform:translateY(-50%); z-index:1; font-size:12.5px; font-weight:800; color:var(--txt); font-variant-numeric:tabular-nums; opacity:0; pointer-events:none; transition:opacity .24s cubic-bezier(.4,0,.2,1); }
-#detail .vc .vnm, #detail .vc .vmeta { transition:opacity .24s cubic-bezier(.4,0,.2,1); }
-#detail.vn-compact .vn .stop-badge, #detail.vn-compact .vn .dst-ic { transform:rotate(90deg); opacity:0; }
-#detail.vn-compact .vn .dot { transform:translate(-50%,-50%) rotate(90deg); opacity:0; }
+#detail .vn .stop-badge, #detail .vn .dst-ic, #detail .vn .dot { transform-origin:center; backface-visibility:hidden; -webkit-backface-visibility:hidden; transition:transform .18s cubic-bezier(.2,0,.2,1), opacity .18s cubic-bezier(.2,0,.2,1); }
+#detail .vn .cdot { position:absolute; left:50%; top:50%; width:6px; height:6px; border-radius:50%; transform:translate(-50%,-50%); z-index:3; opacity:0; pointer-events:none; transition:opacity .18s cubic-bezier(.2,0,.2,1); }
+#detail .vn .gapn { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); z-index:2; font-size:12.5px; font-weight:800; color:var(--txt); font-variant-numeric:tabular-nums; opacity:0; pointer-events:none; transition:opacity .18s cubic-bezier(.2,0,.2,1); }
+#detail.vn-compact .vn .stop-badge, #detail.vn-compact .vn .dst-ic { transform:translate(-50%,-50%) perspective(320px) rotateY(90deg); opacity:0; }
+#detail.vn-compact .vn .dot { transform:translate(-50%,-50%) perspective(320px) rotateY(90deg); opacity:0; }
 #detail.vn-compact .vn .cdot { opacity:1; }
-#detail.vn-compact .vc .vnm, #detail.vn-compact .vc .vmeta { opacity:0; }
-#detail.vn-compact .vc .gapn { opacity:1; }
+#detail.vn-compact .vn:has(.gapn) .cdot { opacity:0; }
+#detail.vn-compact .vn .gapn { opacity:1; }
 @media (pointer:coarse) { #detail .dstop .vn::before { width:44px; } }
 @media (prefers-reduced-motion: reduce) {
-  #detail .vn .stop-badge, #detail .vn .dst-ic, #detail .vn .dot, #detail .vn .cdot, #detail .vc .gapn, #detail .vc .vnm, #detail .vc .vmeta { transition:none; }
+  #detail .vn .stop-badge, #detail .vn .dst-ic, #detail .vn .dot, #detail .vn .cdot, #detail .vn .gapn { transition:none; }
 }
 #detail .dstop.here { background:var(--acc-soft); }
 #detail .dstop.here .dot { background:var(--acc); border-color:var(--acc); box-shadow:0 0 0 4px var(--acc-soft); }

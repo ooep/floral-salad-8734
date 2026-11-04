@@ -4265,11 +4265,11 @@ detailEl.addEventListener('keydown', e => {
   e.preventDefault();
   comfortCarsToggle(w);
 });
-/* ---------- 竖线开关:站名牌收起 → 站间间隔数字(2026-11-04,应用户要求) ----------
-   点击停靠站行左侧竖线(.vn):整组站名牌/线路徽章同向 rotate(90°) 收起为 ≤6px 圆点,
-   中间栏淡出站名、淡入纯数字的站间运行间隔;再点反向转回。仅 transform+opacity 动画
-   (240ms 同一 cubic-bezier,进出对称),行高/列宽全部保留,无重排、无尺寸跳变。
-   监听委托在常驻的 detailEl 上:closeSheet/closeDetail 清空行 DOM 时行内无任何残留监听。
+/* ---------- 竖线开关:徽章列收起 → 站间间隔数字(2026-11-04,应用户要求) ----------
+   点击停靠站行左侧竖线(.vn):徽章/终点图标/圆点绕自身竖直中轴翻转 90°(perspective+rotateY)
+   侧身即隐,徽章原位居中出现纯数字站间运行间隔;站名/站台/时刻保持可见;再点反向翻回。
+   仅 transform+opacity 动画(180ms cubic-bezier(.2,0,.2,1),无 overshoot),行高/列宽全部保留,
+   无重排、无尺寸跳变。监听委托在常驻的 detailEl 上:closeSheet/closeDetail 清空行 DOM 时行内无残留监听。
    状态记忆键:localStorage 'mjr3d_vncmp'('1'=收起态),重开抽屉沿用。 */
 let vnCompact = false;
 try { vnCompact = localStorage.getItem('mjr3d_vncmp') === '1'; } catch (e) {}
@@ -7232,7 +7232,8 @@ function updateDetailLive(t, p, M, rebuild) {
           if (k < N - 1) tm.push('<span class="t-dep">' + T().colDep + fmtHm(t.dep[k]) + dlyTag + '</span>');
           /* 竖线开关:站间间隔 = 本站发车 dep[k] → 下一站到着 arr[k+1] 的分钟差。
              连续分钟轴上直接相减(跨零点不折叠,不会出现负数/24h 错位);时刻数据为整数分钟,
-             差值即整数,不再取整;时刻缺失或差值非正显示 –;终着站无下一段,不产生节点。 */
+             差值即整数,不再取整;时刻缺失或差值非正显示 –;终着站无下一段,不产生节点。
+             gapn 注入在 .vn(徽章列)内,收起态居中出现替代翻转隐藏的徽章,行高/列宽零变化。 */
           let gapTxt = null;
           if (k < N - 1) {
             const g0 = t.dep[k], g1 = t.arr[k + 1];
@@ -7242,8 +7243,9 @@ function updateDetailLive(t, p, M, rebuild) {
           s += '<div class="dstop" data-i="' + k + '"><span class="vn" role="button" tabindex="0" aria-pressed="' + (vnCompact ? 'true' : 'false') + '" aria-label="' + T().vnToggle + '">' +
             (k > 0 ? '<span class="vln up" style="background:' + upCol + '"></span>' : '') +
             midHtml +
+            (gapTxt !== null ? '<span class="gapn">' + gapTxt + '</span>' : '') +
             (k < N - 1 ? '<span class="vln dn" style="background:' + dnCol + '"></span>' : '') +
-            '</span><span class="vc">' + (gapTxt !== null ? '<span class="gapn">' + gapTxt + '</span>' : '') + '<span class="vnm">' + esc(t.jas[k]) + '</span><span class="vmeta">' +
+            '</span><span class="vc"><span class="vnm">' + esc(t.jas[k]) + '</span><span class="vmeta">' +
             (_platAt(PLATMAP && PLATMAP.t && PLATMAP.t[t.t], k) ? '<span class="vplat" title="' + T().colPlat + '">' + _platAt(PLATMAP && PLATMAP.t && PLATMAP.t[t.t], k).replace(/;/g, '/') + '</span>' : '') +
             (tm.length ? '<span class="vtm">' + tm.join('<i class="sep">·</i>') + '</span>' : '') +
             '</span></span></div>';

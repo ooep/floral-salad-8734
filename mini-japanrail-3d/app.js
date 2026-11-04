@@ -5456,21 +5456,27 @@ function badgeEvictNow() {
   _badgeMarkRegistered();
 }
 
+let badgesMapPromise = null; /* 在途去重:启动主路径与 badgesWait 并发调用只发一次请求 */
 async function loadBadgesMap() {
   if (badgesMap) return badgesMap;
-  try {
-    const all = await Promise.all([
-      fetchJSONWithCache(BADGES_DATA_URL, '', 12),
-      fetchJSONWithCache(BADGES_LINES_URL, '', 12).catch(() => null), /* 新文件缺失/未部署时静默降级单徽章 */
-    ]);
-    const r = all[0], l = all[1];
-    if (r && typeof r === 'object') { badgesMap = r; console.log('[badges] map loaded:', Object.keys(r).length, 'stations'); }
-    if (l && l.stations && Array.isArray(l.sheets)) {
-      badgesLines = l;
-      console.log('[badges] lines loaded:', Object.keys(l.stations).length, 'stations,', l.sheets.length, 'sheets');
-    }
-  } catch (e) { console.warn('[badges]', e); }
-  return badgesMap;
+  if (badgesMapPromise) return badgesMapPromise;
+  badgesMapPromise = (async () => {
+    try {
+      const all = await Promise.all([
+        fetchJSONWithCache(BADGES_DATA_URL, '', 12),
+        fetchJSONWithCache(BADGES_LINES_URL, '', 12).catch(() => null), /* 新文件缺失/未部署时静默降级单徽章 */
+      ]);
+      const r = all[0], l = all[1];
+      if (r && typeof r === 'object') { badgesMap = r; console.log('[badges] map loaded:', Object.keys(r).length, 'stations'); }
+      if (l && l.stations && Array.isArray(l.sheets)) {
+        badgesLines = l;
+        console.log('[badges] lines loaded:', Object.keys(l.stations).length, 'stations,', l.sheets.length, 'sheets');
+      }
+    } catch (e) { console.warn('[badges]', e); }
+    if (!badgesMap) badgesMapPromise = null; /* 未拿到结果不锁定去重,后续调用可重试 */
+    return badgesMap;
+  })();
+  return badgesMapPromise;
 }
 /* 站名 -> 徽章条目数组 [[线路名, 站码, 图集url, crop|null], …](已按重要性降序);
    lines.json 有则用(每站每线),否则回退 map.json 单枚。无徽章返回 null。 */

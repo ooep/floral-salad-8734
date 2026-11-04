@@ -7724,7 +7724,7 @@ function renderStationBody() {
     if (!g.lines.length) return;
     if (!sheetFlat) {
       const lg = OP_LOGO[g.op];
-      html += '<div class="grp-op">' + (lg ? '<img class="op-logo" src="https://jr-static.suki.ing/logos/' + lg + '" alt="">' : '<span class="op-ic">' + esc(opShort(g.op).slice(0, 2)) + '</span>') + '<span>' + esc(opShort(g.op)) + '</span></div>';
+      html += '<div class="grp-op">' + (lg ? '<img class="op-logo" src="https://jr-static.suki.ing/logos/' + lg.replace(/\.png$/, '.webp') + '" alt="">' : '<span class="op-ic">' + esc(opShort(g.op).slice(0, 2)) + '</span>') + '<span>' + esc(opShort(g.op)) + '</span></div>';
     }
     g.lines.forEach(L => html += lineRowHtml(L, hour));
   });

@@ -33,6 +33,7 @@
 - `tmaps.json`:`{班次id: {s_jas:[停站序列], lines:[途经线路]}}`,班次 id 可被多个 T 行复用(同径不同发车时刻)
 - `orm_tracks.0.geojson` / `orm_tracks.1.geojson`:ORM 线位图层(2 分片,各 <25MB 适配 CF Pages 单文件上限,客户端合并),`properties={color,line,kind,op}`,LineString;由 OSM 全日本数据构建(见下)
 - `line_icons.js`:线路小图标 URL 映射(403 条),`window.LINE_ICON = {线路名: "https://jr-static.suki.ing/data/lines_icons/<线路名>.svg"}`;SVG 按线路名单独切分存放于 `data/lines_icons/`(403 个文件,由 jr-static CDN 分发,浏览器按需并行加载+缓存);来源 Wikimedia Commons 线路记号/标志/新干线图形,经 线路名×运营商 与地图数据一致性校验(同名异司线路仅在运营商一致时启用);无图标线路回退文字记号/●
+- `models/index.json`:可用车型权威清单(`{models:[slug…],v}`),与 `models/` 目录及 CDN 逐一对应(现 131 条);app.js `pathOf` 依此过滤(`avail`),未列入清单的车型直接回退图标、不发 404;**新增/删除车型必须同步更新本文件,否则前端 3D 模型不加载**
 
 ## 技术要点
 

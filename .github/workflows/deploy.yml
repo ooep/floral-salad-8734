@@ -75,6 +75,17 @@ jobs:
             echo '::warning::jr-track 拉取失败，本次部署抽屉无配线图'
           fi
 
+      # 配线图发布副本后处理（幂等，可重复跑）：去整块白背景 rect、去底部虚线分隔行、
+      # 线条/文字压暗保对比度（透明底叠毛玻璃）。只改发布副本，jr-track 源不动。
+      - name: Postprocess track diagrams (transparent + recolor)
+        run: |
+          cd mini-japanrail-3d
+          if [ -d data/trackdiagrams ]; then
+            python3 ../scripts/postprocess_track_diagrams.py data/trackdiagrams
+          else
+            echo '::warning::trackdiagrams 不存在，跳过后处理'
+          fi
+
       # SEO：每次部署前重新生成「每线路 / 每车站」静态页、sitemap、robots、404、OG 图。
       # 生成失败不阻断部署（沿用仓库内已有文件），保证现有发布流程不受影响。
       - name: Build SEO static pages

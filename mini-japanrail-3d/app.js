@@ -184,7 +184,7 @@ const I18N = {
     muT:'发车铃声', muBack:'返回时刻表', muNone:'该站暂无已收录的发车铃声', muNoAudio:'音频未收录', muLoad:'铃声数据加载中…', muFail:'铃声数据加载失败，请稍后重试', muRetry:'重试', muOther:'其他', muAll:'全部', muCount:'{0} 首', muCountOne:'1 首', muAuto:'连播', muPrev:'上一首', muNext:'下一首', muSeek:'拖动试听进度', muPlayFail:'音频播放失败，请重试', muPause:'暂停', muResume:'播放',
     gdBasic:'基本信息', gdWheelchair:'无障碍通行', gdToilets:'卫生间', gdPlatform:'站台与屏蔽门',
     gdFloorPlan:'站内图', gdLinks:'相关链接', gdAddress:'地址', gdTel:'电话', gdOpened:'开业',
-    gdTrackDiagram:'配线图', gdTdAttr:'来源：配線略図.net（CC BY 4.0）',
+    gdTrackDiagram:'配线图',
     gdInside:'闸内', gdOutside:'闸外', gdSeeFp:'查看官方站内图 ↗', gdEcomo:'ecomo 车站信息',
     gdOperator:'运营商官网', gdDataSrc:'数据：ecomo-rakuraku（交通生态·移动财团）',
     tour:{ welcomeT:'欢迎来到 Mini JapanRail', welcomeB:'全日本列车的实时运行，尽在这一张 3D 地图上。点击列车即可跟随，点击车站查看时刻表。花 1 分钟了解主要功能吧。',
@@ -229,7 +229,7 @@ const I18N = {
     muT:'発車メロディ', muBack:'時刻表に戻る', muNone:'この駅に収録された発車メロディはありません', muNoAudio:'音源未収録', muLoad:'メロディデータ読込中…', muFail:'メロディデータの取得に失敗しました', muRetry:'再試行', muOther:'その他', muAll:'すべて', muCount:'{0}曲', muCountOne:'1曲', muAuto:'連続', muPrev:'前のメロディ', muNext:'次のメロディ', muSeek:'再生位置を調整', muPlayFail:'音声の再生に失敗しました', muPause:'一時停止', muResume:'再生',
     gdBasic:'基本情報', gdWheelchair:'車椅子での移動', gdToilets:'トイレ', gdPlatform:'ホーム・ドア',
     gdFloorPlan:'構内図', gdLinks:'リンク', gdAddress:'所在地', gdTel:'連絡先', gdOpened:'開業',
-    gdTrackDiagram:'配線図', gdTdAttr:'出典：配線略図.net（CC BY 4.0）',
+    gdTrackDiagram:'配線図',
     gdInside:'改札内', gdOutside:'改札外', gdSeeFp:'公式構内図を見る ↗', gdEcomo:'ecomo 駅情報',
     gdOperator:'事業者サイト', gdDataSrc:'データ：ecomo-rakuraku（交通エコロジー・モビリティ財団）',
     tour:{ welcomeT:'ミニ日本鉄道へようこそ', welcomeB:'日本全国の列車の動きを、3D マップでリアルタイムに再現。列車をタップすると追いかけ、駅をタップすると時刻表が見られます。主な機能を 1 分ほどでご案内します。',
@@ -274,7 +274,7 @@ const I18N = {
     muT:'Departure melody', muBack:'Back to timetable', muNone:'No departure melody recorded for this station', muNoAudio:'No audio', muLoad:'Loading melody data…', muFail:'Failed to load melody data', muRetry:'Retry', muOther:'Others', muAll:'All', muCount:'{0} tracks', muCountOne:'1 track', muAuto:'Auto', muPrev:'Previous melody', muNext:'Next melody', muSeek:'Seek playback position', muPlayFail:'Playback failed, please retry', muPause:'Pause', muResume:'Play',
     gdBasic:'Basic info', gdWheelchair:'Barrier-free access', gdToilets:'Toilets', gdPlatform:'Platform / doors',
     gdFloorPlan:'Station map', gdLinks:'Links', gdAddress:'Address', gdTel:'Phone', gdOpened:'Opened',
-    gdTrackDiagram:'Track diagram', gdTdAttr:'Source: haisenryakuzu.net (CC BY 4.0)',
+    gdTrackDiagram:'Track diagram',
     gdInside:'Inside gates', gdOutside:'Outside gates', gdSeeFp:'Official station map ↗', gdEcomo:'ecomo station info',
     gdOperator:'Operator site', gdDataSrc:'Data: ecomo-rakuraku (Japan Traffic Ecology & Mobility Foundation)',
     tour:{ welcomeT:'Welcome to Mini JapanRail', welcomeB:'Every train across Japan, live on one 3D map. Tap a train to follow it, tap a station for its timetable. A quick 1-minute tour of the main features.',
@@ -9511,8 +9511,7 @@ async function _loadTdIndex() {
 function _tdSecHtml(t, stName) {
   return '<div class="gd-sec gd-td" data-st="' + _escTxt(stName) + '" hidden>'
     + '<div class="gd-sec-t">' + _escTxt(t.gdTrackDiagram) + '</div>'
-    + '<div class="gd-td-wrap"></div>'
-    + '<div class="gd-td-attr">' + _escTxt(t.gdTdAttr) + '</div></div>';
+    + '<div class="gd-td-wrap"></div></div>';
 }
 async function _fillTrackDiagrams(sec, name, coord) {
   try {

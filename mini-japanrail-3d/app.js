@@ -184,6 +184,7 @@ const I18N = {
     muT:'发车铃声', muBack:'返回时刻表', muNone:'该站暂无已收录的发车铃声', muNoAudio:'音频未收录', muLoad:'铃声数据加载中…', muFail:'铃声数据加载失败，请稍后重试', muRetry:'重试', muOther:'其他', muAll:'全部', muCount:'{0} 首', muCountOne:'1 首', muAuto:'连播', muPrev:'上一首', muNext:'下一首', muSeek:'拖动试听进度', muPlayFail:'音频播放失败，请重试', muPause:'暂停', muResume:'播放',
     gdBasic:'基本信息', gdWheelchair:'无障碍通行', gdToilets:'卫生间', gdPlatform:'站台与屏蔽门',
     gdFloorPlan:'站内图', gdLinks:'相关链接', gdAddress:'地址', gdTel:'电话', gdOpened:'开业',
+    gdTrackDiagram:'配线图', gdTdAttr:'来源：配線略図.net（CC BY 4.0）',
     gdInside:'闸内', gdOutside:'闸外', gdSeeFp:'查看官方站内图 ↗', gdEcomo:'ecomo 车站信息',
     gdOperator:'运营商官网', gdDataSrc:'数据：ecomo-rakuraku（交通生态·移动财团）',
     tour:{ welcomeT:'欢迎来到 Mini JapanRail', welcomeB:'全日本列车的实时运行，尽在这一张 3D 地图上。点击列车即可跟随，点击车站查看时刻表。花 1 分钟了解主要功能吧。',
@@ -228,6 +229,7 @@ const I18N = {
     muT:'発車メロディ', muBack:'時刻表に戻る', muNone:'この駅に収録された発車メロディはありません', muNoAudio:'音源未収録', muLoad:'メロディデータ読込中…', muFail:'メロディデータの取得に失敗しました', muRetry:'再試行', muOther:'その他', muAll:'すべて', muCount:'{0}曲', muCountOne:'1曲', muAuto:'連続', muPrev:'前のメロディ', muNext:'次のメロディ', muSeek:'再生位置を調整', muPlayFail:'音声の再生に失敗しました', muPause:'一時停止', muResume:'再生',
     gdBasic:'基本情報', gdWheelchair:'車椅子での移動', gdToilets:'トイレ', gdPlatform:'ホーム・ドア',
     gdFloorPlan:'構内図', gdLinks:'リンク', gdAddress:'所在地', gdTel:'連絡先', gdOpened:'開業',
+    gdTrackDiagram:'配線図', gdTdAttr:'出典：配線略図.net（CC BY 4.0）',
     gdInside:'改札内', gdOutside:'改札外', gdSeeFp:'公式構内図を見る ↗', gdEcomo:'ecomo 駅情報',
     gdOperator:'事業者サイト', gdDataSrc:'データ：ecomo-rakuraku（交通エコロジー・モビリティ財団）',
     tour:{ welcomeT:'ミニ日本鉄道へようこそ', welcomeB:'日本全国の列車の動きを、3D マップでリアルタイムに再現。列車をタップすると追いかけ、駅をタップすると時刻表が見られます。主な機能を 1 分ほどでご案内します。',
@@ -272,6 +274,7 @@ const I18N = {
     muT:'Departure melody', muBack:'Back to timetable', muNone:'No departure melody recorded for this station', muNoAudio:'No audio', muLoad:'Loading melody data…', muFail:'Failed to load melody data', muRetry:'Retry', muOther:'Others', muAll:'All', muCount:'{0} tracks', muCountOne:'1 track', muAuto:'Auto', muPrev:'Previous melody', muNext:'Next melody', muSeek:'Seek playback position', muPlayFail:'Playback failed, please retry', muPause:'Pause', muResume:'Play',
     gdBasic:'Basic info', gdWheelchair:'Barrier-free access', gdToilets:'Toilets', gdPlatform:'Platform / doors',
     gdFloorPlan:'Station map', gdLinks:'Links', gdAddress:'Address', gdTel:'Phone', gdOpened:'Opened',
+    gdTrackDiagram:'Track diagram', gdTdAttr:'Source: haisenryakuzu.net (CC BY 4.0)',
     gdInside:'Inside gates', gdOutside:'Outside gates', gdSeeFp:'Official station map ↗', gdEcomo:'ecomo station info',
     gdOperator:'Operator site', gdDataSrc:'Data: ecomo-rakuraku (Japan Traffic Ecology & Mobility Foundation)',
     tour:{ welcomeT:'Welcome to Mini JapanRail', welcomeB:'Every train across Japan, live on one 3D map. Tap a train to follow it, tap a station for its timetable. A quick 1-minute tour of the main features.',
@@ -9486,6 +9489,66 @@ async function _loadGuideData() {
   return _guideData;
 }
 
+/* ============ 配线图（ooep/jr-track，CC BY 4.0 配線略図.net） ============
+   索引: /data/track_diagram_index.json —— station_key → [{line, files[]}]，
+        由 scripts/build_track_diagram_index.py 对 jr-track SVG 站名匹配生成。
+   图片: /data/trackdiagrams/<jr|metro|pr>/…/figures/*.svg，
+        deploy.yml 部署时从 jr-track 拉取注入 jr-static（仓库不打包 SVG）。
+   指南页「相关链接」上方展示该站全部所属线路的配线图；
+   索引/图片加载失败一律静默移除整块，不占位、不报错。 */
+const TRACK_DIAGRAM_BASE = EKI_INFO_BASE + 'trackdiagrams/';
+let _tdIndex = null, _tdIndexP = null;
+async function _loadTdIndex() {
+  if (_tdIndex) return _tdIndex;
+  if (!_tdIndexP) {
+    _tdIndexP = fetchJSONWithCache(EKI_INFO_BASE + 'track_diagram_index.json')
+      .then(j => { _tdIndex = (j && j.stations) || {}; })
+      .catch(() => { _tdIndex = {}; });
+  }
+  await _tdIndexP;
+  return _tdIndex;
+}
+function _tdSecHtml(t, stName) {
+  return '<div class="gd-sec gd-td" data-st="' + _escTxt(stName) + '" hidden>'
+    + '<div class="gd-sec-t">' + _escTxt(t.gdTrackDiagram) + '</div>'
+    + '<div class="gd-td-wrap"></div>'
+    + '<div class="gd-td-attr">' + _escTxt(t.gdTdAttr) + '</div></div>';
+}
+async function _fillTrackDiagrams(sec, name, coord) {
+  try {
+    const key = await resolveStationKey(name, coord);
+    if (!sec.isConnected || sec.dataset.st !== name) return;   // await 期间已换站/节点已换
+    const idx = await _loadTdIndex();
+    if (!sec.isConnected || sec.dataset.st !== name) return;
+    const entries = (idx && (idx[key] || idx[name])) || [];
+    if (!entries.length) { sec.remove(); return; }
+    const wrap = sec.querySelector('.gd-td-wrap');
+    entries.forEach(e => {
+      const fig = document.createElement('div');
+      fig.className = 'gd-td-fig';
+      const lab = document.createElement('div');
+      lab.className = 'gd-td-line';
+      lab.textContent = e.line;
+      fig.appendChild(lab);
+      (e.files || []).forEach(f => {
+        const img = document.createElement('img');
+        img.className = 'gd-td-img';
+        img.loading = 'lazy';
+        img.alt = e.line;
+        img.src = TRACK_DIAGRAM_BASE + f;
+        img.onerror = () => {
+          img.remove();
+          if (!fig.querySelector('img')) fig.remove();
+          if (sec.isConnected && !sec.querySelector('.gd-td-img')) sec.remove();
+        };
+        fig.appendChild(img);
+      });
+      wrap.appendChild(fig);
+    });
+    sec.hidden = false;
+  } catch (err) { try { sec.remove(); } catch (_) {} }
+}
+
 function _gVal(v) {
   if (v === true) return lang === 'zh' ? '有' : (lang === 'en' ? 'Yes' : 'あり');
   if (v === false) return lang === 'zh' ? '无' : (lang === 'en' ? 'No' : 'なし');
@@ -9524,8 +9587,10 @@ async function renderGuideTab() {
   const t = T();
   _guideKey = sheetStation;
   if (!rec) {
-    // wiki 数据缺失时仍显示站台参考（站台数据与百科独立）
-    box.innerHTML = (platHtml || '') + '<div class="gd-empty">' + _escTxt(t.gdEmpty) + '</div>';
+    // wiki 数据缺失时仍显示站台参考与配线图（两者与百科独立）
+    box.innerHTML = (platHtml || '') + _tdSecHtml(t, sheetStation) + '<div class="gd-empty">' + _escTxt(t.gdEmpty) + '</div>';
+    const tdSec0 = box.querySelector('.gd-td');
+    if (tdSec0) _fillTrackDiagrams(tdSec0, sheetStation, sheetCoord);
     return;
   }
   let h = '';
@@ -9572,6 +9637,8 @@ async function renderGuideTab() {
   } else if (fp && fp.pageUrl) {
     h += `<div class="gd-sec"><div class="gd-sec-t">${_escTxt(t.gdFloorPlan)}</div><a class="gd-link" href="${_escTxt(fp.pageUrl)}" target="_blank" rel="noopener">${_escTxt(t.gdSeeFp)}</a></div>`;
   }
+  // 配线图：插在「相关链接」上方（该站全部所属线路，异步填充，失败静默移除）
+  h += _tdSecHtml(t, sheetStation);
   const L = rec.links || {};
   const linkItems = [];
   if (L.ecomo) linkItems.push([t.gdEcomo, L.ecomo]);
@@ -9582,6 +9649,8 @@ async function renderGuideTab() {
     h += '</div></div>';
   }
   box.innerHTML = h;
+  const tdSec = box.querySelector('.gd-td');
+  if (tdSec) _fillTrackDiagrams(tdSec, sheetStation, sheetCoord);
 }
 
 /* ---------------- 搜索 ---------------- */

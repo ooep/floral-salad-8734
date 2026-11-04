@@ -1102,6 +1102,13 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
 .gd-link { display:inline-block; font-size:12.5px; color:var(--acc-txt); background:var(--acc-soft); border:1px solid var(--acc-border); border-radius:8px; padding:6px 12px; text-decoration:none; }
 .gd-src { margin-top:24px; font-size:10.5px; color:var(--dim); text-align:center; opacity:.8; }
 
+/* --- 配线图（jr-track，指南页「相关链接」上方） --- */
+.gd-td-wrap { display:flex; flex-direction:column; gap:10px; }
+.gd-td-fig { border:1px solid var(--glass-edge); border-radius:10px; overflow:hidden; background:#fff; }
+.gd-td-line { font-size:12px; font-weight:700; color:#16181d; padding:7px 10px; border-bottom:1px solid #d8dce3; background:#f2f4f7; }
+.gd-td-img { display:block; width:100%; max-height:240px; object-fit:contain; background:#fff; }
+.gd-td-attr { margin-top:8px; font-size:10px; color:var(--dim); opacity:.75; }
+
 /* --- 信息面板 --- */
 #panelInfo { color:var(--txt); }
 .info-station { padding:6px 2px 14px; border-bottom:1px solid var(--glass-edge); }

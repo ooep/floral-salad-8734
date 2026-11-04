@@ -55,6 +55,26 @@ jobs:
             echo '::warning::配线图仓库拉取失败，本次部署无配线图'
           fi
 
+      # 车站抽屉配线图：从 ooep/jr-track（public，配線略図.net CC BY 4.0）拉取
+      # downloads/documents/{jr,metro,pr} 到 mini-japanrail-3d/data/trackdiagrams/，
+      # 随 build_static_assets.py 的 data 合并进入 jr-static，前端按
+      # data/track_diagram_index.json 于车站抽屉「指南」页引用（缺失时静默跳过）。
+      - name: Fetch track diagrams (jr-track)
+        run: |
+          cd mini-japanrail-3d
+          if curl -sfL -m 120 "https://github.com/ooep/jr-track/archive/refs/heads/main.tar.gz" -o /tmp/jrt.tgz; then
+            rm -rf /tmp/jrtx && mkdir -p /tmp/jrtx && tar xzf /tmp/jrt.tgz -C /tmp/jrtx || true
+            mkdir -p data/trackdiagrams
+            cp -r /tmp/jrtx/jr-track-main/downloads/documents/jr data/trackdiagrams/ 2>/dev/null || true
+            cp -r /tmp/jrtx/jr-track-main/downloads/documents/metro data/trackdiagrams/ 2>/dev/null || true
+            cp -r /tmp/jrtx/jr-track-main/downloads/documents/pr data/trackdiagrams/ 2>/dev/null || true
+            rm -rf /tmp/jrtx /tmp/jrt.tgz
+            n=$(find data/trackdiagrams -name '*.svg' 2>/dev/null | wc -l) || n=0
+            echo "jr-track 配线图 SVG 数: ${n:-0}"
+          else
+            echo '::warning::jr-track 拉取失败，本次部署抽屉无配线图'
+          fi
+
       # SEO：每次部署前重新生成「每线路 / 每车站」静态页、sitemap、robots、404、OG 图。
       # 生成失败不阻断部署（沿用仓库内已有文件），保证现有发布流程不受影响。
       - name: Build SEO static pages

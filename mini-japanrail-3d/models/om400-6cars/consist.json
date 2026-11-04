@@ -10,8 +10,8 @@
    "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    9.486,
-    8.886
+    9.37,
+    9.49
    ],
    "lod": {
     "model": "406-01.stand-in.glb",
@@ -231,8 +231,8 @@
    "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    9.486,
-    8.886
+    9.2,
+    9.49
    ],
    "lod": {
     "model": "401-01OM400-6cars.stand-in.glb",
@@ -369,8 +369,8 @@
    "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    9.486,
-    8.886
+    9.2,
+    9.49
    ],
    "lod": {
     "model": "408-01OM400-6cars.stand-in.glb",
@@ -507,8 +507,8 @@
    "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    9.486,
-    8.886
+    9.2,
+    9.49
    ],
    "lod": {
     "model": "401-01OM400-6cars.stand-in.glb",
@@ -645,8 +645,8 @@
    "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    9.486,
-    9.086
+    9.2,
+    9.49
    ],
    "lod": {
     "model": "401-01OM400-6cars.stand-in.glb",
@@ -783,8 +783,8 @@
    "flip": true,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    9.486,
-    9.486
+    9.37,
+    9.49
    ],
    "lod": {
     "model": "409-01OM400-6cars.stand-in.glb",

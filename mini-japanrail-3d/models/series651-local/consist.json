@@ -10,8 +10,8 @@
    "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    11.341,
-    11.341
+    10.49,
+    11.34
    ],
    "lod": {
     "model": "Cube.010.stand-in.glb",
@@ -152,8 +152,8 @@
    "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    11.014,
-    10.264
+    11.01,
+    10.24
    ],
    "lod": {
     "model": "Cube.003_Series651-Local_4Cars.stand-in.glb",
@@ -221,8 +221,8 @@
    "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    11.051,
-    10.201
+    11.05,
+    10.18
    ],
    "lod": {
     "model": "Cube.004_Series651-Local_4Cars.stand-in.glb",
@@ -290,8 +290,8 @@
    "flip": true,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    11.292,
-    11.292
+    10.49,
+    11.29
    ],
    "lod": {
     "model": "Cube.011_Series651-Local_4Cars.stand-in.glb",

@@ -6,6 +6,8 @@ build_static_assets.py — 组装 jr-static Worker 的静态资产目录
 从仓库源目录合并出 static-worker/assets/：
   /data/*            <- 根站 data/ + mini-japanrail-3d/data/ 合并（唯一冲突 train_icons_atlas.png
                         根站版落入 /data/quest/ 供 index-quest 使用）
+                        含 CI 注入的 mini/data/trackdiagrams/（deploy.yml 从 ooep/jr-track
+                        拉取的车站配线图 SVG；本地无此目录则静默跳过）
   /logos/*           <- mini-japanrail-3d/logos/
   /seo/img/*         <- mini-japanrail-3d/seo/img/
   /segments.geojson  <- 根站 segments.geojson
@@ -231,6 +233,10 @@ def main():
         f.write('  Cache-Control: public, max-age=300\n')
         f.write('/data/badges/atlas/sha256/*\n')
         f.write('  Cache-Control: public, max-age=31536000, immutable\n')
+        # 配线图（2026-11 车站抽屉）：jr-track SVG 内容稳定（文件名即版本），
+        # 1 天缓存；索引 track_diagram_index.json 走上面 /data/*.json 的 5 分钟。
+        f.write('/data/trackdiagrams/*\n')
+        f.write('  Cache-Control: public, max-age=86400\n')
         # 首页拆分出的主程序/面板样式:文件名固定,靠 ETag 每次校验,避免新旧 HTML 错配
         f.write('/app/*\n')
         f.write('  Cache-Control: public, max-age=0, must-revalidate\n')

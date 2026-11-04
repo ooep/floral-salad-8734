@@ -6178,6 +6178,9 @@ let lastActiveN = -1, lastFpsSec = -1;
    必须据此重建列车顶点 —— 否则图元停留在旧视口与旧 zoom:缩小后只剩旧区域附近几辆车、
    图标按旧 zoom 被放大,直到再次交互时间轴才恢复。 */
 let viewDirty = false;
+/* 3D 编组查看器打开时全屏遮罩盖住地图:暂停地图重建/重绘(语义同 document.hidden),
+   由 M3D.openViewer/closeViewer 置位/清除(清除时置 viewDirty 补一帧) */
+let mapPaused = false;
 /* 本轮 updateTrains 是否有淡入淡出进行中(alpha 未到目标):tick 据此临时提高重建率,
    保证 260ms 渐变在低空闲帧率下依然平滑(见 tick 的自适应步长) */
 let anyFading = false;
@@ -6264,10 +6267,10 @@ function startLoop() {
        画过一帧,单看 timeMoved 会漏掉随后到达的新窗口。 */
     const timeMoved = lastRenderM < 0 || Math.abs(M - lastRenderM) >= 0.02;
     const dataChanged = lastRenderList !== tripList || lastRenderDay !== dayList;
-    const staticFrame = (paused && !timeMoved && !dataChanged && !anyFading && !followTrip && !liveDetailTrip && !sliderDragging) || document.hidden;
-    const viewChanged = viewDirty && !document.hidden;
+    const staticFrame = (paused && !timeMoved && !dataChanged && !anyFading && !followTrip && !liveDetailTrip && !sliderDragging) || document.hidden || mapPaused;
+    const viewChanged = viewDirty && !document.hidden && !mapPaused;
     if ((staticFrame && !viewChanged) || frameSkip) {
-      if (followTrip) tickFollow(M, dt);
+      if (followTrip && !mapPaused) tickFollow(M, dt); /* 查看器遮罩期间连相机跟随也暂停,关闭后自动追上 */
       return;
     }
     /* ★ 渲染管线优化(2026-10 二轮,降帧耗/发热):
@@ -10804,6 +10807,7 @@ const M3D = (() => {
       if (!path) { toast(T().m3dNone || '该车型暂无 3D 模型'); return; }
       const d = ensureDr();
       drOpen = true;
+      mapPaused = true; /* 遮罩盖住地图:暂停地图重建/重绘(见 tick 的 staticFrame) */
       $('m3dMask').classList.add('open');
       $('m3dViewer').classList.add('open');
       $('m3dNm').textContent = t.nm || (t.lines && t.lines[0]) || t.i || '#' + t.t;
@@ -11025,6 +11029,7 @@ const M3D = (() => {
   }
   function closeViewer() {
     drOpen = false;
+    mapPaused = false; viewDirty = true; /* 恢复地图渲染并补一帧 */
     $('m3dMask').classList.remove('open');
     $('m3dViewer').classList.remove('open');
     if (dr) { cancelAnimationFrame(dr.raf); if (dr.group) { dr.scene.remove(dr.group); dr.group = null; } }

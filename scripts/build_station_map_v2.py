@@ -351,6 +351,17 @@ out = {'version': 2,
                  'extra_segments': len(extra_segments), 'extra_stations': len(extra_stations)}}
 json.dump(out, open(os.path.join(DATA, "station_map.json"), "w", encoding="utf-8"),
           ensure_ascii=False, separators=(',', ':'))
+# ---------- 6b. 按用途拆分(页面按需加载,见 app.js 启动流程) ----------
+# extras(~29KB gz): 补缺几何, 8s 关键路径; paths(~2.4MB gz): 官方区间折线,
+# 索引构建窗口下载、时刻表解析前归位; stations(~0.3MB gz): 徽章限定键, 懒加载。
+# 全量 station_map.json 保留: 离线工具(sim_verify/seo)仍读它, 且为拆分单一来源。
+for _name, _keys in (('extras', ('extra_segments', 'extra_stations')),
+                     ('paths', ('segments', 'tmap_lids')),
+                     ('stations', ('tt', 'stations'))):
+    _part = {'version': 2, 'generated_at': out['generated_at']}
+    for _k in _keys: _part[_k] = out[_k]
+    json.dump(_part, open(os.path.join(DATA, "station_map.%s.json" % _name), "w", encoding="utf-8"),
+              ensure_ascii=False, separators=(',', ':'))
 # 完整校验报告(含每站坐标, 不部署)
 report = {'stats': out['stats'], 'tmap_stops':
           {tid: [[round(c[0],6), round(c[1],6)] if c else None for c in co] for tid, co in tmap_stops.items()},

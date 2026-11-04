@@ -5181,13 +5181,17 @@ async function boot() {
        由 bindLazyHeavyData 在首次放大(z≥11.5)或开关打开时按需拉取,启动少下 14MB */
     dayBitAuto = serviceBitOf(Date.now());
     dayBit = dayMode === 'auto' ? dayBitAuto : dayMode;
-    /* station_map.json(2.7MB gz)移出首帧关键路径:它只用于官方坐标补缺/股道底图/徽章限定键,
-       首帧(轨道/车站渲染)不依赖。并行发起但不 await;归位时设 8s 限期(自发起时起算,见下),
-       保证补缺几何与索引指纹(idxFingerprint 含 generated_at/补缺数)和现状完全一致 */
+    /* station_map 按用途拆分为三文件(合计 2.7MB gz,见 build_station_map_v2.py 6b):
+       extras 补缺几何(~29KB gz)留在 8s 关键路径,归位/指纹语义与旧版整包一致;
+       paths 官方区间折线(~2.4MB gz)提前发起、借索引构建窗口下载,时刻表解析前归位;
+       stations 徽章限定键(~0.3MB gz)懒载不阻塞(ensureStationKeyIdx 未就绪自动重试)。
+       idxFingerprint 只依赖 extras(generated_at/补缺数),不受 paths/stations 归位时机影响 */
     const smapCtl = {}; /* 归位超时时用于中止在途请求,释放连接 */
-    stationMapPromise = fetchJSONWithCache('https://jr-static.suki.ing/data/station_map.json', 'loadingTm', 4, false, smapCtl)
+    stationMapPromise = fetchJSONWithCache('https://jr-static.suki.ing/data/station_map.extras.json', 'loadingTm', 4, false, smapCtl)
       .then(sm => (stationMap = sm && sm.version === 2 ? sm : null))
       .catch(() => null);
+    const smapPathsPromise = fetchJSONWithCache('https://jr-static.suki.ing/data/station_map.paths.json', '', 4, true).catch(() => null);
+    const smapStationsPromise = fetchJSONWithCache('https://jr-static.suki.ing/data/station_map.stations.json', '', 4, true).catch(() => null);
     /* 8s 限期自发起时起算(不是等到归位 await 才开始),弱网下进度条停留在文件阶段的
        总时长被压在限期之内 */
     const SMAP_TIMEOUT = {};
@@ -5250,6 +5254,11 @@ async function boot() {
           (stationMap.extra_stations || []).length + ' stations');
       }
     }
+    /* stations 懒载归位:仅在 extras 归位(stationMap 非空)时挂载,指纹语义与旧版一致;
+       徽章渲染时的 ensureStationKeyIdx 在其未就绪时会自动重试 */
+    smapStationsPromise.then(stt => {
+      if (stt && stt.version === 2 && stationMap) { stationMap.tt = stt.tt; stationMap.stations = stt.stations; }
+    });
     /* 索引构建/恢复:进度 55→78%(fp 指纹不匹配 = 输入数据变了但版本没递增 → 重建) */
     setPhase(FILES_PCT, IDX_PCT, 0);
     let idxBuiltNow = false;
@@ -5263,6 +5272,23 @@ async function boot() {
       idxBuiltNow = true;
       applyLoaderLineColor();
     }
+    /* 官方路径几何(paths: segments+tmap_lids)必须在时刻表解析(officialStopsFor)前归位:
+       已借索引构建窗口并行下载;设 20s 上限,超时降级"无官方路径"(等价旧版整包缺失行为),
+       到达后再懒载归位 —— 运行时 officialPath 仍可用。正常网络(≥8Mbps)约 2.4s 即归位 */
+    const SMAP_PATHS_TIMEOUT = {};
+    let smapPathsTimer;
+    const smapPathsDeadline = new Promise(r => { smapPathsTimer = setTimeout(() => r(SMAP_PATHS_TIMEOUT), 20000); });
+    const mergePaths = p => {
+      if (!p || p.version !== 2) return;
+      if (!stationMap) stationMap = { version: 2, generated_at: p.generated_at || '' };
+      stationMap.segments = p.segments; stationMap.tmap_lids = p.tmap_lids;
+    };
+    const paths = await Promise.race([smapPathsPromise, smapPathsDeadline]);
+    clearTimeout(smapPathsTimer);
+    if (paths === SMAP_PATHS_TIMEOUT) {
+      console.warn('[station_map] paths not ready within 20s: proceeding without official path geometry');
+      smapPathsPromise.then(mergePaths);
+    } else mergePaths(paths);
     /* 时刻表解析:分片让出主线程,进度 78→97% */
     setPhase(IDX_PCT, PRS_PCT, 0);
     setLoadMsg(T().loading + ' ' + T().loadingPr + ' …');

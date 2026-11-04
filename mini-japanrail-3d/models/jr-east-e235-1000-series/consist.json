@@ -10,8 +10,8 @@
    "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    10.48,
-    9.55
+    9.93,
+    10.48
    ],
    "lod": {
     "model": "E235-1000-1.stand-in.glb",
@@ -188,8 +188,8 @@
    "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    10.48,
-    9.55
+    9.93,
+    10.48
    ],
    "lod": {
     "model": "E235-1000-2newE235100011car.stand-in.glb",
@@ -312,8 +312,8 @@
    "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    10.48,
-    9.55
+    9.93,
+    10.48
    ],
    "lod": {
     "model": "E235-1000-10E235100011car.stand-in.glb",
@@ -436,8 +436,8 @@
    "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    10.48,
-    9.55
+    9.93,
+    10.48
    ],
    "lod": {
     "model": "E235-1000-4E235100011car.stand-in.glb",
@@ -560,8 +560,8 @@
    "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    10.48,
-    9.55
+    9.93,
+    10.48
    ],
    "lod": {
     "model": "E235-1000-5E235100011car.stand-in.glb",
@@ -684,8 +684,8 @@
    "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    10.48,
-    9.55
+    9.93,
+    10.48
    ],
    "lod": {
     "model": "E235-1000-2newE235100011car.stand-in.glb",
@@ -808,8 +808,8 @@
    "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    10.48,
-    9.55
+    9.93,
+    10.48
    ],
    "lod": {
     "model": "E235-1000-10E235100011car.stand-in.glb",
@@ -932,8 +932,8 @@
    "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    10.48,
-    9.55
+    9.93,
+    10.48
    ],
    "lod": {
     "model": "E235-1000-8.001E235100011car.stand-in.glb",
@@ -1056,8 +1056,8 @@
    "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    10.48,
-    9.55
+    9.93,
+    10.48
    ],
    "lod": {
     "model": "E235-1000-9E235100011car.stand-in.glb",
@@ -1180,8 +1180,8 @@
    "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    10.48,
-    10.1
+    9.93,
+    10.48
    ],
    "lod": {
     "model": "E235-1000-10E235100011car.stand-in.glb",
@@ -1304,7 +1304,7 @@
    "flip": true,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    10.48,
+    9.93,
     10.48
    ],
    "lod": {

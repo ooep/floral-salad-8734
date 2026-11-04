@@ -10,8 +10,8 @@
    "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    10.759,
-    9.299
+    9.88,
+    10.76
    ],
    "lod": {
     "model": "E531_5_Car_11.stand-in.glb",
@@ -237,8 +237,8 @@
    "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    10.759,
-    9.299
+    9.95,
+    10.76
    ],
    "lod": {
     "model": "E531_5_Car_12_JREastE531Series5Car.stand-in.glb",
@@ -374,8 +374,8 @@
    "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    10.759,
-    9.299
+    9.95,
+    10.76
    ],
    "lod": {
     "model": "E531_5_Car_13_JREastE531Series5Car.stand-in.glb",
@@ -511,8 +511,8 @@
    "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    10.759,
-    10.109
+    9.95,
+    10.76
    ],
    "lod": {
     "model": "E531_5_Car_14_JREastE531Series5Car.stand-in.glb",
@@ -648,7 +648,7 @@
    "flip": true,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    10.48,
+    9.88,
     10.48
    ],
    "lod": {

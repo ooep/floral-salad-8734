@@ -10,8 +10,8 @@
    "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    10.48,
-    9.58
+    9.73,
+    10.48
    ],
    "lod": {
     "model": "E231-0_Joban_Car_1.stand-in.glb",
@@ -224,8 +224,8 @@
    "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    10.48,
-    9.58
+    9.95,
+    10.48
    ],
    "lod": {
     "model": "E231-0_Joban_Car_2JREastE231Joban10.stand-in.glb",
@@ -348,8 +348,8 @@
    "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    10.48,
-    9.58
+    9.95,
+    10.48
    ],
    "lod": {
     "model": "E231-0_Joban_Car_3JREastE231Joban10.stand-in.glb",
@@ -472,8 +472,8 @@
    "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    10.48,
-    9.58
+    9.95,
+    10.48
    ],
    "lod": {
     "model": "E231-0_Joban_Car_2JREastE231Joban10.stand-in.glb",
@@ -596,8 +596,8 @@
    "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    10.48,
-    9.58
+    9.95,
+    10.48
    ],
    "lod": {
     "model": "E231-0_Joban_Car_2JREastE231Joban10.stand-in.glb",
@@ -720,8 +720,8 @@
    "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    10.48,
-    9.58
+    9.95,
+    10.48
    ],
    "lod": {
     "model": "E231-0_Joban_Car_2JREastE231Joban10.stand-in.glb",
@@ -844,8 +844,8 @@
    "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    10.48,
-    9.58
+    9.95,
+    10.48
    ],
    "lod": {
     "model": "E231-0_Joban_Car_2JREastE231Joban10.stand-in.glb",
@@ -968,8 +968,8 @@
    "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    10.48,
-    9.58
+    9.95,
+    10.48
    ],
    "lod": {
     "model": "E231-0_Joban_Car_3JREastE231Joban10.stand-in.glb",
@@ -1092,8 +1092,8 @@
    "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    10.48,
-    10.11
+    9.95,
+    10.48
    ],
    "lod": {
     "model": "E231-0_Joban_Car_2JREastE231Joban10.stand-in.glb",
@@ -1216,7 +1216,7 @@
    "flip": true,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    10.48,
+    9.73,
     10.48
    ],
    "lod": {

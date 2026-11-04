@@ -10,8 +10,8 @@
    "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    10.262,
-    9.612
+    9.84,
+    10.26
    ],
    "lod": {
     "model": "nk9513.stand-in.glb",
@@ -266,8 +266,8 @@
    "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    10.262,
-    9.712
+    9.91,
+    10.26
    ],
    "lod": {
     "model": "nk9015Nankai9513.stand-in.glb",
@@ -396,8 +396,8 @@
    "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    10.262,
-    9.712
+    9.91,
+    10.26
    ],
    "lod": {
     "model": "nk9816Nankai9513.stand-in.glb",
@@ -526,8 +526,8 @@
    "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    10.262,
-    9.712
+    9.91,
+    10.26
    ],
    "lod": {
     "model": "nk9017Nankai9513.stand-in.glb",
@@ -656,8 +656,8 @@
    "flip": false,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    10.262,
-    10.012
+    9.91,
+    10.26
    ],
    "lod": {
     "model": "nk9018Nankai9513.stand-in.glb",
@@ -786,8 +786,8 @@
    "flip": true,
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
-    10.262,
-    10.262
+    9.84,
+    10.26
    ],
    "lod": {
     "model": "nk9514Nankai9513.stand-in.glb",

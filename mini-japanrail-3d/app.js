@@ -10311,9 +10311,14 @@ function applyThemeMode() {
   document.documentElement.setAttribute('data-theme', resolved);
   document.querySelectorAll('#themeRow .chip').forEach(c => c.classList.toggle('on', c.dataset.theme === mode));
   applyThemeBrand(resolved);
-  /* 配线图双变体：切主题时同步换 .dk.svg / .svg */
+  /* 配线图双变体：切主题时换 .dk.svg / .svg；先预载新变体再换 src，避免闪白/闪空 */
   document.querySelectorAll('img.gd-td-img').forEach(im => {
-    im.src = im.src.replace(/(\.dk)?\.svg(\?.*)?$/, (resolved === 'dark' ? '.dk.svg' : '.svg') + '$2');
+    const ns = im.src.replace(/(\.dk)?\.svg(\?.*)?$/, (resolved === 'dark' ? '.dk.svg' : '.svg') + '$2');
+    if (ns === im.src) return;
+    const pre = new Image();
+    pre.onload = () => { im.src = ns; };
+    pre.onerror = () => {};              /* 新变体缺失时保留旧图，不闪空 */
+    pre.src = ns;
   });
   if (map) applyBaseVisibility(); /* 深浅两套 OFM 图层随主题互斥显隐 */
 }

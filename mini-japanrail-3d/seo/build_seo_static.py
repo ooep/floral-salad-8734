@@ -53,6 +53,99 @@ DEFAULT_CONFIG = {
 FALLBACK_COLOR = '#4f8ef7'
 FALLBACK_KIND = '鉄道'
 
+# ---------------- 边界站归属底线表（真实管辖公司，显式 override） ----------------
+# 键 = (canonical 线名, 站名)。边界站的「管辖公司」与「哪家公司的列车停靠」是两回事：
+# 本表取管辖（站务归属），优先级高于几何段 op 与 model_map 锚点仲裁。
+# 依据逐条附后；新增边界站必须给出依据，禁止用"与前端一致"代替事实核查。
+BOUNDARY_OP = {
+    # 仅收录「几何多公司（段 op ≥2）」的边界站；几何单公司站由段 op 直接决定，不设 override。
+    # 证据逐条见 staging/boundary_evidence.md（在来线站页 / 站番号 / 设施数据 三证同向）。
+    ('東海道本線', '熱海'): '東日本旅客鉄道',      # JR东 estation(StationCd=64)；JT21；JR东海仅新干线栏目有页（不计）
+    ('東海道本線', '米原'): '西日本旅客鉄道',      # JR西 jr-odekake(id=0610147)；JR东海仅新干线栏目有页（不计）
+    ('本四備讃線', '児島'): '西日本旅客鉄道',      # 用户裁定；JR西 jr-odekake(id=0651304)；児島–宇多津段JR四国运营、站务归JR西
+    ('関西本線', '亀山'): '東海旅客鉄道',          # 用户终裁锁定；JR东海在来线栏目駅ガイド + 站番号CJ17 + 设施数据JR东海
+    ('紀勢本線', '亀山'): '東海旅客鉄道',          # 同上（紀勢本線起点）
+    ('高山本線', '猪谷'): '西日本旅客鉄道',        # JR西公式时刻表站页；两家均无番号（中性）；富山～猪谷段JR西
+    ('信越本線', '軽井沢'): 'しなの鉄道',          # 信浓铁道官方站页（起点站）；新干线行另归JR东（几何单值）
+    ('信越本線', '篠ノ井'): '東日本旅客鉄道',      # JR东 estation(StationCd=0801)；信浓铁道仅直通
+    ('大糸線', '南小谷'): '東日本旅客鉄道',        # JR东 estation(StationCd=1478)；JR西列车仅直通
+    ('いわて銀河鉄道線', '盛岡'): '東日本旅客鉄道',  # JR东 estation(StationCd=1565)；IGR仅乘入
+}
+
+# ---------------- 多司共用站（站级运营公司复数，官方共站事实） ----------------
+# 站点页「运营公司」行：命中本表 → 复数列表；未命中 → 由途经线路归属推导（单一即单值）。
+# 仅收录「同一站体多公司共用」的官方共站；同名异站（如 京都 的 JR/近铁分站诉求）
+# 在数据层为单一合并 key 时，以复数列表分列各公司，不混写为一家。
+STATION_OPERATORS = {
+    '神戸三宮(阪神)': ['阪急電鉄', '阪神電気鉄道', '神戸高速鉄道'],
+    '神戸三宮(阪急・神戸高速)': ['阪急電鉄', '阪神電気鉄道', '神戸高速鉄道'],
+    '大阪梅田(阪神線)': ['阪急電鉄', '阪神電気鉄道'],
+    '大阪梅田(阪急線)': ['阪急電鉄', '阪神電気鉄道'],
+    '大阪難波': ['近畿日本鉄道', '阪神電気鉄道'],
+    '京都': ['西日本旅客鉄道', '近畿日本鉄道'],
+    '児島': ['西日本旅客鉄道'],  # 用户裁定（2026-11-04）：児島为JR西管辖站；JR四国仅本四備讃線乘入列车（与直通幽灵同类，降单值）
+    # ---- 坐标实证未过、逐条人工裁定（2026-11-04）：直通运转幽灵公司剔除 / 同名异站拆分 ----
+    '向ケ丘遊園': ['小田急電鉄'],          # 小田急管辖站；东京メトロ千代田線仅直通运转，无站务
+    '梅ケ丘': ['小田急電鉄'],              # 同上
+    '百合ケ丘': ['小田急電鉄'],            # 同上
+    '祖師ケ谷大蔵': ['小田急電鉄'],        # 同上
+    '大手町(東京都)': ['東京地下鉄', '東京都交通局'],  # 东京メトロ(丸ノ内/東西/千代田/半蔵門)+都営三田線共站；東急/JR/東葉为直通幽灵
+    '市ケ谷': ['東日本旅客鉄道', '東京地下鉄', '東京都交通局'],  # JR中央線+东京メトロ有楽町/南北+都営新宿共站；埼玉高速/東急/東武为直通幽灵
+    '日本橋(東京都)': ['東京地下鉄', '東京都交通局'],  # 东京メトロ銀座/東西+都営浅草共站；京成/京急/北総为浅草線直通幽灵
+    '蔵前': ['東京都交通局'],               # 都営浅草線+大江戸線共站（同一站体）；京成/京急/北総为直通幽灵
+    '西ケ原': ['東京地下鉄'],               # 东京メトロ南北線单站；埼玉高速/東急为直通幽灵
+    '山田(大阪モノレール)': ['大阪モノレール'],  # 大阪モノレール站；京王/長良川/阪急为同名异站（阪急千里線山田为邻站不同体）
+    '朝倉(高知県・とさでん交通)': ['とさでん交通'],  # とさでん交通路面电车停留場；名鉄/JR四国为同名异站
+    '柳ケ浦': ['九州旅客鉄道'],             # JR九州日豊本線站；JR西为直通幽灵
+    '神田(鹿児島県)': ['鹿児島市交通局'],    # 鹿児島市電停留場；JR东/松浦为同名异站
+    '西松任': ['IRいしかわ鉄道'],           # IRいしかわ鉄道站（2024年开业）；あいの風为同名联想幽灵
+    '加賀笠間': ['IRいしかわ鉄道'],         # IRいしかわ鉄道站；あいの風为邻接他站幽灵
+    # ---- 坐标实证未过、逐条人工裁定 第二批（直通幽灵剔除 / 官方共站）----
+    '三毛門': ['九州旅客鉄道'],             # 日豊本線JR九州站（宮崎市）；山陽本線/鹿児島本線为合并线幽灵
+    '元住吉': ['東急電鉄'],                 # 東急東横線・目黒線站；埼玉高速/相鉄为直通幽灵
+    '小牧原': ['名古屋鉄道'],               # 名鉄小牧線站；地下鉄上飯田線不到此站（直通幽灵）
+    '巣鴨': ['東日本旅客鉄道', '東京都交通局'],  # 山手線+都営三田線官方共站（都営站位于JR站直下）；東急/相鉄为直通幽灵
+    '新守山': ['東海旅客鉄道', '愛知環状鉄道'],  # JR中央線+愛知環状鉄道線官方共站（同所并设）
+    '浅草橋': ['東日本旅客鉄道', '東京都交通局'],  # 総武線+都営浅草線共站（邻接）；京成/京急/北総为直通幽灵
+    '王子': ['東日本旅客鉄道', '東京地下鉄'],     # 京浜東北線+南北線共站；都電荒川線为別名「王子駅前」停留場；埼玉高速/東急为直通幽灵
+    '駒込': ['東日本旅客鉄道', '東京地下鉄'],     # 山手線+南北線官方共站；埼玉高速/東急/相鉄为直通幽灵
+    '鶴舞': ['東海旅客鉄道', '名古屋市交通局'],   # 中央線+地下鉄鶴舞線官方共站；名鉄/愛環为直通幽灵
+    '新横浜': ['東日本旅客鉄道', '東海旅客鉄道', '横浜市交通局'],  # 横浜線+新幹線+市営地下鉄ブルーライン官方共站（東急/相鉄新横浜为邻接另站）
+    '横浜': ['東日本旅客鉄道', '京浜急行電鉄', '東急電鉄', '相模鉄道', '横浜市交通局', '横浜高速鉄道'],  # 官方共站：JR/京急/東急/相鉄/市営地下鉄/みなとみらい線同一站群（各站体≤300m内连通）
+    '小諸': ['東日本旅客鉄道', 'しなの鉄道'],     # 小海線+しなの鉄道線官方共站（同一站舎）；坐标192m为数据偏移
+}
+
+# ---------------- 合并线路重定向（stub 页） ----------------
+# lines_map 别名合并后，旧线名保留 stub 页（canonical + meta refresh 指向并入线）。
+# 静态站无服务器级 301，删页会使外链/搜索索引 404。
+MERGED_LINE_REDIRECTS = {'山陽線': '山陽本線'}
+
+# ---------------- 人工填司表（线→公司）：segments3d 无 op 且 stations3d 站名不匹配的兜底 ----------------
+# 覆盖 unknown_operator 全部 54 条线路（公开常识：各线唯一运营者）；站级取其所属线的公司并集。
+MANUAL_LINE_OP = {
+    'JR山田線': '東日本旅客鉄道', 'JR日光線': '東日本旅客鉄道',
+    '御堂筋線': 'Osaka Metro', '千日前線': 'Osaka Metro', '四つ橋線': 'Osaka Metro', '谷町線': 'Osaka Metro',
+    '4号線名城線': '名古屋市交通局', '2号線名城線・名港線': '名古屋市交通局', '6号線桜通線': '名古屋市交通局', '1号線東山線': '名古屋市交通局',
+    '千代田線': '東京メトロ', '丸ノ内線': '東京メトロ', '日比谷線': '東京メトロ',
+    '小田原線': '小田急電鉄', '京王線': '京王電鉄', '高尾線': '京王電鉄', '相模原線': '京王電鉄', '池袋線': '西武鉄道', '国分寺線': '西武鉄道',
+    '近鉄名古屋線': '近畿日本鉄道', '橿原線': '近畿日本鉄道', '大阪線': '近畿日本鉄道', '志摩線': '近畿日本鉄道',
+    '近鉄山田線': '近畿日本鉄道', '南大阪線': '近畿日本鉄道', '吉野線': '近畿日本鉄道', '御所線': '近畿日本鉄道',
+    '富山軌道線支線': '富山地方鉄道', '軌道線富山都心線': '富山地方鉄道',
+    '新湊港線': '万葉線', '高岡軌道線': '万葉線',
+    '桜町支線': '長崎電気軌道', '赤迫支線': '長崎電気軌道', '長崎電気軌道本線': '長崎電気軌道',
+    '叡山本線': '叡山電鉄', '広電本線': '広島電鉄', '宇品線': '広島電鉄', '横川線': '広島電鉄',
+    '北松江線': '一畑電車', '大社線': '一畑電車',
+    '東山本線': '岡山電気軌道', '城南線': '伊予鉄道', '本町線': '伊予鉄道',
+    'ハピラインふくい線': 'ハピラインふくい',
+    '水前寺線': '熊本市交通局',
+    '仙台市地下鉄南北線': '仙台市交通局',
+    '交野線': '京阪電気鉄道', '石山坂本線': '京阪電気鉄道',
+    '泉北線': '泉北高速鉄道', '竜ケ崎線': '関東鉄道',
+    '遠州鉄道線': '遠州鉄道',
+    '鹿児島市電第二期線': '鹿児島市交通局', '鹿児島市電谷山線': '鹿児島市交通局',
+    '松戸線': '京成電鉄',
+}
+
 # SEO 静态页不注入任何统计/追踪脚本（2026-11 隐私合规修订）：
 # 原此处统一注入 Microsoft Clarity（项目 yxc9o63w5s），与隐私政策声明冲突，
 # 且静态页以爬虫流量为主、无交互价值，会话录制无意义。现已整体移除；
@@ -140,6 +233,118 @@ def build_canon(lines_map):
         for a in aliases:
             canon_of.setdefault(a, c)
     return canon_of
+
+
+# ---------------- model_map 路由引擎（与前端 app.js M3D.pathOf 同口径） ----------------
+# 前端以 names→lines→rules(exact/all/none/hasStop/stopsIn/firstStopIn) 把班次路由到
+# 3D 车型；SEO 静态页复用同一引擎做「多公司共线」的逐站运营方归属仲裁，保证静态页
+# 线路归属与前端一致。规则按 JSON 序匹配（顺序敏感：先匹配先得），不得改动迭代顺序。
+def load_model_map():
+    try:
+        return load_json('model_map.json')
+    except Exception:
+        return None
+
+
+def _rule_hit(ls, jas, mm):
+    """返回命中的第一条 rule（与 app.js pathOf 的规则段逐条同序同判）。"""
+    for r in mm.get('rules') or []:
+        if 'exact' in r:
+            if len(ls) != len(r['exact']) or not all(x in ls for x in r['exact']):
+                continue
+        if 'all' in r and not all(x in ls for x in r['all']):
+            continue
+        if 'none' in r and any(x in ls for x in r['none']):
+            continue
+        if 'hasStop' in r and not (jas and any(s in jas for s in r['hasStop'])):
+            continue
+        if 'stopsIn' in r:
+            if not jas or len(jas) < 2:
+                continue
+            if not all(s in r['stopsIn'] for s in jas):
+                continue
+        if 'firstStopIn' in r and not (jas and jas[0] in r['firstStopIn']):
+            continue
+        return r
+    return None
+
+
+def path_of(nm, lines_seq, jas, mm):
+    """app.js M3D.pathOf 的 Python 忠实复刻（names→lines→rules；SEO 不做 avail 过滤）。"""
+    if not mm:
+        return None
+    v = None
+    names = mm.get('names') or {}
+    if nm and nm in names:
+        v = names[nm]
+    lines_map = mm.get('lines') or {}
+    if not v:
+        for l in lines_seq or []:
+            if l in lines_map:
+                v = lines_map[l]
+                break
+    if not v:
+        r = _rule_hit(set(lines_seq or []), jas, mm)
+        if r:
+            v = r['model']
+    return v or None
+
+
+# 线路行几何判定阈值（km）：站坐标到线折线 ≤ 该值才出行。默认 0.15（用户规则）；
+# 可用环境变量 SEO_GEO_KM 覆写（如 0.4 变体预算）。
+GEO_LINE_KM = float(os.environ.get('SEO_GEO_KM', '0.15'))
+
+# 白名单变体（SEO_GEO_EXEMPT=1 启用，默认关）：官方成员/官方共站但数据坐标偏移 >150m 的
+# 逐条具名豁免。线对 = 站确在该线（官方事实），坐标偏移为数据误差；共站 = 官方共同使用站。
+GEO_EXEMPT = os.environ.get('SEO_GEO_EXEMPT', '') == '1'
+GEO_EXEMPT_PAIRS = {
+    ('新横浜', '横浜線'), ('東京', '総武本線'), ('東京', '京葉線'), ('池袋', '東上本線'),
+    ('博多', '七隈線'), ('神戸三宮', '神戸高速線'), ('五反田', '池上線'),
+    ('高幡不動', '多摩都市モノレール線'), ('常滑', '常滑線'), ('三軒茶屋', '世田谷線'),
+    ('新綱島', '東横線'), ('内海', '知多新線'), ('南吹田', '東海道本線'),
+    ('大宮', '伊奈線'), ('大久保', '山手線'),
+}
+GEO_EXEMPT_JOINT = {
+    '関西空港(鉄道)': ['西日本旅客鉄道', '南海電気鉄道'],   # 同一站舎官方共站
+    '姪浜': ['九州旅客鉄道', '福岡市'],                     # 地下鉄空港線乗入・同站
+    '五稜郭': ['北海道旅客鉄道', '道南いさりび鉄道'],       # 道南いさりびはJR函館駅共用
+    'りんくうタウン': ['西日本旅客鉄道', '南海電気鉄道'],   # 同一站舎官方共站
+}
+
+
+def _pt_seg_km(px, py, ax, ay, bx, by):
+    """点 (px,py) 到线段 (a,b) 的距离（km）：本地等距投影 + 线段投影。"""
+    kx = 111.32 * math.cos(math.radians((py + ay) / 2))
+    ky = 110.57
+    apx, apy = (px - ax) * kx, (py - ay) * ky
+    abx, aby = (bx - ax) * kx, (by - ay) * ky
+    L2 = abx * abx + aby * aby
+    t = 0.0 if L2 == 0 else max(0.0, min(1.0, (apx * abx + apy * aby) / L2))
+    qx, qy = ax + (bx - ax) * t, ay + (by - ay) * t
+    return haversine_km([px, py], [qx, qy])
+
+
+def _dist_to_line_km(coord, seg_features, km_limit=GEO_LINE_KM):
+    """站点坐标到线路全部折线段的最短距离（km）；≤km_limit 提前返回。"""
+    best = 1e9
+    px, py = coord[0], coord[1]
+    for f in seg_features:
+        co = (f.get('geometry') or {}).get('coordinates') or []
+        if co and isinstance(co[0], list) and co[0] and isinstance(co[0][0], list):
+            rings = co
+        else:
+            rings = [co]
+        for ring in rings:
+            for i in range(1, len(ring)):
+                a, b = ring[i - 1], ring[i]
+                if not (isinstance(a, (list, tuple)) and isinstance(b, (list, tuple)) and len(a) >= 2 and len(b) >= 2):
+                    continue
+                d = _pt_seg_km(px, py, a[0], a[1], b[0], b[1])
+                if d < best:
+                    best = d
+                    if best <= km_limit:
+                        return best
+    return best
 
 
 # ---------------- 记录构建 ----------------
@@ -274,6 +479,260 @@ def build_records(cfg):
         # en 名：优先取有英文名的原始名
         rec['en'] = next((ni_lines.get(r, '') for r in sorted(rec['raw_names']) if ni_lines.get(r)), ni_lines.get(l, '')).strip()
 
+    # ---- 线路成员几何过滤：站须在「站表成员 + 站坐标到该线任一折线 ≤150m」双满足才保留 ----
+    # 时刻表成员会带入"站实际不在其上"的线（サンライズ瀬戸/出雲 使 児島 挂東海道本線、
+    # 米原 挂山陽本線），与 ghost_through 同病；行级直接删行（不抑制、不写"—"）。
+    for l in sorted(lines):
+        lr = lines[l]
+        xs, ys = [], []
+        for f in lr['seg_features']:
+            co = (f.get('geometry') or {}).get('coordinates') or []
+            if co and isinstance(co[0], list) and co[0] and isinstance(co[0][0], list):
+                flat = [pt for ring in co for pt in ring]
+            else:
+                flat = co
+            for p in flat:
+                if isinstance(p, (list, tuple)) and len(p) >= 2:
+                    xs.append(p[0]); ys.append(p[1])
+        lr['_bbox'] = (min(xs), min(ys), max(xs), max(ys)) if xs else None
+    line_drops = []
+    line_kept_nogeom = defaultdict(int)
+    for key in sorted(st):
+        r = st[key]
+        c = r['coord']; keep = []
+        for ln in r['lines']:
+            lr = lines.get(ln)
+            if not lr:
+                line_drops.append({'key': key, 'name': r['name'], 'line': ln, 'reason': '线记录不存在', 'dist_m': None})
+                continue
+            bb = lr.get('_bbox')
+            if not bb:
+                # 线无几何段：不可证伪 → 保留成员（否则该线站页清空），单独计数待数据补齐
+                line_kept_nogeom[ln] += 1
+                keep.append(ln)
+                continue
+            exempt = GEO_EXEMPT and (r['name'], ln) in GEO_EXEMPT_PAIRS
+            if not (bb[0] - 0.002 <= c[0] <= bb[2] + 0.002 and bb[1] - 0.002 <= c[1] <= bb[3] + 0.002):
+                if exempt:
+                    keep.append(ln)
+                else:
+                    line_drops.append({'key': key, 'name': r['name'], 'line': ln, 'reason': '远离线几何(bbox外)', 'dist_m': None})
+                continue
+            d = _dist_to_line_km(c, lr['seg_features'])
+            if d <= GEO_LINE_KM or exempt:
+                keep.append(ln)
+            else:
+                line_drops.append({'key': key, 'name': r['name'], 'line': ln, 'reason': '几何距离超150m', 'dist_m': round(d * 1000, 1)})
+        if len(keep) != len(r['lines']):
+            r['lines'] = keep
+    # 成员过滤后重建各线 station_keys / centroid
+    for l, lr in lines.items():
+        ks = sorted(k for k in lr['station_keys'] if l in st[k]['lines'])
+        lr['station_keys'] = ks
+        if ks:
+            lr['coord_sum'] = [sum(st[k]['coord'][0] for k in ks), sum(st[k]['coord'][1] for k in ks)]
+            lr['coord_n'] = len(ks)
+            lr['centroid'] = [lr['coord_sum'][0] / lr['coord_n'], lr['coord_sum'][1] / lr['coord_n']]
+        else:
+            lr['coord_n'] = 0
+            lr['centroid'] = [135.5, 36.5]
+
+    # ---- 多公司共线：逐站运营方归属（与前端一致）----
+    # ① 几何优先：站取该线相邻段的 op（segments3d 每段自带公司）；
+    # ② 边界站（相邻段跨公司）用 model_map 规则锚点仲裁：与前端 pathOf 同口径——
+    #    以「仅停本站的单线路班次」走 _rule_hit，命中规则的 op 由该规则 hasStop
+    #    锚点站在本线的段 op 多数派导出（全部确定性：JSON 规则序 + sorted 锚点）。
+    # 注：segments 的 from/to 为站名或 key（写法与 station_map 或有出入），须经
+    # 站名→key 解析（key 直配 → 本线站名直配 → station_key_index 变体候选 ∩ 本线站集）。
+    mm = load_model_map()
+    for l in sorted(lines):
+        rec = lines[l]
+        keyset = set(rec['station_keys'])
+        name_keys = {}
+        for k2 in rec['station_keys']:
+            name_keys.setdefault(st[k2]['name'], set()).add(k2)
+
+        def resolve_seg_sta(n, _keyset=keyset, _l=l):
+            if n in _keyset:
+                return [n]
+            # 同名多键（如 柏原(兵庫県)/(滋賀県)）：仅保留 lines 含本线的键，
+            # 防止跨线同名站互相污染归属（确定性：name_keys 构建序 + sorted）
+            ks = {k3 for k3 in name_keys.get(n, ()) if _l in st[k3]['lines']}
+            if ks:
+                return sorted(ks)
+            cand = skj.get(n)
+            if cand:
+                ks = {d['k'] for d in cand} & _keyset
+                ks = {k3 for k3 in ks if _l in st[k3]['lines']}
+                if ks:
+                    return sorted(ks)
+            return []
+
+        seg_ops = {}
+        for f in rec['seg_features']:
+            p = f['properties']
+            o = p.get('op') or ''
+            if not o:
+                continue
+            for n in (p.get('from'), p.get('to')):
+                if not n:
+                    continue
+                for k2 in resolve_seg_sta(n):
+                    seg_ops.setdefault(k2, set()).add(o)
+        rec['ops'] = sorted({o for s in seg_ops.values() for o in s})
+        rec['station_op'] = {}
+        if len(rec['ops']) < 2:
+            continue
+        rule_ops = []
+        if mm:
+            for r in mm.get('rules') or []:
+                if 'hasStop' not in r or 'all' not in r or l not in r['all']:
+                    continue
+                cnt = {}
+                for s in sorted(r['hasStop']):
+                    for k2 in sorted(name_keys.get(s, ())):
+                        if len(seg_ops.get(k2, ())) == 1:
+                            o = next(iter(seg_ops[k2]))
+                            cnt[o] = cnt.get(o, 0) + 1
+                            break
+                if cnt:
+                    op_best = sorted(cnt.items(), key=lambda kv: (-kv[1], kv[0]))[0][0]
+                    rule_ops.append((op_best, frozenset(r['hasStop'])))
+        for k2 in rec['station_keys']:
+            bo = BOUNDARY_OP.get((l, st[k2]['name']))
+            if bo:
+                rec['station_op'][k2] = bo
+                continue
+            os_ = seg_ops.get(k2) or set()
+            if len(os_) == 1:
+                rec['station_op'][k2] = next(iter(os_))
+                continue
+            hit = ''
+            if mm:
+                r = _rule_hit({l}, [st[k2]['name']], mm)
+                if r and 'hasStop' in r:
+                    for op_best, anchors in rule_ops:
+                        if frozenset(r['hasStop']) == anchors:
+                            hit = op_best
+                            break
+            rec['station_op'][k2] = hit or rec['op']
+
+    # ---- 站级运营公司（全站页一律渲染该行）----
+    # 派生序：STATION_OPERATORS 共站表 → 途经线路逐站归属 → stations3d 站级 op 兜底；
+    # 均无 → 空列表（页面渲染"—"，并计入 unknown_operator 清单）。全部 sorted，确定性。
+    try:
+        s3 = load_json('stations3d.geojson')
+        sta3d_ops = {}
+        s3pts = {}
+        for f in s3['features']:
+            p = f['properties']
+            nm3, o3 = p.get('station'), p.get('op') or ''
+            co = (f.get('geometry') or {}).get('coordinates')
+            if nm3 and o3:
+                sta3d_ops.setdefault(nm3, set()).add(o3)
+                if co and len(co) >= 2:
+                    s3pts.setdefault(nm3, []).append((o3, co[0], co[1]))
+        sta3d_ops = {k: sorted(v) for k, v in sta3d_ops.items()}
+        for k3 in s3pts:
+            s3pts[k3] = sorted(s3pts[k3])
+    except Exception:
+        sta3d_ops, s3pts = {}, {}
+    multi_note = []
+    drop_log = []
+    name_count = {}
+    for k3, r3 in st.items():
+        name_count[r3['name']] = name_count.get(r3['name'], 0) + 1
+    for k in sorted(st):
+        r = st[k]
+        ops = STATION_OPERATORS.get(k) or (GEO_EXEMPT_JOINT.get(k) if GEO_EXEMPT else None) or []
+        if ops:
+            multi_note.append((k, r['name'], 'curated', ops))
+        if not ops:
+            s = set()
+            for ln in r['lines']:
+                lr = lines.get(ln)
+                if lr:
+                    o = (lr.get('station_op') or {}).get(k) or lr.get('op') or ''
+                    if o:
+                        s.add(o)
+            ops = sorted(s)
+        if not ops:
+            ops = sta3d_ops.get(r['name']) or []
+        if not ops:
+            s = set()
+            for ln in r['lines']:
+                o = MANUAL_LINE_OP.get(ln)
+                if o:
+                    s.add(o)
+            ops = sorted(s)
+        # 坐标实证（仅多司且非共站表）：每公司须满足其一——
+        # ① stations3d 有同名站点且距本 key 坐标 ≤150m；
+        #    （该公司存在同名站点但距离 >150m → 判为同名异站，直接出局，不再走②）
+        # ② 该公司无同名站点时，本 key 所属线路中归属该公司的线路段几何有点距
+        #    本 key ≤150m（轨道实证）。
+        # 均不满足 → 剔除——杜绝"仅同名、异地"的假共站。
+        if len(ops) > 1 and k not in STATION_OPERATORS and not (GEO_EXEMPT and k in GEO_EXEMPT_JOINT):
+            c0 = r.get('coord') or [0, 0]
+            conf, dropped = [], []
+            for o in ops:
+                same_name_pts = [(x, y) for o2, x, y in s3pts.get(r['name'], []) if o2 == o]
+                if same_name_pts:
+                    ds = [haversine_km(c0, [x, y]) for x, y in same_name_pts]
+                    if min(ds) <= 0.15:
+                        conf.append(o)
+                    else:
+                        dropped.append(o)  # 同名但异地 → 假共站，出局
+                        drop_log.append({'key': k, 'name': r['name'], 'op': o,
+                                         'reason': 'same_name_far', 'dist_m': round(min(ds) * 1000, 1),
+                                         'dup_key': name_count.get(r['name'], 1) > 1})
+                    continue
+                ok = False
+                for ln in r['lines']:
+                        lr = lines.get(ln)
+                        if not lr:
+                            continue
+                        lo = (lr.get('station_op') or {}).get(k) or lr.get('op') or ''
+                        if lo != o:
+                            continue
+                        for f in lr['seg_features']:
+                            co2 = (f.get('geometry') or {}).get('coordinates') or []
+                            if co2 and isinstance(co2[0], list) and co2[0] and isinstance(co2[0][0], list):
+                                co2 = [pt for ring in co2 for pt in ring]  # MultiLineString 压平
+                            for pt in co2:
+                                if not isinstance(pt, (list, tuple)) or len(pt) < 2:
+                                    continue
+                                if haversine_km(c0, [pt[0], pt[1]]) <= 0.15:
+                                    ok = True
+                                    break
+                            if ok:
+                                break
+                        if ok:
+                            break
+                if ok:
+                    conf.append(o)
+                else:
+                    dropped.append(o)
+                    drop_log.append({'key': k, 'name': r['name'], 'op': o,
+                                     'reason': 'ghost_through', 'dist_m': None,
+                                     'dup_key': name_count.get(r['name'], 1) > 1})
+            if conf:
+                if dropped:
+                    multi_note.append((k, r['name'], 'dropped:' + ','.join(dropped), conf))
+                else:
+                    multi_note.append((k, r['name'], 'confirmed', conf))
+                ops = conf
+            else:
+                # 全部未过坐标实证（多为直通运转的虚拟成员线）→ 回退 stations3d
+                # 同名站点中距本 key ≤150m 的 op；仍无则记 unconfirmed 待人工。
+                fb = sorted({o2 for o2, x, y in s3pts.get(r['name'], [])
+                             if haversine_km(c0, [x, y]) <= 0.15})
+                if fb:
+                    multi_note.append((k, r['name'], 'fallback-s3d:' + ','.join(ops), fb))
+                    ops = fb
+                else:
+                    multi_note.append((k, r['name'], 'unconfirmed', ops))
+        r['st_ops'] = ops
+
     # ---- 线路长度（沿轨道折线估算，去重边）----
     for l, rec in lines.items():
         seen_e, km = set(), 0.0
@@ -367,6 +826,10 @@ def build_records(cfg):
         'eki_cache': eki_cache, 'wlm': wlm, 'floorplan': floorplan, 'wtd': wtd,
         'bsd': bsd, 'bsd_files': bsd_files,
         'station_map_meta': {k: sm[k] for k in ('generated_at',) if k in sm},
+        'multi_note': multi_note,
+        'drop_log': drop_log,
+        'line_drops': line_drops,
+        'line_kept_nogeom': dict(line_kept_nogeom),
     }
 
 
@@ -1102,7 +1565,7 @@ def station_page(rec, lines, neighbors, cfg, tozh):
         col = lr['color'] if lr else FALLBACK_COLOR
         en_l = lr['en'] if lr else ''
         kind = tozh(lr['kind']) if lr and lr.get('kind') else ''
-        op = lr['op'] if lr else ''
+        op = (lr.get('station_op') or {}).get(key) or (lr['op'] if lr else '')
         label = ln + (' / ' + en_l if en_l else '')
         seq = line_orders.get(ln) or []
         pos = ''
@@ -1233,6 +1696,13 @@ def station_page(rec, lines, neighbors, cfg, tozh):
         ],
     })
 
+    # 站级运营公司：build_records 已按「共站表→逐线归属→stations3d 兜底」派生 rec['st_ops']。
+    # 全站页一律渲染该行；推导不出 → "—"（计入 unknown_operator 清单）。
+    st_ops = rec.get('st_ops') or []
+    ops_html = ('<tr><th>运营公司</th><td>'
+                + (' ・ '.join(esc(o) for o in st_ops) + ('（共同使用站）' if len(st_ops) > 1 else '') if st_ops else '—')
+                + '</td></tr>\n')
+
     body = (
         '<div class="wrap">\n'
         '<nav class="breadcrumb"><a href="' + esc(abs_url(cfg, '')) + '">' + esc(cfg['site_name']) + '</a> › '
@@ -1257,6 +1727,7 @@ def station_page(rec, lines, neighbors, cfg, tozh):
         + (('<tr><th>所在地</th><td><a href="%s#%s">%s</a>%s</td></tr>\n' % (
             esc(abs_url(cfg, 'stations/')), urllib.parse.quote(rec['pref'], safe=''), esc(rec['pref']),
             ('（' + esc(pref_zh) + '）' if pref_zh and pref_zh != rec['pref'] else ''))) if rec['pref'] else '')
+        + ops_html
         + '<tr><th>途经线路数</th><td>' + str(len(line_names)) + '</td></tr>\n'
         + '<tr><th>经度 / 纬度</th><td>' + str(coord[0]) + ' / ' + str(coord[1]) + '</td></tr>\n'
         + '</table>\n'
@@ -1500,7 +1971,7 @@ def line_page(rec, stations, cfg, tozh, ordered=None):
         '<table class="kv">\n'
         '<tr><th>线路色</th><td><span style="display:inline-block;width:16px;height:16px;border-radius:4px;background:' + esc(rec['color']) + ';vertical-align:-2px"></span> ' + esc(rec['color']) + '</td></tr>\n'
         + (('<tr><th>类型</th><td>' + esc(rec['kind']) + ('（同类型线路共 %d 条）' % kind_n) + '</td></tr>\n') if rec['kind'] else '')
-        + (('<tr><th>运营方</th><td>' + esc(rec['op']) + '</td></tr>\n') if rec['op'] else '')
+        + (('<tr><th>运营方</th><td>' + esc(' ・ '.join(rec['ops']) if len(rec.get('ops') or []) > 1 else rec['op']) + '</td></tr>\n') if rec['op'] else '')
         + '<tr><th>车站数</th><td>' + str(n) + '</td></tr>\n'
         + ends_html
         + km_html
@@ -1776,6 +2247,23 @@ def main():
         os.makedirs(d_, exist_ok=True)
         with open(os.path.join(d_, 'index.html'), 'w', encoding='utf-8') as f:
             f.write(line_page(rec, stations, cfg, tozh, ordered=line_orders[lname]))
+    # 1.5) 合并线路重定向 stub 页（canonical + meta refresh，防外链 404）
+    for old, new in MERGED_LINE_REDIRECTS.items():
+        if new not in lines:
+            continue
+        d_ = os.path.join(out_lines, old)
+        os.makedirs(d_, exist_ok=True)
+        tgt = abs_url(cfg, 'lines/' + quote_path(new) + '/')
+        with open(os.path.join(d_, 'index.html'), 'w', encoding='utf-8') as f:
+            f.write('<!DOCTYPE html>\n<html lang="ja"><head><meta charset="utf-8">\n'
+                    '<title>' + esc(old) + ' → ' + esc(new) + '</title>\n'
+                    '<meta name="robots" content="noindex">\n'
+                    '<link rel="canonical" href="' + esc(tgt) + '">\n'
+                    '<meta http-equiv="refresh" content="0;url=' + esc(tgt) + '">\n'
+                    '</head><body>\n'
+                    '<p>线路「' + esc(old) + '」已并入 <a href="' + esc(tgt) + '">' + esc(new) + '</a>（同一线路，名称统一）。</p>\n'
+                    '<p><a href="' + esc(abs_url(cfg, 'lines/')) + '">全部线路</a></p>\n'
+                    '</body></html>\n')
     # 2) 车站页
     for key, rec in stations.items():
         d_ = os.path.join(out_stations, key)

@@ -9537,12 +9537,16 @@ async function _fillTrackDiagrams(sec, name, coord) {
         img.className = 'gd-td-img';
         img.loading = 'lazy';
         img.alt = e.line;
-        img.src = TRACK_DIAGRAM_BASE + f;
-        img.onerror = () => {
-          img.remove();
-          if (!fig.querySelector('img')) fig.remove();
-          if (sec.isConnected && !sec.querySelector('.gd-td-img')) sec.remove();
+        /* 任一图失败/挂死(12s 无响应)→ 整块(含线路标题)移除；全区块无图则整节移除 */
+        const kill = () => {
+          if (!fig.isConnected) return;
+          fig.remove();
+          if (sec.isConnected && !sec.querySelector('.gd-td-fig')) sec.remove();
         };
+        img.onerror = kill;
+        const tmo = setTimeout(() => { if (!img.complete || img.naturalWidth === 0) kill(); }, 12000);
+        img.addEventListener('load', () => clearTimeout(tmo));
+        img.src = TRACK_DIAGRAM_BASE + f;
         fig.appendChild(img);
       });
       wrap.appendChild(fig);

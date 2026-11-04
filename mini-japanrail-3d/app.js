@@ -5252,6 +5252,7 @@ async function boot() {
     }
     /* 索引构建/恢复:进度 55→78%(fp 指纹不匹配 = 输入数据变了但版本没递增 → 重建) */
     setPhase(FILES_PCT, IDX_PCT, 0);
+    let idxBuiltNow = false;
     const idxCache = await idbGet(IDX_CACHE_KEY);
     if (idxCache && idxCache.v === DATA_VERSION && idxCache.segIndex && idxCache.fp === idxFingerprint()) {
       restoreIndexes(idxCache); /* 二次访问:直接恢复索引,秒过 */
@@ -5259,7 +5260,7 @@ async function boot() {
     } else {
       if (!smapSkipped) setLoadMsg(T().loading + ' ' + T().loadingIdx + ' …'); /* 跳过补缺时保留提示文案 */
       await buildStaticIndexAsync(f => setPhase(FILES_PCT, IDX_PCT, f));
-      saveIndexes();
+      idxBuiltNow = true;
       applyLoaderLineColor();
     }
     /* 时刻表解析:分片让出主线程,进度 78→97% */
@@ -5279,6 +5280,9 @@ async function boot() {
     window.__wdFail = false;
     if (window.__wdClear) { try { window.__wdClear(); } catch (e) {} }
     setTimeout(() => { $('loader').classList.add('hide'); }, 350);
+    /* 索引落盘延后到 ready 之后:结构化克隆(~0.34s)不再占用 ready 前关键路径;
+       构建完成后索引只读(无后续写入),延后保存内容等价;保存前刷新下次重建即可 */
+    if (idxBuiltNow) setTimeout(saveIndexes, 1500);
     setTimeout(() => { if (window.__tourApi) window.__tourApi.maybeStart(); }, 1500);   /* 首次访问:数据就绪后弹出欢迎引导 */
     applyUrlState();
     initPurelineMode();

@@ -1783,10 +1783,6 @@ async function buildStaticIndexAsync(onPhase) {
             if (!cell) continue;
             for (const [ex, ey, nm] of cell) {
               if (nm === na || nm === nb) continue;
-              /* 距离预筛:任一分量差 >0.0025° 时,该分量本身已 ≥0.194km(日本纬度
-                 cos≥0.6947,0.0025×0.6947×111.32=0.1932;纬度 0.0025×110.57=0.2764),
-                 必大于 WELD_KM=0.18,不可能命中 —— 免掉绝大多数 geoKm 调用,结果等价 */
-              if (Math.abs(ex - co[i][0]) > 0.0025 || Math.abs(ey - co[i][1]) > 0.0025) continue;
               const d = geoKm([ex, ey], co[i]);
               if (d < hitD) { hitD = d; hit = nm; }
             }
@@ -5213,17 +5209,13 @@ async function boot() {
        由 bindLazyHeavyData 在首次放大(z≥11.5)或开关打开时按需拉取,启动少下 14MB */
     dayBitAuto = serviceBitOf(Date.now());
     dayBit = dayMode === 'auto' ? dayBitAuto : dayMode;
-    /* station_map 按用途拆分为三文件(合计 2.7MB gz,见 build_station_map_v2.py 6b):
-       extras 补缺几何(~29KB gz)留在 8s 关键路径,归位/指纹语义与旧版整包一致;
-       paths 官方区间折线(~2.4MB gz)提前发起、借索引构建窗口下载,时刻表解析前归位;
-       stations 徽章限定键(~0.3MB gz)懒载不阻塞(ensureStationKeyIdx 未就绪自动重试)。
-       idxFingerprint 只依赖 extras(generated_at/补缺数),不受 paths/stations 归位时机影响 */
+    /* station_map.json(2.7MB gz)移出首帧关键路径:它只用于官方坐标补缺/股道底图/徽章限定键,
+       首帧(轨道/车站渲染)不依赖。并行发起但不 await;归位时设 8s 限期(自发起时起算,见下),
+       保证补缺几何与索引指纹(idxFingerprint 含 generated_at/补缺数)和现状完全一致 */
     const smapCtl = {}; /* 归位超时时用于中止在途请求,释放连接 */
-    stationMapPromise = fetchJSONWithCache('https://jr-static.suki.ing/data/station_map.extras.json', 'loadingTm', 4, false, smapCtl)
+    stationMapPromise = fetchJSONWithCache('https://jr-static.suki.ing/data/station_map.json', 'loadingTm', 4, false, smapCtl)
       .then(sm => (stationMap = sm && sm.version === 2 ? sm : null))
       .catch(() => null);
-    const smapPathsPromise = fetchJSONWithCache('https://jr-static.suki.ing/data/station_map.paths.json', '', 4, true).catch(() => null);
-    const smapStationsPromise = fetchJSONWithCache('https://jr-static.suki.ing/data/station_map.stations.json', '', 4, true).catch(() => null);
     /* 8s 限期自发起时起算(不是等到归位 await 才开始),弱网下进度条停留在文件阶段的
        总时长被压在限期之内 */
     const SMAP_TIMEOUT = {};
@@ -5286,14 +5278,8 @@ async function boot() {
           (stationMap.extra_stations || []).length + ' stations');
       }
     }
-    /* stations 懒载归位:仅在 extras 归位(stationMap 非空)时挂载,指纹语义与旧版一致;
-       徽章渲染时的 ensureStationKeyIdx 在其未就绪时会自动重试 */
-    smapStationsPromise.then(stt => {
-      if (stt && stt.version === 2 && stationMap) { stationMap.tt = stt.tt; stationMap.stations = stt.stations; }
-    });
     /* 索引构建/恢复:进度 55→78%(fp 指纹不匹配 = 输入数据变了但版本没递增 → 重建) */
     setPhase(FILES_PCT, IDX_PCT, 0);
-    let idxBuiltNow = false;
     const idxCache = await idbGet(IDX_CACHE_KEY);
     if (idxCache && idxCache.v === DATA_VERSION && idxCache.segIndex && idxCache.fp === idxFingerprint()) {
       restoreIndexes(idxCache); /* 二次访问:直接恢复索引,秒过 */
@@ -5301,26 +5287,9 @@ async function boot() {
     } else {
       if (!smapSkipped) setLoadMsg(T().loading + ' ' + T().loadingIdx + ' …'); /* 跳过补缺时保留提示文案 */
       await buildStaticIndexAsync(f => setPhase(FILES_PCT, IDX_PCT, f));
-      idxBuiltNow = true;
+      saveIndexes();
       applyLoaderLineColor();
     }
-    /* 官方路径几何(paths: segments+tmap_lids)必须在时刻表解析(officialStopsFor)前归位:
-       已借索引构建窗口并行下载;设 20s 上限,超时降级"无官方路径"(等价旧版整包缺失行为),
-       到达后再懒载归位 —— 运行时 officialPath 仍可用。正常网络(≥8Mbps)约 2.4s 即归位 */
-    const SMAP_PATHS_TIMEOUT = {};
-    let smapPathsTimer;
-    const smapPathsDeadline = new Promise(r => { smapPathsTimer = setTimeout(() => r(SMAP_PATHS_TIMEOUT), 20000); });
-    const mergePaths = p => {
-      if (!p || p.version !== 2) return;
-      if (!stationMap) stationMap = { version: 2, generated_at: p.generated_at || '' };
-      stationMap.segments = p.segments; stationMap.tmap_lids = p.tmap_lids;
-    };
-    const paths = await Promise.race([smapPathsPromise, smapPathsDeadline]);
-    clearTimeout(smapPathsTimer);
-    if (paths === SMAP_PATHS_TIMEOUT) {
-      console.warn('[station_map] paths not ready within 20s: proceeding without official path geometry');
-      smapPathsPromise.then(mergePaths);
-    } else mergePaths(paths);
     /* 时刻表解析:分片让出主线程,进度 78→97% */
     setPhase(IDX_PCT, PRS_PCT, 0);
     setLoadMsg(T().loading + ' ' + T().loadingPr + ' …');
@@ -5338,9 +5307,6 @@ async function boot() {
     window.__wdFail = false;
     if (window.__wdClear) { try { window.__wdClear(); } catch (e) {} }
     setTimeout(() => { $('loader').classList.add('hide'); }, 350);
-    /* 索引落盘延后到 ready 之后:结构化克隆(~0.34s)不再占用 ready 前关键路径;
-       构建完成后索引只读(无后续写入),延后保存内容等价;保存前刷新下次重建即可 */
-    if (idxBuiltNow) setTimeout(saveIndexes, 1500);
     setTimeout(() => { if (window.__tourApi) window.__tourApi.maybeStart(); }, 1500);   /* 首次访问:数据就绪后弹出欢迎引导 */
     applyUrlState();
     initPurelineMode();
@@ -5488,27 +5454,21 @@ function badgeEvictNow() {
   _badgeMarkRegistered();
 }
 
-let badgesMapPromise = null; /* 在途去重:启动主路径与 badgesWait 并发调用只发一次请求 */
 async function loadBadgesMap() {
   if (badgesMap) return badgesMap;
-  if (badgesMapPromise) return badgesMapPromise;
-  badgesMapPromise = (async () => {
-    try {
-      const all = await Promise.all([
-        fetchJSONWithCache(BADGES_DATA_URL, '', 12),
-        fetchJSONWithCache(BADGES_LINES_URL, '', 12).catch(() => null), /* 新文件缺失/未部署时静默降级单徽章 */
-      ]);
-      const r = all[0], l = all[1];
-      if (r && typeof r === 'object') { badgesMap = r; console.log('[badges] map loaded:', Object.keys(r).length, 'stations'); }
-      if (l && l.stations && Array.isArray(l.sheets)) {
-        badgesLines = l;
-        console.log('[badges] lines loaded:', Object.keys(l.stations).length, 'stations,', l.sheets.length, 'sheets');
-      }
-    } catch (e) { console.warn('[badges]', e); }
-    if (!badgesMap) badgesMapPromise = null; /* 未拿到结果不锁定去重,后续调用可重试 */
-    return badgesMap;
-  })();
-  return badgesMapPromise;
+  try {
+    const all = await Promise.all([
+      fetchJSONWithCache(BADGES_DATA_URL, '', 12),
+      fetchJSONWithCache(BADGES_LINES_URL, '', 12).catch(() => null), /* 新文件缺失/未部署时静默降级单徽章 */
+    ]);
+    const r = all[0], l = all[1];
+    if (r && typeof r === 'object') { badgesMap = r; console.log('[badges] map loaded:', Object.keys(r).length, 'stations'); }
+    if (l && l.stations && Array.isArray(l.sheets)) {
+      badgesLines = l;
+      console.log('[badges] lines loaded:', Object.keys(l.stations).length, 'stations,', l.sheets.length, 'sheets');
+    }
+  } catch (e) { console.warn('[badges]', e); }
+  return badgesMap;
 }
 /* 站名 -> 徽章条目数组 [[线路名, 站码, 图集url, crop|null], …](已按重要性降序);
    lines.json 有则用(每站每线),否则回退 map.json 单枚。无徽章返回 null。 */
@@ -6210,9 +6170,6 @@ let lastActiveN = -1, lastFpsSec = -1;
    必须据此重建列车顶点 —— 否则图元停留在旧视口与旧 zoom:缩小后只剩旧区域附近几辆车、
    图标按旧 zoom 被放大,直到再次交互时间轴才恢复。 */
 let viewDirty = false;
-/* 3D 编组查看器打开时全屏遮罩盖住地图:暂停地图重建/重绘(语义同 document.hidden),
-   由 M3D.openViewer/closeViewer 置位/清除(清除时置 viewDirty 补一帧) */
-let mapPaused = false;
 /* 本轮 updateTrains 是否有淡入淡出进行中(alpha 未到目标):tick 据此临时提高重建率,
    保证 260ms 渐变在低空闲帧率下依然平滑(见 tick 的自适应步长) */
 let anyFading = false;
@@ -6299,10 +6256,10 @@ function startLoop() {
        画过一帧,单看 timeMoved 会漏掉随后到达的新窗口。 */
     const timeMoved = lastRenderM < 0 || Math.abs(M - lastRenderM) >= 0.02;
     const dataChanged = lastRenderList !== tripList || lastRenderDay !== dayList;
-    const staticFrame = (paused && !timeMoved && !dataChanged && !anyFading && !followTrip && !liveDetailTrip && !sliderDragging) || document.hidden || mapPaused;
-    const viewChanged = viewDirty && !document.hidden && !mapPaused;
+    const staticFrame = (paused && !timeMoved && !dataChanged && !anyFading && !followTrip && !liveDetailTrip && !sliderDragging) || document.hidden;
+    const viewChanged = viewDirty && !document.hidden;
     if ((staticFrame && !viewChanged) || frameSkip) {
-      if (followTrip && !mapPaused) tickFollow(M, dt); /* 查看器遮罩期间连相机跟随也暂停,关闭后自动追上 */
+      if (followTrip) tickFollow(M, dt);
       return;
     }
     /* ★ 渲染管线优化(2026-10 二轮,降帧耗/发热):
@@ -7322,6 +7279,11 @@ function updateDetailLive(t, p, M, rebuild) {
           if (k < N - 1) {
             const gd = (k + 1 <= i) ? (t.arr[k + 1] - t.dep[k]) : (t.arr[k + 1] - t.dep[i]);
             gapTxt = (Number.isFinite(gd) && gd > 0) ? String(Math.round(gd)) : '–';
+          } else if (N >= 2) {
+            /* 终点站行(第十一版):数字取"进入末站那段"——未到达=累加 arr[last]-dep[i],
+               已驶过=间隔 dep[last-1]→arr[last];缺口/坑位/′/同水平线规则与其它行一致 */
+            const gd = (k <= i) ? (t.arr[k] - t.dep[k - 1]) : (t.arr[k] - t.dep[i]);
+            gapTxt = (Number.isFinite(gd) && gd > 0) ? String(Math.round(gd)) : '–';
           }
           s += '<div class="dstop" data-i="' + k + '"><span class="vn">' +
             (k > 0 ? '<span class="vln up" style="background:' + upCol + '"></span>' : '') +
@@ -7801,7 +7763,7 @@ function renderStationBody() {
     if (!g.lines.length) return;
     if (!sheetFlat) {
       const lg = OP_LOGO[g.op];
-      html += '<div class="grp-op">' + (lg ? '<img class="op-logo" src="https://jr-static.suki.ing/logos/' + lg.replace(/\.png$/, '.webp') + '" alt="">' : '<span class="op-ic">' + esc(opShort(g.op).slice(0, 2)) + '</span>') + '<span>' + esc(opShort(g.op)) + '</span></div>';
+      html += '<div class="grp-op">' + (lg ? '<img class="op-logo" src="https://jr-static.suki.ing/logos/' + lg + '" alt="">' : '<span class="op-ic">' + esc(opShort(g.op).slice(0, 2)) + '</span>') + '<span>' + esc(opShort(g.op)) + '</span></div>';
     }
     g.lines.forEach(L => html += lineRowHtml(L, hour));
   });
@@ -10849,7 +10811,6 @@ const M3D = (() => {
       if (!path) { toast(T().m3dNone || '该车型暂无 3D 模型'); return; }
       const d = ensureDr();
       drOpen = true;
-      mapPaused = true; /* 遮罩盖住地图:暂停地图重建/重绘(见 tick 的 staticFrame) */
       $('m3dMask').classList.add('open');
       $('m3dViewer').classList.add('open');
       $('m3dNm').textContent = t.nm || (t.lines && t.lines[0]) || t.i || '#' + t.t;
@@ -11071,7 +11032,6 @@ const M3D = (() => {
   }
   function closeViewer() {
     drOpen = false;
-    mapPaused = false; viewDirty = true; /* 恢复地图渲染并补一帧 */
     $('m3dMask').classList.remove('open');
     $('m3dViewer').classList.remove('open');
     if (dr) { cancelAnimationFrame(dr.raf); if (dr.group) { dr.scene.remove(dr.group); dr.group = null; } }

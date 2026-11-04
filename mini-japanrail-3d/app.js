@@ -170,7 +170,7 @@ const I18N = {
     routeSame:'起终点相同', badStation:'找不到车站', h1:'拖动平移 · 滚轮缩放 · 右键旋转/倾斜', h2:'点击列车 = 详情 + 相机跟随 · 点空白取消',
     h3:'点击车站 = 途经线路', h4:'底部时钟:暂停 / 拖动时间 / 0.5–32× 倍速回放', h5:'搜索站名:日文 / 中文(东京·涩谷)/ 英文(Tokyo, Shinjuku)',
     h6:'基于计划时刻表,可在设置中开启实时延误', next:'下一站', eta:'约', min:'分', dep:'发车', arr:'到达', status:'状态',
-    stopsTitle:'停靠站', stopsCount:'站', colStop:'站', colArr:'到', colDep:'发', colPlat:'站台', platRefTitle:'各线路站台参考',
+    stopsTitle:'停靠站', stopsCount:'站', colStop:'站', colArr:'到', colDep:'发', colPlat:'站台', vnToggle:'切换站间间隔显示', platRefTitle:'各线路站台参考',
     running:'运行中', dwelling:'停車中', speed:'速度', kmh:'km/h', estTag:'推定', estWhy:'该区间时刻紧于加减速物理极限,速度为推定值,位置按时刻表插值', firstLast:'全程', track:'轨道 = 官方线路色', legendNote:'列车颜色 = 所属线路色',
     followBtn:'跟随此列车', locateBtn:'定位', stopFollowBtn:'停止跟随', tripId:'班次', viaLines:'途经线路',
     cplLabel:'併结', cplSplit:'与 {0} 併结，于 {1} 分割', cplJoin:'与 {0} 于 {1} 併结', cplView:'查看 {0}',
@@ -214,7 +214,7 @@ const I18N = {
     routeSame:'同一点', badStation:'駅が見つかりません', h1:'ドラッグ移動 · ホイール拡縮 · 右回転/傾き', h2:'列車クリック = 詳細 + 追跡 · 空白で解除',
     h3:'駅クリック = 経由路線', h4:'下部時計:一時停止 / 時間操作 / 0.5–32× 再生', h5:'駅名検索:日本語 / 中国語 / 英語(Tokyo, Shinjuku)',
     h6:'計画時刻表ベース(設定でリアルタイム遅延に対応)', next:'次駅', eta:'約', min:'分', dep:'発', arr:'着', status:'状態',
-    stopsTitle:'停車駅', stopsCount:'駅', colStop:'駅', colArr:'着', colDep:'発', colPlat:'番線', platRefTitle:'路線別の番線参考',
+    stopsTitle:'停車駅', stopsCount:'駅', colStop:'駅', colArr:'着', colDep:'発', colPlat:'番線', vnToggle:'駅間隔表示を切替', platRefTitle:'路線別の番線参考',
     running:'運行中', dwelling:'停車中', speed:'速度', kmh:'km/h', estTag:'推定', estWhy:'この区間の所要時間が加減速の物理限界を下回るため、速度は推定値・位置は時刻表補間です', firstLast:'全区間', track:'路線 = 公式路線色', legendNote:'列車色 = 所属路線色',
     followBtn:'列車を追跡', locateBtn:'位置', stopFollowBtn:'追跡停止', tripId:'列車', viaLines:'経由路線',
     cplLabel:'併結', cplSplit:'{0}と併結、{1}で分割', cplJoin:'{1}で{0}と併結', cplView:'{0}を表示',
@@ -258,7 +258,7 @@ const I18N = {
     routeSame:'Same stations', badStation:'Station not found', h1:'Drag to pan · Scroll to zoom · Right-drag rotate/tilt', h2:'Click train = detail + follow · Blank = cancel',
     h3:'Click station = its lines', h4:'Bottom clock: pause / scrub / 0.5–32× replay', h5:'Search stations: Japanese / Chinese / English (Tokyo, Shinjuku)',
     h6:'Scheduled timetables, optional live delays', next:'Next', eta:'~', min:'min', dep:'dep', arr:'arr', status:'Status',
-    stopsTitle:'Stops', stopsCount:'stops', colStop:'Station', colArr:'Arr', colDep:'Dep', colPlat:'Platform', platRefTitle:'Platforms by line',
+    stopsTitle:'Stops', stopsCount:'stops', colStop:'Station', colArr:'Arr', colDep:'Dep', colPlat:'Platform', vnToggle:'Toggle segment intervals', platRefTitle:'Platforms by line',
     running:'Running', dwelling:'At station', speed:'Speed', kmh:'km/h', estTag:'est.', estWhy:'Segment time is below the physical accel/braking limit; speed is estimated and position follows the timetable', firstLast:'Route', track:'Track = official line color', legendNote:'Train color = line color',
     followBtn:'Follow train', locateBtn:'Locate', stopFollowBtn:'Stop follow', tripId:'Trip', viaLines:'Lines',
     cplLabel:'Coupled', cplSplit:'Coupled w/ {0}, splits at {1}', cplJoin:'Couples w/ {0} at {1}', cplView:'View {0}',
@@ -4265,6 +4265,41 @@ detailEl.addEventListener('keydown', e => {
   e.preventDefault();
   comfortCarsToggle(w);
 });
+/* ---------- 竖线开关:站名牌收起 → 站间间隔数字(2026-11-04,应用户要求) ----------
+   点击停靠站行左侧竖线(.vn):整组站名牌/线路徽章同向 rotate(90°) 收起为 ≤6px 圆点,
+   中间栏淡出站名、淡入纯数字的站间运行间隔;再点反向转回。仅 transform+opacity 动画
+   (240ms 同一 cubic-bezier,进出对称),行高/列宽全部保留,无重排、无尺寸跳变。
+   监听委托在常驻的 detailEl 上:closeSheet/closeDetail 清空行 DOM 时行内无任何残留监听。
+   状态记忆键:localStorage 'mjr3d_vncmp'('1'=收起态),重开抽屉沿用。 */
+let vnCompact = false;
+try { vnCompact = localStorage.getItem('mjr3d_vncmp') === '1'; } catch (e) {}
+function applyVnCompact() {
+  detailEl.classList.toggle('vn-compact', vnCompact);
+  detailEl.querySelectorAll('.vn').forEach(v => {
+    v.setAttribute('aria-pressed', vnCompact ? 'true' : 'false');
+    if (!v.querySelector('.cdot')) {
+      const src = v.querySelector('.vln.dn') || v.querySelector('.vln.up');
+      const col = (src && src.style.background) || '#8899aa';
+      v.insertAdjacentHTML('beforeend', '<span class="cdot" style="background:' + col + '"></span>');
+    }
+  });
+}
+function toggleVnCompact() {
+  vnCompact = !vnCompact;
+  try { localStorage.setItem('mjr3d_vncmp', vnCompact ? '1' : '0'); } catch (e) {}
+  applyVnCompact();
+}
+detailEl.addEventListener('click', e => {
+  const vn = e.target && e.target.closest ? e.target.closest('.vn') : null;
+  if (vn && detailEl.contains(vn)) toggleVnCompact();
+});
+detailEl.addEventListener('keydown', e => {
+  if (e.key !== 'Enter' && e.key !== ' ' && e.key !== 'Spacebar') return;
+  const vn = e.target && e.target.closest ? e.target.closest('.vn') : null;
+  if (!vn || !detailEl.contains(vn)) return;
+  e.preventDefault();
+  toggleVnCompact();
+});
 function growVtxBuf(targetFloats) {
   if (targetFloats <= bufArr.length) return true;
   if (bufArr.length >= BUF_MAX) return false;
@@ -7195,11 +7230,20 @@ function updateDetailLive(t, p, M, rebuild) {
           const tm = [];
           if (k > 0) tm.push('<span class="t-arr">' + T().colArr + fmtHm(t.arr[k]) + dlyTag + '</span>');
           if (k < N - 1) tm.push('<span class="t-dep">' + T().colDep + fmtHm(t.dep[k]) + dlyTag + '</span>');
-          s += '<div class="dstop" data-i="' + k + '"><span class="vn">' +
+          /* 竖线开关:站间间隔 = 本站发车 dep[k] → 下一站到着 arr[k+1] 的分钟差。
+             连续分钟轴上直接相减(跨零点不折叠,不会出现负数/24h 错位);时刻数据为整数分钟,
+             差值即整数,不再取整;时刻缺失或差值非正显示 –;终着站无下一段,不产生节点。 */
+          let gapTxt = null;
+          if (k < N - 1) {
+            const g0 = t.dep[k], g1 = t.arr[k + 1];
+            const gd = (Number.isFinite(g0) && Number.isFinite(g1)) ? g1 - g0 : NaN;
+            gapTxt = (Number.isFinite(gd) && gd > 0) ? String(Math.round(gd)) : '–';
+          }
+          s += '<div class="dstop" data-i="' + k + '"><span class="vn" role="button" tabindex="0" aria-pressed="' + (vnCompact ? 'true' : 'false') + '" aria-label="' + T().vnToggle + '">' +
             (k > 0 ? '<span class="vln up" style="background:' + upCol + '"></span>' : '') +
             midHtml +
             (k < N - 1 ? '<span class="vln dn" style="background:' + dnCol + '"></span>' : '') +
-            '</span><span class="vc"><span class="vnm">' + esc(t.jas[k]) + '</span><span class="vmeta">' +
+            '</span><span class="vc">' + (gapTxt !== null ? '<span class="gapn">' + gapTxt + '</span>' : '') + '<span class="vnm">' + esc(t.jas[k]) + '</span><span class="vmeta">' +
             (_platAt(PLATMAP && PLATMAP.t && PLATMAP.t[t.t], k) ? '<span class="vplat" title="' + T().colPlat + '">' + _platAt(PLATMAP && PLATMAP.t && PLATMAP.t[t.t], k).replace(/;/g, '/') + '</span>' : '') +
             (tm.length ? '<span class="vtm">' + tm.join('<i class="sep">·</i>') + '</span>' : '') +
             '</span></span></div>';
@@ -7214,6 +7258,7 @@ function updateDetailLive(t, p, M, rebuild) {
     /* 立即标记停靠站状态(已过/停靠中/下一站),并滚动时间线到当前站——不依赖下一帧差异检测 */
     t._dI = i;
     const stl0 = detailEl.querySelector('.d-stops');
+    applyVnCompact(); /* 停靠站列表重建后同步竖线开关状态(类/aria)并补注入 cdot */
     if (stl0) {
       const ni0 = Math.min(i + 1, N - 1);
       stl0.querySelectorAll('.dstop').forEach(row => {

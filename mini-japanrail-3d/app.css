@@ -263,28 +263,23 @@
 #clock .now:hover { background:var(--acc-soft); }
 
 /* ---------- 列车信息窗口(Apple Liquid Glass) ----------
-   底部锚定(2026-11-04,应用户要求):详情卡为 bottom sheet —— position:fixed; left:0; right:0; bottom:0,
-   从页面底部滑入滑出(translateY(102%)→0),圆角仅上边两角、底边贴边,内容超高时 .d-body 内部滚动,
-   高度上限 min(78vh, 100dvh-顶部安全区),底部留 safe-area-inset-bottom。加载态与正式态共用同一定位
-   (均由 .show 驱动,无第二套定位)。旧版为 left:10px/bottom:72px 的悬浮卡片,已移除全部居中/悬浮来源。 */
-#detail { position:fixed; left:0; right:0; bottom:0; width:auto;
+   浮空圆角卡片(2026-11-04 应用户要求还原 09b42dc 原版):position:absolute; left:10px; bottom:72px,
+   宽 min(316px,100vw-20px) 的左下角小卡片,四角圆角 24px,浮于底部 Dock 之上,
+   translateY(10px)scale(.98)→none 入场。中间版本 245e316 曾改为贴底 bottom sheet
+   (position:fixed 整宽、糊住地图),按用户反馈还原为原浮空卡。加载态与正式态共用同一定位
+   (均由 .show 驱动,无第二套定位)。 */
+#detail { position:absolute; left:10px; bottom:72px; width:min(316px,calc(100vw - 20px));
   background:var(--glass-panel);
-  border:1px solid var(--glass-edge); border-bottom:0; border-radius:24px 24px 0 0;
-  box-shadow:inset 0 1px 0 var(--glass-hi), 0 -10px 30px rgba(0,0,0,.32);
-  z-index:12; padding:14px 16px calc(13px + env(safe-area-inset-bottom, 0px)); overflow:hidden;
-  display:flex; flex-direction:column;
-  max-height:min(78vh, calc(100dvh - env(safe-area-inset-top, 0px)));
-  opacity:0; visibility:hidden; pointer-events:none;
+  border:1px solid var(--glass-edge); border-radius:24px;
+  box-shadow:inset 0 1px 0 var(--glass-hi), inset 0 -1px 1px var(--glass-lo), var(--glass-sh);
+  z-index:12; padding:14px 16px 13px; overflow:hidden;
+  display:block; opacity:0; visibility:hidden; pointer-events:none;
   backdrop-filter:blur(0) saturate(1); -webkit-backdrop-filter:blur(0) saturate(1);
-  transform:translateY(102%);
+  transform:translateY(10px) scale(.98);
   transition:opacity .26s var(--ease-smooth), backdrop-filter .26s var(--ease-smooth), -webkit-backdrop-filter .26s var(--ease-smooth), transform .34s var(--ease-spring), visibility 0s linear .26s; }
-#detail.show { opacity:1; visibility:visible; pointer-events:auto; transform:translateY(0);
+#detail.show { opacity:1; visibility:visible; pointer-events:auto; transform:none;
   backdrop-filter:var(--glass-panel-blur); -webkit-backdrop-filter:var(--glass-panel-blur);
   transition:opacity .26s var(--ease-smooth), backdrop-filter .26s var(--ease-smooth), -webkit-backdrop-filter .26s var(--ease-smooth), transform .34s var(--ease-spring), visibility 0s linear 0s; }
-/* 桌面端(>640px)内容自适应高度、超上限内部滚动;头部/操作行固定,正文吃掉剩余高度。
-   移动端同名规则在 ≤640px 媒体查询内按拖拽档位细化,覆盖此处。 */
-#detail .d-h, #detail .d-act { flex:none; }
-#detail .d-body { flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
 #detail.following { border-color:var(--acc-border); box-shadow:inset 0 1px 0 var(--glass-hi), inset 0 -1px 1px var(--glass-lo), 0 0 0 1px var(--acc-soft) inset, 0 4px 16px var(--shadow); }
 #detail .d-h { display:flex; align-items:center; gap:10px; touch-action:none; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
 #detail .d-ic { width:36px; height:36px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; flex:none; min-width:36px; max-width:68px; padding:0 5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
@@ -532,26 +527,21 @@
 #detail .vtm { font-size:11px; color:var(--dim); font-variant-numeric:tabular-nums; white-space:nowrap; font-weight:600; }
 #detail .vtm .sep { margin:0 5px; opacity:.5; }
 #detail .vplat { font-size:10px; font-weight:700; color:var(--acc); background:var(--acc-soft); border:1px solid color-mix(in srgb, var(--acc) 45%, transparent); border-radius:7px; padding:0 6px; letter-spacing:.3px; font-variant-numeric:tabular-nums; white-space:nowrap; max-width:100%; }
-/* ---------- 竖线开关:徽章列收起 → 站间间隔数字(2026-11-04,应用户要求) ----------
-   点击 .vn:徽章/终点图标/圆点绕自身竖直中轴翻转 90°(perspective+rotateY,侧身即隐),
-   徽章原来占的位置居中出现纯数字站间运行间隔(gapn);站名/站台/时刻保持可见;再点反向翻回。
-   仅 transform+opacity(180ms cubic-bezier(.2,0,.2,1),无 overshoot),行高/列宽保留 → 无重排。
-   有 gapn 的行收起态不重复画 cdot 小圆点(:has 抑制);终着站无 gapn 时仍以 cdot 为收起标记。
-   命中区由 .vn::before 透明扩展(32px,触屏 44px),不额外占布局。 */
-#detail .dstop .vn { cursor:pointer; }
-#detail .dstop .vn::before { content:''; position:absolute; left:50%; top:0; bottom:0; width:32px; transform:translateX(-50%); }
-#detail .vn:focus-visible { outline:2px solid var(--acc); outline-offset:1px; border-radius:8px; }
-#detail .vn .stop-badge, #detail .vn .dst-ic, #detail .vn .dot { transform-origin:center; backface-visibility:hidden; -webkit-backface-visibility:hidden; transition:transform .18s cubic-bezier(.2,0,.2,1), opacity .18s cubic-bezier(.2,0,.2,1); }
-#detail .vn .cdot { position:absolute; left:50%; top:50%; width:6px; height:6px; border-radius:50%; transform:translate(-50%,-50%); z-index:3; opacity:0; pointer-events:none; transition:opacity .18s cubic-bezier(.2,0,.2,1); }
-#detail .vn .gapn { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); z-index:2; font-size:12.5px; font-weight:800; color:var(--txt); font-variant-numeric:tabular-nums; opacity:0; pointer-events:none; transition:opacity .18s cubic-bezier(.2,0,.2,1); }
-#detail.vn-compact .vn .stop-badge, #detail.vn-compact .vn .dst-ic { transform:translate(-50%,-50%) perspective(320px) rotateY(90deg); opacity:0; }
-#detail.vn-compact .vn .dot { transform:translate(-50%,-50%) perspective(320px) rotateY(90deg); opacity:0; }
-#detail.vn-compact .vn .cdot { opacity:1; }
-#detail.vn-compact .vn:has(.gapn) .cdot { opacity:0; }
+/* ---------- 徽章开关:站徽倾斜 → 站间运行分钟(2026-11-04,应用户要求第三版) ----------
+   点停靠站模块里的车站徽标(.stop-badge/.dst-ic/.dot 本体):徽标绕自身中心轴平面内
+   rotate(50deg)——不绕竖轴侧翻(rotateY)、不整块翻面;同时站名/右侧列(.vnm/.vmeta)淡出,
+   两站之间的运行分钟数(gapn)淡入,居中排在两站之间的竖线轴线上(行边界=两站中点);再点反向转回。
+   仅 transform+opacity(240ms cubic-bezier(.4,0,.2,1),取 3636c60 基线原参数,进出对称),
+   行高/列宽全部保留 → 无重排、无尺寸跳变。徽章收起态保持可见(仅倾斜),无需 cdot 占位。 */
+#detail .vn .stop-badge, #detail .vn .dst-ic, #detail .vn .dot { cursor:pointer; transition:transform .24s cubic-bezier(.4,0,.2,1), opacity .24s cubic-bezier(.4,0,.2,1); }
+#detail .vn .stop-badge:focus-visible, #detail .vn .dst-ic:focus-visible, #detail .vn .dot:focus-visible { outline:2px solid var(--acc); outline-offset:2px; border-radius:6px; }
+#detail .vn .gapn { position:absolute; left:50%; top:100%; transform:translate(-50%,-50%); z-index:3; font-size:12.5px; font-weight:800; color:var(--txt); font-variant-numeric:tabular-nums; background:var(--glass-solid); padding:1px 5px; border-radius:8px; opacity:0; pointer-events:none; transition:opacity .24s cubic-bezier(.4,0,.2,1); }
+#detail .vc .vnm, #detail .vc .vmeta { transition:opacity .24s cubic-bezier(.4,0,.2,1), visibility 0s linear 0s; }
+#detail.vn-compact .vn .stop-badge, #detail.vn-compact .vn .dst-ic, #detail.vn-compact .vn .dot { transform:translate(-50%,-50%) rotate(50deg); }
+#detail.vn-compact .vc .vnm, #detail.vn-compact .vc .vmeta { opacity:0; visibility:hidden; transition:opacity .24s cubic-bezier(.4,0,.2,1), visibility 0s linear .24s; }
 #detail.vn-compact .vn .gapn { opacity:1; }
-@media (pointer:coarse) { #detail .dstop .vn::before { width:44px; } }
 @media (prefers-reduced-motion: reduce) {
-  #detail .vn .stop-badge, #detail .vn .dst-ic, #detail .vn .dot, #detail .vn .cdot, #detail .vn .gapn { transition:none; }
+  #detail .vn .stop-badge, #detail .vn .dst-ic, #detail .vn .dot, #detail .vn .gapn, #detail .vc .vnm, #detail .vc .vmeta { transition:none; }
 }
 #detail .dstop.here { background:var(--acc-soft); }
 #detail .dstop.here .dot { background:var(--acc); border-color:var(--acc); box-shadow:0 0 0 4px var(--acc-soft); }
@@ -703,7 +693,7 @@
   #dock:has(#clock.expanded) #dockCenter { max-width:calc(100vw - 16px); width:calc(100vw - 16px); }
   /* 详情卡打开时整体隐藏底部 Dock */
   #dock.hide { opacity:0; pointer-events:none; transform:translateY(14px); }
-  #detail { left:0; right:0; width:auto; border-radius:22px 22px 0 0; padding:12px 13px calc(11px + env(safe-area-inset-bottom, 0px)); bottom:0; }
+  #detail { width:calc(100vw - 12px); left:6px; border-radius:22px; padding:12px 13px 11px; bottom:8px; }
   #detail .d-x { min-width:32px; min-height:32px; width:32px; }
   #detail .d-act .btn { min-height:40px; }
   /* ---- 移动端详情卡:默认折叠为头部胶囊,拖拽头部行三档吸附(折叠/中/全),点击头部切换 ----

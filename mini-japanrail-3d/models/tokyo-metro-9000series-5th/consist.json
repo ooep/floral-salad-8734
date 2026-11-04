@@ -135,7 +135,7 @@
    "shader": "Custom/Vehicles/Vehicle/Train",
    "couple": [
     10.25,
-    9.45
+    10.25
    ],
    "lod": {
     "model": "M1Tokyo_Metro_9000Series_5th_Batch.stand-in.glb",

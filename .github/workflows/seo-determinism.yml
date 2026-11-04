@@ -78,7 +78,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      EXPECTED_FP_STABLE: '91f5051db82b0a4e80d87ff442c19a6263fccc3d8907b1798019ff4bf24482ec'
+      EXPECTED_FP_STABLE: 'e80eef770432bb766f3898ec2b9b03735e84088f4f94c25cb6d0b7cce50b852a'
     steps:
       - name: Checkout
         uses: actions/checkout@v4

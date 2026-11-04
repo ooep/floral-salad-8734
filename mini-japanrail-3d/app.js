@@ -6686,10 +6686,13 @@ function closeDetail() {
     apply(m);
     const to = el.offsetHeight;
     if (Math.abs(from - to) < 2) return;
+    /* 第十版:严禁回弹——基线 240ms cubic-bezier(.4,0,.2,1)(旧 .34,1.45,.44,1 有 overshoot);
+       减弱动效直接落位,不产生动画 */
+    if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     el.style.height = from + 'px';
     anim = el.animate(
       [{ height: from + 'px' }, { height: to + 'px' }],
-      { duration: 380, easing: 'cubic-bezier(.34,1.45,.44,1)', fill: 'both' }
+      { duration: 240, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'both' }
     );
     anim.onfinish = () => { anim.cancel(); anim = null; el.style.height = ''; };
   }

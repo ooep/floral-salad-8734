@@ -4269,38 +4269,70 @@ detailEl.addEventListener('keydown', e => {
   e.preventDefault();
   comfortCarsToggle(w);
 });
-/* ---------- 竖线开关:站名牌收起 → 站间间隔数字(2026-11-04,应用户要求) ----------
-   点击停靠站行左侧竖线(.vn):整组站名牌/线路徽章同向 rotate(90°) 收起为 ≤6px 圆点,
-   中间栏淡出站名、淡入纯数字的站间运行间隔;再点反向转回。仅 transform+opacity 动画
-   (240ms 同一 cubic-bezier,进出对称),行高/列宽全部保留,无重排、无尺寸跳变。
-   监听委托在常驻的 detailEl 上:closeSheet/closeDetail 清空行 DOM 时行内无任何残留监听。
+/* ---------- 徽章开关:站徽倾斜 → 站间运行分钟(2026-11-04,应用户要求第三版) ----------
+   点停靠站模块里的车站徽标(.stop-badge/.dst-ic/.dot 本体,命中外扩 12px 便于点中 10px 圆点):
+   徽标绕自身中心轴平面内旋转 50deg(不绕竖轴侧翻、不整块翻面),站名/右侧列(.vnm/.vmeta)淡出,
+   两站之间的运行分钟数(gapn)淡入、居中排在两站之间的竖线轴线上;再点反向转回。
+   仅 transform+opacity 动画(240ms cubic-bezier(.4,0,.2,1),取 3636c60 基线原参数),
+   行高/列宽全部保留,无重排、无尺寸跳变。监听委托在常驻的 detailEl 上:
+   closeSheet/closeDetail 清空行 DOM 时行内无任何残留监听。
    状态记忆键:localStorage 'mjr3d_vncmp'('1'=收起态),重开抽屉沿用。 */
 let vnCompact = false;
 try { vnCompact = localStorage.getItem('mjr3d_vncmp') === '1'; } catch (e) {}
 function applyVnCompact() {
   detailEl.classList.toggle('vn-compact', vnCompact);
-  detailEl.querySelectorAll('.vn').forEach(v => {
-    v.setAttribute('aria-pressed', vnCompact ? 'true' : 'false');
-    if (!v.querySelector('.cdot')) {
-      const src = v.querySelector('.vln.dn') || v.querySelector('.vln.up');
-      const col = (src && src.style.background) || '#8899aa';
-      v.insertAdjacentHTML('beforeend', '<span class="cdot" style="background:' + col + '"></span>');
-    }
+  detailEl.querySelectorAll('.vn .stop-badge, .vn .dst-ic, .vn .dot').forEach(b => {
+    b.setAttribute('aria-pressed', vnCompact ? 'true' : 'false');
   });
+  placeGapns();
 }
+/* 分钟数位置(第九版):正对本行徽标坑位——CSS top:50% 即徽标中心(与站名同一水平线),
+   无需 JS 覆写;placeGapns 只负责在竖线上同位置留缺口:"线在缺口中间"——
+   本行 .vln.up 止于数字上缘-2px、.vln.dn 起于数字下缘+2px,任何视口下数字 bbox
+   与线段 bbox 相交面积=0;展开态清除内联恢复连续线。重建/切换/resize 后刷新。 */
+function placeGapns() {
+  const rows = detailEl.querySelectorAll('.dstop');
+  for (let k = 0; k < rows.length; k++) {
+    const g = rows[k].querySelector('.gapn');
+    if (!g) continue;
+    const b = rows[k].querySelector('.vn .stop-badge, .vn .dst-ic, .vn .dot');
+    const vn = rows[k].querySelector('.vn');
+    const up = rows[k].querySelector('.vln.up');
+    const dn = rows[k].querySelector('.vln.dn');
+    if (!b || !vn || (!up && !dn)) continue;
+    const r = b.getBoundingClientRect(), v = vn.getBoundingClientRect();
+    const hh = g.getBoundingClientRect().height / 2, clr = 2;
+    const c = r.top + r.height / 2;
+    if (vnCompact) {
+      if (up) up.style.height = Math.max(0, (c - hh - clr) - v.top) + 'px';
+      if (dn) { dn.style.top = (c + hh + clr - v.top) + 'px'; dn.style.bottom = '0'; dn.style.height = 'auto'; }
+    } else {
+      if (up) up.style.height = '';
+      if (dn) { dn.style.top = ''; dn.style.bottom = ''; dn.style.height = ''; }
+    }
+  }
+}
+window.addEventListener('resize', placeGapns);
 function toggleVnCompact() {
   vnCompact = !vnCompact;
   try { localStorage.setItem('mjr3d_vncmp', vnCompact ? '1' : '0'); } catch (e) {}
   applyVnCompact();
 }
-detailEl.addEventListener('click', e => {
+function vnBadgeAt(e) {
   const vn = e.target && e.target.closest ? e.target.closest('.vn') : null;
-  if (vn && detailEl.contains(vn)) toggleVnCompact();
+  if (!vn || !detailEl.contains(vn)) return null;
+  const b = vn.querySelector('.stop-badge, .dst-ic, .dot');
+  if (!b) return null;
+  const r = b.getBoundingClientRect(), pad = 12;
+  return (e.clientX >= r.left - pad && e.clientX <= r.right + pad && e.clientY >= r.top - pad && e.clientY <= r.bottom + pad) ? b : null;
+}
+detailEl.addEventListener('click', e => {
+  if (vnBadgeAt(e)) toggleVnCompact();
 });
 detailEl.addEventListener('keydown', e => {
   if (e.key !== 'Enter' && e.key !== ' ' && e.key !== 'Spacebar') return;
-  const vn = e.target && e.target.closest ? e.target.closest('.vn') : null;
-  if (!vn || !detailEl.contains(vn)) return;
+  const b = e.target && e.target.closest ? e.target.closest('.vn .stop-badge, .vn .dst-ic, .vn .dot') : null;
+  if (!b || !detailEl.contains(b)) return;
   e.preventDefault();
   toggleVnCompact();
 });
@@ -6697,10 +6729,13 @@ function closeDetail() {
     apply(m);
     const to = el.offsetHeight;
     if (Math.abs(from - to) < 2) return;
+    /* 第十版:严禁回弹——基线 240ms cubic-bezier(.4,0,.2,1)(旧 .34,1.45,.44,1 有 overshoot);
+       减弱动效直接落位,不产生动画 */
+    if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     el.style.height = from + 'px';
     anim = el.animate(
       [{ height: from + 'px' }, { height: to + 'px' }],
-      { duration: 380, easing: 'cubic-bezier(.34,1.45,.44,1)', fill: 'both' }
+      { duration: 240, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'both' }
     );
     anim.onfinish = () => { anim.cancel(); anim = null; el.style.height = ''; };
   }
@@ -7265,28 +7300,35 @@ function updateDetailLive(t, p, M, rebuild) {
           }
           const crop = b0 && b0[3] ? b0[3] : [0, 0, 160, 160];
           const dstIc = (!b0) ? ((k < N - 1 && _segLic(lineOfPair(t, k))) || (k > 0 && _segLic(lineOfPair(t, k - 1))) || '') : '';
+          /* 徽章 = 切换开关本体:role/tabindex/aria 挂在徽标元素上(点徽标触发,键盘 Enter/Space 同样聚焦徽标) */
+          const vnBtn = ' role="button" tabindex="0" aria-pressed="' + (vnCompact ? 'true' : 'false') + '" aria-label="' + T().vnToggle + '"';
           const midHtml = (b0 && b0[2])
-            ? '<span class="stop-badge" data-sheet="' + b0[2] + '" data-cx="' + crop[0] + '" data-cy="' + crop[1] + '" data-cw="' + crop[2] + '" data-ch="' + crop[3] + '"></span>'
+            ? '<span class="stop-badge"' + vnBtn + ' data-sheet="' + b0[2] + '" data-cx="' + crop[0] + '" data-cy="' + crop[1] + '" data-cw="' + crop[2] + '" data-ch="' + crop[3] + '"></span>'
             : (dstIc
-              ? '<img class="dst-ic" src="' + dstIc + '" alt="" loading="lazy">'
-              : '<span class="dot" style="--dc:' + dotCol + '"></span>');
+              ? '<img class="dst-ic"' + vnBtn + ' src="' + dstIc + '" alt="" loading="lazy">'
+              : '<span class="dot"' + vnBtn + ' style="--dc:' + dotCol + '"></span>');
           const tm = [];
           if (k > 0) tm.push('<span class="t-arr">' + T().colArr + fmtHm(t.arr[k]) + dlyTag + '</span>');
           if (k < N - 1) tm.push('<span class="t-dep">' + T().colDep + fmtHm(t.dep[k]) + dlyTag + '</span>');
-          /* 竖线开关:站间间隔 = 本站发车 dep[k] → 下一站到着 arr[k+1] 的分钟差。
-             连续分钟轴上直接相减(跨零点不折叠,不会出现负数/24h 错位);时刻数据为整数分钟,
-             差值即整数,不再取整;时刻缺失或差值非正显示 –;终着站无下一段,不产生节点。 */
+          /* 徽章开关分钟数口径(第七版):分两种
+             - 已驶过站(k+1 ≤ i,i 为当前站):相邻间隔 dep[k] → arr[k+1];
+             - 未到达站(k+1 > i,含跨当前站那段):累加时间 arr[k+1] - dep[i],
+               即自当前站发车起到该站所需总分钟(后续第 n 站显示到第 n 站所需分钟);
+               k=i 时累加值 == 间隔 dep[i]→arr[i+1],与当前站段既有约定一致。
+             连续分钟轴直接相减(跨零点不折叠);时刻缺失或差值非正显 –;终着站无节点。
+             数字右上角带分钟单位 ′(.gunit,11px 次要字号)。gapn 注入 .vn 内,
+             top 由 placeGapns() 精确覆写为相邻两徽标中心中点,并在竖线上留出缺口。 */
           let gapTxt = null;
           if (k < N - 1) {
-            const g0 = t.dep[k], g1 = t.arr[k + 1];
-            const gd = (Number.isFinite(g0) && Number.isFinite(g1)) ? g1 - g0 : NaN;
+            const gd = (k + 1 <= i) ? (t.arr[k + 1] - t.dep[k]) : (t.arr[k + 1] - t.dep[i]);
             gapTxt = (Number.isFinite(gd) && gd > 0) ? String(Math.round(gd)) : '–';
           }
-          s += '<div class="dstop" data-i="' + k + '"><span class="vn" role="button" tabindex="0" aria-pressed="' + (vnCompact ? 'true' : 'false') + '" aria-label="' + T().vnToggle + '">' +
+          s += '<div class="dstop" data-i="' + k + '"><span class="vn">' +
             (k > 0 ? '<span class="vln up" style="background:' + upCol + '"></span>' : '') +
             midHtml +
+            (gapTxt !== null ? '<span class="gapn">' + gapTxt + (gapTxt !== '–' ? '<i class="gunit">′</i>' : '') + '</span>' : '') +
             (k < N - 1 ? '<span class="vln dn" style="background:' + dnCol + '"></span>' : '') +
-            '</span><span class="vc">' + (gapTxt !== null ? '<span class="gapn">' + gapTxt + '</span>' : '') + '<span class="vnm">' + esc(t.jas[k]) + '</span><span class="vmeta">' +
+            '</span><span class="vc"><span class="vnm">' + esc(t.jas[k]) + '</span><span class="vmeta">' +
             (_platAt(PLATMAP && PLATMAP.t && PLATMAP.t[t.t], k) ? '<span class="vplat" title="' + T().colPlat + '">' + _platAt(PLATMAP && PLATMAP.t && PLATMAP.t[t.t], k).replace(/;/g, '/') + '</span>' : '') +
             (tm.length ? '<span class="vtm">' + tm.join('<i class="sep">·</i>') + '</span>' : '') +
             '</span></span></div>';
@@ -7301,7 +7343,7 @@ function updateDetailLive(t, p, M, rebuild) {
     /* 立即标记停靠站状态(已过/停靠中/下一站),并滚动时间线到当前站——不依赖下一帧差异检测 */
     t._dI = i;
     const stl0 = detailEl.querySelector('.d-stops');
-    applyVnCompact(); /* 停靠站列表重建后同步竖线开关状态(类/aria)并补注入 cdot */
+    applyVnCompact(); /* 停靠站列表重建后同步徽章开关状态(类/徽标 aria) */
     if (stl0) {
       const ni0 = Math.min(i + 1, N - 1);
       stl0.querySelectorAll('.dstop').forEach(row => {

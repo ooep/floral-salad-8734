@@ -364,10 +364,10 @@ button { font-family:inherit; }
 <!-- 性能(2026-10-28): 首页只内联基础变量与加载遮罩的关键 CSS;其余约 87KB 样式和
      约 481KB 主程序拆到 jr-static(边缘缓存快路径)。此前首页 621KB/205KB(br) 单包,
      慢网络下要等整包才出现加载条。 -->
-<!-- feat/drawer-20261104 预览:临时改本地引用,便于本地服务直接看到抽屉改动;合并 main 前须还原 CDN 引用并 bump ?v= -->
-<link rel="preload" as="style" href="./app.css" onload="this.rel='stylesheet'">
-<noscript><link rel="stylesheet" href="./app.css"></noscript>
-<link rel="modulepreload" href="./app.js" crossorigin="anonymous">
+<!-- 抽屉改版(2026-11-04 合并):CDN 引用已还原并 bump ?v=20261104-drawer1(与 perf 的 20261108-perf1 并存避让) -->
+<link rel="preload" as="style" href="https://jr-static.suki.ing/app/app.css?v=20261104-drawer1" onload="this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://jr-static.suki.ing/app/app.css?v=20261104-drawer1"></noscript>
+<link rel="modulepreload" href="https://jr-static.suki.ing/app/app.js?v=20261104-drawer1" crossorigin="anonymous">
 
 </head>
 <body>
@@ -827,7 +827,7 @@ window.addEventListener('unhandledrejection', e => { __pushErr('REJ ' + (e.reaso
     "three/addons/": "https://jr-static.suki.ing/vendor/three/jsm/"
 } }
 </script>
-<script type="module" src="./app.js"></script>
+<script type="module" src="https://jr-static.suki.ing/app/app.js?v=20261104-drawer1"></script>
 <div id="m3dMask"></div>
 <div id="m3dViewer">
   <canvas id="m3dCanvas"></canvas>

@@ -7429,6 +7429,16 @@ const OP_LOGO = {
   '丹後海陸交通':'鋼索鉄道/丹後海陸交通.png','四国ケーブル':'鋼索鉄道/四国ケーブル.png','立山黒部貫光':'鋼索鉄道/立山黒部貫光.png','筑波観光鉄道':'鋼索鉄道/筑波観光鉄道.png','高尾登山電鉄':'鋼索鉄道/高尾登山電鉄.png','御岳登山鉄道':'鋼索鉄道/御岳登山鉄道.png','大山観光電鉄':'鋼索鉄道/大山観光電鉄.png','比叡山鉄道':'鋼索鉄道/比叡山鉄道.png','青函トンネル記念館':'鋼索鉄道/青函トンネル記念館.png','十国峠':'鋼索鉄道/十国峠.png','ラクテンチ':'鋼索鉄道/ラクテンチ.png','皿倉登山鉄道':'鋼索鉄道/皿倉登山鉄道.png','六甲山観光':'鋼索鉄道/六甲山観光.png','神戸すまいまちづくり公社':'鋼索鉄道/神戸すまいまちづくり公社.png',
   '水島臨海鉄道':'地域鉄道/水島臨海鉄道.png'
 };
+/* 运营商 logo 扩展名归一：真实资产均为 .webp，映射表历史上写成 .png 导致抽屉图标 404。
+   首载归一为 .webp；失败时按原始扩展名(.png)重试一次，两级都失败则移除留空（不回退文字）。 */
+function opLogoUrl(rel) { return 'https://jr-static.suki.ing/logos/' + String(rel).replace(/\.(png|webp)$/i, '') + '.webp'; }
+document.addEventListener('error', e => {
+  const im = e.target;
+  if (!im || im.nodeType !== 1 || !im.classList.contains('op-logo')) return;
+  if (im.dataset.lf) { im.remove(); return; }
+  im.dataset.lf = '1';
+  im.src = im.src.replace(/\.webp$/i, '.png');
+}, true);
 function shortTerm(s) { return String(s).replace(/[（(].*?[)）]/g, '').slice(0, 2); }
 function isRapidType(tp) { return ['特','急','快','準','区','通','回'].indexOf(tp) >= 0; }
 let lineOp = null, boardCache = new Map(), boardCacheItems = 0, sheetStation = null, sheetCoord = null, sheetFlat = false, sheetLine = null, sheetOp = null;
@@ -7769,7 +7779,7 @@ function renderStationBody() {
     if (!g.lines.length) return;
     if (!sheetFlat) {
       const lg = OP_LOGO[g.op];
-      html += '<div class="grp-op">' + (lg ? '<img class="op-logo" src="https://jr-static.suki.ing/logos/' + lg + '" alt="">' : '<span class="op-ic">' + esc(opShort(g.op).slice(0, 2)) + '</span>') + '<span>' + esc(opShort(g.op)) + '</span></div>';
+      html += '<div class="grp-op">' + (lg ? '<img class="op-logo" src="' + opLogoUrl(lg) + '" alt="">' : '<span class="op-ic">' + esc(opShort(g.op).slice(0, 2)) + '</span>') + '<span>' + esc(opShort(g.op)) + '</span></div>';
     }
     g.lines.forEach(L => html += lineRowHtml(L, hour));
   });

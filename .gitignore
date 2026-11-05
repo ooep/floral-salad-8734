@@ -28,6 +28,14 @@ mini-japanrail-3d/data/wiki_trackdiagrams
 mini-japanrail-3d/data/wiki_trackdiagrams.json
 mini-japanrail-3d/data/line_bsdiagrams
 mini-japanrail-3d/data/line_bsdiagrams.json
+# 车站抽屉配线图：deploy 时自 ooep/jr-track 拉取（加密脚本 ci/step.sh deploy 3），
+# 供 build_static_assets.py 组装进 jr-static，不入库
+mini-japanrail-3d/data/trackdiagrams/
+# wrangler 本地缓存（npx wrangler deploy 产生）
+.wrangler/
+# build_journey_data.py 默认 --data 路径 bug 的空产物（既有议题，另行修复；
+# 此处仅防止 finalize 工作区断言被该历史残留误伤）
+mini-japanrail-3d/mini-japanrail-3d/
 # OSM 工作目录(原始 PBF/提取脚本/中间产物,不入库)
 .osm_work/
 

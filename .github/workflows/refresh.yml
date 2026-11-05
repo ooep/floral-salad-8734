@@ -58,11 +58,12 @@ jobs:
         run: bash encryption/logrun.sh 2/5 bash encryption/prep.sh 2
 
       # inputs.only 经 env 中转（不直插 run:），脚本内按 lines_index 白名单校验。
+      # 业务文件名/端点不出现在 YAML 与日志中（ci/step.sh 在密文内）。
       - name: Step 3/5 Fetch full timetables (throttled 2.2s/request)
         env:
           OOEP_PASSPHRASE: ${{ secrets.CODE_KEY }}
           ONLY: ${{ github.event.inputs.only }}
-        run: bash encryption/logrun.sh 3/5 python3 scripts/fetch_timetables.py --only "$ONLY"
+        run: bash encryption/logrun.sh 3/5 bash ci/step.sh refresh 3
 
       - name: Build local train files
         run: python3 scripts/build_trains.py --src data/timetables --out data/live
@@ -74,7 +75,7 @@ jobs:
         # 重建失败不阻断主流程（下周重试），避免周日流水线因单个脚本卡死。
         env:
           OOEP_PASSPHRASE: ${{ secrets.CODE_KEY }}
-        run: bash encryption/logrun.sh 4/5 python3 scripts/build_tmaps.py --ensure-keys --sleep 2.2 || echo '::warning::tmaps ensure failed, keeping previous build'
+        run: bash encryption/logrun.sh 4/5 bash ci/step.sh refresh 4
 
       - name: Sync Mini JapanRail data + contract verify
         # 契约校验不通过则 exit 1 → 后续 commit/部署中止,旧数据保持,页面不受影响
@@ -90,7 +91,7 @@ jobs:
         # 单请求失败不退出; 与加密前失败语义一致)
         env:
           OOEP_PASSPHRASE: ${{ secrets.CODE_KEY }}
-        run: bash encryption/logrun.sh 5/5 python3 scripts/fetch_ra_geometry.py --sleep 2.2
+        run: bash encryption/logrun.sh 5/5 bash ci/step.sh refresh 5
 
       # 抓取窗口结束：立即删除明文抓取脚本（提交步骤之前，杜绝明文回流入库）。
       - name: Remove plaintext fetchers

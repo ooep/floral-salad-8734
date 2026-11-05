@@ -45,7 +45,7 @@ jobs:
       - name: Step 3/3 Probe Wikimedia Commons API
         env:
           OOEP_PASSPHRASE: ${{ secrets.CODE_KEY }}
-        run: bash encryption/logrun.sh 3/3 python3 mini-japanrail-3d/seo/probe_wiki.py
+        run: bash encryption/logrun.sh 3/3 bash ci/step.sh probewiki 3
 
       - name: Finalize (cleanup + worktree assertion)
         if: always()

@@ -85,10 +85,15 @@ python3 encryption/decrypt.py decrypt --enc encrypted \
 
 ## 本仓密文覆盖范围（2026-11-05 接入时）
 
-16 个文件：`scripts/{fetch_timetables,fetch_ra_geometry,build_tmaps,
-deploy_wiki_statics,line_regression_check,build_platform_map_online}.py`、
+17 个文件：`ci/step.sh`（业务步骤分发器，workflow 只写 `ci/step.sh <stage> <号>`，
+业务文件名/端点不进 YAML 与日志）、`scripts/{fetch_timetables,fetch_ra_geometry,
+build_tmaps,deploy_wiki_statics,line_regression_check,build_platform_map_online}.py`、
 `scripts/fetch_track_diagrams.sh`（deploy.yml 配线图拉取块抽出）、
 `mini-japanrail-3d/seo/{fetch_wiki_trackdiagrams{,_v2,_v3,_v4,_v7,_v8},
 fetch_bs_diagrams,probe_bs,probe_wiki}.py`。
 离线脚本（build_trains / sync_mini_3d / build_seo_static / build_tt_shards 等）
 与全部 workflow YAML 保持明文。
+
+`ci/step.sh` 的 stage 对照：refresh=周更时刻表链（3 抓时刻表/4 tmaps ensure/5 官方几何）、
+deploy=部署链（3 配线图拉取/4 wiki 静态部署）、tdv1/tdv2/tdv4/tdv6/tdv8=配线图抓取、
+probebs/probewiki=结构探测。新增抓取脚本时：放进明文源树 → 按上文流程整体重加密。

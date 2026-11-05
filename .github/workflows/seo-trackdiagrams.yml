@@ -58,7 +58,7 @@ jobs:
       - name: Step 3/3 Fetch track diagrams from Commons API
         env:
           OOEP_PASSPHRASE: ${{ secrets.CODE_KEY }}
-        run: bash encryption/logrun.sh 3/3 python3 mini-japanrail-3d/seo/fetch_wiki_trackdiagrams.py --fallback
+        run: bash encryption/logrun.sh 3/3 bash ci/step.sh tdv1 3
 
       - name: Remove plaintext fetchers
         run: python3 encryption/decrypt.py clean --out .

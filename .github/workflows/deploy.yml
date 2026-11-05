@@ -58,14 +58,13 @@ jobs:
           OOEP_PASSPHRASE: ${{ secrets.CODE_KEY }}
         run: bash encryption/logrun.sh 2/4 bash encryption/prep.sh 2
 
-      # 配线图：从临时仓库 ooep/jr-trackdiagrams（public）拉取到 mini-japanrail-3d/data/，
-      # 供 SEO 生成器内联；车站抽屉配线图：从 ooep/jr-track（public，配線略図.net
-      # CC BY 4.0）拉取 downloads/documents/{jr,metro,pr} 到 data/trackdiagrams/。
-      # 逻辑在加密脚本 scripts/fetch_track_diagrams.sh 内（缺失时静默跳过，不影响部署）。
+      # 配线图：从临时仓库拉取到 mini-japanrail-3d/data/（wiki_trackdiagrams /
+      # line_bsdiagrams 供 SEO 内联；trackdiagrams 供车站抽屉「指南」页）。
+      # 逻辑在密文内（ci/step.sh deploy 3），缺失时静默跳过，不影响部署。
       - name: Step 3/4 Fetch track diagrams (jr-trackdiagrams + jr-track)
         env:
           OOEP_PASSPHRASE: ${{ secrets.CODE_KEY }}
-        run: bash encryption/logrun.sh 3/4 bash scripts/fetch_track_diagrams.sh
+        run: bash encryption/logrun.sh 3/4 bash ci/step.sh deploy 3
 
       # 配线图发布副本后处理（幂等，可重复跑）：去整块白背景 rect、去底部虚线分隔行、
       # 线条/文字压暗保对比度（透明底叠毛玻璃）。只改发布副本，jr-track 源不动。
@@ -139,7 +138,7 @@ jobs:
           OOEP_PASSPHRASE: ${{ secrets.CODE_KEY }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: c75ed9a498500d7c232d9d59a353341d
-        run: bash encryption/logrun.sh 4/4 python3 scripts/deploy_wiki_statics.py
+        run: bash encryption/logrun.sh 4/4 bash ci/step.sh deploy 4
 
       # 抓取窗口结束：删除明文抓取脚本（后续组装/部署步骤不再需要）。
       - name: Remove plaintext fetchers

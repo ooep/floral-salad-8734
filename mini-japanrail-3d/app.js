@@ -7839,6 +7839,262 @@ function lineRowHtml(L, hour) {
   dirs.forEach(d => h += dirHtml(L, d, hour));
   return h + '</div>';
 }
+/* ===== 车站抽屉「列表」tab → 信息板（原生整合，20261105）=====
+   列表 tab 整页替换为仿「unit 版」信息屏（基准：feat/ib-drawer-20261104 的
+   ib-drawer/index.html + screen.css，只读参考）：
+   - 走 renderStationBody 同步渲染路径：无 iframe、不搬节点、无 MutationObserver、无定时器/轮播；
+   - 数据单一真源＝宿主时刻表（buildBoard 结果）；番线经 platform_map 反查（懒加载，
+     未到达前留空，到达后由 refreshPlatConsumers 回填）；両数宿主无同步数据源，按规格留空；
+   - 深/浅主题由 html[data-theme] 的 CSS 变量驱动、语言随宿主 lang，切换即时不重开抽屉；
+   - 任何异常静默回落到原生列表，绝不让抽屉空白。 */
+const IB_TYPE_MAP = {
+  普: ['普通', '普通', 'Local'], 各: ['普通', '各停', 'Local'],
+  特: ['特急', '特急', 'Ltd. Exp.'], 快: ['快速', '快速', 'Rapid'],
+  急: ['急行', '急行', 'Express'], 準: ['準急', '準急', 'Semi Exp.'],
+  区: ['区間快速', '区快', 'Sect. Rapid'], 通: ['通勤快速', '通快', 'Comm. Rapid'],
+  直: ['直通特急', '直通', 'Through Ltd.'], 空: ['空港急行', '空港', 'Airport Exp.'],
+  新: ['新快速', '新快', 'Special Rapid'], 関: ['関空快速', '関空', 'Kansai Apt.'],
+  紀: ['紀州路快速', '紀州', 'Kishuji'], 中: ['中央特快', '中央', 'Chuo Special'],
+  大: ['大和路快速', '大和', 'Yamatoji'], ラ: ['ライナー', 'ライナー', 'Liner'],
+  ミ: ['ミュースカイ', 'ミュー', 'μ-SKY'], ア: ['アクセス特急', 'アクセス', 'Access Exp.'],
+  エ: ['エアポート急行', 'エアポ', 'Airport Exp.'], 寝: ['寝台特急', '寝台', 'Sleeper Ltd.'],
+};
+const IB_TYPE_ZH = { 普通: '普通', 各停: '每站停车', 特急: '特急', 快速: '快速', 急行: '急行', 準急: '准急',
+  区間快速: '区间快速', 通勤快速: '通勤快速', 直通特急: '直通特急', 空港急行: '机场急行', 新快速: '新快速',
+  関空快速: '关空快速', 紀州路快速: '纪州路快速', 中央特快: '中央特快', 大和路快速: '大和路快速',
+  ライナー: 'Liner', ミュースカイ: 'μ-SKY', アクセス特急: 'Access特急', エアポート急行: '机场急行',
+  寝台特急: '卧铺特急', 新幹線: '新干线' };
+const IB_I18N = {
+  ja: { title: '今度の列車', sub: 'Train Information',
+    cols: [['種別', 'Type'], ['列車名 / 路線', 'Train / Line'], ['時刻', 'Time'], ['行先', 'Destination'], ['両数', 'Cars'], ['番線', 'Track']],
+    ordDep: '発車  DEP', ordArr: '到着  ARR', origin: '発',
+    dia: { 1: '平日ダイヤ', 2: '土曜ダイヤ', 4: '日曜・祝日ダイヤ' },
+    countDep: '発', countArr: '着', trains: '本', sched: '予定 ', nextDay: '翌日', trackCap: '番線',
+    viewDep: '出発', viewArr: '到着',
+    empty: 'この駅の時刻データがありません', emptyWin: '現在の時間帯に列車がありません' },
+  zh: { title: '下一班列车', sub: 'Train Information',
+    cols: [['种别', 'Type'], ['列车 / 线路', 'Train / Line'], ['时刻', 'Time'], ['目的地', 'Destination'], ['编组', 'Cars'], ['站台', 'Track']],
+    ordDep: '发车  DEP', ordArr: '到达  ARR', origin: '发',
+    dia: { 1: '工作日时刻表', 2: '周六时刻表', 4: '周日·节假日时刻表' },
+    countDep: '发', countArr: '到', trains: '班', sched: '原定 ', nextDay: '次日', trackCap: '站台',
+    viewDep: '出发', viewArr: '到达',
+    empty: '暂无该站的时刻数据', emptyWin: '当前时段没有列车' },
+  en: { title: 'Next Trains', sub: 'Train Information',
+    cols: [['Type', '種別'], ['Train / Line', '列車名 / 路線'], ['Time', '時刻'], ['Destination', '行先'], ['Cars', '両数'], ['Track', '番線']],
+    ordDep: 'DEP', ordArr: 'ARR', origin: 'dep.',
+    dia: { 1: 'Weekday', 2: 'Saturday', 4: 'Sun & Holiday' },
+    countDep: 'Dep.', countArr: 'Arr.', trains: 'trains', sched: 'sched. ', nextDay: 'next day', trackCap: 'Track',
+    viewDep: 'Dep', viewArr: 'Arr',
+    empty: 'No timetable data for this station', emptyWin: 'No trains in the current time window' },
+};
+const IB_OP_EN = { '東日本旅客鉄道': 'JR East', '東海旅客鉄道': 'JR Central', '西日本旅客鉄道': 'JR West',
+  '北海道旅客鉄道': 'JR Hokkaido', '四国旅客鉄道': 'JR Shikoku', '九州旅客鉄道': 'JR Kyushu',
+  '東京地下鉄': 'Tokyo Metro', '東京都': 'Toei Subway', '大阪市高速電気軌道': 'Osaka Metro',
+  '名古屋鉄道': 'Meitetsu', '近畿日本鉄道': 'Kintetsu', '東武鉄道': 'Tobu', '西武鉄道': 'Seibu',
+  '京成電鉄': 'Keisei', '京王電鉄': 'Keio', '小田急電鉄': 'Odakyu', '東急電鉄': 'Tokyu',
+  '京浜急行電鉄': 'Keikyu', '京阪電気鉄道': 'Keihan', '阪急電鉄': 'Hankyu', '阪神電気鉄道': 'Hanshin',
+  '南海電気鉄道': 'Nankai', '山陽電気鉄道': 'Sanyo', '神戸電鉄': 'Kobe Dentetsu', '相模鉄道': 'Sagami',
+  '西日本鉄道': 'Nishitetsu', '東京モノレール': 'Tokyo Monorail', '多摩都市モノレール': 'Tama Monorail',
+  '大阪モノレール': 'Osaka Monorail', '横浜新都市交通': 'Seaside Line', '埼玉新都市交通': 'New Shuttle',
+  '首都圏新都市鉄道': 'TX', '東京臨海高速鉄道': 'Rinkai', '新京成電鉄': 'Shin-Keisei',
+  'ハピラインふくい': 'Hapi-line Fukui', 'ゆりかもめ': 'Yurikamome', '広島電鉄': 'Hiroden' };
+function ibLocStation(n) {
+  if (!n) return '';
+  if (lang === 'en') { const a = NAME_I18N && NAME_I18N.stations ? NAME_I18N.stations[n] : null; return (a && a.en) || n; }
+  if (lang === 'zh') return toZh(n);
+  return n;
+}
+function ibLocLine(n) {
+  if (!n) return '';
+  if (lang === 'en') { const l = NAME_I18N && NAME_I18N.lines ? NAME_I18N.lines[n] : null; return l || n; }
+  if (lang === 'zh') return toZh(n);
+  return n;
+}
+function ibTypeOf(code) {
+  const c = String(code == null ? '' : code).trim();
+  if (!c) return { key: '普通', text: '普通', en: 'Local', zh: '普通' };
+  const m = IB_TYPE_MAP[c];
+  if (m) return { key: m[0], text: m[1], en: m[2], zh: IB_TYPE_ZH[m[1]] || m[1] };
+  return { key: c, text: c, en: '', zh: toZh(c) };
+}
+function ibPlatOf(it) {
+  try {
+    const byRid = PLATMAP && PLATMAP.t && it.tr ? PLATMAP.t[it.tr.t] : null;
+    if (!byRid) return '';
+    const p = _platAt(byRid, it.idx);
+    return p ? String(p).split(';').slice(0, 2).join('·') : '';
+  } catch (e) { return ''; }
+}
+/* 跨线路扁平化 + 按班次去重（同趟车多线只出现一次）+ 时间升序，取接下来 4 班 */
+function ibCollect(board, kind) {
+  const cm = curMin();
+  const nowSvc = cm < 240 ? cm + 1440 : cm;   /* 00:00–04:00 属前一服务日，分钟口径 +1440 */
+  const seen = new WeakSet();
+  const all = [];
+  const ops = board.ops || [];
+  for (let oi = 0; oi < ops.length; oi++) {
+    const lines = ops[oi].lines || [];
+    for (let li = 0; li < lines.length; li++) {
+      const L = lines[li];
+      const items = (kind === 'arr') ? (L.itemsArr || []) : (L.items || []);
+      for (let ii = 0; ii < items.length; ii++) {
+        const it = items[ii];
+        if (!it || !it.tr || seen.has(it.tr)) continue;
+        seen.add(it.tr);
+        all.push({ it: it, line: L });
+      }
+    }
+  }
+  const rows = all.filter(x => {
+    const dly = (x.it.tr && x.it.tr.dly > 0) ? x.it.tr.dly : 0;
+    return kind === 'arr' ? x.it.dep >= nowSvc - 30 : x.it.dep + dly >= nowSvc - 1;
+  });
+  rows.sort((a, b) => a.it.dep - b.it.dep || a.line.name.localeCompare(b.line.name));
+  return { rows: rows.slice(0, 4), total: all.length, nowSvc: nowSvc };
+}
+function ibRowHtml(x, kind) {
+  const it = x.it, L = x.line, tr = it.tr || {};
+  const ib = IB_I18N[lang] || IB_I18N.ja;
+  const ty = ibTypeOf(it.type);
+  const dly = (tr.dly > 0) ? Math.round(tr.dly) : 0;
+  const shown = (kind === 'dep' && dly) ? it.dep + dly : it.dep;
+  const originNm = kind === 'dep' ? ((tr.jas && tr.jas[0]) || '') : (it.term || '');
+  const destNm = it.term || '';
+  const lic = (window.LINE_ICON || {})[L.name];
+  const plat = ibPlatOf(it);
+  const tyTxt = lang === 'en' ? (ty.en || ty.text) : (lang === 'zh' ? ty.zh : ty.text);
+  const tySub = lang === 'en' ? ty.text : ty.en;
+  const opTxt = lang === 'zh' ? opShort(L.op) : (IB_OP_EN[L.op] || opShort(L.op));
+  let adj = '';
+  if (kind === 'dep' && dly) adj = ib.sched + fmtHm(it.dep) + ' · +' + dly + (lang === 'en' ? 'min' : '分');
+  if (Math.floor(shown / 60) >= 24) adj = (adj ? adj + ' · ' : '') + ib.nextDay;
+  let h = '<article class="ib-row" style="--lc:' + L.color + '">';
+  h += '<div class="ib-cell ib-c-type"><div class="ib-order">' + (kind === 'dep' ? ib.ordDep : ib.ordArr) + '</div>' +
+    '<div class="ib-badge" data-type="' + esc(ty.key) + '"><div class="ib-type" data-fit="1">' + esc(tyTxt) + '</div>' +
+    (tySub ? '<div class="ib-type-en">' + esc(tySub) + '</div>' : '') + '</div></div>';
+  h += '<div class="ib-cell ib-c-train"><div class="ib-trainhead">' +
+    '<span class="ib-lico"><i class="ib-dot"></i>' + (lic ? '<img src="' + lic + '" alt="" loading="lazy">' : '') + '</span>' +
+    '<div class="ib-lname" data-fit="1" title="' + esc(ibLocLine(L.name)) + '">' + esc(ibLocLine(L.name)) + '</div></div>' +
+    '<div class="ib-note">' + esc(ibLocStation(originNm)) + ' ' + esc(ib.origin) + '</div>' +
+    '<div class="ib-open">' + esc(opTxt || '') + '</div></div>';
+  h += '<div class="ib-cell ib-c-time"><time class="ib-time" data-fit="1">' + fmtHm(shown) + '</time>' +
+    (adj ? '<div class="ib-adj">' + esc(adj) + '</div>' : '') + '</div>';
+  h += '<div class="ib-cell ib-c-dest"><div class="ib-dest" data-fit="1" title="' + esc(ibLocStation(destNm)) + '">' + esc(ibLocStation(destNm)) + '</div></div>';
+  h += '<div class="ib-cell ib-c-cars"><div class="ib-cars"></div></div>';
+  h += '<div class="ib-cell ib-c-track"><div class="ib-track"' + (plat ? ' data-fit="1"' : '') + '>' + esc(plat) + '</div>' +
+    '<div class="ib-trackcap">' + esc(ib.trackCap) + '</div></div>';
+  return h + '</article>';
+}
+function ibBoardHtml(board) {
+  const kind = (sheetDepArr === 'arr') ? 'arr' : 'dep';
+  const ib = IB_I18N[lang] || IB_I18N.ja;
+  const c = ibCollect(board, kind);
+  const dia = ib.dia[dayBit] || ib.dia[1];
+  let h = '<div class="ib" data-view="' + kind + '" aria-label="' + esc(ib.title) + '">';
+  /* 出发/到达切换收进板头部条右侧（原 #shSubTabs 独立行在信息板激活时隐藏，高度还给板面）；
+     服务日标签让位——页脚条已含同信息 */
+  h += '<div class="ib-mast"><div class="ib-title">' + esc(ib.title) + '<small>' + esc(ib.sub) + '</small></div>' +
+    '<div class="ib-viewseg"><button type="button" class="ib-vs' + (kind === 'dep' ? ' on' : '') + '" data-ibview="dep">' + esc(ib.viewDep) + '</button>' +
+    '<button type="button" class="ib-vs' + (kind === 'arr' ? ' on' : '') + '" data-ibview="arr">' + esc(ib.viewArr) + '</button></div></div>';
+  h += '<div class="ib-colhead" aria-hidden="true">';
+  for (let i = 0; i < 6; i++) h += '<div><div class="jp">' + esc(ib.cols[i][0]) + '</div><div class="en">' + esc(ib.cols[i][1]) + '</div></div>';
+  h += '</div>';
+  if (c.rows.length) {
+    h += '<div class="ib-rows">';
+    for (let i = 0; i < c.rows.length; i++) h += ibRowHtml(c.rows[i], kind);
+    for (let i = c.rows.length; i < 4; i++) h += '<article class="ib-row is-empty" aria-hidden="true"></article>';
+    h += '</div>';
+  } else {
+    h += '<div class="ib-rows ib-rows-none"><div class="ib-empty">' + esc(c.total ? ib.emptyWin : ib.empty) + '</div></div>';
+  }
+  const cnt = (kind === 'arr' ? ib.countArr : ib.countDep) + ' ' + c.total + ' ' + ib.trains;
+  h += '<div class="ib-foot"><span class="ib-foot-msg">' + esc(ibLocStation(sheetStation)) + ' · ' + esc(dia) + ' · ' + esc(cnt) + '</span></div>';
+  h += '</div>';
+  /* 番线数据未到则按需拉（与指南页同款），到达后 refreshPlatConsumers 回填重渲染 */
+  if (!PLATMAP && !platmapP) { try { fetchPlatmap(); } catch (e) {} }
+  return h;
+}
+/* 长文收敛：等比降字号直到不溢出（同步一次性，无定时器；仍不合则省略号），杜绝文字被裁成黑块。
+   收敛结果以 cqw 写回：容器（板宽）变化时字号等比跟随，跨视口不复发溢出。 */
+const IB_FIT_STAGES = [0.86, 0.74, 0.64, 0.54, 0.46];
+function ibFit() {
+  const scope = document.querySelector('#shBody .ib');
+  if (!scope) return;
+  const cw = scope.clientWidth;
+  if (!cw) return;
+  const els = scope.querySelectorAll('[data-fit]');
+  for (let i = 0; i < els.length; i++) {
+    const el = els[i];
+    el.style.fontSize = '';
+    /* 复位上一轮收敛残留（重渲染/复测场景），保证度量从基线开始 */
+    if (el.classList.contains('ib-lname')) {
+      el.style.whiteSpace = ''; el.style.overflowWrap = '';
+      const c0 = el.closest('.ib-cell');
+      if (c0) { const o0 = c0.querySelector('.ib-open'), l0 = c0.querySelector('.ib-lico');
+        if (o0) o0.style.display = ''; if (l0) l0.style.display = ''; }
+    }
+    const w = el.clientWidth;
+    if (!w || !el.textContent) continue;
+    if (el.scrollWidth <= w + 1) continue;
+    const base = parseFloat(getComputedStyle(el).fontSize) || 16;
+    let fitted = 0;
+    for (let s = 0; s < IB_FIT_STAGES.length; s++) {
+      const px = base * IB_FIT_STAGES[s];
+      el.style.fontSize = px + 'px';
+      if (el.scrollWidth <= w + 1) { fitted = px; break; }
+    }
+    if (fitted) el.style.fontSize = (fitted / cw * 100).toFixed(3) + 'cqw';
+    else if (el.classList.contains('ib-lname')) {
+      /* 长英文名降字号仍不合：换行 + 逐档降字号（纵向校验），都不行再回省略号 */
+      const cell = el.closest('.ib-cell');
+      const open = cell ? cell.querySelector('.ib-open') : null;
+      const lico = cell ? cell.querySelector('.ib-lico') : null;
+      el.style.whiteSpace = 'normal';
+      el.style.overflowWrap = 'break-word';
+      if (open) open.style.display = 'none';
+      const tryStages = () => {
+        for (let s = 0; s < IB_FIT_STAGES.length; s++) {
+          const px2 = base * IB_FIT_STAGES[s];
+          el.style.fontSize = px2 + 'px';
+          if (el.scrollWidth <= el.clientWidth + 1 && (!cell || cell.scrollHeight <= cell.clientHeight + 1)) return px2;
+        }
+        return 0;
+      };
+      /* 先让出线路徽章位换行（保字号可读），不行再带徽章深缩，都不行回省略号 */
+      let fitted2 = 0;
+      if (lico) { lico.style.display = 'none'; fitted2 = tryStages(); if (!fitted2) lico.style.display = ''; }
+      if (!fitted2) fitted2 = tryStages();
+      if (fitted2) el.style.fontSize = (fitted2 / cw * 100).toFixed(3) + 'cqw';
+      else {
+        el.style.whiteSpace = ''; el.style.overflowWrap = '';
+        if (open) open.style.display = '';
+        if (lico) lico.style.display = '';
+        el.style.fontSize = (base * 0.46 / cw * 100).toFixed(3) + 'cqw';
+        el.style.overflow = 'hidden'; el.style.textOverflow = 'ellipsis';
+      }
+    }
+    else { el.style.fontSize = (base * 0.46 / cw * 100).toFixed(3) + 'cqw'; el.style.overflow = 'hidden'; el.style.textOverflow = 'ellipsis'; }
+  }
+}
+/* 板内出发/到达切换：与宿主 #subDep/#subArr 共用 sheetDepArr 单一真源；
+   委托绑定一次，板 innerHTML 重建不丢；宿主按钮回调原样保留，互不双触发 */
+$('shBody').addEventListener('click', function (e) {
+  const b = e.target && e.target.closest ? e.target.closest('.ib-vs') : null;
+  if (!b) return;
+  const v = b.getAttribute('data-ibview');
+  if (v !== 'dep' && v !== 'arr') return;
+  if (v === sheetDepArr) return;
+  sheetDepArr = v;
+  $('subDep').classList.toggle('on', v === 'dep');
+  $('subArr').classList.toggle('on', v === 'arr');
+  try { renderStationBody(); } catch (err) { try { console.warn('[ib] view switch failed', err); } catch (_) {} }
+});
+/* 视口/滚动条宽度变化后按新容器宽复收敛一次（事件驱动，非定时器） */
+window.addEventListener('resize', function () {
+  if (sheetTab === 'tabList' && sheetStation && $('sheet').classList.contains('open') && !$('shBody').hidden) {
+    try { ibFit(); } catch (e) {}
+  }
+});
 function renderStationBody() {
   if (!sheetStation) return;
   dayLazyBuild.clear(); dayLazySeq = 0;
@@ -7846,6 +8102,23 @@ function renderStationBody() {
   sheetIsPartial = !!board.partial;
   $('shBody').classList.toggle('partial', sheetIsPartial);
   $('shSub').textContent = board.ops.map(o => opShort(o.op)).join(' · ');
+  /* 列表 tab → 信息板整页替换；任何异常静默回落下方原生列表，绝不让抽屉空白 */
+  if (sheetTab === 'tabList') {
+    let ibHtml = null;
+    try { ibHtml = ibBoardHtml(board); } catch (e) { try { console.warn('[ib] board build failed → 回落原生列表', e); } catch (_) {} ibHtml = null; }
+    if (ibHtml) {
+      $('shSubTabs').classList.add('hidden');   /* 出发/到达已收进板头部条，独立行高度还给板面 */
+      $('shBody').classList.add('ib-mode');
+      $('shBody').innerHTML = ibHtml;
+      try {
+        $('shBody').querySelectorAll('.ib-lico img').forEach(im => { im.addEventListener('error', () => im.remove(), { once: true }); });
+        ibFit();
+      } catch (e) { try { console.warn('[ib] post-render fit failed', e); } catch (_) {} }
+      return;
+    }
+    $('shSubTabs').classList.remove('hidden');
+  }
+  $('shBody').classList.remove('ib-mode');
   const M = curMin(), hour = Math.floor(((M % 1440) + 1440) % 1440 / 60);
   let html = '';
   const groups = sheetFlat ? [{ op: '', lines: board.ops.reduce((a, o) => a.concat(o.lines), []) }] : board.ops;
@@ -9482,6 +9755,10 @@ function refreshPlatConsumers() {
     _guideKey = null;
     renderGuideTab();
   }
+  /* 信息板（列表 tab）：platform_map 到达后回填番线，原地重渲染 */
+  if (sheetTab === 'tabList' && sheetStation && $('sheet').classList.contains('open') && !$('shBody').hidden) {
+    try { renderStationBody(); } catch (e) {}
+  }
 }
 function buildPlatIndex() {
   if (_platIdx) return Promise.resolve(_platIdx);
@@ -10501,6 +10778,8 @@ function applyLang() {
   if (dataReady) setStatus(liveOn ? '' : t.goLive);
   if ($('panelGuide') && !$('panelGuide').hidden) { _guideKey = null; renderGuideTab(); }
   if (window.__tourApi) window.__tourApi.refresh();   /* 引导展开中切换语言时实时刷新文案 */
+  /* 信息板（列表 tab）：语言切换立即原地重渲染，无闪屏；其他 tab 不受影响 */
+  try { if (sheetTab === 'tabList' && sheetStation && $('sheet').classList.contains('open')) renderStationBody(); } catch (e) {}
 }
 function buildLegend() {
   $('legendBox').innerHTML =

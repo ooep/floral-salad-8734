@@ -6,11 +6,17 @@ name: Fetch station track diagrams (Commons, manual + weekly)
 # 主仓库 deploy.yml 部署时会从该临时仓库拉取配线图（public，无需 token）。
 # 需要 Secret：TRACKDIAGRAM_REPO_TOKEN（仓库 Settings→Secrets→Actions 添加；
 #   值为有 ooep/jr-trackdiagrams 写入权限的 PAT）。未配置时跳过同步（抓取仍完成并留产物日志）。
+#
+# 加密（2026-11）：抓取脚本 seo/fetch_wiki_trackdiagrams.py 入库即密文（encrypted/*.enc），
+# 运行时经 prep.sh 先验后写解密、用毕 clean。钥匙来自 Secret: CODE_KEY。
+# workflow YAML 本身无法加密（GitHub 只从明文 YAML 调度）。
 
 on:
   push:
     paths:
-      - 'mini-japanrail-3d/seo/fetch_wiki_trackdiagrams.py'
+      - 'encrypted/**'
+      - 'encryption/**'
+      - '.github/workflows/seo-trackdiagrams.yml'
       - 'mini-japanrail-3d/data/station_map.json'
       - 'mini-japanrail-3d/data/eki_wiki_cache.json'
   workflow_dispatch: {}
@@ -39,10 +45,23 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Fetch track diagrams from Commons API
-        run: |
-          cd mini-japanrail-3d
-          python3 seo/fetch_wiki_trackdiagrams.py --fallback
+      - name: Step 1/3 verify ciphertext (verify-only, zero writes)
+        env:
+          OOEP_PASSPHRASE: ${{ secrets.CODE_KEY }}
+        run: bash encryption/logrun.sh 1/3 bash encryption/prep.sh 1
+
+      - name: Step 2/3 materialize fetchers
+        env:
+          OOEP_PASSPHRASE: ${{ secrets.CODE_KEY }}
+        run: bash encryption/logrun.sh 2/3 bash encryption/prep.sh 2
+
+      - name: Step 3/3 Fetch track diagrams from Commons API
+        env:
+          OOEP_PASSPHRASE: ${{ secrets.CODE_KEY }}
+        run: bash encryption/logrun.sh 3/3 python3 mini-japanrail-3d/seo/fetch_wiki_trackdiagrams.py --fallback
+
+      - name: Remove plaintext fetchers
+        run: python3 encryption/decrypt.py clean --out .
 
       - name: Sync diagrams to ooep/jr-trackdiagrams
         env:
@@ -71,3 +90,12 @@ jobs:
           git remote add origin "https://x-access-token:${TD_TOKEN}@github.com/ooep/jr-trackdiagrams.git"
           git push -f origin main
           echo "已同步到 ooep/jr-trackdiagrams"
+
+      # 抓取过程对受跟踪 cache 的更新只留在 runner（与加密前一致：本流程从不提交主仓），
+      # 还原以保证 finalize 的工作区断言与加密前行为等价。
+      - name: Restore tracked cache (runner-local updates, as before)
+        run: git checkout -- mini-japanrail-3d/data/eki_wiki_cache.json 2>/dev/null || true
+
+      - name: Finalize (cleanup + worktree assertion)
+        if: always()
+        run: bash encryption/finalize.sh

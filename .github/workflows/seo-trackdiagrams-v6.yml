@@ -3,6 +3,11 @@ name: Fetch line BS diagrams (V6)
 # V6 线路级 BS 全线配线图：抓 ja 维基线路词条 {{BS-table}}/{{BS-map}} 模板代码 → 本地渲染 SVG。
 # 手动触发；可用 --titles 指定词条小批验证，或 --limit-lines N。
 # 产物同步到 ooep/jr-trackdiagrams（line_bsdiagrams/）。
+#
+# 加密（2026-11）：抓取脚本入库即密文（encrypted/*.enc），运行时经 prep.sh
+# 先验后写解密、用毕 clean。钥匙来自 Secret: CODE_KEY。YAML 本身无法加密。
+# 注入面收敛：inputs 一律经 env: 中转，不再直插 run:；--titles 在脚本内按
+# 已知线路词条白名单过滤，--limit-lines 强制整数解析。
 
 on:
   workflow_dispatch:
@@ -38,13 +43,32 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Fetch & render line BS diagrams
+      - name: Step 1/3 verify ciphertext (verify-only, zero writes)
+        env:
+          OOEP_PASSPHRASE: ${{ secrets.CODE_KEY }}
+        run: bash encryption/logrun.sh 1/3 bash encryption/prep.sh 1
+
+      - name: Step 2/3 materialize fetchers
+        env:
+          OOEP_PASSPHRASE: ${{ secrets.CODE_KEY }}
+        run: bash encryption/logrun.sh 2/3 bash encryption/prep.sh 2
+
+      - name: Step 3/3 Fetch & render line BS diagrams
+        env:
+          OOEP_PASSPHRASE: ${{ secrets.CODE_KEY }}
+          TITLES: ${{ github.event.inputs.titles }}
+          LIMIT_LINES: ${{ github.event.inputs.limit_lines }}
         run: |
-          cd mini-japanrail-3d
-          ARGS=""
-          [ -n "${{ github.event.inputs.titles }}" ] && ARGS="$ARGS --titles ${{ github.event.inputs.titles }}"
-          [ -n "${{ github.event.inputs.limit_lines }}" ] && ARGS="$ARGS --limit-lines ${{ github.event.inputs.limit_lines }}"
-          python3 seo/fetch_bs_diagrams.py $ARGS
+          bash encryption/logrun.sh 3/3 bash -c '
+            set -Eeuo pipefail
+            EXTRA=()
+            [ -n "${TITLES:-}" ] && EXTRA+=(--titles "$TITLES")
+            [ -n "${LIMIT_LINES:-}" ] && EXTRA+=(--limit-lines "$LIMIT_LINES")
+            python3 mini-japanrail-3d/seo/fetch_bs_diagrams.py ${EXTRA[@]+"${EXTRA[@]}"}
+          '
+
+      - name: Remove plaintext fetchers
+        run: python3 encryption/decrypt.py clean --out .
 
       - name: Sync line_bsdiagrams to ooep/jr-trackdiagrams
         env:
@@ -71,3 +95,7 @@ jobs:
           git remote set-url origin "https://x-access-token:${TD_TOKEN}@github.com/ooep/jr-trackdiagrams.git"
           git pull --rebase origin main 2>/dev/null || true
           git push origin HEAD:main && echo "已同步 line_bsdiagrams" || { echo "::warning::push 失败，重试一次"; sleep 5; git pull --rebase origin main 2>/dev/null || true; git push origin HEAD:main && echo "重试成功" || echo "::error::同步失败"; }
+
+      - name: Finalize (cleanup + worktree assertion)
+        if: always()
+        run: bash encryption/finalize.sh

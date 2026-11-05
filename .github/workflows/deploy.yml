@@ -8,11 +8,22 @@ name: Build & deploy site
 # 流程: 拉取配线图 → 生成 SEO 页 → 组装并部署静态 Worker → 组装前端发布物 → GH Pages + CF Pages
 # GitHub Pages: Actions 方式部署（仓库 Settings→Pages→Source: GitHub Actions）。
 # Cloudflare: 仓库需配置 Secret: CF_API_TOKEN。
+#
+# 加密（2026-11）：带外部抓取能力的程序（配线图拉取 fetch_track_diagrams.sh、
+# wiki 静态部署 deploy_wiki_statics.py）入库即密文（encrypted/*.enc），运行时经
+# prep.sh 先验后写解密、用毕 clean。钥匙来自 Secret: CODE_KEY。
+# workflow YAML 本身无法加密（GitHub 只从明文 YAML 调度）；workflow_dispatch
+# 提供 dry_run：跑完解密/抓取/构建但跳过全部真实部署，供分支验证。
 
 on:
   push:
     branches: [main]
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'dry-run：执行解密/抓取/构建，但跳过所有真实部署（GH Pages / CF）'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -37,43 +48,24 @@ jobs:
         with:
           python-version: '3.11'
 
-      # 配线图：从临时仓库 ooep/jr-trackdiagrams（public）拉取到 mini-japanrail-3d/data/，
-      # 供 SEO 生成器内联（缺失时静默跳过，不影响部署）。
-      - name: Fetch track diagrams (jr-trackdiagrams)
-        run: |
-          cd mini-japanrail-3d
-          if curl -sfL -m 40 "https://github.com/ooep/jr-trackdiagrams/archive/refs/heads/main.tar.gz" -o /tmp/td.tgz; then
-            rm -rf /tmp/tdx && mkdir -p /tmp/tdx && tar xzf /tmp/td.tgz -C /tmp/tdx || true
-            cp -r /tmp/tdx/jr-trackdiagrams-main/wiki_trackdiagrams data/ 2>/dev/null || true
-            cp /tmp/tdx/jr-trackdiagrams-main/wiki_trackdiagrams.json data/ 2>/dev/null || true
-            cp -r /tmp/tdx/jr-trackdiagrams-main/line_bsdiagrams data/ 2>/dev/null || true
-            cp /tmp/tdx/jr-trackdiagrams-main/line_bsdiagrams.json data/ 2>/dev/null || true
-            n=$(ls data/wiki_trackdiagrams/*.svg 2>/dev/null | wc -l) || n=0
-            nb=$(ls data/line_bsdiagrams/*.svg 2>/dev/null | wc -l) || nb=0
-            echo "配线图 SVG 数: ${n:-0}，线路 BS 全线图: ${nb:-0}"
-          else
-            echo '::warning::配线图仓库拉取失败，本次部署无配线图'
-          fi
+      - name: Step 1/4 verify ciphertext (verify-only, zero writes)
+        env:
+          OOEP_PASSPHRASE: ${{ secrets.CODE_KEY }}
+        run: bash encryption/logrun.sh 1/4 bash encryption/prep.sh 1
 
-      # 车站抽屉配线图：从 ooep/jr-track（public，配線略図.net CC BY 4.0）拉取
-      # downloads/documents/{jr,metro,pr} 到 mini-japanrail-3d/data/trackdiagrams/，
-      # 随 build_static_assets.py 的 data 合并进入 jr-static，前端按
-      # data/track_diagram_index.json 于车站抽屉「指南」页引用（缺失时静默跳过）。
-      - name: Fetch track diagrams (jr-track)
-        run: |
-          cd mini-japanrail-3d
-          if curl -sfL -m 120 "https://github.com/ooep/jr-track/archive/refs/heads/main.tar.gz" -o /tmp/jrt.tgz; then
-            rm -rf /tmp/jrtx && mkdir -p /tmp/jrtx && tar xzf /tmp/jrt.tgz -C /tmp/jrtx || true
-            mkdir -p data/trackdiagrams
-            cp -r /tmp/jrtx/jr-track-main/downloads/documents/jr data/trackdiagrams/ 2>/dev/null || true
-            cp -r /tmp/jrtx/jr-track-main/downloads/documents/metro data/trackdiagrams/ 2>/dev/null || true
-            cp -r /tmp/jrtx/jr-track-main/downloads/documents/pr data/trackdiagrams/ 2>/dev/null || true
-            rm -rf /tmp/jrtx /tmp/jrt.tgz
-            n=$(find data/trackdiagrams -name '*.svg' 2>/dev/null | wc -l) || n=0
-            echo "jr-track 配线图 SVG 数: ${n:-0}"
-          else
-            echo '::warning::jr-track 拉取失败，本次部署抽屉无配线图'
-          fi
+      - name: Step 2/4 materialize fetchers
+        env:
+          OOEP_PASSPHRASE: ${{ secrets.CODE_KEY }}
+        run: bash encryption/logrun.sh 2/4 bash encryption/prep.sh 2
+
+      # 配线图：从临时仓库 ooep/jr-trackdiagrams（public）拉取到 mini-japanrail-3d/data/，
+      # 供 SEO 生成器内联；车站抽屉配线图：从 ooep/jr-track（public，配線略図.net
+      # CC BY 4.0）拉取 downloads/documents/{jr,metro,pr} 到 data/trackdiagrams/。
+      # 逻辑在加密脚本 scripts/fetch_track_diagrams.sh 内（缺失时静默跳过，不影响部署）。
+      - name: Step 3/4 Fetch track diagrams (jr-trackdiagrams + jr-track)
+        env:
+          OOEP_PASSPHRASE: ${{ secrets.CODE_KEY }}
+        run: bash encryption/logrun.sh 3/4 bash scripts/fetch_track_diagrams.sh
 
       # 配线图发布副本后处理（幂等，可重复跑）：去整块白背景 rect、去底部虚线分隔行、
       # 线条/文字压暗保对比度（透明底叠毛玻璃）。只改发布副本，jr-track 源不动。
@@ -120,7 +112,7 @@ jobs:
       # CDN 边缘直服，任何请求都不触发 Worker → 零 Worker 调用、零计费。
       # CORS 由 assets 根 _headers 提供。令牌缺失时跳过并告警（与 CF Pages 一致）。
       - name: Deploy static assets (jr-static)
-        if: ${{ env.CF_API_TOKEN != '' }}
+        if: ${{ env.CF_API_TOKEN != '' && !inputs.dry_run }}
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: c75ed9a498500d7c232d9d59a353341d
@@ -132,7 +124,7 @@ jobs:
       # 这里再对「实际要上传的目录」做一次只读校验（不重建），任何一项不通过就让任务变红，
       # 避免「新整包 + 旧/缺分片」的混版本静默上线（客户端虽有 monolith 回退，但会白丢优化）。
       - name: Verify timetable shards (jr-static payload)
-        if: ${{ env.CF_API_TOKEN != '' }}
+        if: ${{ env.CF_API_TOKEN != '' && !inputs.dry_run }}
         run: |
           python3 scripts/build_tt_shards.py --src data/live \
             --out static-worker/assets/data/tt --verify-only
@@ -140,33 +132,46 @@ jobs:
       # 车站百科(eki-wiki)与列车百科(ressha-wiki)：同为「仅资产」纯静态 Worker（无脚本，零计费）。
       # 每次主仓 push 从各自源仓库拉取最新 data/ 并同步部署（wrangler 按哈希去重，未变化秒级跳过）。
       # 前端引用: EKI_BASE=https://eki-wiki.suki.ing/data/、RESSHA_BASE=https://ressha-wiki.suki.ing/data/
-      - name: Deploy wiki statics (eki-wiki & ressha-wiki)
+      # 本步骤为抓取+部署一体，脚本在密文内。
+      - name: Step 4/4 Deploy wiki statics (eki-wiki & ressha-wiki)
         if: ${{ env.CF_API_TOKEN != '' }}
         env:
+          OOEP_PASSPHRASE: ${{ secrets.CODE_KEY }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: c75ed9a498500d7c232d9d59a353341d
-        run: |
-          python3 scripts/deploy_wiki_statics.py 2>&1 | tail -20
+        run: bash encryption/logrun.sh 4/4 python3 scripts/deploy_wiki_statics.py
+
+      # 抓取窗口结束：删除明文抓取脚本（后续组装/部署步骤不再需要）。
+      - name: Remove plaintext fetchers
+        run: python3 encryption/decrypt.py clean --out .
 
       - name: Prepare deploy dir (frontend only)
         run: |
           python3 scripts/prepare_pages_dist.py
 
       - name: Configure Pages
+        if: ${{ !inputs.dry_run }}
         uses: actions/configure-pages@v5
 
       - name: Upload Pages artifact
+        if: ${{ !inputs.dry_run }}
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist
 
       - name: Deploy to GitHub Pages
+        if: ${{ !inputs.dry_run }}
         id: deployment
         uses: actions/deploy-pages@v4
 
       - name: Deploy Mini JapanRail frontend to Cloudflare Pages
-        if: ${{ env.CF_API_TOKEN != '' }}
+        if: ${{ env.CF_API_TOKEN != '' && !inputs.dry_run }}
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
         run: |
           npx wrangler@4 pages deploy cf-mj3d --project-name mini-japanrail-3d --branch main --commit-dirty=true
+
+      # 常开收尾：再清一次（幂等）并断言工作区干净。
+      - name: Finalize (cleanup + worktree assertion)
+        if: always()
+        run: bash encryption/finalize.sh

@@ -7868,10 +7868,25 @@ function updateDetailLive(t, p, M, rebuild) {
       if (mIc < 0) mIc = ATLAS.fallback !== undefined ? ATLAS.fallback : -1;
       if (mIc !== dIc) console.warn('[icon-src] drawer/map mismatch t=' + t.t + ' drawer=' + dIc + ' map=' + mIc + ' p3=' + (p && p[3]));
     }
+    /* 终着站到着显示口径修正:源时刻表最后一段区间时长可能为 0 分钟(分钟级取整,
+       如平日 tmap10345 長崎電気軌道 赤迫→蛍茶屋 51 个班次末段为 0),解码后
+       arr[N-1]==dep[N-2],抽屉里终着站到着与倒数第二站完全相同。末段时长非正时,
+       用最近一段非零区间时长推算终着到着(数据来源:本班自身 arr/dep 区间时长);
+       全段皆零则显式显示 –,绝不沿用上一站的值伪装正常。仅供抽屉展示(表头区间
+       +停靠站列表);地图动画/ETA 等仍用原始 arr/dep,不扩大改动。 */
+    let arrEnd = t.arr[N-1], arrEndEst = false;
+    const lastRunBad = N >= 2 && !(t.arr[N-1] > t.dep[N-2]);
+    if (lastRunBad) {
+      for (let j = N - 3; j >= 0; j--) {
+        const rj = t.arr[j+1] - t.dep[j];
+        if (rj > 0) { arrEnd = t.dep[N-2] + rj; arrEndEst = true; break; }
+      }
+    }
+    const arrEndTxt = (lastRunBad && !arrEndEst) ? '–' : fmtHm(arrEnd);
     detailEl.innerHTML =
       '<div class="d-h">' + (dIc >= 0 ? '<span class="d-ic d-ic-img" style="' + iconStyle(dIc) + '"></span>' : '<span class="d-ic" style="color:' + col + ';background:' + col + '22">' + ICO.train + '</span>') +
       '<div class="d-t"><div class="d-nm">' + (t.nm || p[3] || uniqLines[0] || t.i) + '</div>' +
-      '<div class="d-sb">' + t.jas[0] + ' → ' + t.jas[N-1] + ' · ' + fmtHm(t.dep[0]) + '–' + fmtHm(t.arr[N-1]) + '</div></div>' +
+      '<div class="d-sb">' + t.jas[0] + ' → ' + t.jas[N-1] + ' · ' + fmtHm(t.dep[0]) + '–' + arrEndTxt + '</div></div>' +
       '<button class="btn icon d-x" id="dClose">' + ICO.close + '</button></div>' +
       '<div class="d-body">' +
       '<div class="d-meta">' +
@@ -7954,24 +7969,24 @@ function updateDetailLive(t, p, M, rebuild) {
               ? '<img class="dst-ic"' + vnBtn + ' src="' + dstIc + '" alt="" loading="lazy">'
               : '<span class="dot"' + vnBtn + ' style="--dc:' + dotCol + '"></span>');
           const tm = [];
-          if (k > 0) tm.push('<span class="t-arr">' + T().colArr + fmtHm(t.arr[k]) + dlyTag + '</span>');
+          /* 终着站到着用推算值 arrEndTxt(源数据末段 0 分钟时不沿用上一站,见函数头注释) */
+          if (k > 0) tm.push('<span class="t-arr">' + T().colArr + (k === N - 1 ? arrEndTxt : fmtHm(t.arr[k])) + dlyTag + '</span>');
           if (k < N - 1) tm.push('<span class="t-dep">' + T().colDep + fmtHm(t.dep[k]) + dlyTag + '</span>');
           /* 徽章开关分钟数口径(第七版):分两种
              - 已驶过站(k+1 ≤ i,i 为当前站):相邻间隔 dep[k] → arr[k+1];
              - 未到达站(k+1 > i,含跨当前站那段):累加时间 arr[k+1] - dep[i],
                即自当前站发车起到该站所需总分钟(后续第 n 站显示到第 n 站所需分钟);
                k=i 时累加值 == 间隔 dep[i]→arr[i+1],与当前站段既有约定一致。
-             连续分钟轴直接相减(跨零点不折叠);时刻缺失或差值非正显 –;终着站无节点。
+             连续分钟轴直接相减(跨零点不折叠);时刻缺失或差值非正显 –;终着站无节点
+             (末段数字归倒数第二站行;第十一版曾在终着行重复挂同一段数字,致末两站
+             分钟数相同,已移除)。末段 k=N-2 的到达时刻用 arrEnd(源数据末段 0 分钟
+             时为推算值),避免最后一段显示 – 或沿用上一站数字。
              数字右上角带分钟单位 ′(.gunit,11px 次要字号)。gapn 注入 .vn 内,
              top 由 placeGapns() 精确覆写为相邻两徽标中心中点,并在竖线上留出缺口。 */
           let gapTxt = null;
           if (k < N - 1) {
-            const gd = (k + 1 <= i) ? (t.arr[k + 1] - t.dep[k]) : (t.arr[k + 1] - t.dep[i]);
-            gapTxt = (Number.isFinite(gd) && gd > 0) ? String(Math.round(gd)) : '–';
-          } else if (N >= 2) {
-            /* 终点站行(第十一版):数字取"进入末站那段"——未到达=累加 arr[last]-dep[i],
-               已驶过=间隔 dep[last-1]→arr[last];缺口/坑位/′/同水平线规则与其它行一致 */
-            const gd = (k <= i) ? (t.arr[k] - t.dep[k - 1]) : (t.arr[k] - t.dep[i]);
+            const ak1 = (k === N - 2) ? arrEnd : t.arr[k + 1];
+            const gd = (k + 1 <= i) ? (ak1 - t.dep[k]) : (ak1 - t.dep[i]);
             gapTxt = (Number.isFinite(gd) && gd > 0) ? String(Math.round(gd)) : '–';
           }
           s += '<div class="dstop" data-i="' + k + '"><span class="vn">' +

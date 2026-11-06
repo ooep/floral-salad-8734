@@ -176,6 +176,13 @@ jobs:
         run: |
           npx wrangler@4 pages deploy cf-mj3d --project-name mini-japanrail-3d --branch main --commit-dirty=true
 
+      # 部署后回读（2026-11-06 审计④：部署来源可追溯）：从线上拉 /app/ 三件，
+      # 断言 200 + sha256 与本 commit 构建产物一致 + 无 './vendor/ 相对导入坏模式。
+      # 不一致 = 线上不是本 commit 产物（工作区直发/手工上传）或 CDN 未更新 → 红。
+      - name: Readback online artifacts (provenance)
+        if: ${{ env.CF_API_TOKEN != '' && !inputs.dry_run }}
+        run: python3 scripts/readback_online.py
+
       # 常开收尾：再清一次（幂等）并断言工作区干净。
       - name: Finalize (cleanup + worktree assertion)
         if: always()

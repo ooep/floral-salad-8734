@@ -368,7 +368,7 @@ button { font-family:inherit; }
 <!-- 信息板原生整合(2026-11-05):验收完毕,CDN 绝对地址已还原并 bump ?v=20261105-ib2 破缓存 -->
 <link rel="preload" as="style" href="https://jr-static.suki.ing/app/app.css?v=20261105-ib2" onload="this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://jr-static.suki.ing/app/app.css?v=20261105-ib2"></noscript>
-<link rel="modulepreload" href="https://jr-static.suki.ing/app/app.js?v=20261106-ib6" crossorigin="anonymous">
+<link rel="modulepreload" href="https://jr-static.suki.ing/app/app.js?v=20261106-diag1" crossorigin="anonymous">
 
 </head>
 <body>
@@ -701,12 +701,16 @@ window.addEventListener('unhandledrejection', e => { __pushErr('REJ ' + (e.reaso
       造成的 lastAlive 过期而在首拍误判。
    遮罩隐藏(启动成功)后看门狗自动终止。重试点击:整页刷新按会话计次、最多 2 次;
    boot 在途时首次点击先给在途闲置超时一次自我裁决的机会;模块已执行且 boot 已落定时
-   交给 app.js 自己的重试监听(原地 boot(),更快)。 */
+   交给 app.js 自己的重试监听(原地 boot(),更快)。
+   增强(2026-11-06 移动端 0% 事故):① 模块(图)加载失败先自动重试 —— 指数退避
+   1s/3s/9s、最多 3 次、带独立查询参数避开被污染缓存条目,boot 成功即取消;
+   ② 判死时附诊断面板:关键资源 timing 分段(DNS/TCP/TLS/TTFB/下载)、状态码、
+   错误尾与网络类型,用户可在手机上直接展开查看或复制回传,不再只有一句笼统文案。 */
 (function () {
   var TXT = {
-    zh: { fail: '加载失败，请检查网络后重试', retry: '重试', capped: '重试次数已达上限，请检查网络后手动刷新页面' },
-    ja: { fail: '読み込みに失敗しました。ネットワークを確認してもう一度お試しください', retry: '再試行', capped: '再試行回数が上限に達しました。ネットワークを確認してから手動で更新してください' },
-    en: { fail: 'Failed to load. Check your network and retry.', retry: 'Retry', capped: 'Retry limit reached. Check your network and refresh manually.' }
+    zh: { fail: '加载失败，请检查网络后重试', retry: '重试', capped: '重试次数已达上限，请检查网络后手动刷新页面', diag: '诊断信息', copy: '复制', copied: '已复制' },
+    ja: { fail: '読み込みに失敗しました。ネットワークを確認してもう一度お試しください', retry: '再試行', capped: '再試行回数が上限に達しました。ネットワークを確認してから手動で更新してください', diag: '診断情報', copy: 'コピー', copied: 'コピー済み' },
+    en: { fail: 'Failed to load. Check your network and retry.', retry: 'Retry', capped: 'Retry limit reached. Check your network and refresh manually.', diag: 'Diagnostics', copy: 'Copy', copied: 'Copied' }
   };
   var lang = 'zh';
   try {
@@ -719,8 +723,10 @@ window.addEventListener('unhandledrejection', e => { __pushErr('REJ ' + (e.reaso
   var RUN_BUDGET_MS = 60000;  /* 模块已执行期:无进度判死阈值(抓取闲置中止先于此兜底) */
   var PROBE_MS = 28000;       /* HEAD 探针单项超时(须大于实测最坏 TTFB 25s) */
   var RELOAD_KEY = 'mjr3d_wdReloads', MAX_RELOADS = 2;
+  var MOD_RETRY_MAX = 3;   /* 模块(图)加载失败自动重试上限:指数退避 1s/3s/9s,超限才判死 */
   window.__bootTick = Date.now();
   var failed = false, probing = false, chance = false, lastTick = window.__bootTick, lastAlive = Date.now();
+  var modRetries = 0, modRetryTimer = null;
   function showFail() {
     if (failed) return; failed = true; chance = false; window.__wdFail = true;
     var msg = document.getElementById('lMsg'), btn = document.getElementById('lRetry');
@@ -743,6 +749,7 @@ window.addEventListener('unhandledrejection', e => { __pushErr('REJ ' + (e.reaso
         }
       }, true);
     }
+    showDiagPanel();   /* 失败即附诊断:设备侧失败点可展开、可复制回传 */
   }
   window.__wdClear = function () { /* app.js boot() 成功后调用:清失败态与刷新计次 */
     failed = false; chance = false; window.__wdFail = false;
@@ -751,9 +758,112 @@ window.addEventListener('unhandledrejection', e => { __pushErr('REJ ' + (e.reaso
   };
   window.addEventListener('error', function (e) {
     var t = e.target;
-    /* 资源错误只在捕获阶段可见;仅模块脚本致命(经典脚本如统计/图标表失败有各自兜底) */
-    if (t && t !== window && t.tagName === 'SCRIPT' && t.type === 'module') { window.__scriptFail = true; showFail(); }
+    /* 资源错误只在捕获阶段可见;仅模块脚本致命(经典脚本如统计/图标表失败有各自兜底)。
+       先自动重试(指数退避,≤3 次)再判死:瞬时断网/缓存残体不再一次失败就定格 0% */
+    if (t && t !== window && t.tagName === 'SCRIPT' && t.type === 'module') {
+      window.__scriptFail = true;
+      if (retryModule()) return;
+      showFail();
+    }
   }, true);
+  function retryModule() {
+    /* 模块(图)加载失败自动重试:重注入带独立查询参数的新元素,避开被污染的缓存条目;
+       1s/3s/9s 指数退避,最多 MOD_RETRY_MAX 次;boot 成功(__wdClear)或已判死后不再执行 */
+    if (modRetries >= MOD_RETRY_MAX || modRetryTimer || window.__appJsLoaded || failed) return false;
+    var m = document.querySelector('script[type="module"][src]');
+    if (!m || !m.src) return false;
+    var n = ++modRetries;
+    window.__scriptFail = false;
+    modRetryTimer = setTimeout(function () {
+      modRetryTimer = null;
+      if (window.__appJsLoaded || failed) return;   /* 已恢复/已判死:取消重注入 */
+      var cur = document.querySelector('script[type="module"][src]');
+      if (!cur || !cur.parentNode) return;
+      var base = cur.src.split('&__mr=')[0];
+      var s = document.createElement('script');
+      s.type = 'module';
+      s.src = base + (base.indexOf('?') >= 0 ? '&' : '?') + '__mr=' + n;
+      cur.parentNode.insertBefore(s, cur);
+      cur.parentNode.removeChild(cur);
+      lastAlive = Date.now(); lastTick = window.__bootTick;   /* 给新下载完整预算 */
+    }, 1000 * Math.pow(3, n - 1));
+    return true;
+  }
+  function diagText() {
+    /* 设备侧失败点快照:关键资源 timing 分段(DNS/TCP/TLS/TTFB/下载)+状态码+错误尾,
+       供用户直接复制回传,定位是 DNS/连接/TLS/HTTP/body 哪一段失败 */
+    var L = [];
+    L.push('t=' + new Date().toISOString());
+    var m = document.querySelector('script[type="module"][src]');
+    L.push('src=' + (m ? m.src : 'none'));
+    L.push('flags appJsLoaded=' + !!window.__appJsLoaded + ' booting=' + !!window.__booting
+      + ' scriptFail=' + !!window.__scriptFail + ' retries=' + modRetries
+      + ' appVer=' + (window.__appVer || '-'));
+    try {
+      var c = navigator.connection || {};
+      L.push('net ' + (c.effectiveType || '?') + ' downlink=' + (c.downlink == null ? '?' : c.downlink) + 'Mbps rtt=' + (c.rtt == null ? '?' : c.rtt) + 'ms');
+    } catch (e) {}
+    try {
+      var es = performance.getEntriesByType('resource') || [];
+      ['app/app.js', 'vendor/maplibre/maplibre-gl.mjs', 'data/line_icons.js', 'app/app.css', 'vendor/three/three.module.js'].forEach(function (k) {
+        var hits = es.filter(function (e) { return e.name.indexOf(k) >= 0; });
+        if (!hits.length) { L.push('res ' + k + ' NO-ENTRY'); return; }
+        hits.forEach(function (e) {
+          var mr = e.name.indexOf('__mr=') >= 0 ? '(r' + e.name.split('__mr=')[1].split('&')[0] + ')' : '';
+          var tls = e.secureConnectionStart > 0 ? Math.max(0, e.connectEnd - e.secureConnectionStart) : 0;
+          L.push('res ' + k + mr
+            + ' st=' + (e.responseStatus || 0)
+            + ' xfer=' + e.transferSize + '/' + e.encodedBodySize + '/' + e.decodedBodySize
+            + ' dns=' + Math.round(Math.max(0, e.domainLookupEnd - e.domainLookupStart))
+            + ' tcp=' + Math.round(Math.max(0, e.connectEnd - e.connectStart))
+            + ' tls=' + Math.round(tls)
+            + ' ttfb=' + Math.round(Math.max(0, e.responseStart - e.fetchStart))
+            + ' dl=' + Math.round(Math.max(0, e.responseEnd - e.responseStart))
+            + ' total=' + Math.round(e.duration));
+        });
+      });
+    } catch (e) { L.push('res ERR ' + e.message); }
+    L.push('errs ' + (window.__errs && window.__errs.length ? window.__errs.slice(-5).join(' || ') : '-'));
+    L.push('ua ' + String(navigator.userAgent).slice(0, 160));
+    return L.join('\n');
+  }
+  function showDiagPanel() {
+    /* 失败态附加诊断:可展开、可复制;不改动既有重试按钮 */
+    if (document.getElementById('wdDiag')) return;
+    var loader = document.getElementById('loader');
+    if (!loader) return;
+    var wrap = document.createElement('div');
+    wrap.id = 'wdDiag';
+    wrap.style.cssText = 'margin-top:14px;max-width:min(92vw,480px);text-align:left;font:11px/1.55 ui-monospace,Menlo,Consolas,monospace;color:#8a93a6;';
+    var bar = document.createElement('div');
+    bar.style.cssText = 'display:flex;gap:8px;align-items:center;margin-bottom:6px;';
+    var btnCss = 'padding:4px 12px;border-radius:999px;border:1px solid var(--acc-border);background:var(--acc-soft);color:var(--txt);font-size:11px;cursor:pointer;';
+    var tgl = document.createElement('button');
+    tgl.type = 'button'; tgl.style.cssText = btnCss; tgl.textContent = TXT[lang].diag;
+    var cpy = document.createElement('button');
+    cpy.type = 'button'; cpy.style.cssText = btnCss; cpy.textContent = TXT[lang].copy;
+    var pre = document.createElement('pre');
+    pre.style.cssText = 'display:none;max-height:34vh;overflow:auto;white-space:pre-wrap;word-break:break-all;margin:0;padding:8px 10px;border:1px solid var(--acc-border);border-radius:10px;background:rgba(0,0,0,.25);user-select:text;-webkit-user-select:text;';
+    pre.textContent = diagText();
+    tgl.addEventListener('click', function () { pre.style.display = pre.style.display === 'none' ? 'block' : 'none'; });
+    cpy.addEventListener('click', function () {
+      var txt = pre.textContent || diagText();
+      var ok = function () { cpy.textContent = TXT[lang].copied; setTimeout(function () { cpy.textContent = TXT[lang].copy; }, 2000); };
+      var fb = function () {
+        pre.style.display = 'block';
+        try {
+          var r = document.createRange(); r.selectNodeContents(pre);
+          var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+          if (document.execCommand && document.execCommand('copy')) ok();
+        } catch (e) {}
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(ok, fb);
+      else fb();
+    });
+    bar.appendChild(tgl); bar.appendChild(cpy);
+    wrap.appendChild(bar); wrap.appendChild(pre);
+    loader.appendChild(wrap);
+  }
   function probeUrls() {
     /* 模块执行关键路径上的资源:defer 脚本(先于模块执行)与主模块脚本。
        任一挂起都会使 app.js 永不执行 —— 探针正是针对"会不会被卡住"的资源。
@@ -827,7 +937,7 @@ window.addEventListener('unhandledrejection', e => { __pushErr('REJ ' + (e.reaso
     "three/addons/": "https://jr-static.suki.ing/vendor/three/jsm/"
 } }
 </script>
-<script type="module" src="https://jr-static.suki.ing/app/app.js?v=20261106-ib6"></script>
+<script type="module" src="https://jr-static.suki.ing/app/app.js?v=20261106-diag1"></script>
 <div id="m3dMask"></div>
 <div id="m3dViewer">
   <canvas id="m3dCanvas"></canvas>

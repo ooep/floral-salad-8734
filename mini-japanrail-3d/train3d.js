@@ -5,7 +5,7 @@
    - 渲染：MapLibre custom layer('3d')，共享 GL 上下文与深度缓冲（建筑遮挡正确）；
      矩阵 = render(gl,args).defaultProjectionData.mainMatrix 右乘 T(中心)·S(米→世界)，
      顶点相对中心米制（float32 精度安全）；resetState 防共享上下文状态污染。
-   - 分级启用：阈值 = maxZoom−1.5/−1.0（默认 14.5/15.0），240ms cubic-bezier(.4,0,.2,1)。
+   - 分级启用：阈值固定 Z_ON=16/Z_FULL=17.5（2D 图标与 3D 的交接在基础上限处），240ms cubic-bezier(.4,0,.2,1)。
    - 光影：每车厢接触阴影；定向光方位读 map.getLight()；夜间(?t3dnight/JST18-06)车窗发光+头灯。
    - LOD：屏幕长<130px 切 stand-in.glb（__t3dNoLOD 可关），240ms 双根交叉淡化。
    - 交互：射线-定向盒 pickAt；app.js 点击/悬停 3D 优先不穿透；f>0.5 隐藏出入口层。
@@ -24,12 +24,14 @@ const LOD_PX_BACK = 165; /* 滞回:full→stand 用 LOD_PX,stand→full 需 >LOD
 let map = null, renderer = null, scene = null, camera = null, layerOn = false;
 let disabled = false, inited = false;
 let f = 0, fFrom = 0, fTo = 0, fT0 = 0;
-let Z_ON = 14.5, Z_FULL = 15.0;
+let Z_ON = 16, Z_FULL = 17.5;
+const Z_MAX = 18.5; /* 放宽硬顶:无论 base(?t3dmax 可抬至 18.5)多少,上限不超过 18.5 */
 /* 3D 开启时动态放宽缩放上限:baseMaxZoom=init 时的地图上限(不受放宽影响),
-   3D 实质开启(f>0.5 且未 __t3dOff)时 maxZoom=base+plus,关闭立即恢复 base。
-   plus 默认 1.5(生产 z17.5):pitch60 实测 z18 城市峡谷被建筑遮挡不可读、顶视仅车顶一条;
-   z17.5 车体侧面/窗带/车头清晰且同编组占幅 33%。window.__t3dZoomPlus 可覆盖 0–3。移动端不加载本模块→天然不放宽。 */
-let baseMaxZoom = 0, zoomPlus = 1.5, appliedMax = -1;
+   模块激活(未 __t3dOff)即放宽 maxZoom=base+plus,关闭立即恢复 base。
+   放宽不能等 f>0.5:Z_ON=16=基础上限,f>0 需 z>16,等 f 放宽则永远推不过去(死锁)。
+   plus 默认 2.5(生产 z18.5):z17.5 淡入完成后仍有 1 档近观余量;
+   window.__t3dZoomPlus 可覆盖 0–3。移动端不加载本模块→天然不放宽。 */
+let baseMaxZoom = 0, zoomPlus = 2.5, appliedMax = -1;
 const insts = new Map();
 let frameFlat = [], frameSeq = 0, consumedSeq = -1;
 let nightOn = false, hoverId = null, lastEntHide = false;
@@ -101,10 +103,14 @@ export function init(mapObj) {
   if (inited || disabled) return;
   map = mapObj;
   const mz = map.getMaxZoom();
-  Z_ON = mz - 1.5; Z_FULL = mz - 1.0;
-  baseMaxZoom = mz; appliedMax = mz;
+  /* 阈值固定 16/17.5,不随 mz 相对化:2D→3D 交接点=基础上限,与放宽幅度解耦 */
+  baseMaxZoom = mz;
   window.__T3D.zOn = Z_ON;
   window.__T3D.baseMaxZoom = mz;
+  /* 模块激活即放宽上限(不等 f):否则 Z_ON=16=base,z>16 不可达 → 3D 永不淡入(死锁) */
+  const plus0 = window.__t3dZoomPlus != null ? Math.max(0, Math.min(3, +window.__t3dZoomPlus || 0)) : zoomPlus;
+  appliedMax = Math.min(Z_MAX, baseMaxZoom + (!window.__t3dOff ? plus0 : 0));
+  try { map.setMaxZoom(appliedMax); } catch (e) {}
   nightOn = nightByClock() || new URLSearchParams(location.search).has('t3dnight');
   const add = () => {
     if (layerOn || !map.getLayer || map.getLayer('trains-3d-exp')) { layerOn = true; return; }
@@ -174,9 +180,10 @@ const T3DLAYER = {
     if (target !== fTo) { fFrom = f; fTo = target; fT0 = now; }
     f = animTo(now, fFrom, fTo, fT0);
     window.__T3D.f = f; stats.f = f;
-    /* 动态缩放上限:3D 实质开启才放宽,关闭/关停立即恢复 base(不改变默认行为) */
+    /* 动态缩放上限:模块激活(未 __t3dOff)即放宽,关闭/关停立即恢复 base。
+       不含 f 条件:Z_ON=16=基础上限,等 f>0.5 再放宽则用户永远推不过 z16(死锁) */
     const plus = window.__t3dZoomPlus != null ? Math.max(0, Math.min(3, +window.__t3dZoomPlus || 0)) : zoomPlus;
-    const wantMax = baseMaxZoom + ((!window.__t3dOff && f > 0.5) ? plus : 0);
+    const wantMax = Math.min(Z_MAX, baseMaxZoom + (!window.__t3dOff ? plus : 0));
     if (appliedMax !== wantMax) {
       appliedMax = wantMax;
       try { map.setMaxZoom(wantMax); } catch (e) {}

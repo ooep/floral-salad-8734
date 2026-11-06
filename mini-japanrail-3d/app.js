@@ -5168,8 +5168,8 @@ async function initMap() {
       (resourceType === 'Tile' && url.includes('gsi.go.jp')) ? { url, cache: 'force-cache' } : { url },
   });
   window.__map = map; /* EXP 调试暴露(仅实验分支) */
-  /* EXP train3d:实验旋钮 ?t3dmax=17.5 —— 抬升 maxZoom 以便近距观察真实比例 3D 列车
-     (默认 16 时车宽仅 ~4px;阈值随 maxZoom 相对化,始终=最高 1.5 档) */
+  /* EXP train3d:实验旋钮 ?t3dmax=17.5 —— 抬升 base maxZoom 以便近距观察真实比例 3D 列车
+     (默认 16 时车宽仅 ~4px;3D 淡入阈值固定 Z_ON=16/Z_FULL=17.5,不随本旋钮移动) */
   try {
     const tmx = +new URLSearchParams(location.search).get('t3dmax');
     if (tmx >= 16 && tmx <= 18.5) map.setMaxZoom(tmx);
@@ -6412,7 +6412,7 @@ function t3dEnsure() {
     if (!t3dCapToastDone) { t3dCapToastDone = true; try { toast(t3dCapable === 'nogl' ? T().t3dNoGl : T().t3dNoDev, 4000); } catch (e) {} }
     return;
   }
-  t3dModP = import('https://jr-static.suki.ing/app/train3d.js?v=t3d1')
+  t3dModP = import('https://jr-static.suki.ing/app/train3d.js?v=t3d2')
     .then(m => { m.init(map); })
     .catch(e => { pushErrSafe('t3d ' + (e && e.message || e)); });
 }

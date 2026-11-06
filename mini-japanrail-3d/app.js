@@ -8035,18 +8035,17 @@ function ibTickHtml(board, c, kind, ib) {
     }
   }
   const r0 = c.rows && c.rows[0];
-  if (r0) {
-    const d0 = r0.tr ? r0.tr.dly : 0;
-    const dmin = typeof d0 === 'object' && d0 ? Math.round(+d0.delay_min || 0) : Math.round(+d0 || 0);
+  if (r0 && r0.it) {
+    const dmin = (r0.it.tr && r0.it.tr.dly > 0) ? Math.round(r0.it.tr.dly) : 0;
     g += '<span class="ib-tick-key">' + esc(ib.tickTrain) + '</span>' +
-      '<span class="ib-tick-line">「' + esc(ibLocLine(r0.line || '')) + '」</span>' +
-      '<span class="ib-tick-train">' + esc(fmtHm(r0.dep)) + ' ' + esc(kind === 'arr' ? ib.countArr : ib.countDep) + '</span>' +
-      '<span class="ib-tick-stops">' + esc(ibLocStation(r0.term || '')) + '</span>' +
+      '<span class="ib-tick-line">「' + esc(ibLocLine(r0.line.name || '')) + '」</span>' +
+      '<span class="ib-tick-train">' + esc(fmtHm(r0.it.dep)) + ' ' + esc(kind === 'arr' ? ib.countArr : ib.countDep) + '</span>' +
+      '<span class="ib-tick-stops">' + esc(ibLocStation(r0.it.term || '')) + '</span>' +
       (dmin > 0 ? '<span class="ib-tick-delay">' + esc(ib.tickDelay + dmin + ib.tickMin) + '</span>' : '');
   }
   if (st.length === 0 && !r0) g += '<span class="ib-tick-key is-status">' + esc(ib.tickStatus) + '</span><span class="ib-tick-line">' + esc(ib.empty) + '</span>';
   g += '</span>';
-  const plat = r0 ? (ibPlatOf(r0) || '–') : '–';
+  const plat = (r0 && r0.it) ? (ibPlatOf(r0.it) || '–') : '–';
   return '<div class="ib-tick" aria-label="' + esc(ib.tickBadge) + '"><span class="ib-tick-badge">' + esc(ib.tickBadge) +
     '<small>' + esc(plat + ib.tickTrack) + '</small></span><span class="ib-tick-win"><span class="ib-tick-track">' + g + g + '</span></span></div>';
 }

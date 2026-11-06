@@ -8662,7 +8662,7 @@ function ibStatusItemsFor(board) {
       min: Math.round(dmax.get(normName(s.name)) || 0), cause: ibStatusCause(detail) || '', detail });
   }
   out.sort((a, b) => b.sev - a.sev);
-  return out.slice(0, 4);
+  return out.slice(0, 8);   /* 原版 shown = st.slice(0,8) 同上限 */
 }
 function ibTickHtml(board, c, kind, ib) {
   if (!ibTickMock) { try { ibStatusStart(); } catch (e) {} }

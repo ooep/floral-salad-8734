@@ -172,7 +172,7 @@ def main():
             print('::error::missing ' + f)
             sys.exit(1)
     total += n
-    print('[app] %d (app.css/app.js)' % n)
+    print('[app] %d (app.css/app.js/train3d.js)' % n)
 
     # 5.95) 时刻表分片 —— 从周更后的 data/live/trains_*.json 生成 30 分钟活跃窗口
     #       （终点加 60 分钟晚点尾巴）分片到 /data/tt/。纯静态 additive 端点。

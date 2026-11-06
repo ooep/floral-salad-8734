@@ -8610,15 +8610,27 @@ const IB_CAUSE_WORDS = ['人身事故', '車両故障', '車両点検', '車両�
   '動物支障', '動物との接触', '急病人', '沿線火災', '火災', '土砂崩れ', '土砂流出', '保守工事',
   '大雨', '強風', '大雪', '雪害', '地震', '台風', '洪水', '停電', '接続待ち', '乗務員', '運転士',
   '車掌', '点検', '支障', '混雑', '工事', '車両'];
+/* 原版三语原因词表同块唯一存放；causeOfLang 复刻：对目标语言 detail 文本最先命中 */
+const IB_CAUSE_WORDS_ZH = ['事故', '检查', '检修', '线路检查', '车辆检查', '信号', '接触网', '动物', '暴雨', '大风', '台风', '大雪', '地震', '火灾', '停电', '施工', '拥挤', '乘务', '晚点'];
+const IB_CAUSE_WORDS_EN = ['accident', 'inspection', 'track inspection', 'vehicle inspection', 'signal', 'overhead line', 'animal', 'heavy rain', 'strong wind', 'typhoon', 'snow', 'earthquake', 'fire', 'power outage', 'construction', 'crowding', 'crew', 'delay'];
+const IB_JP_RE = /[぀-ヿ一-鿿]/;
+function ibCauseOfLang(detail, lang) {
+  const s = String(detail || ''); if (!s) return null;
+  const words = lang === 'en' ? IB_CAUSE_WORDS_EN : lang === 'zh' ? IB_CAUSE_WORDS_ZH : IB_CAUSE_WORDS;
+  let best = null, pos = 1e9;
+  for (const w of words) { const i = s.toLowerCase().indexOf(w.toLowerCase()); if (i >= 0 && i < pos) { best = w; pos = i; } }
+  return best;
+}
+/* 原版 locStatus 逐字：feed 自带翻译字段链，目标语言 → ja */
+function ibLocStatus(s, lang) {
+  if (lang === 'en') return { label: s.label_en || s.label, detail: s.detail_full_en || s.detail_en || s.detail_full || s.detail || '' };
+  if (lang === 'zh') return { label: s.label_zh || s.label, detail: s.detail_full_zh || s.detail_zh || s.detail_full || s.detail || '' };
+  return { label: s.label, detail: s.detail_full || s.detail || '' };
+}
 /* 宿主 ops 正式公司名 → jrstatus company 名（复刻原版 STATUS_ALIAS 值）；未列者回退正式名本身 */
 const IB_STATUS_COMPANY = { '東日本旅客鉄道': 'JR東日本', '西日本旅客鉄道': 'JR西日本', '東海旅客鉄道': 'JR東海',
   '九州旅客鉄道': 'JR九州', '北海道旅客鉄道': 'JR北海道', '四国旅客鉄道': 'JR四国',
   '東京地下鉄': '東京メトロ', '東京都': '東京都交通局', '大阪市高速電気軌道': '大阪メトロ' };
-function ibStatusCause(detail) {
-  const s = String(detail || ''); let best = null, pos = 1e9;
-  for (const w of IB_CAUSE_WORDS) { const i = s.indexOf(w); if (i >= 0 && i < pos) { best = w; pos = i; } }
-  return best;
-}
 /* 原版 fetchJsonSoft 复刻：no-store + 5s 超时；失败静默（首取失败置空数组，后续轮询自愈） */
 function ibStatusLoad() {
   const ctl = new AbortController();
@@ -8658,8 +8670,10 @@ function ibStatusItemsFor(board) {
     const sev = +s.severity || 0;
     if (sev <= 0) continue;
     const detail = s.detail_full || s.detail || '';
-    out.push({ line: s.name, company: s.company || '', label: s.label || s.status || '', sev,
-      min: Math.round(dmax.get(normName(s.name)) || 0), cause: ibStatusCause(detail) || '', detail });
+    const loc = ibLocStatus(s, lang);
+    out.push({ line: s.name, company: s.company || '', label: loc.label, sev,
+      min: Math.round(dmax.get(normName(s.name)) || 0), cause: ibCauseOfLang(loc.detail, lang) || '',
+      detail: loc.detail, untrans: lang !== 'ja' && IB_JP_RE.test(loc.label || '') });
   }
   out.sort((a, b) => b.sev - a.sev);
   return out.slice(0, 8);   /* 原版 shown = st.slice(0,8) 同上限 */
@@ -8674,7 +8688,7 @@ function ibTickHtml(board, c, kind, ib) {
       const col = lineColor.get(s.line) || '#8f979b';
       g += '<span class="ib-tick-item"><span class="ib-tick-dot" style="background:' + esc(col) + '"></span>' +
         '<span class="ib-tick-line">' + esc(ibLocLine(s.line)) + '</span>' +
-        '<span class="ib-tick-state' + (s.sev >= 4 ? ' is-severe' : s.sev >= 3 ? ' is-alert' : '') + '">' + esc(s.label) + '</span>' +
+        '<span class="ib-tick-state' + (s.sev >= 4 ? ' is-severe' : s.sev >= 3 ? ' is-alert' : '') + (s.untrans ? ' is-untranslated' : '') + '" title="' + esc(s.detail + (s.untrans ? (lang === 'zh' ? ' · 无翻译源，保留日文原名' : ' · untranslated (no source)') : '')) + '">' + esc(s.label) + '</span>' +
         (s.min ? '<span class="ib-tick-delay">' + esc(String(s.min) + ib.tickMin) + '</span>' : '') +
         (s.cause ? '<span class="ib-tick-cause" title="' + esc(s.detail || s.cause) + '">' + esc(s.cause) + '</span>' : '') +
         '</span>';

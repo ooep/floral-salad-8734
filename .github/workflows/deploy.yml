@@ -134,6 +134,14 @@ jobs:
           python3 scripts/build_tt_shards.py --src data/live \
             --out static-worker/assets/data/tt --verify-only
 
+      # 首屏依赖预检（2026-11-06 审计⑤）：静态资产刚部署到 jr-static，此处按线上真实
+      # URL 逐个验证首屏所需资源（含模块静态 import 目标 —— 本次 0% 事故正是探针
+      # 只看 script 标签、漏掉 import 图的盲区）全部 200/206，并禁止相对导入。
+      # 任何 404/超时 → 红，绝不允许「部署绿但站点白屏」再次通过。
+      - name: Preflight boot dependencies (jr-static 200)
+        if: ${{ env.CF_API_TOKEN != '' && !inputs.dry_run }}
+        run: python3 scripts/preflight_boot_deps.py
+
       # 车站百科(eki-wiki)与列车百科(ressha-wiki)：同为「仅资产」纯静态 Worker（无脚本，零计费）。
       # 每次主仓 push 从各自源仓库拉取最新 data/ 并同步部署（wrangler 按哈希去重，未变化秒级跳过）。
       # 前端引用: EKI_BASE=https://eki-wiki.suki.ing/data/、RESSHA_BASE=https://ressha-wiki.suki.ing/data/

@@ -172,11 +172,10 @@ jobs:
         with:
           path: dist
 
-      - name: Deploy to GitHub Pages
-        if: ${{ !inputs.dry_run }}
-        id: deployment
-        uses: actions/deploy-pages@v4
-
+      # 主站(Cloudflare Pages, jr.suki.ing)与回读门禁先于 GH Pages 镜像执行：
+      # 2026-11-06 GH Pages deploy-pages 平台瞬断(timeout/重跑重复 artifact)连红三次,
+      # 镜像步骤失败曾使主站部署被跳过、线上滞留旧版。镜像归镜像,不得劫持主站上线;
+      # 镜像失败仍会让本 run 变红(可见),但主站与回读已完成。
       - name: Deploy Mini JapanRail frontend to Cloudflare Pages
         if: ${{ env.CF_API_TOKEN != '' && !inputs.dry_run }}
         env:
@@ -190,6 +189,11 @@ jobs:
       - name: Readback online artifacts (provenance)
         if: ${{ env.CF_API_TOKEN != '' && !inputs.dry_run }}
         run: python3 scripts/readback_online.py
+
+      - name: Deploy to GitHub Pages
+        if: ${{ !inputs.dry_run }}
+        id: deployment
+        uses: actions/deploy-pages@v4
 
       # 常开收尾：再清一次（幂等）并断言工作区干净。
       - name: Finalize (cleanup + worktree assertion)

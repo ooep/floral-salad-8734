@@ -5,8 +5,7 @@
  *  渲染:MapLibre GL JS v6(Globe 投影)+ projectTile 注入自定义 WebGL 列车层
  *  时钟:JST 每帧推算全部在途列车位置,运行时零数据请求
  * ================================================================== */
-/* EXP train3d 分支:maplibre 改本地 vendor(线上 main 为 jr-static CDN 绝对地址) */
-import * as maplibregl from './vendor/maplibre/maplibre-gl.mjs';
+import * as maplibregl from 'https://jr-static.suki.ing/vendor/maplibre/maplibre-gl.mjs';
 /* 供 index.html 启动看门狗判定:模块已执行(静态 import 失败时本行不会运行) */
 window.__appJsLoaded = true;
 window.__appVer = 'c3-stopslot'; /* 重叠修复轮 canary:停站轨位+槽位 */

@@ -7991,27 +7991,31 @@ function updateDetailLive(t, p, M, rebuild) {
           /* 终着站到着用推算值 arrEndTxt(源数据末段 0 分钟时不沿用上一站,见函数头注释) */
           if (k > 0) tm.push('<span class="t-arr">' + T().colArr + (k === N - 1 ? arrEndTxt : fmtHm(t.arr[k])) + dlyTag + '</span>');
           if (k < N - 1) tm.push('<span class="t-dep">' + T().colDep + fmtHm(t.dep[k]) + dlyTag + '</span>');
-          /* 徽章开关分钟数口径(第七版):分两种
-             - 已驶过站(k+1 ≤ i,i 为当前站):相邻间隔 dep[k] → arr[k+1];
-             - 未到达站(k+1 > i,含跨当前站那段):累加时间 arr[k+1] - dep[i],
-               即自当前站发车起到该站所需总分钟(后续第 n 站显示到第 n 站所需分钟);
-               k=i 时累加值 == 间隔 dep[i]→arr[i+1],与当前站段既有约定一致。
-             连续分钟轴直接相减(跨零点不折叠);时刻缺失或差值非正显 –;终着站无节点
-             (末段数字归倒数第二站行;第十一版曾在终着行重复挂同一段数字,致末两站
-             分钟数相同,已移除)。末段 k=N-2 的到达时刻用 arrEnd(源数据末段 0 分钟
-             时为推算值),避免最后一段显示 – 或沿用上一站数字。
+          /* 徽章开关分钟数口径(第十二版,修第十一版 off-by-one):数字归属「本行站」——
+             - 已驶过站(k ≤ i,i 为当前站):进入本站的区间 dep[k-1] → arr[k];
+             - 未到达站(k > i,含跨当前站那段):累加时间 arr[k] - dep[i],
+               即自当前站发车起到本行站所需总分钟(第 n 站显示到第 n 站所需分钟,
+               与第七版注释本意一致;旧实现把行 k 的数字挂到区间 k→k+1,off-by-one,
+               致终着行无自己的数字,第十一版在终着行重复挂末段数字补洞又使末两站
+               相同,ib8 版移除终着行数字则终着行空白——三态皆不对,本版归位)。
+             - 起点行 k=0 上方无区间,固定 0(发车基准点),不留空白;
+             - 终着行 k=N-1 的到着时刻用 arrEnd(源数据末段 0 分钟时为推算值,
+               见函数头注释),推算结果落到本行数字与到着列,而非仅表头区间。
+             连续分钟轴直接相减(跨零点不折叠);时刻缺失或差值非正显 –。
              数字右上角带分钟单位 ′(.gunit,11px 次要字号)。gapn 注入 .vn 内,
              top 由 placeGapns() 精确覆写为相邻两徽标中心中点,并在竖线上留出缺口。 */
-          let gapTxt = null;
-          if (k < N - 1) {
-            const ak1 = (k === N - 2) ? arrEnd : t.arr[k + 1];
-            const gd = (k + 1 <= i) ? (ak1 - t.dep[k]) : (ak1 - t.dep[i]);
+          let gapTxt;
+          if (k === 0) {
+            gapTxt = '0';
+          } else {
+            const ak = (k === N - 1) ? arrEnd : t.arr[k];
+            const gd = (k <= i) ? (ak - t.dep[k - 1]) : (ak - t.dep[i]);
             gapTxt = (Number.isFinite(gd) && gd > 0) ? String(Math.round(gd)) : '–';
           }
           s += '<div class="dstop" data-i="' + k + '"><span class="vn">' +
             (k > 0 ? '<span class="vln up" style="background:' + upCol + '"></span>' : '') +
             midHtml +
-            (gapTxt !== null ? '<span class="gapn">' + gapTxt + (gapTxt !== '–' ? '<i class="gunit">′</i>' : '') + '</span>' : '') +
+            '<span class="gapn">' + gapTxt + (gapTxt !== '–' ? '<i class="gunit">′</i>' : '') + '</span>' +
             (k < N - 1 ? '<span class="vln dn" style="background:' + dnCol + '"></span>' : '') +
             '</span><span class="vc"><span class="vnm">' + esc(t.jas[k]) + '</span><span class="vmeta">' +
             (_platAt(PLATMAP && PLATMAP.t && PLATMAP.t[t.t], k) ? '<span class="vplat" title="' + T().colPlat + '">' + _platAt(PLATMAP && PLATMAP.t && PLATMAP.t[t.t], k).replace(/;/g, '/') + '</span>' : '') +

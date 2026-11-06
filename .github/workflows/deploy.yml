@@ -106,6 +106,12 @@ jobs:
               print('trains_%s.json: %d 班次 @ %s' % (n, d['n'], d['b']))
           PY
 
+      # DATA_VERSION 同源门禁（2026-11-06 审计）：数据指纹与 .version-lock 不一致即红。
+      # 拦截任何路径（重建/手工提交）改了 data/live 却未随同 bump + --update 的变更，
+      # 避免 2026-10-25「旧索引 × 新时刻表」乱飞再现。
+      - name: Gate DATA_VERSION same-source
+        run: python3 scripts/check_data_version.py --check
+
       # 静态资源：组装 assets（含刚生成的 OG 图）部署到 jr-static。
       # Workers Static Assets「仅资产」模式（无 Worker 脚本）：资产/404/robots/healthz 全部由
       # CDN 边缘直服，任何请求都不触发 Worker → 零 Worker 调用、零计费。

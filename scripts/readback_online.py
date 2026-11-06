@@ -12,9 +12,10 @@ readback_online.py — 部署后线上回读断言（2026-11-06 审计④：部�
 """
 import hashlib
 import os
+import subprocess
 import sys
+import tempfile
 import time
-import urllib.request
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ASSETS = os.path.join(REPO, 'static-worker', 'assets', 'app')
@@ -23,19 +24,21 @@ FILES = ('app.js', 'app.css', 'train3d.js')
 BAD_PATTERNS = ("'./vendor/", '"./vendor/', "'../vendor/", '"../vendor/')
 
 
-def fetch(url, tries=4):
-    last = None
+def fetch(url, dest, tries=4):
+    """curl 下载到 dest，返回状态码字符串（000=连接失败/超时）。"""
+    last = '000'
     for i in range(tries):
         try:
-            req = urllib.request.Request(url, headers={
-                'Cache-Control': 'no-cache',
-                'User-Agent': 'deploy-readback/1.0',
-            })
-            with urllib.request.urlopen(req, timeout=30) as r:
-                return r.status, r.read()
+            out = subprocess.run(
+                ['curl', '-sS', '-m', '60', '-o', dest, '-w', '%{http_code}', url],
+                capture_output=True, text=True, timeout=90)
+            code = (out.stdout or '').strip()
+            if code:
+                return code
+            last = 'ERR(%s)' % (out.stderr or '').strip()[:120]
         except Exception as e:  # noqa: BLE001
-            last = e
-            time.sleep(3 * (i + 1))
+            last = 'EXC(%s)' % e
+        time.sleep(3 * (i + 1))
     print('::error::readback 抓取失败 %s: %s' % (url, last))
     sys.exit(1)
 
@@ -46,16 +49,19 @@ def main():
         sys.exit(1)
     bad = []
     stamp = int(time.time())
+    tmp = tempfile.mkdtemp(prefix='readback.')
     for f in FILES:
         local = os.path.join(ASSETS, f)
         if not os.path.isfile(local):
             bad.append('%s: 本次构建产物缺失' % f)
             continue
         want = hashlib.sha256(open(local, 'rb').read()).hexdigest()
-        status, body = fetch('%s%s?__readback=%d' % (BASE, f, stamp))
+        dest = os.path.join(tmp, f)
+        status = fetch('%s%s?__readback=%d' % (BASE, f, stamp), dest)
+        body = open(dest, 'rb').read() if os.path.isfile(dest) else b''
         got = hashlib.sha256(body).hexdigest()
-        if status != 200:
-            bad.append('%s: HTTP %d（期望 200）' % (f, status))
+        if status != '200':
+            bad.append('%s: HTTP %s（期望 200）' % (f, status))
             continue
         if got != want:
             bad.append('%s: sha256 不符（线上 %s… ≠ 本次构建 %s…）'

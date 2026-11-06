@@ -24,10 +24,9 @@ import argparse
 import json
 import os
 import re
+import subprocess
 import sys
 import time
-import urllib.error
-import urllib.request
 from urllib.parse import urljoin
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -62,14 +61,16 @@ def collect():
         if u.startswith(('https://jr-static.suki.ing/', 'https://jr.suki.ing/')):
             urls.add(u.split('#')[0])
 
-    # R4：importmap
+    # R4：importmap（尾斜杠的前缀映射无法预检具体模块，跳过并注明）
     m = re.search(r'<script type="importmap">\s*(\{.*?\})\s*</script>', index_html, re.S)
     if m:
         try:
             imap = json.loads(m.group(1)).get('imports', {})
-            for v in imap.values():
-                if v.startswith('http'):
+            for k, v in imap.items():
+                if v.startswith('http') and not v.endswith('/'):
                     urls.add(v)
+                elif v.endswith('/'):
+                    print('[preflight] SKIP importmap 前缀映射 %r -> %s（运行时按需，无法枚举预检）' % (k, v))
         except Exception as e:  # noqa: BLE001
             print('::error::importmap 解析失败: %s' % e)
             sys.exit(1)
@@ -77,21 +78,22 @@ def collect():
 
 
 def probe(url, tries=3):
-    last = None
+    """curl 探测（CI/本机一致）：返回状态码字符串；000=连接失败/超时。"""
+    last = '000'
     for i in range(tries):
         try:
-            req = urllib.request.Request(url, headers={
-                'Range': 'bytes=0-0',
-                'User-Agent': 'boot-deps-preflight/1.0',
-            })
-            with urllib.request.urlopen(req, timeout=20) as r:
-                return r.status
-        except urllib.error.HTTPError as e:  # noqa: PERF203
-            return e.code
+            out = subprocess.run(
+                ['curl', '-sS', '-o', '/dev/null', '-m', '20',
+                 '-r', '0-0', '-w', '%{http_code}', url],
+                capture_output=True, text=True, timeout=40)
+            code = (out.stdout or '').strip()
+            if code:
+                return code
+            last = code or 'ERR'
         except Exception as e:  # noqa: BLE001
-            last = e
-            time.sleep(2 * (i + 1))
-    return 'TIMEOUT(%s)' % last
+            last = 'EXC(%s)' % e
+        time.sleep(2 * (i + 1))
+    return last
 
 
 def main():
@@ -112,8 +114,8 @@ def main():
     failures = []
     for u in sorted(urls | set(args.extra)):
         st = probe(u)
-        ok = st in (200, 206)
-        print('[preflight] %-3s %s' % (st, u))
+        ok = st in ('200', '206')
+        print('[preflight] %-4s %s' % (st, u))
         if not ok:
             failures.append((u, st))
 

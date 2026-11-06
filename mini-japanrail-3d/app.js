@@ -5928,7 +5928,7 @@ function badgesBindView() {
   /* 探针:统计徽章键缺图事件(回归口径:不应异常增长;正常压力下的瞬时缺图见 REPORT) */
   map.on('styleimagemissing', (e) => { if (e && typeof e.id === 'string' && e.id.indexOf('bd_') === 0) _badgeStats.missing++; });
 }
-/* 徽章开关(设置面板 swBadge):默认开;关闭时隐藏徽章层与兜底色圆层,仅保留灰点 */
+/* 徽章开关(设置面板 swBadge):默认开;关闭时隐藏徽章层与兜底色圆层,仅保留白心环点 */
 function applyBadgeVisible(v) {
   if (!map) return;
   if (map.getLayer('stas-badge')) map.setLayoutProperty('stas-badge', 'visibility', v ? 'visible' : 'none');
@@ -6070,6 +6070,31 @@ function addEntSource() {
   }
 }
 
+/* 站点圆点线路色(白心+线路色环):环色取 feature 的 dotColor(站首条线路官方色,
+   writeBadgeProps 一次写全);深色底图用提亮变体 dotColorDk(向白混合 30%),主题切换时
+   applyStationDotTheme 整层换表达式。表达式 data-driven:渲染期 GPU 直读属性,零逐点 JS */
+function stationDotRingExpr() {
+  return resolvedTheme() === 'light'
+    ? ['coalesce', ['get', 'dotColor'], '#5b6572']
+    : ['coalesce', ['get', 'dotColorDk'], '#8a93a3'];
+}
+function applyStationDotTheme() {
+  if (!map) return;
+  try {
+    if (map.getLayer('stas')) map.setPaintProperty('stas', 'circle-stroke-color', stationDotRingExpr());
+    if (map.getLayer('stas-fb-dot')) map.setPaintProperty('stas-fb-dot', 'circle-stroke-color', stationDotRingExpr());
+  } catch (e) {}
+}
+/* hex 色提亮:向白色混合比例 k(深色底图站点圆环保持可辨) */
+function lightenHex(hex, k) {
+  const m = /^#?([0-9a-fA-F]{6})$/.exec(hex || '');
+  if (!m) return '#8a93a3';
+  const n = parseInt(m[1], 16);
+  const r = Math.round(((n >> 16) & 255) * (1 - k) + 255 * k);
+  const g = Math.round(((n >> 8) & 255) * (1 - k) + 255 * k);
+  const b = Math.round((n & 255) * (1 - k) + 255 * k);
+  return '#' + ((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1);
+}
 function addMapLayers() {
   addDetailLayers(); /* 站台/站房/出入口层:数据未到位时内部守卫自动跳过,懒加载到位后可再调 */
   map.addSource('segs', { type: 'geojson', data: segFC });
@@ -6089,16 +6114,46 @@ function addMapLayers() {
           其余不挂 icon —— 否则同一合成图在同名坐标重复渲染 N 次,符号碰撞白算;
           badgesMap 未就绪时等 loadBadgesMap 完成再写(避免整站误判为无徽章)。
        ② 无专属徽章的站(约 3,500 站,JR 地方线等):第一个 feature 写 fbBadge=1+fbColor(该站
-          首条线路官方色)——stas-fb-dot 层据此画「线路色圆+白描边」,与专属徽章同 z13 淡入,
-          全站皆有线路色标记(对齐 DokoRail 全站徽章观感);updateBadgeIcons 补写时同步清 fbBadge */
+          首条线路官方色)——stas-fb-dot 层据此画「白心+线路色环」,与专属徽章同 z13 淡入,
+          全站皆有线路色标记(对齐 DokoRail 全站徽章观感);updateBadgeIcons 补写时同步清 fbBadge
+       ③ 全站(含①②)写 dotColor/dotColorDk(站首条线路色;多线路共用站取首条线路,与 fbColor
+          同口径)——stas/stas-fb-dot 圆层据此画「白心+线路色环」;一次写全的静态属性,
+          渲染期零逐点 JS */
     const writeBadgeProps = () => {
       if (!staFC || !staFC.features) return;
       const lineColorQ = new Map();
+      /* 站名 → 所接轨道段 [[段线路名, 段色, official], …](含 station_map 官方补缺段;
+         补缺段后 push=后绘制=视觉在上,其线路名带括号变体如「中央線（快速）」) */
+      const segEndList = new Map();
       if (segFC && segFC.features) for (const g of segFC.features) {
         const p = g.properties;
-        if (p && p.line && p.color && !lineColorQ.has(p.line)) lineColorQ.set(p.line, p.color);
+        if (p && p.line && p.color) {
+          if (!lineColorQ.has(p.line)) lineColorQ.set(p.line, p.color);
+          for (let i = 0; i < 2; i++) {
+            const nm2 = i ? p.to : p.from;
+            if (!nm2) continue;
+            let a = segEndList.get(nm2);
+            if (!a) { a = []; segEndList.set(nm2, a); }
+            a.push([p.line, p.color, p.official === 1]);
+          }
+        }
       }
+      /* 本站所接段色:线路族匹配(同名多色段消歧);优先 official 补缺段,同级取线路名
+         更短者(「中央線（快速）」比「中央線・総武線（各駅停車）」更贴合要素线路名) */
+      const segColorAt = (nm, L) => {
+        const a = segEndList.get(nm);
+        if (!a) return null;
+        let cand = null;
+        for (let i = a.length - 1; i >= 0; i--) {
+          const sl = a[i][0];
+          if (!sl || !badgeFamilyHit(sl, L)) continue;
+          if (!cand) { cand = a[i]; continue; }
+          if ((a[i][2] && !cand[2]) || (a[i][2] === cand[2] && sl.length < cand[0].length)) cand = a[i];
+        }
+        return cand && cand[1];
+      };
       const seen = new Set();
+      const dotOf = new Map(); /* 站级点色:站首条线路色(与 fbColor 同口径;多线路共用站取首条) */
       for (const f of staFC.features) {
         const p = f.properties || {};
         const nm = p.station;
@@ -6107,6 +6162,7 @@ function addMapLayers() {
         const dk = (key && key !== nm) ? key : nm;   /* 同名跨城站按限定键区分(神戸大倉山与東京大倉山不同图标) */
         if (seen.has(dk)) continue;
         seen.add(dk);
+        dotOf.set(dk, segColorAt(nm, p.line) || lineColorQ.get(p.line) || '#5b6572');
         const ent = badgeEntriesOfStation(nm, p.line, p.op);
         if (ent && ent.length) {
           p.badgeIcon = 'bd_' + dk;
@@ -6116,6 +6172,18 @@ function addMapLayers() {
           p.fbColor = lineColorQ.get(p.line) || '#5b6572';
         }
       }
+      /* 站点圆点线路色属性(③):一次写全;同站后续 feature 也写同色(重叠点防顶层露杂色)。
+         属性静态写入后由图层表达式直读,渲染期无逐点 JS 开销 */
+      for (const f of staFC.features) {
+        const p = f.properties || {};
+        const nm = p.station;
+        if (!nm) continue;
+        const key = badgeKeyOfFeature(nm, p.line, p.op);
+        const dk = (key && key !== nm) ? key : nm;
+        const c = dotOf.get(dk) || segColorAt(nm, p.line) || lineColorQ.get(p.line) || '#5b6572';
+        p.dotColor = c;
+        p.dotColorDk = lightenHex(c, 0.3);
+      }
       if (map.getSource('stas')) map.getSource('stas').setData(staFC);
     };
     /* 徽章属性写入等 badges 与 station_map 双就绪:限定键(同名跨城站消歧,如神戸大倉山/東京大倉山)
@@ -6124,9 +6192,14 @@ function addMapLayers() {
     Promise.all([badgesWait, stationMapPromise || Promise.resolve()])
       .then(() => writeBadgeProps()).catch(() => writeBadgeProps());
     map.addSource('stas', { type: 'geojson', data: staFC });
+    /* 站点圆点 = 白心 + 线路色环(dotColor 由 writeBadgeProps 静态写全;深色底图自动用
+       提亮变体 dotColorDk,见 stationDotRingExpr/applyStationDotTheme)。半径不变;
+       不透明度 0.55→0.8 使线路色可辨;描边 0.4 黑→线路色环随半径同比放大 */
     map.addLayer({ id: 'stas', type: 'circle', source: 'stas', minzoom: 7, paint: {
       'circle-radius': ['interpolate', ['exponential', 1.5], ['zoom'], 3, 1, 9, 1.8, 13, 3.2],
-      'circle-color': '#b9c3d4', 'circle-opacity': 0.55, 'circle-stroke-color': '#06080e', 'circle-stroke-width': 0.4 } });
+      'circle-color': '#f5f7fa', 'circle-opacity': 0.8,
+      'circle-stroke-color': stationDotRingExpr(),
+      'circle-stroke-width': ['interpolate', ['exponential', 1.5], ['zoom'], 3, 0.5, 9, 0.9, 13, 1.5] } });
     map.addLayer({ id: 'stas-label', type: 'symbol', source: 'stas', minzoom: 9.5, layout: {
       'text-field': ['get', 'station'], 'text-size': ['interpolate', ['linear'], ['zoom'], 9.5, 9.5, 14, 13],
       'text-font': ['Noto Sans Regular'], 'text-offset': [0, 0.85], 'text-anchor': 'top', 'text-allow-overlap': false, 'text-optional': true },
@@ -6135,7 +6208,7 @@ function addMapLayers() {
     /* ── 车站徽章层(DokoRail 迁移):放大到 z13 才显示,三级兜底 ──
        专属徽章(图集裁剪注册为 MapLibre icon) → 线路符号 → 文字徽章(站名+线路色)。
        徽章数据 data/badges/map.json 按站名映射 {code,url,crop},图集从 jr-static 拉取;
-       z13 以下只显示灰点(stas 层),放大后徽章淡入 —— 与 DokoRail zooms.body=13 一致。 */
+       z13 以下只显示白心线路色点(stas 层),放大后徽章淡入 —— 与 DokoRail zooms.body=13 一致。 */
     map.addLayer({ id: 'stas-badge', type: 'symbol', source: 'stas', minzoom: 13, layout: {
       'icon-image': ['get', 'badgeIcon'],
       /* 自适应尺寸:z13 刚出徽章时小小一个(能看一条线几站)→ 随放大渐大 → z19 聚焦车站相对最大。
@@ -6160,16 +6233,17 @@ function addMapLayers() {
         14, ['case', ['>=', ['coalesce', ['get', 'badgeN'], 1], 4], 0, 1],
         14.6, 1] } });
     if (!map.getLayer('trains-gl')) map.addLayer(trainShaderLayer, 'stas-badge'); /* 同一 GL 层只加一次:重复 addLayer 会抛 already exists 错误事件 */
-    /* ── 无专属徽章站兜底:线路色圆+白描边(该站首条线路官方色,属性 fbBadge/fbColor 由
+    /* ── 无专属徽章站兜底:白心+线路色环(该站首条线路官方色,属性 fbBadge/dotColor 由
        writeBadgeProps 静态写入)。DokoRail 徽章数据对 JR 四社仅覆盖约 30%(都市圈),其余
-       约 3,500 站在原站走文字徽章兜底;我们以线路色圆对齐「全站皆有徽章」的观感,
-       与专属徽章同 z13 淡入、比例同步放大,零 ImageData/零网络(矢量圆) ── */
+       约 3,500 站在原站走文字徽章兜底;我们以线路色环对齐「全站皆有徽章」的观感,
+       与专属徽章同 z13 淡入、比例同步放大,零 ImageData/零网络(矢量圆)。半径不变,
+       环宽≈半径 28%(原白描边反转为线路色环) ── */
     map.addLayer({ id: 'stas-fb-dot', type: 'circle', source: 'stas', minzoom: 13,
       filter: ['==', ['get', 'fbBadge'], 1], paint: {
         'circle-radius': ['interpolate', ['linear'], ['zoom'], 13, 6, 15, 9, 17, 14, 19, 22],
-        'circle-color': ['get', 'fbColor'],
-        'circle-stroke-color': '#f5f7fa',
-        'circle-stroke-width': ['interpolate', ['linear'], ['zoom'], 13, 1.2, 15, 1.6, 17, 2, 19, 2.4],
+        'circle-color': '#f5f7fa',
+        'circle-stroke-color': stationDotRingExpr(),
+        'circle-stroke-width': ['interpolate', ['linear'], ['zoom'], 13, 1.7, 15, 2.5, 17, 3.9, 19, 6.2],
         'circle-opacity': ['interpolate', ['linear'], ['zoom'], 13, 0, 13.6, 0.96] } });
   }
   // 高亮层(仅首次创建,避免每帧重复 addSource/addLayer)
@@ -8036,6 +8110,16 @@ const OP_LOGO = {
   '丹後海陸交通':'鋼索鉄道/丹後海陸交通.png','四国ケーブル':'鋼索鉄道/四国ケーブル.png','立山黒部貫光':'鋼索鉄道/立山黒部貫光.png','筑波観光鉄道':'鋼索鉄道/筑波観光鉄道.png','高尾登山電鉄':'鋼索鉄道/高尾登山電鉄.png','御岳登山鉄道':'鋼索鉄道/御岳登山鉄道.png','大山観光電鉄':'鋼索鉄道/大山観光電鉄.png','比叡山鉄道':'鋼索鉄道/比叡山鉄道.png','青函トンネル記念館':'鋼索鉄道/青函トンネル記念館.png','十国峠':'鋼索鉄道/十国峠.png','ラクテンチ':'鋼索鉄道/ラクテンチ.png','皿倉登山鉄道':'鋼索鉄道/皿倉登山鉄道.png','六甲山観光':'鋼索鉄道/六甲山観光.png','神戸すまいまちづくり公社':'鋼索鉄道/神戸すまいまちづくり公社.png',
   '水島臨海鉄道':'地域鉄道/水島臨海鉄道.png'
 };
+/* 运营商 logo 扩展名归一：真实资产均为 .webp，映射表历史上写成 .png 导致抽屉图标 404。
+   首载归一为 .webp；失败时按原始扩展名(.png)重试一次，两级都失败则移除留空（不回退文字）。 */
+function opLogoUrl(rel) { return 'https://jr-static.suki.ing/logos/' + String(rel).replace(/\.(png|webp)$/i, '') + '.webp'; }
+document.addEventListener('error', e => {
+  const im = e.target;
+  if (!im || im.nodeType !== 1 || !im.classList.contains('op-logo')) return;
+  if (im.dataset.lf) { im.remove(); return; }
+  im.dataset.lf = '1';
+  im.src = im.src.replace(/\.webp$/i, '.png');
+}, true);
 function shortTerm(s) { return String(s).replace(/[（(].*?[)）]/g, '').slice(0, 2); }
 function isRapidType(tp) { return ['特','急','快','準','区','通','回'].indexOf(tp) >= 0; }
 let lineOp = null, boardCache = new Map(), boardCacheItems = 0, sheetStation = null, sheetCoord = null, sheetFlat = false, sheetLine = null, sheetOp = null;
@@ -8362,6 +8446,336 @@ function lineRowHtml(L, hour) {
   dirs.forEach(d => h += dirHtml(L, d, hour));
   return h + '</div>';
 }
+/* ===== 车站抽屉「列表」tab → 信息板（原生整合，20261105）=====
+   列表 tab 整页替换为仿「unit 版」信息屏（基准：feat/ib-drawer-20261104 的
+   ib-drawer/index.html + screen.css，只读参考）：
+   - 走 renderStationBody 同步渲染路径：无 iframe、不搬节点、无 MutationObserver、无定时器/轮播；
+   - 数据单一真源＝宿主时刻表（buildBoard 结果）；番线经 platform_map 反查（懒加载，
+     未到达前留空，到达后由 refreshPlatConsumers 回填）；両数宿主无同步数据源，按规格留空；
+   - 深/浅主题由 html[data-theme] 的 CSS 变量驱动、语言随宿主 lang，切换即时不重开抽屉；
+   - 任何异常静默回落到原生列表，绝不让抽屉空白。 */
+const IB_TYPE_MAP = {
+  普: ['普通', '普通', 'Local'], 各: ['普通', '各停', 'Local'],
+  特: ['特急', '特急', 'Ltd. Exp.'], 快: ['快速', '快速', 'Rapid'],
+  急: ['急行', '急行', 'Express'], 準: ['準急', '準急', 'Semi Exp.'],
+  区: ['区間快速', '区快', 'Sect. Rapid'], 通: ['通勤快速', '通快', 'Comm. Rapid'],
+  直: ['直通特急', '直通', 'Through Ltd.'], 空: ['空港急行', '空港', 'Airport Exp.'],
+  新: ['新快速', '新快', 'Special Rapid'], 関: ['関空快速', '関空', 'Kansai Apt.'],
+  紀: ['紀州路快速', '紀州', 'Kishuji'], 中: ['中央特快', '中央', 'Chuo Special'],
+  大: ['大和路快速', '大和', 'Yamatoji'], ラ: ['ライナー', 'ライナー', 'Liner'],
+  ミ: ['ミュースカイ', 'ミュー', 'μ-SKY'], ア: ['アクセス特急', 'アクセス', 'Access Exp.'],
+  エ: ['エアポート急行', 'エアポ', 'Airport Exp.'], 寝: ['寝台特急', '寝台', 'Sleeper Ltd.'],
+};
+const IB_TYPE_ZH = { 普通: '普通', 各停: '每站停车', 特急: '特急', 快速: '快速', 急行: '急行', 準急: '准急',
+  区間快速: '区间快速', 通勤快速: '通勤快速', 直通特急: '直通特急', 空港急行: '机场急行', 新快速: '新快速',
+  関空快速: '关空快速', 紀州路快速: '纪州路快速', 中央特快: '中央特快', 大和路快速: '大和路快速',
+  ライナー: 'Liner', ミュースカイ: 'μ-SKY', アクセス特急: 'Access特急', エアポート急行: '机场急行',
+  寝台特急: '卧铺特急', 新幹線: '新干线' };
+const IB_I18N = {
+  ja: { title: '今度の列車', sub: 'Train Information',
+    cols: [['種別', 'Type'], ['列車名 / 路線', 'Train / Line'], ['時刻', 'Time'], ['行先', 'Destination'], ['両数', 'Cars'], ['番線', 'Track']],
+    ordDep: '発車  DEP', ordArr: '到着  ARR', origin: '発',
+    dia: { 1: '平日ダイヤ', 2: '土曜ダイヤ', 4: '日曜・祝日ダイヤ' },
+    countDep: '発', countArr: '着', trains: '本', sched: '予定 ', nextDay: '翌日', trackCap: '番線',
+    viewDep: '出発', viewArr: '到着',
+    tickBadge: '列車案内', tickTrack: '番線', tickStatus: '運行情報', tickTrain: '列車案内', tickDelay: '遅延', tickMin: '分',
+    empty: 'この駅の時刻データがありません', emptyWin: '現在の時間帯に列車がありません' },
+  zh: { title: '下一班列车', sub: 'Train Information',
+    cols: [['种别', 'Type'], ['列车 / 线路', 'Train / Line'], ['时刻', 'Time'], ['目的地', 'Destination'], ['编组', 'Cars'], ['站台', 'Track']],
+    ordDep: '发车  DEP', ordArr: '到达  ARR', origin: '发',
+    dia: { 1: '工作日时刻表', 2: '周六时刻表', 4: '周日·节假日时刻表' },
+    countDep: '发', countArr: '到', trains: '班', sched: '原定 ', nextDay: '次日', trackCap: '站台',
+    viewDep: '出发', viewArr: '到达',
+    tickBadge: '列车案内', tickTrack: '站台', tickStatus: '运行情报', tickTrain: '列车案内', tickDelay: '延误', tickMin: '分',
+    empty: '暂无该站的时刻数据', emptyWin: '当前时段没有列车' },
+  en: { title: 'Next Trains', sub: 'Train Information',
+    cols: [['Type', '種別'], ['Train / Line', '列車名 / 路線'], ['Time', '時刻'], ['Destination', '行先'], ['Cars', '両数'], ['Track', '番線']],
+    ordDep: 'DEP', ordArr: 'ARR', origin: 'dep.',
+    dia: { 1: 'Weekday', 2: 'Saturday', 4: 'Sun & Holiday' },
+    countDep: 'Dep.', countArr: 'Arr.', trains: 'trains', sched: 'sched. ', nextDay: 'next day', trackCap: 'Track',
+    viewDep: 'Dep', viewArr: 'Arr',
+    tickBadge: 'Trains', tickTrack: 'Track', tickStatus: 'Service', tickTrain: 'Next', tickDelay: 'delay', tickMin: 'min',
+    empty: 'No timetable data for this station', emptyWin: 'No trains in the current time window' },
+};
+const IB_OP_EN = { '東日本旅客鉄道': 'JR East', '東海旅客鉄道': 'JR Central', '西日本旅客鉄道': 'JR West',
+  '北海道旅客鉄道': 'JR Hokkaido', '四国旅客鉄道': 'JR Shikoku', '九州旅客鉄道': 'JR Kyushu',
+  '東京地下鉄': 'Tokyo Metro', '東京都': 'Toei Subway', '大阪市高速電気軌道': 'Osaka Metro',
+  '名古屋鉄道': 'Meitetsu', '近畿日本鉄道': 'Kintetsu', '東武鉄道': 'Tobu', '西武鉄道': 'Seibu',
+  '京成電鉄': 'Keisei', '京王電鉄': 'Keio', '小田急電鉄': 'Odakyu', '東急電鉄': 'Tokyu',
+  '京浜急行電鉄': 'Keikyu', '京阪電気鉄道': 'Keihan', '阪急電鉄': 'Hankyu', '阪神電気鉄道': 'Hanshin',
+  '南海電気鉄道': 'Nankai', '山陽電気鉄道': 'Sanyo', '神戸電鉄': 'Kobe Dentetsu', '相模鉄道': 'Sagami',
+  '西日本鉄道': 'Nishitetsu', '東京モノレール': 'Tokyo Monorail', '多摩都市モノレール': 'Tama Monorail',
+  '大阪モノレール': 'Osaka Monorail', '横浜新都市交通': 'Seaside Line', '埼玉新都市交通': 'New Shuttle',
+  '首都圏新都市鉄道': 'TX', '東京臨海高速鉄道': 'Rinkai', '新京成電鉄': 'Shin-Keisei',
+  'ハピラインふくい': 'Hapi-line Fukui', 'ゆりかもめ': 'Yurikamome', '広島電鉄': 'Hiroden' };
+function ibLocStation(n) {
+  if (!n) return '';
+  if (lang === 'en') { const a = NAME_I18N && NAME_I18N.stations ? NAME_I18N.stations[n] : null; return (a && a.en) || n; }
+  if (lang === 'zh') return toZh(n);
+  return n;
+}
+function ibLocLine(n) {
+  if (!n) return '';
+  if (lang === 'en') { const l = NAME_I18N && NAME_I18N.lines ? NAME_I18N.lines[n] : null; return l || n; }
+  if (lang === 'zh') return toZh(n);
+  return n;
+}
+function ibTypeOf(code) {
+  const c = String(code == null ? '' : code).trim();
+  if (!c) return { key: '普通', text: '普通', en: 'Local', zh: '普通' };
+  const m = IB_TYPE_MAP[c];
+  if (m) return { key: m[0], text: m[1], en: m[2], zh: IB_TYPE_ZH[m[1]] || m[1] };
+  return { key: c, text: c, en: '', zh: toZh(c) };
+}
+function ibPlatOf(it) {
+  try {
+    const byRid = PLATMAP && PLATMAP.t && it.tr ? PLATMAP.t[it.tr.t] : null;
+    if (!byRid) return '';
+    const p = _platAt(byRid, it.idx);
+    return p ? String(p).split(';').slice(0, 2).join('·') : '';
+  } catch (e) { return ''; }
+}
+/* 跨线路扁平化 + 按班次去重（同趟车多线只出现一次）+ 时间升序，取接下来 4 班 */
+function ibCollect(board, kind) {
+  const cm = curMin();
+  const nowSvc = cm < 240 ? cm + 1440 : cm;   /* 00:00–04:00 属前一服务日，分钟口径 +1440 */
+  const seen = new WeakSet();
+  const all = [];
+  const ops = board.ops || [];
+  for (let oi = 0; oi < ops.length; oi++) {
+    const lines = ops[oi].lines || [];
+    for (let li = 0; li < lines.length; li++) {
+      const L = lines[li];
+      const items = (kind === 'arr') ? (L.itemsArr || []) : (L.items || []);
+      for (let ii = 0; ii < items.length; ii++) {
+        const it = items[ii];
+        if (!it || !it.tr || seen.has(it.tr)) continue;
+        seen.add(it.tr);
+        all.push({ it: it, line: L });
+      }
+    }
+  }
+  const rows = all.filter(x => {
+    const dly = (x.it.tr && x.it.tr.dly > 0) ? x.it.tr.dly : 0;
+    return kind === 'arr' ? x.it.dep >= nowSvc - 30 : x.it.dep + dly >= nowSvc - 1;
+  });
+  rows.sort((a, b) => a.it.dep - b.it.dep || a.line.name.localeCompare(b.line.name));
+  return { rows: rows.slice(0, 4), total: all.length, nowSvc: nowSvc };
+}
+function ibRowHtml(x, kind) {
+  const it = x.it, L = x.line, tr = it.tr || {};
+  const ib = IB_I18N[lang] || IB_I18N.ja;
+  const ty = ibTypeOf(it.type);
+  const dly = (tr.dly > 0) ? Math.round(tr.dly) : 0;
+  const shown = (kind === 'dep' && dly) ? it.dep + dly : it.dep;
+  const originNm = kind === 'dep' ? ((tr.jas && tr.jas[0]) || '') : (it.term || '');
+  const destNm = it.term || '';
+  const lic = (window.LINE_ICON || {})[L.name];
+  const plat = ibPlatOf(it);
+  const tyTxt = lang === 'en' ? (ty.en || ty.text) : (lang === 'zh' ? ty.zh : ty.text);
+  const tySub = lang === 'en' ? ty.text : ty.en;
+  const opTxt = lang === 'zh' ? opShort(L.op) : (IB_OP_EN[L.op] || opShort(L.op));
+  let adj = '';
+  if (kind === 'dep' && dly) adj = ib.sched + fmtHm(it.dep) + ' · +' + dly + (lang === 'en' ? 'min' : '分');
+  if (Math.floor(shown / 60) >= 24) adj = (adj ? adj + ' · ' : '') + ib.nextDay;
+  let h = '<article class="ib-row" style="--lc:' + L.color + '">';
+  h += '<div class="ib-cell ib-c-type"><div class="ib-order">' + (kind === 'dep' ? ib.ordDep : ib.ordArr) + '</div>' +
+    '<div class="ib-badge" data-type="' + esc(ty.key) + '"><div class="ib-type" data-fit="1">' + esc(tyTxt) + '</div>' +
+    (tySub ? '<div class="ib-type-en">' + esc(tySub) + '</div>' : '') + '</div></div>';
+  h += '<div class="ib-cell ib-c-train"><div class="ib-trainhead">' +
+    '<span class="ib-lico"><i class="ib-dot"></i>' + (lic ? '<img src="' + lic + '" alt="" loading="lazy">' : '') + '</span>' +
+    '<div class="ib-lname" data-fit="1" title="' + esc(ibLocLine(L.name)) + '">' + esc(ibLocLine(L.name)) + '</div></div>' +
+    '<div class="ib-note">' + esc(ibLocStation(originNm)) + ' ' + esc(ib.origin) + '</div>' +
+    '<div class="ib-open">' + esc(opTxt || '') + '</div></div>';
+  h += '<div class="ib-cell ib-c-time"><time class="ib-time" data-fit="1">' + fmtHm(shown) + '</time>' +
+    (adj ? '<div class="ib-adj">' + esc(adj) + '</div>' : '') + '</div>';
+  h += '<div class="ib-cell ib-c-dest"><div class="ib-dest" data-fit="1" title="' + esc(ibLocStation(destNm)) + '">' + esc(ibLocStation(destNm)) + '</div></div>';
+  h += '<div class="ib-cell ib-c-cars"><div class="ib-cars"></div></div>';
+  h += '<div class="ib-cell ib-c-track"><div class="ib-track"' + (plat ? ' data-fit="1"' : '') + '>' + esc(plat) + '</div>' +
+    '<div class="ib-trackcap">' + esc(ib.trackCap) + '</div></div>';
+  return h + '</article>';
+}
+/* ---------- 板内横向电光掲示带（移植自原版 site-live .train-ticker） ----------
+   位置：4 行与页脚条之间；内容＝运行情报（延误/运休，仅异常）在前 + 最近一班列车案内在后；
+   无内容时给一条中性说明不留空轨。走字为纯 CSS marquee（双份拷贝无缝循环），点阵质感用
+   monospace 字栈+LED 配色+tabular-nums 复现（原版同款手法，不用图片）。
+   数据：延误取宿主既有 delays.json 内存态（trip.dly）；运休/运行情报取 jrstatus status.json
+   （原版同一既有接口，会话级单次拉取、不轮询、失败静默降级为空）。mock 仅经 __mjr3d.ibTickMock。 */
+let ibStatusP = null, ibStatusArr = null, ibTickMock = null;
+function ibStatusFetch() {
+  if (!ibStatusP) {
+    ibStatusP = fetchJSONWithCache('https://jrstatus.jr.suki.ing/data/status.json', null, null, true)
+      .then(j => { ibStatusArr = (j && Array.isArray(j.lines)) ? j.lines : []; })
+      .catch(() => { ibStatusArr = []; })
+      .then(() => { try { if (sheetTab === 'tabList' && sheetStation && $('sheet').classList.contains('open')) renderStationBody(); } catch (e) {} });
+  }
+  return ibStatusP;
+}
+function ibStatusItemsFor(lineNames) {
+  if (ibTickMock) return ibTickMock;
+  if (!ibStatusArr || !ibStatusArr.length || !lineNames.length) return [];
+  const set = new Set(lineNames.map(n => normName(n)));
+  const out = [];
+  for (const s of ibStatusArr) {
+    if (!s || !s.line || !set.has(normName(s.line))) continue;
+    out.push({ line: s.line, company: s.company || '', label: s.label || '', sev: +s.sev || 0, min: +s.min || 0, cause: s.cause || '', detail: s.detail || '' });
+    if (out.length >= 4) break;
+  }
+  return out;
+}
+function ibTickHtml(board, c, kind, ib) {
+  const lineNames = [];
+  for (const o of (board.ops || [])) for (const L of (o.lines || [])) if (L.name && !lineNames.includes(L.name)) lineNames.push(L.name);
+  if (ibStatusArr === null && !ibTickMock) { try { ibStatusFetch(); } catch (e) {} }
+  const st = ibStatusItemsFor(lineNames);
+  let g = '<span class="ib-tick-group">';
+  if (st.length) {
+    g += '<span class="ib-tick-key is-status">' + esc(ib.tickStatus) + '</span>';
+    for (const s of st) {
+      const col = lineColor.get(s.line) || '#8f979b';
+      g += '<span class="ib-tick-item"><span class="ib-tick-dot" style="background:' + esc(col) + '"></span>' +
+        '<span class="ib-tick-line">' + esc(ibLocLine(s.line)) + '</span>' +
+        '<span class="ib-tick-state' + (s.sev >= 4 ? ' is-severe' : s.sev >= 3 ? ' is-alert' : '') + '">' + esc(s.label) + '</span>' +
+        (s.min ? '<span class="ib-tick-delay">' + esc(String(s.min) + ib.tickMin) + '</span>' : '') +
+        (s.cause ? '<span class="ib-tick-cause" title="' + esc(s.detail || s.cause) + '">' + esc(s.cause) + '</span>' : '') +
+        '</span>';
+    }
+  }
+  const r0 = c.rows && c.rows[0];
+  if (r0 && r0.it) {
+    const dmin = (r0.it.tr && r0.it.tr.dly > 0) ? Math.round(r0.it.tr.dly) : 0;
+    g += '<span class="ib-tick-key">' + esc(ib.tickTrain) + '</span>' +
+      '<span class="ib-tick-line">「' + esc(ibLocLine(r0.line.name || '')) + '」</span>' +
+      '<span class="ib-tick-train">' + esc(fmtHm(r0.it.dep)) + ' ' + esc(kind === 'arr' ? ib.countArr : ib.countDep) + '</span>' +
+      '<span class="ib-tick-stops">' + esc(ibLocStation(r0.it.term || '')) + '</span>' +
+      (dmin > 0 ? '<span class="ib-tick-delay">' + esc(ib.tickDelay + dmin + ib.tickMin) + '</span>' : '');
+  }
+  if (st.length === 0 && !r0) g += '<span class="ib-tick-key is-status">' + esc(ib.tickStatus) + '</span><span class="ib-tick-line">' + esc(ib.empty) + '</span>';
+  g += '</span>';
+  const plat = (r0 && r0.it) ? (ibPlatOf(r0.it) || '–') : '–';
+  return '<div class="ib-tick" aria-label="' + esc(ib.tickBadge) + '"><span class="ib-tick-badge">' + esc(ib.tickBadge) +
+    '<small>' + esc(plat + ib.tickTrack) + '</small></span><span class="ib-tick-win"><span class="ib-tick-track">' + g + g + '</span></span></div>';
+}
+function ibBoardHtml(board) {
+  const kind = (sheetDepArr === 'arr') ? 'arr' : 'dep';
+  const ib = IB_I18N[lang] || IB_I18N.ja;
+  const c = ibCollect(board, kind);
+  const dia = ib.dia[dayBit] || ib.dia[1];
+  let h = '<div class="ib" data-view="' + kind + '" aria-label="' + esc(ib.title) + '">';
+  /* 出发/到达切换收进板头部条右侧（原 #shSubTabs 独立行在信息板激活时隐藏，高度还给板面）；
+     服务日标签让位——页脚条已含同信息 */
+  h += '<div class="ib-mast"><div class="ib-title">' + esc(ib.title) + '<small>' + esc(ib.sub) + '</small></div>' +
+    '<div class="ib-viewseg"><button type="button" class="ib-vs' + (kind === 'dep' ? ' on' : '') + '" data-ibview="dep">' + esc(ib.viewDep) + '</button>' +
+    '<button type="button" class="ib-vs' + (kind === 'arr' ? ' on' : '') + '" data-ibview="arr">' + esc(ib.viewArr) + '</button></div></div>';
+  h += '<div class="ib-colhead" aria-hidden="true">';
+  for (let i = 0; i < 6; i++) h += '<div><div class="jp">' + esc(ib.cols[i][0]) + '</div><div class="en">' + esc(ib.cols[i][1]) + '</div></div>';
+  h += '</div>';
+  if (c.rows.length) {
+    h += '<div class="ib-rows">';
+    for (let i = 0; i < c.rows.length; i++) h += ibRowHtml(c.rows[i], kind);
+    for (let i = c.rows.length; i < 4; i++) h += '<article class="ib-row is-empty" aria-hidden="true"></article>';
+    h += '</div>';
+  } else {
+    h += '<div class="ib-rows ib-rows-none"><div class="ib-empty">' + esc(c.total ? ib.emptyWin : ib.empty) + '</div></div>';
+  }
+  h += ibTickHtml(board, c, kind, ib);
+  const cnt = (kind === 'arr' ? ib.countArr : ib.countDep) + ' ' + c.total + ' ' + ib.trains;
+  h += '<div class="ib-foot"><span class="ib-foot-msg">' + esc(ibLocStation(sheetStation)) + ' · ' + esc(dia) + ' · ' + esc(cnt) + '</span></div>';
+  h += '</div>';
+  /* 番线数据未到则按需拉（与指南页同款），到达后 refreshPlatConsumers 回填重渲染 */
+  if (!PLATMAP && !platmapP) { try { fetchPlatmap(); } catch (e) {} }
+  return h;
+}
+/* 长文收敛：等比降字号直到不溢出（同步一次性，无定时器；仍不合则省略号），杜绝文字被裁成黑块。
+   收敛结果以 cqw 写回：容器（板宽）变化时字号等比跟随，跨视口不复发溢出。 */
+const IB_FIT_STAGES = [0.86, 0.74, 0.64, 0.54, 0.46];
+function ibFit() {
+  const scope = document.querySelector('#shBody .ib');
+  if (!scope) return;
+  const cw = scope.clientWidth;
+  if (!cw) return;
+  /* 横带走字：按单组实测宽设无缝循环距离与时长（恒定 40px/s，事件驱动复测，无定时器） */
+  const tk = scope.querySelector('.ib-tick-track');
+  if (tk && tk.firstElementChild) {
+    const gw = tk.firstElementChild.getBoundingClientRect().width;
+    if (gw > 0) {
+      tk.style.setProperty('--ib-tick-dist', Math.round(gw) + 'px');
+      tk.style.setProperty('--ib-tick-dur', (gw / 40).toFixed(1) + 's');
+    }
+  }
+  const els = scope.querySelectorAll('[data-fit]');
+  for (let i = 0; i < els.length; i++) {
+    const el = els[i];
+    el.style.fontSize = '';
+    /* 复位上一轮收敛残留（重渲染/复测场景），保证度量从基线开始 */
+    if (el.classList.contains('ib-lname')) {
+      el.style.whiteSpace = ''; el.style.overflowWrap = '';
+      const c0 = el.closest('.ib-cell');
+      if (c0) { const o0 = c0.querySelector('.ib-open'), l0 = c0.querySelector('.ib-lico');
+        if (o0) o0.style.display = ''; if (l0) l0.style.display = ''; }
+    }
+    const w = el.clientWidth;
+    if (!w || !el.textContent) continue;
+    if (el.scrollWidth <= w + 1) continue;
+    const base = parseFloat(getComputedStyle(el).fontSize) || 16;
+    let fitted = 0;
+    for (let s = 0; s < IB_FIT_STAGES.length; s++) {
+      const px = base * IB_FIT_STAGES[s];
+      el.style.fontSize = px + 'px';
+      if (el.scrollWidth <= w + 1) { fitted = px; break; }
+    }
+    if (fitted) el.style.fontSize = (fitted / cw * 100).toFixed(3) + 'cqw';
+    else if (el.classList.contains('ib-lname')) {
+      /* 长英文名降字号仍不合：换行 + 逐档降字号（纵向校验），都不行再回省略号 */
+      const cell = el.closest('.ib-cell');
+      const open = cell ? cell.querySelector('.ib-open') : null;
+      const lico = cell ? cell.querySelector('.ib-lico') : null;
+      el.style.whiteSpace = 'normal';
+      el.style.overflowWrap = 'break-word';
+      if (open) open.style.display = 'none';
+      const tryStages = () => {
+        for (let s = 0; s < IB_FIT_STAGES.length; s++) {
+          const px2 = base * IB_FIT_STAGES[s];
+          el.style.fontSize = px2 + 'px';
+          if (el.scrollWidth <= el.clientWidth + 1 && (!cell || cell.scrollHeight <= cell.clientHeight + 1)) return px2;
+        }
+        return 0;
+      };
+      /* 先让出线路徽章位换行（保字号可读），不行再带徽章深缩，都不行回省略号 */
+      let fitted2 = 0;
+      if (lico) { lico.style.display = 'none'; fitted2 = tryStages(); if (!fitted2) lico.style.display = ''; }
+      if (!fitted2) fitted2 = tryStages();
+      if (fitted2) el.style.fontSize = (fitted2 / cw * 100).toFixed(3) + 'cqw';
+      else {
+        el.style.whiteSpace = ''; el.style.overflowWrap = '';
+        if (open) open.style.display = '';
+        if (lico) lico.style.display = '';
+        el.style.fontSize = (base * 0.46 / cw * 100).toFixed(3) + 'cqw';
+        el.style.overflow = 'hidden'; el.style.textOverflow = 'ellipsis';
+      }
+    }
+    else { el.style.fontSize = (base * 0.46 / cw * 100).toFixed(3) + 'cqw'; el.style.overflow = 'hidden'; el.style.textOverflow = 'ellipsis'; }
+  }
+}
+/* 板内出发/到达切换：与宿主 #subDep/#subArr 共用 sheetDepArr 单一真源；
+   委托绑定一次，板 innerHTML 重建不丢；宿主按钮回调原样保留，互不双触发 */
+$('shBody').addEventListener('click', function (e) {
+  const b = e.target && e.target.closest ? e.target.closest('.ib-vs') : null;
+  if (!b) return;
+  const v = b.getAttribute('data-ibview');
+  if (v !== 'dep' && v !== 'arr') return;
+  if (v === sheetDepArr) return;
+  sheetDepArr = v;
+  $('subDep').classList.toggle('on', v === 'dep');
+  $('subArr').classList.toggle('on', v === 'arr');
+  try { renderStationBody(); } catch (err) { try { console.warn('[ib] view switch failed', err); } catch (_) {} }
+});
+/* 视口/滚动条宽度变化后按新容器宽复收敛一次（事件驱动，非定时器） */
+window.addEventListener('resize', function () {
+  if (sheetTab === 'tabList' && sheetStation && $('sheet').classList.contains('open') && !$('shBody').hidden) {
+    try { ibFit(); } catch (e) {}
+  }
+});
 function renderStationBody() {
   if (!sheetStation) return;
   dayLazyBuild.clear(); dayLazySeq = 0;
@@ -8369,6 +8783,23 @@ function renderStationBody() {
   sheetIsPartial = !!board.partial;
   $('shBody').classList.toggle('partial', sheetIsPartial);
   $('shSub').textContent = board.ops.map(o => opShort(o.op)).join(' · ');
+  /* 列表 tab → 信息板整页替换；任何异常静默回落下方原生列表，绝不让抽屉空白 */
+  if (sheetTab === 'tabList') {
+    let ibHtml = null;
+    try { ibHtml = ibBoardHtml(board); } catch (e) { try { console.warn('[ib] board build failed → 回落原生列表', e); } catch (_) {} ibHtml = null; }
+    if (ibHtml) {
+      $('shSubTabs').classList.add('hidden');   /* 出发/到达已收进板头部条，独立行高度还给板面 */
+      $('shBody').classList.add('ib-mode');
+      $('shBody').innerHTML = ibHtml;
+      try {
+        $('shBody').querySelectorAll('.ib-lico img').forEach(im => { im.addEventListener('error', () => im.remove(), { once: true }); });
+        ibFit();
+      } catch (e) { try { console.warn('[ib] post-render fit failed', e); } catch (_) {} }
+      return;
+    }
+    $('shSubTabs').classList.remove('hidden');
+  }
+  $('shBody').classList.remove('ib-mode');
   const M = curMin(), hour = Math.floor(((M % 1440) + 1440) % 1440 / 60);
   let html = '';
   const groups = sheetFlat ? [{ op: '', lines: board.ops.reduce((a, o) => a.concat(o.lines), []) }] : board.ops;
@@ -8376,7 +8807,7 @@ function renderStationBody() {
     if (!g.lines.length) return;
     if (!sheetFlat) {
       const lg = OP_LOGO[g.op];
-      html += '<div class="grp-op">' + (lg ? '<img class="op-logo" src="https://jr-static.suki.ing/logos/' + lg + '" alt="">' : '<span class="op-ic">' + esc(opShort(g.op).slice(0, 2)) + '</span>') + '<span>' + esc(opShort(g.op)) + '</span></div>';
+      html += '<div class="grp-op">' + (lg ? '<img class="op-logo" src="' + opLogoUrl(lg) + '" alt="">' : '<span class="op-ic">' + esc(opShort(g.op).slice(0, 2)) + '</span>') + '<span>' + esc(opShort(g.op)) + '</span></div>';
     }
     g.lines.forEach(L => html += lineRowHtml(L, hour));
   });
@@ -8555,6 +8986,10 @@ function showStationDetail(name, coord, featLine, featOp) {
   $('tabGrid').classList.add('on');
   $('shBody').hidden = false;
   $('shSubTabs').classList.remove('hidden');
+  // 新站打开：出发/到达视图重置为「出发」，宿主 #subDep/#subArr 选中态同步（板内芯片随板重建自动一致）
+  sheetDepArr = 'dep';
+  $('subDep').classList.add('on');
+  $('subArr').classList.remove('on');
   $('panelInfo').hidden = true;
   $('panelGuide').hidden = true;
   _infoKey = null;
@@ -8604,7 +9039,7 @@ $('subDep').addEventListener('click', function () { sheetDepArr = 'dep'; $('subD
 $('subArr').addEventListener('click', function () { sheetDepArr = 'arr'; $('subArr').classList.add('on'); $('subDep').classList.remove('on'); renderStationBody(); });
 window.showStationDetail = showStationDetail;  // 调试/自动化钩子：供控制台与 E2E 直接打开车站抽屉
 // E2E 钩子：列车详情/站台数据（确定性验证用，只读引用）
-window.__mjr3d = { showTrainDetail, tripList: () => tripList, PLATMAP: () => PLATMAP, tmaps: () => tmaps, badgeKeyOfFeature, badgeEntriesOfStation, badgeEntriesOf, showStationDetail, stationCoord: () => stationCoord, stationMap: () => stationMap, badgeNorm, badgeFamilyHit, map: () => map, ormState: () => ({ enabled: ormEnabled, loaded: ormLoaded, fetching: ormFetching }), detailState: () => ({ wanted: detailWanted, fetched: stationDetailFetched }), bufState: () => ({ bytes: bufArr.byteLength, trains: Math.min(MAXT, fadeList.length) }), boardCacheStats: () => ({ size: boardCache.size, items: boardCacheItems, cap: BOARD_CACHE_MAX_ITEMS }), platState: () => ({ loaded: !!PLATMAP, pending: !!(platmapP && !PLATMAP) }), detailRetry: () => Object.assign({}, detailRetry), sheetState: () => ({ partial: sheetIsPartial, rows: document.querySelectorAll('#shBody .lrow').length, open: document.querySelectorAll('#shBody .lrow.open').length, scroll: $('shBody').scrollTop }), ttState: () => (ttState ? { mode: ttState.mode, bucket: ttState.bucket, key: ttState.key } : null), ttCache: () => ({ station: stationTripsCache.size, miss: stationTripsMiss.size, partial: stationPartialCache.size, raw: !!ttRaw, sets: !!ttStopNames }) };
+window.__mjr3d = { showTrainDetail, tripList: () => tripList, PLATMAP: () => PLATMAP, tmaps: () => tmaps, badgeKeyOfFeature, badgeEntriesOfStation, badgeEntriesOf, showStationDetail, stationCoord: () => stationCoord, stationMap: () => stationMap, badgeNorm, badgeFamilyHit, map: () => map, ormState: () => ({ enabled: ormEnabled, loaded: ormLoaded, fetching: ormFetching }), detailState: () => ({ wanted: detailWanted, fetched: stationDetailFetched }), bufState: () => ({ bytes: bufArr.byteLength, trains: Math.min(MAXT, fadeList.length) }), boardCacheStats: () => ({ size: boardCache.size, items: boardCacheItems, cap: BOARD_CACHE_MAX_ITEMS }), platState: () => ({ loaded: !!PLATMAP, pending: !!(platmapP && !PLATMAP) }), detailRetry: () => Object.assign({}, detailRetry), sheetState: () => ({ partial: sheetIsPartial, rows: document.querySelectorAll('#shBody .lrow').length, open: document.querySelectorAll('#shBody .lrow.open').length, scroll: $('shBody').scrollTop }), ttState: () => (ttState ? { mode: ttState.mode, bucket: ttState.bucket, key: ttState.key } : null), ibTickMock: v => { ibTickMock = Array.isArray(v) ? v : null; try { renderStationBody(); } catch (e) {} }, ttCache: () => ({ station: stationTripsCache.size, miss: stationTripsMiss.size, partial: stationPartialCache.size, raw: !!ttRaw, sets: !!ttStopNames }) };
 // E2E 钩子：列车叠加弹窗（确定性验证，不依赖实时列车密度）
 window.__trPick = { n: () => visibleTrips.length, near: (x, y) => collectTrains(x, y, 14).length, open: (x, y) => showTrPick(collectTrains(x, y, 14), x, y) };
 /* E2E 回归钩子(确定性验证):两条历史事故的防线
@@ -10005,6 +10440,10 @@ function refreshPlatConsumers() {
     _guideKey = null;
     renderGuideTab();
   }
+  /* 信息板（列表 tab）：platform_map 到达后回填番线，原地重渲染 */
+  if (sheetTab === 'tabList' && sheetStation && $('sheet').classList.contains('open') && !$('shBody').hidden) {
+    try { renderStationBody(); } catch (e) {}
+  }
 }
 function buildPlatIndex() {
   if (_platIdx) return Promise.resolve(_platIdx);
@@ -10153,7 +10592,7 @@ async function _fillTrackDiagrams(sec, name, coord) {
         img.onerror = kill;
         const tmo = setTimeout(() => { if (!img.complete || img.naturalWidth === 0) kill(); }, 12000);
         img.addEventListener('load', () => clearTimeout(tmo));
-        img.src = TRACK_DIAGRAM_BASE + f;
+        img.src = TRACK_DIAGRAM_BASE + (resolvedTheme() === 'dark' ? f.replace(/\.svg$/, '.dk.svg') : f);
         fig.appendChild(img);
       });
       wrap.appendChild(fig);
@@ -10918,7 +11357,17 @@ function applyThemeMode() {
   document.documentElement.setAttribute('data-theme', resolved);
   document.querySelectorAll('#themeRow .chip').forEach(c => c.classList.toggle('on', c.dataset.theme === mode));
   applyThemeBrand(resolved);
+  /* 配线图双变体：切主题时换 .dk.svg / .svg；先预载新变体再换 src，避免闪白/闪空 */
+  document.querySelectorAll('img.gd-td-img').forEach(im => {
+    const ns = im.src.replace(/(\.dk)?\.svg(\?.*)?$/, (resolved === 'dark' ? '.dk.svg' : '.svg') + '$2');
+    if (ns === im.src) return;
+    const pre = new Image();
+    pre.onload = () => { im.src = ns; };
+    pre.onerror = () => {};              /* 新变体缺失时保留旧图，不闪空 */
+    pre.src = ns;
+  });
   if (map) applyBaseVisibility(); /* 深浅两套 OFM 图层随主题互斥显隐 */
+  applyStationDotTheme(); /* 站点圆环色随主题换常亮/提亮变体(深浅底图均可辨) */
 }
 // 深色模式使用深色版 logo / 标签页图标（浅色模式用浅色版）
 // 注：apple-touch-icon / icon-192 / icon-512 属应用图标（iOS 主屏 / Android），
@@ -11014,6 +11463,8 @@ function applyLang() {
   if (dataReady) setStatus(liveOn ? '' : t.goLive);
   if ($('panelGuide') && !$('panelGuide').hidden) { _guideKey = null; renderGuideTab(); }
   if (window.__tourApi) window.__tourApi.refresh();   /* 引导展开中切换语言时实时刷新文案 */
+  /* 信息板（列表 tab）：语言切换立即原地重渲染，无闪屏；其他 tab 不受影响 */
+  try { if (sheetTab === 'tabList' && sheetStation && $('sheet').classList.contains('open')) renderStationBody(); } catch (e) {}
 }
 function buildLegend() {
   $('legendBox').innerHTML =

@@ -1106,9 +1106,11 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
    SVG 发布副本已后处理为透明底（scripts/postprocess_track_diagrams.py），
    图块叠一层半透明浅衬底保证线条/文字在深浅玻璃上的对比度；块间仅靠 gap 分隔。 */
 .gd-td-wrap { display:flex; flex-direction:column; gap:10px; }
-.gd-td-fig { border:1px solid var(--glass-edge); border-radius:10px; overflow:hidden; background:rgba(255,255,255,.55); }
+.gd-td-fig { border:1px solid var(--glass-edge); border-radius:10px; overflow:hidden; background:rgba(255,255,255,.62); }
 .gd-td-line { font-size:12px; font-weight:700; color:#16181d; padding:7px 10px; border-bottom:1px solid #d8dce3; background:rgba(255,255,255,.7); }
 .gd-td-img { display:block; width:100%; max-height:240px; object-fit:contain; background:transparent; }
+[data-theme='dark'] .gd-td-fig { background:rgba(16,18,22,.62); }
+[data-theme='dark'] .gd-td-line { color:#e8eaed; border-bottom-color:#3a4150; background:rgba(16,18,22,.7); }
 
 /* --- 信息面板 --- */
 #panelInfo { color:var(--txt); }
@@ -1219,3 +1221,167 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
 .tc-back svg { margin-left:-3px; }
 .tc-btn:focus-visible, .tc-x:focus-visible, .tc-dot:focus-visible { outline:2px solid var(--acc); outline-offset:1px; }
 @media (prefers-reduced-motion: reduce) { #tourHole, #tourCard, .tc-dot { transition:none; } .tc-media .tc-train, #tourHole::after, #tourCard .tc-in { animation:none; } }
+
+/* ===== 信息板（抽屉「列表」tab 原生整合；基准：feat/ib-drawer-20261104 unit 版信息屏，只读参考）=====
+   深/浅两套由 html[data-theme] 变量驱动，切换即时生效；字号用容器单位(cqw)按板宽等比缩放，
+   所有尺寸先给 px 兜底（不支持容器查询时不塌）。 */
+html[data-theme="dark"] {
+  --ib-edge:#3a4147; --ib-bg:#0c0f12;
+  --ib-mast-bg:#30363b; --ib-mast-ink:#f5f6f3; --ib-mast-accent:#68aa4b; --ib-mast-sub:#bdc8bf;
+  --ib-head-bg:#242a2e; --ib-head-ink:#f5f6f3; --ib-head-en:#c5c9c9;
+  --ib-row-bg:#0c0f12; --ib-row-alt:#101316; --ib-row-edge:#020303; --ib-row-line:#4c5256;
+  --ib-ink:#f5f6f3; --ib-dim:#9aa4a5; --ib-note:#c9d0cd; --ib-en2:#b4c0b9;
+  --ib-time:#f8f9f1; --ib-dest:#f5f6f3; --ib-track:#f5f7e8; --ib-trackcap:#b0b8ae;
+  --ib-foot-bg:#161b1e; --ib-foot-ink:#e1e7db;
+  --ib-tick-bg:#080b09; --ib-tick-badge-bg:#26302a; --ib-tick-badge-ink:#dbe9c8;
+  --ib-tick-ink:#b2ea95; --ib-tick-key:#c6e8a8; --ib-tick-status:#ffd28a; --ib-tick-train:#eff4e7;
+  --ib-tick-stops:#f7c278; --ib-tick-alert:#ffc36b; --ib-tick-severe:#ff8f8f; --ib-tick-cause:#e3d5ac;
+  --ib-badge-bg:#232b31; --ib-badge-edge:#8f979b; --ib-badge-ink:#fafbf8;
+  --ib-delay:#ffb4a2;
+  --ib-vs-on:#68aa4b; --ib-vs-on-ink:#0c130b;
+  --ib-sb-thumb:rgba(154,164,165,.40);
+}
+html[data-theme="light"] {
+  --ib-edge:#c3cad0; --ib-bg:#f4f6f7;
+  --ib-mast-bg:#e4e8eb; --ib-mast-ink:#16191c; --ib-mast-accent:#3f8f3a; --ib-mast-sub:#5a646b;
+  --ib-head-bg:#d7dde1; --ib-head-ink:#1d2327; --ib-head-en:#576067;
+  --ib-row-bg:#f7f8f9; --ib-row-alt:#eef1f3; --ib-row-edge:#c6cdd2; --ib-row-line:#aeb7bd;
+  --ib-ink:#14181b; --ib-dim:#565f66; --ib-note:#4a545b; --ib-en2:#5b656c;
+  --ib-time:#0f1418; --ib-dest:#10151a; --ib-track:#101518; --ib-trackcap:#576067;
+  --ib-foot-bg:#e2e6e9; --ib-foot-ink:#23292e;
+  --ib-tick-bg:#e9ede9; --ib-tick-badge-bg:#d3ddd2; --ib-tick-badge-ink:#2c3a2c;
+  --ib-tick-ink:#2f6e2c; --ib-tick-key:#3f7a3a; --ib-tick-status:#8a5a10; --ib-tick-train:#1d2a1d;
+  --ib-tick-stops:#7a5210; --ib-tick-alert:#b46a10; --ib-tick-severe:#b3261e; --ib-tick-cause:#6b5d2e;
+  --ib-badge-bg:#eef1f3; --ib-badge-edge:#7c868d; --ib-badge-ink:#14181b;
+  --ib-delay:#b3261e;
+  --ib-vs-on:#2f6e2c; --ib-vs-on-ink:#ffffff;
+  --ib-sb-thumb:rgba(86,95,102,.45);
+}
+#sheet .sh-body.ib-mode { padding:4px 10px 10px; display:flex; flex-direction:column; }
+/* hidden 属性必须赢过 ib-mode 的 display:flex：切走 tab/开发车铃时板要彻底不占位不拦截点击 */
+#sheet .sh-body.ib-mode[hidden] { display:none; }
+#sheet .ib {
+  --ib-cols:18% 25% 15% 24% 9% 9%;
+  flex:1; min-height:320px; display:flex; flex-direction:column; overflow:hidden;
+  container-type:inline-size;
+  font-family:-apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Yu Gothic", "Microsoft YaHei", sans-serif;
+  border-radius:10px; border:1px solid var(--ib-edge); background:var(--ib-bg); color:var(--ib-ink);
+}
+#sheet .ib-mast { flex:none; display:flex; align-items:center; justify-content:space-between; gap:8px;
+  background:var(--ib-mast-bg); color:var(--ib-mast-ink); border-top:3px solid var(--ib-mast-accent); padding:7px 10px 6px; min-width:0; }
+#sheet .ib-title { flex:1; font-size:14px; font-weight:600; letter-spacing:.08em; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
+#sheet .ib-title small { font:9px/1.2 Arial, sans-serif; letter-spacing:.03em; margin-left:7px; color:var(--ib-mast-sub); white-space:nowrap; }
+/* 出发/到达切换件：收进头部条右侧（原 #shSubTabs 独立行在信息板激活时隐藏） */
+#sheet .ib-viewseg { flex:none; display:flex; gap:4px; margin-left:8px; }
+#sheet .ib-vs { flex:none; padding:3px 9px; border-radius:7px; border:1px solid var(--ib-row-line); background:transparent;
+  color:var(--ib-mast-sub); font-size:10px; font-weight:700; letter-spacing:.04em; cursor:pointer; font-family:inherit;
+  -webkit-tap-highlight-color:transparent; }
+#sheet .ib-vs.on { background:var(--ib-vs-on); border-color:var(--ib-vs-on); color:var(--ib-vs-on-ink); }
+#sheet .ib-colhead { flex:none; display:grid; grid-template-columns:var(--ib-cols); height:32px; align-items:center;
+  background:var(--ib-head-bg); color:var(--ib-head-ink); border-bottom:2px solid var(--ib-row-edge); }
+#sheet .ib-colhead > div { padding:2px 6px 3px 8px; min-width:0; }
+#sheet .ib-colhead .jp { font-size:11px; font-weight:500; letter-spacing:.06em; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#sheet .ib-colhead .en { font:7.5px/1.25 Arial, sans-serif; color:var(--ib-head-en); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#sheet .ib-colhead > div:nth-last-child(-n+2) { padding-left:2px; padding-right:2px; text-align:center; }
+#sheet .ib-colhead > div:nth-last-child(-n+2) .jp { font-size:9px; letter-spacing:0; }
+#sheet .ib-colhead > div:nth-last-child(-n+2) .en { font-size:7px; }
+#sheet .ib-rows { flex:1; min-height:0; display:grid; grid-template-rows:repeat(4, minmax(0,1fr)); }
+#sheet .ib-rows-none { grid-template-rows:none; display:flex; align-items:center; justify-content:center; }
+#sheet .ib-empty { font-size:12px; color:var(--ib-dim); padding:20px; text-align:center; }
+#sheet .ib-row { position:relative; display:grid; grid-template-columns:var(--ib-cols); min-height:0;
+  background:var(--ib-row-bg); border-bottom:3px solid var(--ib-row-edge); }
+#sheet .ib-row:nth-child(even) { background:var(--ib-row-alt); }
+#sheet .ib-row.is-empty { border-bottom-color:var(--ib-row-edge); }
+#sheet .ib-cell { min-width:0; display:flex; flex-direction:column; justify-content:center; padding:3px 6px 3px 7px; overflow:hidden; }
+#sheet .ib-c-type { padding:3px 5px 3px 6px; }
+#sheet .ib-order { font-size:8px; line-height:1.2; color:var(--ib-dim); letter-spacing:.08em; margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#sheet .ib-badge { display:flex; flex-direction:column; align-items:center; justify-content:center;
+  background:var(--ib-badge-bg); border:1px solid var(--ib-badge-edge); color:var(--ib-badge-ink);
+  padding:3px 2px 2px; min-height:34px; max-height:100%; border-radius:3px; }
+#sheet .ib-type { font-size:16px; font-size:clamp(10.5px, 4.4cqw, 20px); line-height:1.1; letter-spacing:.05em;
+  white-space:nowrap; font-weight:600; text-align:center; width:100%; }
+#sheet .ib-type-en { font:8px/1.25 Arial, sans-serif; font-size:clamp(7px, 1.9cqw, 9px);
+  white-space:nowrap; margin-top:2px; opacity:.92; max-width:100%; overflow:hidden; text-overflow:ellipsis; }
+#sheet .ib-badge[data-type="快速"], #sheet .ib-badge[data-type="通勤快速"] { background:#d52b3f; border-color:#d52b3f; color:#fff; }
+#sheet .ib-badge[data-type="中央特快"], #sheet .ib-badge[data-type="青梅特快"], #sheet .ib-badge[data-type="特別快速"], #sheet .ib-badge[data-type="通勤特快"] { background:#ee7b27; border-color:#ee7b27; color:#1a120b; }
+#sheet .ib-badge[data-type="特急"] { background:#c91e42; border-color:#c91e42; color:#fff; }
+#sheet .ib-badge[data-type="新幹線"] { background:#33436b; border-color:#6679a9; color:#fff; }
+#sheet .ib-badge[data-type="寝台特急"] { background:#243458; border-color:#8295c2; color:#fff; }
+#sheet .ib-badge[data-type="急行"], #sheet .ib-badge[data-type="区間快速"] { background:#e46f28; border-color:#e46f28; color:#1a120b; }
+#sheet .ib-badge[data-type="新快速"] { background:#245aaf; border-color:#5e86c5; color:#fff; }
+#sheet .ib-badge[data-type="大和路快速"] { background:#087858; border-color:#49ad8f; color:#fff; }
+#sheet .ib-badge[data-type="関空快速"] { background:#2375a8; border-color:#65a8cb; color:#fff; }
+#sheet .ib-badge[data-type="紀州路快速"] { background:#c97522; border-color:#e6a45e; color:#1a120b; }
+#sheet .ib-badge[data-type="快速急行"], #sheet .ib-badge[data-type="空港急行"] { background:#d56529; border-color:#e6a16f; color:#1a120b; }
+#sheet .ib-badge[data-type="快速特急"] { background:#a91c42; border-color:#d96787; color:#fff; }
+#sheet .ib-badge[data-type="準急"] { background:#28714c; border-color:#529d75; color:#fff; }
+#sheet .ib-badge[data-type="直通特急"] { background:#c8432f; border-color:#e28872; color:#fff; }
+#sheet .ib-badge[data-type="ミュースカイ"] { background:#2367a3; border-color:#60a0d5; color:#fff; }
+#sheet .ib-badge[data-type="準特急"], #sheet .ib-badge[data-type="通勤快急"] { background:#a1263d; border-color:#cd7586; color:#fff; }
+#sheet .ib-badge[data-type="区間急行"] { background:#c16a30; border-color:#e0a06d; color:#1a120b; }
+#sheet .ib-badge[data-type="区間準急"] { background:#387752; border-color:#76ab88; color:#fff; }
+#sheet .ib-badge[data-type="ライナー"] { background:#45435d; border-color:#9e91ac; color:#fff; }
+#sheet .ib-badge[data-type="エアポート快特"], #sheet .ib-badge[data-type="アクセス特急"] { background:#b02c42; border-color:#d48493; color:#fff; }
+#sheet .ib-c-train { padding-left:6px; }
+#sheet .ib-trainhead { display:flex; align-items:center; gap:6px; min-width:0; }
+/* 线路徽章：原版方形圆角矩形（line-badge 26×26 r6 / 窄屏 18×18 r4，object-fit:contain）；
+   抽屉取 20×20 r4（窄屏比例族），contain 不裁切；深色套原版 saturate(.82)，浅色不过滤 */
+#sheet .ib-lico { flex:none; position:relative; width:20px; height:20px; border-radius:4px; display:flex; align-items:center; justify-content:center; }
+#sheet .ib-lico .ib-dot { width:18px; height:18px; border-radius:4px; background:var(--lc, #6e6e6e); }
+#sheet .ib-lico:has(img) .ib-dot { display:none; }   /* 有真徽章时不留底色圆点 */
+#sheet .ib-lico img { position:absolute; inset:0; width:20px; height:20px; display:block; border-radius:4px; object-fit:contain; }
+html[data-theme="dark"] #sheet .ib-lico img { filter:saturate(.82); }
+#sheet .ib-lname { min-width:0; flex:1; font-size:15px; font-size:clamp(12px, 4.2cqw, 19px); font-weight:600;
+  line-height:1.15; white-space:nowrap; color:var(--ib-ink); }
+#sheet .ib-note { font-size:10px; font-size:clamp(8.5px, 2.6cqw, 11px); color:var(--ib-note); line-height:1.35;
+  margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#sheet .ib-open { font:8.5px/1.25 Arial, sans-serif; font-size:clamp(7.5px, 2.2cqw, 9.5px);
+  color:var(--ib-en2); letter-spacing:.02em; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#sheet .ib-c-time { padding-left:2px; padding-right:2px; align-items:center; }
+#sheet .ib-time { font:400 22px/1 "Helvetica Neue", Arial, sans-serif;
+  font:400 clamp(16px, 5.8cqw, 27px)/1 "Helvetica Neue", Arial, sans-serif;
+  letter-spacing:-.03em; font-variant-numeric:tabular-nums; white-space:nowrap; width:100%; text-align:center; color:var(--ib-time); }
+#sheet .ib-adj { font-size:8px; color:var(--ib-dim); margin-top:3px; white-space:normal; line-height:1.25; max-width:100%; overflow-wrap:break-word; }
+#sheet .ib-c-dest { padding-left:5px; padding-right:3px; }
+#sheet .ib-dest { font-size:19px; font-size:clamp(14px, 5.2cqw, 24px); line-height:1.12; white-space:nowrap;
+  font-weight:600; letter-spacing:.02em; width:100%; color:var(--ib-dest); }
+#sheet .ib-c-cars { padding-left:2px; padding-right:2px; align-items:center; text-align:center; }
+#sheet .ib-cars { font:400 14px/1.15 "Helvetica Neue", Arial, sans-serif;
+  font:400 clamp(12px, 3.4cqw, 17px)/1.15 "Helvetica Neue", Arial, sans-serif; color:var(--ib-note); white-space:nowrap; min-height:1em; width:100%; text-align:center; }
+#sheet .ib-c-track { padding-left:0; padding-right:3px; align-items:center; text-align:center; border-left:1px solid var(--ib-row-line); }
+#sheet .ib-track { font:400 24px/1 "Helvetica Neue", Arial, sans-serif;
+  font:400 clamp(18px, 6.6cqw, 30px)/1 "Helvetica Neue", Arial, sans-serif; color:var(--ib-track); white-space:nowrap; min-height:1em; width:100%; text-align:center; }
+#sheet .ib-trackcap { font-size:8.5px; font-size:clamp(7.5px, 2.3cqw, 10px); color:var(--ib-trackcap); line-height:1.2; margin-top:3px; white-space:nowrap; }
+#sheet .ib-foot { flex:none; height:26px; display:flex; align-items:center; padding:0 10px;
+  border-top:1px solid var(--ib-row-line); background:var(--ib-foot-bg); min-width:0; }
+#sheet .ib-foot-msg { font-size:10px; letter-spacing:.03em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--ib-foot-ink); flex:1; min-width:0; }
+/* 横向电光掲示带（移植自原版 .train-ticker）：4 行与页脚条之间，flex:none 固定最小可读高；
+   点阵质感＝monospace 字栈+LED 配色+tabular-nums（原版同款，非图片）；走字纯 CSS marquee */
+#sheet .ib-tick { flex:none; height:24px; display:flex; align-items:stretch; border-top:1px solid var(--ib-row-line); background:var(--ib-tick-bg); overflow:hidden; min-width:0; }
+#sheet .ib-tick-badge { flex:0 0 52px; display:flex; flex-direction:column; justify-content:center; align-items:center; background:var(--ib-tick-badge-bg); border-right:1px solid var(--ib-row-line); color:var(--ib-tick-badge-ink); font-size:9px; letter-spacing:.06em; line-height:1.2; }
+#sheet .ib-tick-badge small { font:8px/1.2 Arial, sans-serif; color:var(--ib-dim); margin-top:1px; letter-spacing:0; }
+#sheet .ib-tick-win { min-width:0; flex:1; overflow:hidden; display:flex; align-items:center; }
+#sheet .ib-tick-track { display:flex; width:max-content; will-change:transform; animation:ib-tick-scroll var(--ib-tick-dur,40s) linear infinite; }
+#sheet .ib-tick-group { display:inline-flex; align-items:center; gap:18px; padding-right:36px; white-space:nowrap; font-family:"Yu Gothic","Hiragino Kaku Gothic ProN",monospace; font-size:11px; line-height:1.2; color:var(--ib-tick-ink); font-variant-numeric:tabular-nums; letter-spacing:.02em; }
+#sheet .ib-tick-key { color:var(--ib-tick-key); }
+#sheet .ib-tick-key.is-status { color:var(--ib-tick-status); }
+#sheet .ib-tick-item { display:inline-flex; align-items:center; gap:6px; }
+#sheet .ib-tick-dot { width:7px; height:7px; border-radius:50%; flex:0 0 auto; box-shadow:0 0 0 1px rgba(255,255,255,.25) inset; }
+#sheet .ib-tick-state { font-weight:700; letter-spacing:.02em; }
+#sheet .ib-tick-state.is-alert { color:var(--ib-tick-alert); }
+#sheet .ib-tick-state.is-severe { color:var(--ib-tick-severe); }
+#sheet .ib-tick-train { color:var(--ib-tick-train); }
+#sheet .ib-tick-stops { color:var(--ib-tick-stops); }
+#sheet .ib-tick-delay { color:var(--ib-delay); }
+#sheet .ib-tick-cause { color:var(--ib-tick-cause); max-width:8em; overflow:hidden; text-overflow:ellipsis; }
+@keyframes ib-tick-scroll { from { transform:translateX(0); } to { transform:translateX(calc(-1 * var(--ib-tick-dist,600px))); } }
+@media (prefers-reduced-motion: reduce) { #sheet .ib-tick-track { animation:none; will-change:auto; } #sheet .ib-tick-win { overflow-x:auto; } }
+@media (max-width:375px) { #sheet .ib-tick { height:22px; } #sheet .ib-tick-badge { flex-basis:46px; } #sheet .ib-tick-group { font-size:10px; gap:14px; padding-right:28px; } }
+/* 滚动条：移植自 compact unit 版 .ibc-scroll（4px 宽 / thumb 圆角 2px）。注意：Chrome≥121 下
+   标准 scrollbar-width 会压制 ::-webkit-scrollbar 自定义（原版在本机实测即被压成 overlay thin），
+   故移植版只保留 webkit 伪元素保证 4px 常驻可见；Firefox 回落默认细栏。嵌入态唯一滚动容器＝#shBody
+   （行区 .ib-rows 为固定 4 行网格不滚、.ib overflow:hidden），仅板激活时生效，其他 tab 保持宿主默认 */
+#sheet .sh-body.ib-mode { overscroll-behavior:contain; }
+#sheet .sh-body.ib-mode::-webkit-scrollbar { width:4px; }
+#sheet .sh-body.ib-mode::-webkit-scrollbar-track { background:transparent; }
+#sheet .sh-body.ib-mode::-webkit-scrollbar-thumb { background:var(--ib-sb-thumb); border-radius:2px; }

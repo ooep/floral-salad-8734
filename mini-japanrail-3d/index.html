@@ -368,9 +368,12 @@ button { font-family:inherit; }
 <!-- 信息板原生整合(2026-11-05):验收完毕,CDN 绝对地址已还原并 bump ?v=20261105-ib2 破缓存 -->
 <!-- 列车抽屉终着站时刻修复(2026-11-06):app.js bump ?v=20261106-ib9 破缓存
      (ib7 被 ib 线占用、ib8 为终着行空白错版,均顺延避让) -->
+<!-- 信息板运营商品牌主题色(2026-11-07):app.js bump ?v=20261106-ib10 破缓存
+     (主题色按本站主导运营商品牌渲染:原版 12 主题复刻+线色推导,杜绝每站同绿;
+      ib9 已被抽屉修复线占用,顺延避让) -->
 <link rel="preload" as="style" href="https://jr-static.suki.ing/app/app.css?v=20261105-ib2" onload="this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://jr-static.suki.ing/app/app.css?v=20261105-ib2"></noscript>
-<link rel="modulepreload" href="https://jr-static.suki.ing/app/app.js?v=20261106-ib9" crossorigin="anonymous">
+<link rel="modulepreload" href="https://jr-static.suki.ing/app/app.js?v=20261106-ib10" crossorigin="anonymous">
 
 </head>
 <body>
@@ -940,7 +943,7 @@ window.addEventListener('unhandledrejection', e => { __pushErr('REJ ' + (e.reaso
     "three/addons/": "https://jr-static.suki.ing/vendor/three/jsm/"
 } }
 </script>
-<script type="module" src="https://jr-static.suki.ing/app/app.js?v=20261106-ib9"></script>
+<script type="module" src="https://jr-static.suki.ing/app/app.js?v=20261106-ib10"></script>
 <div id="m3dMask"></div>
 <div id="m3dViewer">
   <canvas id="m3dCanvas"></canvas>

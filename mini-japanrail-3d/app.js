@@ -8681,6 +8681,78 @@ function ibLocStatus(s, lang) {
 const IB_STATUS_COMPANY = { '東日本旅客鉄道': 'JR東日本', '西日本旅客鉄道': 'JR西日本', '東海旅客鉄道': 'JR東海',
   '九州旅客鉄道': 'JR九州', '北海道旅客鉄道': 'JR北海道', '四国旅客鉄道': 'JR四国',
   '東京地下鉄': '東京メトロ', '東京都': '東京都交通局', '大阪市高速電気軌道': '大阪メトロ' };
+/* ---------- 运营商品牌主题色（原版 themes.json 12 主题 + THEME_BY_OP 复刻；toei 与 tokyometro 共用主题） ----------
+   取色优先级（原版 themeOf 语义）：① 主导运营商（本站线路数最多者，平局取先出现）→ 12 主题表；
+   ② 无主题的运营商 → 该运营商在本站代表线路（班次最多线）的线路色推导（MU_LC_MAP → lineColor，
+   均为既有真实数据，不用 hash 造色）；③ 连线路色也没有 → 显式中性色（原版 line_brand.json fallback）。
+   不回退 jreast，杜绝「每站都是 JR 东日本绿」。 */
+const IB_THEMES = {
+  jreast: '#80b748', jrwest: '#418cc7', jrtokai: '#ff9b18', jrhokkaido: '#56c17e',
+  jrkyushu: '#d94346', jrshikoku: '#38c7bd', kintetsu: '#2861b8', hankyu: '#a95c76',
+  keihan: '#6579dc', nankai: '#7eafd6', hanshin: '#367ab9', tokyometro: '#40afcd' };
+const IB_THEME_BY_OP = {
+  '東日本旅客鉄道': 'jreast', '西日本旅客鉄道': 'jrwest', '東海旅客鉄道': 'jrtokai', '北海道旅客鉄道': 'jrhokkaido',
+  '九州旅客鉄道': 'jrkyushu', '四国旅客鉄道': 'jrshikoku', '近畿日本鉄道': 'kintetsu', '阪急電鉄': 'hankyu',
+  '京阪電気鉄道': 'keihan', '南海電気鉄道': 'nankai', '阪神電気鉄道': 'hanshin', '東京地下鉄': 'tokyometro', '東京都': 'tokyometro' };
+function ibLineBrandColor(name) {
+  /* 复用 muLineColorFor 的查表链，但只取 MU_LC_MAP / lineColor 的真实数据；查不到返回 null（不落 hash 色） */
+  const key = String(name || '').trim(); if (!key) return null;
+  const norm = muLcNorm(key);
+  if (MU_LC_MAP[key]) return { hex: muLcHex(MU_LC_MAP[key]), src: 'MU_LC_MAP:' + key };
+  if (norm !== key && MU_LC_MAP[norm]) return { hex: muLcHex(MU_LC_MAP[norm]), src: 'MU_LC_MAP:' + norm };
+  for (const part of key.split(/[・･]/)) {
+    const c = MU_LC_MAP[part] || MU_LC_MAP[muLcNorm(part)];
+    if (c) return { hex: muLcHex(c), src: 'MU_LC_MAP:' + part };
+  }
+  const stripped = key.replace(/(快速|各駅停車|緩行)$/, '');
+  if (stripped !== key && MU_LC_MAP[stripped]) return { hex: muLcHex(MU_LC_MAP[stripped]), src: 'MU_LC_MAP:' + stripped };
+  const lc = lineColor.get(key) || lineColor.get(norm);
+  if (lc) return { hex: muLcHex(lc) || lc, src: 'lineColor:' + key };
+  return null;
+}
+function ibThemeFor(board) {
+  let best = null;
+  for (const o of (board.ops || [])) { if (!best || o.lines.length > best.lines.length) best = o; }
+  const op = best ? (best.op || '') : '';
+  const tid = IB_THEME_BY_OP[op];
+  if (tid && IB_THEMES[tid]) return { hex: IB_THEMES[tid], tag: tid + '/themes.json', op };
+  if (best) {
+    /* 代表线路＝该运营商班次数（出发+到达）最多的线；并列按线名排序先者 */
+    const ls = best.lines.slice().sort((a, b) => ((b.items ? b.items.length : 0) + (b.itemsArr ? b.itemsArr.length : 0)) - ((a.items ? a.items.length : 0) + (a.itemsArr ? a.itemsArr.length : 0)));
+    for (const L of ls) { const c = ibLineBrandColor(L.name); if (c) return { hex: c.hex, tag: 'linecolor/' + c.src, op }; }
+  }
+  return { hex: '#4a545a', tag: 'neutral/line_brand.fallback', op };
+}
+function ibNormAccent(hex, mode) {
+  /* 可读性归一化（HSL，保色相＝保品牌识别）：
+     深色：L'=clamp(L,.50,.72)、S'≤.85，墨色按相对亮度 Y≥0.25→深墨 否则 白墨；
+     浅色：L'=clamp(L,.26,.30)、S'≤.90，墨色恒白墨（12 主题浅色值对白墨对比已数值核验≥4.4）。
+     仅作用于 --ib-mast-accent/--ib-vs-on/--ib-vs-on-ink；正文与横带 token 不动。 */
+  const c = muLcHex(hex) || '#4a545a';
+  const rgb = muLcRgb(c).map(v => v / 255);
+  const mx = Math.max(rgb[0], rgb[1], rgb[2]), mn = Math.min(rgb[0], rgb[1], rgb[2]);
+  let h = 0, s = 0; const l = (mx + mn) / 2;
+  if (mx !== mn) {
+    const d = mx - mn;
+    s = l > 0.5 ? d / (2 - mx - mn) : d / (mx + mn);
+    if (mx === rgb[0]) h = ((rgb[1] - rgb[2]) / d + (rgb[1] < rgb[2] ? 6 : 0)) / 6;
+    else if (mx === rgb[1]) h = ((rgb[2] - rgb[0]) / d + 2) / 6;
+    else h = ((rgb[0] - rgb[1]) / d + 4) / 6;
+  }
+  const dark = mode !== 'light';
+  const l2 = Math.min(Math.max(l, dark ? 0.50 : 0.26), dark ? 0.72 : 0.30);
+  const s2 = Math.min(s, dark ? 0.85 : 0.90);
+  const f = n => {
+    const k = (n + h * 12) % 12;
+    const a = s2 * Math.min(l2, 1 - l2);
+    const v = l2 - a * Math.max(-1, Math.min(k - 3, 9 - k, 1));
+    return Math.round(255 * v).toString(16).padStart(2, '0');
+  };
+  const css = ('#' + f(0) + f(8) + f(4)).toUpperCase();
+  const Y = arr => { const q = x => x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4); return 0.2126 * q(arr[0]) + 0.7152 * q(arr[1]) + 0.0722 * q(arr[2]); };
+  const ink = dark ? (Y(muLcRgb(css).map(v => v / 255)) >= 0.25 ? '#0c130b' : '#ffffff') : '#ffffff';
+  return { css, ink };
+}
 /* 原版 fetchJsonSoft 复刻变体：5s 超时仅守护「首字节/响应头」（线上 jrstatus 体解析可超 5s，
    整段超时会 abort 掉已成功响应＝ERR_ABORTED 空态）；头到达即清定时器，body 解析放行。
    失败静默（首取失败置空数组），60s 轮询自愈。 */
@@ -8793,7 +8865,11 @@ function ibBoardHtml(board) {
   const ib = IB_I18N[lang] || IB_I18N.ja;
   const c = ibCollect(board, kind);
   const dia = ib.dia[dayBit] || ib.dia[1];
-  let h = '<div class="ib" data-view="' + kind + '" aria-label="' + esc(ib.title) + '">';
+  /* 运营商品牌主题色：只覆盖板内三个 accent 变量（内联级联，CSS 结构不动）；横带 --ib-tick-* 不受影响。
+     data-ibtheme=「主题名/来源字段」供抽查（如 jreast/themes.json、linecolor/MU_LC_MAP:京成本線） */
+  const th = ibThemeFor(board);
+  const acc = ibNormAccent(th.hex, resolvedTheme());
+  let h = '<div class="ib" data-view="' + kind + '" data-ibtheme="' + esc(th.tag) + '" style="--ib-mast-accent:' + acc.css + ';--ib-vs-on:' + acc.css + ';--ib-vs-on-ink:' + acc.ink + '" aria-label="' + esc(ib.title) + '">';
   /* 出发/到达切换收进板头部条右侧（原 #shSubTabs 独立行在信息板激活时隐藏，高度还给板面）；
      服务日标签让位——页脚条已含同信息 */
   h += '<div class="ib-mast"><div class="ib-title">' + esc(ib.title) + '<small>' + esc(ib.sub) + '</small></div>' +
@@ -11525,6 +11601,8 @@ function applyThemeMode() {
   });
   if (map) applyBaseVisibility(); /* 深浅两套 OFM 图层随主题互斥显隐 */
   applyStationDotTheme(); /* 站点圆环色随主题换常亮/提亮变体(深浅底图均可辨) */
+  /* 信息板（列表 tab）：主题切换立即原地重渲染，让运营商主题色按深浅归一化重新取值（同语言切换的处理） */
+  try { if (sheetTab === 'tabList' && sheetStation && $('sheet').classList.contains('open')) renderStationBody(); } catch (e) {}
 }
 // 深色模式使用深色版 logo / 标签页图标（浅色模式用浅色版）
 // 注：apple-touch-icon / icon-192 / icon-512 属应用图标（iOS 主屏 / Android），

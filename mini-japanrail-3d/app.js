@@ -8640,15 +8640,17 @@ function ibLocStatus(s, lang) {
 const IB_STATUS_COMPANY = { '東日本旅客鉄道': 'JR東日本', '西日本旅客鉄道': 'JR西日本', '東海旅客鉄道': 'JR東海',
   '九州旅客鉄道': 'JR九州', '北海道旅客鉄道': 'JR北海道', '四国旅客鉄道': 'JR四国',
   '東京地下鉄': '東京メトロ', '東京都': '東京都交通局', '大阪市高速電気軌道': '大阪メトロ' };
-/* 原版 fetchJsonSoft 复刻：no-store + 5s 超时；失败静默（首取失败置空数组，后续轮询自愈） */
+/* 原版 fetchJsonSoft 复刻变体：5s 超时仅守护「首字节/响应头」（线上 jrstatus 体解析可超 5s，
+   整段超时会 abort 掉已成功响应＝ERR_ABORTED 空态）；头到达即清定时器，body 解析放行。
+   失败静默（首取失败置空数组），60s 轮询自愈。 */
 function ibStatusLoad() {
   const ctl = new AbortController();
   const to = setTimeout(() => ctl.abort(), 5000);
   return fetch(IB_STATUS_URL + '?t=' + Date.now(), { cache: 'no-store', signal: ctl.signal })
-    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(r => { clearTimeout(to); if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
     .then(j => { if (j && Array.isArray(j.lines)) ibStatusArr = j.lines; })
     .catch(() => { if (ibStatusArr === null) ibStatusArr = []; })
-    .then(() => { clearTimeout(to); try { if (sheetTab === 'tabList' && sheetStation && $('sheet').classList.contains('open')) renderStationBody(); } catch (e) {} });
+    .then(() => { try { if (sheetTab === 'tabList' && sheetStation && $('sheet').classList.contains('open')) renderStationBody(); } catch (e) {} });
 }
 function ibStatusStart() {
   if (!ibStatusTimer) { ibStatusLoad(); ibStatusTimer = setInterval(ibStatusLoad, IB_STATUS_POLL_MS); }

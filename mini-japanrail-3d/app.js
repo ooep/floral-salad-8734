@@ -8598,35 +8598,75 @@ function ibRowHtml(x, kind) {
    位置：4 行与页脚条之间；内容＝运行情报（延误/运休，仅异常）在前 + 最近一班列车案内在后；
    无内容时给一条中性说明不留空轨。走字为纯 CSS marquee（双份拷贝无缝循环），点阵质感用
    monospace 字栈+LED 配色+tabular-nums 复现（原版同款手法，不用图片）。
-   数据：延误取宿主既有 delays.json 内存态（trip.dly）；运休/运行情报取 jrstatus status.json
-   （原版同一既有接口，会话级单次拉取、不轮询、失败静默降级为空）。mock 仅经 __mjr3d.ibTickMock。 */
-let ibStatusP = null, ibStatusArr = null, ibTickMock = null;
-function ibStatusFetch() {
-  if (!ibStatusP) {
-    ibStatusP = fetchJSONWithCache('https://jrstatus.jr.suki.ing/data/status.json', null, null, true)
-      .then(j => { ibStatusArr = (j && Array.isArray(j.lines)) ? j.lines : []; })
-      .catch(() => { ibStatusArr = []; })
-      .then(() => { try { if (sheetTab === 'tabList' && sheetStation && $('sheet').classList.contains('open')) renderStationBody(); } catch (e) {} });
-  }
-  return ibStatusP;
+   数据：延误取宿主既有 delays.json 内存态（trip.dly / delayedSet 按线最大）；运休/运行情报取 jrstatus
+   status.json（原版同端点同口径：公司级过滤、60s 轮询、no-store+5s 超时、失败静默降级）。
+   mock 仅经 __mjr3d.ibTickMock。 */
+let ibStatusArr = null, ibTickMock = null, ibStatusTimer = 0;
+const IB_STATUS_URL = 'https://jrstatus.jr.suki.ing/data/status.json';
+const IB_STATUS_POLL_MS = 60 * 1000;   /* 原版 STATUS_POLL_MS 同频 */
+/* 原版 causeOf：detail 全文取最先出现的因果词 */
+const IB_CAUSE_WORDS = ['人身事故', '車両故障', '車両点検', '車両検査', '線路内点検', '線路内作業', '線路故障',
+  '信号機故障', '信号故障', 'ポイント故障', '架線故障', '架線障害', '設備故障', 'ドア故障', 'ドア点検',
+  '動物支障', '動物との接触', '急病人', '沿線火災', '火災', '土砂崩れ', '土砂流出', '保守工事',
+  '大雨', '強風', '大雪', '雪害', '地震', '台風', '洪水', '停電', '接続待ち', '乗務員', '運転士',
+  '車掌', '点検', '支障', '混雑', '工事', '車両'];
+/* 宿主 ops 正式公司名 → jrstatus company 名（复刻原版 STATUS_ALIAS 值）；未列者回退正式名本身 */
+const IB_STATUS_COMPANY = { '東日本旅客鉄道': 'JR東日本', '西日本旅客鉄道': 'JR西日本', '東海旅客鉄道': 'JR東海',
+  '九州旅客鉄道': 'JR九州', '北海道旅客鉄道': 'JR北海道', '四国旅客鉄道': 'JR四国',
+  '東京地下鉄': '東京メトロ', '東京都': '東京都交通局', '大阪市高速電気軌道': '大阪メトロ' };
+function ibStatusCause(detail) {
+  const s = String(detail || ''); let best = null, pos = 1e9;
+  for (const w of IB_CAUSE_WORDS) { const i = s.indexOf(w); if (i >= 0 && i < pos) { best = w; pos = i; } }
+  return best;
 }
-function ibStatusItemsFor(lineNames) {
+/* 原版 fetchJsonSoft 复刻：no-store + 5s 超时；失败静默（首取失败置空数组，后续轮询自愈） */
+function ibStatusLoad() {
+  const ctl = new AbortController();
+  const to = setTimeout(() => ctl.abort(), 5000);
+  return fetch(IB_STATUS_URL + '?t=' + Date.now(), { cache: 'no-store', signal: ctl.signal })
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(j => { if (j && Array.isArray(j.lines)) ibStatusArr = j.lines; })
+    .catch(() => { if (ibStatusArr === null) ibStatusArr = []; })
+    .then(() => { clearTimeout(to); try { if (sheetTab === 'tabList' && sheetStation && $('sheet').classList.contains('open')) renderStationBody(); } catch (e) {} });
+}
+function ibStatusStart() {
+  if (!ibStatusTimer) { ibStatusLoad(); ibStatusTimer = setInterval(ibStatusLoad, IB_STATUS_POLL_MS); }
+}
+/* 原版 delayMaxByLine 等价：宿主 delayedSet 按线名聚合最大延误分钟 */
+function ibDelayMaxByLine() {
+  const m = new Map();
+  for (const t of delayedSet) {
+    if (!t || !(t.dly > 0)) continue;
+    for (const L of (t.lines || [])) { const k = normName(L); if ((m.get(k) || 0) < t.dly) m.set(k, t.dly); }
+  }
+  return m;
+}
+/* 原版 statusItems 口径：板公司级（该公司全部 severity>0 条目），字段 name/severity/label||status/detail||detail_full */
+function ibStatusItemsFor(board) {
   if (ibTickMock) return ibTickMock;
-  if (!ibStatusArr || !ibStatusArr.length || !lineNames.length) return [];
-  const set = new Set(lineNames.map(n => normName(n)));
+  if (!ibStatusArr || !ibStatusArr.length) return [];
+  const comps = [];
+  for (const o of (board.ops || [])) {
+    const c = IB_STATUS_COMPANY[o.op] || o.op;
+    if (c && !comps.includes(c)) comps.push(c);
+  }
+  if (!comps.length) return [];
+  const dmax = ibDelayMaxByLine();
   const out = [];
   for (const s of ibStatusArr) {
-    if (!s || !s.line || !set.has(normName(s.line))) continue;
-    out.push({ line: s.line, company: s.company || '', label: s.label || '', sev: +s.sev || 0, min: +s.min || 0, cause: s.cause || '', detail: s.detail || '' });
-    if (out.length >= 4) break;
+    if (!s || !s.name || !comps.includes(s.company)) continue;
+    const sev = +s.severity || 0;
+    if (sev <= 0) continue;
+    const detail = s.detail_full || s.detail || '';
+    out.push({ line: s.name, company: s.company || '', label: s.label || s.status || '', sev,
+      min: Math.round(dmax.get(normName(s.name)) || 0), cause: ibStatusCause(detail) || '', detail });
   }
-  return out;
+  out.sort((a, b) => b.sev - a.sev);
+  return out.slice(0, 4);
 }
 function ibTickHtml(board, c, kind, ib) {
-  const lineNames = [];
-  for (const o of (board.ops || [])) for (const L of (o.lines || [])) if (L.name && !lineNames.includes(L.name)) lineNames.push(L.name);
-  if (ibStatusArr === null && !ibTickMock) { try { ibStatusFetch(); } catch (e) {} }
-  const st = ibStatusItemsFor(lineNames);
+  if (!ibTickMock) { try { ibStatusStart(); } catch (e) {} }
+  const st = ibStatusItemsFor(board);
   let g = '<span class="ib-tick-group">';
   if (st.length) {
     g += '<span class="ib-tick-key is-status">' + esc(ib.tickStatus) + '</span>';

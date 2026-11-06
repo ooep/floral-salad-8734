@@ -8477,6 +8477,8 @@ const IB_I18N = {
     dia: { 1: '平日ダイヤ', 2: '土曜ダイヤ', 4: '日曜・祝日ダイヤ' },
     countDep: '発', countArr: '着', trains: '本', sched: '予定 ', nextDay: '翌日', trackCap: '番線',
     viewDep: '出発', viewArr: '到着',
+    colsArr: [['種別', 'Type'], ['列車名 / 路線', 'Train / Line'], ['時刻', 'Time'], ['発地', 'Origin'], ['両数', 'Cars'], ['番線', 'Track']],
+    arrNote: '着', winNone: '今後10分に発車なし — 直近の列車を表示',
     tickBadge: '列車案内', tickTrack: '番線', tickStatus: '運行情報', tickTrain: '列車案内', tickDelay: '遅延', tickMin: '分',
     empty: 'この駅の時刻データがありません', emptyWin: '現在の時間帯に列車がありません' },
   zh: { title: '下一班列车', sub: 'Train Information',
@@ -8485,6 +8487,8 @@ const IB_I18N = {
     dia: { 1: '工作日时刻表', 2: '周六时刻表', 4: '周日·节假日时刻表' },
     countDep: '发', countArr: '到', trains: '班', sched: '原定 ', nextDay: '次日', trackCap: '站台',
     viewDep: '出发', viewArr: '到达',
+    colsArr: [['种别', 'Type'], ['列车 / 线路', 'Train / Line'], ['时刻', 'Time'], ['始发地', 'Origin'], ['编组', 'Cars'], ['站台', 'Track']],
+    arrNote: '到', winNone: '未来10分钟无发车 — 显示最近列车',
     tickBadge: '列车案内', tickTrack: '站台', tickStatus: '运行情报', tickTrain: '列车案内', tickDelay: '延误', tickMin: '分',
     empty: '暂无该站的时刻数据', emptyWin: '当前时段没有列车' },
   en: { title: 'Next Trains', sub: 'Train Information',
@@ -8493,6 +8497,8 @@ const IB_I18N = {
     dia: { 1: 'Weekday', 2: 'Saturday', 4: 'Sun & Holiday' },
     countDep: 'Dep.', countArr: 'Arr.', trains: 'trains', sched: 'sched. ', nextDay: 'next day', trackCap: 'Track',
     viewDep: 'Dep', viewArr: 'Arr',
+    colsArr: [['Type', '種別'], ['Train / Line', '列車名 / 路線'], ['Time', '時刻'], ['Origin', '発地'], ['Cars', '両数'], ['Track', '番線']],
+    arrNote: 'arr', winNone: 'No departures in next 10 min — showing nearest trains',
     tickBadge: 'Trains', tickTrack: 'Track', tickStatus: 'Service', tickTrain: 'Next', tickDelay: 'delay', tickMin: 'min',
     empty: 'No timetable data for this station', emptyWin: 'No trains in the current time window' },
 };
@@ -8568,7 +8574,10 @@ function ibRowHtml(x, kind) {
   const dly = (tr.dly > 0) ? Math.round(tr.dly) : 0;
   const shown = (kind === 'dep' && dly) ? it.dep + dly : it.dep;
   const originNm = kind === 'dep' ? ((tr.jas && tr.jas[0]) || '') : (it.term || '');
-  const destNm = it.term || '';
+  /* 到达视图：主列＝始发站（表头同切「始发地」），副注＝目的地「着」；出发视图维持终点站主列 */
+  const destNm = kind === 'arr' ? ((tr.jas && tr.jas[0]) || it.term || '') : (it.term || '');
+  const noteNm = kind === 'arr' ? (it.term || '') : originNm;
+  const noteSuf = kind === 'arr' ? (ib.arrNote || '') : ib.origin;
   const lic = (window.LINE_ICON || {})[L.name];
   const plat = ibPlatOf(it);
   const tyTxt = lang === 'en' ? (ty.en || ty.text) : (lang === 'zh' ? ty.zh : ty.text);
@@ -8584,7 +8593,7 @@ function ibRowHtml(x, kind) {
   h += '<div class="ib-cell ib-c-train"><div class="ib-trainhead">' +
     '<span class="ib-lico"><i class="ib-dot"></i>' + (lic ? '<img src="' + lic + '" alt="" loading="lazy">' : '') + '</span>' +
     '<div class="ib-lname" data-fit="1" title="' + esc(ibLocLine(L.name)) + '">' + esc(ibLocLine(L.name)) + '</div></div>' +
-    '<div class="ib-note">' + esc(ibLocStation(originNm)) + ' ' + esc(ib.origin) + '</div>' +
+    '<div class="ib-note">' + esc(ibLocStation(noteNm)) + ' ' + esc(noteSuf) + '</div>' +
     '<div class="ib-open">' + esc(opTxt || '') + '</div></div>';
   h += '<div class="ib-cell ib-c-time"><time class="ib-time" data-fit="1">' + fmtHm(shown) + '</time>' +
     (adj ? '<div class="ib-adj">' + esc(adj) + '</div>' : '') + '</div>';
@@ -8680,6 +8689,7 @@ function ibStatusItemsFor(board) {
 }
 function ibTickHtml(board, c, kind, ib) {
   if (!ibTickMock) { try { ibStatusStart(); } catch (e) {} }
+  try { ibFollowStart(); } catch (e) {}
   const st = ibStatusItemsFor(board);
   let g = '<span class="ib-tick-group">';
   if (st.length) {
@@ -8709,6 +8719,32 @@ function ibTickHtml(board, c, kind, ib) {
   return '<div class="ib-tick" aria-label="' + esc(ib.tickBadge) + '"><span class="ib-tick-badge">' + esc(ib.tickBadge) +
     '<small>' + esc(plat + ib.tickTrack) + '</small></span><span class="ib-tick-win"><span class="ib-tick-track">' + g + g + '</span></span></div>';
 }
+/* ---------- 板内十分钟窗口自动跟随：每 30s 校准、分钟变化才重渲染（≥1 次/分钟）；
+   手动滚动（wheel/touch）暂停 8s 让位，静置后恢复；重渲染保留 scrollTop 不跳动 ---------- */
+let ibFollowTimer = 0, ibFollowPauseUntil = 0, ibFollowLastMin = -1;
+function ibNowSvc() { const cm = curMin(); return cm < 240 ? cm + 1440 : cm; }
+function ibFollowTick() {
+  const m = curMin();
+  if (m === ibFollowLastMin) return;
+  ibFollowLastMin = m;
+  if (sheetTab !== 'tabList' || !sheetStation || !$('sheet').classList.contains('open') || $('shBody').hidden) return;
+  if (Date.now() < ibFollowPauseUntil) return;
+  const sb = $('shBody'); const st = sb.scrollTop;
+  try {
+    renderStationBody();
+    sb.scrollTop = st;
+    const r0 = sb.querySelector('.ib-row');
+    if (r0 && sb.scrollHeight > sb.clientHeight + 1) r0.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  } catch (e) {}
+}
+function ibFollowStart() {
+  if (ibFollowTimer) return;
+  ibFollowTimer = setInterval(ibFollowTick, 30000);
+  const sb = $('shBody');
+  const pause = () => { ibFollowPauseUntil = Date.now() + 8000; };
+  sb.addEventListener('wheel', pause, { passive: true });
+  sb.addEventListener('touchstart', pause, { passive: true });
+}
 function ibBoardHtml(board) {
   const kind = (sheetDepArr === 'arr') ? 'arr' : 'dep';
   const ib = IB_I18N[lang] || IB_I18N.ja;
@@ -8721,7 +8757,8 @@ function ibBoardHtml(board) {
     '<div class="ib-viewseg"><button type="button" class="ib-vs' + (kind === 'dep' ? ' on' : '') + '" data-ibview="dep">' + esc(ib.viewDep) + '</button>' +
     '<button type="button" class="ib-vs' + (kind === 'arr' ? ' on' : '') + '" data-ibview="arr">' + esc(ib.viewArr) + '</button></div></div>';
   h += '<div class="ib-colhead" aria-hidden="true">';
-  for (let i = 0; i < 6; i++) h += '<div><div class="jp">' + esc(ib.cols[i][0]) + '</div><div class="en">' + esc(ib.cols[i][1]) + '</div></div>';
+  const cols = (kind === 'arr' && ib.colsArr) ? ib.colsArr : ib.cols;
+  for (let i = 0; i < 6; i++) h += '<div><div class="jp">' + esc(cols[i][0]) + '</div><div class="en">' + esc(cols[i][1]) + '</div></div>';
   h += '</div>';
   if (c.rows.length) {
     h += '<div class="ib-rows">';
@@ -8730,6 +8767,11 @@ function ibBoardHtml(board) {
     h += '</div>';
   } else {
     h += '<div class="ib-rows ib-rows-none"><div class="ib-empty">' + esc(c.total ? ib.emptyWin : ib.empty) + '</div></div>';
+  }
+  /* 十分钟窗口空窗：展示最近若干班（rows 即最近）+ 中性说明，不留空白 */
+  const ns = ibNowSvc();
+  if (c.rows.length && !c.rows.some(r => r.it.dep >= ns - 1 && r.it.dep <= ns + 10)) {
+    h += '<div class="ib-win-note">' + esc(ib.winNone) + '</div>';
   }
   h += ibTickHtml(board, c, kind, ib);
   const cnt = (kind === 'arr' ? ib.countArr : ib.countDep) + ' ' + c.total + ' ' + ib.trains;

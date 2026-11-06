@@ -1376,6 +1376,7 @@ html[data-theme="dark"] #sheet .ib-lico img { filter:saturate(.82); }
 #sheet .ib-tick-cause { color:var(--ib-tick-cause); max-width:8em; overflow:hidden; text-overflow:ellipsis; }
 /* 原版同款：无翻译源保留日文原文时的标记（点线下划+降透明） */
 #sheet .ib-tick .is-untranslated { opacity:.85; text-decoration:underline dotted; text-decoration-thickness:1px; text-underline-offset:3px; }
+#sheet .ib-win-note { flex:none; font-size:9px; color:var(--ib-dim); padding:2px 10px; background:var(--ib-row-alt); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 @keyframes ib-tick-scroll { from { transform:translateX(0); } to { transform:translateX(calc(-1 * var(--ib-tick-dist,600px))); } }
 @media (prefers-reduced-motion: reduce) { #sheet .ib-tick-track { animation:none; will-change:auto; } #sheet .ib-tick-win { overflow-x:auto; } }
 @media (max-width:375px) { #sheet .ib-tick { height:22px; } #sheet .ib-tick-badge { flex-basis:46px; } #sheet .ib-tick-group { font-size:10px; gap:14px; padding-right:28px; } }

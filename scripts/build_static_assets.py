@@ -163,7 +163,7 @@ def main():
     app_out = os.path.join(out, 'app')
     os.makedirs(app_out, exist_ok=True)
     n = 0
-    for f in ('app.css', 'app.js'):
+    for f in ('app.css', 'app.js', 'train3d.js'):
         src = os.path.join(MINI, f)
         if os.path.isfile(src):
             shutil.copy2(src, os.path.join(app_out, f))

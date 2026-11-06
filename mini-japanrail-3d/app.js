@@ -5,9 +5,11 @@
  *  渲染:MapLibre GL JS v6(Globe 投影)+ projectTile 注入自定义 WebGL 列车层
  *  时钟:JST 每帧推算全部在途列车位置,运行时零数据请求
  * ================================================================== */
-import * as maplibregl from 'https://jr-static.suki.ing/vendor/maplibre/maplibre-gl.mjs';
+/* EXP train3d 分支:maplibre 改本地 vendor(线上 main 为 jr-static CDN 绝对地址) */
+import * as maplibregl from './vendor/maplibre/maplibre-gl.mjs';
 /* 供 index.html 启动看门狗判定:模块已执行(静态 import 失败时本行不会运行) */
 window.__appJsLoaded = true;
+window.__appVer = 'c3-stopslot'; /* 重叠修复轮 canary:停站轨位+槽位 */
 
 /* ---------------- 常量 ---------------- */
 const JST = 9 * 3600 * 1000;
@@ -2769,9 +2771,32 @@ function fallbackSeg(t, i) {
   if (share) (g.fbI || (g.fbI = []))[i] = { coords: fb.coords, cum: fb.cum, len: fb.len, single: fb.single, clamp: fb.clamp };
   return fb;
 }
+let _stopReg = [], _stopRegFrame = -1; /* 帧内停站位置簇登记:20m 内归一簇 */
+let _stopLastS = 0;                    /* 最近一次 stopSlotAt 分到的槽号(调用方写 _pos[8]) */
+/* 同簇多车槽位:20m 内第 s 车横向错开 s*4.2m(≈邻线轨距);>20m 独立成簇保持真位。
+   不依赖站名/分支,停站、发车锚点、退化钉点统一入簇。返回错开后 [lng,lat] */
+function stopSlotAt(cb, lng, lat) {
+  if (_stopRegFrame !== frameC) { _stopRegFrame = frameC; _stopReg = []; }
+  const mx = 111320 * Math.cos(lat * Math.PI / 180);
+  let ent = null;
+  for (const e of _stopReg) { const dx = (e.lng - lng) * mx, dy = (e.lat - lat) * 110540; if (dx * dx + dy * dy < 400) { ent = e; break; } }
+  if (!ent) { ent = { lng, lat, s: 0 }; _stopReg.push(ent); }
+  _stopLastS = ent.s++;
+  if (_stopLastS <= 0) return [lng, lat];
+  const dm = _stopLastS * 4.2, clat = Math.cos(lat * Math.PI / 180);
+  return [lng + Math.cos(cb) * dm / (111320 * clat), lat - Math.sin(cb) * dm / 110540];
+}
+/* 复线左侧行车:运行轨中心相对线路中心线左偏 2.1m(真实平行轨距的一半),
+   消除共用 way 反会车/同线双轨的互相穿插;单线区段无会车时偏移不可察 */
+function leftTrackOff(cb, lng, lat) {
+  const lx = -Math.cos(cb), ly = Math.sin(cb), clat = Math.cos(lat * Math.PI / 180);
+  return [lng + lx * 2.1 / (111320 * clat), lat + ly * 2.1 / 110540];
+}
 function trainPosition(t, M) {
   const { dep, arr, N, jas } = t;
   _pos[6] = 0;   /* 共享数组:每次调用先清零,防上一班次的 unrel 标记残留 */
+  _pos[7] = -1;  /* 停站索引标记(__appCollide 诊断用):-1=在途,≥0=停在 jas[i] */
+  _pos[8] = 0;   /* 槽位标记:0=未加槽位偏移(参与同点去重),≥1=已错开到邻轨 */
   /* 段内快径(十九轮,二十四轮并入梯形剖面):缓存上次解算的(时间窗 m0/m1、折线子段 kLo/kSpan、
      子段起点/方向/方位角、线路/种类)。M 仍落在同一时间窗与同一折线子段内时,直接复用子段几何;
      frac 与速度改由梯形剖面按加减速非线性推进(与全量解算同一算法),免去 locateSeg 与 skCum
@@ -2797,8 +2822,17 @@ function trainPosition(t, M) {
       _pos[0] = fk.c0x + fk.dx * f;
       _pos[1] = fk.c0y + fk.dy * f;
       _pos[2] = fk.brg;
+      _pos[8] = 0;
+      /* 与全量路径同口径:发车瞬间锚点/距站≤40m 的 kmh=0 钉点 → 槽位(簇名取近端站 i 或 i+1);再复线左偏 */
+      if (kmh === 0) {
+        let stN = null;
+        for (let k = fk.i; k <= fk.i + 1 && k < t.N; k++) { const cK = stopPoint(t, k); if (cK && geoKm(cK, [_pos[0], _pos[1]]) <= 0.04) { stN = 1; break; } }
+        if (!stN && frac === 0 && fk.kLo === 0) stN = 1;
+        if (stN) { const q = stopSlotAt(fk.brg, _pos[0], _pos[1]); _pos[0] = q[0]; _pos[1] = q[1]; _pos[8] = _stopLastS; }
+      }
+      const q2 = leftTrackOff(fk.brg, _pos[0], _pos[1]); _pos[0] = q2[0]; _pos[1] = q2[1];
       _pos[3] = fk.line; _pos[4] = fk.kind; _pos[5] = kmh;
-      _pos[6] = unrel;
+      _pos[6] = unrel; _pos[7] = -1;
       return _pos;
     }
   }
@@ -2850,7 +2884,17 @@ function trainPosition(t, M) {
     if (c) {
       _pos[2] = stopBearing(t, i, c);
       const e = t._seg[i];
-      _pos[0] = c[0]; _pos[1] = c[1]; _pos[3] = e ? e.line : lineOfPair(t, i); _pos[4] = kindOfPair(t, i); _pos[5] = 0;
+      /* C 类修复:停站位置取本线区间几何的站端轨点(站内真实平行轨位,snapToStops 未吸附时
+         几何端点距站 ≤30m),不同线路停站车各落各自轨道,不再共享站中心一点;
+         几何站端点距站 >40m(已吸附/缺几何)才回退站中心。
+         A 类修复:同锚点(同几何端点或同回退点)同时刻停多车时按帧内序分配横向槽位
+         (4.2m≈邻线轨距),绝不两车画同一处;槽序=fadeList 稳定序。 */
+      let sp = c;
+      if (e && e.coords && e.coords.length && geoKm(c, e.coords[0]) <= 0.04) sp = e.coords[0];
+      sp = stopSlotAt(_pos[2], sp[0], sp[1]);
+      _pos[8] = _stopLastS;
+      sp = leftTrackOff(_pos[2], sp[0], sp[1]);
+      _pos[0] = sp[0]; _pos[1] = sp[1]; _pos[3] = e ? e.line : lineOfPair(t, i); _pos[4] = kindOfPair(t, i); _pos[5] = 0; _pos[7] = i;
       return _pos;
     }
     /* 无坐标站停车(磐越西線咲花/日出谷/偕楽園等):frac 归零,由下方区间几何
@@ -2880,9 +2924,11 @@ function trainPosition(t, M) {
     }
   }
   if (coords) {
+    let anchor = 0;
     if (len <= 0) {
       _pos[0] = coords[0][0]; _pos[1] = coords[0][1];
       _pos[2] = pathBrgAt(coords, cum, 0, len);
+      anchor = 1;
     }
     else {
       const target = fPos * len;
@@ -2909,7 +2955,21 @@ function trainPosition(t, M) {
       /* 暂存本子段几何(快径用):kLo/kSpan 定义 M→距离 的线性映射的有效域 */
       ckLo = cum[k-1]; ckSpan = segLen; cc0x = c0[0]; cc0y = c0[1];
       cdx = c1[0] - c0[0]; cdy = c1[1] - c0[1]; cbrg = _pos[2];
+      if (kmh === 0 && fPos === 0) anchor = 1;   /* 发车瞬间锚在站端点:同点槽位防多车堆叠 */
     }
+    /* 退化零几何/滑窗钉点(kmh=0)视同停站锚点:簇名取距位置 ≤40m 的站(i 或 i+1,
+       钉点常在区间另一端),保证同站不同分支的车共享同一槽位簇 */
+    let anchorSt = null;
+    if (kmh === 0) {
+      for (let k = i; k <= i + 1 && k < N; k++) { const cK = stopPoint(t, k); if (cK && geoKm(cK, [_pos[0], _pos[1]]) <= 0.04) { anchorSt = t.jasN[k]; break; } }
+      if (!anchorSt && anchor) anchorSt = t.jasN[i];
+    }
+    if (anchor || anchorSt) {
+      const q = stopSlotAt(_pos[2], _pos[0], _pos[1]);
+      _pos[0] = q[0]; _pos[1] = q[1]; _pos[8] = _stopLastS;
+    }
+    /* 复线左侧行车偏移(与快径同口径) */
+    const q2 = leftTrackOff(_pos[2], _pos[0], _pos[1]); _pos[0] = q2[0]; _pos[1] = q2[1];
     if (!line) line = lineOfPair(t, i);
     if (!kind) kind = lineKind.get(line) || '鉄道';
     /* 线路约束(MC 核心):列车只能出现在途经线路上 —— fallback 路径生成时已做
@@ -3463,6 +3523,8 @@ function updateTierGate(z) {
 const FADE_MS = 260;      /* 单程淡入/淡出时长 */
 let fadeStamp = 0;        /* 帧戳:避免每帧新建 Set 做存活判定 */
 const fadeList = [];      /* 正在显示或正在淡出的班次(携带 alpha) */
+const drawnPosSeen = new Set(); /* 帧内同线同点同向去重(A 类数据层重复班次只留一个) */
+const drawnPosBest = new Map(); /* EXP 去重优选:dkey → 胜出班次(有 3D 映射者优先,防未映射重复对象占位) */
 const eligible = [];      /* 本帧通过廉价筛选的班次(复用数组,不重建) */
 
 /* 按日预过滤:r 掩码不随帧变化,一次过滤后每帧只遍历当日班次(省 57049×N 次 & 分支)。
@@ -4587,10 +4649,33 @@ function updateTrains(M, dtms) {
   }
 
   /* ── 阶段 3:位置解算 + 顶点构建(只对 alpha>0 的班次,即真正画到屏幕上的那一批) ── */
+  /* EXP train3d(exp/train3d-20261105):z≥14.2 且模块就绪时收集 3D 候选;
+     命中模型的班次按全局交叉淡化系数 f 降 2D alpha,f≥0.985 时 2D 完全让位 */
+  /* 门限相对 baseMaxZoom(3D 动态放宽上限前的基准):放宽后 getMaxZoom() 上移,
+     若仍用它做门限会把在屏列车挡在推送门外(3D 淡入却无推送→inst 淡出) */
+  const T3DH = (z >= ((window.__T3D && window.__T3D.baseMaxZoom) || map.getMaxZoom()) - 1.8 && window.__T3D && window.__T3D.f > 0.01) ? window.__T3D : null;
+  if (T3DH) T3DH.begin();
   let stopped = -1;
+  drawnPosSeen.clear();
+  /* EXP 去重优选预判:用上一帧缓存位置/航向/槽位预投 dkey,有 3D 映射者胜出 ——
+     实测京浜東北 11180 与未映射重复对象 11016 同格同线同向,旧序未映射者先占位,
+     映射班次被整条跳过(永远 2D)。首帧无缓存退回旧行为,次帧起生效。 */
+  drawnPosBest.clear();
+  if (T3DH) {
+    for (let i = 0; i < fadeList.length; i++) {
+      const q = fadeList[i];
+      if (q._f < 0.02 || q._lpx === undefined || q._brg2 === undefined) continue;
+      if ((q._slot | 0) !== 0) continue;
+      if (wRect && (q._lpx < vpLng0 - 0.06 || q._lpx > vpLng1 + 0.06 || q._lpy < vpLat0 - 0.06 || q._lpy > vpLat1 + 0.06)) continue;
+      const mapped = !!(q._t3du && (!T3DH.modelOk || T3DH.modelOk(q._t3du)));
+      const dkey = (q._line || '') + '|' + q._lpx.toFixed(4) + ',' + q._lpy.toFixed(4) + '|' + Math.round(q._brg2 * 10);
+      const cur = drawnPosBest.get(dkey);
+      if (!cur || (mapped && !cur.m)) drawnPosBest.set(dkey, { t: q, m: mapped });
+    }
+  }
   for (let i = 0; i < fadeList.length; i++) {
     const t = fadeList[i];
-    const al = t._f;
+    let al = t._f;
     if (al < 0.02) continue;                    /* 尚未起步 / 已淡完:不占顶点、不上传 */
     if (n >= MAXT - 1) { stopped = i; break; }
     if (!growVtxBuf(vtx * STRIDE + (t.dly > 0 ? 42 : 36) * STRIDE)) { stopped = i; break; }
@@ -4610,6 +4695,7 @@ function updateTrains(M, dtms) {
        归零后定位恢复时会从 0 淡入。 */
     if (!p) { t._ok = 0; t._f = 0; continue; }
     t._lpx = p[0]; t._lpy = p[1]; t._lpxM = M2; /* 位置缓存(屏外远车跳过判定用) */
+    t._brg2 = p[2]; t._slot = p[8] | 0; /* EXP 去重优选预判缓存(下一帧 dkey 预投用) */
     /* 视口外免写(十轮/十四轮):bbox 级 eligible 含大量「线路穿过视口但车在远处」的班次。
        解算位置在写矩形(视锥+64px)外 → 本帧不写顶点:GL 本来就会裁掉,视觉零差异;
        顶点流/GPU 处理量与颜色/图标解算同省。班次仍在 fadeList(alpha 保持),
@@ -4642,6 +4728,31 @@ function updateTrains(M, dtms) {
           lat -= Math.cos(p[2]) * offD;
           break;
         }
+      }
+    }
+    /* A 类数据层重复班次去重:同线、同点(~10m 格)、同向被画两次(重复时刻表/重复对象)→ 只留一个,
+       绝不两个都画在同一处;已加槽位偏移(邻轨)的车不参与;正常追踪间隔不受影响 */
+    if ((p[8] | 0) === 0) {
+      const dkey = (p[3] || '') + '|' + p[0].toFixed(4) + ',' + p[1].toFixed(4) + '|' + Math.round(p[2] * 10);
+      const best = drawnPosBest.get(dkey);
+      if (best && best.t !== t) continue; /* 预投胜出者不是本班次 → 让位(映射优先) */
+      if (!best && drawnPosSeen.has(dkey)) continue; /* 无预判(首帧/缓存格漂移)退回旧去重 */
+      drawnPosSeen.add(dkey);
+    }
+    if (T3DH) {
+      /* 模型映射按班次缓存(modelMap 加载后不变);M3D.ready 前不缓存,加载完成后自然命中 */
+      if (t._t3du === undefined && M3D.ready) t._t3du = M3D.pathOf(t) || '';
+      /* v3:无单节资产/轴向不可校正的模型回退 2D(modelOk 由 train3d 维护) */
+      if (t._t3du && (!T3DH.modelOk || T3DH.modelOk(t._t3du))) {
+        t._t3dpF = frameC; /* EXP 诊断:本帧已推送 3D 的帧戳(__appVisTrips 归因 2D/3D 用) */
+        T3DH.push(t, lng, lat, p[2], t._t3du, M2, p[5]);
+        if (T3DH.f >= 0.985) {
+          /* 3D 完全接管:仍进拾取集(点击详情/跟随不失效),只跳过 2D 顶点 */
+          visibleTrips.push(t); visibleXY[n * 2] = lng; visibleXY[n * 2 + 1] = lat;
+          drawnCouple.add(t); n++;
+          continue;
+        }
+        al *= (1 - T3DH.f);
       }
     }
     const mx = (lng + 180) / 360 - cxo;
@@ -4710,6 +4821,7 @@ function updateTrains(M, dtms) {
     n++;
     if (drawGlow) { let go = glowN * 8; glowBuf[go++] = mx; glowBuf[go++] = my; glowBuf[go++] = dxm; glowBuf[go++] = dym; glowBuf[go++] = r; glowBuf[go++] = g; glowBuf[go++] = b; glowBuf[go++] = al; glowN++; }
   }
+  if (T3DH) T3DH.end();
   /* 触顶(MAXT/缓冲上限)时,未画出的班次直接把 alpha 归零:否则阶段 2 每帧仍在 +step,
      与本处相抵会让 alpha 冻结在 1,一旦上限松动就整批以全不透明"啪"地冒出来 ——
      归零后重新淡入,观感一致。 */
@@ -5046,6 +5158,13 @@ async function initMap() {
     transformRequest: (url, resourceType) =>
       (resourceType === 'Tile' && url.includes('gsi.go.jp')) ? { url, cache: 'force-cache' } : { url },
   });
+  window.__map = map; /* EXP 调试暴露(仅实验分支) */
+  /* EXP train3d:实验旋钮 ?t3dmax=17.5 —— 抬升 maxZoom 以便近距观察真实比例 3D 列车
+     (默认 16 时车宽仅 ~4px;阈值随 maxZoom 相对化,始终=最高 1.5 档) */
+  try {
+    const tmx = +new URLSearchParams(location.search).get('t3dmax');
+    if (tmx >= 16 && tmx <= 18.5) map.setMaxZoom(tmx);
+  } catch (e) {}
   /* 液态玻璃改版:移除左下角缩放/指南针 NavigationControl 与比例尺(原比例尺容器被隐藏从未显示),缩放改由滚轮/双指手势完成,底部四角留给 Dock */
   let stateSaveT = 0;
   map.on('moveend', () => { clearTimeout(stateSaveT); stateSaveT = setTimeout(stateHash, 700); });
@@ -6266,6 +6385,473 @@ let scanStamp = 0, scanMinute = -1, scanGates = -1, scanPure = null, scanHasVp =
 let scanList = null, scanDay = null;
 /* 写矩形(z≥5 时按当前视锥+64px 余量填充;z<5 为 null 不裁切) */
 let wRect = null;
+/* ── EXP train3d(exp/train3d-20261105):高缩放 3D 列车,模块懒加载 ──
+   移动端/低端(IS_MOBILE/PERF_LOW)不加载 → 全程保持 2D 图标(回退策略) */
+let t3dModP = null;
+let lastT3dPushT = 0; /* EXP train3d:静态帧补推送节流戳 */
+function t3dEnsure() {
+  if (t3dModP || IS_MOBILE || PERF_LOW) return;
+  t3dModP = import('./train3d.js?v=t3d1')
+    .then(m => { m.init(map); })
+    .catch(e => { pushErrSafe('t3d ' + (e && e.message || e)); });
+}
+window.__t3dForce = () => { t3dEnsure(); return !!window.__T3D; };
+/* EXP train3d:逐车厢铰接需要沿程采样位置(车头回溯 di/速度),暴露只读解算 */
+window.__t3dSolve = (t, M) => { const p = trainPosition(t, windowShift(t, M)); return p ? [p[0], p[1], p[2], p[5], p[7] | 0] : null; };
+/* 按班次号解算(诊断用):返回 [lng,lat,brg,kmh,stopI] */
+window.__t3dSolveById = (tid, M) => { let t = null; for (const q of fadeList) if (q.t === tid) { t = q; break; } if (!t) return null; const p = trainPosition(t, windowShift(t, M)); return p ? [+p[0].toFixed(6), +p[1].toFixed(6), +(p[2] * 57.29578).toFixed(1), +p[5].toFixed(0), p[7] | 0, t.jasN[p[7] | 0] || ''] : null; };
+/* 重叠诊断(数据层,不依赖 3D 模型):同一时刻当前视口全部在显班次解算位置,
+   两两距离+中心线夹角普查。分类:A=同线占位冲突;B=异线平行贴近(夹角≤10°);C=异线共点(<5m,停站共享站坐标);
+   crossing=夹角>10°且<30m。连挂伙伴(cpl)按设计紧贴,排除。供改前/改后对比与回归断言。 */
+/* EXP 诊断(仅实验分支):当前视口在显班次的 2D/3D 归因表 —— 逐班次给出
+   pushed(本帧是否已推送 3D)/t3du(模型映射路径,空=无映射回退 2D)/停站与速度,
+   用于「交付截图里哪些车是 2D 图标、为什么」的取证。 */
+window.__appVisTrips = (M) => {
+  const MM = (M == null) ? +((document.getElementById('cSlider') || {}).value || 0) : M;
+  let b0 = null;
+  try { const b = window.__map && window.__map.getBounds(); if (b) b0 = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()]; } catch (e) {}
+  const out = [];
+  for (const t of fadeList) {
+    if (t._f < 0.02) continue;
+    const ms = windowShift(t, MM);
+    const p = trainPosition(t, ms);
+    if (!p) continue;
+    if (b0 && (p[0] < b0[0] - 0.01 || p[0] > b0[2] + 0.01 || p[1] < b0[1] - 0.01 || p[1] > b0[3] + 0.01)) continue;
+    const si = p[7] | 0;
+    out.push({ t: t.t, nm: t.nm || '', line: p[3] || '', lines: t.lines || [], stopN: si >= 0 ? (t.jasN[si] || '') : '',
+      kmh: +(+p[5]).toFixed(0), pushed: t._t3dpF === frameC, t3du: t._t3du === undefined ? 'undef' : (t._t3du || ''),
+      lng: +p[0].toFixed(5), lat: +p[1].toFixed(5) });
+    if (out.length >= 40) break;
+  }
+  return { M: MM, frameC, n: out.length, rows: out };
+};
+window.__uidC = 0;
+/* fadeList 内同 t.t 重复对象普查(数据层重复班次诊断) */
+window.__appDupIds = () => { const seen = new Map(), dup = []; for (const q of fadeList) { const n = (seen.get(q.t) || 0) + 1; seen.set(q.t, n); if (n === 2) dup.push(q.t); if (dup.length >= 12) break; } return dup; };
+window.__appSolveUid = (uid, M) => { let t = null; for (const q of fadeList) if (q.__uid === uid) { t = q; break; } if (!t) return null; const ms = windowShift(t, M); const p = trainPosition(t, ms); return p ? [+p[0].toFixed(6), +p[1].toFixed(6), +(p[2] * 57.29578).toFixed(1), +p[5].toFixed(0), p[7] | 0, ms - M, t.t, t.nm || ''] : null; };
+window.__appCollide = (M) => {
+  const MM = (M == null) ? +((document.getElementById('cSlider') || {}).value || 0) : M;
+  const K = Math.PI / 180;
+  /* fadeList 非视口过滤(全国在显),按当前地图 bounds+1km  margin 取本视口子集 */
+  let b0 = null;
+  try { const b = window.__map && window.__map.getBounds(); if (b) b0 = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()]; } catch (e) {}
+  const R = [];
+  const Rseen = new Set(); /* 与渲染同口径去重:数据层重复班次只计一个 */
+  for (const t of fadeList) {
+    if (t._f < 0.02) continue;
+    const ms = windowShift(t, MM);
+    const p = trainPosition(t, ms);
+    if (!p) continue;
+    if (b0 && (p[0] < b0[0] - 0.01 || p[0] > b0[2] + 0.01 || p[1] < b0[1] - 0.01 || p[1] > b0[3] + 0.01)) continue;
+    if ((p[8] | 0) === 0) {
+      const dkey = (p[3] || '') + '|' + p[0].toFixed(4) + ',' + p[1].toFixed(4) + '|' + Math.round(p[2] * 10);
+      if (Rseen.has(dkey)) continue;
+      Rseen.add(dkey);
+    }
+    const si = p[7] | 0;
+    if (!t.__uid) t.__uid = ++window.__uidC;
+    R.push({ trip: t.t, uid: t.__uid, ws: Math.abs(ms - MM) > 720 ? (ms > MM ? 1 : -1) : 0, line: p[3] || '', lng: p[0], lat: p[1], brg: p[2], kmh: +(+p[5]).toFixed(0), stopN: si >= 0 ? (t.jasN[si] || '') : '', cpl: (t.cpl || []).map(c => c.p && c.p.t) });
+  }
+  const pairs = [];
+  for (let i = 0; i < R.length; i++) for (let j = i + 1; j < R.length; j++) {
+    const a = R[i], b = R[j];
+    const dx = (b.lng - a.lng) * Math.cos((a.lat + b.lat) / 2 * K) * 111320;
+    const dy = (b.lat - a.lat) * 110540;
+    const d = Math.hypot(dx, dy);
+    if (d >= 50) continue;
+    let ang = Math.abs((((a.brg - b.brg) % (2 * Math.PI)) + 3 * Math.PI) % (2 * Math.PI) - Math.PI) / K; if (ang > 90) ang = 180 - ang;
+    const cpl = (a.cpl.indexOf(b.trip) >= 0) || (b.cpl.indexOf(a.trip) >= 0);
+    pairs.push({ a: a.trip, b: b.trip, ua: a.uid, ub: b.uid, wa: a.ws, wb: b.ws, ka: a.kmh, kb: b.kmh, la: a.line, lb: b.line, d: +d.toFixed(1), ang: +ang.toFixed(1), sameLine: a.line === b.line, cpl: !!cpl, sa: a.stopN, sb: b.stopN });
+  }
+  pairs.sort((x, y) => x.d - y.d);
+  const real = pairs.filter(p => !p.cpl);
+  const under15 = real.filter(p => p.d < 15);
+  const crossing = real.filter(p => p.d < 30 && p.ang > 10);
+  /* 分类阈 3.5m:槽位/复线偏移后的邻轨间距 ≥4.2m 属正常平行轨,不计冲突 */
+  const clsA = real.filter(p => p.sameLine && p.d < 3.5);
+  const clsC = real.filter(p => !p.sameLine && p.d < 3.5);
+  const clsB = real.filter(p => !p.sameLine && p.d < 15 && p.ang <= 10);
+  return { M: MM, n: R.length, minPairDist: real.length ? real[0].d : null, pairsUnder15m: under15.length, crossingPairs: crossing.length, nA: clsA.length, nB: clsB.length, nC: clsC.length, pairsUnder50: real.slice(0, 60), crossing: crossing.slice(0, 60) };
+};
+/* 几何净化(模块级,供 __t3dArc 采样与 __t3dLegSan 走廊断言共用):
+   站喉 snapToStops 短桩/错向残段(单点回折)从折线中剔除并重算 cum ——
+   否则采样点落在回折段上,位置折叠(总长误差 1–2%)、切线尖峰(178° 伪转折)。结果按腿缓存。 */
+function sanitizeLeg(ee, cosf) {
+  if (!ee || !ee.coords || !ee.cum) return ee;
+  if (ee._t3dsan) return ee._t3dsan;
+  let co = ee.coords; const cum0 = ee.cum;
+  if (co.length < 3) { ee._t3dsan = ee; return ee; }
+  /* 局部尖峰判定:前后子段方位差 >60° 且邻域 <1.2km = 单点回折(短桩/道岔残段)。
+     真实弯道/S 弯方位渐变(每子段 <15°),不以全局弦为基准(误删 S 弯真曲率)。
+     EXP 迭代至稳定:剔除顶点后新弦与后段子段可能再次构成 >60° 折角
+     (实测东横线咽喉 13.6°→167.4°→174.7°:删中点后新折角 155°,单遍漏判
+     → 净化线自身折返,邻节采样重叠 dd2≈5m 触发 chain 级联),故循环重检。 */
+  let cum = cum0, changed = false;
+  for (let pass = 0; pass < 8 && co.length >= 3; pass++) {
+    const brgOf = k => Math.atan2((co[k][0] - co[k - 1][0]) * cosf, co[k][1] - co[k - 1][1]);
+    const keep = [0];
+    for (let k = 1; k < co.length - 1; k++) {
+      let dd = Math.abs(brgOf(k + 1) - brgOf(k)); if (dd > Math.PI) dd = 2 * Math.PI - dd;
+      if (!(dd > 1.05 && (cum[k + 1] - cum[k - 1]) < 1.2)) keep.push(k);
+    }
+    keep.push(co.length - 1);
+    if (keep.length === co.length) break;
+    changed = true;
+    co = keep.map(k => co[k]);
+    cum = keep.map(k => cum[k]);
+  }
+  if (!changed) { ee._t3dsan = ee; return ee; }
+  const ncum = new Array(co.length); ncum[0] = 0;
+  for (let j = 1; j < co.length; j++) {
+    const dLng = (co[j][0] - co[j - 1][0]) * cosf, dLat = co[j][1] - co[j - 1][1];
+    /* 单位 km(111.32 km/°),与 segIndex/withLen 口径一致 —— 曾误留度数致
+       净化腿 cum 缩约 1/110,跨腿弧长采样塌到腿中段 → chain 守卫误触发整列直铺 */
+    ncum[j] = ncum[j - 1] + Math.hypot(dLng, dLat) * 111.32;
+  }
+  const san = { coords: co, cum: ncum, len: ncum[ncum.length - 1], line: ee.line, kind: ee.kind };
+  ee._t3dsan = san;
+  return san;
+}
+/* EXP train3d v3:弧长采样器 —— 不重跑运动学,复用 updateTrains 同一套解算
+   (locateSeg/legSegEntry/梯形剖面同源):车头锚定推送点投影到腿折线的弧长,
+   逐节按 dBack 回退弧长取点+切线。同一解算状态,两种画法。 */
+window.__t3dArc = (t, M, hlng, hlat, hbrg) => {
+  try {
+    let i = locateSeg(t, M); if (i > t.N - 2) i = t.N - 2;
+    const entry = idx => legSegEntry(t, idx) || fallbackSeg(t, idx);
+    const cosf = Math.cos(hlat * Math.PI / 180);
+    const sanitize = ee => sanitizeLeg(ee, cosf);
+    /* 车头投影取误差最小的腿(区间边界/无几何腿兜底);投影在净化后几何上做 */
+    let best = null, blng = 0, blat = 0;
+    for (const cand of [i, i - 1, i + 1]) {
+      if (cand < 0 || cand > t.N - 2) continue;
+      let ee = sanitize(entry(cand));
+      if (!ee || !ee.coords || !ee.cum || ee.coords.length < 2) continue;
+      const co = ee.coords, cum = ee.cum;
+      let bk = 0, bf = 0, bd = 1e18, bs = 0;
+      for (let k = 0; k + 1 < co.length; k++) {
+        const x0 = co[k][0], y0 = co[k][1], x1 = co[k + 1][0], y1 = co[k + 1][1];
+        const ax = (x1 - x0) * cosf, ay = y1 - y0;
+        const px = (hlng - x0) * cosf, py = hlat - y0;
+        const L2 = ax * ax + ay * ay;
+        const f = L2 > 1e-18 ? Math.min(1, Math.max(0, (px * ax + py * ay) / L2)) : 0;
+        const dx = px - ax * f, dy = py - ay * f;
+        const d2 = dx * dx + dy * dy;
+        if (d2 < bd) { bd = d2; bk = k; bf = f; bs = cum[k] + f * (cum[k + 1] - cum[k]); blng = x0 + (x1 - x0) * f; blat = y0 + (y1 - y0) * f; }
+      }
+      if (!best || bd < best.bd) best = { idx: cand, e: ee, bd, bs, bk, bf, plng: blng, plat: blat };
+    }
+    if (!best) return null;
+    /* EXP 腿选取兜底:locateSeg 的时刻→腿映射在窗口边缘/携带班次/重复对象上可能错腿,
+       投影误差 >150m 时全腿重扫取最小投影,避免整列采样到 35km 外的错腿再被 chain 直铺。 */
+    if (best.bd > 2.0e-6) {
+      /* EXP 全腿重扫不排除 ±1:三元组窗口选错腿时(时刻定位超前/滞后 1–2 腿),
+         真腿常恰在 best.idx±1 内(实测 10060:三元组选腿13 投影 473m,真腿12 仅 5m 却被排除)
+         → 整列被采到错腿上,头车留在原轨 = 「每节吸附不同轨道」根因之一 */
+      for (let k = 0; k <= t.N - 2; k++) {
+        let ee = sanitize(entry(k));
+        if (!ee || !ee.coords || !ee.cum || ee.coords.length < 2) continue;
+        const co = ee.coords, cum = ee.cum;
+        let bk = 0, bf = 0, bd = 1e18, bs = 0;
+        for (let q = 0; q + 1 < co.length; q++) {
+          const x0 = co[q][0], y0 = co[q][1], x1 = co[q + 1][0], y1 = co[q + 1][1];
+          const ax = (x1 - x0) * cosf, ay = y1 - y0;
+          const px = (hlng - x0) * cosf, py = hlat - y0;
+          const L2 = ax * ax + ay * ay;
+          const f = L2 > 1e-18 ? Math.min(1, Math.max(0, (px * ax + py * ay) / L2)) : 0;
+          const dx = px - ax * f, dy = py - ay * f;
+          const d2 = dx * dx + dy * dy;
+          if (d2 < bd) { bd = d2; bk = q; bf = f; bs = cum[q] + f * (cum[q + 1] - cum[q]); blng = x0 + (x1 - x0) * f; blat = y0 + (y1 - y0) * f; }
+        }
+        if (bd < best.bd) best = { idx: k, e: ee, bd, bs, bk, bf, plng: blng, plat: blat };
+      }
+    }
+    i = best.idx; const e = best.e; const bs0 = best.bs;
+    const bproj = [best.plng, best.plat];
+    const segAt = (ee, s, win) => {
+      const co = ee.coords, cum = ee.cum;
+      let k = 0; while (k < cum.length - 2 && cum[k + 1] < s) k++;
+      const L = Math.max(1e-9, cum[k + 1] - cum[k]);
+      const f = Math.min(1, Math.max(0, (s - cum[k]) / L));
+      const x0 = co[k][0], y0 = co[k][1], x1 = co[k + 1][0], y1 = co[k + 1][1];
+      const lng = x0 + (x1 - x0) * f, lat = y0 + (y1 - y0) * f;
+      /* 窗口弦切线:在 [s−win, s+win] 取折线上两点求方位,跨短桩尖峰仍稳。
+         EXP win 参数化:默认 T3D_WIN;逐节可传转向架弦窗(carLen/2−2.2)m。 */
+      const wk = win || T3D_WIN;
+      const Ltot = cum[cum.length - 1];
+      const ptAtS = ss => {
+        let j = 0; while (j < cum.length - 2 && cum[j + 1] < ss) j++;
+        const Lj = Math.max(1e-9, cum[j + 1] - cum[j]);
+        const fj = Math.min(1, Math.max(0, (ss - cum[j]) / Lj));
+        return [co[j][0] + (co[j + 1][0] - co[j][0]) * fj, co[j][1] + (co[j + 1][1] - co[j][1]) * fj];
+      };
+      const A = ptAtS(Math.max(0, s - wk)), B = ptAtS(Math.min(Ltot, s + wk));
+      const dxw = (B[0] - A[0]) * cosf, dyw = B[1] - A[1];
+      const brg = (dxw * dxw + dyw * dyw > 1e-18) ? Math.atan2(dxw, dyw) : Math.atan2((x1 - x0) * cosf, (y1 - y0));
+      return [lng, lat, brg, k, f];
+    };
+    const bs = bs0, bd = best.bd;
+    /* 切线取 ±T3D_WIN 窗口弦(转向架弦):站喉 snapToStops 短桩(数十米反向子段)会被平滑,
+       真实弯道上即车辆物理姿态(车体弦切线);瞬时单段切线会把短桩尖峰当弯道(178° 伪转折根因) */
+    const T3D_WIN = 0.015;
+    const chord = idx => {
+      /* 无几何腿：相邻站坐标弦（与 fallbackSeg 同口径），保证逐节弧长连续。
+         ★ 单位与 segIndex/withLen 一致为 km（111.32 km/°）——曾误用米致跨腿回退失控 */
+      const a = stopPoint(t, idx), b = stopPoint(t, idx + 1);
+      if (!a || !b) return null;
+      const L = geoKm(a, b);
+      return { coords: [a, b], cum: [0, L], len: L };
+    };
+    /* 腿几何 cum/len 一律 km（segIndex/withLen 口径）；外部 carD 为米，at() 内换算 */
+    const cumLen = ee => { const cl = ee.cum[ee.cum.length - 1]; return (isFinite(cl) && cl > 0) ? cl : (ee.len || 0); };
+    const ptAt = (ee, k) => ee.coords[k];
+    const geoD = (a, b) => { const dx = (a[0] - b[0]) * Math.cos(hlat * Math.PI / 180), dy = a[1] - b[1]; return Math.hypot(dx, dy); };
+    /* ── 行进向归一：腿几何 coords 朝向可能与本班次行进向相反（segIndex 存在反向注册段），
+         统一换算到「行进弧长」坐标 a（0=本腿行进起点），跨腿回退时按端点匹配定向前腿 ── */
+    const tH = segAt(e, Math.min(bs, cumLen(e)))[2];
+    const hb = (hbrg == null ? tH : hbrg);
+    const dotH = Math.sin(tH) * Math.sin(hb) + Math.cos(tH) * Math.cos(hb);
+    let orient = dotH >= 0 ? 1 : -1;
+    const L0 = cumLen(e);
+    /* EXP 推进点端点钳位外推:时刻表推进点落在腿端点之外(站坐标/腿几何注册偏移,
+       实测銀座線边界 310m)且滞后于本腿行进起点时,把弧长原点沿路径外推 distPush ——
+       尾车采样自推进点真实位置起算,不再从腿端点起算致整列前置数百米触发 chain。
+       仅处理滞后向(行进起点之后)钳位;超前向(已入下一腿)保持原行为。限 600m 防错腿放大。 */
+    let bsPush = bs, pushClamp = false, pushOffM = 0;
+    {
+      const coN = best.e.coords.length;
+      const distM = Math.sqrt(best.bd) * 111319;
+      const atStart = best.bf <= 0 && best.bk === 0;
+      const atEnd = best.bf >= 1 && best.bk === coN - 2;
+      const lag = (orient > 0 && atStart) || (orient < 0 && atEnd);
+      if (lag && distM <= 600) { pushClamp = true; pushOffM = distM; bsPush = orient > 0 ? bs - distM / 1000 : bs + distM / 1000; } /* m→km */
+    }
+    const aHead = orient > 0 ? bsPush : L0 - bsPush;
+    const rigid = d => {
+      const brg = segAt(e, Math.min(bs, L0))[2];
+      const dlat = Math.cos(brg) * d / 110540, dlng = Math.sin(brg) * d / (111319 * Math.cos(hlat * Math.PI / 180));
+      return [hlng - dlng, hlat - dlat, brg, -1, 0];
+    };
+    /* EXP 整列单源:本列采样过的腿索引集(走廊断言用);回退只在本链上,不许切到别的轨 */
+    const chainLegs = new Set([i]);
+    const at = (d, win) => {
+      /* d 为米（carD），腿弧长坐标为 km —— 统一换算，曾混用致 a 恒巨负、回退走穿全程 */
+      let a = aHead - d / 1000;
+      let idx = i, ee = e, or = orient, L = L0;
+      /* EXP oob 口径:头车后方已连通的可用弧长(km),随接纳腿累加;k=-2 返回时随样点给出(p[7]),
+         审计「真越界(d>arcToHead) vs 外推误判(d≤arcToHead)」 */
+      let consumedKm = Math.max(0, aHead);
+      /* EXP 腿缝不连续累计(米):站喉 snap 短桩/平行轨变体使邻腿端点不共点,
+         弧长跨腿时记录断口量随采样返回(p[5]),守卫按「期望间距=step+断口增量」判定,
+         不再把数据断口误判为几何尖峰而整列直铺。 */
+      let gapM = 0;
+      /* EXP walk-back 取证(开关 __t3dArcWBOn):记录跨腿走过的每条腿与退出态,
+         定位 cum 起点附近尾车塌陷根因;开关关闭时 wb=null,零开销 */
+      const wb = window.__t3dArcWBOn ? [] : null;
+      const wbFlush = (exit, extra) => {
+        if (!wb) return;
+        const WB = window.__t3dArcWB || (window.__t3dArcWB = []);
+        if (WB.length < 240) WB.push(Object.assign({ tid: t.t, d: +d.toFixed(1), aHead: +aHead.toFixed(4), bs: +bs.toFixed(4), i, orient, L0: +L0.toFixed(4), steps: wb, exit, a: +a.toFixed(4) }, extra || {}));
+      };
+      const trc = window.__t3dArcTrace === t.t ? (window.__t3dArcTraceLog = window.__t3dArcTraceLog || [], window.__t3dArcTraceLog) : null;
+      if (trc) trc.push({ d: +d.toFixed(1), a0: +a.toFixed(4), idx, orient: or, L: +L.toFixed(4) });
+      /* 当前腿行进起点（= 前一腿的行进终点连接点） */
+      let conn = or > 0 ? ptAt(ee, 0) : ptAt(ee, ee.coords.length - 1);
+      /* 沿当前腿行进起点的切线反向延伸(越界/断口/折返桩超调统一走这里 —— 保持本线同源,
+         间距恒定;替代旧版「跨腿续接/沿前节航向直铺」的跨线来源。返回 k=-2 */
+      const extrapConn = (backM, tag, extra) => {
+        const p0 = segAt(ee, or > 0 ? 0 : cumLen(ee));
+        const cf2 = Math.cos(hlat * Math.PI / 180);
+        const arcM = +(consumedKm * 1000).toFixed(1);
+        wbFlush(tag, Object.assign({ backM: +backM.toFixed(1), gapM: +gapM.toFixed(1), dir, arcToHeadM: arcM }, extra || {}));
+        return [p0[0] - Math.sin(p0[2]) * backM / (111319 * cf2), p0[1] - Math.cos(p0[2]) * backM / 110540, p0[2], -2, 0, gapM, arcM];
+      };
+      /* EXP walk-back 方向: -1=索引减小侧(常规注册); 镜像注册(站序与腿索引序相反,
+         反注册段常见)在首次端点失配后翻转为 +1(真前驱腿在索引增大侧)。 */
+      let dir = -1, mirrorTried = false;
+      const tryCand = ci => {
+        let e2 = sanitize(entry(ci));
+        if (!e2 || !e2.coords || !e2.cum) e2 = chord(ci);
+        if (!e2 || !e2.coords) return null;
+        const L2 = cumLen(e2);
+        if (!(L2 > 0)) return null;
+        /* EXP 折返短桩腿跳过:首尾共点(站喉 snap 折返)的短腿不进采样 —— 弧长照耗、
+           位置/切线不取它,避免采样点回折致切线尖峰+漂移守卫重铺连锁 chain。 */
+        const fe2 = geoD(ptAt(e2, 0), ptAt(e2, e2.coords.length - 1));
+        if (L2 < 0.45 && fe2 < 0.35 * L2) return { e2, L2, stub: 1, fe2 };
+        /* 端点匹配定向：前一腿行进终点必须等于 conn */
+        const dEnd = geoD(ptAt(e2, e2.coords.length - 1), conn), dSt = geoD(ptAt(e2, 0), conn);
+        const mDeg = Math.min(dEnd, dSt);
+        if (mDeg * 111319 > 60) return { e2, L2, seamM: +(mDeg * 111319).toFixed(1), end: dEnd <= dSt ? 'e' : 's' };
+        return { e2, L2, or2: dEnd <= dSt ? 1 : -1, m: mDeg * 111319 };
+      };
+      while (a < 0) {
+        if (dir < 0 ? idx <= 0 : idx >= t.N - 2) {
+          if (trc) trc[trc.length - 1].oob = true;
+          /* 真越界：路线端点之外（车尾还在站喉）→ 沿端点切线反向延伸，标 k=-2（chain 计数） */
+          return extrapConn(-a * 1000, 'oob');
+        }
+        let cand = idx + dir;
+        let r = tryCand(cand);
+        if (!r) { wbFlush('rigid'); return rigid(d); }
+        /* EXP 镜像注册探测(仅首次失配尝试一次): 前驱腿(idx-1)断口 >60m 而 idx+1 侧端点
+           连续 → 反注册段, 真前驱腿在索引增大侧, walk-back 翻 +1 向。实测案例:
+           东横/半藏门/丸之内线御茶ノ水段, idx+1 腿与 conn 0m 连续、idx-1 腿 654–1219m 假断口。 */
+        if (r.seamM !== undefined && dir < 0 && !mirrorTried) {
+          mirrorTried = true;
+          if (idx + 1 <= t.N - 2) {
+            const r2 = tryCand(idx + 1);
+            if (r2 && r2.or2 !== undefined) { dir = 1; cand = idx + 1; r = r2; }
+          }
+        }
+        idx = cand;
+        if (r.stub) {
+          a += r.L2;
+          if (wb) wb.push({ idx, L2: +r.L2.toFixed(4), stub: 1, fe2: +(r.fe2 * 111319).toFixed(1) });
+          if (trc) trc.push({ idx, L2: +r.L2.toFixed(1), skipStub: 1 });
+          /* 采样点落在折返桩区间内 → 不采桩几何,沿 conn 切线按超调量反延(单源同线、间距保持) */
+          if (a >= 0) return extrapConn(a * 1000, 'stub-extrap');
+          continue;
+        }
+        if (r.seamM !== undefined) {
+          /* EXP 整列单源硬约束:前驱腿端点断口 >60m(平行轨变体/错注册段)→ 禁止跨腿续接
+             (旧版把 conn 移到错腿远端,后车随之进入别的轨道 = 「每节吸附不同轨道」根因之一),
+             也不消耗不可信腿的弧长;直接沿当前腿 conn 切线反延剩余距离(k=-2,与 oob 同口径)。
+             小断口(≤60m,站喉 snap)仍按 or2 接纳并计入 gapM,由守卫按期望间距吸收。 */
+          if (wb) wb.push({ idx, L2: +r.L2.toFixed(4), seam: r.seamM, end: r.end, extrap: +(-a * 1000).toFixed(1) });
+          if (trc) trc.push({ idx, L2: +r.L2.toFixed(1), seamExtrap: +(-a * 1000).toFixed(1) });
+          return extrapConn(-a * 1000, 'seam-extrap', { seamM: r.seamM });
+        }
+        const or2 = r.or2;
+        gapM += r.m;
+        a += r.L2;
+        consumedKm += r.L2;
+        if (wb) wb.push({ idx, L2: +r.L2.toFixed(4), m: +r.m.toFixed(1), or2, dir });
+        if (trc) trc.push({ idx, L2: +r.L2.toFixed(1), a: +a.toFixed(1), or2, n: r.e2.coords.length, gapM: +gapM.toFixed(1), dir });
+        ee = r.e2; or = or2; L = r.L2;
+        chainLegs.add(idx);
+        conn = or > 0 ? ptAt(ee, 0) : ptAt(ee, ee.coords.length - 1);
+      }
+      if (a > L) a = L;
+      const s = or > 0 ? a : L - a;
+      const p = segAt(ee, s, win);
+      if (wb && wb.length) wbFlush('ok', { s: +s.toFixed(4), k: p[3], f: +p[4].toFixed(3), gapM: +gapM.toFixed(1) });
+      if (or < 0) p[2] = wrapPiBrg(p[2] + Math.PI);
+      p[5] = gapM;
+      return p;
+    };
+    /* 头腿行进起点切线(单源回退基准):train3d 守卫触发时沿此方向共线重铺,不再沿前节航向直铺 */
+    const conn0 = orient > 0 ? ptAt(e, 0) : ptAt(e, e.coords.length - 1);
+    let connBrg0 = segAt(e, orient > 0 ? 0 : L0)[2];
+    if (orient < 0) connBrg0 = wrapPiBrg(connBrg0 + Math.PI);
+    /* chainLegs 返回 Set 本体(非快照):随后续 at() 回退增长,走廊断言读取时才完整 */
+    return { at, leg: i, sHead: bs, projErrM: Math.sqrt(bd) * 111319, orient, proj: bproj, L0, pushClamp, pushOffM: +pushOffM.toFixed(1), chainLegs, conn0, connBrg0 };
+  } catch (err) { window.__t3dArcErr = String(err && err.message || err); return null; }
+};
+function wrapPiBrg(a) { while (a > Math.PI) a -= 2 * Math.PI; while (a < -Math.PI) a += 2 * Math.PI; return a; }
+/* EXP train3d 诊断:按班次 id 透视 __t3dArc 的腿选取与邻腿几何(弯道闭环排查用)。
+   可选第三参 [hlng,hlat,hbrg] 直接用 inst 存储的头车状态(不依赖 trainPosition 重解)。 */
+window.__t3dArcDbg = (tid, M2, headOverride) => {
+  const t = tripList.find(x => x.t === tid);
+  if (!t) return { err: 'no trip ' + tid };
+  if (M2 == null) return { err: 'need M2', N: t.N };
+  let hlng, hlat, hbrg;
+  if (headOverride) { [hlng, hlat, hbrg] = headOverride; }
+  else {
+    /* inst 存的 M2 已是 windowShift 后的值,不能再 shift 第二次(双重偏移会越界返回 null) */
+    const p = trainPosition(t, M2);
+    if (!p) return { err: 'no pos' };
+    hlng = p[0]; hlat = p[1]; hbrg = p[2];
+  }
+  let i = locateSeg(t, M2); if (i > t.N - 2) i = t.N - 2;
+  const entry = idx => legSegEntry(t, idx) || fallbackSeg(t, idx);
+  const info = { tid, N: t.N, locI: i, hlng: +hlng.toFixed(5), hlat: +hlat.toFixed(5), hbrgDeg: +(hbrg * 180 / Math.PI).toFixed(1), legs: [] };
+  for (let k = Math.max(0, i - 4); k <= Math.min(t.N - 2, i + 1); k++) {
+    const e = entry(k);
+    const a = stopPoint(t, k), b = stopPoint(t, k + 1);
+    if (!e || !e.coords || !e.cum) { info.legs.push({ k, none: true, hasChord: !!(a && b), jas: t.jasN[k] + '|' + t.jasN[k + 1] }); continue; }
+    const row = { k, n: e.coords.length, cumL: +e.cum[e.cum.length - 1].toFixed(4), len: e.len != null ? +e.len.toFixed(4) : null, line: e.line || '', c0: e.coords[0].map(v => +v.toFixed(5)), c1: e.coords[e.coords.length - 1].map(v => +v.toFixed(5)) };
+    if (k === i) {
+      /* 头腿折线细节:逐子段长度+方位,定位尖峰/回折 */
+      const subs = [];
+      for (let s = 1; s < e.coords.length; s++) {
+        const dLng = (e.coords[s][0] - e.coords[s - 1][0]) * Math.cos(hlat * Math.PI / 180), dLat = e.coords[s][1] - e.coords[s - 1][1];
+        subs.push([+(e.cum[s] - e.cum[s - 1]).toFixed(4), +(Math.atan2(dLng, dLat) * 180 / Math.PI).toFixed(1)]);
+      }
+      row.subs = subs;
+    }
+    info.legs.push(row);
+  }
+  return info;
+};
+/* EXP 服帖诊断(仅实验分支):返回指定班次当前腿附近的原始腿折线(未 sanitize,即地图所绘轨道线),
+   供 train3d.js __t3dFit 逐节量垂直偏差。coords 单位=度;腿索引 k 与 locateSeg 同口径。
+   首参可直接传渲染侧 trip 对象(与 __t3dArc 同源,避免 tripList 副本时刻基准不一致)。 */
+window.__t3dLegRaw = (tid, M2, legOverride) => {
+  try {
+    const t = (tid && typeof tid === 'object' && tid.jasN) ? tid : tripList.find(x => x.t === tid);
+    if (!t) return null;
+    let i = legOverride != null ? legOverride : locateSeg(t, M2); if (i > t.N - 2) i = t.N - 2; if (i < 0) i = 0;
+    const entry = idx => legSegEntry(t, idx) || fallbackSeg(t, idx);
+    const legs = [];
+    for (let k = Math.max(0, i - 5); k <= Math.min(t.N - 2, i + 2); k++) {
+      const e = entry(k);
+      if (!e || !e.coords || e.coords.length < 2) { legs.push({ k, none: true }); continue; }
+      legs.push({ k, line: e.line || '', coords: e.coords, cum: e.cum || null, len: e.len != null ? +e.len.toFixed(4) : null });
+    }
+    return { tid, locI: i, legs };
+  } catch (err) { return { err: String(err && err.message || err) }; }
+};
+/* EXP 净化腿折线(与 __t3dArc 采样同一几何):走廊断言量「车在自己采样线上」用,
+   原始绘制折线在回折尖峰处与采样线相差数米,不是跨线。 */
+window.__t3dLegSan = (tid, M2, legOverride) => {
+  try {
+    const t = (tid && typeof tid === 'object' && tid.jasN) ? tid : tripList.find(x => x.t === tid);
+    if (!t) return null;
+    let i = legOverride != null ? legOverride : locateSeg(t, M2); if (i > t.N - 2) i = t.N - 2; if (i < 0) i = 0;
+    const entry = idx => legSegEntry(t, idx) || fallbackSeg(t, idx);
+    const legs = [];
+    for (let k = Math.max(0, i - 5); k <= Math.min(t.N - 2, i + 2); k++) {
+      const e0 = entry(k);
+      if (!e0 || !e0.coords || e0.coords.length < 2) { legs.push({ k, none: true }); continue; }
+      const cf = Math.cos(e0.coords[0][1] * Math.PI / 180);
+      const e = sanitizeLeg(e0, cf);
+      legs.push({ k, line: e.line || '', coords: e.coords, cum: e.cum || null });
+    }
+    return { tid, locI: i, legs };
+  } catch (err) { return { err: String(err && err.message || err) }; }
+};
+/* EXP 覆盖率统计(仅实验分支):全量平日班次 × 真实 pathOf 映射,按等级/线路聚合 */
+window.__t3dCoverage = async () => {
+  await M3D.init();
+  const r = await fetch('https://jr-static.suki.ing/data/trains_wd.json');
+  const jj = await r.json();
+  const tot = { n: 0, hit: 0 }, byGrade = [{}, {}, {}, {}];
+  const missLines = new Map(), hitLines = new Map(), missTmap = new Set(), hitTmap = new Set();
+  for (const T of jj.T) {
+    const tm = tmaps[T.t];
+    if (!tm || !tm.s_jas || tm.s_jas.length < 2) continue;
+    const lines = tm.lines || [], jas = tm.s_jas;
+    const nm = tripName(T.i || '', jas.length, jas, lines.map(normName));
+    const p = M3D.pathOf({ nm, lines, jas });
+    const g = gradeOf(T.i || '');
+    tot.n++; byGrade[g].n = (byGrade[g].n || 0) + 1;
+    if (p) {
+      tot.hit++; byGrade[g].hit = (byGrade[g].hit || 0) + 1;
+      hitTmap.add(T.t);
+      for (const l of lines) hitLines.set(l, (hitLines.get(l) || 0) + 1);
+    } else {
+      missTmap.add(T.t);
+      for (const l of lines) missLines.set(l, (missLines.get(l) || 0) + 1);
+    }
+  }
+  const top = m => [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, 12);
+  return {
+    trips: tot, byGrade,
+    tmaps: { hit: hitTmap.size, miss: missTmap.size },
+    topHitLines: top(hitLines), topMissLines: top(missLines),
+  };
+};
 function startLoop() {
   function tickFollow(M, dt) {
     if (performance.now() - followStartT <= 950) return;
@@ -6339,6 +6925,14 @@ function startLoop() {
     const staticFrame = (paused && !timeMoved && !dataChanged && !anyFading && !followTrip && !liveDetailTrip && !sliderDragging) || document.hidden;
     const viewChanged = viewDirty && !document.hidden;
     if ((staticFrame && !viewChanged) || frameSkip) {
+      /* EXP train3d:暂停静态帧 updateTrains 被节流 → 3D 推送停摆(门在两次重建之间打开时
+         inst 永不创建/淡入,断言采样全空)。3D 门开期间以 2Hz 补推送,代价远低于全帧重建。 */
+      if (!frameSkip && window.__T3D && window.__T3D.f > 0.01 && window.M3D && window.M3D.ready &&
+          now - lastT3dPushT > 500) {
+        lastT3dPushT = now;
+        updateTrains(M, dt * 1000);
+        lastRenderM = M; lastRenderList = tripList; lastRenderDay = dayList;
+      }
       if (followTrip) tickFollow(M, dt);
       return;
     }
@@ -6361,6 +6955,8 @@ function startLoop() {
        保 260ms 渐变平滑;交互(viewDirty)/跟随/拖动时间轴仍全帧,跟手性不变。
        全国视图(默认落地视野)常驻渲染从 20fps 降到 4fps,GPU/发热约 -80%。 */
     const zz = map.getZoom();
+    /* EXP train3d:接近阈值前一级懒加载模块并保持 3D 层唤醒(阈值=maxZoom-1.5) */
+    if (zz >= map.getMaxZoom() - 2) { t3dEnsure(); if (window.__T3D) window.__T3D.wake(); }
     /* ★ 纯平移/旋转免重建(六轮,z<5):列车顶点是世界坐标 + 屏幕尺寸按 zoom 烘焙,
        平移/旋转只由相机矩阵变换,顶点数据不变;时刻推进的位置误差全国视图 <0.01px/秒。
        此前全国视图拖动时每帧重建(阶段 1 线性扫描 8.6 万班次 ≈8.5ms/帧,60fps 下占满
@@ -6600,7 +7196,13 @@ function onMouseMove(e) {
   const now = performance.now();
   if (now - lastPickT < 60) return;
   lastPickT = now;
-  const hit = pickTrain(e.offsetX, e.offsetY, 10);
+  let hit = pickTrain(e.offsetX, e.offsetY, 10);
+  /* EXP train3d:高缩放 3D 拾取优先(射线-定向盒),悬停同步高亮 */
+  if (window.__T3D && window.__T3D.f > 0.3) {
+    const h3 = window.__T3D.pickAt(e.offsetX, e.offsetY);
+    if (h3) hit = h3;
+    window.__T3D.hover(h3 ? h3.t : null);
+  }
   map.getCanvas().style.cursor = hit ? 'pointer' : '';
   if (hit && tipEnabled) {
     const M = curMin(), p = trainPosition(hit, windowShift(hit, M));
@@ -6690,6 +7292,11 @@ function onMapClick(e) {
   if (!dataReady || !liveOn) return;
   const px = (e.offsetX !== undefined ? e.offsetX : e.point && e.point.x);
   const py = (e.offsetY !== undefined ? e.offsetY : e.point && e.point.y);
+  /* EXP train3d:3D 命中直接出车次卡并阻断穿透(不再落到车站/2D 拾取) */
+  if (window.__T3D && window.__T3D.f > 0.3) {
+    const h3 = window.__T3D.pickAt(px, py);
+    if (h3) { showTrainDetail(h3); return; }
+  }
   const hits = collectTrains(px, py, 14);
   const lowZ = map.getZoom() < 10; // 低 zoom（国家/城市级）抑制列车点击，避免密集区误触弹窗/详情
   if (!lowZ) {
@@ -11262,7 +11869,7 @@ const M3D = (() => {
     const last = failedAt.get(path);
     if (last && Date.now() - last < 60000) return null; /* 60s 负缓存 */
     const p = loadConsist(path);
-    p.then(() => { p._ready = true; }).catch(() => {
+    p.then(t => { p._ready = true; p._tmpl = t; }).catch(() => {
       cache.delete(path); cacheOrder = cacheOrder.filter(x => x !== path); failedAt.set(path, Date.now());
     });
     cache.set(path, p); cacheOrder.push(path);
@@ -11583,7 +12190,7 @@ const M3D = (() => {
   /* ── init:拉映射表(小文件,加载即取;失败静默禁用) ── */
   async function init() {
     if (mapP) return mapP;
-    mapP = fetch(u('/data/model_map.json')).then(r => { if (!r.ok) throw new Error('model_map ' + r.status); return r.json(); })
+    mapP = fetch(u('/data/model_map.json?v=7')).then(r => { if (!r.ok) throw new Error('model_map ' + r.status); return r.json(); })
       .then(j => { modelMap = j; return j; })
       .catch(() => { modelMap = {}; });
     fetch(u('/models/index.json')).then(r => r.ok ? r.json() : null).then(j => {
@@ -11595,7 +12202,22 @@ const M3D = (() => {
     init, pathOf, ensure,
     openViewer, closeViewer, bindDetail,
     get ready() { return modelMap !== null; },
-    __dbg: () => ({ cache: [...cache.keys()], failed: [...failedAt.keys()] })
+    __dbg: () => ({ cache: [...cache.keys()], failed: [...failedAt.keys()] }),
+    /* EXP 资产诊断(仅实验分支):模板实际节数/逐节包围盒(米),核对 consist 声明与 glb 实况 */
+    __tmplInfo: (path) => {
+      const p = cache.get(path);
+      if (!p) return { cached: false };
+      const t = p._tmpl;
+      if (!t) return { cached: true, ready: !!(p._ready) };
+      let THREEr = null; try { THREEr = THREE; } catch (e) {}
+      const cars = (t.cars || []).map(cn => {
+        if (!THREEr) return { z: +cn.z.toFixed(2) };
+        const box = new THREEr.Box3().setFromObject(cn.node);
+        const sz = box.getSize(new THREEr.Vector3());
+        return { z: +cn.z.toFixed(2), x: +sz.x.toFixed(2), y: +sz.y.toFixed(2), len: +sz.z.toFixed(2) };
+      });
+      return { cached: true, ready: true, nCars: (t.cars || []).length, length: +t.length.toFixed(2), cars };
+    }
   };
 })();
 M3D.init();

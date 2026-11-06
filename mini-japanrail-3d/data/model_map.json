@@ -1,14 +1,15 @@
 {
  "_meta": {
-  "v": 6,
+  "v": 7,
   "generated": "2026-10-25",
-  "principle": "车型目录直接取自 DokoRail 車両コレクション作者目录(odpt.Railway 184 线 + 爱称 15 组),ja 线名对齐本站 tmaps 实体;跨公司区段(東海道/山陽本線)与东京圈共线实体用规则消歧;判不了的回退图标;v5 补齐 29 条借用/别名义线路(取自 DokoRail 收藏页 stockRailways 与运营者层级映射);v6 修复关西私铁/JR西短实体名前缀错位并回补 JR 东日本地方线",
+  "principle": "车型目录直接取自 DokoRail 車両コレクション作者目录(odpt.Railway 184 线 + 爱称 15 组),ja 线名对齐本站 tmaps 实体;跨公司区段(東海道/山陽本線)与东京圈共线实体用规则消歧;判不了的回退图标;v5 补齐 29 条借用/别名义线路(取自 DokoRail 收藏页 stockRailways 与运营者层级映射);v6 修复关西私铁/JR西短实体名前缀错位并回补 JR 东日本地方线;v7 高缩放 3D 列车全量上线:新增京浜東北線映射与节数补齐 slug(京急 8 编组/e233-3000 10・15/W7 12/Metro 16000 10)",
   "rules_engine": "names → lines → rules(exact/all/none/hasStop/firstStopIn/stopsIn)",
   "models": {
    "tf2-n700s-16car": {
     "reverse": true
    }
-  }
+  },
+  "comment_exp": "exp: +京浜東北線 all 规则(项3 停站车2D→3D)"
  },
  "names": {
   "成田エクスプレス": "/models/jr-east-e259-series-n-ex-1683535411-jr-east-e259-series-nex-crp-6cf9a67b/consist.json",
@@ -60,20 +61,20 @@
   "JR東日本": "/models/toden-8900-blue-tram-ver/consist.json",
   "山形新幹線": "/models/tf2-e3-2000-7car/consist.json",
   "秋田新幹線": "/models/tf2-e6-7car/consist.json",
-  "上越新幹線": "/models/shinkansen-w7-jr/consist.json",
-  "上越新幹線 ガーラ湯沢支線": "/models/shinkansen-w7-jr/consist.json",
-  "北陸新幹線": "/models/shinkansen-w7-jr/consist.json",
+  "上越新幹線": "/models/shinkansen-w7-jr-12/consist.json",
+  "上越新幹線 ガーラ湯沢支線": "/models/shinkansen-w7-jr-12/consist.json",
+  "北陸新幹線": "/models/shinkansen-w7-jr-12/consist.json",
   "京浜東北線・根岸線": "/models/jr-east-series-e233-1000/consist.json",
   "中央線快速": "/models/jr-east-series-e233-0/consist.json",
-  "伊東線": "/models/jr-east-series-e233-3000/consist.json",
+  "伊東線": "/models/jr-east-series-e233-3000-10/consist.json",
   "中央・総武各駅停車": "/models/e231-500s-10cars/consist.json",
   "京葉線": "/models/209-500-k-10cars/consist.json",
   "埼京線・川越線": "/models/e233-7000-10cars/consist.json",
   "総武快速線": "/models/jr-east-e235-1000-series/consist.json",
   "常磐線快速": "/models/jr-east-e231-0-10-car/consist.json",
-  "湘南新宿ライン": "/models/jr-east-series-e233-3000/consist.json",
-  "宇都宮線": "/models/jr-east-series-e233-3000/consist.json",
-  "高崎線": "/models/jr-east-series-e233-3000/consist.json",
+  "湘南新宿ライン": "/models/jr-east-series-e233-3000-15/consist.json",
+  "宇都宮線": "/models/jr-east-series-e233-3000-10/consist.json",
+  "高崎線": "/models/jr-east-series-e233-3000-10/consist.json",
   "横浜線": "/models/jr-e233-6000-series-kurah017/consist.json",
   "武蔵野線": "/models/jr-east-e231-0-musashino-line/consist.json",
   "南武線": "/models/jr-e233-8000-series-nahan15/consist.json",
@@ -109,7 +110,7 @@
   "丸ノ内線支線": "/models/tokyo-metro-2000-series/consist.json",
   "日比谷線": "/models/tokyo-metro-03-series/consist.json",
   "東西線": "/models/tokyo-metro-15000-series/consist.json",
-  "千代田線": "/models/tokyo-metro-16000-series/consist.json",
+  "千代田線": "/models/tokyo-metro-16000-series-10/consist.json",
   "有楽町線": "/models/tokyo-metro-7000-series/consist.json",
   "半蔵門線": "/models/tokyo-metro-08-series/consist.json",
   "南北線": "/models/tokyo-metro-9000series-5th/consist.json",
@@ -126,7 +127,7 @@
   "伊勢崎線": "/models/tobu-70000-series/consist.json",
   "東武アーバンパークライン": "/models/td6000f/consist.json",
   "東上線": "/models/tobu10030-2x5/consist.json",
-  "京急本線": "/models/keikyu-n1000-al-6c/consist.json",
+  "京急本線": "/models/keikyu-n1000-al-8c/consist.json",
   "空港線": "/models/keikyu-n1000-al-6c/consist.json",
   "大師線": "/models/keikyu-n1000-al-6c/consist.json",
   "逗子線": "/models/keikyu-n1000-al-6c/consist.json",
@@ -354,6 +355,17 @@
    "model": "/models/jr-east-series-e233-1000/consist.json"
   },
   {
+   "comment": "京浜東北線単独標記(根岸線規則未命中的京浜東北班次;横浜線直通排除)",
+   "all": [
+    "京浜東北線"
+   ],
+   "none": [
+    "横浜線",
+    "根岸線"
+   ],
+   "model": "/models/jr-east-series-e233-1000/consist.json"
+  },
+  {
    "comment": "埼京線・川越線(赤羽線实体=埼京;川越線高麗川以南埼京系,八高系排除按赤羽線判)",
    "all": [
     "赤羽線"
@@ -396,14 +408,14 @@
     "横須賀線",
     "御殿場線"
    ],
-   "model": "/models/jr-east-series-e233-3000/consist.json"
+   "model": "/models/jr-east-series-e233-3000-15/consist.json"
   },
   {
    "comment": "宇都宮線/高崎線(实体专用直通東京圏)",
    "all": [
     "宇都宮線"
    ],
-   "model": "/models/jr-east-series-e233-3000/consist.json"
+   "model": "/models/jr-east-series-e233-3000-10/consist.json"
   },
   {
    "all": [
@@ -421,7 +433,7 @@
     "信越本線",
     "八高線"
    ],
-   "model": "/models/jr-east-series-e233-3000/consist.json"
+   "model": "/models/jr-east-series-e233-3000-10/consist.json"
   },
   {
    "comment": "横須賀・総武快速(E235-1000,2024+;含湘南新宿/内房外房直通)",

@@ -8305,6 +8305,10 @@ function showStationDetail(name, coord, featLine, featOp) {
   $('tabGrid').classList.add('on');
   $('shBody').hidden = false;
   $('shSubTabs').classList.remove('hidden');
+  // 新站打开：出发/到达视图重置为「出发」，宿主 #subDep/#subArr 选中态同步（板内芯片随板重建自动一致）
+  sheetDepArr = 'dep';
+  $('subDep').classList.add('on');
+  $('subArr').classList.remove('on');
   $('panelInfo').hidden = true;
   $('panelGuide').hidden = true;
   _infoKey = null;

@@ -5,7 +5,8 @@
    - 渲染：MapLibre custom layer('3d')，共享 GL 上下文与深度缓冲（建筑遮挡正确）；
      矩阵 = render(gl,args).defaultProjectionData.mainMatrix 右乘 T(中心)·S(米→世界)，
      顶点相对中心米制（float32 精度安全）；resetState 防共享上下文状态污染。
-   - 分级启用：阈值 = maxZoom−1.5/−1.0（默认 14.5/15.0），240ms cubic-bezier(.4,0,.2,1)。
+   - 分级启用：阈值 = 基础上限/+1.5(生产 16.0/17.5,对标 dokorail 的 mesh z16 起),
+     240ms cubic-bezier(.4,0,.2,1)。模型失败/缺失→线路色占位盒车(对标 dokorail 占位车,永不空白)。
    - 光影：每车厢接触阴影；定向光方位读 map.getLight()；夜间(?t3dnight/JST18-06)车窗发光+头灯。
    - LOD：屏幕长<130px 切 stand-in.glb（__t3dNoLOD 可关），240ms 双根交叉淡化。
    - 交互：射线-定向盒 pickAt；app.js 点击/悬停 3D 优先不穿透；f>0.5 隐藏出入口层。
@@ -16,7 +17,7 @@ import * as THREE from 'three';
 
 const FADE_MS = 240;
 const LOD_FADE_MS = 400; /* LOD 交叉淡化比启用淡化更长:远景切换更柔(打磨轮) */
-const MAX_INST = 30;
+const MAX_INST = 40; /* 对标 dokorail meshMaxTrains 默认 40 */
 const EARTH_C = 40075016.686;
 const LOD_PX = 130;
 const LOD_PX_BACK = 165; /* 滞回:full→stand 用 LOD_PX,stand→full 需 >LOD_PX_BACK,防边界来回跳(打磨轮) */
@@ -26,10 +27,11 @@ let disabled = false, inited = false;
 let f = 0, fFrom = 0, fTo = 0, fT0 = 0;
 let Z_ON = 14.5, Z_FULL = 15.0;
 /* 3D 开启时动态放宽缩放上限:baseMaxZoom=init 时的地图上限(不受放宽影响),
-   3D 实质开启(f>0.5 且未 __t3dOff)时 maxZoom=base+plus,关闭立即恢复 base。
-   plus 默认 1.5(生产 z17.5):pitch60 实测 z18 城市峡谷被建筑遮挡不可读、顶视仅车顶一条;
-   z17.5 车体侧面/窗带/车头清晰且同编组占幅 33%。window.__t3dZoomPlus 可覆盖 0–3。移动端不加载本模块→天然不放宽。 */
-let baseMaxZoom = 0, zoomPlus = 1.5, appliedMax = -1;
+   模块激活(已加载且未 __t3dOff)时 maxZoom=base+plus,关闭立即恢复 base。
+   plus 默认 2.5(生产 z18.5,对标 dokorail.jp 的近距观察口径;其 maxZoom=24 依赖
+   自有高倍底图,我们矢量底图过插值仍清晰,栅格回退底图 maxzoom=17 仅轻插值)。
+   window.__t3dZoomPlus 可覆盖 0–3。 */
+let baseMaxZoom = 0, zoomPlus = 2.5, appliedMax = -1;
 const insts = new Map();
 let frameFlat = [], frameSeq = 0, consumedSeq = -1;
 let nightOn = false, hoverId = null, lastEntHide = false;
@@ -78,7 +80,7 @@ const axisChecked = new Set();
 
 window.__T3D = {
   f: 0, zOn: Z_ON,
-  push(trip, lng, lat, brg, path) { frameFlat.push(trip, lng, lat, brg, path); },
+  push(trip, lng, lat, brg, path, color) { frameFlat.push(trip, lng, lat, brg, path, color); },
   begin() { frameFlat.length = 0; },
   end() { frameSeq++; },
   wake() { if (map && layerOn) map.triggerRepaint(); },
@@ -101,7 +103,10 @@ export function init(mapObj) {
   if (inited || disabled) return;
   map = mapObj;
   const mz = map.getMaxZoom();
-  Z_ON = mz - 1.5; Z_FULL = mz - 1.0;
+  /* 对标 dokorail.jp 的绝对阈值(其 mesh z16 / full z18):以「放宽后上限」为参照 ——
+     3D 起点=基础上限(生产 z16),full=+1.5(z17.5),相机上限=+2.5(z18.5)。
+     旧口径(mz−1.5/−1.0)在基础上限 16 下起点 14.5,早于 dokorail 两档,小车无谓 3D。 */
+  Z_ON = mz; Z_FULL = mz + 1.5;
   baseMaxZoom = mz; appliedMax = mz;
   window.__T3D.zOn = Z_ON;
   window.__T3D.baseMaxZoom = mz;
@@ -174,9 +179,11 @@ const T3DLAYER = {
     if (target !== fTo) { fFrom = f; fTo = target; fT0 = now; }
     f = animTo(now, fFrom, fTo, fT0);
     window.__T3D.f = f; stats.f = f;
-    /* 动态缩放上限:3D 实质开启才放宽,关闭/关停立即恢复 base(不改变默认行为) */
+    /* 动态缩放上限:模块激活(已加载且主开关开)即放宽 —— 与 dokorail 一致,
+       相机上限不依赖 3D 淡入进度(其 maxZoom=24 恒定,3D 在 z16 自行出现);
+       旧口径「f>0.5 才放宽」在阈值=基础上限时死锁(到顶也到不了 f>0.5) */
     const plus = window.__t3dZoomPlus != null ? Math.max(0, Math.min(3, +window.__t3dZoomPlus || 0)) : zoomPlus;
-    const wantMax = baseMaxZoom + ((!window.__t3dOff && f > 0.5) ? plus : 0);
+    const wantMax = baseMaxZoom + (window.__t3dOff ? 0 : plus);
     if (appliedMax !== wantMax) {
       appliedMax = wantMax;
       try { map.setMaxZoom(wantMax); } catch (e) {}
@@ -213,16 +220,54 @@ const T3DLAYER = {
 
 const candTmp = [];
 const pendingMeta = [];
+/* ── 占位编组(对标 dokorail.jp 的见本车辆):模型加载失败/缺失时按节生成线路色盒车,
+   高倍缩放永不空白。尺寸口径取 dokorail train-body 默认:车体宽 2.8m、高 3.65m、
+   窗带 1.55–1.9m;车体长=节长−0.6m(其 Ve_gap 视觉缝)。占位车已是极简几何,不再走 stand-in。 ── */
+const PH_BODY = 0xd4d6d9, PH_ROOF = 0xa2a6ab, PH_WIN = 0x263238;
+function synthMeta() {
+  const cars = []; let z = 0;
+  for (let i = 0; i < 4; i++) { const L = 20; cars.push({ model: null, len: L, d: z }); z += L + 0.03; }
+  return { cars, length: z - 0.03, n: 4, synth: true };
+}
+function placeholderTmpl(meta, colorHex) {
+  const m = (meta && meta.cars && meta.cars.length) ? meta : synthMeta();
+  const group = new THREE.Group();
+  const bodyMat = new THREE.MeshStandardMaterial({ color: PH_BODY, roughness: 0.55, metalness: 0 });
+  const roofMat = new THREE.MeshStandardMaterial({ color: PH_ROOF, roughness: 0.7, metalness: 0 });
+  const winMat = new THREE.MeshStandardMaterial({ color: PH_WIN, roughness: 0.35, metalness: 0 });
+  let bandCol = 0x888888;
+  try { if (colorHex) bandCol = new THREE.Color(colorHex); } catch (e) {}
+  const bandMat = new THREE.MeshStandardMaterial({ color: bandCol, roughness: 0.5, metalness: 0 });
+  const carNodes = [];
+  for (let i = 0; i < m.cars.length; i++) {
+    const L = Math.max(6, (m.cars[i].len || 20) - 0.6);
+    const wrap = new THREE.Group();
+    wrap.userData.m3dCar = 1;
+    const body = new THREE.Mesh(new THREE.BoxGeometry(2.8, 2.9, L), bodyMat);
+    body.position.y = 0.5 + 1.45;
+    const band = new THREE.Mesh(new THREE.BoxGeometry(2.86, 0.35, L * 0.995), bandMat);
+    band.position.y = 1.375;
+    const win = new THREE.Mesh(new THREE.BoxGeometry(2.84, 0.35, L * 0.99), winMat);
+    win.position.y = 1.725;
+    const roof = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.25, L * 0.98), roofMat);
+    roof.position.y = 3.525;
+    wrap.add(body, band, win, roof);
+    wrap.traverse(o => { if (o.isMesh) o.frustumCulled = false; });
+    group.add(wrap);
+    carNodes.push({ node: wrap, d: m.cars[i].d || 0 });
+  }
+  return { group, cars: carNodes, length: m.length || m.cars.length * 20, path: 'placeholder', placeholder: true };
+}
 function consume(now) {
   const v = view();
   const W = v.W, c = v.center;
   const cwx = (c.lng + 180) / 360 * W, cwy = mercY(c.lat) * W;
   candTmp.length = 0;
-  for (let i = 0; i < frameFlat.length; i += 5) {
-    const trip = frameFlat[i], lng = frameFlat[i + 1], lat = frameFlat[i + 2], brg = frameFlat[i + 3], path = frameFlat[i + 4];
+  for (let i = 0; i < frameFlat.length; i += 6) {
+    const trip = frameFlat[i], lng = frameFlat[i + 1], lat = frameFlat[i + 2], brg = frameFlat[i + 3], path = frameFlat[i + 4], color = frameFlat[i + 5];
     const wx = (lng + 180) / 360 * W, wy = mercY(lat) * W;
     const dx = wx - cwx, dy = wy - cwy;
-    candTmp.push({ trip, lng, lat, brg, path, d2: dx * dx + dy * dy });
+    candTmp.push({ trip, lng, lat, brg, path, color, d2: dx * dx + dy * dy });
   }
   frameFlat.length = 0;
   stats.cand = candTmp.length;
@@ -237,18 +282,33 @@ function consume(now) {
       insts.set(cd.trip.t, it);
     }
     it.lng = cd.lng; it.lat = cd.lat; it.brg = cd.brg; it.seenFr = stats.frame; it.lastPush = now;
+    if (cd.color) it.phColor = cd.color;
     if (!it.req) {
       it.pending = true;
-      it.req = Promise.all([window.M3D && window.M3D.ensure(it.path), consistMeta(it.path)]).then(([tmpl, meta]) => {
-        it.pending = false;
-        if (!tmpl || !meta || it.dead) { it.dead = true; return; }
-        checkAxis(it.path, tmpl, meta);
-        if (!window.__T3D.modelOk(it.path)) { it.dead = true; return; }
-        it.tmpl = tmpl; it.carsMeta = meta;
+      /* 占位回退(对标 dokorail):真模板不可用(加载失败/缺失/轴向不可校正)时,
+         用线路色盒车顶上 —— 3D 层永不空白,2D 让位门禁照常生效 */
+      const adopt = (tmpl, meta, isPh) => {
+        it.tmpl = tmpl; it.carsMeta = meta; it.isPlaceholder = !!isPh;
         it.lenM = tmpl.length;   /* 必须先于 buildRoot：gap/carD 依赖 lenM（曾因此 NaN 致全列只画头车） */
         it.rootF = buildRoot(tmpl, it);
         it.aFrom = 0; it.aTo = 1; it.aT0 = performance.now();
-      }).catch(() => { it.pending = false; it.dead = true; });
+        if (isPh) stats.ph = (stats.ph || 0) + 1;
+      };
+      it.req = Promise.all([window.M3D && window.M3D.ensure(it.path), consistMeta(it.path)]).then(([tmpl, meta]) => {
+        it.pending = false;
+        if (it.dead) return;
+        const useMeta = meta || synthMeta();
+        if (tmpl && window.__T3D.modelOk(it.path)) {
+          checkAxis(it.path, tmpl, useMeta);
+          if (window.__T3D.modelOk(it.path)) { adopt(tmpl, useMeta, false); return; }
+        }
+        adopt(placeholderTmpl(useMeta, it.phColor), useMeta, true);
+      }).catch(() => {
+        it.pending = false;
+        if (it.dead) return;
+        const useMeta = synthMeta();
+        adopt(placeholderTmpl(useMeta, it.phColor), useMeta, true);
+      });
     }
   }
   for (const [k, it] of insts) {
@@ -435,7 +495,7 @@ function placeInstances(now) {
                             : (pxLen < LOD_PX ? 'stand' : 'full'));
     if (wantLod !== it.lod) {
       it.lod = wantLod;
-      if (wantLod === 'stand' && !it.stand && it.carsMeta && !it.reqS) {
+      if (wantLod === 'stand' && !it.stand && it.carsMeta && !it.reqS && !it.isPlaceholder) {
         it.reqS = standTmpl(it.path, it.carsMeta).then(st => {
           if (!st || it.dead) return;
           it.stand = st;
@@ -1019,7 +1079,7 @@ window.__t3dProbe = () => {
 };
 
 const _push = window.__T3D.push;
-window.__T3D.push = (trip, lng, lat, brg, path, M2, kmh) => {
-  _push(trip, lng, lat, brg, path);
+window.__T3D.push = (trip, lng, lat, brg, path, M2, kmh, color) => {
+  _push(trip, lng, lat, brg, path, color);
   pendingMeta.push([trip.t, M2, kmh]);
 };

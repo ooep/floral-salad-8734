@@ -4748,13 +4748,16 @@ function updateTrains(M, dtms) {
       if (t._t3du && (!T3DH.modelOk || T3DH.modelOk(t._t3du))) {
         t._t3dpF = frameC; /* EXP 诊断:本帧已推送 3D 的帧戳(__appVisTrips 归因 2D/3D 用) */
         T3DH.push(t, lng, lat, p[2], t._t3du, M2, p[5]);
-        if (T3DH.f >= 0.985) {
+        /* EXP 让位门禁(空白缺陷修):仅当该班次 3D 实例确已可见才藏 2D/降 alpha;
+           3D 未起来(模型未就绪/渲染未起/能力不足)时 2D 图标保持全可见 */
+        const t3dVisNow = T3DH.trainVis ? T3DH.trainVis(t.t) : false;
+        if (T3DH.f >= 0.985 && t3dVisNow) {
           /* 3D 完全接管:仍进拾取集(点击详情/跟随不失效),只跳过 2D 顶点 */
           visibleTrips.push(t); visibleXY[n * 2] = lng; visibleXY[n * 2 + 1] = lat;
           drawnCouple.add(t); n++;
           continue;
         }
-        al *= (1 - T3DH.f);
+        al *= (1 - (t3dVisNow ? T3DH.f : 0));
       }
     }
     const mx = (lng + 180) / 360 - cxo;

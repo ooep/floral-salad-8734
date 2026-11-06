@@ -90,6 +90,9 @@ window.__T3D = {
     for (const [k, it] of insts) setHover(it, k === id);
     if (map) map.triggerRepaint();
   },
+  /* EXP 让位门禁:2D 图标只在「该班次 3D 实例确已可见(淡入过半且 rootF 可见)」时才让位,
+     杜绝「f 到阈值就藏 2D、3D 却因模型未就绪/渲染未起而空白」的设计缺陷 */
+  trainVis(tid) { const it = insts.get(tid); return !!(it && it.rootF && it.rootF.visible && it.a > 0.5); },
 };
 function setHover(it, on) { if (it && it.mats) for (const m of it.mats) { if (m.emissive) m.emissive.setScalar(on ? 0.22 : 0); } }
 

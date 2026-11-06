@@ -1233,6 +1233,9 @@ html[data-theme="dark"] {
   --ib-ink:#f5f6f3; --ib-dim:#9aa4a5; --ib-note:#c9d0cd; --ib-en2:#b4c0b9;
   --ib-time:#f8f9f1; --ib-dest:#f5f6f3; --ib-track:#f5f7e8; --ib-trackcap:#b0b8ae;
   --ib-foot-bg:#161b1e; --ib-foot-ink:#e1e7db;
+  --ib-tick-bg:#080b09; --ib-tick-badge-bg:#26302a; --ib-tick-badge-ink:#dbe9c8;
+  --ib-tick-ink:#b2ea95; --ib-tick-key:#c6e8a8; --ib-tick-status:#ffd28a; --ib-tick-train:#eff4e7;
+  --ib-tick-stops:#f7c278; --ib-tick-alert:#ffc36b; --ib-tick-severe:#ff8f8f; --ib-tick-cause:#e3d5ac;
   --ib-badge-bg:#232b31; --ib-badge-edge:#8f979b; --ib-badge-ink:#fafbf8;
   --ib-delay:#ffb4a2;
   --ib-vs-on:#68aa4b; --ib-vs-on-ink:#0c130b;
@@ -1246,6 +1249,9 @@ html[data-theme="light"] {
   --ib-ink:#14181b; --ib-dim:#565f66; --ib-note:#4a545b; --ib-en2:#5b656c;
   --ib-time:#0f1418; --ib-dest:#10151a; --ib-track:#101518; --ib-trackcap:#576067;
   --ib-foot-bg:#e2e6e9; --ib-foot-ink:#23292e;
+  --ib-tick-bg:#e9ede9; --ib-tick-badge-bg:#d3ddd2; --ib-tick-badge-ink:#2c3a2c;
+  --ib-tick-ink:#2f6e2c; --ib-tick-key:#3f7a3a; --ib-tick-status:#8a5a10; --ib-tick-train:#1d2a1d;
+  --ib-tick-stops:#7a5210; --ib-tick-alert:#b46a10; --ib-tick-severe:#b3261e; --ib-tick-cause:#6b5d2e;
   --ib-badge-bg:#eef1f3; --ib-badge-edge:#7c868d; --ib-badge-ink:#14181b;
   --ib-delay:#b3261e;
   --ib-vs-on:#2f6e2c; --ib-vs-on-ink:#ffffff;
@@ -1349,6 +1355,28 @@ html[data-theme="dark"] #sheet .ib-lico img { filter:saturate(.82); }
 #sheet .ib-foot { flex:none; height:26px; display:flex; align-items:center; padding:0 10px;
   border-top:1px solid var(--ib-row-line); background:var(--ib-foot-bg); min-width:0; }
 #sheet .ib-foot-msg { font-size:10px; letter-spacing:.03em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--ib-foot-ink); flex:1; min-width:0; }
+/* 横向电光掲示带（移植自原版 .train-ticker）：4 行与页脚条之间，flex:none 固定最小可读高；
+   点阵质感＝monospace 字栈+LED 配色+tabular-nums（原版同款，非图片）；走字纯 CSS marquee */
+#sheet .ib-tick { flex:none; height:24px; display:flex; align-items:stretch; border-top:1px solid var(--ib-row-line); background:var(--ib-tick-bg); overflow:hidden; min-width:0; }
+#sheet .ib-tick-badge { flex:0 0 52px; display:flex; flex-direction:column; justify-content:center; align-items:center; background:var(--ib-tick-badge-bg); border-right:1px solid var(--ib-row-line); color:var(--ib-tick-badge-ink); font-size:9px; letter-spacing:.06em; line-height:1.2; }
+#sheet .ib-tick-badge small { font:8px/1.2 Arial, sans-serif; color:var(--ib-dim); margin-top:1px; letter-spacing:0; }
+#sheet .ib-tick-win { min-width:0; flex:1; overflow:hidden; display:flex; align-items:center; }
+#sheet .ib-tick-track { display:flex; width:max-content; will-change:transform; animation:ib-tick-scroll var(--ib-tick-dur,40s) linear infinite; }
+#sheet .ib-tick-group { display:inline-flex; align-items:center; gap:18px; padding-right:36px; white-space:nowrap; font-family:"Yu Gothic","Hiragino Kaku Gothic ProN",monospace; font-size:11px; line-height:1.2; color:var(--ib-tick-ink); font-variant-numeric:tabular-nums; letter-spacing:.02em; }
+#sheet .ib-tick-key { color:var(--ib-tick-key); }
+#sheet .ib-tick-key.is-status { color:var(--ib-tick-status); }
+#sheet .ib-tick-item { display:inline-flex; align-items:center; gap:6px; }
+#sheet .ib-tick-dot { width:7px; height:7px; border-radius:50%; flex:0 0 auto; box-shadow:0 0 0 1px rgba(255,255,255,.25) inset; }
+#sheet .ib-tick-state { font-weight:700; letter-spacing:.02em; }
+#sheet .ib-tick-state.is-alert { color:var(--ib-tick-alert); }
+#sheet .ib-tick-state.is-severe { color:var(--ib-tick-severe); }
+#sheet .ib-tick-train { color:var(--ib-tick-train); }
+#sheet .ib-tick-stops { color:var(--ib-tick-stops); }
+#sheet .ib-tick-delay { color:var(--ib-delay); }
+#sheet .ib-tick-cause { color:var(--ib-tick-cause); max-width:8em; overflow:hidden; text-overflow:ellipsis; }
+@keyframes ib-tick-scroll { from { transform:translateX(0); } to { transform:translateX(calc(-1 * var(--ib-tick-dist,600px))); } }
+@media (prefers-reduced-motion: reduce) { #sheet .ib-tick-track { animation:none; will-change:auto; } #sheet .ib-tick-win { overflow-x:auto; } }
+@media (max-width:375px) { #sheet .ib-tick { height:22px; } #sheet .ib-tick-badge { flex-basis:46px; } #sheet .ib-tick-group { font-size:10px; gap:14px; padding-right:28px; } }
 /* 滚动条：移植自 compact unit 版 .ibc-scroll（4px 宽 / thumb 圆角 2px）。注意：Chrome≥121 下
    标准 scrollbar-width 会压制 ::-webkit-scrollbar 自定义（原版在本机实测即被压成 overlay thin），
    故移植版只保留 webkit 伪元素保证 4px 常驻可见；Firefox 回落默认细栏。嵌入态唯一滚动容器＝#shBody

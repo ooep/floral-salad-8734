@@ -7871,6 +7871,7 @@ const IB_I18N = {
     dia: { 1: '平日ダイヤ', 2: '土曜ダイヤ', 4: '日曜・祝日ダイヤ' },
     countDep: '発', countArr: '着', trains: '本', sched: '予定 ', nextDay: '翌日', trackCap: '番線',
     viewDep: '出発', viewArr: '到着',
+    tickBadge: '列車案内', tickTrack: '番線', tickStatus: '運行情報', tickTrain: '列車案内', tickDelay: '遅延', tickMin: '分',
     empty: 'この駅の時刻データがありません', emptyWin: '現在の時間帯に列車がありません' },
   zh: { title: '下一班列车', sub: 'Train Information',
     cols: [['种别', 'Type'], ['列车 / 线路', 'Train / Line'], ['时刻', 'Time'], ['目的地', 'Destination'], ['编组', 'Cars'], ['站台', 'Track']],
@@ -7878,6 +7879,7 @@ const IB_I18N = {
     dia: { 1: '工作日时刻表', 2: '周六时刻表', 4: '周日·节假日时刻表' },
     countDep: '发', countArr: '到', trains: '班', sched: '原定 ', nextDay: '次日', trackCap: '站台',
     viewDep: '出发', viewArr: '到达',
+    tickBadge: '列车案内', tickTrack: '站台', tickStatus: '运行情报', tickTrain: '列车案内', tickDelay: '延误', tickMin: '分',
     empty: '暂无该站的时刻数据', emptyWin: '当前时段没有列车' },
   en: { title: 'Next Trains', sub: 'Train Information',
     cols: [['Type', '種別'], ['Train / Line', '列車名 / 路線'], ['Time', '時刻'], ['Destination', '行先'], ['Cars', '両数'], ['Track', '番線']],
@@ -7885,6 +7887,7 @@ const IB_I18N = {
     dia: { 1: 'Weekday', 2: 'Saturday', 4: 'Sun & Holiday' },
     countDep: 'Dep.', countArr: 'Arr.', trains: 'trains', sched: 'sched. ', nextDay: 'next day', trackCap: 'Track',
     viewDep: 'Dep', viewArr: 'Arr',
+    tickBadge: 'Trains', tickTrack: 'Track', tickStatus: 'Service', tickTrain: 'Next', tickDelay: 'delay', tickMin: 'min',
     empty: 'No timetable data for this station', emptyWin: 'No trains in the current time window' },
 };
 const IB_OP_EN = { '東日本旅客鉄道': 'JR East', '東海旅客鉄道': 'JR Central', '西日本旅客鉄道': 'JR West',
@@ -7985,6 +7988,68 @@ function ibRowHtml(x, kind) {
     '<div class="ib-trackcap">' + esc(ib.trackCap) + '</div></div>';
   return h + '</article>';
 }
+/* ---------- 板内横向电光掲示带（移植自原版 site-live .train-ticker） ----------
+   位置：4 行与页脚条之间；内容＝运行情报（延误/运休，仅异常）在前 + 最近一班列车案内在后；
+   无内容时给一条中性说明不留空轨。走字为纯 CSS marquee（双份拷贝无缝循环），点阵质感用
+   monospace 字栈+LED 配色+tabular-nums 复现（原版同款手法，不用图片）。
+   数据：延误取宿主既有 delays.json 内存态（trip.dly）；运休/运行情报取 jrstatus status.json
+   （原版同一既有接口，会话级单次拉取、不轮询、失败静默降级为空）。mock 仅经 __mjr3d.ibTickMock。 */
+let ibStatusP = null, ibStatusArr = null, ibTickMock = null;
+function ibStatusFetch() {
+  if (!ibStatusP) {
+    ibStatusP = fetchJSONWithCache('https://jrstatus.jr.suki.ing/data/status.json', null, null, true)
+      .then(j => { ibStatusArr = (j && Array.isArray(j.lines)) ? j.lines : []; })
+      .catch(() => { ibStatusArr = []; })
+      .then(() => { try { if (sheetTab === 'tabList' && sheetStation && $('sheet').classList.contains('open')) renderStationBody(); } catch (e) {} });
+  }
+  return ibStatusP;
+}
+function ibStatusItemsFor(lineNames) {
+  if (ibTickMock) return ibTickMock;
+  if (!ibStatusArr || !ibStatusArr.length || !lineNames.length) return [];
+  const set = new Set(lineNames.map(n => normName(n)));
+  const out = [];
+  for (const s of ibStatusArr) {
+    if (!s || !s.line || !set.has(normName(s.line))) continue;
+    out.push({ line: s.line, company: s.company || '', label: s.label || '', sev: +s.sev || 0, min: +s.min || 0, cause: s.cause || '', detail: s.detail || '' });
+    if (out.length >= 4) break;
+  }
+  return out;
+}
+function ibTickHtml(board, c, kind, ib) {
+  const lineNames = [];
+  for (const o of (board.ops || [])) for (const L of (o.lines || [])) if (L.name && !lineNames.includes(L.name)) lineNames.push(L.name);
+  if (ibStatusArr === null && !ibTickMock) { try { ibStatusFetch(); } catch (e) {} }
+  const st = ibStatusItemsFor(lineNames);
+  let g = '<span class="ib-tick-group">';
+  if (st.length) {
+    g += '<span class="ib-tick-key is-status">' + esc(ib.tickStatus) + '</span>';
+    for (const s of st) {
+      const col = lineColor.get(s.line) || '#8f979b';
+      g += '<span class="ib-tick-item"><span class="ib-tick-dot" style="background:' + esc(col) + '"></span>' +
+        '<span class="ib-tick-line">' + esc(ibLocLine(s.line)) + '</span>' +
+        '<span class="ib-tick-state' + (s.sev >= 4 ? ' is-severe' : s.sev >= 3 ? ' is-alert' : '') + '">' + esc(s.label) + '</span>' +
+        (s.min ? '<span class="ib-tick-delay">' + esc(String(s.min) + ib.tickMin) + '</span>' : '') +
+        (s.cause ? '<span class="ib-tick-cause" title="' + esc(s.detail || s.cause) + '">' + esc(s.cause) + '</span>' : '') +
+        '</span>';
+    }
+  }
+  const r0 = c.rows && c.rows[0];
+  if (r0) {
+    const d0 = r0.tr ? r0.tr.dly : 0;
+    const dmin = typeof d0 === 'object' && d0 ? Math.round(+d0.delay_min || 0) : Math.round(+d0 || 0);
+    g += '<span class="ib-tick-key">' + esc(ib.tickTrain) + '</span>' +
+      '<span class="ib-tick-line">「' + esc(ibLocLine(r0.line || '')) + '」</span>' +
+      '<span class="ib-tick-train">' + esc(fmtHm(r0.dep)) + ' ' + esc(kind === 'arr' ? ib.countArr : ib.countDep) + '</span>' +
+      '<span class="ib-tick-stops">' + esc(ibLocStation(r0.term || '')) + '</span>' +
+      (dmin > 0 ? '<span class="ib-tick-delay">' + esc(ib.tickDelay + dmin + ib.tickMin) + '</span>' : '');
+  }
+  if (st.length === 0 && !r0) g += '<span class="ib-tick-key is-status">' + esc(ib.tickStatus) + '</span><span class="ib-tick-line">' + esc(ib.empty) + '</span>';
+  g += '</span>';
+  const plat = r0 ? (ibPlatOf(r0) || '–') : '–';
+  return '<div class="ib-tick" aria-label="' + esc(ib.tickBadge) + '"><span class="ib-tick-badge">' + esc(ib.tickBadge) +
+    '<small>' + esc(plat + ib.tickTrack) + '</small></span><span class="ib-tick-win"><span class="ib-tick-track">' + g + g + '</span></span></div>';
+}
 function ibBoardHtml(board) {
   const kind = (sheetDepArr === 'arr') ? 'arr' : 'dep';
   const ib = IB_I18N[lang] || IB_I18N.ja;
@@ -8007,6 +8072,7 @@ function ibBoardHtml(board) {
   } else {
     h += '<div class="ib-rows ib-rows-none"><div class="ib-empty">' + esc(c.total ? ib.emptyWin : ib.empty) + '</div></div>';
   }
+  h += ibTickHtml(board, c, kind, ib);
   const cnt = (kind === 'arr' ? ib.countArr : ib.countDep) + ' ' + c.total + ' ' + ib.trains;
   h += '<div class="ib-foot"><span class="ib-foot-msg">' + esc(ibLocStation(sheetStation)) + ' · ' + esc(dia) + ' · ' + esc(cnt) + '</span></div>';
   h += '</div>';
@@ -8022,6 +8088,15 @@ function ibFit() {
   if (!scope) return;
   const cw = scope.clientWidth;
   if (!cw) return;
+  /* 横带走字：按单组实测宽设无缝循环距离与时长（恒定 40px/s，事件驱动复测，无定时器） */
+  const tk = scope.querySelector('.ib-tick-track');
+  if (tk && tk.firstElementChild) {
+    const gw = tk.firstElementChild.getBoundingClientRect().width;
+    if (gw > 0) {
+      tk.style.setProperty('--ib-tick-dist', Math.round(gw) + 'px');
+      tk.style.setProperty('--ib-tick-dur', (gw / 40).toFixed(1) + 's');
+    }
+  }
   const els = scope.querySelectorAll('[data-fit]');
   for (let i = 0; i < els.length; i++) {
     const el = els[i];
@@ -8358,7 +8433,7 @@ $('subDep').addEventListener('click', function () { sheetDepArr = 'dep'; $('subD
 $('subArr').addEventListener('click', function () { sheetDepArr = 'arr'; $('subArr').classList.add('on'); $('subDep').classList.remove('on'); renderStationBody(); });
 window.showStationDetail = showStationDetail;  // 调试/自动化钩子：供控制台与 E2E 直接打开车站抽屉
 // E2E 钩子：列车详情/站台数据（确定性验证用，只读引用）
-window.__mjr3d = { showTrainDetail, tripList: () => tripList, PLATMAP: () => PLATMAP, tmaps: () => tmaps, badgeKeyOfFeature, badgeEntriesOfStation, badgeEntriesOf, showStationDetail, stationCoord: () => stationCoord, stationMap: () => stationMap, badgeNorm, badgeFamilyHit, map: () => map, ormState: () => ({ enabled: ormEnabled, loaded: ormLoaded, fetching: ormFetching }), detailState: () => ({ wanted: detailWanted, fetched: stationDetailFetched }), bufState: () => ({ bytes: bufArr.byteLength, trains: Math.min(MAXT, fadeList.length) }), boardCacheStats: () => ({ size: boardCache.size, items: boardCacheItems, cap: BOARD_CACHE_MAX_ITEMS }), platState: () => ({ loaded: !!PLATMAP, pending: !!(platmapP && !PLATMAP) }), detailRetry: () => Object.assign({}, detailRetry), sheetState: () => ({ partial: sheetIsPartial, rows: document.querySelectorAll('#shBody .lrow').length, open: document.querySelectorAll('#shBody .lrow.open').length, scroll: $('shBody').scrollTop }), ttState: () => (ttState ? { mode: ttState.mode, bucket: ttState.bucket, key: ttState.key } : null), ttCache: () => ({ station: stationTripsCache.size, miss: stationTripsMiss.size, partial: stationPartialCache.size, raw: !!ttRaw, sets: !!ttStopNames }) };
+window.__mjr3d = { showTrainDetail, tripList: () => tripList, PLATMAP: () => PLATMAP, tmaps: () => tmaps, badgeKeyOfFeature, badgeEntriesOfStation, badgeEntriesOf, showStationDetail, stationCoord: () => stationCoord, stationMap: () => stationMap, badgeNorm, badgeFamilyHit, map: () => map, ormState: () => ({ enabled: ormEnabled, loaded: ormLoaded, fetching: ormFetching }), detailState: () => ({ wanted: detailWanted, fetched: stationDetailFetched }), bufState: () => ({ bytes: bufArr.byteLength, trains: Math.min(MAXT, fadeList.length) }), boardCacheStats: () => ({ size: boardCache.size, items: boardCacheItems, cap: BOARD_CACHE_MAX_ITEMS }), platState: () => ({ loaded: !!PLATMAP, pending: !!(platmapP && !PLATMAP) }), detailRetry: () => Object.assign({}, detailRetry), sheetState: () => ({ partial: sheetIsPartial, rows: document.querySelectorAll('#shBody .lrow').length, open: document.querySelectorAll('#shBody .lrow.open').length, scroll: $('shBody').scrollTop }), ttState: () => (ttState ? { mode: ttState.mode, bucket: ttState.bucket, key: ttState.key } : null), ibTickMock: v => { ibTickMock = Array.isArray(v) ? v : null; try { renderStationBody(); } catch (e) {} }, ttCache: () => ({ station: stationTripsCache.size, miss: stationTripsMiss.size, partial: stationPartialCache.size, raw: !!ttRaw, sets: !!ttStopNames }) };
 // E2E 钩子：列车叠加弹窗（确定性验证，不依赖实时列车密度）
 window.__trPick = { n: () => visibleTrips.length, near: (x, y) => collectTrains(x, y, 14).length, open: (x, y) => showTrPick(collectTrains(x, y, 14), x, y) };
 /* E2E 回归钩子(确定性验证):两条历史事故的防线

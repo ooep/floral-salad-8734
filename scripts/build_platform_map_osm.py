@@ -3,19 +3,19 @@
 """
 build_platform_map_osm.py —— OSM 站台番线补空（v2：线路轨道走廊过滤）
 
-用仓库内已有 OSM 站台几何（station_platforms.geojson，ODbL）为 platform_map.json（dokorail）
+用仓库内已有 OSM 站台几何（station_platforms.geojson，ODbL）为 platform_map.json（上游番线数据）
 缺失（null）的站台番线补值，覆盖全部铁路公司。
 
 v2 精度改进（针对大站"站级并集"污染单线路）：
   - 小站（站级并集番线数 <= 6）：直接按 车站名 -> OSM 番线并集 补入（小站物理上就只有几个番线，并集即精确）。
   - 大站（并集 > 6）：用该 tmap 的官方轨道几何（station_map.json segments + tmap_lids）
     做"轨道走廊过滤"——只保留质心距该线路轨道 <= 110m 的站台番线，排除并行/新干线/他社线的番线。
-  - 过滤后无结果则保持 null（优雅降级），不改动 dokorail 已有值。
+  - 过滤后无结果则保持 null（优雅降级），不改动上游已有值。
 
 v3 格式统一（version 5）：
   - 新幹線号段守卫：非新幹線线路剔除 >=20 番（京都30-34/新大阪20-27/東京20-23 等新幹線高架站台
     与在来線走廊几何重叠，距离分不开，按号段规则兜底）；新幹線线路保留全量。
-  - 输出值统一为 dokorail 规范：升序数字、分号分隔（"1;2;3"），保留真实存在的 0 番线（千葉/米子等）。
+  - 输出值统一为上游规范：升序数字、分号分隔（"1;2;3"），保留真实存在的 0 番线（千葉/米子等）。
 
 匹配流程：
   1. OSM platform(ref) 质心 -> 最近官方车站点（station_map.json stations/extra_stations，400m 内）
@@ -283,7 +283,7 @@ def main():
 
     result = {
         "version": 5,
-        "source": "dokorail.jp 线上 + OSM(ODbL)",
+        "source": "上游线上 + OSM(ODbL)",
         "osm": {
             "filled": fill_union + fill_track,
             "union_filled": fill_union,

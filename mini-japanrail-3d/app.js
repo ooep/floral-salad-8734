@@ -3948,7 +3948,7 @@ function comfortHtml(c) {
     const lbl = cls >= 3 ? T().cfoHigh : (cls === 2 ? T().cfoMid : T().cfoLow);
     h += '<span class="cfo-chip c' + cls + '">' + lbl + ' ' + Math.round(+c.congestion.rate) + '%</span>';
   }
-  /* 東京メトロ CrowdNavi 只发布 1-6 的混雑レベル(%,温度は無い)。level が
+  /* 東京メトロ混雑页只发布 1-6 的混雑レベル(%,温度は無い)。level が
      実測(本日)か 5日平均かは basis=est で区別し、平均は別チップで明示する */
   else if (c.congestion && c.congestion.level != null) {
     const lv = Math.max(1, Math.min(6, +c.congestion.level));
@@ -3990,7 +3990,7 @@ function comfortHtml(c) {
     }
     if (mn !== null) h += '<span class="cfo-chip t ic" title="' + T().cfoTemp + '">' + ICO.cfoTemp + Math.round(mn * 10) / 10 + (mx !== mn ? '~' + Math.round(mx * 10) / 10 : '') + '℃</span>';
   }
-  /* 车両設備(JR西日本 trainmonitorinfo):轮椅/婴儿车/Wi-Fi/厕所/行李架。
+  /* 车両設備(JR西日本官方列车情报 API):轮椅/婴儿车/Wi-Fi/厕所/行李架。
      图标代替文字省一行宽度;每个图标各自带 title,整个 chip 的 aria-label
      保留完整文字,读屏和悬停都拿得到原文 */
   if (c.facilities && c.facilities.length) {
@@ -10077,16 +10077,18 @@ async function renderGuideTab() {
     h += '</div>';
   }
   const fp = rec.floorPlan;
-  if (fp && fp.imageUrl) {
+  /* 源地址脱敏后指南库字段可能只剩路径（无主机名）；仅渲染可直达的绝对 URL，
+     路径值不渲染（优雅降级），避免产生站内 404 的图/链 */
+  if (fp && /^https?:\/\//i.test(fp.imageUrl || '')) {
     h += `<div class="gd-sec"><div class="gd-sec-t">${_escTxt(t.gdFloorPlan)}</div><img class="gd-img" src="${_escTxt(fp.imageUrl)}" alt="${_escTxt(t.gdFloorPlan)}" loading="lazy"></div>`;
-  } else if (fp && fp.pageUrl) {
+  } else if (fp && /^https?:\/\//i.test(fp.pageUrl || '')) {
     h += `<div class="gd-sec"><div class="gd-sec-t">${_escTxt(t.gdFloorPlan)}</div><a class="gd-link" href="${_escTxt(fp.pageUrl)}" target="_blank" rel="noopener">${_escTxt(t.gdSeeFp)}</a></div>`;
   }
   // 配线图：插在「相关链接」上方（该站全部所属线路，异步填充，失败静默移除）
   h += _tdSecHtml(t, sheetStation);
   const L = rec.links || {};
   const linkItems = [];
-  if (L.ecomo) linkItems.push([t.gdEcomo, L.ecomo]);
+  if (L.ecomo && /^https?:\/\//i.test(L.ecomo)) linkItems.push([t.gdEcomo, L.ecomo]); /* 仅路径（脱敏后）时不渲染该链接 */
   if (L.operator) linkItems.push([t.gdOperator, L.operator]);
   if (linkItems.length) {
     h += '<div class="gd-sec"><div class="gd-sec-t">' + _escTxt(t.gdLinks) + '</div><div class="gd-links">';

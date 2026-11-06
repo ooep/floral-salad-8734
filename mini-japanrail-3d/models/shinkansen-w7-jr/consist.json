@@ -1,0 +1,712 @@
+{
+ "source": "1772471858",
+ "name": "Shinkansen W7 JR (8)_Data",
+ "car_length_m": 26.15,
+ "cars": [
+  {
+   "name": "Shinkansen W7 JR (8)_Data",
+   "model": "Cube.167.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    13.059,
+    13.059
+   ],
+   "lod": {
+    "model": "Cube.167.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "e701_lod_nwheel.obj"
+   },
+   "transform": {
+    "position": [
+     0,
+     0,
+     -0.0727
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.5,
+      1.4,
+      -9.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1.4,
+      -9.2
+     ]
+    }
+   ],
+   "lights": [
+    [
+     -1.14,
+     1.66,
+     -2.17
+    ],
+    [
+     1.14,
+     1.66,
+     -2.17
+    ]
+   ]
+  },
+  {
+   "name": "Trailere7w-jr-080",
+   "model": "Cube.152e7w-12e7w-jnr-12e7w-jnr-08e7w-jnr-06e7w-jr-06e7w-jr-12e7w-jr-08.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    13.074,
+    13.014
+   ],
+   "lod": {
+    "model": "Cube.152e7w-12e7w-jnr-12e7w-jnr-08e7w-jnr-06e7w-jr-06e7w-jr-12e7w-jr-08.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Cube.179e7w-12e7w-jnr-12e7w-jnr-08e7w-jnr-06e7w-jr-06e7w-jr-12e7w-jr-08.obj"
+   },
+   "transform": {
+    "position": [
+     0,
+     0,
+     -28.065
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.6,
+      1.4,
+      -12.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1.4,
+      -12.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.5,
+      1.4,
+      12.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1.4,
+      12.2
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Trailere7w-jr-081",
+   "model": "Cube.149e7w-12e7w-jnr-12e7w-jnr-08e7w-jnr-06e7w-jr-06e7w-jr-12e7w-jr-08.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    13.074,
+    13.014
+   ],
+   "lod": {
+    "model": "Cube.149e7w-12e7w-jnr-12e7w-jnr-08e7w-jnr-06e7w-jr-06e7w-jr-12e7w-jr-08.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Cube.181e7w-12e7w-jnr-12e7w-jnr-08e7w-jnr-06e7w-jr-06e7w-jr-12e7w-jr-08.obj"
+   },
+   "transform": {
+    "position": [
+     0,
+     0,
+     -56.055
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.6,
+      1.4,
+      -8.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1.4,
+      -8.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.5,
+      1.4,
+      11.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1.4,
+      11.2
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Trailere7w-jr-082",
+   "model": "Cube.144e7w-12e7w-jnr-12e7w-jnr-08e7w-jnr-06e7w-jr-06e7w-jr-12e7w-jr-08.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    13.029,
+    13.069
+   ],
+   "lod": {
+    "model": "Cube.144e7w-12e7w-jnr-12e7w-jnr-08e7w-jnr-06e7w-jr-06e7w-jr-12e7w-jr-08.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Cube.186e7w-12e7w-jnr-12e7w-jnr-08e7w-jnr-06e7w-jr-06e7w-jr-12e7w-jr-08.obj"
+   },
+   "transform": {
+    "position": [
+     0,
+     0,
+     -196
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.6,
+      1.4,
+      -12.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1.4,
+      -12.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.5,
+      1.4,
+      12.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1.4,
+      12.1
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Trailere7w-jr-083",
+   "model": "Cube.143e7w-12e7w-jnr-12e7w-jnr-08e7w-jr-12e7w-jr-08.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    13.029,
+    13.069
+   ],
+   "lod": {
+    "model": "Cube.143e7w-12e7w-jnr-12e7w-jnr-08e7w-jr-12e7w-jr-08.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Cube.187e7w-12e7w-jnr-12e7w-jnr-08e7w-jr-12e7w-jr-08.obj"
+   },
+   "transform": {
+    "position": [
+     0,
+     0,
+     -224
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.6,
+      1.4,
+      -9.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1.4,
+      -9.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.5,
+      1.4,
+      11.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1.4,
+      11.1
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Trailere7w-jr-084",
+   "model": "Cube.142e7w-12e7w-jnr-12e7w-jnr-08e7w-jr-12e7w-jr-08.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    13.029,
+    13.069
+   ],
+   "lod": {
+    "model": "Cube.142e7w-12e7w-jnr-12e7w-jnr-08e7w-jr-12e7w-jr-08.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Cube.188e7w-12e7w-jnr-12e7w-jnr-08e7w-jr-12e7w-jr-08.obj"
+   },
+   "transform": {
+    "position": [
+     0,
+     0,
+     -252
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.6,
+      1.4,
+      -12.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1.4,
+      -12.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.5,
+      1.4,
+      12.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1.4,
+      12.1
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Trailere7w-jr-085",
+   "model": "Cube.141e7w-12e7w-jnr-12e7w-jnr-08e7w-jnr-06e7w-jr-06e7w-jr-12e7w-jr-08.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    13.129,
+    13.069
+   ],
+   "lod": {
+    "model": "Cube.141e7w-12e7w-jnr-12e7w-jnr-08e7w-jnr-06e7w-jr-06e7w-jr-12e7w-jr-08.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Cube.189e7w-12e7w-jnr-12e7w-jnr-08e7w-jnr-06e7w-jr-06e7w-jr-12e7w-jr-08.obj"
+   },
+   "transform": {
+    "position": [
+     0,
+     0,
+     -280
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.6,
+      1.4,
+      -9.6
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1.4,
+      -9.6
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Trailere7w-jr-086",
+   "model": "Cube.306e7w-12e7w-jnr-12e7w-jnr-08e7w-jnr-06e7w-jr-06e7w-jr-12e7w-jr-08.glb",
+   "texture": "MainTex.ktx2",
+   "flip": true,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    13.059,
+    12.999
+   ],
+   "lod": {
+    "model": "Cube.306e7w-12e7w-jnr-12e7w-jnr-08e7w-jnr-06e7w-jr-06e7w-jr-12e7w-jr-08.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Cube.310e7w-12e7w-jnr-12e7w-jnr-08e7w-jnr-06e7w-jr-06e7w-jr-12e7w-jr-08.obj"
+   },
+   "transform": {
+    "position": [
+     8,
+     0,
+     -0.0727
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.6,
+      1.4,
+      -9
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.4,
+      -9
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.5,
+      1.4,
+      3.8
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1.4,
+      3.6
+     ]
+    }
+   ],
+   "lights": [
+    [
+     -1.14,
+     1.66,
+     -2.17
+    ],
+    [
+     1.14,
+     1.66,
+     -2.17
+    ]
+   ]
+  }
+ ],
+ "material": {
+  "brightness": 2.667,
+  "emissiveIntensity": 0
+ },
+ "fixed_by": "1772471858"
+}

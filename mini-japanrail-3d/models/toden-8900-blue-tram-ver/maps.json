@@ -1,0 +1,26 @@
+{
+ "MainTex.ktx2": {
+  "roughnessMap": "MainTex.rough.ktx2",
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.1299,
+  "cutoutShell": 0.0049
+ },
+ "asset_94df4688.ktx2": {
+  "roughnessMap": "asset_94df4688.rough.ktx2",
+  "colorMask": "r",
+  "maskCoverage": 0.125
+ },
+ "mirror-r_lod_Diffuse.ktx2": {
+  "roughness": 0.35
+ },
+ "mirror_lod_Diffuse.ktx2": {
+  "roughness": 0.35
+ },
+ "stand-ins.ktx2": {
+  "roughnessMap": "stand-ins.rough.ktx2",
+  "normal": "stand-ins.normal.ktx2",
+  "normalScale": 1,
+  "alphaChannel": "b",
+  "cutoutAt": 0.5
+ }
+}

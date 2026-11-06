@@ -1,0 +1,20 @@
+<svg id="レイヤー_1" data-name="レイヤー 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #d1031f;
+      }
+
+      .cls-2 {
+        fill: #fff;
+      }
+    </style>
+  </defs>
+  <g>
+    <rect class="cls-1" width="50" height="50" rx="8.333"/>
+    <g>
+      <path class="cls-2" d="M13.5,16.485H7.954V13.353H22.667v3.132H17.219V36.647H13.5Z"/>
+      <path class="cls-2" d="M26.419,13.353h3.719V23.5H30.2l7.047-10.146h4.078l-6.721,9.82,7.438,13.474H37.838L32.194,26.174l-2.056,2.937v7.536H26.419Z"/>
+    </g>
+  </g>
+</svg>

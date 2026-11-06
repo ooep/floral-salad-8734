@@ -1,0 +1,71 @@
+{
+ "Chiyoda16000Car_lod_Diffuse.ktx2": {
+  "normal": "Chiyoda16000Car_lod_Diffuse.normal.ktx2",
+  "roughnessMap": "Chiyoda16000Car_lod_Diffuse.rough.ktx2",
+  "night": {
+   "file": "Chiyoda16000Car_lod_Diffuse.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.082,
+  "emissive": "Chiyoda16000Car_lod_Diffuse.emissive.ktx2",
+  "nightCoverage": 0.1592
+ },
+ "Chiyoda16000Front_lod_Diffuse.ktx2": {
+  "normal": "Chiyoda16000Front_lod_Diffuse.normal.ktx2",
+  "roughnessMap": "Chiyoda16000Front_lod_Diffuse.rough.ktx2",
+  "night": {
+   "file": "Chiyoda16000Front_lod_Diffuse.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.0596,
+  "emissive": "Chiyoda16000Front_lod_Diffuse.emissive.ktx2",
+  "nightCoverage": 0.1523
+ },
+ "Chiyoda16000Front_lod_Diffuse_e528f984.ktx2": {
+  "normal": "Chiyoda16000Front_lod_Diffuse_e528f984.normal.ktx2",
+  "roughnessMap": "Chiyoda16000Front_lod_Diffuse_e528f984.rough.ktx2",
+  "night": {
+   "file": "Chiyoda16000Front_lod_Diffuse_e528f984.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.0693,
+  "emissive": "Chiyoda16000Front_lod_Diffuse_e528f984.emissive.ktx2",
+  "nightCoverage": 0.1699
+ },
+ "MainTex.ktx2": {
+  "roughnessMap": "MainTex.rough.ktx2",
+  "night": {
+   "file": "MainTex.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.0818,
+  "emissive": "MainTex.emissive.ktx2",
+  "nightCoverage": 0.0737
+ },
+ "MainTex_ad9f7ade.ktx2": {
+  "roughnessMap": "MainTex_ad9f7ade.rough.ktx2",
+  "night": {
+   "file": "MainTex_ad9f7ade.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.0818,
+  "emissive": "MainTex_ad9f7ade.emissive.ktx2",
+  "nightCoverage": 0.0737
+ },
+ "stand-ins.ktx2": {
+  "roughnessMap": "stand-ins.rough.ktx2",
+  "normal": "stand-ins.normal.ktx2",
+  "normalScale": 1,
+  "night": {
+   "file": "stand-ins.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "emissive": "stand-ins.emissive.ktx2"
+ }
+}

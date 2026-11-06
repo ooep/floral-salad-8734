@@ -1,0 +1,128 @@
+{
+ "3000-2_lod_Diffuse.ktx2": {
+  "normal": "3000-2_lod_Diffuse.normal.ktx2",
+  "roughnessMap": "3000-2_lod_Diffuse.rough.ktx2",
+  "night": {
+   "file": "3000-2_lod_Diffuse.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0,
+  "nightCoverage": 0.0645
+ },
+ "3000-3_lod_Diffuse.ktx2": {
+  "normal": "3000-3_lod_Diffuse.normal.ktx2",
+  "roughnessMap": "3000-3_lod_Diffuse.rough.ktx2",
+  "night": {
+   "file": "3000-3_lod_Diffuse.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0,
+  "nightCoverage": 0.0518
+ },
+ "3000-4_lod_Diffuse.ktx2": {
+  "normal": "3000-4_lod_Diffuse.normal.ktx2",
+  "roughnessMap": "3000-4_lod_Diffuse.rough.ktx2",
+  "night": {
+   "file": "3000-4_lod_Diffuse.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0,
+  "emissive": "3000-4_lod_Diffuse.emissive.ktx2",
+  "nightCoverage": 0.1611
+ },
+ "3000-5_lod_Diffuse.ktx2": {
+  "normal": "3000-5_lod_Diffuse.normal.ktx2",
+  "roughnessMap": "3000-5_lod_Diffuse.rough.ktx2",
+  "night": {
+   "file": "3000-5_lod_Diffuse.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0,
+  "nightCoverage": 0.1455
+ },
+ "3000-6_lod_Diffuse.ktx2": {
+  "normal": "3000-6_lod_Diffuse.normal.ktx2",
+  "roughnessMap": "3000-6_lod_Diffuse.rough.ktx2",
+  "night": {
+   "file": "3000-6_lod_Diffuse.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0,
+  "nightCoverage": 0.1396
+ },
+ "3000-7_lod_Diffuse.ktx2": {
+  "normal": "3000-7_lod_Diffuse.normal.ktx2",
+  "roughnessMap": "3000-7_lod_Diffuse.rough.ktx2",
+  "night": {
+   "file": "3000-7_lod_Diffuse.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0,
+  "nightCoverage": 0.0645
+ },
+ "3001-1_lod_Diffuse.ktx2": {
+  "normal": "3001-1_lod_Diffuse.normal.ktx2",
+  "roughnessMap": "3001-1_lod_Diffuse.rough.ktx2",
+  "night": {
+   "file": "3001-1_lod_Diffuse.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.001,
+  "nightCoverage": 0.0518
+ },
+ "3001-8_lod_Diffuse.ktx2": {
+  "normal": "3001-8_lod_Diffuse.normal.ktx2",
+  "roughnessMap": "3001-8_lod_Diffuse.rough.ktx2",
+  "night": {
+   "file": "3001-8_lod_Diffuse.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.001,
+  "nightCoverage": 0.0508
+ },
+ "MainTex.ktx2": {
+  "normal": "MainTex.normal.ktx2",
+  "roughnessMap": "MainTex.rough.ktx2",
+  "night": {
+   "file": "MainTex.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.0039,
+  "emissive": "MainTex.emissive.ktx2",
+  "nightCoverage": 0.1213
+ },
+ "MainTex_48f2ae0c.ktx2": {
+  "normal": "MainTex_48f2ae0c.normal.ktx2",
+  "roughnessMap": "MainTex_48f2ae0c.rough.ktx2",
+  "night": {
+   "file": "MainTex_48f2ae0c.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.0039,
+  "emissive": "MainTex_48f2ae0c.emissive.ktx2",
+  "nightCoverage": 0.1213
+ },
+ "stand-ins.ktx2": {
+  "roughnessMap": "stand-ins.rough.ktx2",
+  "normal": "stand-ins.normal.ktx2",
+  "normalScale": 1,
+  "night": {
+   "file": "stand-ins.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "alphaChannel": "b",
+  "cutoutAt": 0.5,
+  "emissive": "stand-ins.emissive.ktx2"
+ }
+}

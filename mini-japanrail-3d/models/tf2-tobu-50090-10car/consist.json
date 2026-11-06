@@ -1,0 +1,153 @@
+{
+ "source": "2936481344/Tobu50090",
+ "name": "Tobu50090",
+ "car_length_m": 20.15,
+ "middle_car_length_m": 20.15,
+ "cars": [
+  {
+   "name": "tb51090",
+   "model": "tb51090.glb",
+   "texture": null,
+   "flip": true,
+   "lod": {
+    "model": "tb51090_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    9.819,
+    10.329
+   ]
+  },
+  {
+   "name": "tb52090",
+   "model": "tb52090.glb",
+   "texture": null,
+   "flip": true,
+   "lod": {
+    "model": "tb52090_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    9.819,
+    10.329
+   ]
+  },
+  {
+   "name": "tb53090",
+   "model": "tb53090.glb",
+   "texture": null,
+   "flip": true,
+   "lod": {
+    "model": "tb53090_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    9.819,
+    10.329
+   ]
+  },
+  {
+   "name": "tb54090",
+   "model": "tb54090.glb",
+   "texture": null,
+   "flip": true,
+   "lod": {
+    "model": "tb54090_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    9.819,
+    10.329
+   ]
+  },
+  {
+   "name": "tb55090",
+   "model": "tb55090.glb",
+   "texture": null,
+   "flip": true,
+   "lod": {
+    "model": "tb55090_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    9.819,
+    10.329
+   ]
+  },
+  {
+   "name": "tb56090",
+   "model": "tb56090.glb",
+   "texture": null,
+   "flip": true,
+   "lod": {
+    "model": "tb56090_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    9.819,
+    10.329
+   ]
+  },
+  {
+   "name": "tb57090",
+   "model": "tb57090.glb",
+   "texture": null,
+   "flip": true,
+   "lod": {
+    "model": "tb57090_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    9.819,
+    10.329
+   ]
+  },
+  {
+   "name": "tb58090",
+   "model": "tb58090.glb",
+   "texture": null,
+   "flip": true,
+   "lod": {
+    "model": "tb58090_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    9.819,
+    10.329
+   ]
+  },
+  {
+   "name": "tb59090",
+   "model": "tb59090.glb",
+   "texture": null,
+   "flip": true,
+   "lod": {
+    "model": "tb59090_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    9.819,
+    10.329
+   ]
+  },
+  {
+   "name": "tb50090",
+   "model": "tb50090.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "tb50090_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    9.819,
+    10.329
+   ]
+  }
+ ],
+ "material": {
+  "brightness": 1.514,
+  "lodBrightness": 1
+ },
+ "fixed_by": "tf2-tobu-50090-10car"
+}

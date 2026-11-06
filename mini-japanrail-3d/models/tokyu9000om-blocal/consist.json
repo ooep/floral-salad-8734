@@ -1,0 +1,1099 @@
+{
+ "source": "3456591322",
+ "name": "Tokyu9000OM Blocal_Data",
+ "car_length_m": 20,
+ "cars": [
+  {
+   "name": "Tokyu9000OM Blocal_Data",
+   "model": "9116OM.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.074,
+    9.874
+   ],
+   "lod": {
+    "model": "9116OM.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "asset_37e3cb86.obj"
+   },
+   "parts": [
+    {
+     "name": "front blo oi(53AA8DBE)",
+     "model": "asset_c31b018a.glb",
+     "texture": "MainTex_d2610ce8.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      0.238281,
+      4,
+      4
+     ]
+    },
+    {
+     "name": "front blo sag(D4125BB9)",
+     "model": "asset_c31b018a.glb",
+     "texture": "MainTex_e3ff65b9.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      0.238281,
+      4,
+      4
+     ]
+    },
+    {
+     "name": "side blo oi(D4194450)",
+     "model": "asset_830d59df.glb",
+     "texture": "MainTex_d2610ce8.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      0.238281,
+      4,
+      4
+     ]
+    },
+    {
+     "name": "side blo sag(3BFA584F)",
+     "model": "asset_830d59df.glb",
+     "texture": "MainTex_e3ff65b9.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      0.238281,
+      4,
+      4
+     ]
+    },
+    {
+     "name": "behind light(4C709B2E)",
+     "model": "asset_1fbb8bbc.glb",
+     "texture": "MainTex_6c28eca2.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "front light(08284A59)",
+     "model": "asset_3cb92daa.glb",
+     "texture": "MainTex_6c28eca2.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "front blocal(8714B45B)",
+     "model": ".003.glb",
+     "texture": "MainTex_9dfb7004.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default"
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.1,
+      -7.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.1,
+      -7.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.1,
+      7.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.1,
+      7.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.1,
+      2.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.1,
+      -2.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.1,
+      -2.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.1,
+      2.4
+     ]
+    }
+   ],
+   "lights": [
+    [
+     1,
+     1.7,
+     -0.2
+    ],
+    [
+     -1,
+     1.7,
+     -0.2
+    ]
+   ]
+  },
+  {
+   "name": "TrailerTokyu9000OM Blocal1",
+   "model": "9616OMTokyu9000OM_BlocalTokyu9000OM_Blocal.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.927,
+    9.927
+   ],
+   "lod": {
+    "model": "9616OMTokyu9000OM_BlocalTokyu9000OM_Blocal.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Tokyu9000OM_BlocalTokyu9000OM_Blocal_a8a4797f.obj"
+   },
+   "parts": [
+    {
+     "name": "side blo sag(B268B3E3)",
+     "model": "Instance.glb",
+     "texture": "asset.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      0.238281,
+      4,
+      4
+     ]
+    },
+    {
+     "name": "side blo oi(428DB9C4)",
+     "model": "Instance.glb",
+     "texture": "asset_115d8222.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      0.238281,
+      4,
+      4
+     ]
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.1,
+      7.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.1,
+      -7.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.1,
+      7.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.1,
+      -7.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.1,
+      2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.1,
+      -2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.1,
+      -2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.1,
+      2.3
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerTokyu9000OM Blocal2",
+   "model": "9416OMTokyu9000OM_BlocalTokyu9000OM_Blocal.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.927,
+    9.927
+   ],
+   "lod": {
+    "model": "9416OMTokyu9000OM_BlocalTokyu9000OM_Blocal.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Tokyu9000OM_BlocalTokyu9000OM_Blocal_9b3621ed.obj"
+   },
+   "parts": [
+    {
+     "name": "side blo sag(648BA7CF)",
+     "model": "Instance.glb",
+     "texture": "asset.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      0.238281,
+      4,
+      4
+     ]
+    },
+    {
+     "name": "side blo oi(011B4406)",
+     "model": "Instance.glb",
+     "texture": "asset_115d8222.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      0.238281,
+      4,
+      4
+     ]
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.1,
+      7.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.1,
+      -7.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.1,
+      7.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.1,
+      -7.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.1,
+      2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.1,
+      -2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.1,
+      -2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.1,
+      2.3
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerTokyu9000OM Blocal3",
+   "model": "9216OMTokyu9000OM_BlocalTokyu9000OM_Blocal.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.927,
+    9.927
+   ],
+   "lod": {
+    "model": "9216OMTokyu9000OM_BlocalTokyu9000OM_Blocal.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Tokyu9000OM_BlocalTokyu9000OM_Blocal_ecd06c40.obj"
+   },
+   "parts": [
+    {
+     "name": "side blo sag(55E88566)",
+     "model": "asset_830d59df.glb",
+     "texture": "MainTex_e3ff65b9.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      0.238281,
+      4,
+      4
+     ]
+    },
+    {
+     "name": "side blo oi(261F5712)",
+     "model": "asset_830d59df.glb",
+     "texture": "MainTex_d2610ce8.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      0.238281,
+      4,
+      4
+     ]
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.1,
+      7.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.1,
+      -7.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.1,
+      7.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.1,
+      -7.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.1,
+      2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.1,
+      -2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.1,
+      -2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.1,
+      2.3
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerTokyu9000OM Blocal4",
+   "model": "9016OMTokyu9000OM_Blocal.glb",
+   "texture": "MainTex.ktx2",
+   "flip": true,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.074,
+    9.874
+   ],
+   "skins": [
+    {
+     "shader": "Custom/Vehicles/Vehicle/Train",
+     "texture": "MainTex.ktx2"
+    },
+    {
+     "shader": "Custom/Vehicles/Vehicle/Train",
+     "texture": "MainTex.ktx2"
+    },
+    {
+     "shader": "Custom/Vehicles/Vehicle/Train",
+     "texture": "MainTex.ktx2"
+    }
+   ],
+   "lod": {
+    "model": "9016OMTokyu9000OM_Blocal.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "InstanceTokyu9000OM_Blocal.obj"
+   },
+   "parts": [
+    {
+     "name": "front blo sag(FE669543)(Clone)",
+     "model": "Instance_97435359.glb",
+     "texture": "asset.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      0.238281,
+      4,
+      4
+     ]
+    },
+    {
+     "name": "front blo oi",
+     "model": "asset_c31b018a.glb",
+     "texture": "MainTex_d2610ce8.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      0.238281,
+      4,
+      4
+     ]
+    },
+    {
+     "name": "side blo sag(CE5CEC4A)(Clone)",
+     "model": "Instance.glb",
+     "texture": "asset.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      0.238281,
+      4,
+      4
+     ]
+    },
+    {
+     "name": "side blo oi(2A74FC6B)(Clone)",
+     "model": "Instance.glb",
+     "texture": "asset_115d8222.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      0.238281,
+      4,
+      4
+     ]
+    },
+    {
+     "name": "behind light(B473C3B2)(Clone)",
+     "model": "Instance_Instance_b6ee004c.glb",
+     "texture": "asset_77ba5658.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "front light(FA28F710)(Clone)",
+     "model": "Instance_Instance_46086fdf.glb",
+     "texture": "asset_77ba5658.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "front blocal(54506A6F)(Clone)",
+     "model": ".003_Instance.glb",
+     "texture": "asset_16d3b750.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default"
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.1,
+      7.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.1,
+      -7.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.1,
+      7.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.1,
+      -7.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.1,
+      2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.1,
+      -2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.1,
+      -2.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.1,
+      2.3
+     ]
+    }
+   ],
+   "lights": [
+    [
+     -1,
+     1.7,
+     -0.2
+    ],
+    [
+     1,
+     1.7,
+     -0.2
+    ]
+   ]
+  }
+ ],
+ "connectors": [
+  {
+   "name": "TrailerTokyu9000OM Blocal0",
+   "model": "9000.001Tokyu9000OM_BlocalTokyu9000OM_Blocal.glb",
+   "texture": "MainTex.ktx2",
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    0.1,
+    0.1
+   ],
+   "lod": {
+    "model": "Tokyu9000OM_BlocalTokyu9000OM_Blocal.glb",
+    "texture": "9000OM_lod_Diffuse.ktx2"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "after": 0
+  },
+  {
+   "name": "TrailerTokyu9000OM Blocal0",
+   "model": "9000.001Tokyu9000OM_BlocalTokyu9000OM_Blocal.glb",
+   "texture": "MainTex.ktx2",
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    0.1,
+    0.1
+   ],
+   "lod": {
+    "model": "Tokyu9000OM_BlocalTokyu9000OM_Blocal.glb",
+    "texture": "9000OM_lod_Diffuse.ktx2"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "after": 1
+  },
+  {
+   "name": "TrailerTokyu9000OM Blocal0",
+   "model": "9000.001Tokyu9000OM_BlocalTokyu9000OM_Blocal.glb",
+   "texture": "MainTex.ktx2",
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    0.1,
+    0.1
+   ],
+   "lod": {
+    "model": "Tokyu9000OM_BlocalTokyu9000OM_Blocal.glb",
+    "texture": "9000OM_lod_Diffuse.ktx2"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "after": 2
+  },
+  {
+   "name": "TrailerTokyu9000OM Blocal0",
+   "model": "9000.001Tokyu9000OM_BlocalTokyu9000OM_Blocal.glb",
+   "texture": "MainTex.ktx2",
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    0.1,
+    0.1
+   ],
+   "lod": {
+    "model": "Tokyu9000OM_BlocalTokyu9000OM_Blocal.glb",
+    "texture": "9000OM_lod_Diffuse.ktx2"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "after": 3
+  }
+ ],
+ "material": {
+  "brightness": 2.667,
+  "steel": {
+   "skin": 53,
+   "gain": 1.7
+  },
+  "lodSteel": {
+   "skin": 63,
+   "gain": 1.7
+  }
+ },
+ "fixed_by": "3456591322"
+}

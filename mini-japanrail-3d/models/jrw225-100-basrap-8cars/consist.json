@@ -1,0 +1,1107 @@
+{
+ "source": "3287790833",
+ "name": "JRW225-100-BASRap-8Cars_Data",
+ "car_length_m": 20.34,
+ "cars": [
+  {
+   "name": "JRW225-100-BASRap-8Cars_Data",
+   "model": "Mc225-100.glb",
+   "texture": "MainTex_4c9d5752.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.19,
+    9.69
+   ],
+   "lod": {
+    "model": "Mc225-100.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Mc225lod.obj"
+   },
+   "parts": [
+    {
+     "name": "225BSR_up(21BEEAF1)",
+     "model": "225-100makuf_Instance.glb",
+     "texture": "asset.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "225BSR_ups(E0232094)",
+     "model": "225-100makus_Instance_17cff600.glb",
+     "texture": "asset.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "225ASR2_down(662F3044)",
+     "model": "225-100makuf_Instance_ce9fea92.glb",
+     "texture": "asset_e0b45270.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "225ASR2_downs(7C4B4F9D)",
+     "model": "225-100makus_Instance.glb",
+     "texture": "asset_e0b45270.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "225-100lightH(CF95A440)",
+     "model": "AdditiveShader_0_0_10_20.glb",
+     "texture": "MainTex_af0f81e6.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 10,
+      "intensity": 20
+     }
+    },
+    {
+     "name": "225-100lightE(ADBF5A67)",
+     "model": "AdditiveShader_0_0_10_20_513b2d46.glb",
+     "texture": "MainTex_af0f81e6.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 10,
+      "intensity": 20
+     }
+    },
+    {
+     "name": "225Mcroom(F57CDC1C)",
+     "model": "Mc225-100room_Instance.glb",
+     "texture": "asset_6fee186d.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default"
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -0.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -0.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7.1
+     ]
+    }
+   ],
+   "lights": [
+    [
+     0.8,
+     1.6,
+     -0.4
+    ],
+    [
+     -0.8,
+     1.6,
+     -0.4
+    ]
+   ]
+  },
+  {
+   "name": "TrailerJRW225-100-BASRap-8Cars0",
+   "model": "M224-100.001JRW225-100-BASRap-8CarsJRW225-100-BASRap-8Cars.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.146,
+    9.696
+   ],
+   "lod": {
+    "model": "M224-100.001JRW225-100-BASRap-8CarsJRW225-100-BASRap-8Cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "M224lodJRW225-100-BASRap-8CarsJRW225-100-BASRap-8Cars.obj"
+   },
+   "parts": [
+    {
+     "name": "225BSR_ups(4F899304)",
+     "model": "225-100makus_Instance_Instance.glb",
+     "texture": "asset.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "225ASR2_downs(BA4C3F8D)",
+     "model": "225-100makus_Instance.glb",
+     "texture": "asset_e0b45270.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "225Mroom(4278B8E0)",
+     "model": "M225-100room_Instance.glb",
+     "texture": "asset_6fee186d.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default"
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -0.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -0.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.3
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJRW225-100-BASRap-8Cars0",
+   "model": "M224-100.001JRW225-100-BASRap-8CarsJRW225-100-BASRap-8Cars.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.146,
+    9.696
+   ],
+   "lod": {
+    "model": "M224-100.001JRW225-100-BASRap-8CarsJRW225-100-BASRap-8Cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "M224lodJRW225-100-BASRap-8CarsJRW225-100-BASRap-8Cars.obj"
+   },
+   "parts": [
+    {
+     "name": "225BSR_ups(4F899304)",
+     "model": "225-100makus_Instance_Instance.glb",
+     "texture": "asset.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "225ASR2_downs(BA4C3F8D)",
+     "model": "225-100makus_Instance.glb",
+     "texture": "asset_e0b45270.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "225Mroom(4278B8E0)",
+     "model": "M225-100room_Instance.glb",
+     "texture": "asset_6fee186d.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default"
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -0.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -0.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.3
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJRW225-100-BASRap-8Cars1",
+   "model": "M225-100.001JRW225-100-BASRap-8CarsJRW225-100-BASRap-8Cars.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.146,
+    9.696
+   ],
+   "lod": {
+    "model": "M225-100.001JRW225-100-BASRap-8CarsJRW225-100-BASRap-8Cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "M225lodJRW225-100-BASRap-8CarsJRW225-100-BASRap-8Cars.obj"
+   },
+   "parts": [
+    {
+     "name": "225BSR_ups(0AC5B57C)",
+     "model": "225-100makus_Instance_17cff600.glb",
+     "texture": "asset.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "225ASR2_downs(FC0F4694)",
+     "model": "225-100makus.glb",
+     "texture": "MainTex_902cb2da.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "225Mroom(BE178A40)",
+     "model": "M225-100room.glb",
+     "texture": "MainTex_0848d509.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default"
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -0.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -0.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.3
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJRW225-100-BASRap-8Cars0",
+   "model": "M224-100.001JRW225-100-BASRap-8CarsJRW225-100-BASRap-8Cars.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.146,
+    9.696
+   ],
+   "lod": {
+    "model": "M224-100.001JRW225-100-BASRap-8CarsJRW225-100-BASRap-8Cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "M224lodJRW225-100-BASRap-8CarsJRW225-100-BASRap-8Cars.obj"
+   },
+   "parts": [
+    {
+     "name": "225BSR_ups(4F899304)",
+     "model": "225-100makus_Instance_Instance.glb",
+     "texture": "asset.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "225ASR2_downs(BA4C3F8D)",
+     "model": "225-100makus_Instance.glb",
+     "texture": "asset_e0b45270.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "225Mroom(4278B8E0)",
+     "model": "M225-100room_Instance.glb",
+     "texture": "asset_6fee186d.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default"
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -0.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -0.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.3
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJRW225-100-BASRap-8Cars0",
+   "model": "M224-100.001JRW225-100-BASRap-8CarsJRW225-100-BASRap-8Cars.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.146,
+    9.696
+   ],
+   "lod": {
+    "model": "M224-100.001JRW225-100-BASRap-8CarsJRW225-100-BASRap-8Cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "M224lodJRW225-100-BASRap-8CarsJRW225-100-BASRap-8Cars.obj"
+   },
+   "parts": [
+    {
+     "name": "225BSR_ups(4F899304)",
+     "model": "225-100makus_Instance_Instance.glb",
+     "texture": "asset.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "225ASR2_downs(BA4C3F8D)",
+     "model": "225-100makus_Instance.glb",
+     "texture": "asset_e0b45270.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "225Mroom(4278B8E0)",
+     "model": "M225-100room_Instance.glb",
+     "texture": "asset_6fee186d.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default"
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -0.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -0.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.3
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJRW225-100-BASRap-8Cars2",
+   "model": "M225-100W.001JRW225-100-BASRap-8CarsJRW225-100-BASRap-8Cars.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.146,
+    9.696
+   ],
+   "lod": {
+    "model": "M225-100W.001JRW225-100-BASRap-8CarsJRW225-100-BASRap-8Cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "M225lodWJRW225-100-BASRap-8CarsJRW225-100-BASRap-8Cars.obj"
+   },
+   "parts": [
+    {
+     "name": "225BSR_ups(D85E34AA)",
+     "model": "225-100makus_Instance_Instance.glb",
+     "texture": "asset.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "225ASR2_downs(534BFCD7)",
+     "model": "225-100makus_Instance.glb",
+     "texture": "asset_e0b45270.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "225Mroom(1271BC5B)",
+     "model": "M225-100room_Instance.glb",
+     "texture": "asset_6fee186d.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default"
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -0.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -0.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.3
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJRW225-100-BASRap-8Cars3",
+   "model": "Mc224-100JRW225-100-BASRap-8Cars.glb",
+   "texture": "MainTex_4c9d5752.ktx2",
+   "flip": true,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.19,
+    10.27
+   ],
+   "lod": {
+    "model": "Mc224-100JRW225-100-BASRap-8Cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Mc224lodJRW225-100-BASRap-8Cars.obj"
+   },
+   "parts": [
+    {
+     "name": "225BSR_up(FF0E1BA4)",
+     "model": "225-100makuf_Instance.glb",
+     "texture": "asset.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "225BSR_ups(37D991F9)",
+     "model": "225-100makus_Instance_17cff600.glb",
+     "texture": "asset.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "225ASR2_down(C9E2E9F2)",
+     "model": "225-100makuf_Instance_ce9fea92.glb",
+     "texture": "asset_e0b45270.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "225ASR2_downs(60DBB34C)",
+     "model": "225-100makus_Instance.glb",
+     "texture": "asset_e0b45270.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "225-100lightH(4562CB67)",
+     "model": "AdditiveShader_0_0_10_20.glb",
+     "texture": "MainTex_af0f81e6.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 10,
+      "intensity": 20
+     }
+    },
+    {
+     "name": "225-100lightE(05F97565)",
+     "model": "AdditiveShader_0_0_10_20_513b2d46.glb",
+     "texture": "MainTex_af0f81e6.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 10,
+      "intensity": 20
+     }
+    },
+    {
+     "name": "225Mcroom(0FF1ED1E)",
+     "model": "Mc225-100room_Instance.glb",
+     "texture": "asset_6fee186d.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/Default"
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -0.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -0.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7.3
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7.3
+     ]
+    }
+   ],
+   "lights": [
+    [
+     -0.8,
+     1.6,
+     -0.4
+    ],
+    [
+     0.8,
+     1.6,
+     -0.4
+    ]
+   ]
+  }
+ ]
+}

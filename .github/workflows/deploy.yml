@@ -1,0 +1,176 @@
+name: Build & deploy site
+
+# 架构（2026-10 拆分）:
+#   - Cloudflare Pages (mini-japanrail-3d, jr.suki.ing): 仅 HTML/CSS/JS + SEO 静态页
+#   - Worker jr-static (jr-static.suki.ing): 全部大文件静态资产（data/ geojson 时刻表、logos 图片、
+#     seo/img 车站图、图标等），纯静态零计费（Workers Static Assets 免费档）
+#   - 页面内所有大文件引用均已改写为 https://jr-static.suki.ing/ 绝对地址
+# 流程: 拉取配线图 → 生成 SEO 页 → 组装并部署静态 Worker → 组装前端发布物 → GH Pages + CF Pages
+# GitHub Pages: Actions 方式部署（仓库 Settings→Pages→Source: GitHub Actions）。
+# Cloudflare: 仓库需配置 Secret: CF_API_TOKEN。
+#
+# 加密（2026-11）：带外部抓取能力的程序（配线图拉取 fetch_track_diagrams.sh、
+# wiki 静态部署 deploy_wiki_statics.py）入库即密文（encrypted/*.enc），运行时经
+# prep.sh 先验后写解密、用毕 clean。钥匙来自 Secret: CODE_KEY。
+# workflow YAML 本身无法加密（GitHub 只从明文 YAML 调度）；workflow_dispatch
+# 提供 dry_run：跑完解密/抓取/构建但跳过全部真实部署，供分支验证。
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'dry-run：执行解密/抓取/构建，但跳过所有真实部署（GH Pages / CF）'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Step 1/4 verify ciphertext (verify-only, zero writes)
+        env:
+          OOEP_PASSPHRASE: ${{ secrets.CODE_KEY }}
+        run: bash encryption/logrun.sh 1/4 bash encryption/prep.sh 1
+
+      - name: Step 2/4 materialize fetchers
+        env:
+          OOEP_PASSPHRASE: ${{ secrets.CODE_KEY }}
+        run: bash encryption/logrun.sh 2/4 bash encryption/prep.sh 2
+
+      # 配线图：从临时仓库拉取到 mini-japanrail-3d/data/（wiki_trackdiagrams /
+      # line_bsdiagrams 供 SEO 内联；trackdiagrams 供车站抽屉「指南」页）。
+      # 逻辑在密文内（ci/step.sh deploy 3），缺失时静默跳过，不影响部署。
+      - name: Step 3/4 Fetch track diagrams (jr-trackdiagrams + jr-track)
+        env:
+          OOEP_PASSPHRASE: ${{ secrets.CODE_KEY }}
+        run: bash encryption/logrun.sh 3/4 bash ci/step.sh deploy 3
+
+      # 配线图发布副本后处理（幂等，可重复跑）：去整块白背景 rect、去底部虚线分隔行、
+      # 线条/文字压暗保对比度（透明底叠毛玻璃）。只改发布副本，jr-track 源不动。
+      - name: Postprocess track diagrams (transparent + recolor)
+        run: |
+          cd mini-japanrail-3d
+          if [ -d data/trackdiagrams ]; then
+            python3 ../scripts/postprocess_track_diagrams.py data/trackdiagrams
+          else
+            echo '::warning::trackdiagrams 不存在，跳过后处理'
+          fi
+
+      # SEO：每次部署前重新生成「每线路 / 每车站」静态页、sitemap、robots、404、OG 图。
+      # 生成失败不阻断部署（沿用仓库内已有文件），保证现有发布流程不受影响。
+      - name: Build SEO static pages
+        run: |
+          cd mini-japanrail-3d && python3 seo/build_seo_static.py || echo '::warning::SEO 静态页生成失败，沿用已有文件部署'
+          rm -rf mini-japanrail-3d/data/wiki_trackdiagrams mini-japanrail-3d/data/wiki_trackdiagrams.json
+          rm -rf mini-japanrail-3d/data/line_bsdiagrams mini-japanrail-3d/data/line_bsdiagrams.json
+
+      - name: Verify data assets
+        run: |
+          python3 - <<'PY'
+          import json, os
+          for f in ['index.html','data/segments.geojson','data/stations.geojson',
+                    'data/live/tmaps.json','data/live/trains_wd.json',
+                    'data/live/trains_sa.json','data/live/trains_su.json',
+                    'mini-japanrail-3d/index.html','mini-japanrail-3d/app.js',
+                    'mini-japanrail-3d/app.css','mini-japanrail-3d/journey.html',
+                    'mini-japanrail-3d/data/journey/stations.json',
+                    'mini-japanrail-3d/data/journey/tmaps.json',
+                    'mini-japanrail-3d/data/journey/trips_wd.json',
+                    'mini-japanrail-3d/data/journey/trips_sa.json',
+                    'mini-japanrail-3d/data/journey/trips_su.json']:
+              assert os.path.exists(f), 'missing: ' + f
+          print('数据资产完整: 页面 + 地图 + tmaps + 三份本地时刻表 + 换乘案内(journey)')
+          for n in ['wd','sa','su']:
+              d = json.load(open('data/live/trains_%s.json' % n, encoding='utf-8'))
+              print('trains_%s.json: %d 班次 @ %s' % (n, d['n'], d['b']))
+          PY
+
+      # 静态资源：组装 assets（含刚生成的 OG 图）部署到 jr-static。
+      # Workers Static Assets「仅资产」模式（无 Worker 脚本）：资产/404/robots/healthz 全部由
+      # CDN 边缘直服，任何请求都不触发 Worker → 零 Worker 调用、零计费。
+      # CORS 由 assets 根 _headers 提供。令牌缺失时跳过并告警（与 CF Pages 一致）。
+      - name: Deploy static assets (jr-static)
+        if: ${{ env.CF_API_TOKEN != '' && !inputs.dry_run }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: c75ed9a498500d7c232d9d59a353341d
+        run: |
+          python3 scripts/build_static_assets.py
+          npx wrangler@4 deploy --config static-worker/wrangler.toml 2>&1 | tail -12
+
+      # 时刻表分片门禁（2026-11）：周更数据与分片必须同源。上一步组装时已 --verify 过，
+      # 这里再对「实际要上传的目录」做一次只读校验（不重建），任何一项不通过就让任务变红，
+      # 避免「新整包 + 旧/缺分片」的混版本静默上线（客户端虽有 monolith 回退，但会白丢优化）。
+      - name: Verify timetable shards (jr-static payload)
+        if: ${{ env.CF_API_TOKEN != '' && !inputs.dry_run }}
+        run: |
+          python3 scripts/build_tt_shards.py --src data/live \
+            --out static-worker/assets/data/tt --verify-only
+
+      # 车站百科(eki-wiki)与列车百科(ressha-wiki)：同为「仅资产」纯静态 Worker（无脚本，零计费）。
+      # 每次主仓 push 从各自源仓库拉取最新 data/ 并同步部署（wrangler 按哈希去重，未变化秒级跳过）。
+      # 前端引用: EKI_BASE=https://eki-wiki.suki.ing/data/、RESSHA_BASE=https://ressha-wiki.suki.ing/data/
+      # 本步骤为抓取+部署一体，脚本在密文内。
+      - name: Step 4/4 Deploy wiki statics (eki-wiki & ressha-wiki)
+        if: ${{ env.CF_API_TOKEN != '' }}
+        env:
+          OOEP_PASSPHRASE: ${{ secrets.CODE_KEY }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: c75ed9a498500d7c232d9d59a353341d
+        run: bash encryption/logrun.sh 4/4 bash ci/step.sh deploy 4
+
+      # 抓取窗口结束：删除明文抓取脚本（后续组装/部署步骤不再需要）。
+      - name: Remove plaintext fetchers
+        run: python3 encryption/decrypt.py clean --out .
+
+      - name: Prepare deploy dir (frontend only)
+        run: |
+          python3 scripts/prepare_pages_dist.py
+
+      - name: Configure Pages
+        if: ${{ !inputs.dry_run }}
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        if: ${{ !inputs.dry_run }}
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - name: Deploy to GitHub Pages
+        if: ${{ !inputs.dry_run }}
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Deploy Mini JapanRail frontend to Cloudflare Pages
+        if: ${{ env.CF_API_TOKEN != '' && !inputs.dry_run }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+        run: |
+          npx wrangler@4 pages deploy cf-mj3d --project-name mini-japanrail-3d --branch main --commit-dirty=true
+
+      # 常开收尾：再清一次（幂等）并断言工作区干净。
+      - name: Finalize (cleanup + worktree assertion)
+        if: always()
+        run: bash encryption/finalize.sh

@@ -1,0 +1,68 @@
+{
+ "MainTex.ktx2": {
+  "roughnessMap": "MainTex.rough.ktx2",
+  "night": {
+   "file": "MainTex.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.0399,
+  "nightCoverage": 0.0972
+ },
+ "MainTex_5c9d6827.ktx2": {
+  "roughnessMap": "MainTex_5c9d6827.rough.ktx2",
+  "night": {
+   "file": "MainTex_5c9d6827.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.0399,
+  "nightCoverage": 0.0972
+ },
+ "TokyoMonorail10000Car_lod_Diffuse.ktx2": {
+  "normal": "TokyoMonorail10000Car_lod_Diffuse.normal.ktx2",
+  "roughnessMap": "TokyoMonorail10000Car_lod_Diffuse.rough.ktx2",
+  "night": {
+   "file": "TokyoMonorail10000Car_lod_Diffuse.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.0205,
+  "emissive": "TokyoMonorail10000Car_lod_Diffuse.emissive.ktx2",
+  "nightCoverage": 0.1016
+ },
+ "TokyoMonorail10000Front_lod_Diffuse.ktx2": {
+  "normal": "TokyoMonorail10000Front_lod_Diffuse.normal.ktx2",
+  "roughnessMap": "TokyoMonorail10000Front_lod_Diffuse.rough.ktx2",
+  "night": {
+   "file": "TokyoMonorail10000Front_lod_Diffuse.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.0713,
+  "emissive": "TokyoMonorail10000Front_lod_Diffuse.emissive.ktx2",
+  "nightCoverage": 0.0723
+ },
+ "TokyoMonorail10000Front_lod_Diffuse_2d5fbb58.ktx2": {
+  "normal": "TokyoMonorail10000Front_lod_Diffuse_2d5fbb58.normal.ktx2",
+  "roughnessMap": "TokyoMonorail10000Front_lod_Diffuse_2d5fbb58.rough.ktx2",
+  "night": {
+   "file": "TokyoMonorail10000Front_lod_Diffuse_2d5fbb58.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.0459,
+  "emissive": "TokyoMonorail10000Front_lod_Diffuse_2d5fbb58.emissive.ktx2",
+  "nightCoverage": 0.0557
+ },
+ "stand-ins.ktx2": {
+  "roughnessMap": "stand-ins.rough.ktx2",
+  "normal": "stand-ins.normal.ktx2",
+  "normalScale": 1,
+  "night": {
+   "file": "stand-ins.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r"
+ }
+}

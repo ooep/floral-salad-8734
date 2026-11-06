@@ -1,0 +1,88 @@
+{
+ "MainTex.ktx2": {
+  "roughnessMap": "MainTex.rough.ktx2",
+  "night": {
+   "file": "MainTex.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.0333,
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.0151,
+  "nightCoverage": 0.0463,
+  "cutoutShell": 0
+ },
+ "MainTex_6c95df59.ktx2": {
+  "roughnessMap": "MainTex_6c95df59.rough.ktx2",
+  "night": {
+   "file": "MainTex_6c95df59.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.0331,
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.0146,
+  "emissive": "MainTex_6c95df59.emissive.ktx2",
+  "nightCoverage": 0.0425,
+  "cutoutShell": 0
+ },
+ "MainTex_89ad2d0c.ktx2": {
+  "roughnessMap": "MainTex_89ad2d0c.rough.ktx2",
+  "night": {
+   "file": "MainTex_89ad2d0c.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.0331,
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.0146,
+  "emissive": "MainTex_89ad2d0c.emissive.ktx2",
+  "nightCoverage": 0.0425,
+  "cutoutShell": 0
+ },
+ "MainTex_fafcaee9.ktx2": {
+  "roughnessMap": "MainTex_fafcaee9.rough.ktx2",
+  "night": {
+   "file": "MainTex_fafcaee9.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.0309,
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.0138,
+  "nightCoverage": 0.0432,
+  "cutoutShell": 0
+ },
+ "asset.ktx2": {
+  "roughnessMap": "asset.rough.ktx2",
+  "night": {
+   "file": "asset.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.0469,
+  "nightCoverage": 0.0769
+ },
+ "asset_25f0f5df.ktx2": {
+  "roughnessMap": "asset_25f0f5df.rough.ktx2",
+  "night": {
+   "file": "asset_25f0f5df.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.0323,
+  "emissive": "asset_25f0f5df.emissive.ktx2",
+  "nightCoverage": 0.0737
+ },
+ "stand-ins.ktx2": {
+  "roughnessMap": "stand-ins.rough.ktx2",
+  "normal": "stand-ins.normal.ktx2",
+  "normalScale": 1,
+  "night": {
+   "file": "stand-ins.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "emissive": "stand-ins.emissive.ktx2"
+ }
+}

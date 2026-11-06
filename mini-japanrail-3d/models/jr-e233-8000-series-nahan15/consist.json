@@ -1,0 +1,1333 @@
+{
+ "source": "3253845538",
+ "name": "JR E233-8000 Series NahaN15 (6cars,Local)_Data",
+ "car_length_m": 20.28,
+ "cars": [
+  {
+   "name": "JR E233-8000 Series NahaN15 (6cars,Local)_Data",
+   "model": "233_8015_1.glb",
+   "texture": "MainTex_4a2be703.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.14,
+    10.14
+   ],
+   "lod": {
+    "model": "233_8015_1.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "tc_lod_Instance.obj"
+   },
+   "parts": [
+    {
+     "name": "233_8015_1_frontLED(BA5C29A5)",
+     "model": "e233_frontLED_1_Instance_Instance.glb",
+     "texture": "asset_5f376b99.ktx2",
+     "kind": "display",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.125,
+      8,
+      7.5
+     ]
+    },
+    {
+     "name": "233_8015_1_frontLED2(B874AE44)",
+     "model": "e233_frontLED_1_Instance_Instance.glb",
+     "texture": "asset_99bbd592.ktx2",
+     "kind": "display",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.125,
+      8,
+      7.5
+     ]
+    },
+    {
+     "name": "233_8015_1_LED(D455CB02)",
+     "model": "18001__.158_Instance_Instance.glb",
+     "texture": "asset_4f814c56.ktx2",
+     "kind": "display",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.125,
+      8,
+      7.5
+     ]
+    },
+    {
+     "name": "233_8015_1_LED2(FB903DD5)",
+     "model": "18001__.158_Instance_Instance.glb",
+     "texture": "asset_87a0062a.ktx2",
+     "kind": "display",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.125,
+      8,
+      7.5
+     ]
+    },
+    {
+     "name": "233_5001_1_light(7B00BF9C)",
+     "model": "AdditiveShader_0_0_20_10.glb",
+     "texture": "MainTex_40c960aa.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 10
+     }
+    },
+    {
+     "name": "233_5001_1_taillight(C7EC48E8)",
+     "model": "AdditiveShader_0_0_20_5.glb",
+     "texture": "MainTex_40c960aa.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 5
+     }
+    },
+    {
+     "name": "233_8015_1_number(24839475)",
+     "model": "E233_number_1_Instance_Instance.glb",
+     "texture": "asset_c33091da.ktx2",
+     "kind": "number",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -1,
+      1,
+      60
+     ],
+     "lettering": "#ffffff"
+    },
+    {
+     "name": "233_8015_1_number2(F1D0FEA3)",
+     "model": "E233_number_2_Instance_Instance.glb",
+     "texture": "asset_c33091da.ktx2",
+     "kind": "number",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -1,
+      1,
+      60
+     ],
+     "lettering": "#ffffff"
+    },
+    {
+     "name": "fan1(6A068CE6)",
+     "model": "18001__.031_Instance_Instance_Instance_Instance_Instance_Instance_Instance_Instance_Instance_Instance_Instance__3788017c.glb",
+     "texture": "asset_b570e1e4.ktx2",
+     "kind": "fan",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "scrolls": [
+      0,
+      -0.0625,
+      16,
+      60
+     ]
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      6.05
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.45
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      2.45
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      6.05
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.45
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      2.45
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -2.5
+     ]
+    }
+   ],
+   "lights": [
+    [
+     0.93,
+     3.35,
+     -0.4
+    ],
+    [
+     -0.93,
+     3.35,
+     -0.4
+    ]
+   ]
+  },
+  {
+   "name": "TrailerJR E233-8000 Series NahaN15 (6cars,Local)1",
+   "model": "233_8015_2_JR_E233-8000_Series_NahaN15_6cars_Local.glb",
+   "texture": "MainTex_4a2be703.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.106,
+    10.106
+   ],
+   "lod": {
+    "model": "233_8015_2_JR_E233-8000_Series_NahaN15_6cars_Local.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "t_lod_JR_E233-8000_Series_NahaN15_6cars_Local.obj"
+   },
+   "parts": [
+    {
+     "name": "233_8015_2_LED(4D818B87)",
+     "model": "18001__.404_Instance_Instance.glb",
+     "texture": "asset.ktx2",
+     "kind": "display",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.125,
+      8,
+      7.5
+     ]
+    },
+    {
+     "name": "233_8015_2_LED2(69081614)",
+     "model": "18001__.404_Instance_Instance.glb",
+     "texture": "asset_dcf9dd8d.ktx2",
+     "kind": "display",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.125,
+      8,
+      7.5
+     ]
+    },
+    {
+     "name": "fan2(3AF1A882)",
+     "model": "18001__.162_Instance_Instance_Instance_Instance_Instance_Instance_Instance_Instance_Instance_Instance_Instance__3f78404d.glb",
+     "texture": "asset_e56eae5d.ktx2",
+     "kind": "fan",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "scrolls": [
+      0,
+      -0.0625,
+      16,
+      60
+     ]
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      7.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      7.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -2.5
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJR E233-8000 Series NahaN15 (6cars,Local)2",
+   "model": "233_8015_3_JR_E233-8000_Series_NahaN15_6cars_Local.glb",
+   "texture": "MainTex_4a2be703.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.106,
+    10.106
+   ],
+   "lod": {
+    "model": "233_8015_3_JR_E233-8000_Series_NahaN15_6cars_Local.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "t_lod_JR_E233-8000_Series_NahaN15_6cars_Local_JR_E233-8000_Series_NahaN15_6cars_Local.obj"
+   },
+   "parts": [
+    {
+     "name": "233_8015_2_LED(4786EF9A)",
+     "model": "18001__.404_Instance.glb",
+     "texture": "asset.ktx2",
+     "kind": "display",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.125,
+      8,
+      7.5
+     ]
+    },
+    {
+     "name": "233_8015_2_LED2(26825C66)",
+     "model": "18001__.404_Instance.glb",
+     "texture": "asset_dcf9dd8d.ktx2",
+     "kind": "display",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.125,
+      8,
+      7.5
+     ]
+    },
+    {
+     "name": "fan2(1CA51067)",
+     "model": "18001__.162_Instance_Instance_Instance_Instance_Instance_Instance_Instance_Instance_Instance_Instance_Instance__5d40898c.glb",
+     "texture": "asset_e56eae5d.ktx2",
+     "kind": "fan",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "scrolls": [
+      0,
+      -0.0625,
+      16,
+      60
+     ]
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      7.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      7.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -2.5
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJR E233-8000 Series NahaN15 (6cars,Local)3",
+   "model": "233_8015_4_JR_E233-8000_Series_NahaN15_6cars_Local.glb",
+   "texture": "MainTex_4a2be703.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.106,
+    10.106
+   ],
+   "lod": {
+    "model": "233_8015_4_JR_E233-8000_Series_NahaN15_6cars_Local.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "t_lod_JR_E233-8000_Series_NahaN15_6cars_Local_JR_E233-8000_Series_NahaN15_6cars_Local_JR_E233-8000_Series_NahaN_76f2579c.obj"
+   },
+   "parts": [
+    {
+     "name": "233_8015_2_LED(A4A2170F)",
+     "model": "18001__.404_Instance_Instance_Instance.glb",
+     "texture": "asset.ktx2",
+     "kind": "display",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.125,
+      8,
+      7.5
+     ]
+    },
+    {
+     "name": "233_8015_2_LED2(14E7D7B3)",
+     "model": "18001__.404_Instance_Instance_Instance.glb",
+     "texture": "asset_dcf9dd8d.ktx2",
+     "kind": "display",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.125,
+      8,
+      7.5
+     ]
+    },
+    {
+     "name": "fan2(90146D3A)",
+     "model": "18001__.162_Instance_Instance_Instance_Instance_Instance_Instance_Instance_Instance_Instance_Instance_Instance__126b6204.glb",
+     "texture": "asset_e56eae5d.ktx2",
+     "kind": "fan",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "scrolls": [
+      0,
+      -0.0625,
+      16,
+      60
+     ]
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      7.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      7.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -2.5
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJR E233-8000 Series NahaN15 (6cars,Local)4",
+   "model": "233_8015_5_JR_E233-8000_Series_NahaN15_6cars_Local.glb",
+   "texture": "MainTex_4a2be703.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.106,
+    10.106
+   ],
+   "lod": {
+    "model": "233_8015_5_JR_E233-8000_Series_NahaN15_6cars_Local.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "t_lod_JR_E233-8000_Series_NahaN15_6cars_Local_JR_E233-8000_Series_NahaN15_6cars_Local_JR_E233-8000_Series_NahaN_3c5ed6fa.obj"
+   },
+   "parts": [
+    {
+     "name": "233_8015_2_LED(79B5C335)",
+     "model": "18001__.404.glb",
+     "texture": "MainTex_3b2f2be2.ktx2",
+     "kind": "display",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.125,
+      8,
+      7.5
+     ]
+    },
+    {
+     "name": "233_8015_2_LED2(D06E3A34)",
+     "model": "18001__.404.glb",
+     "texture": "MainTex_5e45f4bb.ktx2",
+     "kind": "display",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.125,
+      8,
+      7.5
+     ]
+    },
+    {
+     "name": "fan2(A75472B0)",
+     "model": "18001__.162_Instance_Instance_Instance_Instance_Instance_Instance_Instance_Instance_Instance_Instance_Instance__74a17788.glb",
+     "texture": "asset_e56eae5d.ktx2",
+     "kind": "fan",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "scrolls": [
+      0,
+      -0.0625,
+      16,
+      60
+     ]
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      7.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      7.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -2.5
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJR E233-8000 Series NahaN15 (6cars,Local)5",
+   "model": "233_8015_6_JR_E233-8000_Series_NahaN15_6cars_Local_JR_E233-8000_Series_NahaN15_6cars_Local.glb",
+   "texture": "MainTex_4a2be703.ktx2",
+   "flip": true,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.09,
+    10.14
+   ],
+   "lod": {
+    "model": "233_8015_6_JR_E233-8000_Series_NahaN15_6cars_Local_JR_E233-8000_Series_NahaN15_6cars_Local.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "tc_lod_JR_E233-8000_Series_NahaN15_6cars_Local_JR_E233-8000_Series_NahaN15_6cars_Local.obj"
+   },
+   "parts": [
+    {
+     "name": "233_8015_1_frontLED(893D482F)",
+     "model": "e233_frontLED_1_Instance_Instance_Instance.glb",
+     "texture": "asset_f3194257.ktx2",
+     "kind": "display",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.125,
+      8,
+      7.5
+     ]
+    },
+    {
+     "name": "233_8015_1_frontLED2(79299632)",
+     "model": "e233_frontLED_1_Instance_Instance_Instance.glb",
+     "texture": "asset_b8895c7f.ktx2",
+     "kind": "display",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.125,
+      8,
+      7.5
+     ]
+    },
+    {
+     "name": "233_8015_1_LED(F13834EF)",
+     "model": "18001__.158_Instance_Instance_Instance.glb",
+     "texture": "asset.ktx2",
+     "kind": "display",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.125,
+      8,
+      7.5
+     ]
+    },
+    {
+     "name": "233_8015_1_LED2(A9848B28)",
+     "model": "18001__.158_Instance_Instance_Instance.glb",
+     "texture": "asset_dcf9dd8d.ktx2",
+     "kind": "display",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -0.125,
+      8,
+      7.5
+     ]
+    },
+    {
+     "name": "233_5001_1_light(3EEB7497)",
+     "model": "AdditiveShader_0_0_20_10.glb",
+     "texture": "MainTex_149eb5d7.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 10
+     }
+    },
+    {
+     "name": "233_5001_1_taillight(D46E3A77)",
+     "model": "AdditiveShader_0_0_20_5.glb",
+     "texture": "MainTex_149eb5d7.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 5
+     }
+    },
+    {
+     "name": "233_8015_1_number(2490BDBC)",
+     "model": "E233_number_1_Instance_Instance_Instance.glb",
+     "texture": "asset_62c44d24.ktx2",
+     "kind": "number",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -1,
+      1,
+      60
+     ],
+     "lettering": "#ffffff"
+    },
+    {
+     "name": "233_8015_1_number2(1C92A505)",
+     "model": "E233_number_2_Instance_Instance_Instance.glb",
+     "texture": "asset_62c44d24.ktx2",
+     "kind": "number",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      -1,
+      1,
+      60
+     ],
+     "lettering": "#ffffff"
+    },
+    {
+     "name": "fan1(B0242EEF)",
+     "model": "18001__.031_Instance_Instance_Instance_Instance_Instance_Instance_Instance_Instance_Instance_Instance_Instance__403a9536.glb",
+     "texture": "asset_e56eae5d.ktx2",
+     "kind": "fan",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "scrolls": [
+      0,
+      0.0625,
+      16,
+      60
+     ]
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      6.05
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.45
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      2.45
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -2.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      6.05
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.45
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      2.45
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -2.5
+     ]
+    }
+   ],
+   "lights": [
+    [
+     0.93,
+     3.35,
+     -0.4
+    ],
+    [
+     -0.93,
+     3.35,
+     -0.4
+    ]
+   ]
+  }
+ ],
+ "connectors": [
+  {
+   "name": "TrailerJR E233-8000 Series NahaN15 (6cars,Local)0",
+   "model": "NURBS_.006_JR_E233-7000_Series_Hae131_10cars_Local_JR_E233-7000_Series_Hae131_10cars_Local_JR_E233-7000_Series__2fcb5e73.glb",
+   "texture": "MainTex.ktx2",
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    -0.18,
+    -0.18
+   ],
+   "lod": {
+    "model": "lod_JR_E233-7000_Series_Hae131_10cars_Local_JR_E233-7000_Series_Hae131_10cars_Local_JR_E233-7000_Series_Hae127__bbfe7cfb.glb",
+    "texture": "Clone_Clone_Clone_Clone_Clone_Clone.ktx2"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "after": 0
+  },
+  {
+   "name": "TrailerJR E233-8000 Series NahaN15 (6cars,Local)0",
+   "model": "NURBS_.006_JR_E233-7000_Series_Hae131_10cars_Local_JR_E233-7000_Series_Hae131_10cars_Local_JR_E233-7000_Series__2fcb5e73.glb",
+   "texture": "MainTex.ktx2",
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    -0.18,
+    -0.18
+   ],
+   "lod": {
+    "model": "lod_JR_E233-7000_Series_Hae131_10cars_Local_JR_E233-7000_Series_Hae131_10cars_Local_JR_E233-7000_Series_Hae127__bbfe7cfb.glb",
+    "texture": "Clone_Clone_Clone_Clone_Clone_Clone.ktx2"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "after": 1
+  },
+  {
+   "name": "TrailerJR E233-8000 Series NahaN15 (6cars,Local)0",
+   "model": "NURBS_.006_JR_E233-7000_Series_Hae131_10cars_Local_JR_E233-7000_Series_Hae131_10cars_Local_JR_E233-7000_Series__2fcb5e73.glb",
+   "texture": "MainTex.ktx2",
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    -0.18,
+    -0.18
+   ],
+   "lod": {
+    "model": "lod_JR_E233-7000_Series_Hae131_10cars_Local_JR_E233-7000_Series_Hae131_10cars_Local_JR_E233-7000_Series_Hae127__bbfe7cfb.glb",
+    "texture": "Clone_Clone_Clone_Clone_Clone_Clone.ktx2"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "after": 2
+  },
+  {
+   "name": "TrailerJR E233-8000 Series NahaN15 (6cars,Local)0",
+   "model": "NURBS_.006_JR_E233-7000_Series_Hae131_10cars_Local_JR_E233-7000_Series_Hae131_10cars_Local_JR_E233-7000_Series__2fcb5e73.glb",
+   "texture": "MainTex.ktx2",
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    -0.18,
+    -0.18
+   ],
+   "lod": {
+    "model": "lod_JR_E233-7000_Series_Hae131_10cars_Local_JR_E233-7000_Series_Hae131_10cars_Local_JR_E233-7000_Series_Hae127__bbfe7cfb.glb",
+    "texture": "Clone_Clone_Clone_Clone_Clone_Clone.ktx2"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "after": 3
+  },
+  {
+   "name": "TrailerJR E233-8000 Series NahaN15 (6cars,Local)0",
+   "model": "NURBS_.006_JR_E233-7000_Series_Hae131_10cars_Local_JR_E233-7000_Series_Hae131_10cars_Local_JR_E233-7000_Series__2fcb5e73.glb",
+   "texture": "MainTex.ktx2",
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    -0.18,
+    -0.18
+   ],
+   "lod": {
+    "model": "lod_JR_E233-7000_Series_Hae131_10cars_Local_JR_E233-7000_Series_Hae131_10cars_Local_JR_E233-7000_Series_Hae127__bbfe7cfb.glb",
+    "texture": "Clone_Clone_Clone_Clone_Clone_Clone.ktx2"
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "after": 4
+  }
+ ],
+ "material": {
+  "alphaCutout": 0.5,
+  "brightness": 2.667,
+  "steel": {
+   "skin": 69,
+   "gain": 1.969
+  },
+  "lodSteel": {
+   "skin": 68,
+   "gain": 1.989
+  }
+ },
+ "fixed_by": "3253845538"
+}

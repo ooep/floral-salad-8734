@@ -1,0 +1,603 @@
+{
+ "source": "3138904785",
+ "name": "TD6000F_Data",
+ "car_length_m": 20.12,
+ "cars": [
+  {
+   "name": "TD6000F_Data",
+   "model": "Tobu_Urban_Park_Line_60000_series_formation_cb70af11.glb",
+   "texture": "MainTex_39b41a21.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.812,
+    9.812
+   ],
+   "lod": {
+    "model": "Tobu_Urban_Park_Line_60000_series_formation_cb70af11.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Tobu_Urban_Park_Line_60000_series_formation_2409f316.obj"
+   },
+   "transform": {
+    "position": [
+     -3.6146,
+     0,
+     0
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -6.53
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -6.53
+     ]
+    }
+   ],
+   "lights": [
+    [
+     0.9,
+     1.25,
+     -0.4
+    ],
+    [
+     -0.9,
+     1.25,
+     -0.4
+    ]
+   ]
+  },
+  {
+   "name": "TrailerTobu Urban Park Line 60000 series formation0",
+   "model": ".002_Tobu_Urban_Park_Line_60000_series_formation.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.697,
+    9.697
+   ],
+   "lod": {
+    "model": ".002_Tobu_Urban_Park_Line_60000_series_formation.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Tobu_Urban_Park_Line_60000_series_formation.obj"
+   },
+   "transform": {
+    "position": [
+     -0.0116,
+     0,
+     0
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -6.44
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerTobu Urban Park Line 60000 series formation1",
+   "model": ".017_Tobu_Urban_Park_Line_60000_series_formation.glb",
+   "texture": "MainTex_baa2fdff.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.693,
+    9.693
+   ],
+   "lod": {
+    "model": ".017_Tobu_Urban_Park_Line_60000_series_formation.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Tobu_Urban_Park_Line_60000_series_formation_ce92de2d.obj"
+   },
+   "transform": {
+    "position": [
+     3.6801,
+     0,
+     0
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -6.44
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerTobu Urban Park Line 60000 series formation1",
+   "model": ".017_Tobu_Urban_Park_Line_60000_series_formation.glb",
+   "texture": "MainTex_baa2fdff.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.693,
+    9.693
+   ],
+   "lod": {
+    "model": ".017_Tobu_Urban_Park_Line_60000_series_formation.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Tobu_Urban_Park_Line_60000_series_formation_ce92de2d.obj"
+   },
+   "transform": {
+    "position": [
+     3.6801,
+     0,
+     0
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -6.44
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerTobu Urban Park Line 60000 series formation0",
+   "model": ".002_Tobu_Urban_Park_Line_60000_series_formation.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.697,
+    9.697
+   ],
+   "lod": {
+    "model": ".002_Tobu_Urban_Park_Line_60000_series_formation.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Tobu_Urban_Park_Line_60000_series_formation.obj"
+   },
+   "transform": {
+    "position": [
+     -0.0116,
+     0,
+     0
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      6.44
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -6.44
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerTobu Urban Park Line 60000 series formation2",
+   "model": "Tobu_Urban_Park_Line_60000_series_formation_cb70af11.glb",
+   "texture": "MainTex_39b41a21.ktx2",
+   "flip": true,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.812,
+    9.812
+   ],
+   "lod": {
+    "model": "Tobu_Urban_Park_Line_60000_series_formation_cb70af11.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Tobu_Urban_Park_Line_60000_series_formation_2409f316.obj"
+   },
+   "transform": {
+    "position": [
+     -3.6146,
+     0,
+     0
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -6.53
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -6.53
+     ]
+    }
+   ],
+   "lights": [
+    [
+     0.9,
+     1.25,
+     -0.4
+    ],
+    [
+     -0.9,
+     1.25,
+     -0.4
+    ]
+   ]
+  }
+ ],
+ "material": {
+  "brightness": 1.939
+ },
+ "fixed_by": "3138904785"
+}

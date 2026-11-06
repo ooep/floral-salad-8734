@@ -1,0 +1,81 @@
+{
+ "MainTex.ktx2": {
+  "roughnessMap": "MainTex.rough.ktx2",
+  "night": {
+   "file": "MainTex.rough.ktx2",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.0074,
+  "nightCoverage": 0.0542,
+  "cutoutShell": 0.0029
+ },
+ "MainTex_028a91dc.ktx2": {
+  "roughnessMap": "MainTex_028a91dc.rough.ktx2",
+  "night": {
+   "file": "MainTex_028a91dc.rough.ktx2",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.0261,
+  "nightCoverage": 0.0604,
+  "cutoutShell": 0.0157
+ },
+ "MainTex_1e172f97.ktx2": {
+  "roughnessMap": "MainTex_1e172f97.rough.ktx2",
+  "night": {
+   "file": "MainTex_1e172f97.rough.ktx2",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.0089,
+  "nightCoverage": 0.0552,
+  "cutoutShell": 0.0064
+ },
+ "MainTex_645cf189.ktx2": {
+  "roughnessMap": "MainTex_645cf189.rough.ktx2",
+  "night": {
+   "file": "MainTex_645cf189.rough.ktx2",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.0097,
+  "nightCoverage": 0.055,
+  "cutoutShell": 0.0066
+ },
+ "asset.ktx2": {
+  "roughness": 0.85,
+  "night": {
+   "file": "asset.night.ktx2",
+   "channel": "r"
+  },
+  "nightCoverage": 0.0754
+ },
+ "asset_1e14b2e9.ktx2": {
+  "roughness": 0.85,
+  "night": {
+   "file": "asset_1e14b2e9.night.ktx2",
+   "channel": "r"
+  },
+  "nightCoverage": 0.0796
+ },
+ "asset_52be2725.ktx2": {
+  "roughness": 0.85,
+  "night": {
+   "file": "asset_52be2725.night.ktx2",
+   "channel": "r"
+  },
+  "nightCoverage": 0.0762
+ },
+ "stand-ins.ktx2": {
+  "roughnessMap": "stand-ins.rough.ktx2",
+  "normal": "stand-ins.normal.ktx2",
+  "normalScale": 1,
+  "night": {
+   "file": "stand-ins.rough.ktx2",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutAt": 0.5
+ }
+}

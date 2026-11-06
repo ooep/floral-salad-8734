@@ -1,0 +1,487 @@
+{
+ "source": "3390787624",
+ "name": "JRW227-1000-ULoc-2Cars_Data",
+ "car_length_m": 20.34,
+ "cars": [
+  {
+   "name": "JRW227-1000-ULoc-2Cars_Data",
+   "model": "Mc227-1000.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.19,
+    9.69
+   ],
+   "lod": {
+    "model": "Mc227-1000.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Mc225lod_Instance.obj"
+   },
+   "parts": [
+    {
+     "name": "227UL_up(FCAE2D2E)",
+     "model": "225-100makufr_Instance.glb",
+     "texture": "asset.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      0.25,
+      20,
+      1
+     ]
+    },
+    {
+     "name": "227UL_ups(203322B4)",
+     "model": "225-100makusr_Instance.glb",
+     "texture": "asset_b5687c23.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      0.25,
+      20,
+      1
+     ]
+    },
+    {
+     "name": "227UL_down(CFA7CAD2)",
+     "model": "225-100makufr_Instance.glb",
+     "texture": "asset_6a405f59.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      0.25,
+      20,
+      1
+     ]
+    },
+    {
+     "name": "227UL_downs(9C1CC582)",
+     "model": "225-100makusr_Instance.glb",
+     "texture": "asset_89a7bc34.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      0.25,
+      20,
+      1
+     ]
+    },
+    {
+     "name": "225-100light(207D81DF)",
+     "model": "AdditiveShader_0_0_10_20.glb",
+     "texture": "MainTex_af0f81e6.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 10,
+      "intensity": 20
+     }
+    },
+    {
+     "name": "225-100lightE(68FB1515)",
+     "model": "AdditiveShader_0_0_10_20_513b2d46.glb",
+     "texture": "MainTex_af0f81e6.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 10,
+      "intensity": 20
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.5,
+      1,
+      7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1,
+      7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      0
+     ]
+    }
+   ],
+   "lights": [
+    [
+     0.8,
+     1.6,
+     -0.3
+    ],
+    [
+     -0.8,
+     1.6,
+     -0.3
+    ]
+   ]
+  },
+  {
+   "name": "TrailerJRW227-1000-ULoc-2Cars0",
+   "model": "Mc226-1000JRW227-1000-ULoc-2CarsJRW227-1000-ULoc-2Cars.glb",
+   "texture": "MainTex.ktx2",
+   "flip": true,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.19,
+    10.26
+   ],
+   "lod": {
+    "model": "Mc226-1000JRW227-1000-ULoc-2CarsJRW227-1000-ULoc-2Cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "Mc224lodJRW227-1000-ULoc-2Cars_InstanceJRW227-1000-ULoc-2Cars.obj"
+   },
+   "parts": [
+    {
+     "name": "227UL_up(0E486DBF)",
+     "model": "225-100makufr_Instance.glb",
+     "texture": "asset.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      0.25,
+      20,
+      1
+     ]
+    },
+    {
+     "name": "227UL_ups(6448CA2C)",
+     "model": "225-100makusr_Instance.glb",
+     "texture": "asset_b5687c23.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      0.25,
+      20,
+      1
+     ]
+    },
+    {
+     "name": "227UL_down(2344B658)",
+     "model": "225-100makufr_Instance.glb",
+     "texture": "asset_6a405f59.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      0.25,
+      20,
+      1
+     ]
+    },
+    {
+     "name": "227UL_downs(AD5EC8B4)",
+     "model": "225-100makusr_Instance.glb",
+     "texture": "asset_89a7bc34.ktx2",
+     "kind": "part",
+     "shader": "Custom/Buildings/Building/AnimUV",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "scrolls": [
+      0,
+      0.25,
+      20,
+      1
+     ]
+    },
+    {
+     "name": "225-100light(8D06FC61)",
+     "model": "AdditiveShader_0_0_10_20.glb",
+     "texture": "MainTex_af0f81e6.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 10,
+      "intensity": 20
+     }
+    },
+    {
+     "name": "225-100lightE(3BA29D23)",
+     "model": "AdditiveShader_0_0_10_20_513b2d46.glb",
+     "texture": "MainTex_af0f81e6.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 10,
+      "intensity": 20
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      0
+     ]
+    }
+   ],
+   "lights": [
+    [
+     -0.8,
+     1.6,
+     -0.3
+    ],
+    [
+     0.8,
+     1.6,
+     -0.3
+    ]
+   ]
+  }
+ ]
+}

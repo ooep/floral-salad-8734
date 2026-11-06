@@ -1,0 +1,90 @@
+name: Fetch station track diagrams V7 (fixed)
+
+# V7 站级配线图全量抓取（手动触发）：ja/zh/commons 三端点文件名探测 + 文件名校验搜索 + 限速下载。
+# 独立 concurrency 组；克隆基线增量抓取；合并式 pull --rebase + 非 force push。
+# 需要 Secret：TRACKDIAGRAM_REPO_TOKEN（未配置时跳过同步）。
+#
+# 加密（2026-11）：抓取脚本入库即密文（encrypted/*.enc），运行时经 prep.sh
+# 先验后写解密、用毕 clean。钥匙来自 Secret: CODE_KEY。YAML 本身无法加密。
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: seo-trackdiagrams-v8
+  cancel-in-progress: false
+
+jobs:
+  fetch-v7:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Step 1/3 verify ciphertext (verify-only, zero writes)
+        env:
+          OOEP_PASSPHRASE: ${{ secrets.CODE_KEY }}
+        run: bash encryption/logrun.sh 1/3 bash encryption/prep.sh 1
+
+      - name: Step 2/3 materialize fetchers
+        env:
+          OOEP_PASSPHRASE: ${{ secrets.CODE_KEY }}
+        run: bash encryption/logrun.sh 2/3 bash encryption/prep.sh 2
+
+      - name: Step 3/3 Fetch track diagrams (V7)
+        env:
+          OOEP_PASSPHRASE: ${{ secrets.CODE_KEY }}
+        run: bash encryption/logrun.sh 3/3 bash ci/step.sh tdv8 3
+
+      - name: Remove plaintext fetchers
+        run: python3 encryption/decrypt.py clean --out .
+
+      - name: Sync diagrams to ooep/jr-trackdiagrams (merge-style)
+        env:
+          TD_TOKEN: ${{ secrets.TRACKDIAGRAM_REPO_TOKEN }}
+        run: |
+          cd mini-japanrail-3d/data
+          if [ ! -d wiki_trackdiagrams ] || [ ! -f wiki_trackdiagrams.json ]; then
+            echo "本次无抓取产物，跳过同步"; exit 0
+          fi
+          if [ -z "$TD_TOKEN" ]; then
+            echo "::warning::未配置 Secret TRACKDIAGRAM_REPO_TOKEN，跳过同步"; exit 0
+          fi
+          n=$(ls wiki_trackdiagrams/*.svg 2>/dev/null | wc -l) || n=0
+          echo "配线图 SVG 数: ${n:-0}"
+          TD=$(mktemp -d)
+          git clone --depth 1 "https://x-access-token:${TD_TOKEN}@github.com/ooep/jr-trackdiagrams.git" "$TD" 2>/dev/null || git init -q -b main "$TD"
+          cd "$TD"
+          cp -r "$GITHUB_WORKSPACE/mini-japanrail-3d/data/wiki_trackdiagrams" .
+          cp "$GITHUB_WORKSPACE/mini-japanrail-3d/data/wiki_trackdiagrams.json" .
+          git add -A
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+              commit -q -m "chore(v7): station track diagrams $(date -u +%Y-%m-%d-%H%M)" || echo "无新变更"
+          git remote set-url origin "https://x-access-token:${TD_TOKEN}@github.com/ooep/jr-trackdiagrams.git"
+          git pull --rebase origin main 2>/dev/null || true
+          if git push origin HEAD:main 2>/dev/null; then
+            echo "已合并式同步到 ooep/jr-trackdiagrams"
+          else
+            echo "::warning::push 失败（可能与并发 run 冲突），重试一次"
+            sleep 5
+            git pull --rebase origin main 2>/dev/null || true
+            git push origin HEAD:main && echo "重试成功" || echo "::error::同步失败，需人工处理"
+          fi
+
+      - name: Restore tracked cache (runner-local updates, as before)
+        run: git checkout -- mini-japanrail-3d/data/eki_wiki_cache.json 2>/dev/null || true
+
+      - name: Finalize (cleanup + worktree assertion)
+        if: always()
+        run: bash encryption/finalize.sh

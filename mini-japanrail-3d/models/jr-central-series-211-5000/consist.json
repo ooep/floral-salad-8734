@@ -1,0 +1,425 @@
+{
+ "source": "1823858496",
+ "name": "JR Central series 211-5000 (3 Cars)_Data",
+ "car_length_m": 20.13,
+ "cars": [
+  {
+   "name": "JR Central series 211-5000 (3 Cars)_Data",
+   "model": "front.glb",
+   "texture": "MainTex_e816d0e9.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.065,
+    10.065
+   ],
+   "lod": {
+    "model": "front.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "front_e5b02e1a.obj"
+   },
+   "transform": {
+    "position": [
+     0.0109,
+     2.1098,
+     1.5828
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      6.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -6.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      6.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -6.5
+     ]
+    }
+   ],
+   "lights": [
+    [
+     0.88,
+     1.73,
+     -0.4
+    ],
+    [
+     -0.88,
+     1.73,
+     -0.4
+    ]
+   ]
+  },
+  {
+   "name": "TrailerJR Central series 211-5000 (3 Cars)0",
+   "model": "frontJR_Central_series_211-5000_3_Cars_JR_Central_series_211-5000_3_Cars.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10,
+    10
+   ],
+   "lod": {
+    "model": "frontJR_Central_series_211-5000_3_Cars_JR_Central_series_211-5000_3_Cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "frontJR_Central_series_211-5000_3_Cars_JR_Central_series_211-5000_3_Cars_43c83d3c.obj"
+   },
+   "transform": {
+    "position": [
+     -0.0077,
+     1.6724,
+     0.0008
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      6.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -6.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      6.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -6.5
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJR Central series 211-5000 (3 Cars)1",
+   "model": "frontJR_Central_series_211-5000_3_Cars_JR_Central_series_211-5000_3_Cars_c974bd04.glb",
+   "texture": "MainTex_83e66b90.ktx2",
+   "flip": true,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.065,
+    10.065
+   ],
+   "lod": {
+    "model": "frontJR_Central_series_211-5000_3_Cars_JR_Central_series_211-5000_3_Cars_c974bd04.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "frontJR_Central_series_211-5000_3_Cars_JR_Central_series_211-5000_3_Cars_2bb76bed.obj"
+   },
+   "transform": {
+    "position": [
+     0.0155,
+     1.4826,
+     3.3216
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      6.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -6.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      6.5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -6.5
+     ]
+    }
+   ],
+   "lights": [
+    [
+     0.88,
+     1.73,
+     -0.4
+    ],
+    [
+     -0.88,
+     1.73,
+     -0.4
+    ]
+   ]
+  }
+ ],
+ "material": {
+  "brightness": 1.59
+ },
+ "fixed_by": "1823858496"
+}

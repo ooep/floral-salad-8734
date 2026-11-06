@@ -1,0 +1,96 @@
+{
+ "131_tn6_1_LED2_lod_Diffuse.ktx2": {
+  "roughness": 0.35
+ },
+ "131_tn6_1_LED_lod_Diffuse.ktx2": {
+  "roughness": 0.35
+ },
+ "131_tn6_1_frontLED2_lod_Diffuse.ktx2": {
+  "roughness": 0.35
+ },
+ "131_tn6_1_frontLED_lod_Diffuse.ktx2": {
+  "roughness": 0.35
+ },
+ "131_tn6_1_number2_lod_Diffuse.ktx2": {
+  "roughness": 0.85
+ },
+ "131_tn6_1_number_lod_Diffuse.ktx2": {
+  "roughness": 0.85
+ },
+ "131_tn6_2_LED2_lod_Diffuse.ktx2": {
+  "roughness": 0.35
+ },
+ "131_tn6_2_LED_lod_Diffuse.ktx2": {
+  "roughness": 0.35
+ },
+ "Clone.ktx2": {
+  "roughness": 0.35
+ },
+ "Clone_2e92188a.ktx2": {
+  "normal": "Clone_2e92188a.normal.ktx2",
+  "roughnessMap": "Clone_2e92188a.rough.ktx2",
+  "night": {
+   "file": "Clone_2e92188a.rough.ktx2",
+   "channel": "a"
+  },
+  "nightCoverage": 0.1758
+ },
+ "Clone_Clone.ktx2": {
+  "roughness": 0.35
+ },
+ "Clone_Clone_Clone_Clone_Clone_Clone.ktx2": {
+  "roughness": 0.85
+ },
+ "Clone_Clone_fe2bb870.ktx2": {
+  "normal": "Clone_Clone_fe2bb870.normal.ktx2",
+  "roughnessMap": "Clone_Clone_fe2bb870.rough.ktx2",
+  "night": {
+   "file": "Clone_Clone_fe2bb870.rough.ktx2",
+   "channel": "a"
+  },
+  "nightCoverage": 0.1758
+ },
+ "MainTex.ktx2": {
+  "roughnessMap": "MainTex.rough.ktx2",
+  "night": {
+   "file": "MainTex.rough.ktx2",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.1865,
+  "nightCoverage": 0.0097
+ },
+ "MainTex_5aef22ef.ktx2": {
+  "normal": "MainTex_5aef22ef.normal.ktx2",
+  "roughnessMap": "MainTex_5aef22ef.rough.ktx2",
+  "night": {
+   "file": "MainTex_5aef22ef.rough.ktx2",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.2688,
+  "nightCoverage": 0.0097,
+  "cutoutShell": 0.0023,
+  "cutoutGrille": 0.3661
+ },
+ "asset_23afd4f8.ktx2": {
+  "roughness": 0.35
+ },
+ "asset_5019a122.ktx2": {
+  "roughness": 0.85
+ },
+ "asset_719e7f71.ktx2": {
+  "roughness": 0.85
+ },
+ "stand-ins.ktx2": {
+  "roughnessMap": "stand-ins.rough.ktx2",
+  "normal": "stand-ins.normal.ktx2",
+  "normalScale": 1,
+  "night": {
+   "file": "stand-ins.rough.ktx2",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutAt": 0.5
+ }
+}

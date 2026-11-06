@@ -1,0 +1,109 @@
+{
+ "MainTex.ktx2": {
+  "roughnessMap": "MainTex.rough.ktx2",
+  "night": {
+   "file": "MainTex.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.038,
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.0186,
+  "nightCoverage": 0.0515,
+  "cutoutShell": 0
+ },
+ "MainTex_1890ba97.ktx2": {
+  "roughnessMap": "MainTex_1890ba97.rough.ktx2",
+  "night": {
+   "file": "MainTex_1890ba97.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.0317,
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.0191,
+  "nightCoverage": 0.0418,
+  "cutoutShell": 0
+ },
+ "MainTex_4fcf25c5.ktx2": {
+  "roughnessMap": "MainTex_4fcf25c5.rough.ktx2",
+  "night": {
+   "file": "MainTex_4fcf25c5.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.0363,
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.0231,
+  "emissive": "MainTex_4fcf25c5.emissive.ktx2",
+  "nightCoverage": 0.0359,
+  "cutoutShell": 0
+ },
+ "MainTex_b90be60e.ktx2": {
+  "roughnessMap": "MainTex_b90be60e.rough.ktx2",
+  "night": {
+   "file": "MainTex_b90be60e.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.0438,
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.0302,
+  "nightCoverage": 0.0806,
+  "cutoutShell": 0
+ },
+ "asset.ktx2": {
+  "roughnessMap": "asset.rough.ktx2",
+  "night": {
+   "file": "asset.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.0444,
+  "nightCoverage": 0.0706
+ },
+ "asset_b56bfdeb.ktx2": {
+  "roughnessMap": "asset_b56bfdeb.rough.ktx2",
+  "night": {
+   "file": "asset_b56bfdeb.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.0435,
+  "emissive": "asset_b56bfdeb.emissive.ktx2",
+  "nightCoverage": 0.0529
+ },
+ "asset_c214ed89.ktx2": {
+  "roughnessMap": "asset_c214ed89.rough.ktx2",
+  "night": {
+   "file": "asset_c214ed89.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.0444,
+  "nightCoverage": 0.0706
+ },
+ "asset_e657c886.ktx2": {
+  "roughnessMap": "asset_e657c886.rough.ktx2",
+  "night": {
+   "file": "asset_e657c886.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.0497,
+  "nightCoverage": 0.087
+ },
+ "stand-ins.ktx2": {
+  "roughnessMap": "stand-ins.rough.ktx2",
+  "normal": "stand-ins.normal.ktx2",
+  "normalScale": 1,
+  "night": {
+   "file": "stand-ins.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "alphaChannel": "b",
+  "cutoutAt": 0.5,
+  "emissive": "stand-ins.emissive.ktx2"
+ }
+}

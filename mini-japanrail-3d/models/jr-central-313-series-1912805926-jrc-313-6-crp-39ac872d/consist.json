@@ -1,0 +1,801 @@
+{
+ "source": "1912805926",
+ "name": "JR Central 313 Series (6)_Data",
+ "car_length_m": 20.63,
+ "cars": [
+  {
+   "name": "JR Central 313 Series (6)_Data",
+   "model": "313-1.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.491,
+    10.135
+   ],
+   "lod": {
+    "model": "313-1.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "313-6_LOD.001.obj"
+   },
+   "transform": {
+    "position": [
+     0,
+     -0.0048,
+     38.0817
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "FL",
+     "model": "AdditiveShader_0_24_20_3_33eb6aef.glb",
+     "texture": "MainTex_843977ab.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 20,
+      "intensity": 3
+     }
+    },
+    {
+     "name": "RL",
+     "model": "AdditiveShader_0_24_20_3_99a93dbb.glb",
+     "texture": "MainTex_843977ab.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 20,
+      "intensity": 3
+     }
+    },
+    {
+     "name": "FLED",
+     "model": "AdditiveShader_0_24_20_3_f104f4b7.glb",
+     "texture": "MainTex_843977ab.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Spawned"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 20,
+      "intensity": 3
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Passenger",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -6.9
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -6.9
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      0.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      0.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      7
+     ]
+    }
+   ],
+   "lights": [
+    [
+     0.85,
+     1.68,
+     -0.7
+    ],
+    [
+     -0.85,
+     1.68,
+     -0.7
+    ]
+   ]
+  },
+  {
+   "name": "TrailerJRC_313_60",
+   "model": "313-2JRC_313_8JRC_313_6.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.01,
+    10.03
+   ],
+   "lod": {
+    "model": "313-2JRC_313_8JRC_313_6.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "313-4_LOD.002JRC_313_8JRC_313_6.obj"
+   },
+   "transform": {
+    "position": [
+     0,
+     0,
+     17.8777
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "SLED",
+     "model": "AdditiveShader_0_24_20_3.glb",
+     "texture": "MainTex_843977ab.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Spawned"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 20,
+      "intensity": 3
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -6.9
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -6.9
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.5,
+      1,
+      6.9
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1,
+      6.9
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJRC_313_61",
+   "model": "313-3JRC_313_8JRC_313_6.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.01,
+    10.03
+   ],
+   "lod": {
+    "model": "313-3JRC_313_8JRC_313_6.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "313-4_LOD.001JRC_313_8JRC_313_6.obj"
+   },
+   "transform": {
+    "position": [
+     0,
+     0,
+     -2.159
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "SLED",
+     "model": "AdditiveShader_0_24_20_3.glb",
+     "texture": "MainTex_843977ab.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Spawned"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 20,
+      "intensity": 3
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -6.9
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -6.9
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.5,
+      1,
+      6.9
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1,
+      6.9
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJRC_313_62",
+   "model": "313-4JRC_313_8JRC_313_6.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.01,
+    10.03
+   ],
+   "lod": {
+    "model": "313-4JRC_313_8JRC_313_6.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "313-4_LODJRC_313_8JRC_313_6.obj"
+   },
+   "transform": {
+    "position": [
+     0,
+     0,
+     -22.1967
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "SLED",
+     "model": "AdditiveShader_0_24_20_3.glb",
+     "texture": "MainTex_843977ab.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Spawned"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 20,
+      "intensity": 3
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -6.9
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -6.9
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.5,
+      1,
+      6.9
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1,
+      6.9
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJRC_313_63",
+   "model": "313-5JRC_313_8JRC_313_6.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.01,
+    10.01
+   ],
+   "lod": {
+    "model": "313-5JRC_313_8JRC_313_6.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "313-4_LOD.003JRC_313_8JRC_313_6.obj"
+   },
+   "transform": {
+    "position": [
+     0,
+     0,
+     -42.2332
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "SLED",
+     "model": "AdditiveShader_0_24_20_3.glb",
+     "texture": "MainTex_843977ab.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Spawned"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 20,
+      "intensity": 3
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -6.9
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -6.9
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.5,
+      1,
+      6.9
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1,
+      6.9
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerJRC_313_64",
+   "model": "313-6OJRC_313_8JRC_313_6.glb",
+   "texture": "MainTex.ktx2",
+   "flip": true,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.226,
+    10.135
+   ],
+   "lod": {
+    "model": "313-6OJRC_313_8JRC_313_6.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "313-6_LOD.000JRC_313_8JRC_313_6.obj"
+   },
+   "transform": {
+    "position": [
+     10,
+     10,
+     -63.8955
+    ],
+    "rotation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ]
+   },
+   "parts": [
+    {
+     "name": "LEDcar6-7O",
+     "model": "AdditiveShader_0_24_20_3_c3189262.glb",
+     "texture": "MainTex_843977ab.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Spawned"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 24,
+      "fade": 20,
+      "intensity": 3
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      -6.9
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      -6.9
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1,
+      0.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1,
+      0.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.5,
+      1,
+      7
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1,
+      7
+     ]
+    }
+   ]
+  }
+ ],
+ "material": {
+  "brightness": 2.667,
+  "steel": {
+   "skin": 70,
+   "gain": 1.48
+  },
+  "lodSteel": {
+   "skin": 72,
+   "gain": 1.486
+  }
+ },
+ "fixed_by": "1912805926"
+}

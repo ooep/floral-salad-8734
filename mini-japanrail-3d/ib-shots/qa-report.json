@@ -1,0 +1,486 @@
+{
+  "shots": [],
+  "phases": {
+    "boot_errors": [],
+    "theme_mode": "auto",
+    "open_method": "dom-click-sug",
+    "subtabs_h_list": 0,
+    "assert_light_316": {
+      "cells": 24,
+      "rectViolations": [],
+      "clipViolations": [],
+      "carsNonEmpty": 0,
+      "rows": 4,
+      "trackFilled": 2,
+      "contrast": [
+        {
+          "sel": ".ib-time",
+          "kind": "body",
+          "ratio": 17.42
+        },
+        {
+          "sel": ".ib-dest",
+          "kind": "body",
+          "ratio": 17.26
+        },
+        {
+          "sel": ".ib-lname",
+          "kind": "body",
+          "ratio": 16.79
+        },
+        {
+          "sel": ".ib-type",
+          "kind": "body",
+          "ratio": 15.74
+        },
+        {
+          "sel": ".ib-vs.on",
+          "kind": "body",
+          "ratio": 6.2
+        },
+        {
+          "sel": ".ib-vs:not(.on)",
+          "kind": "secondary",
+          "ratio": 4.91
+        },
+        {
+          "sel": ".ib-note",
+          "kind": "secondary",
+          "ratio": 7.29
+        },
+        {
+          "sel": ".ib-open",
+          "kind": "secondary",
+          "ratio": 5.61
+        },
+        {
+          "sel": ".ib-order",
+          "kind": "secondary",
+          "ratio": 6.13
+        },
+        {
+          "sel": ".ib-trackcap",
+          "kind": "secondary",
+          "ratio": 6.03
+        },
+        {
+          "sel": ".ib-type-en",
+          "kind": "secondary",
+          "ratio": 15.74
+        },
+        {
+          "sel": ".ib-colhead jp",
+          "kind": "secondary",
+          "ratio": 11.59
+        },
+        {
+          "sel": ".ib-colhead en",
+          "kind": "secondary",
+          "ratio": 4.68
+        },
+        {
+          "sel": ".ib-foot-msg",
+          "kind": "secondary",
+          "ratio": 11.71
+        }
+      ],
+      "minBody": 6.2,
+      "minSecondary": 4.68
+    },
+    "assert_dark_316": {
+      "cells": 24,
+      "rectViolations": [],
+      "clipViolations": [],
+      "carsNonEmpty": 0,
+      "rows": 4,
+      "trackFilled": 2,
+      "contrast": [
+        {
+          "sel": ".ib-time",
+          "kind": "body",
+          "ratio": 18.13
+        },
+        {
+          "sel": ".ib-dest",
+          "kind": "body",
+          "ratio": 17.72
+        },
+        {
+          "sel": ".ib-lname",
+          "kind": "body",
+          "ratio": 17.72
+        },
+        {
+          "sel": ".ib-type",
+          "kind": "body",
+          "ratio": 13.84
+        },
+        {
+          "sel": ".ib-vs.on",
+          "kind": "body",
+          "ratio": 6.68
+        },
+        {
+          "sel": ".ib-vs:not(.on)",
+          "kind": "secondary",
+          "ratio": 7.09
+        },
+        {
+          "sel": ".ib-note",
+          "kind": "secondary",
+          "ratio": 12.25
+        },
+        {
+          "sel": ".ib-open",
+          "kind": "secondary",
+          "ratio": 10.23
+        },
+        {
+          "sel": ".ib-order",
+          "kind": "secondary",
+          "ratio": 7.53
+        },
+        {
+          "sel": ".ib-trackcap",
+          "kind": "secondary",
+          "ratio": 9.44
+        },
+        {
+          "sel": ".ib-type-en",
+          "kind": "secondary",
+          "ratio": 13.84
+        },
+        {
+          "sel": ".ib-colhead jp",
+          "kind": "secondary",
+          "ratio": 13.39
+        },
+        {
+          "sel": ".ib-colhead en",
+          "kind": "secondary",
+          "ratio": 8.7
+        },
+        {
+          "sel": ".ib-foot-msg",
+          "kind": "secondary",
+          "ratio": 13.77
+        }
+      ],
+      "minBody": 6.68,
+      "minSecondary": 7.09
+    },
+    "assert_dark_375": {
+      "cells": 24,
+      "rectViolations": [],
+      "clipViolations": [],
+      "carsNonEmpty": 0,
+      "rows": 4,
+      "trackFilled": 2,
+      "contrast": [
+        {
+          "sel": ".ib-time",
+          "kind": "body",
+          "ratio": 18.13
+        },
+        {
+          "sel": ".ib-dest",
+          "kind": "body",
+          "ratio": 17.72
+        },
+        {
+          "sel": ".ib-lname",
+          "kind": "body",
+          "ratio": 17.72
+        },
+        {
+          "sel": ".ib-type",
+          "kind": "body",
+          "ratio": 13.84
+        },
+        {
+          "sel": ".ib-vs.on",
+          "kind": "body",
+          "ratio": 6.68
+        },
+        {
+          "sel": ".ib-vs:not(.on)",
+          "kind": "secondary",
+          "ratio": 7.09
+        },
+        {
+          "sel": ".ib-note",
+          "kind": "secondary",
+          "ratio": 12.25
+        },
+        {
+          "sel": ".ib-open",
+          "kind": "secondary",
+          "ratio": 10.23
+        },
+        {
+          "sel": ".ib-order",
+          "kind": "secondary",
+          "ratio": 7.53
+        },
+        {
+          "sel": ".ib-trackcap",
+          "kind": "secondary",
+          "ratio": 9.44
+        },
+        {
+          "sel": ".ib-type-en",
+          "kind": "secondary",
+          "ratio": 13.84
+        },
+        {
+          "sel": ".ib-colhead jp",
+          "kind": "secondary",
+          "ratio": 13.39
+        },
+        {
+          "sel": ".ib-colhead en",
+          "kind": "secondary",
+          "ratio": 8.7
+        },
+        {
+          "sel": ".ib-foot-msg",
+          "kind": "secondary",
+          "ratio": 13.77
+        }
+      ],
+      "minBody": 6.68,
+      "minSecondary": 7.09
+    },
+    "assert_light_375": {
+      "cells": 24,
+      "rectViolations": [],
+      "clipViolations": [],
+      "carsNonEmpty": 0,
+      "rows": 4,
+      "trackFilled": 2,
+      "contrast": [
+        {
+          "sel": ".ib-time",
+          "kind": "body",
+          "ratio": 17.42
+        },
+        {
+          "sel": ".ib-dest",
+          "kind": "body",
+          "ratio": 17.26
+        },
+        {
+          "sel": ".ib-lname",
+          "kind": "body",
+          "ratio": 16.79
+        },
+        {
+          "sel": ".ib-type",
+          "kind": "body",
+          "ratio": 15.74
+        },
+        {
+          "sel": ".ib-vs.on",
+          "kind": "body",
+          "ratio": 6.2
+        },
+        {
+          "sel": ".ib-vs:not(.on)",
+          "kind": "secondary",
+          "ratio": 4.91
+        },
+        {
+          "sel": ".ib-note",
+          "kind": "secondary",
+          "ratio": 7.29
+        },
+        {
+          "sel": ".ib-open",
+          "kind": "secondary",
+          "ratio": 5.61
+        },
+        {
+          "sel": ".ib-order",
+          "kind": "secondary",
+          "ratio": 6.13
+        },
+        {
+          "sel": ".ib-trackcap",
+          "kind": "secondary",
+          "ratio": 6.03
+        },
+        {
+          "sel": ".ib-type-en",
+          "kind": "secondary",
+          "ratio": 15.74
+        },
+        {
+          "sel": ".ib-colhead jp",
+          "kind": "secondary",
+          "ratio": 11.59
+        },
+        {
+          "sel": ".ib-colhead en",
+          "kind": "secondary",
+          "ratio": 4.68
+        },
+        {
+          "sel": ".ib-foot-msg",
+          "kind": "secondary",
+          "ratio": 11.71
+        }
+      ],
+      "minBody": 6.2,
+      "minSecondary": 4.68
+    },
+    "assert_en_375": {
+      "cells": 24,
+      "rectViolations": [],
+      "clipViolations": [],
+      "carsNonEmpty": 0,
+      "rows": 4,
+      "trackFilled": 2,
+      "contrast": [
+        {
+          "sel": ".ib-time",
+          "kind": "body",
+          "ratio": 18.13
+        },
+        {
+          "sel": ".ib-dest",
+          "kind": "body",
+          "ratio": 17.72
+        },
+        {
+          "sel": ".ib-lname",
+          "kind": "body",
+          "ratio": 17.72
+        },
+        {
+          "sel": ".ib-type",
+          "kind": "body",
+          "ratio": 13.84
+        },
+        {
+          "sel": ".ib-vs.on",
+          "kind": "body",
+          "ratio": 6.68
+        },
+        {
+          "sel": ".ib-vs:not(.on)",
+          "kind": "secondary",
+          "ratio": 7.09
+        },
+        {
+          "sel": ".ib-note",
+          "kind": "secondary",
+          "ratio": 12.25
+        },
+        {
+          "sel": ".ib-open",
+          "kind": "secondary",
+          "ratio": 10.23
+        },
+        {
+          "sel": ".ib-order",
+          "kind": "secondary",
+          "ratio": 7.53
+        },
+        {
+          "sel": ".ib-trackcap",
+          "kind": "secondary",
+          "ratio": 9.44
+        },
+        {
+          "sel": ".ib-type-en",
+          "kind": "secondary",
+          "ratio": 13.84
+        },
+        {
+          "sel": ".ib-colhead jp",
+          "kind": "secondary",
+          "ratio": 13.39
+        },
+        {
+          "sel": ".ib-colhead en",
+          "kind": "secondary",
+          "ratio": 8.7
+        },
+        {
+          "sel": ".ib-foot-msg",
+          "kind": "secondary",
+          "ratio": 13.77
+        }
+      ],
+      "minBody": 6.68,
+      "minSecondary": 7.09
+    },
+    "lang": [
+      {
+        "lang": "ja",
+        "header": "種別",
+        "rows": 4
+      },
+      {
+        "lang": "zh",
+        "header": "种别",
+        "rows": 4
+      },
+      {
+        "lang": "en",
+        "header": "Type",
+        "rows": 4
+      }
+    ],
+    "osaka_rows": 4,
+    "stress": {
+      "cycles": 10,
+      "max_loaf": 2634,
+      "mem_peak_mb": 697,
+      "errors_before": 0,
+      "errors_after": 0
+    },
+    "stations": [
+      {
+        "station": "東京",
+        "rows": 4
+      },
+      {
+        "station": "大阪",
+        "rows": 4
+      },
+      {
+        "station": "名古屋",
+        "rows": 4
+      }
+    ],
+    "mine_rect": {
+      "x": 11,
+      "y": 380,
+      "w": 353,
+      "h": 422
+    },
+    "mine_rect_316": {
+      "x": 11,
+      "y": 381,
+      "w": 294,
+      "h": 349
+    },
+    "orig_rect": {
+      "x": 0,
+      "y": 0,
+      "w": 375,
+      "h": 491
+    },
+    "orig_rect_316": {
+      "x": 0,
+      "y": 0,
+      "w": 316,
+      "h": 551
+    },
+    "final_errors": [
+      "<page crashed or context lost>"
+    ],
+    "cdp_exceptions": []
+  }
+}

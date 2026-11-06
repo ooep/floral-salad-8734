@@ -1,0 +1,208 @@
+name: SEO determinism guard
+
+# 回归护栏（2026-11 增补）：build_seo_static.py 的 resolve_line_adj 曾存在顺序敏感
+# 消歧——nodes=set() 之后 pending 按 set 迭代序（= 字符串哈希序，随 PYTHONHASHSEED
+# 漂移）处理，同一输入会产出不同页面。修复后（pending 按 sorted(nodes) + 线名唯一
+# 归属锁定）输出必须与种子无关。本护栏以 PYTHONHASHSEED=1..4 各构建一次整站并
+# 比对整树指纹，不一致即失败。用 4 个种子而非 2 个：实测 set() 回归变体的顺序
+# 敏感盆地按种子分群（seed 1/2/3 同盆地、seed 4 异盆地），仅比双种子会漏检。
+#
+# 指纹口径：lines/ 与 stations/ 全部产物 + 根级 sitemap*.xml/robots.txt/404.html，
+# 逐文件 sha256 得 "<hash>  <relpath>" 行，按 relpath 排序后整体再 sha256（FP_STABLE）。
+# og-image.png 受 PIL 版本/字体环境影响，不计入 FP_STABLE，仅参与同环境内多种子
+# 互比（FP_FULL）。EXPECTED 为 2026-11-03 在 head 3c07eefc 基线上的实测值
+# （Python 3.12、无配线图数据、无 CJK 字体环境亦不影响 FP_STABLE）；
+# 生成器输出发生预期内变更时须同步更新该值。
+#
+# 本 workflow 为只读构建比对：不产出部署物、不触发任何部署；
+# deploy.yml / refresh.yml 等现有部署链的触发条件未做任何改动。
+#
+# 统计口径更正（2026-11-03 独立复核实测，基线 3c07eefc seed0 vs 补丁 seed0）：
+# 差异闭包为 56 文件（22 线路页 + 34 车站页），归属翻转 30 处 / 涉及 22 条线路
+# （29 处线名唯一归属锁定 + 1 处地理最近＝京阪黄檗）。早期描述 53(20+33)/26/20
+# 为误报，以本行为准。
+#
+# 触发面（2026-11-03 收窄）：paths = 生成器三件（脚本/配置/本护栏）+ 数据五件
+# （station_map/segments3d/names_i18n/lines_map/station_key_index）。index.html 与
+# app.js 虽是生成器输入，但只被正则提取 JP2CN/KANA2ZH 两张字面量表（站名/线名中文
+# 转写），字段不变则输出不变（实测多次 app.js 变更 FP_STABLE 不动），且仓库内无
+# 其派生物可盯——故移出 paths，改由每周定时全量兜底；近 30 天频率因此从
+# ~100 次/周 降至 ~8 次/周。
+#
+# 判定分支与种子分级：
+#   * 生成器/配置/护栏变更 → 种子 1 2 3 4 全量互比 + EXPECTED（完整检查）；
+#   * 仅数据五件变更 → 种子 1 与 4 互比（要求 0 差异），跳过 EXPECTED，避免预期
+#     内产物变更误报。(1,4) 为跨盆地种子对：实测 set() 回归变体的种子划分为
+#     {1,2,3,6,7}=A 盆、{4,5}=B 盆，该对横跨两盆，2 次构建即可捕获已知分盆形态；
+#     未知盆地形态的顺序敏感逻辑只可能来自生成器代码改动，由上一档全覆盖。
+#   * 无法确定差异范围（schedule/workflow_dispatch/新分支/基线获取失败）→ 完整检查。
+#
+# 定时兜底：每周日 03:00 UTC 全量检查（含 EXPECTED）。即使 paths 漏掉某类输入，
+# 一周内必有一次完整比对；定时运行按「不可判」路径走完整检查。
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'mini-japanrail-3d/seo/build_seo_static.py'
+      - 'mini-japanrail-3d/seo/seo_config.json'
+      - '.github/workflows/seo-determinism.yml'
+      - 'mini-japanrail-3d/data/station_map.json'
+      - 'mini-japanrail-3d/data/segments3d.geojson'
+      - 'mini-japanrail-3d/data/names_i18n.json'
+      - 'mini-japanrail-3d/data/lines_map.json'
+      - 'mini-japanrail-3d/data/station_key_index.json'
+  pull_request:
+    paths:
+      - 'mini-japanrail-3d/seo/build_seo_static.py'
+      - 'mini-japanrail-3d/seo/seo_config.json'
+      - '.github/workflows/seo-determinism.yml'
+      - 'mini-japanrail-3d/data/station_map.json'
+      - 'mini-japanrail-3d/data/segments3d.geojson'
+      - 'mini-japanrail-3d/data/names_i18n.json'
+      - 'mini-japanrail-3d/data/lines_map.json'
+      - 'mini-japanrail-3d/data/station_key_index.json'
+  schedule:
+    - cron: '0 3 * * 0'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: seo-determinism
+  cancel-in-progress: false
+
+jobs:
+  determinism:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      EXPECTED_FP_STABLE: 'e80eef770432bb766f3898ec2b9b03735e84088f4f94c25cb6d0b7cce50b852a'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Detect change scope (generator vs inputs-only)
+        id: scope
+        run: |
+          set -euo pipefail
+          BASE=""
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE="${{ github.event.pull_request.base.sha }}"
+          elif [ "${{ github.event_name }}" = "push" ]; then
+            BASE="${{ github.event.before }}"
+          fi
+          CHANGED=""
+          if [ -n "$BASE" ] && [ "$BASE" != "0000000000000000000000000000000000000000" ]; then
+            if git fetch --quiet --depth=1 origin "$BASE" 2>/dev/null; then
+              CHANGED=$(git diff --name-only "$BASE" HEAD)
+            fi
+          fi
+          if [ -z "$CHANGED" ]; then
+            echo "generator_touched=true" >> "$GITHUB_OUTPUT"
+            echo "seeds=1 2 3 4" >> "$GITHUB_OUTPUT"
+            echo "scope: 无法确定差异范围（schedule/workflow_dispatch/新分支/基线获取失败）→ 完整检查（含 EXPECTED）"
+          elif printf '%s\n' "$CHANGED" | grep -qE '^(mini-japanrail-3d/seo/build_seo_static\.py|mini-japanrail-3d/seo/seo_config\.json|\.github/workflows/seo-determinism\.yml)$'; then
+            echo "generator_touched=true" >> "$GITHUB_OUTPUT"
+            echo "seeds=1 2 3 4" >> "$GITHUB_OUTPUT"
+            echo "scope: 生成器/配置/护栏自身变更 → 完整检查（种子 1 2 3 4 + EXPECTED）"
+          else
+            echo "generator_touched=false" >> "$GITHUB_OUTPUT"
+            echo "seeds=1 4" >> "$GITHUB_OUTPUT"
+            echo "scope: 仅数据五件变更 → 跨盆地种子对 1/4 互比，跳过 EXPECTED"
+          fi
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Pillow (og-image)
+        run: python3 -m pip install --quiet pillow
+
+      - name: Build twice (PYTHONHASHSEED=1 / 2) and fingerprint
+        run: |
+          set -euo pipefail
+          cd mini-japanrail-3d
+
+          fingerprint() {
+            python3 - <<'PY'
+          import hashlib, os
+          ROOT = '.'
+          ROOT_ARTIFACTS = ['sitemap.xml', 'sitemap-lines.xml', 'sitemap-stations.xml',
+                            'sitemap-pages.xml', 'robots.txt', '404.html', 'og-image.png']
+          rels = []
+          for sub in ('lines', 'stations'):
+              for dp, dns, fns in os.walk(sub):
+                  dns.sort()
+                  for fn in sorted(fns):
+                      rels.append(os.path.join(dp, fn))
+          for fn in ROOT_ARTIFACTS:
+              if os.path.exists(fn):
+                  rels.append(fn)
+          rels = sorted(set(rels))
+          def sha(p):
+              h = hashlib.sha256()
+              with open(p, 'rb') as f:
+                  for chunk in iter(lambda: f.read(1 << 20), b''):
+                      h.update(chunk)
+              return h.hexdigest()
+          full, stable = [], []
+          for rp in rels:
+              line = '%s  %s' % (sha(rp), rp)
+              full.append(line)
+              if rp != 'og-image.png':
+                  stable.append(line)
+          print('FP_FULL=%s' % hashlib.sha256('\n'.join(full).encode()).hexdigest())
+          print('FP_STABLE=%s' % hashlib.sha256('\n'.join(stable).encode()).hexdigest())
+          print('files=%d' % len(rels))
+          PY
+          }
+
+          clean() {
+            rm -rf lines stations
+            rm -f sitemap.xml sitemap-lines.xml sitemap-stations.xml sitemap-pages.xml \
+                  robots.txt 404.html og-image.png
+          }
+
+          SEEDS='${{ steps.scope.outputs.seeds }}'
+          GENERATOR_TOUCHED='${{ steps.scope.outputs.generator_touched }}'
+          echo "seeds=[$SEEDS] generator_touched=$GENERATOR_TOUCHED"
+
+          for SEED in $SEEDS; do
+            clean
+            PYTHONHASHSEED=$SEED python3 seo/build_seo_static.py
+            fingerprint | tee /tmp/fp$SEED.txt
+          done
+
+          FP1_FULL=$(sed -n 's/^FP_FULL=//p' /tmp/fp1.txt)
+          FP1_STABLE=$(sed -n 's/^FP_STABLE=//p' /tmp/fp1.txt)
+          echo "seed1 FP_FULL=$FP1_FULL"
+          echo "seed1 FP_STABLE=$FP1_STABLE"
+
+          fail=0
+          for SEED in $SEEDS; do
+            if [ "$SEED" = "1" ]; then continue; fi
+            FPN_FULL=$(sed -n 's/^FP_FULL=//p' /tmp/fp$SEED.txt)
+            FPN_STABLE=$(sed -n 's/^FP_STABLE=//p' /tmp/fp$SEED.txt)
+            echo "seed$SEED FP_FULL=$FPN_FULL"
+            echo "seed$SEED FP_STABLE=$FPN_STABLE"
+            if [ "$FPN_FULL" != "$FP1_FULL" ]; then
+              echo "::error::整树指纹（含 og-image）seed$SEED 与 seed1 不一致 → 存在顺序敏感回归"
+              fail=1
+            fi
+            if [ "$FPN_STABLE" != "$FP1_STABLE" ]; then
+              echo "::error::整树指纹（FP_STABLE）seed$SEED 与 seed1 不一致 → 存在顺序敏感回归"
+              fail=1
+            fi
+          done
+          if [ "$GENERATOR_TOUCHED" = "false" ]; then
+            echo "仅数据五件变更：跳过 EXPECTED 指纹比对（本次 FP_STABLE=$FP1_STABLE）"
+          elif [ "$FP1_STABLE" != "$EXPECTED_FP_STABLE" ]; then
+            echo "::error::FP_STABLE 与期望值不符（期望 $EXPECTED_FP_STABLE）。若为预期内输出变更，请更新本 workflow 的 EXPECTED_FP_STABLE"
+            fail=1
+          fi
+          exit $fail

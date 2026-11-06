@@ -1,0 +1,135 @@
+name: Refresh timetables (weekly + manual)
+
+# 唯一会访问时刻表源的工作流。每周自动抓一次全表维护总时刻表，
+# 也可手动触发（workflow_dispatch）。
+# 流程: 全量抓取时刻表(fetch_timetables.py, 2.2s/请求节流) → 构建页面本地列车文件
+# (build_trains.py) → 提交 → 由 push 触发的 deploy.yml 统一完成部署
+# （静态 Worker jr-static 与 Pages 均在其内重建，含新数据）。
+#
+# 加密（2026-11）：具备外部抓取能力的脚本（fetch_timetables / build_tmaps /
+# fetch_ra_geometry）入库即密文（encrypted/*.enc + encryption/manifest.tsv），
+# 运行时经 prep.sh 先验后写解密、用毕 clean 删除，finalize 断言工作区干净。
+# 明文只存在于 runner 工作区的解密窗口内。钥匙来自 Secret: CODE_KEY。
+# workflow YAML 本身无法加密（GitHub 只从明文 YAML 调度），调度名/步骤名公开。
+
+on:
+  schedule:
+    - cron: '0 3 * * 0'   # 每周日 03:00 UTC = 11:00 JST
+  workflow_dispatch:
+    inputs:
+      only:
+        description: '只刷新单条线路名（留空 = 全量，约 65 分钟）'
+        type: string
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: refresh-pages
+  cancel-in-progress: true
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # 解密密文抓取脚本：先全量校验（零落盘），再物化到原路径。
+      - name: Step 1/5 verify ciphertext (verify-only, zero writes)
+        env:
+          OOEP_PASSPHRASE: ${{ secrets.CODE_KEY }}
+        run: bash encryption/logrun.sh 1/5 bash encryption/prep.sh 1
+
+      - name: Step 2/5 materialize fetchers
+        env:
+          OOEP_PASSPHRASE: ${{ secrets.CODE_KEY }}
+        run: bash encryption/logrun.sh 2/5 bash encryption/prep.sh 2
+
+      # inputs.only 经 env 中转（不直插 run:），脚本内按 lines_index 白名单校验。
+      # 业务文件名/端点不出现在 YAML 与日志中（ci/step.sh 在密文内）。
+      - name: Step 3/5 Fetch full timetables (throttled 2.2s/request)
+        env:
+          OOEP_PASSPHRASE: ${{ secrets.CODE_KEY }}
+          ONLY: ${{ github.event.inputs.only }}
+        run: bash encryption/logrun.sh 3/5 bash ci/step.sh refresh 3
+
+      - name: Build local train files
+        run: python3 scripts/build_trains.py --src data/timetables --out data/live
+
+      - name: Step 4/5 Ensure tmaps covers trains keys (rebuild only when dangling)
+        # trains 更新常引入新 tmap_id（ダイヤ改正/新服务），而 tmaps.json 是
+        # 手动构建的旧版 → 悬空 key 会让这些班次在 delay bake 中宁漏。
+        # --ensure-keys: 全覆盖则秒级跳过；有缺失才全量重建（merge 旧 tmaps，约 25 分钟）。
+        # 重建失败不阻断主流程（下周重试），避免周日流水线因单个脚本卡死。
+        env:
+          OOEP_PASSPHRASE: ${{ secrets.CODE_KEY }}
+        run: bash encryption/logrun.sh 4/5 bash ci/step.sh refresh 4
+
+      - name: Sync Mini JapanRail data + contract verify
+        # 契约校验不通过则 exit 1 → 后续 commit/部署中止,旧数据保持,页面不受影响
+        run: python3 scripts/sync_mini_3d.py
+
+      - name: Build journey planner data (RAPTOR)
+        # 由同步后的 tmaps/trains_{wd,sa,su} 生成 data/journey/(stations/lines/tmaps/trips/transfers)
+        # 失败不阻断: journey 页会回退到上一次提交的数据(旧数据仍自洽)
+        run: python3 mini-japanrail-3d/scripts/build_journey_data.py || echo '::warning::journey 数据构建失败,沿用旧数据'
+
+      - name: Step 5/5 Refresh official geometry (incremental, throttled 2.2s)
+        # resume: 已缓存 rw 跳过, 通常 0 个新请求; 仅新开线才抓取(脚本内逐请求容错,
+        # 单请求失败不退出; 与加密前失败语义一致)
+        env:
+          OOEP_PASSPHRASE: ${{ secrets.CODE_KEY }}
+        run: bash encryption/logrun.sh 5/5 bash ci/step.sh refresh 5
+
+      # 抓取窗口结束：立即删除明文抓取脚本（提交步骤之前，杜绝明文回流入库）。
+      - name: Remove plaintext fetchers
+        run: python3 encryption/decrypt.py clean --out .
+
+      - name: Build station geometry map v2 (official coords + extra tracks)
+        run: pip install numpy && python3 scripts/build_station_map_v2.py
+
+      - name: Preflight timetable shards (bake-time gate)
+        # 数据不合格就不提交：分片按「计划时刻 + 晚点尾巴」切窗，终点<起点、重复 id、
+        # 缺班次等问题在这里暴露，避免坏数据推上 main 之后才在 deploy 侧失败。
+        # 纯离线全量生成 + 抽样校验，约 30s，不额外产生费用。
+        run: |
+          rm -rf /tmp/tt-preflight
+          python3 scripts/build_tt_shards.py --src data/live --out /tmp/tt-preflight --verify
+
+      - name: Commit refreshed data (+ DATA_VERSION bump)
+        # 提交后 push 触发 deploy.yml：重新生成 SEO、重建并部署静态 Worker、部署 Pages。
+        # 数据内容变了必须同时递增 DATA_VERSION——idx 索引缓存与数据文件缓存都以它为键,
+        # 不递增 → 老访客 IDB 旧索引 × 新时刻表错配 → 列车线路外乱飞(2026-10-25 事故,见 PERF.md)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A data/live mini-japanrail-3d/data scripts
+          if git diff --cached --quiet; then
+            echo "no data change"
+          else
+            V="$(date -u +%Y-%m-%d)a"
+            sed -i "s/const DATA_VERSION = '[^']*';/const DATA_VERSION = '$V';/" mini-japanrail-3d/app.js
+            sed -i "s/const DATA_VERSION = 'mjrj[^']*';/const DATA_VERSION = 'mjrj-$V';/" mini-japanrail-3d/journey.html
+            git add mini-japanrail-3d/app.js mini-japanrail-3d/journey.html
+            git commit -m "chore(data): refresh timetables $(date -u +%Y-%m-%d)"
+            git fetch origin
+            git rebase origin/main
+            git push
+          fi
+
+      # 常开收尾：再清一次（幂等）并断言工作区干净；任何明文残留都会在此暴露。
+      - name: Finalize (cleanup + worktree assertion)
+        if: always()
+        run: bash encryption/finalize.sh

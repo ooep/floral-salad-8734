@@ -1,0 +1,281 @@
+{
+ "source": "2839240092",
+ "name": "Toden 8900 Blue - tram ver_Data",
+ "car_length_m": 13,
+ "cars": [
+  {
+   "name": "Toden 8900 Blue - tram ver_Data",
+   "model": ".009.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Default",
+   "couple": [
+    5.498,
+    5.498
+   ],
+   "lod": {
+    "model": ".009.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "lod.obj"
+   },
+   "parts": [
+    {
+     "name": "light",
+     "model": "AdditiveShader_0_0_20_3.glb",
+     "texture": "MainTex_b6a98c29.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    },
+    {
+     "name": "lightr",
+     "model": "AdditiveShader_0_0_20_3_fbc9d82e.glb",
+     "texture": "MainTex_b6a98c29.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    },
+    {
+     "name": "tlight",
+     "model": "AdditiveShader_0_0_20_3_cf8908bf.glb",
+     "texture": "MainTex_b6a98c29.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    },
+    {
+     "name": "tlightr",
+     "model": "AdditiveShader_0_0_20_3_7303f57c.glb",
+     "texture": "MainTex_b6a98c29.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    },
+    {
+     "name": "minowabashi",
+     "model": "AdditiveShader_0_0_20_3_f447a6bc.glb",
+     "texture": "MainTex_b6a98c29.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    },
+    {
+     "name": "waseda",
+     "model": "AdditiveShader_0_0_20_3_f447a6bc.glb",
+     "texture": "MainTex_1a254c07.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    },
+    {
+     "name": "mirror",
+     "model": "Cube.004.glb",
+     "texture": "MainTex.ktx2",
+     "kind": "part",
+     "shader": "Custom/Vehicles/Vehicle/Default",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "transform": {
+      "position": [
+       0.011,
+       0,
+       -0.0097
+      ],
+      "rotation": [
+       0,
+       0,
+       0,
+       1
+      ],
+      "scale": [
+       1,
+       1,
+       1
+      ]
+     }
+    },
+    {
+     "name": "mirror-r",
+     "model": "Cube.003.glb",
+     "texture": "MainTex.ktx2",
+     "kind": "part",
+     "shader": "Custom/Vehicles/Vehicle/Default",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "transform": {
+      "position": [
+       0.011,
+       0,
+       -0.0097
+      ],
+      "rotation": [
+       0,
+       0,
+       0,
+       1
+      ],
+      "scale": [
+       1,
+       1,
+       1
+      ]
+     }
+    },
+    {
+     "name": "brake",
+     "model": "AdditiveShader_0_0_20_2.glb",
+     "texture": "MainTex_4ef112e5.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ],
+      "required": [
+       "Arriving"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 2
+     }
+    },
+    {
+     "name": "braker",
+     "model": "AdditiveShader_0_0_20_2_18a6924e.glb",
+     "texture": "MainTex_4ef112e5.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Arriving",
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 2
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Tram Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      1,
+      0.8,
+      -2.25
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1,
+      0.8,
+      2.25
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1,
+      0.8,
+      5
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1,
+      0.8,
+      -5
+     ]
+    }
+   ]
+  }
+ ],
+ "material": {
+  "brightness": 2.186
+ },
+ "fixed_by": "toden-8900-blue-tram-ver"
+}

@@ -1,0 +1,53 @@
+.DS_Store
+*.log
+.secrets/
+__MACOSX/
+__pycache__/
+data/timetables/
+scripts/geo/station_map_report.json
+scripts/geo/ra_official/_failed.json
+_backup/
+_shots/
+mini-japanrail-3d/data/icons_vec/
+
+# ===== Mini JapanRail 3D SEO 静态化生成产物（部署时由 CI 重新生成，不入库） =====
+mini-japanrail-3d/lines/
+mini-japanrail-3d/stations/
+mini-japanrail-3d/sitemap.xml
+mini-japanrail-3d/sitemap-lines.xml
+mini-japanrail-3d/sitemap-stations.xml
+mini-japanrail-3d/sitemap-pages.xml
+mini-japanrail-3d/robots.txt
+mini-japanrail-3d/404.html
+
+# SEO 抓取临时脚本/日志（不入库；line_wiki.json 摘要如需入库请单独添加）
+mini-japanrail-3d/.seo-logs/
+
+# 配线图由独立仓库 ooep/jr-trackdiagrams 提供，不在主仓库维护
+mini-japanrail-3d/data/wiki_trackdiagrams
+mini-japanrail-3d/data/wiki_trackdiagrams.json
+mini-japanrail-3d/data/line_bsdiagrams
+mini-japanrail-3d/data/line_bsdiagrams.json
+# 车站抽屉配线图：deploy 时自 ooep/jr-track 拉取（加密脚本 ci/step.sh deploy 3），
+# 供 build_static_assets.py 组装进 jr-static，不入库
+mini-japanrail-3d/data/trackdiagrams/
+# wrangler 本地缓存（npx wrangler deploy 产生）
+.wrangler/
+# build_journey_data.py 默认 --data 路径 bug 的空产物（既有议题，另行修复；
+# 此处仅防止 finalize 工作区断言被该历史残留误伤）
+mini-japanrail-3d/mini-japanrail-3d/
+# OSM 工作目录(原始 PBF/提取脚本/中间产物,不入库)
+.osm_work/
+
+# ===== 静态 Worker 资产组装产物（由 build_static_assets.py 生成，不入库） =====
+static-worker/assets/
+
+# ===== 本地工具依赖 =====
+node_modules/
+
+# ===== Pages 发布物组装产物（由 prepare_pages_dist.py 生成，不入库） =====
+dist/
+cf-mj3d/
+
+# 站台验证/工具目录（不入仓库）
+.plat3d/

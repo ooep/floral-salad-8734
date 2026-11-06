@@ -1,0 +1,98 @@
+{
+ "Clone.ktx2": {
+  "normal": "Clone.normal.ktx2",
+  "roughnessMap": "Clone.rough.ktx2",
+  "night": {
+   "file": "Clone.rough.ktx2",
+   "channel": "a"
+  },
+  "emissive": "Clone.emissive.ktx2",
+  "nightCoverage": 0.125
+ },
+ "MainTex.ktx2": {
+  "normal": "MainTex.normal.ktx2",
+  "roughnessMap": "MainTex.rough.ktx2",
+  "night": {
+   "file": "MainTex.rough.ktx2",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.0794,
+  "nightCoverage": 0.0097,
+  "cutoutShell": 0.0038
+ },
+ "MainTex_4fd79c4e.ktx2": {
+  "normal": "MainTex_4fd79c4e.normal.ktx2",
+  "roughnessMap": "MainTex_4fd79c4e.rough.ktx2",
+  "night": {
+   "file": "MainTex_4fd79c4e.rough.ktx2",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.0794,
+  "nightCoverage": 0.0097,
+  "cutoutShell": 0.0108
+ },
+ "MainTex_7fa06f67.ktx2": {
+  "roughnessMap": "MainTex_7fa06f67.rough.ktx2",
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.0827
+ },
+ "MainTex_e074b508.ktx2": {
+  "roughnessMap": "MainTex_e074b508.rough.ktx2",
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.0565
+ },
+ "asset_4cd627ce.ktx2": {
+  "normal": "asset_4cd627ce.normal.ktx2",
+  "roughnessMap": "asset_4cd627ce.rough.ktx2",
+  "night": {
+   "file": "asset_4cd627ce.rough.ktx2",
+   "channel": "a"
+  },
+  "emissive": "asset_4cd627ce.emissive.ktx2",
+  "nightCoverage": 0.125
+ },
+ "lod_Diffuse.ktx2": {
+  "normal": "lod_Diffuse.normal.ktx2",
+  "roughness": 0.85
+ },
+ "tb71717_side_anim_lod_Diffuse.ktx2": {
+  "roughness": 0.35
+ },
+ "tb72717_side_anim_lod_Diffuse.ktx2": {
+  "roughness": 0.35
+ },
+ "tb73717_side_anim_lod_Diffuse.ktx2": {
+  "roughness": 0.35
+ },
+ "tb74717_side_anim_lod_Diffuse.ktx2": {
+  "roughness": 0.35
+ },
+ "tb75717_side_anim_lod_Diffuse.ktx2": {
+  "roughness": 0.35
+ },
+ "tb76717_side2_anim_lod_Diffuse.ktx2": {
+  "roughness": 0.35
+ },
+ "tb76717_side_anim_lod_Diffuse.ktx2": {
+  "roughness": 0.35
+ },
+ "tb77717_side2_anim_lod_Diffuse.ktx2": {
+  "roughness": 0.35
+ },
+ "tb77717_side_anim_lod_Diffuse.ktx2": {
+  "roughness": 0.35
+ },
+ "stand-ins.ktx2": {
+  "roughnessMap": "stand-ins.rough.ktx2",
+  "normal": "stand-ins.normal.ktx2",
+  "normalScale": 1,
+  "night": {
+   "file": "stand-ins.rough.ktx2",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutAt": 0.5
+ }
+}

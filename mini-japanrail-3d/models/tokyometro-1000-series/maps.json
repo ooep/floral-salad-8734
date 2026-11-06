@@ -1,0 +1,72 @@
+{
+ "Ginza1000-Car_lod_Diffuse.ktx2": {
+  "normal": "Ginza1000-Car_lod_Diffuse.normal.ktx2",
+  "roughnessMap": "Ginza1000-Car_lod_Diffuse.rough.ktx2",
+  "night": {
+   "file": "Ginza1000-Car_lod_Diffuse.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.0078,
+  "emissive": "Ginza1000-Car_lod_Diffuse.emissive.ktx2",
+  "nightCoverage": 0.2637
+ },
+ "Ginza1000-Front_lod_Diffuse.ktx2": {
+  "normal": "Ginza1000-Front_lod_Diffuse.normal.ktx2",
+  "roughnessMap": "Ginza1000-Front_lod_Diffuse.rough.ktx2",
+  "night": {
+   "file": "Ginza1000-Front_lod_Diffuse.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.0078,
+  "nightCoverage": 0.1895
+ },
+ "Ginza1000-Front_lod_Diffuse_8f6a5c4e.ktx2": {
+  "normal": "Ginza1000-Front_lod_Diffuse_8f6a5c4e.normal.ktx2",
+  "roughnessMap": "Ginza1000-Front_lod_Diffuse_8f6a5c4e.rough.ktx2",
+  "night": {
+   "file": "Ginza1000-Front_lod_Diffuse_8f6a5c4e.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.001,
+  "emissive": "Ginza1000-Front_lod_Diffuse_8f6a5c4e.emissive.ktx2",
+  "nightCoverage": 0.1904
+ },
+ "MainTex.ktx2": {
+  "roughnessMap": "MainTex.rough.ktx2",
+  "night": {
+   "file": "MainTex.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.0166,
+  "emissive": "MainTex.emissive.ktx2",
+  "nightCoverage": 0.0629
+ },
+ "MainTex_a5e45f31.ktx2": {
+  "roughnessMap": "MainTex_a5e45f31.rough.ktx2",
+  "night": {
+   "file": "MainTex_a5e45f31.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "maskCoverage": 0.0166,
+  "emissive": "MainTex_a5e45f31.emissive.ktx2",
+  "nightCoverage": 0.0629
+ },
+ "stand-ins.ktx2": {
+  "roughnessMap": "stand-ins.rough.ktx2",
+  "normal": "stand-ins.normal.ktx2",
+  "normalScale": 1,
+  "night": {
+   "file": "stand-ins.rough.ktx2",
+   "channel": "a"
+  },
+  "colorMask": "r",
+  "alphaChannel": "b",
+  "cutoutAt": 0.5,
+  "emissive": "stand-ins.emissive.ktx2"
+ }
+}

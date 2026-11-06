@@ -1,0 +1,88 @@
+{
+ "Clone.ktx2": {
+  "roughness": 0.35
+ },
+ "Clone_546642eb.ktx2": {
+  "normal": "Clone_546642eb.normal.ktx2",
+  "roughnessMap": "Clone_546642eb.rough.ktx2",
+  "night": {
+   "file": "Clone_546642eb.rough.ktx2",
+   "channel": "a"
+  },
+  "nightCoverage": 0.1758
+ },
+ "Clone_Clone.ktx2": {
+  "roughness": 0.35
+ },
+ "Clone_Clone_Clone_Clone_Clone_Clone.ktx2": {
+  "roughness": 0.85
+ },
+ "MainTex.ktx2": {
+  "roughnessMap": "MainTex.rough.ktx2",
+  "night": {
+   "file": "MainTex.rough.ktx2",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.1865,
+  "nightCoverage": 0.0097
+ },
+ "MainTex_4e6f8a62.ktx2": {
+  "normal": "MainTex_4e6f8a62.normal.ktx2",
+  "roughnessMap": "MainTex_4e6f8a62.rough.ktx2",
+  "night": {
+   "file": "MainTex_4e6f8a62.rough.ktx2",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.254,
+  "nightCoverage": 0.0097,
+  "cutoutShell": 0.0025,
+  "cutoutGrille": 0.3713
+ },
+ "MainTex_a6e36540.ktx2": {
+  "normal": "MainTex_a6e36540.normal.ktx2",
+  "roughnessMap": "MainTex_a6e36540.rough.ktx2",
+  "night": {
+   "file": "MainTex_a6e36540.rough.ktx2",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.254,
+  "nightCoverage": 0.0097,
+  "cutoutShell": 0.0016,
+  "cutoutGrille": 0.3724
+ },
+ "asset_23afd4f8.ktx2": {
+  "roughness": 0.35
+ },
+ "asset_25123d69.ktx2": {
+  "normal": "asset_25123d69.normal.ktx2",
+  "roughnessMap": "asset_25123d69.rough.ktx2",
+  "night": {
+   "file": "asset_25123d69.rough.ktx2",
+   "channel": "a"
+  },
+  "nightCoverage": 0.1758
+ },
+ "asset_89369522.ktx2": {
+  "normal": "asset_89369522.normal.ktx2",
+  "roughnessMap": "asset_89369522.rough.ktx2",
+  "night": {
+   "file": "asset_89369522.rough.ktx2",
+   "channel": "a"
+  },
+  "nightCoverage": 0.1758
+ },
+ "stand-ins.ktx2": {
+  "roughnessMap": "stand-ins.rough.ktx2",
+  "normal": "stand-ins.normal.ktx2",
+  "normalScale": 1,
+  "night": {
+   "file": "stand-ins.rough.ktx2",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutAt": 0.5
+ }
+}

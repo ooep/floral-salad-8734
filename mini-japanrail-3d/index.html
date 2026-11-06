@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<!-- Microsoft Clarity (yxc9o63w5s) —— 仅在用户明确同意后加载(PIPL/APPI 合规)。
+     同意状态存 localStorage: mjr3d_consent '1'=同意 '0'=拒绝,未设置=展示提示且不加载。
+     同意后仍沿用原策略:数据就绪后 4s 注入、手机端停用(见 app.js)。
+     SEO 静态页(stations/ lines/)与 privacy.html / orm-demo.html 完全不加载统计脚本。 -->
+<script>
+(function () {
+  var KEY = 'mjr3d_consent';
+  var MOBILE_OK = false; /* 主地图:手机端停用(会话录制按 DOM 变更量累积内存) */
+  var AUTO_IF_CONSENTED = false; /* 主地图不在 head 立即加载:由 app.js 在数据就绪后 4s 调度 */
+  var IS_MOBILE = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
+  window.__loadClarity = function () {
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i+"?ref=bwt";
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "yxc9o63w5s");
+  };
+  window.__clarityConsented = function () {
+    try { return localStorage.getItem(KEY) === '1'; } catch (e) { return false; }
+  };
+  /* 受同意门禁的统计入口:由 app.js 在数据就绪后延时调用,或用户点击"同意"时调用 */
+  window.__clarityGate = function () {
+    if ((MOBILE_OK || !IS_MOBILE) && window.__clarityConsented()) window.__loadClarity();
+  };
+  function raw() { try { return localStorage.getItem(KEY); } catch (e) { return null; } }
+  function save(v) { try { localStorage.setItem(KEY, v); } catch (e) {} }
+  var I18N = {
+    zh: { t:'使用统计', b:'为改进体验，我们希望在您同意后加载 Microsoft Clarity 统计脚本（使用分析与会话回放，不含广告）。您可随时更改选择，拒绝不影响任何功能。', ok:'同意', no:'拒绝', more:'隐私政策' },
+    ja: { t:'利用統計', b:'体験改善のため、ご同意いただいた場合のみ Microsoft Clarity 統計スクリプト（利用分析とセッション再生、広告なし）を読み込みます。選択はいつでも変更でき、拒否しても機能はそのまま利用できます。', ok:'同意する', no:'拒否する', more:'プライバシーポリシー' },
+    en: { t:'Analytics', b:'With your consent we load Microsoft Clarity (usage analytics and session replays, no advertising) to improve the experience. You can change your choice anytime; declining does not affect functionality.', ok:'Accept', no:'Decline', more:'Privacy Policy' }
+  };
+  function lang() {
+    try {
+      var k = localStorage.getItem('mjr3d_lang') || localStorage.getItem('mjrj_lang');
+      if (k === 'zh' || k === 'ja' || k === 'en') return k;
+    } catch (e) {}
+    var n = (navigator.language || '').slice(0, 2);
+    return (n === 'ja' || n === 'en') ? n : 'zh';
+  }
+  /* ── 安全落位:同意条永不覆盖交互控件 ──
+     旧版固定 bottom:14px 居中,竖屏遮挡 60.9%、横屏 56.1% 的控件(时间轴滑杆/手柄、
+     播放键、速度钮全被盖住,真实点击会误触同意/拒绝)。现改为动态测量:
+     - KEEP_HARD 受保护控件(时间轴滑杆/手柄、播放键、速度钮、侧栏与搜索输入等):
+       任何候选位只要与它们重叠即一票否决;
+     - KEEP_SOFT 软障碍(dock/HUD/侧栏/详情卡等面板):在零硬冲突的候选位里挑软重叠最小者;
+     窗口尺寸变化、dock 形态(时间胶囊展开/收起)、侧栏/详情卡开合时重新测量。 */
+  var KEEP_HARD = ['#btnPlay', '#cSlider', '#spMain', '#btnSide', '#btnSearch', '#brand', '#btnView3d', '#rFrom', '#rTo', '#rGo', '#search', '#spClear'];
+  var KEEP_SOFT = ['#dock', '#dockCenter', '#clock', '#side', '#topHud', '#detail', '#sheet', '#searchPanel', '#lineSheet'];
+  var WATCH = ['#dock', '#side', '#detail', '#searchPanel', '#sheet', '#topHud'];
+  function visibleRects(sels) {
+    var out = [], vw = window.innerWidth, vh = window.innerHeight;
+    sels.forEach(function (sel) {
+      var el = document.querySelector(sel);
+      if (!el) return;
+      var cs = window.getComputedStyle(el);
+      if (cs.display === 'none' || cs.visibility === 'hidden') return;
+      var r = el.getBoundingClientRect();
+      if (r.width < 2 || r.height < 2 || r.bottom <= 0 || r.top >= vh || r.right <= 0 || r.left >= vw) return;
+      out.push(r);
+    });
+    return out;
+  }
+  function placeSafe(d) {
+    var vw = window.innerWidth, vh = window.innerHeight;
+    var bw = Math.min(520, vw - 24);
+    d.style.width = bw + 'px';
+    var bh = d.offsetHeight || 130;
+    var hard = visibleRects(KEEP_HARD), soft = visibleRects(KEEP_SOFT);
+    function area(x, y, R) {
+      var a = 0;
+      R.forEach(function (r) {
+        var ox = Math.min(x + bw, r.right) - Math.max(x, r.left);
+        var oy = Math.min(y + bh, r.bottom) - Math.max(y, r.top);
+        if (ox > 0 && oy > 0) a += ox * oy;
+      });
+      return a;
+    }
+    /* 候选位:垂直取"每个障碍上方/下方 + 屏幕中/上/下",水平取"居中 + 每个障碍左右两侧空档" */
+    var all = hard.concat(soft);
+    var xs = [(vw - bw) / 2], ys = [(vh - bh) / 2, 10, vh - bh - 10];
+    all.forEach(function (r) {
+      xs.push(r.right + 12, r.left - bw - 12);
+      ys.push(r.top - bh - 10, r.bottom + 10);
+    });
+    var best = null;
+    ys.forEach(function (y) {
+      y = Math.max(8, Math.min(y, vh - bh - 8));
+      xs.forEach(function (x) {
+        x = Math.max(12, Math.min(x, vw - bw - 12));
+        var h = area(x, y, hard);
+        var s = area(x, y, soft) + (Math.abs(y - (vh - bh) / 2) + Math.abs(x - (vw - bw) / 2)) * 0.25;
+        var score = h * 1e12 + s; /* 硬重叠一票否决 */
+        if (!best || score < best.score) best = { x: x, y: y, score: score };
+      });
+    });
+    d.style.left = best.x + 'px';
+    d.style.top = best.y + 'px';
+    d.style.right = 'auto';
+    d.style.bottom = 'auto';
+    d.style.transform = 'none';
+  }
+  function init() {
+    var chosen = raw();
+    if (chosen === '1') { if (AUTO_IF_CONSENTED) window.__clarityGate(); return; } /* 曾同意→由 app.js 按计划加载 */
+    if (chosen === '0') return; /* 曾拒绝→永不加载,不再提示 */
+    var t = I18N[lang()];
+    var d = document.createElement('div');
+    d.id = 'mjrConsent';
+    d.setAttribute('role', 'dialog');
+    d.setAttribute('aria-label', t.t);
+    d.style.cssText = 'position:fixed;z-index:2147483647;box-sizing:border-box;padding:12px 14px 10px;border-radius:16px;background:rgba(16,21,31,.92);color:#e8edf4;border:1px solid rgba(255,255,255,.14);box-shadow:0 8px 32px rgba(0,0,0,.35);backdrop-filter:blur(18px) saturate(1.6);-webkit-backdrop-filter:blur(18px) saturate(1.6);font:12px/1.7 -apple-system,"PingFang SC","Hiragino Sans GB","Yu Gothic UI","Noto Sans CJK SC",sans-serif;opacity:0;transition:opacity .22s ease;';
+    d.innerHTML = '<div style="font-weight:800;margin-bottom:4px">' + t.t + '</div>'
+      + '<div style="color:#bccbdd">' + t.b + '</div>'
+      + '<div style="display:flex;gap:8px;margin-top:10px;align-items:center">'
+      + '<button id="mjrCAccept" style="padding:6px 16px;border-radius:999px;border:0;background:#2f6de8;color:#fff;font-weight:700;font-size:12px;cursor:pointer">' + t.ok + '</button>'
+      + '<button id="mjrCDecline" style="padding:6px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.22);background:transparent;color:#e8edf4;font-weight:600;font-size:12px;cursor:pointer">' + t.no + '</button>'
+      + '<a href="privacy.html" style="margin-left:auto;color:#6da9ff;font-size:11px;text-decoration:none">' + t.more + '</a>'
+      + '</div>';
+    document.body.appendChild(d);
+    placeSafe(d);
+    requestAnimationFrame(function () { d.style.opacity = '1'; });
+    document.getElementById('mjrCAccept').onclick = function () { save('1'); d.remove(); window.__clarityGate(); };
+    document.getElementById('mjrCDecline').onclick = function () { save('0'); d.remove(); };
+    /* 几何变化时重新落位:视口尺寸、时间胶囊展开/收起、侧栏/详情卡/搜索层开合 */
+    var rt = null;
+    window.addEventListener('resize', function () {
+      clearTimeout(rt);
+      rt = setTimeout(function () { if (d.isConnected) placeSafe(d); }, 120);
+    });
+    var pending = false;
+    var mo = new MutationObserver(function () {
+      if (pending || !d.isConnected) return;
+      pending = true;
+      requestAnimationFrame(function () { pending = false; if (d.isConnected) placeSafe(d); });
+    });
+    WATCH.forEach(function (sel) {
+      var el = document.querySelector(sel);
+      if (el) mo.observe(el, { subtree: true, attributes: true, attributeFilter: ['class', 'style'] });
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Mini JapanRail｜全日本列车实时运行可视化地图・列車走行位置・運行情報 | Japan Train Live Map</title>
+<meta name="baidu-site-verification" content="codeva-DigR5zzAl8" />
+<meta name="description" content="全日本列车实时运行可视化地图（列車走行位置・運行情報）：本地时刻表驱动，实时显示新干线・特急・在来线・地下铁・路面电车的列车走行位置与运行情报，覆盖 600+ 条线路、8,900+ 个车站、4,000+ 列列车，支持 3D 地球投影、时钟回放、路线搜索与车站查询，列车数据随站点内置、无需实时数据接口。日本全国の列車走行位置・運行情報がわかるリアルタイム鉄道マップ（走行シミュレーション）。Japan Train Live Map &amp; Real-Time Railway Tracker.">
+<meta name="keywords" content="日本铁路,全日本铁路,日本铁路地图,日本铁路实时地图,日本列车实时位置,日本电车实时位置,日本列车实时追踪,列车运行可视化,列车运行可视化系统,列车运行情报,列车走行位置,列车实时位置,列车运行图,新干线实时位置,新干线地图,日本新干线,日本地铁地图,日本电车地图,日本铁路线路图,日本车站查询,日本列车时刻表,日本铁路3D地图,全日本列车在线,3D铁路地图,列車走行位置,列車運行情報,運行情報,リアルタイム列車位置,鉄道マップ,全国鉄道マップ,路線図,駅一覧,路線一覧,新幹線 走行位置,在来線 走行位置,特急 走行位置,電車 現在位置,鉄道 リアルタイム,走行シミュレーション,3D鉄道マップ,Japan train live map,Japan railway map,real-time train tracker,Japan train tracker,shinkansen live map,shinkansen tracker,Japan rail map,live train map,Japan train positions,Japanese railway map,Japan transit map,Japan 3D train map,Japan train timetable map">
+<meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large,max-video-preview:-1">
+<meta name="googlebot" content="index,follow,max-snippet:-1,max-image-preview:large">
+<meta name="author" content="Mini JapanRail">
+<meta name="rating" content="general">
+<meta name="revisit-after" content="3 days">
+<!-- ============ SEO（纯静态：真实 HTML + JSON-LD + OG，不影响页面任何功能） ============
+     线上域名：https://jr.suki.ing（如需变更，请同步替换此处与 seo/seo_config.json 的 site_base）。 -->
+<link rel="canonical" href="https://jr.suki.ing/">
+<link rel="alternate" hreflang="zh-Hans" href="https://jr.suki.ing/">
+<link rel="alternate" hreflang="ja" href="https://jr.suki.ing/">
+<link rel="alternate" hreflang="en" href="https://jr.suki.ing/">
+<link rel="alternate" hreflang="x-default" href="https://jr.suki.ing/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Mini JapanRail">
+<meta property="og:title" content="Mini JapanRail｜全日本列车实时运行可视化地图・列車走行位置・運行情報 | Japan Train Live Map">
+<meta property="og:description" content="全日本列车实时运行可视化地图：实时显示新干线・特急・在来线・地铁・路面电车的列车走行位置与运行情报，覆盖 600+ 线路、8,900+ 车站、4,000+ 列车，支持 3D 地球投影、时钟回放、路线搜索与车站查询。日本全国の列車走行位置・運行情報 / Japan Train Live Map。">
+<meta property="og:url" content="https://jr.suki.ing/">
+<meta property="og:image" content="https://jr-static.suki.ing/og-image.png">
+<meta property="og:image:secure_url" content="https://jr-static.suki.ing/og-image.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Mini JapanRail 全日本列车实时运行可视化地图">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:locale:alternate" content="ja_JP">
+<meta property="og:locale:alternate" content="en_US">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Mini JapanRail｜全日本列车实时运行可视化地图・列車走行位置・運行情報 | Japan Train Live Map">
+<meta name="twitter:description" content="全日本列车实时运行可视化地图：新干线・特急・在来线・地铁・路面电车的列车走行位置与运行情报，600+ 线路、8,900+ 车站、4,000+ 列车，3D 地球投影与时钟回放。">
+<meta name="twitter:image" content="https://jr-static.suki.ing/og-image.png">
+<meta name="twitter:image:alt" content="Mini JapanRail 全日本列车实时运行可视化地图">
+<meta name="theme-color" content="#0b0f16">
+<link rel="icon" type="image/png" sizes="64x64" href="https://jr-static.suki.ing/favicon.png" id="fav64">
+<link rel="icon" type="image/png" sizes="192x192" href="https://jr-static.suki.ing/icon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="https://jr-static.suki.ing/apple-touch-icon.png">
+<!-- maplibre CSS 非阻塞加载:启动遮罩/关键样式由页内 <style> 提供,其余面板样式由
+     app.css(jr-static)并行加载,地图初始化在数据就绪后 —— 首帧不被跨域样式表阻塞 -->
+<link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin>
+<link rel="dns-prefetch" href="https://tiles.openfreemap.org">
+<link rel="preload" href="https://jr-static.suki.ing/vendor/maplibre/maplibre-gl.css" as="style" onload="this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://jr-static.suki.ing/vendor/maplibre/maplibre-gl.css"></noscript>
+<script>
+/* 老旧设备自适应降载判定(内联、首帧前执行,避免闪烁)。
+   仅在判定为低端设备时给 <html> 挂 perf-low 类并置 window.__PERF_LOW;
+   新设备不触发任何降载,视觉与交互与旧版完全一致。
+   判定:① WebGL 软件渲染(SwiftShader/llvmpipe 等,典型于无独显老机/虚拟机);
+        ② 移动端且 CPU 核心≤4 或 内存≤3GB;
+        ③ 桌面端且 CPU 核心≤2 且 内存≤2GB。 */
+(function () {
+  try {
+    var ua = navigator.userAgent || '';
+    var mobile = /Mobi|Android|iPhone|iPad|iPod/i.test(ua);
+    var cores = navigator.hardwareConcurrency || (mobile ? 4 : 8);
+    var mem = navigator.deviceMemory || (mobile ? 4 : 8);
+    var soft = false;
+    try {
+      var c = document.createElement('canvas');
+      var gl = c.getContext('webgl') || c.getContext('experimental-webgl');
+      if (gl) { var r = String(gl.getParameter(gl.RENDERER) || ''); soft = /swiftshader|llvmpipe|softpipe|software/i.test(r); }
+    } catch (e) {}
+    if (soft || (mobile && (cores <= 4 || mem <= 3)) || (!mobile && cores <= 2 && mem <= 2)) {
+      document.documentElement.classList.add('perf-low');
+      window.__PERF_LOW = true;
+    } else if (!mobile && cores <= 4) {
+      /* 中端档(桌面 3-4 核):保持全部功能与画质设置,仅把渲染分辨率钳到 1.5×。
+         全视网膜(2×)渲染像素数是 1.5× 的 1.8 倍,叠加 MSAA 后是持续发热大头;
+         视觉差异仅线条稍软,几乎不可感。高端设备不受影响。 */
+      window.__PERF_MID = true;
+    }
+  } catch (e) {}
+})();
+</script>
+<style>
+:root {
+  --bg:#0b0f16;
+  --panel:rgba(18,24,34,.68);
+  --panel2:rgba(30,38,52,.72);
+  --line:rgba(255,255,255,.08);
+  --txt:#e8edf4; --dim:#bccbdd; --acc:#2f6de8; --acc-txt:#6da9ff; --acc2:#5fd4f4;
+  --shadow:0 2px 10px rgba(0,0,0,.28), 0 8px 32px rgba(0,0,0,.2);
+  --r:14px; --r-sm:10px; --r-xs:7px; --r-pill:999px;
+  --acc-soft:rgba(79,142,247,.16); --acc-border:rgba(79,142,247,.5);
+  /* ── Liquid Glass 液态玻璃(深色) ── */
+  --glass:rgba(255,255,255,.10);
+  --glass-2:rgba(255,255,255,.16);
+  --glass-edge:rgba(255,255,255,.22);
+  --glass-hi:rgba(255,255,255,.34);
+  --glass-lo:rgba(0,0,0,.16);
+  --glass-sh:0 6px 20px rgba(0,0,0,.30), 0 2px 6px rgba(0,0,0,.22);
+  --glass-solid:rgb(25,32,45);
+  /* ── 大面板玻璃:顶部镜面高光 → 中段通透 → 底部微反射(Apple Liquid Glass 分层) ── */
+  --glass-panel:linear-gradient(180deg, rgba(255,255,255,.18) 0%, rgba(255,255,255,.05) 34%, rgba(255,255,255,.09) 100%), rgba(255,255,255,.10);
+  --glass-panel-blur:blur(26px) saturate(1.9);
+  --dock:48px;
+  /* ── Liquid Glass 动效曲线 ── */
+  --ease-spring:cubic-bezier(.34,1.45,.44,1);   /* 按压松开:轻回弹 */
+  --ease-smooth:cubic-bezier(.16,1,.3,1);       /* 出场/形变:顺滑减速 */
+  /* ── 真弹簧曲线(二阶欠阻尼 step response 采样,linear() 精确复现) ──
+     展开 ζ=0.72:过冲 3.8%,尾部偏差 <0.2% —— 液体铺开的"张力感"
+     收起 ζ=0.92:近临界阻尼,几乎无过冲 —— 表面张力收回,干脆不拖尾 */
+  --spring-out:linear(0,.0598,.1976,.3654,.5321,.68,.8007,.8924,.9573,.9996,1.0241,1.0356,1.0384,1.0358,1.0304,1.0239,1.0175,1.0119,1.0074,1.0039,1.0015,.9999,.999,.9986,.9985,.9986,.9989,.9991,.9993,.9996,1);
+  --spring-in:linear(0,.0368,.1232,.2323,.3473,.458,.5586,.6466,.7215,.7836,.8341,.8746,.9065,.9313,.9503,.9646,.9753,.9831,.9888,.9929,.9957,.9976,.9989,.9997,1.0002,1.0005,1.0006,1.0006,1.0006,1.0005,1);
+  --morph-out:460ms;   /* 展开稍慢:液体铺开需要时间 */
+  --morph-in:340ms;    /* 收起更快:退出永远比进入利落(HIG) */
+}
+/* 不支持 linear() 的旧浏览器退化为过冲贝塞尔(视觉近似,非真弹簧) */
+@supports not (transition-timing-function:linear(0,1)) {
+  :root { --spring-out:cubic-bezier(.22,1.12,.36,1); --spring-in:cubic-bezier(.32,.94,.44,1); }
+}
+:root[data-theme="light"] {
+  --bg:#dfe4ec;
+  --panel:rgba(255,255,255,.82);
+  --panel2:rgba(245,247,251,.88);
+  --line:rgba(15,23,42,.09);
+  --txt:#0f172a; --dim:#414e66; --acc:#1c51d6; --acc-txt:#1c51d6; --acc2:#0891b2;
+  --shadow:0 1px 3px rgba(15,23,42,.08), 0 8px 24px rgba(15,23,42,.1);
+  --r:14px; --r-sm:10px; --r-xs:7px; --r-pill:999px;
+  --acc-soft:rgba(37,99,235,.1); --acc-border:rgba(37,99,235,.4);
+  /* ── Liquid Glass 液态玻璃(浅色) ── */
+  --glass:rgba(255,255,255,.58);
+  --glass-2:rgba(255,255,255,.76);
+  --glass-edge:rgba(255,255,255,.92);
+  --glass-hi:rgba(255,255,255,.95);
+  --glass-lo:rgba(15,23,42,.06);
+  --glass-sh:0 6px 18px rgba(15,23,42,.14), 0 2px 5px rgba(15,23,42,.08);
+  --glass-solid:rgb(247,249,252);
+  /* 浅色大面板玻璃:高光更亮、底色更白,保持同一种分层语言 */
+  --glass-panel:linear-gradient(180deg, rgba(255,255,255,.78) 0%, rgba(255,255,255,.52) 36%, rgba(255,255,255,.66) 100%), rgba(255,255,255,.58);
+  --glass-panel-blur:blur(26px) saturate(1.6);
+}
+:root[data-theme="light"] .tbox { background:var(--panel2); color:var(--txt); }
+:root[data-theme="light"] .btn { color:var(--txt); }
+:root[data-theme="light"] .btn.on { color:#fff; }
+:root[data-theme="light"] .chip.on, :root[data-theme="light"] .spb.on { color:#fff; }
+:root[data-theme="light"] #sheet { box-shadow:inset 0 1px 0 rgba(255,255,255,.85), inset 0 -1px 1px rgba(15,23,42,.05), 0 -10px 30px rgba(15,23,42,.16); }
+:root[data-theme="light"] #detail { box-shadow:inset 0 1px 0 rgba(255,255,255,.85), inset 0 -1px 1px rgba(15,23,42,.05), var(--glass-sh); }
+:root[data-theme="light"] .lrow { background:rgba(255,255,255,.7); }
+:root[data-theme="light"] .hour-row { background:rgba(240,243,248,.8); }
+:root[data-theme="light"] .dg-cell.local { background:rgba(200,215,240,.5); }
+:root[data-theme="light"] .dg-cell.rapid { background:rgba(255,180,190,.45); }
+:root[data-theme="light"] .dg-cell .m, :root[data-theme="light"] .hr-t .m { color:#1a2333; }
+:root[data-theme="light"] .day .dlg, :root[data-theme="light"] .d { color:var(--dim); }
+/* ── 可读性修复(WCAG 对比度):深色模式激活 Tab 白底配深色文字 ── */
+:root[data-theme="dark"] .stab.on { color:#0b0f16; }
+/* 深色模式下线路名(Line 大字)颜色提亮,避免深色线路色看不清 */
+:root[data-theme="dark"] .lrow .lnm { color:color-mix(in srgb,var(--lc,#4f8ef7) 55%,#fff 45%); }
+/* 浅色模式下“方向 ▸”提示与图例关键词改用深琥珀色,避免黄字白底 */
+:root[data-theme="light"] .dir .d-more { color:#8a5a00; }
+:root[data-theme="light"] .day .dlg b { color:#7a5e00; }
+* { margin:0; padding:0; box-sizing:border-box; }
+html,body { width:100%; height:100%; overflow:hidden; background:var(--bg); color:var(--txt);
+  font-family:-apple-system,"SF Pro SC","PingFang SC","Hiragino Sans GB","Noto Sans CJK SC","Yu Gothic UI","Noto Sans JP",sans-serif;
+  -webkit-tap-highlight-color:transparent; }
+/* iOS 刘海/底部横条安全区 */
+@supports (padding: max(0px)) {
+  #side { top: max(10px, env(safe-area-inset-top)); }
+  #topHud { top: max(10px, env(safe-area-inset-top)); }
+  #dock { bottom: max(12px, env(safe-area-inset-bottom)); }
+  #detail { bottom: max(14px, env(safe-area-inset-bottom)); }
+  .foot { bottom: max(4px, env(safe-area-inset-bottom)); }
+}
+#map { position:absolute; inset:0; }
+::-webkit-scrollbar { width:5px; height:5px; } ::-webkit-scrollbar-thumb { background:rgba(120,140,180,.28); border-radius:3px; } ::-webkit-scrollbar-thumb:hover { background:rgba(120,140,180,.45); } ::-webkit-scrollbar-track { background:transparent; }
+button { font-family:inherit; }
+
+/* ---------- 加载遮罩 ---------- */
+#loader { position:absolute; inset:0; z-index:50; background:var(--bg); overflow:hidden;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; transition:opacity .5s; }
+#loader.hide { opacity:0; pointer-events:none; }
+#loader .lgi { color:var(--acc); animation:pulse 1.6s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{transform:scale(1);opacity:.85;} 50%{transform:scale(1.06);opacity:1;} }
+/* 2×2 列车车头马赛克拼图:4 格分别显示 4 张不同列车图的四个角,加载中随机轮换一格 */
+#lmosaic { display:grid; grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr; width:48px; height:48px;
+  padding:2px; gap:2px; border-radius:13px;
+  background:rgba(120,140,180,.16); box-shadow:inset 0 0 0 1px rgba(120,140,180,.32), 0 5px 18px rgba(0,0,0,.2); }
+.lmq { overflow:hidden; border-radius:3px; background:var(--bg); background-size:cover; background-position:center; }
+.lmq.swap { animation:lmPop .32s var(--ease-smooth); }
+@keyframes lmPop { 0% { transform:scale(1.45); opacity:.15; filter:brightness(1.6); }
+  100% { transform:scale(1); opacity:1; filter:none; } }
+#loader .lt { font-size:14px; font-weight:700; letter-spacing:.5px; }
+#loader .lb { font-size:11px; color:var(--dim); }
+/* 加载轨道:线路色轨道 + 默认立体方盒列车沿进度行驶(跑到最右 = 加载完成)
+   --lrail 由 JS 每次加载从所有线路色中随机挑选;未设置时回退站点强调色 */
+#loader .ltrack { position:relative; width:min(300px,70vw); height:24px; }
+#loader .ltrack-line { position:absolute; left:18px; right:18px; top:50%; height:4px; margin-top:-2px; border-radius:3px;
+  background:color-mix(in srgb, var(--lrail, var(--acc)) 45%, transparent);
+  transition:background .6s ease; }
+/* 列车位置由 --p(0-100) 驱动:0% 列车左端对齐线路左端,100% 列车右端对齐线路右端(两端均无阴影) */
+#loader .ltrain { position:absolute; left:calc(18px + (100% - 72px) * var(--p,0) / 100); top:50%; margin-top:-18px; z-index:1;
+  transition:left .28s ease; }
+/* 默认立体方盒列车:顶面亮、正面主色、侧面暗 —— 与地图内 3D 盒一致的三面配色 */
+.ltrain-top   { fill:color-mix(in srgb, var(--lrail, var(--acc)) 55%, #fff); transition:fill .6s ease; }
+.ltrain-f     { fill:var(--lrail, var(--acc)); transition:fill .6s ease; }
+.ltrain-side  { fill:color-mix(in srgb, var(--lrail, var(--acc)) 45%, #000); transition:fill .6s ease; }
+.ltrain-sheen { fill:rgba(255,255,255,.16); }
+#loader .lpd { display:flex; align-items:center; gap:10px; font-size:10.5px; color:var(--dim); }
+#loader .lpd b { color:var(--acc-txt,var(--acc)); font-variant-numeric:tabular-nums; }
+#lRetry { display:none; min-height:38px; padding:0 22px; border:1px solid var(--acc-border); border-radius:var(--r-pill); background:var(--acc-soft); color:var(--txt); font-size:12.5px; font-weight:600; cursor:pointer; align-items:center; gap:6px; transition:background .12s,color .12s; }
+#lRetry:hover { background:var(--acc); color:#fff; }
+
+#toast { position:absolute; top:54px; left:50%; transform:translateX(-50%); background:var(--panel); border:1px solid var(--glass-edge);
+  color:var(--txt); font-size:11.5px; font-weight:600; padding:7px 15px; border-radius:var(--r-pill); z-index:40;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.2), var(--glass-sh); max-width:80vw;
+  opacity:0; visibility:hidden; pointer-events:none;
+  backdrop-filter:blur(0) saturate(1); -webkit-backdrop-filter:blur(0) saturate(1);
+  transition:opacity .24s var(--ease-smooth), backdrop-filter .24s var(--ease-smooth), -webkit-backdrop-filter .24s var(--ease-smooth), visibility 0s linear .24s; }
+#toast.show { opacity:1; visibility:visible; backdrop-filter:blur(14px) saturate(1.4); -webkit-backdrop-filter:blur(14px) saturate(1.4);
+  transition:opacity .24s var(--ease-smooth), backdrop-filter .24s var(--ease-smooth), -webkit-backdrop-filter .24s var(--ease-smooth), visibility 0s linear 0s; }
+
+</style>
+<!-- 性能(2026-10-28): 首页只内联基础变量与加载遮罩的关键 CSS;其余约 87KB 样式和
+     约 481KB 主程序拆到 jr-static(边缘缓存快路径)。此前首页 621KB/205KB(br) 单包,
+     慢网络下要等整包才出现加载条。 -->
+<!-- 抽屉改版(2026-11-04 合并):CDN 引用已还原并 bump ?v=20261105-sd1(站点圆点线路色;与 perf 的 20261108-perf1 并存避让) -->
+<!-- 信息板原生整合(2026-11-05):验收完毕,CDN 绝对地址已还原并 bump ?v=20261105-ib2 破缓存 -->
+<link rel="preload" as="style" href="https://jr-static.suki.ing/app/app.css?v=20261105-ib2" onload="this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://jr-static.suki.ing/app/app.css?v=20261105-ib2"></noscript>
+<link rel="modulepreload" href="https://jr-static.suki.ing/app/app.js?v=20261106-ib4" crossorigin="anonymous">
+
+</head>
+<body>
+<div id="loader">
+  <div class="lgi" id="lgi">
+    <div id="lmosaic"><div class="lmq"></div><div class="lmq"></div><div class="lmq"></div><div class="lmq"></div></div>
+  </div>
+  <div class="lt" id="lTitle">Mini JapanRail</div>
+  <div class="ltrack" id="lTrack">
+    <div class="ltrack-line"></div>
+    <svg class="ltrain" id="ltrain" viewBox="0 0 44 24" width="36" height="20" aria-hidden="true"><path class="ltrain-side" d="M35 12 L42 5 L42 15 L35 22 Z"/><path class="ltrain-top" d="M3 12 L10 5 L42 5 L35 12 Z"/><rect class="ltrain-f" x="3" y="12" width="32" height="10" rx="1.5"/><rect class="ltrain-sheen" x="3" y="12" width="32" height="4" rx="1.5"/></svg>
+  </div>
+  <div class="lpd"><span id="lMsg">准备中…</span><b id="lPct">0%</b></div>
+  <button id="lRetry"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66M20 4v4h-4"/></svg> 重试</button>
+</div>
+
+
+<noscript>
+  <div style="position:fixed;inset:auto 0 0 0;z-index:99999;background:#0b0f16;color:#e8edf4;padding:14px;font-family:-apple-system,'PingFang SC','Hiragino Sans GB','Noto Sans CJK SC','Yu Gothic UI','Noto Sans JP',sans-serif;font-size:14px;line-height:1.8;max-height:70vh;overflow:auto">
+    <h1 style="font-size:18px;margin-bottom:6px">Mini JapanRail｜全日本列车实时运行可视化地图（列車走行位置・運行情報）</h1>
+    <p>本站为纯静态网站：<strong>全日本列车实时运行可视化地图</strong>，实时显示新干线・特急・在来线・地下铁・路面电车等 <strong>600+ 条铁路线路、8,900+ 个车站、约 4,000 列列车</strong>的<strong>列车走行位置与运行情报</strong>（列車走行位置・運行情報 / Japan Train Live Map）。请在浏览器中启用 JavaScript 以使用 3D 地球投影、实时列车动画、时钟回放与路线搜索；无需脚本即可直接浏览以下静态页面：</p>
+    <p style="margin:6px 0"><a href="lines/">全部线路一览（600+ 条）</a> ｜ <a href="stations/">全部车站一览（8,900+ 个）</a></p>
+    <p lang="ja">全国の<strong>列車走行位置</strong>・<strong>運行情報</strong>をリアルタイムで確認できる日本全国の鉄道マップ（走行シミュレーション）です。新幹線・特急・在来線・地下鉄・路面電車に対応。3D 地球投影・時刻表の再生・経路検索は JavaScript を有効にすると利用できます。</p>
+    <p lang="en">A free, real-time <strong>Japan train live map</strong> — see the live positions of Shinkansen, limited express and local trains across 600+ lines and 8,900+ stations, with a 3D globe projection, timetable replay and route search. Enable JavaScript to use the interactive map.</p>
+    <p style="color:#8fa0c0;margin-top:8px;font-size:13px">热门线路：<a href="lines/%E5%B1%B1%E6%89%8B%E7%B7%9A/">山手線（Yamanote Line）</a> ·
+      <a href="lines/%E6%9D%B1%E6%B5%B7%E9%81%93%E6%9C%AC%E7%B7%9A/">東海道本線</a> ·
+      <a href="lines/%E5%A4%A7%E9%98%AA%E7%92%B0%E7%8A%B6%E7%B7%9A/">大阪環状線</a> ·
+      <a href="lines/%E4%B8%AD%E5%A4%AE%E6%9C%AC%E7%B7%9A/">中央本線</a> ·
+      <a href="lines/%E6%9D%B1%E5%8C%97%E6%9C%AC%E7%B7%9A/">東北本線</a></p>
+    <p style="color:#8fa0c0;font-size:13px">热门车站：<a href="stations/%E6%9D%B1%E4%BA%AC/">東京</a> ·
+      <a href="stations/%E6%96%B0%E5%AE%BF/">新宿</a> ·
+      <a href="stations/%E5%A4%A7%E9%98%AA/">大阪</a> ·
+      <a href="stations/%E5%90%8D%E5%8F%A4%E5%B1%8B/">名古屋</a> ·
+      <a href="stations/%E4%BA%AC%E9%83%BD/">京都</a> ·
+      <a href="stations/%E6%9C%AD%E5%B9%8C/">札幌</a> ·
+      <a href="stations/%E5%8D%9A%E5%A4%9A/">博多</a></p>
+    <h2 style="font-size:15px;margin:10px 0 4px">主要功能 / 主な機能 / Features</h2>
+    <ul style="margin:0 0 6px 18px;padding:0;font-size:13px;color:#c7d3e6">
+      <li>全日本列车实时位置与走行位置动画（新幹線・特急・在来線・地下鉄・路面電車）</li>
+      <li>3D 地球投影与 2D/3D 视角切换（OpenFreeMap 矢量底图 3D 建筑，可换淡色 / 标准 / 卫星）、官方线路色轨道渲染</li>
+      <li>时钟回放：任意时刻查看列车配置，0.5–32× 倍速播放</li>
+      <li>起终点路线搜索（最短路 + 换乘）、车站查询与途经线路</li>
+      <li>运行日切换（平日 / 周六 / 周日祝）、线路类型过滤</li>
+      <li>日文・简体中文・英文三语界面</li>
+    </ul>
+    <h2 style="font-size:15px;margin:10px 0 4px">常见问题 / FAQ</h2>
+    <dl style="font-size:13px;color:#c7d3e6;margin:0">
+      <dt><strong>可以实时查看日本全国的列车运行位置吗？</strong></dt>
+      <dd>可以。本站基于本地时刻表在浏览器端实时推算全日本约 4,000 列列车的走行位置，无需刷新即可查看新干线、特急、在来线、地铁与路面电车的当前位置与运行情报。</dd>
+      <dt><strong>新幹線の現在の走行位置はわかりますか？</strong></dt>
+      <dd>はい。東海道・山陽・東北・北陸・九州など全国の新幹線の走行位置をリアルタイムで表示します。</dd>
+      <dt><strong>データはどこから取得していますか？</strong></dt>
+      <dd>日本全国の鉄道の計画時刻表を元に構築しています（実際の遅延などの運行状況は含みません）。列車データはページ読み込み後に外部 API へ問い合わせません（地図タイルは OpenFreeMap / 国土地理院から読み込みます）。</dd>
+      <dt><strong>Is this Japan train live map free?</strong></dt>
+      <dd>Yes. It is a free, non-commercial hobby project; all data is based on scheduled timetables and provided for reference only.</dd>
+    </dl>
+  </div>
+</noscript>
+<div id="map"></div>
+
+<div id="topHud">
+  <div id="brand" role="button" tabindex="0" aria-label="回到全国视图">
+    <span class="lg"><img src="https://jr-static.suki.ing/logo.png" alt="" width="26" height="26" decoding="async"></span>
+    <b id="brandT">Mini JapanRail</b>
+    <span class="hud-sep"></span>
+    <div class="badge" id="badge">
+      <div class="b-it"><span class="b-live-dot"></span><b id="bLive">-</b><span class="b-lb" id="bLiveLb">在途</span></div>
+      <div class="b-it"><b id="bCount">-</b><span class="b-lb" id="bCountLb">今日</span></div>
+    </div>
+  </div>
+</div>
+
+<button id="btnView3d" type="button" aria-pressed="false" aria-label="3D 视角" title="3D 视角">
+  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.8 20 7v10l-8 4.2L4 17V7z"/><path d="M4 7l8 4.2 8-4.2M12 11.2V21"/></svg>
+  <span id="btnView3dLb">3D</span>
+</button>
+
+<div id="side">
+  <div id="sideTabs">
+    <button class="stab on" data-tab="route" id="tabRoute"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="17" r="2.2"/><circle cx="19" cy="5" r="2.2"/><path d="M5 19C5 11 11 5 19 5M5 14.5c5-1 8-2 9-4"/></svg><span class="st-lb" id="tabRouteLb">路线</span></button>
+    <button class="stab" data-tab="legend" id="tabLegend"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="7" cy="6" r="1.2"/><circle cx="7" cy="12" r="1.2"/><circle cx="7" cy="18" r="1.2"/></svg><span class="st-lb" id="tabLegendLb">图例</span></button>
+    <button class="stab" data-tab="set" id="tabSet"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10z"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"/></svg><span class="st-lb" id="tabSetLb">设置</span></button>
+  </div>
+  <div id="sideBody">
+    <div class="stab-sec" data-tab="route">
+      <div class="sec">
+        <div class="sec-t" id="tRoute">路线搜索</div>
+        <div id="routeRow">
+          <input id="rFrom" class="tbox" type="text" autocomplete="off" spellcheck="false" placeholder="起点" data-clarity-mask="true">
+          <span class="route-arrow"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h14M13 6l6 6-6 6"/></svg></span>
+          <input id="rTo" class="tbox" type="text" autocomplete="off" spellcheck="false" placeholder="终点" data-clarity-mask="true">
+          <button id="rGo" class="btn"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h14M13 6l6 6-6 6"/></svg></button>
+        </div>
+        <div id="routeRes">
+          <div id="routeSum"></div>
+          <div id="routeLegs"></div>
+        </div>
+      </div>
+      <div class="sec">
+        <div class="sec-t" id="tFilter">线路类型</div>
+        <div class="frow" id="kindRow"></div>
+      </div>
+      <div class="sec">
+        <div class="sec-t" id="tDay">运行日</div>
+        <div class="frow" id="dayRow">
+          <button class="chip on" data-day="auto" id="dayAuto">自动</button>
+          <button class="chip" data-day="1">平日</button>
+          <button class="chip" data-day="2">周六</button>
+          <button class="chip" data-day="4">周日・假</button>
+        </div>
+      </div>
+    </div>
+    <div class="stab-sec" data-tab="legend">
+      <div class="sec">
+        <div class="sec-t" id="tLegend">图例</div>
+        <div id="legendBox"></div>
+      </div>
+    </div>
+    <div class="stab-sec" data-tab="set">
+      <div class="sec">
+        <div class="sec-t" id="tSet">设置</div>
+        <div class="sw" id="swPerf"><span id="tSw11">性能改善</span><span class="trk"></span></div>
+        <div class="swnote" id="tSw11Note">只渲染新干线・特急，放大后逐级加入其他列车</div>
+        <div class="sw on" id="swLabel"><span id="tSw1">车站标签</span><span class="trk"></span></div>
+        <div class="sw on" id="swGlow"><span id="tSw2">轨道光晕</span><span class="trk"></span></div>
+        <div class="sw on" id="swSta"><span id="tSw3">车站点</span><span class="trk"></span></div>
+        <div class="sw on" id="swBadge"><span id="tSw12">车站徽章</span><span class="trk"></span></div>
+        <div class="sw on" id="swFp"><span id="tSw8">车站轮廓</span><span class="trk"></span></div>
+        <div class="sw on" id="swEnt"><span id="tSw9">出入口</span><span class="trk"></span></div>
+        <div class="sw on" id="swOrm"><span id="tSw10">详细股道</span><span class="trk"></span></div>
+        <div class="sw on" id="swBase"><span id="tSw4">底图瓦片</span><span class="trk"></span></div>
+        <div class="sec-t" id="tBase" style="margin-top:12px">底图源</div>
+        <div class="frow" id="baseSrcRow">
+          <button class="chip on" data-base="ofm"><span id="bOfm">矢量</span></button>
+          <button class="chip" data-base="pale"><span id="bPale">淡色</span></button>
+          <button class="chip" data-base="std"><span id="bStd">标准</span></button>
+          <button class="chip" data-base="sat"><span id="bSat">卫星</span></button>
+        </div>
+        <div class="sw on" id="swTrail"><span id="tSw5">列车光晕</span><span class="trk"></span></div>
+        <div class="sw" id="swCopyBad"><span id="tSw6">复制异常车辆</span><span class="trk"></span></div>
+        <div class="sw on" id="swTip"><span id="tSw7">列车悬浮提示</span><span class="trk"></span></div>
+        <div class="sw on" id="swDelay"><span id="tSw14">实时列车延误</span><span class="trk"></span></div>
+        <div class="swnote" id="tSw14Note" style="display:none"></div>
+        <div class="sec-t" id="tMode" style="margin-top:12px">列车显示</div>
+        <div class="frow" id="trainModeRow">
+          <button class="chip" data-mode="3d" id="tMode3d">3D</button>
+          <button class="chip on" data-mode="icon" id="tModeIcon">图标</button>
+          <button class="chip" data-mode="cute" id="tModeCute">可爱</button>
+        </div>
+        <div class="sec-t" id="tIconSet" style="margin-top:12px">图标集</div>
+        <div class="frow" id="iconSetRow">
+          <button class="chip on" data-set="default"><span id="iSetDefault">默认</span></button>
+          <button class="chip" data-set="vector"><span id="iSetVector">矢量</span></button>
+        </div>
+        <div class="sec-t" id="tTheme" style="margin-top:10px">主题</div>
+        <div class="frow" id="themeRow">
+          <button class="chip" data-theme="dark"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M20 13.5A8.5 8.5 0 0 1 10.5 4a8.5 8.5 0 1 0 9.5 9.5z"/></svg> 深色</button>
+          <button class="chip" data-theme="light"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"/></svg> 浅色</button>
+          <button class="chip on" data-theme="auto"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg> 跟随</button>
+        </div>
+        <div class="sec-t" id="tLang" style="margin-top:10px">语言</div>
+        <div class="frow" id="langRow">
+          <button class="chip on" data-lang="zh">中文</button>
+          <button class="chip" data-lang="ja">日本語</button>
+          <button class="chip" data-lang="en">English</button>
+        </div>
+      </div>
+      <div class="sec">
+        <div class="sec-t" id="tData">数据</div>
+        <div class="stats">
+          <div class="stat"><div class="s-lb" id="tD4">线路 / 车站</div><div class="s-v" id="dNet">-</div></div>
+          <div class="stat"><div class="s-lb" id="tD5">时刻表构建</div><div class="s-v" id="dBuild">-</div></div>
+          <div class="stat"><div class="s-lb" id="tD6">帧率</div><div class="s-v" id="dFps">-</div></div>
+        </div>
+      </div>
+      <div class="sec">
+        <div class="sec-t" id="tHelp">帮助</div>
+        <div class="help" id="helpBox"></div>
+      </div>
+      <div class="sec">
+        <div class="sec-t" id="tAbout">关于</div>
+        <div class="help" id="aboutBox"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="dock">
+  <div id="dockCenter">
+    <button class="gcircle" id="btnSide" type="button" title="Panel" aria-label="菜单"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg></button>
+<div id="clock" data-clarity-mask="true">
+  <div class="r1">
+    <span class="ldot" id="cDot"></span>
+    <button id="btnPlay" type="button" aria-label="播放或暂停"><svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M7 5.5v13a.8.8 0 0 0 1.22.68l10.6-6.5a.8.8 0 0 0 0-1.36L8.22 4.82A.8.8 0 0 0 7 5.5z"/></svg></button>
+    <div class="ct">
+      <div class="t" id="cTime">--:--:--</div>
+      <div class="tz" id="cTz">JST</div>
+    </div>
+    <div class="daychip" id="cDay">-</div>
+    <button class="spb sp-main" id="spMain">1×</button>
+  </div>
+  <div class="r2">
+    <span class="tk-l" id="tkL">0:00</span>
+    <span class="c-bub" id="cBub"></span>
+    <input type="range" id="cSlider" min="0" max="1439" value="0" step="1">
+    <span class="tk-r" id="tkR">24:00</span>
+    <span class="now" id="cNow">回到现在</span>
+  </div>
+</div>
+    <button class="gcircle" id="btnSearch" type="button" title="搜索" aria-label="搜索"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg></button>
+  </div>
+</div>
+
+<!-- 独立搜索浮层(iOS Spotlight 风格) -->
+<div id="searchMask"></div>
+<div id="searchPanel">
+  <div class="sp-bar">
+    <span class="sp-ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg></span>
+    <input id="search" class="tbox" type="text" autocomplete="off" spellcheck="false" placeholder="搜索车站或线路" data-clarity-mask="true">
+    <button id="spClear" type="button" aria-label="清除"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><circle cx="12" cy="12" r="10"/><path d="M8.5 8.5l7 7M15.5 8.5l-7 7" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+  </div>
+  <div id="sug"></div>
+</div>
+
+<div id="detail" data-clarity-mask="true"></div>
+<div id="trTag"></div>
+<div id="tip"></div>
+<div id="trPick"></div>
+<div id="sheetMask"></div>
+</div>
+<div id="sheet">
+  <div class="grab"></div>
+  <div class="sh-head">
+    <div class="sh-titles"><div class="sh-nmrow"><div class="sh-nm" id="shNm">駅名</div><div class="sh-badges" id="shBadges" hidden></div></div><div class="sh-sub" id="shSub"></div></div>
+    <button class="btn icon sh-x sh-bell" id="shBell" type="button" aria-label="发车铃声" title="发车铃声" aria-pressed="false"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></button>
+    <button class="btn icon sh-x" id="shX"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sh-tabs"><button id="tabList">列表</button><button id="tabGrid" class="on">一览</button><button id="tabInfo">信息</button><button id="tabGuide">指南</button></div>
+  <div class="sh-subtabs" id="shSubTabs"><button id="subDep" class="on">出发</button><button id="subArr">到达</button></div>
+  <div class="sh-body" id="shBody"><div class="empty">時刻表を読込中…</div></div>
+  <div class="sh-body tab-panel" id="panelInfo" hidden></div>
+  <div class="sh-body tab-panel" id="panelGuide" hidden></div>
+  <div class="sh-body tab-panel" id="panelMusic" tabindex="-1" hidden>
+    <div class="mu-head">
+      <span class="mu-title" id="muTitleTxt">发车铃声</span>
+      <span class="mu-count" id="muCount" hidden></span>
+    </div>
+    <div class="mu-lines" id="muLines" hidden></div>
+    <div class="mu-list" id="muList"></div>
+    <div class="mu-player" id="muPlayer" hidden>
+      <div class="mu-now">
+        <div class="mu-pmeta">
+          <div class="mu-pname" id="muPName"></div>
+          <div class="mu-pplat" id="muPPlat"></div>
+        </div>
+        <button class="mu-auto" id="muAuto" type="button" aria-pressed="true" title="连播" aria-label="连播"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg><span id="muAutoTxt">连播</span></button>
+      </div>
+      <div class="mu-scrub" id="muScrub" role="slider" tabindex="0" aria-label="拖动试听进度" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0" aria-valuetext="0:00 / 0:00">
+        <div class="mu-rail"><div class="mu-fill" id="muFill"></div><div class="mu-knob" id="muKnob"></div></div>
+      </div>
+      <div class="mu-times"><span id="muTimeCur">0:00</span><span id="muTimeTot">0:00</span></div>
+      <div class="mu-transport">
+        <button class="mu-skip" id="muPrev" type="button" aria-label="上一首" title="上一首"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M18 6v12l-9-6z"/><rect x="5" y="6" width="1.8" height="12" rx=".9"/></svg></button>
+        <button class="mu-play" id="muPlay" type="button" aria-label="播放" aria-pressed="false">
+          <svg class="ico-play" viewBox="0 0 24 24" width="19" height="19" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+          <svg class="ico-pause" viewBox="0 0 24 24" width="17" height="17" fill="currentColor" aria-hidden="true"><rect x="6.6" y="5" width="3.8" height="14" rx="1.1"/><rect x="13.6" y="5" width="3.8" height="14" rx="1.1"/></svg>
+        </button>
+        <button class="mu-skip" id="muNext" type="button" aria-label="下一首" title="下一首"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M6 6v12l9-6z"/><rect x="17.2" y="6" width="1.8" height="12" rx=".9"/></svg></button>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="lineSheet">
+  <div class="ls-grab" id="lsGrab"></div>
+  <div class="ls-head">
+    <div style="flex:1;min-width:0">
+      <div class="ls-nm" id="lsNm">线路</div>
+      <div class="ls-sub" id="lsSub">正在加载…</div>
+    </div>
+    <button class="ls-x" id="lsX" type="button" aria-label="关闭"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="ls-body" id="lsBody"><div class="gd-loading">正在加载线路百科…</div></div>
+</div>
+<!-- 首次访问欢迎引导(Welcome Tour) -->
+<div id="tour" hidden role="dialog" aria-modal="true" aria-labelledby="tourTitle">
+  <div id="tourDim"></div>
+  <div id="tourHole"></div>
+  <section id="tourCard" tabindex="-1" aria-live="polite"><div class="tc-in">
+    <div class="tc-media" id="tcMedia" hidden>
+      <div class="tc-rail"></div>
+      <svg class="tc-train" viewBox="0 0 44 24" width="36" height="20" aria-hidden="true"><path class="ltrain-side" d="M35 12 L42 5 L42 15 L35 22 Z"/><path class="ltrain-top" d="M3 12 L10 5 L42 5 L35 12 Z"/><rect class="ltrain-f" x="3" y="12" width="32" height="10" rx="1.5"/><rect class="ltrain-sheen" x="3" y="12" width="32" height="4" rx="1.5"/></svg>
+    </div>
+    <div class="tc-head">
+      <span class="tc-ico" id="tourIco" aria-hidden="true"></span>
+      <p class="tc-title" id="tourTitle"></p>
+      <button class="tc-x" id="tourSkip" type="button" aria-label="skip"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <p class="tc-body" id="tourBody"></p>
+    <div class="tc-foot">
+      <span class="tc-dots" id="tourDots" aria-hidden="true"></span>
+      <button class="tc-btn tc-back" id="tourBack" type="button" hidden>Back</button>
+      <button class="tc-btn tc-next" id="tourNext" type="button">Next</button>
+    </div>
+  </div></section>
+</div>
+<div id="toast"></div>
+<div class="foot" id="footNote"></div>
+
+<script>
+window.__errs = [];
+function __pushErr(s) { window.__errs.push(String(s).slice(0, 500)); if (window.__errs.length > 300) window.__errs.shift(); }
+window.addEventListener('error', e => { __pushErr(String(e.message || e) + ' @ ' + String(e.error && e.error.stack || '').split('\n').slice(0, 4).join(' | ').slice(0, 400)); document.getElementById('lMsg').textContent = 'ERR ' + (e.message || e); });
+window.addEventListener('unhandledrejection', e => { __pushErr('REJ ' + (e.reason && e.reason.message || e.reason)); });
+(() => { const oc = console.error; console.error = function () { __pushErr('CERR ' + Array.from(arguments).map(a => (a && a.message) ? a.message : String(a)).join(' ;; ').slice(0, 300)); return oc.apply(console, arguments); }; })();
+</script>
+<script>
+/* 启动看门狗:兜底「永久 0% 且无重试」死锁。
+   成因:① 资源错误事件不冒泡 —— app.js 模块脚本加载失败时,上面按冒泡注册的 window error
+   监听收不到;② 重试按钮只在 app.js boot() 的 catch 里显示,模块没执行就永远不出现。
+   因此本页自己兜底:
+   ① 捕获阶段监听资源错误:主模块脚本加载失败 → 立即显示本地化失败文案 + 重试(点击=刷新);
+   ② 进度看门狗(双预算):
+      - 模块未执行期(!__appJsLoaded):2G 下光 app.js 下载就要 4 分钟以上,期间没有任何
+        进度信号,固定阈值必误杀。改用较短的 BOOT 预算,到期不直接判死,而是对关键脚本
+        (defer + 主模块)发 HEAD 探针:全部有响应 = 网络活着、下载仍在推进 → 续等;
+        任一超时无响应 = 真挂起 → 判死。
+      - 模块已执行期:app.js 的 setPct/setLoadMsg/下载字节/索引心跳都会刷新 __bootTick,
+        前台连续 RUN 预算无进度信号才判死(抓取闲置中止已先于此兜住真挂起)。
+      后台标签页不计时;回前台(visible)立即重置基准并给予完整宽限,不因后台定时器节流
+      造成的 lastAlive 过期而在首拍误判。
+   遮罩隐藏(启动成功)后看门狗自动终止。重试点击:整页刷新按会话计次、最多 2 次;
+   boot 在途时首次点击先给在途闲置超时一次自我裁决的机会;模块已执行且 boot 已落定时
+   交给 app.js 自己的重试监听(原地 boot(),更快)。 */
+(function () {
+  var TXT = {
+    zh: { fail: '加载失败，请检查网络后重试', retry: '重试', capped: '重试次数已达上限，请检查网络后手动刷新页面' },
+    ja: { fail: '読み込みに失敗しました。ネットワークを確認してもう一度お試しください', retry: '再試行', capped: '再試行回数が上限に達しました。ネットワークを確認してから手動で更新してください' },
+    en: { fail: 'Failed to load. Check your network and retry.', retry: 'Retry', capped: 'Retry limit reached. Check your network and refresh manually.' }
+  };
+  var lang = 'zh';
+  try {
+    var saved = localStorage.getItem('mjr3d_lang'), nav = String(navigator.language || '').toLowerCase();
+    if (saved && TXT[saved]) lang = saved;
+    else if (nav.indexOf('ja') === 0) lang = 'ja';
+    else if (nav.indexOf('zh') !== 0) lang = 'en';
+  } catch (e) {}
+  var BOOT_BUDGET_MS = 22000; /* 模块期:开始探针的阈值(模块下载本身不产生进度信号) */
+  var RUN_BUDGET_MS = 60000;  /* 模块已执行期:无进度判死阈值(抓取闲置中止先于此兜底) */
+  var PROBE_MS = 28000;       /* HEAD 探针单项超时(须大于实测最坏 TTFB 25s) */
+  var RELOAD_KEY = 'mjr3d_wdReloads', MAX_RELOADS = 2;
+  window.__bootTick = Date.now();
+  var failed = false, probing = false, chance = false, lastTick = window.__bootTick, lastAlive = Date.now();
+  function showFail() {
+    if (failed) return; failed = true; chance = false; window.__wdFail = true;
+    var msg = document.getElementById('lMsg'), btn = document.getElementById('lRetry');
+    if (msg) msg.textContent = '⚠ ' + TXT[lang].fail;
+    if (btn) {
+      var svg = btn.querySelector('svg');
+      btn.innerHTML = (svg ? svg.outerHTML + ' ' : '') + TXT[lang].retry;
+      btn.style.display = 'flex';
+      btn.addEventListener('click', function () {
+        /* boot 在途:首次点击不刷新 —— 给在途请求的闲置超时一次自我裁决的机会,
+           避免掐掉可能成功的在途下载;再次点击仍在途 → 落到下方刷新路径 */
+        if (window.__booting && !chance) { chance = true; return; }
+        /* 模块没执行 → 不存在 boot(),只能刷新;模块已执行但 boot 仍卡在途 → 刷新。
+           整页刷新按会话计次、最多 2 次:连点 3 次不再是 3 次整页刷新 */
+        if (!window.__appJsLoaded || window.__booting) {
+          var n = 0; try { n = +(sessionStorage.getItem(RELOAD_KEY) || 0); } catch (e) {}
+          if (n >= MAX_RELOADS) { if (msg) msg.textContent = '⚠ ' + TXT[lang].capped; return; }
+          try { sessionStorage.setItem(RELOAD_KEY, String(n + 1)); } catch (e) {}
+          location.reload();
+        }
+      }, true);
+    }
+  }
+  window.__wdClear = function () { /* app.js boot() 成功后调用:清失败态与刷新计次 */
+    failed = false; chance = false; window.__wdFail = false;
+    lastAlive = Date.now(); lastTick = window.__bootTick;
+    try { sessionStorage.removeItem(RELOAD_KEY); } catch (e) {}
+  };
+  window.addEventListener('error', function (e) {
+    var t = e.target;
+    /* 资源错误只在捕获阶段可见;仅模块脚本致命(经典脚本如统计/图标表失败有各自兜底) */
+    if (t && t !== window && t.tagName === 'SCRIPT' && t.type === 'module') { window.__scriptFail = true; showFail(); }
+  }, true);
+  function probeUrls() {
+    /* 模块执行关键路径上的资源:defer 脚本(先于模块执行)与主模块脚本。
+       任一挂起都会使 app.js 永不执行 —— 探针正是针对"会不会被卡住"的资源。
+       追加独立查询参数:与在途 GET 不同缓存条目,避免 no-cache 校验把正在下载的同名
+       请求打断(实测会中止 app.js/line_icons 的在途 GET,模块将永不执行) */
+    var urls = [];
+    try {
+      var d = document.querySelector('script[defer][src]');
+      var m = document.querySelector('script[type="module"][src]');
+      var tag = function (u) { return u + (u.indexOf('?') >= 0 ? '&' : '?') + '__wdprobe=1'; };
+      if (d && d.src) urls.push(tag(d.src));
+      if (m && m.src) urls.push(tag(m.src));
+    } catch (e) {}
+    return urls;
+  }
+  function probeAlive(cb) {
+    var urls = probeUrls(), pending = urls.length, alive = true;
+    if (!pending || typeof fetch === 'undefined') return cb(false);
+    urls.forEach(function (u) {
+      var ctl = null, timer = null, done = false;
+      var finish = function (ok) {
+        if (done) return; done = true;
+        if (timer) clearTimeout(timer);
+        if (!ok) alive = false;
+        if (--pending === 0) cb(alive);
+      };
+      try { ctl = new AbortController(); } catch (e) {}
+      timer = setTimeout(function () { try { if (ctl) ctl.abort(); } catch (e) {} finish(false); }, PROBE_MS);
+      try {
+        fetch(u, { method: 'HEAD', cache: 'no-cache', signal: ctl ? ctl.signal : undefined })
+          .then(function () { finish(true); }, function () { finish(false); });
+      } catch (e) { finish(false); }
+    });
+  }
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible') { lastAlive = Date.now(); lastTick = window.__bootTick; }
+  });
+  setTimeout(function tick() {
+    var loader = document.getElementById('loader');
+    if (!loader || loader.classList.contains('hide') || failed) return; /* 启动成功或已判失败:终止 */
+    var now = Date.now();
+    if (document.visibilityState === 'hidden') lastAlive = now; /* 后台不计时 */
+    else if (window.__bootTick !== lastTick) { lastTick = window.__bootTick; lastAlive = now; }
+    else if (window.__scriptFail) showFail();
+    else {
+      var budget = window.__appJsLoaded ? RUN_BUDGET_MS : BOOT_BUDGET_MS;
+      if (now - lastAlive > budget && !probing) {
+        if (!window.__appJsLoaded) {
+          /* 模块未执行:先探针确认网络是否还活着(慢下载 ≠ 挂起),再决定是否判死 */
+          probing = true;
+          probeAlive(function (ok) {
+            probing = false;
+            if (failed) return;
+            if (ok) { lastAlive = Date.now(); lastTick = window.__bootTick; }
+            else showFail();
+          });
+        } else showFail();
+      }
+    }
+    if (!failed) setTimeout(tick, 3000);
+  }, 3000);
+})();
+</script>
+
+<!-- line_icons.js:线路小图标 URL 表,仅车站抽屉时刻表行使用(LINE_ICON 消费处已有缺省兜底)。
+     defer 解除解析阻塞:执行顺序仍在 module 之前,行为不变 -->
+<script defer src="https://jr-static.suki.ing/data/line_icons.js"></script>
+<script type="importmap">
+{ "imports": {
+    "three": "https://jr-static.suki.ing/vendor/three/three.module.js",
+    "three/addons/": "https://jr-static.suki.ing/vendor/three/jsm/"
+} }
+</script>
+<script type="module" src="https://jr-static.suki.ing/app/app.js?v=20261106-ib4"></script>
+<div id="m3dMask"></div>
+<div id="m3dViewer">
+  <canvas id="m3dCanvas"></canvas>
+  <div class="m3d-scrim"></div>
+  <div class="m3d-hd">
+    <div class="m3d-tx"><div class="m3d-nm" id="m3dNm"></div><div class="m3d-sub" id="m3dSub"></div></div>
+    <div class="m3d-actions">
+      <div class="m3d-dn" id="m3dDN" role="group"><button id="m3dDay" aria-pressed="true">☀</button><button id="m3dNight" aria-pressed="false">☾</button></div>
+      <button class="m3d-x" id="m3dShot" aria-label="screenshot" title="截图"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></button>
+      <button class="m3d-x" id="m3dX" aria-label="close"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+  </div>
+  <div class="m3d-load" id="m3dLoad"><div class="spin"></div><span id="m3dLoadTx">Loading…</span></div>
+  <div class="m3d-panel">
+    <div class="m3d-row" id="m3dViewRow">
+      <span class="m3d-lb" id="tM3dVpL">视点</span>
+      <button class="mchip on" data-vp="0">斜め</button><button class="mchip" data-vp="1">側面</button><button class="mchip" data-vp="2">正面</button><button class="mchip" data-vp="3">上面</button>
+    </div>
+    <div class="m3d-row" id="m3dModeRow">
+      <span class="m3d-lb" id="tM3dMdL">編成</span>
+      <button class="mchip on" data-md="all" id="m3dAll">全編成</button><button class="mchip" data-car-step="-1" title="上一节">‹</button><span id="m3dCarChips" style="display:contents"></span><button class="mchip" data-car-step="1" title="下一节">›</button><button class="mchip on" data-md="auto" id="m3dAuto">自動回転</button>
+    </div>
+    <div class="m3d-detail" id="m3dDetail"></div>
+    <div class="m3d-hint" id="m3dHint"></div>
+  </div>
+</div>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","@id":"https://jr.suki.ing/#website","name":"Mini JapanRail","alternateName":["全日本列车实时运行可视化地图","全日本铁路实时运行地图","全日本列车实时追踪地图","列车运行可视化系统","列车运行情报","列车走行位置","日本铁路实时地图","日本电车实时位置","列車走行位置","列車運行情報","運行情報","リアルタイム列車位置","日本全国鉄道リアルタイムマップ","全国鉄道マップ","鉄道マップ","Japan Train Live Map","Japan Rail Live Map","Real-Time Japan Train Tracker","Japan Railway Map","Shinkansen Live Map"],"url":"https://jr.suki.ing/","description":"全日本列车实时运行可视化地图：本地时刻表驱动，实时显示新干线・特急・在来线・地铁・路面电车的列车走行位置与运行情报，覆盖 600+ 条线路、8,900+ 个车站、4,000+ 列列车。","keywords":"列车实时位置,列车运行可视化,列車走行位置,列車運行情報,運行情報,新幹線,鉄道マップ,路線図,Japan train live map,shinkansen live map","inLanguage":["zh-Hans","ja","en"],"publisher":{"@id":"https://jr.suki.ing/#org"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","@id":"https://jr.suki.ing/#org","name":"Mini JapanRail","alternateName":"ミニ日本鉄道","url":"https://jr.suki.ing/","logo":{"@type":"ImageObject","url":"https://jr.suki.ing/icon-512.png","width":512,"height":512},"description":"个人爱好项目：全日本列车实时运行可视化地图（列車走行位置・運行情報）。","knowsLanguage":["zh-Hans","ja","en"]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","@id":"https://jr.suki.ing/#app","name":"Mini JapanRail","url":"https://jr.suki.ing/","applicationCategory":"TravelApplication","applicationSubCategory":"Train Map","operatingSystem":"Web","browserRequirements":"Requires WebGL2","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"JPY"},"description":"全日本列车实时运行可视化地图：实时列车走行位置与运行情报、时钟回放、路线搜索、车站查询、线路类型过滤。","featureList":["全日本列车实时位置","列车运行可视化","新干线・特急・在来线・地铁・路面电车分层显示","3D 地球投影与 2D 平面切换","时钟回放（0.5–32× 倍速）","起终点路线搜索","车站查询与途经线路","线路类型过滤","运行日切换（平日/周六/周日祝）","日・中・英三语"],"inLanguage":["zh-Hans","ja","en"],"publisher":{"@id":"https://jr.suki.ing/#org"},"screenshot":"https://jr-static.suki.ing/og-image.png","isPartOf":{"@id":"https://jr.suki.ing/#website"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"可以实时查看日本全国的列车运行位置吗？","acceptedAnswer":{"@type":"Answer","text":"可以。Mini JapanRail 基于本地时刻表在浏览器端实时推算全日本约 4,000 列列车的走行位置，无需刷新即可看到新干线、特急、在来线、地铁与路面电车的当前位置与运行情报。"}},{"@type":"Question","name":"新幹線の現在の走行位置はわかりますか？","acceptedAnswer":{"@type":"Answer","text":"はい。東海道・山陽・東北・北陸・九州など全国の新幹線の走行位置をリアルタイムで表示します。"}},{"@type":"Question","name":"Is this Japan train live map free?","acceptedAnswer":{"@type":"Answer","text":"Yes. Mini JapanRail is a free, non-commercial hobby project. All data is based on scheduled timetables and provided for reference only."}},{"@type":"Question","name":"データはどこから取得していますか？","acceptedAnswer":{"@type":"Answer","text":"日本全国の鉄道の計画時刻表を元に構築しています（実際の遅延などの運行状況は含みません）。ページ実行時の外部リクエストはありません。"}},{"@type":"Question","name":"収録されている路線・駅の数は？","acceptedAnswer":{"@type":"Answer","text":"全国 600 以上の路線と 8,900 以上の駅、約 4,000 列の列車を収録しています。"}},{"@type":"Question","name":"対応している言語は？","acceptedAnswer":{"@type":"Answer","text":"日本語・簡体字中国語・英語の 3 言語に対応しています。"}},{"@type":"Question","name":"スマートフォンでも使えますか？","acceptedAnswer":{"@type":"Answer","text":"はい。スマートフォンやタブレットのブラウザでも利用できます。WebGL 対応ブラウザを推奨します。"}},{"@type":"Question","name":"時刻表の回放（タイムスライダー）はありますか？","acceptedAnswer":{"@type":"Answer","text":"あります。時間スライダーで任意の時刻の列車配置を再生でき、0.5〜32 倍速の再生にも対応しています。"}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Dataset","name":"全日本鉄道 計画時刻表データセット（平日・土曜・休日）","description":"全日本 600+ 路線・8,900+ 駅の鉄道計画時刻表。平日・土曜・休日の 3 種別を収録し、Mini JapanRail の列車走行位置シミュレーションに使用。","url":"https://jr.suki.ing/","creator":{"@id":"https://jr.suki.ing/#org"},"keywords":["鉄道時刻表","列車走行位置","運行情報","日本全国","timetable","Japan railway"],"temporalCoverage":"2026/","spatialCoverage":{"@type":"Place","name":"日本","geo":{"@type":"GeoShape","box":"24.0 122.9 45.6 145.9"}},"isAccessibleForFree":true}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"ItemList","name":"热门线路与车站","itemListElement":[{"@type":"ListItem","position":1,"name":"山手線","url":"https://jr.suki.ing/lines/%E5%B1%B1%E6%89%8B%E7%B7%9A/"},{"@type":"ListItem","position":2,"name":"東海道本線","url":"https://jr.suki.ing/lines/%E6%9D%B1%E6%B5%B7%E9%81%93%E6%9C%AC%E7%B7%9A/"},{"@type":"ListItem","position":3,"name":"大阪環状線","url":"https://jr.suki.ing/lines/%E5%A4%A7%E9%98%AA%E7%92%B0%E7%8A%B6%E7%B7%9A/"},{"@type":"ListItem","position":4,"name":"中央本線","url":"https://jr.suki.ing/lines/%E4%B8%AD%E5%A4%AE%E6%9C%AC%E7%B7%9A/"},{"@type":"ListItem","position":5,"name":"東北本線","url":"https://jr.suki.ing/lines/%E6%9D%B1%E5%8C%97%E6%9C%AC%E7%B7%9A/"},{"@type":"ListItem","position":6,"name":"東京駅","url":"https://jr.suki.ing/stations/%E6%9D%B1%E4%BA%AC/"},{"@type":"ListItem","position":7,"name":"新宿駅","url":"https://jr.suki.ing/stations/%E6%96%B0%E5%AE%BF/"},{"@type":"ListItem","position":8,"name":"大阪駅","url":"https://jr.suki.ing/stations/%E5%A4%A7%E9%98%AA/"},{"@type":"ListItem","position":9,"name":"名古屋駅","url":"https://jr.suki.ing/stations/%E5%90%8D%E5%8F%A4%E5%B1%8B/"},{"@type":"ListItem","position":10,"name":"京都駅","url":"https://jr.suki.ing/stations/%E4%BA%AC%E9%83%BD/"}]}</script>
+</body>
+</html>

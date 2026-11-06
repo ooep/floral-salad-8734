@@ -1,0 +1,82 @@
+{
+ "651-10_lod_Diffuse.ktx2": {
+  "roughnessMap": "651-10_lod_Diffuse.rough.ktx2",
+  "night": {
+   "file": "651-10_lod_Diffuse.rough.ktx2",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutCoverage": 0,
+  "nightCoverage": 0.0312
+ },
+ "651-8_lod_Diffuse.ktx2": {
+  "normal": "651-8_lod_Diffuse.normal.ktx2",
+  "roughnessMap": "651-8_lod_Diffuse.rough.ktx2",
+  "night": {
+   "file": "651-8_lod_Diffuse.rough.ktx2",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutCoverage": 0,
+  "emissive": "651-8_lod_Diffuse.emissive.ktx2",
+  "nightCoverage": 0.0381
+ },
+ "651-9_lod_Diffuse.ktx2": {
+  "normal": "651-9_lod_Diffuse.normal.ktx2",
+  "roughnessMap": "651-9_lod_Diffuse.rough.ktx2",
+  "night": {
+   "file": "651-9_lod_Diffuse.rough.ktx2",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutCoverage": 0,
+  "nightCoverage": 0.0391
+ },
+ "MainTex_8d64ef36.ktx2": {
+  "night": {
+   "file": "MainTex_8d64ef36.night.ktx2",
+   "channel": "r"
+  },
+  "nightCoverage": 0.4892
+ },
+ "MainTex_fa839035.ktx2": {
+  "normal": "MainTex_fa839035.normal.ktx2",
+  "roughnessMap": "MainTex_fa839035.rough.ktx2",
+  "night": {
+   "file": "MainTex_fa839035.rough.ktx2",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.0038,
+  "emissive": "MainTex_fa839035.emissive.ktx2",
+  "nightCoverage": 0.1054,
+  "cutoutShell": 0.003
+ },
+ "asset.ktx2": {
+  "roughness": 0.85
+ },
+ "asset_7a912dab.ktx2": {
+  "roughness": 0.85,
+  "night": {
+   "file": "asset_7a912dab.night.ktx2",
+   "channel": "r"
+  },
+  "nightCoverage": 0.0625
+ },
+ "kaba205_lod_Diffuse.ktx2": {
+  "normal": "kaba205_lod_Diffuse.normal.ktx2",
+  "roughness": 0.85
+ },
+ "stand-ins.ktx2": {
+  "roughnessMap": "stand-ins.rough.ktx2",
+  "normal": "stand-ins.normal.ktx2",
+  "normalScale": 1,
+  "night": {
+   "file": "stand-ins.rough.ktx2",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutAt": 0.5,
+  "emissive": "stand-ins.emissive.ktx2"
+ }
+}

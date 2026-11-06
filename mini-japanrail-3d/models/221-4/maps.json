@@ -1,0 +1,22 @@
+{
+ "MainTex.webp": {
+  "normal": "MainTex.normal.webp",
+  "roughnessMap": "MainTex.rough.webp",
+  "night": {
+   "file": "MainTex.rough.webp",
+   "channel": "a"
+  },
+  "alphaChannel": "b",
+  "cutoutCoverage": 0.27,
+  "emissive": "MainTex.emissive.webp",
+  "nightCoverage": 0.0996
+ },
+ "asset_3108f68d.webp": {
+  "roughness": 0.85,
+  "night": {
+   "file": "asset_3108f68d.night.webp",
+   "channel": "r"
+  },
+  "nightCoverage": 0.076
+ }
+}

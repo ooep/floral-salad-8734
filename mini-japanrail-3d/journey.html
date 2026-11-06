@@ -1,0 +1,2837 @@
+<!DOCTYPE html>
+<html lang="zh-Hans" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<!-- Microsoft Clarity (yxc9o63w5s) —— 仅在用户明确同意后加载(PIPL/APPI 合规)。
+     同意状态与主站共用 localStorage 键 mjr3d_consent:'1'=同意 '0'=拒绝,未设置=展示提示且不加载。 -->
+<script>
+(function () {
+  var KEY = 'mjr3d_consent';
+  var MOBILE_OK = true; /* 换乘案内页:保持原全设备覆盖,但改为同意后加载 */
+  var AUTO_IF_CONSENTED = true; /* 本页无 app.js 调度:曾同意则在载入时直接加载 */
+  var IS_MOBILE = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
+  window.__loadClarity = function () {
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i+"?ref=bwt";
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "yxc9o63w5s");
+  };
+  window.__clarityConsented = function () {
+    try { return localStorage.getItem(KEY) === '1'; } catch (e) { return false; }
+  };
+  window.__clarityGate = function () {
+    if ((MOBILE_OK || !IS_MOBILE) && window.__clarityConsented()) window.__loadClarity();
+  };
+  function raw() { try { return localStorage.getItem(KEY); } catch (e) { return null; } }
+  function save(v) { try { localStorage.setItem(KEY, v); } catch (e) {} }
+  var I18N = {
+    zh: { t:'使用统计', b:'为改进体验，我们希望在您同意后加载 Microsoft Clarity 统计脚本（使用分析与会话回放，不含广告）。您可随时更改选择，拒绝不影响任何功能。', ok:'同意', no:'拒绝', more:'隐私政策' },
+    ja: { t:'利用統計', b:'体験改善のため、ご同意いただいた場合のみ Microsoft Clarity 統計スクリプト（利用分析とセッション再生、広告なし）を読み込みます。選択はいつでも変更でき、拒否しても機能はそのまま利用できます。', ok:'同意する', no:'拒否する', more:'プライバシーポリシー' },
+    en: { t:'Analytics', b:'With your consent we load Microsoft Clarity (usage analytics and session replays, no advertising) to improve the experience. You can change your choice anytime; declining does not affect functionality.', ok:'Accept', no:'Decline', more:'Privacy Policy' }
+  };
+  function lang() {
+    try {
+      var k = localStorage.getItem('mjr3d_lang') || localStorage.getItem('mjrj_lang');
+      if (k === 'zh' || k === 'ja' || k === 'en') return k;
+    } catch (e) {}
+    var n = (navigator.language || '').slice(0, 2);
+    return (n === 'ja' || n === 'en') ? n : 'zh';
+  }
+  /* ── 安全落位:同意条永不覆盖交互控件 ──
+     旧版固定 bottom:14px 居中,会盖住底部抽屉里的起点/终点输入框与搜索按钮,
+     真实点击会误触同意/拒绝。现改为动态测量:
+     - KEEP_HARD 受保护控件(起终点输入、搜索/交换按钮、时间/曜日选择、顶栏按钮等):
+       任何候选位只要与它们重叠即一票否决;
+     - KEEP_SOFT 软障碍(面板抽屉/顶栏/地图控件):在零硬冲突的候选位里挑软重叠最小者;
+     窗口尺寸变化、抽屉展开/收起时重新测量。 */
+  var KEEP_HARD = ['#rFrom', '#rTo', '#goBtn', '#swapBtn', '#depTime', '#daySel', '#langBtn', '#themeBtn', '#backBtn', '#grip'];
+  var KEEP_SOFT = ['#panel', '#sheetMain', '#sheetDetail', '#topHud', '#mapCtl', '#searchCard'];
+  var WATCH = ['#panel', '#sheetMain', '#sheetDetail', '#topHud', '#mapCtl'];
+  function visibleRects(sels) {
+    var out = [], vw = window.innerWidth, vh = window.innerHeight;
+    sels.forEach(function (sel) {
+      var el = document.querySelector(sel);
+      if (!el) return;
+      var cs = window.getComputedStyle(el);
+      if (cs.display === 'none' || cs.visibility === 'hidden') return;
+      var r = el.getBoundingClientRect();
+      if (r.width < 2 || r.height < 2 || r.bottom <= 0 || r.top >= vh || r.right <= 0 || r.left >= vw) return;
+      out.push(r);
+    });
+    return out;
+  }
+  function placeSafe(d) {
+    var vw = window.innerWidth, vh = window.innerHeight;
+    var bw = Math.min(520, vw - 24);
+    d.style.width = bw + 'px';
+    var bh = d.offsetHeight || 130;
+    var hard = visibleRects(KEEP_HARD), soft = visibleRects(KEEP_SOFT);
+    function area(x, y, R) {
+      var a = 0;
+      R.forEach(function (r) {
+        var ox = Math.min(x + bw, r.right) - Math.max(x, r.left);
+        var oy = Math.min(y + bh, r.bottom) - Math.max(y, r.top);
+        if (ox > 0 && oy > 0) a += ox * oy;
+      });
+      return a;
+    }
+    /* 候选位:垂直取"每个障碍上方/下方 + 屏幕中/上/下",水平取"居中 + 每个障碍左右两侧空档" */
+    var all = hard.concat(soft);
+    var xs = [(vw - bw) / 2], ys = [(vh - bh) / 2, 10, vh - bh - 10];
+    all.forEach(function (r) {
+      xs.push(r.right + 12, r.left - bw - 12);
+      ys.push(r.top - bh - 10, r.bottom + 10);
+    });
+    var best = null;
+    ys.forEach(function (y) {
+      y = Math.max(8, Math.min(y, vh - bh - 8));
+      xs.forEach(function (x) {
+        x = Math.max(12, Math.min(x, vw - bw - 12));
+        var h = area(x, y, hard);
+        var s = area(x, y, soft) + (Math.abs(y - (vh - bh) / 2) + Math.abs(x - (vw - bw) / 2)) * 0.25;
+        var score = h * 1e12 + s; /* 硬重叠一票否决 */
+        if (!best || score < best.score) best = { x: x, y: y, score: score };
+      });
+    });
+    d.style.left = best.x + 'px';
+    d.style.top = best.y + 'px';
+    d.style.right = 'auto';
+    d.style.bottom = 'auto';
+    d.style.transform = 'none';
+  }
+  function init() {
+    var chosen = raw();
+    if (chosen === '1') { if (AUTO_IF_CONSENTED) window.__clarityGate(); return; } /* 曾同意→加载 */
+    if (chosen === '0') return; /* 曾拒绝→永不加载,不再提示 */
+    var t = I18N[lang()];
+    var d = document.createElement('div');
+    d.id = 'mjrConsent';
+    d.setAttribute('role', 'dialog');
+    d.setAttribute('aria-label', t.t);
+    d.style.cssText = 'position:fixed;z-index:2147483647;box-sizing:border-box;padding:12px 14px 10px;border-radius:16px;background:rgba(16,21,31,.92);color:#e8edf4;border:1px solid rgba(255,255,255,.14);box-shadow:0 8px 32px rgba(0,0,0,.35);backdrop-filter:blur(18px) saturate(1.6);-webkit-backdrop-filter:blur(18px) saturate(1.6);font:12px/1.7 -apple-system,"PingFang SC","Hiragino Sans GB","Yu Gothic UI","Noto Sans CJK SC",sans-serif;opacity:0;transition:opacity .22s ease;';
+    d.innerHTML = '<div style="font-weight:800;margin-bottom:4px">' + t.t + '</div>'
+      + '<div style="color:#bccbdd">' + t.b + '</div>'
+      + '<div style="display:flex;gap:8px;margin-top:10px;align-items:center">'
+      + '<button id="mjrCAccept" style="padding:6px 16px;border-radius:999px;border:0;background:#2f6de8;color:#fff;font-weight:700;font-size:12px;cursor:pointer">' + t.ok + '</button>'
+      + '<button id="mjrCDecline" style="padding:6px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.22);background:transparent;color:#e8edf4;font-weight:600;font-size:12px;cursor:pointer">' + t.no + '</button>'
+      + '<a href="privacy.html" style="margin-left:auto;color:#6da9ff;font-size:11px;text-decoration:none">' + t.more + '</a>'
+      + '</div>';
+    document.body.appendChild(d);
+    placeSafe(d);
+    requestAnimationFrame(function () { d.style.opacity = '1'; });
+    document.getElementById('mjrCAccept').onclick = function () { save('1'); d.remove(); window.__clarityGate(); };
+    document.getElementById('mjrCDecline').onclick = function () { save('0'); d.remove(); };
+    /* 几何变化时重新落位:视口尺寸、抽屉展开/收起 */
+    var rt = null;
+    window.addEventListener('resize', function () {
+      clearTimeout(rt);
+      rt = setTimeout(function () { if (d.isConnected) placeSafe(d); }, 120);
+    });
+    var pending = false;
+    var mo = new MutationObserver(function () {
+      if (pending || !d.isConnected) return;
+      pending = true;
+      requestAnimationFrame(function () { pending = false; if (d.isConnected) placeSafe(d); });
+    });
+    WATCH.forEach(function (sel) {
+      var el = document.querySelector(sel);
+      if (el) mo.observe(el, { subtree: true, attributes: true, attributeFilter: ['class', 'style'] });
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
+</script>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
+<meta name="theme-color" content="#0b0f16">
+<title>乗換案内 · Mini JapanRail</title>
+<meta name="description" content="全日本铁路换乘案内：班次时刻、换乘次数、列车爱称与目的地、营业里程。纯静态时刻表检索。">
+<link rel="icon" href="https://jr-static.suki.ing/favicon.png">
+<link href="https://cdn.jsdelivr.net/npm/maplibre-gl@6.12.0/dist/maplibre-gl.css" rel="stylesheet" />
+<!-- MapLibre 6.x 仅 ESM 构建, 由 initMap() 动态 import(失败不影响检索功能) -->
+<style>
+/* ══════════════ 液态玻璃 token(与主页 index.html 完全一致) ══════════════ */
+:root {
+  --bg:#0b0f16; --panel:rgba(18,24,34,.68); --panel2:rgba(30,38,52,.72);
+  --line:rgba(255,255,255,.08); --txt:#e8edf4; --dim:#bccbdd; --acc:#2f6de8; --acc-txt:#6da9ff; --acc2:#5fd4f4;
+  --shadow:0 2px 10px rgba(0,0,0,.28), 0 8px 32px rgba(0,0,0,.2);
+  --r:14px; --r-sm:10px; --r-xs:7px; --r-pill:999px;
+  --acc-soft:rgba(79,142,247,.16); --acc-border:rgba(79,142,247,.5);
+  /* ── Liquid Glass ── */
+  --glass:rgba(255,255,255,.10);
+  --glass-2:rgba(255,255,255,.16);
+  --glass-edge:rgba(255,255,255,.22);
+  --glass-hi:rgba(255,255,255,.34);
+  --glass-lo:rgba(0,0,0,.16);
+  --glass-sh:0 6px 20px rgba(0,0,0,.30), 0 2px 6px rgba(0,0,0,.22);
+  --glass-solid:rgb(25,32,45);
+  --glass-panel:linear-gradient(180deg, rgba(255,255,255,.18) 0%, rgba(255,255,255,.05) 34%, rgba(255,255,255,.09) 100%), rgba(255,255,255,.10);
+  --glass-panel-blur:blur(26px) saturate(1.9);
+  --ease-spring:cubic-bezier(.34,1.45,.44,1);
+  --ease-smooth:cubic-bezier(.16,1,.3,1);
+  --spring-out:linear(0,.0598,.1976,.3654,.5321,.68,.8007,.8924,.9573,.9996,1.0241,1.0356,1.0384,1.0358,1.0304,1.0239,1.0175,1.0119,1.0074,1.0039,1.0015,.9999,.999,.9986,.9985,.9986,.9989,.9991,.9993,.9996,1);
+  --spring-in:linear(0,.0368,.1232,.2323,.3473,.458,.5586,.6466,.7215,.7836,.8341,.8746,.9065,.9313,.9503,.9646,.9753,.9831,.9888,.9929,.9957,.9976,.9989,.9997,1.0002,1.0005,1.0006,1.0006,1.0005,1);
+  --morph-out:460ms; --morph-in:340ms;
+  /* ── 布局 token ── */
+  --sbw:400px;            /* 桌面侧栏宽度 */
+  --pad:14px;             /* 外边距 */
+  --dock:44px;
+  --ok:#34d399; --warn:#fbbf24; --bad:#f87171;
+}
+@supports not (transition-timing-function:linear(0,1)) {
+  :root { --spring-out:cubic-bezier(.22,1.12,.36,1); --spring-in:cubic-bezier(.32,.94,.44,1); }
+}
+:root[data-theme="light"] {
+  --bg:#dfe4ec; --panel:rgba(255,255,255,.82); --panel2:rgba(245,247,251,.88);
+  --line:rgba(15,23,42,.09); --txt:#0f172a; --dim:#414e66; --acc:#1c51d6; --acc-txt:#1c51d6; --acc2:#0891b2;
+  --shadow:0 1px 3px rgba(15,23,42,.08), 0 8px 24px rgba(15,23,42,.1);
+  --acc-soft:rgba(37,99,235,.1); --acc-border:rgba(37,99,235,.4);
+  --glass:rgba(255,255,255,.58); --glass-2:rgba(255,255,255,.76);
+  --glass-edge:rgba(255,255,255,.92); --glass-hi:rgba(255,255,255,.95); --glass-lo:rgba(15,23,42,.06);
+  --glass-sh:0 6px 18px rgba(15,23,42,.14), 0 2px 5px rgba(15,23,42,.08);
+  --glass-solid:rgb(247,249,252);
+  --glass-panel:linear-gradient(180deg, rgba(255,255,255,.78) 0%, rgba(255,255,255,.52) 36%, rgba(255,255,255,.66) 100%), rgba(255,255,255,.58);
+  --glass-panel-blur:blur(26px) saturate(1.6);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+html,body { width:100%; height:100%; overflow:hidden; background:var(--bg); color:var(--txt);
+  font-family:-apple-system,"SF Pro SC","PingFang SC","Hiragino Sans GB","Noto Sans CJK SC","Yu Gothic UI","Noto Sans JP",sans-serif;
+  -webkit-tap-highlight-color:transparent; }
+/* 全局锁定: body 固定 + 根禁滚动链 → 杜绝 iOS 橡皮筋过滚把整页拖出视口(黑边) */
+html { overscroll-behavior:none; }
+body { position:fixed; top:0; left:0; overscroll-behavior:none; }
+button,input,select { font-family:inherit; }
+::-webkit-scrollbar { width:5px; height:5px; }
+::-webkit-scrollbar-thumb { background:rgba(120,140,180,.28); border-radius:3px; }
+::-webkit-scrollbar-thumb:hover { background:rgba(120,140,180,.45); }
+::-webkit-scrollbar-track { background:transparent; }
+.maplibregl-ctrl-attrib { font-size:10px !important; }
+:focus-visible { outline:2px solid var(--acc-border); outline-offset:2px; border-radius:6px; }
+
+#map { position:absolute; inset:0; }
+
+/* ══════════════ 顶部 HUD(移动端居中 / 桌面右上) ══════════════ */
+#topHud { position:absolute; top:calc(10px + env(safe-area-inset-top)); left:50%; transform:translateX(-50%);
+  z-index:9; display:flex; align-items:center; gap:8px; pointer-events:none; max-width:calc(100vw - 20px); }
+#brand { pointer-events:auto; display:flex; align-items:center; gap:8px; height:var(--dock); padding:0 13px 0 5px;
+  cursor:pointer; border-radius:var(--r-pill); color:var(--txt); text-decoration:none;
+  background:var(--glass); border:1px solid var(--glass-edge);
+  backdrop-filter:blur(14px) saturate(1.4); -webkit-backdrop-filter:blur(14px) saturate(1.4);
+  box-shadow:inset 0 1px 0 var(--glass-hi), inset 0 -1px 2px var(--glass-lo), var(--glass-sh);
+  transition:background .2s var(--ease-smooth), transform .38s var(--ease-spring); white-space:nowrap; }
+@media (hover:hover) { #brand:hover { background:var(--glass-2); transform:translateY(-1px); } }
+#brand:active { transform:scale(.95); transition:transform .12s ease-in; }
+#brand .lg { width:28px; height:28px; border-radius:50%; background:#fff; display:flex; align-items:center;
+  justify-content:center; flex:none; box-shadow:0 2px 8px var(--acc-soft), inset 0 0 0 1px rgba(255,255,255,.35); overflow:hidden; }
+#brand .lg img { width:100%; height:100%; object-fit:cover; display:block; }
+#brand b { font-size:12px; font-weight:800; letter-spacing:-.2px; }
+
+/* ══════════════ 主面板: 移动端底部抽屉(默认) ══════════════ */
+/* ══════ 宿主 + 两级抽屉(Apple Maps 式: 主抽屉 → 路线详情抽屉) ══════ */
+#panel { position:absolute; inset:0; z-index:10; pointer-events:none; background:none; border:0; box-shadow:none;
+  overflow:hidden; overscroll-behavior:none; }
+.sheet { position:absolute; left:8px; right:8px; bottom:calc(8px + env(safe-area-inset-bottom));
+  z-index:1; display:flex; flex-direction:column; border-radius:26px; overflow:hidden;
+  max-height:min(88dvh, 820px); pointer-events:auto;
+  background:var(--glass-panel); border:1px solid var(--glass-edge);
+  backdrop-filter:var(--glass-panel-blur); -webkit-backdrop-filter:var(--glass-panel-blur);
+  box-shadow:inset 0 1px 0 var(--glass-hi), inset 0 -1px 2px var(--glass-lo), 0 12px 40px rgba(0,0,0,.36);
+  transition:transform .48s var(--ease-spring), opacity .28s var(--ease-smooth); will-change:transform; }
+:root[data-theme="light"] .sheet { box-shadow:inset 0 1px 0 rgba(255,255,255,.85), inset 0 -1px 1px var(--glass-lo), 0 12px 36px rgba(15,23,42,.16); }
+.sheet.dragging { transition:none; }
+/* 主抽屉: 折叠到「仅搜索卡」的 peek 档; 详情打开时整体收起隐藏 */
+#sheetMain.collapsed { transform:translateY(calc(100% - var(--peek, 170px))); }
+#sheetMain.stowed { transform:translateY(112%); opacity:0; pointer-events:none; }
+/* 路线详情抽屉: hidden → medium(露出地图) → full */
+#sheetDetail { z-index:2; max-height:min(66dvh, 660px); transform:translateY(112%); pointer-events:none; }
+#sheetDetail.show { transform:translateY(0); pointer-events:auto; }
+#sheetDetail.show.medium { transform:translateY(calc(100% - var(--med, 34dvh))); }
+
+/* ───── 抽屉把手 ───── */
+#grip, #dgrip { display:flex; align-items:flex-start; justify-content:center; width:100%; height:22px;
+  padding:8px 0 0; margin:0; border:0; background:transparent; cursor:pointer; touch-action:none; flex:none;
+  -webkit-tap-highlight-color:transparent; user-select:none; }
+#grip span, #dgrip span { width:40px; height:4.5px; border-radius:3px; background:var(--dim); opacity:.5;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.28); transition:opacity .2s, width .3s var(--ease-spring); }
+#grip:active span, #dgrip:active span { opacity:.95; width:48px; }
+
+/* ───── 详情抽屉头部(返回 + 概要标题) ───── */
+#detailHead { display:flex; align-items:center; gap:8px; padding:6px 13px 10px; flex:none; border-bottom:1px solid var(--line); }
+#backBtn { display:flex; align-items:center; gap:2px; height:30px; padding:0 11px 0 7px; flex:none;
+  border:1px solid var(--glass-edge); border-radius:var(--r-pill); background:var(--glass);
+  color:var(--acc-txt); font-size:11.5px; font-weight:800; cursor:pointer;
+  transition:transform .25s var(--ease-spring), background .2s; }
+@media (hover:hover) { #backBtn:hover { background:var(--glass-2); } }
+#backBtn:active { transform:scale(.93); }
+#dTitle { flex:1; min-width:0; font-size:12px; font-weight:800; color:var(--txt);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-variant-numeric:tabular-nums; }
+
+/* ───── 搜索卡 ───── */
+#searchCard { padding:12px 13px 12px; flex:none; position:relative; }
+.srow { display:flex; align-items:center; gap:8px; }
+.sfield { flex:1; min-width:0; position:relative; }
+.sfield label { position:absolute; left:11px; top:4px; font-size:8.5px; font-weight:700; letter-spacing:.4px;
+  color:var(--dim); pointer-events:none; z-index:1; }
+.sfield input { width:100%; height:42px; padding:16px 10px 5px; border:1px solid var(--glass-edge);
+  border-radius:var(--r-sm); background:var(--glass); color:var(--txt); font-size:15px; font-weight:700;
+  backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); outline:none;
+  transition:border-color .15s, background .15s, box-shadow .15s; }
+.sfield input:focus { border-color:var(--acc-border); background:var(--glass-2); box-shadow:0 0 0 3px var(--acc-soft); }
+.sfield:has(input:focus) label { color:var(--acc-txt); }
+.sfield input::placeholder { color:var(--dim); font-weight:500; }
+:root[data-theme="light"] .sfield input { background:rgba(255,255,255,.85); }
+.gcircle { position:relative; width:36px; height:36px; flex:none; border-radius:50%; padding:0;
+  display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--txt);
+  background:var(--glass); border:1px solid var(--glass-edge);
+  backdrop-filter:blur(14px) saturate(1.4); -webkit-backdrop-filter:blur(14px) saturate(1.4);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.5), inset 0 1px 1.5px var(--glass-hi), inset 0 -2px 4px var(--glass-lo), var(--glass-sh);
+  transition:transform .38s var(--ease-spring), background .2s var(--ease-smooth); overflow:hidden; }
+.gcircle::before { content:''; position:absolute; inset:0; border-radius:50%;
+  background:linear-gradient(165deg, rgba(255,255,255,.42) 0%, rgba(255,255,255,.06) 24%, rgba(255,255,255,0) 48%); pointer-events:none; }
+@media (hover:hover) { .gcircle:hover { background:var(--glass-2); } }
+.gcircle:active { transform:scale(.88) rotate(180deg); transition:transform .18s ease-in; }
+#goBtn { height:42px; padding:0 16px; flex:none; border:0; border-radius:var(--r-sm);
+  background:var(--acc); color:#fff; font-size:13.5px; font-weight:800; cursor:pointer;
+  display:flex; align-items:center; gap:5px; box-shadow:0 2px 10px var(--acc-soft);
+  transition:transform .3s var(--ease-spring), filter .15s; }
+@media (hover:hover) { #goBtn:hover { filter:brightness(1.1); } }
+#goBtn:active { transform:scale(.94); transition:transform .1s ease-in; }
+
+/* ───── 模式分段控件 + 时刻 ───── */
+.mrow { display:flex; align-items:center; gap:6px; margin-top:9px; flex-wrap:wrap; }
+.mchip { height:30px; padding:0 11px; border:1px solid var(--glass-edge); border-radius:var(--r-pill);
+  background:transparent; color:var(--dim); font-size:11.5px; font-weight:700; cursor:pointer;
+  display:flex; align-items:center; gap:4px; white-space:nowrap;
+  transition:color .15s, background .28s var(--ease-spring), border-color .15s, transform .25s var(--ease-spring); }
+.mchip:active { transform:scale(.94); }
+@media (hover:hover) { .mchip:hover { color:var(--txt); background:rgba(255,255,255,.08); } }
+.mchip.on { color:#fff; background:var(--acc); border-color:var(--acc); box-shadow:0 2px 8px var(--acc-soft); }
+#timeWrap { display:none; align-items:center; gap:5px; height:30px; padding:0 10px; border:1px solid var(--glass-edge);
+  border-radius:var(--r-pill); background:var(--glass); }
+#timeWrap.show { display:flex; }
+#timeWrap input { border:0; background:transparent; color:var(--txt); font-size:12.5px; font-weight:800; outline:none; font-variant-numeric:tabular-nums; }
+#timeWrap input::-webkit-calendar-picker-indicator { filter:invert(.6); cursor:pointer; }
+:root[data-theme="light"] #timeWrap input::-webkit-calendar-picker-indicator { filter:none; }
+.daySel { height:26px; border:1px solid var(--glass-edge); border-radius:var(--r-pill); background:var(--glass);
+  color:var(--txt); font-size:11px; font-weight:700; padding:0 7px; outline:none; cursor:pointer; }
+.daySel option { background:var(--glass-solid); color:var(--txt); }
+
+/* ───── 层级菜单: 詳細条件(可折叠, 移动端默认收起以释放空间) ───── */
+#optSec { margin-top:9px; border-top:1px solid var(--line); padding-top:7px; }
+#optToggle { width:100%; display:flex; align-items:center; gap:7px; height:32px; padding:0 2px;
+  border:0; background:transparent; color:var(--txt); cursor:pointer; font-size:11.5px; font-weight:800;
+  border-radius:var(--r-xs); transition:background .2s var(--ease-smooth); }
+@media (hover:hover) { #optToggle:hover { background:rgba(255,255,255,.06); } }
+#optToggle:active { transform:scale(.99); }
+#optToggle .cv { flex:none; color:var(--dim); transition:transform .34s var(--ease-spring); }
+#optToggle[aria-expanded="true"] .cv { transform:rotate(90deg); color:var(--acc-txt); }
+#optToggle .sum { margin-left:auto; font-size:10px; color:var(--dim); font-weight:700;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:56%; }
+#optCollapse { display:grid; grid-template-rows:0fr; transition:grid-template-rows .38s var(--ease-smooth); }
+#optCollapse.open { grid-template-rows:1fr; }
+#optCollapse > #optWrap { overflow:hidden; min-height:0; padding:8px 0 2px;
+  transition:padding .34s var(--ease-smooth); }
+#optCollapse:not(.open) > #optWrap { padding-top:0; padding-bottom:0; }
+#optWrap { display:flex; align-items:center; gap:5px; flex-wrap:wrap; }
+#optWrap .olb { font-size:9px; font-weight:700; letter-spacing:.5px; color:var(--dim); flex:none; }
+#optWrap .osep { width:1px; height:13px; background:var(--line); flex:none; margin:0 4px; }
+.ochip { height:28px; padding:0 10px; border:1px solid var(--glass-edge); border-radius:var(--r-pill);
+  background:transparent; color:var(--dim); font-size:10.5px; font-weight:700; cursor:pointer;
+  display:flex; align-items:center; gap:5px;
+  transition:color .15s, background .28s var(--ease-spring), border-color .15s, opacity .15s, transform .2s var(--ease-spring); }
+.ochip::before { content:''; width:5px; height:5px; border-radius:50%; flex:none;
+  background:var(--dim); opacity:.45; transition:background .2s, opacity .2s; }
+.ochip:not(.on) { opacity:.55; }
+.ochip:active { transform:scale(.93); }
+@media (hover:hover) { .ochip:hover { color:var(--txt); background:rgba(255,255,255,.07); } }
+.ochip.on { color:var(--txt); background:var(--acc-soft); border-color:var(--acc-border); }
+.ochip.on::before { background:var(--acc); opacity:1; }
+
+/* ══════════════ 空态: 快速开始(热门路线/最近搜索) ══════════════ */
+#quick { display:none; flex-direction:column; gap:12px; padding:13px 13px 15px; flex:none; }
+#quick.show { display:flex; animation:resIn .32s var(--ease-smooth) both; }
+.q-sec { display:flex; flex-direction:column; gap:7px; }
+.q-lb { display:flex; align-items:center; gap:8px; font-size:9px; font-weight:800; letter-spacing:.8px;
+  color:var(--dim); text-transform:uppercase; }
+#qClear { margin-left:auto; border:0; background:none; color:var(--dim); font-size:9.5px; font-weight:700;
+  cursor:pointer; padding:3px 6px; border-radius:6px; font-family:inherit; letter-spacing:0;
+  transition:color .15s, background .15s; }
+#qClear:hover { color:var(--bad); background:var(--acc-soft); }
+.q-row { display:flex; flex-wrap:wrap; gap:6px; }
+.qchip { display:flex; align-items:center; gap:6px; min-height:30px; padding:0 11px; border-radius:var(--r-pill);
+  border:1px solid var(--glass-edge); background:var(--glass); color:var(--txt); font-size:11.5px; font-weight:700;
+  cursor:pointer; font-family:inherit; max-width:100%;
+  transition:background .15s, border-color .15s, transform .3s var(--ease-spring); }
+.qchip .ar { color:var(--dim); font-weight:800; flex:none; }
+.qchip .nm { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+@media (hover:hover) { .qchip:hover { background:var(--glass-2); border-color:var(--acc-border); } }
+.qchip:active { transform:scale(.94); transition:transform .1s ease-in; }
+
+
+/* ══════════════ 地图玻璃控件(缩放/适配) ══════════════ */
+#mapCtl { position:absolute; right:var(--pad); top:calc(70px + env(safe-area-inset-top)); z-index:8;
+  display:none; flex-direction:column; gap:6px; }
+#mapCtl.show { display:flex; animation:resIn .3s var(--ease-smooth) both; }
+#mapCtl button { width:34px; height:34px; border-radius:11px; border:1px solid var(--glass-edge);
+  background:var(--glass); color:var(--dim); cursor:pointer; display:flex; align-items:center; justify-content:center;
+  padding:0; font-family:inherit;
+  backdrop-filter:blur(14px) saturate(1.4); -webkit-backdrop-filter:blur(14px) saturate(1.4);
+  box-shadow:inset 0 1px 0 var(--glass-hi), inset 0 -1px 2px var(--glass-lo), var(--glass-sh);
+  transition:background .15s, color .15s, transform .3s var(--ease-spring); }
+#mapCtl button svg { width:15px; height:15px; }
+@media (hover:hover) { #mapCtl button:hover { background:var(--glass-2); color:var(--txt); } }
+#mapCtl button:active { transform:scale(.86); transition:transform .1s ease-in; }
+:root[data-theme="light"] #mapCtl button { background:rgba(255,255,255,.6); }
+
+/* ══════════════ 主抽屉首次入场(仅移动端; 桌面侧栏已有 sbIn) ══════════════ */
+@media (max-width:899px) {
+  #sheetMain { animation:sheetIn .46s var(--spring-out) .1s backwards; }
+}
+@keyframes sheetIn { from { opacity:0; transform:translateY(22px); } to { opacity:1; transform:translateY(0); } }
+
+/* ───── 联想面板: top 由 JS 根据当前聚焦的 input 动态设置 ───── */
+#sug { position:absolute; left:12px; right:12px; z-index:20; display:none;
+  max-height:min(320px, 44dvh); overflow-y:auto;
+  -webkit-overflow-scrolling:touch; border-radius:16px;
+  background:var(--glass-solid); border:1px solid var(--glass-edge);
+  box-shadow:0 14px 44px rgba(0,0,0,.42), inset 0 1px 0 var(--glass-hi);
+  animation:sugIn .22s var(--ease-smooth) both; }
+@keyframes sugIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:none; } }
+:root[data-theme="light"] #sug { background:rgba(255,255,255,.97); box-shadow:0 14px 44px rgba(15,23,42,.18), inset 0 1px 0 #fff; }
+.sug-grp { font-size:9px; font-weight:700; letter-spacing:.4px; color:var(--dim); padding:8px 12px 3px; }
+.sug-it { display:flex; align-items:center; gap:8px; padding:9px 12px; cursor:pointer; font-size:13.5px; font-weight:600; transition:background .1s; }
+.sug-it:hover, .sug-it.hl-it { background:var(--acc-soft); }
+.sug-it .k { font-size:10px; color:var(--dim); font-weight:500; }
+.sug-it .rt { margin-left:auto; font-size:9.5px; color:var(--dim); font-weight:600; font-variant-numeric:tabular-nums; }
+.sug-it .hl { color:var(--acc-txt); font-weight:800; }
+.sug-empty { padding:14px 12px; text-align:center; color:var(--dim); font-size:12px; }
+.sug-empty .sug-q { color:var(--txt); font-weight:700; }
+
+/* ───── 结果区 ───── */
+#result { display:none; flex-direction:column; min-height:0; border-top:1px solid var(--line);
+  overflow-y:auto; -webkit-overflow-scrolling:touch; }
+#result.show { display:flex; animation:resIn .34s var(--ease-smooth) both; }
+@keyframes resIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+
+/* 概要: 発→着 大时刻 + 三项统计 */
+#sumBar { padding:12px 13px 9px; flex:none; }
+.sum-head { display:flex; align-items:baseline; gap:9px; }
+.sum-t { display:flex; align-items:baseline; gap:3px; }
+.sum-t .tm { font-size:27px; font-weight:900; font-variant-numeric:tabular-nums; letter-spacing:-.7px; line-height:1; }
+.sum-t .lb { font-size:10px; font-weight:800; color:var(--dim); }
+.sum-t .nd { font-size:11px; color:var(--warn); font-weight:800; }
+.sum-arw { color:var(--dim); font-weight:700; font-size:15px; padding:0 1px; }
+.sum-note { margin-top:8px; font-size:10px; color:var(--warn); font-weight:700; line-height:1.45; }
+
+/* 方案卡片(横向滚动) */
+#routes { display:flex; gap:8px; padding:0 13px 10px; overflow-x:auto; flex:none; scrollbar-width:none;
+  -webkit-overflow-scrolling:touch; }
+#routes::-webkit-scrollbar { height:0; display:none; }
+.rcard { flex:none; width:136px; padding:10px 11px; border-radius:var(--r-sm); cursor:pointer;
+  border:1px solid var(--glass-edge); background:var(--glass);
+  transition:background .15s, transform .3s var(--ease-spring), border-color .15s, box-shadow .2s; }
+@media (hover:hover) { .rcard:hover { background:var(--glass-2); transform:translateY(-2px); } }
+.rcard:active { transform:scale(.97); }
+.rcard.on { border-color:var(--acc); background:var(--acc-soft);
+  box-shadow:0 0 0 3px var(--acc-soft), 0 4px 14px rgba(0,0,0,.18); }
+.rcard .rt { display:flex; align-items:baseline; gap:4px; font-size:14px; font-weight:900; font-variant-numeric:tabular-nums; letter-spacing:-.3px; }
+.rcard .rt .nd { font-size:8.5px; color:var(--warn); font-weight:800; }
+.rcard .rd { font-size:10.5px; font-weight:700; color:var(--dim); margin-top:2px; font-variant-numeric:tabular-nums; }
+.rcard .rtag { display:inline-block; padding:2px 7px; border-radius:var(--r-pill); font-size:8.5px; font-weight:800;
+  background:var(--acc); color:#fff; margin-top:6px; }
+.rcard .rtag.g { background:rgba(120,140,180,.28); color:var(--txt); }
+
+/* 时间轴 */
+#legs { flex:1 1 auto; min-height:0; overflow-y:auto; padding:0 13px 12px;
+  -webkit-overflow-scrolling:touch; scrollbar-width:thin; scrollbar-color:rgba(125,145,180,.4) transparent; }
+#legs::-webkit-scrollbar { width:5px; }
+#legs::-webkit-scrollbar-thumb { background:rgba(125,145,180,.35); border-radius:3px; }
+#legs::-webkit-scrollbar-track { background:transparent; }
+@media (hover:none) { #legs { scrollbar-width:none; } #legs::-webkit-scrollbar { width:0; display:none; } }
+.tl { position:relative; }
+.tl-node { display:flex; align-items:stretch; gap:10px; position:relative; }
+.tl-ic { width:20px; flex:none; display:flex; flex-direction:column; align-items:center; }
+.tl-dot { width:11px; height:11px; border-radius:50%; border:2.5px solid var(--acc); background:var(--bg); flex:none; z-index:1; margin-top:4px; }
+.tl-dot.end { background:var(--acc); }
+.tl-line { width:2.5px; flex:1; background:var(--glass-edge); margin:2px 0; border-radius:2px; min-height:12px; }
+.tl-line.xfr { background:repeating-linear-gradient(180deg, var(--dim) 0 3px, transparent 3px 6px); opacity:.5; width:2px; }
+.tl-line.walk { background:repeating-linear-gradient(180deg, var(--acc2) 0 4px, transparent 4px 7px); width:2px; }
+.tl-body { flex:1; min-width:0; padding-bottom:2px; }
+.tl-st { display:flex; align-items:center; gap:7px; padding:2px 0; flex-wrap:wrap; }
+.tl-st .nm { font-size:16px; font-weight:800; letter-spacing:-.3px; }
+.tl-st .zh { font-size:10.5px; color:var(--dim); font-weight:600; }
+.tl-st .t { margin-left:auto; font-size:15px; font-weight:900; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.tl-st .t .lb { font-size:9px; font-weight:700; color:var(--dim); margin-right:3px; }
+.tl-st .t .nd { font-size:9.5px; color:var(--warn); font-weight:800; }
+/* 列车卡 */
+.tcard { margin:3px 0 4px; border-radius:var(--r-xs); border:1px solid var(--glass-edge);
+  border-left:3px solid var(--lc, #4f8ef7); background:var(--glass);
+  box-shadow:0 1px 4px var(--glass-lo); overflow:hidden; }
+.tcard .th { display:flex; align-items:center; gap:7px; padding:7px 10px; flex-wrap:wrap; }
+.tcard .tn { font-size:12.5px; font-weight:800; color:color-mix(in srgb, var(--lc,#4f8ef7) 62%, var(--txt) 38%); }
+.tcard .ty { padding:2px 6px; border-radius:5px; font-size:9.5px; font-weight:800;
+  background:color-mix(in srgb, var(--lc,#4f8ef7) 24%, transparent); color:color-mix(in srgb, var(--lc,#4f8ef7) 70%, var(--txt) 30%); }
+.tcard .tnm { font-size:11.5px; font-weight:800; color:var(--txt); }
+.tcard .dst { margin-left:auto; font-size:10.5px; font-weight:700; color:var(--dim); white-space:nowrap; }
+.tcard .tf { padding:0 10px 7px; font-size:10px; color:var(--dim); font-weight:600; font-variant-numeric:tabular-nums; }
+.tcard .nxt { display:flex; align-items:center; gap:5px; width:100%; padding:6px 10px; border:0; border-top:1px solid var(--line);
+  background:transparent; color:var(--acc-txt); font-size:10.5px; font-weight:800; cursor:pointer; transition:background .15s; }
+@media (hover:hover) { .tcard .nxt:hover { background:var(--acc-soft); } }
+.tcard .nxt.open .cv { color:var(--acc-txt); }   /* 原样式把提示文字整段旋转 90°(展开后续班次后文字竖排到卡片外), 箭头旋转已由内联 svg 承担 */
+/* 后续班次列表 */
+.nlist { border-top:1px solid var(--line); background:var(--glass-lo); animation:nlistIn .26s var(--ease-smooth) both; }
+@keyframes nlistIn { from { opacity:0; } to { opacity:1; } }
+.nitem { display:flex; align-items:center; gap:8px; padding:8px 10px; cursor:pointer; font-size:11.5px; font-weight:700;
+  transition:background .1s; border-top:1px solid var(--line); }
+.nitem:first-child { border-top:0; }
+.nitem:hover { background:var(--acc-soft); }
+.nitem .nt { font-variant-numeric:tabular-nums; font-size:12.5px; font-weight:900; }
+.nitem .nty { font-size:9.5px; font-weight:700; color:var(--dim); }
+.nitem .nr { margin-left:auto; font-size:9.5px; color:var(--dim); font-weight:700; font-variant-numeric:tabular-nums; }
+.nitem .nr.ok { color:var(--ok); }
+.nitem .nr.bad { color:var(--bad); }
+.tl-xfr { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--dim); font-weight:700; padding:2px 0 4px 30px; }
+.tl-xfr .xm { color:var(--warn); font-weight:800; }
+.tl-walk { display:flex; align-items:center; gap:5px; font-size:11px; color:var(--acc2); font-weight:700; padding:2px 0 4px 30px; }
+.tl-note { font-size:9.5px; color:var(--dim); padding:8px 0 2px 30px; font-weight:600; line-height:1.55; }
+.tl-empty { padding:22px 4px; text-align:center; font-size:12.5px; color:var(--dim); font-weight:600; }
+
+/* ───── 加载遮罩 ───── */
+#loader { position:fixed; inset:0; z-index:50; display:flex; flex-direction:column; align-items:center;
+  justify-content:center; gap:14px; background:var(--bg); transition:opacity .45s var(--ease-smooth); }
+#loader.done { opacity:0; pointer-events:none; }
+#loader .lt { font-size:13px; font-weight:700; color:var(--dim); letter-spacing:.3px; }
+#loader .lb2 { width:min(280px, 70vw); height:4px; border-radius:2px; background:var(--glass-2); overflow:hidden; }
+#loader .lb2 i { display:block; height:100%; width:0%; border-radius:2px;
+  background:linear-gradient(90deg, var(--acc), var(--acc2)); transition:width .3s var(--ease-smooth); }
+#loader .brand2 { display:flex; align-items:center; gap:9px; animation:brPulse 2.4s var(--ease-smooth) infinite; }
+@keyframes brPulse { 0%,100% { opacity:.92; } 50% { opacity:1; } }
+#loader .brand2 .lg { width:40px; height:40px; border-radius:50%; background:#fff; display:flex; align-items:center;
+  justify-content:center; box-shadow:0 4px 16px var(--acc-soft); overflow:hidden; }
+#loader .brand2 .lg img { width:100%; height:100%; object-fit:cover; }
+#loader .brand2 b { font-size:15px; font-weight:900; }
+
+/* ───── toast ───── */
+#toast { position:fixed; left:50%; top:calc(62px + env(safe-area-inset-top)); transform:translateX(-50%) translateY(-8px); z-index:60;
+  padding:9px 16px; border-radius:var(--r-pill); background:var(--glass-solid); color:var(--txt);
+  border:1px solid var(--glass-edge); box-shadow:0 8px 28px rgba(0,0,0,.4); font-size:12.5px; font-weight:700;
+  opacity:0; pointer-events:none; transition:opacity .25s var(--ease-smooth), transform .25s var(--ease-spring); max-width:calc(100vw - 32px); }
+#toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+:root[data-theme="light"] #toast { background:rgba(255,255,255,.97); box-shadow:0 8px 28px rgba(15,23,42,.2); }
+
+/* ───── 可访问性 / 性能回退 ───── */
+@media (prefers-reduced-transparency: reduce) {
+  #brand, .gcircle, #panel, .rcard, .tcard, #toast, #sug {
+    background:var(--glass-solid) !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration:.001ms !important; transition-duration:.001ms !important; }
+}
+html.perf-low #brand, html.perf-low .gcircle, html.perf-low #panel,
+html.perf-low .rcard, html.perf-low .tcard { backdrop-filter:none !important; -webkit-backdrop-filter:none !important; box-shadow:0 1px 4px rgba(0,0,0,.3) !important; }
+
+/* ══════════════ 窄屏(<700px): 起终点上下排布, 释放横向空间 ══════════════ */
+@media (max-width:700px) {
+  .srow { display:grid; grid-template-columns:1fr 38px; gap:8px; align-items:center; }
+  .sfield:nth-child(1) { grid-area:1 / 1 / 2 / 2; }
+  #swapBtn { grid-area:1 / 2 / 3 / 3; align-self:center; justify-self:center; }
+  .sfield:nth-child(3) { grid-area:2 / 1 / 3 / 2; }
+  #goBtn { grid-area:3 / 1 / 4 / 3; justify-content:center; height:44px; }
+  .sum-t .tm { font-size:24px; }
+  #brand b { font-size:11.5px; }
+}
+
+/* ══════════════ 桌面(≥900px): 面板改为左侧栏, 地图完整可见 ══════════════ */
+@media (min-width:900px) {
+  #topHud { left:auto; right:var(--pad); transform:none; top:var(--pad); }
+  #panel { left:var(--pad); right:auto; top:var(--pad); bottom:var(--pad); width:var(--sbw);
+    display:flex; flex-direction:column; border-radius:22px; overflow:hidden; pointer-events:auto;
+    background:var(--glass-panel); border:1px solid var(--glass-edge);
+    backdrop-filter:var(--glass-panel-blur); -webkit-backdrop-filter:var(--glass-panel-blur);
+    box-shadow:inset 0 1px 0 var(--glass-hi), inset 0 -1px 2px var(--glass-lo), 0 12px 40px rgba(0,0,0,.36);
+    animation:sbIn .55s var(--ease-smooth) both; }
+  /* 桌面不做抽屉: 两层内容上下堆叠, 全部可见 */
+  .sheet { position:static; max-height:none; border-radius:0; border:0; background:none;
+    backdrop-filter:none; -webkit-backdrop-filter:none; box-shadow:none; overflow:visible;
+    transform:none !important; opacity:1 !important; transition:none; will-change:auto; }
+  #sheetMain { flex:none; }
+  #sheetDetail { flex:1 1 auto; min-height:0; display:flex; flex-direction:column; z-index:1; }
+  #grip, #dgrip { display:none; }
+  #detailHead { display:none; }
+  #searchCard { padding:14px 14px 12px; }
+  /* 空态: 主抽屉撑满侧栏, 快速开始区垂直居中, 避免半截空白 */
+  #panel.empty #sheetMain { flex:1 1 auto; }
+  #panel.empty #sheetDetail { display:none; }
+  #panel.empty #quick { flex:1 1 auto; justify-content:flex-start; }
+  #result { flex:none; }
+  #legs { flex:1 1 auto; min-height:0; }
+  @keyframes sbIn { from { opacity:0; transform:translateX(-18px); } to { opacity:1; transform:none; } }
+  /* 结果卡错落入场 */
+  .rcard { animation:rise .42s var(--ease-smooth) both; }
+  .rcard:nth-child(1) { animation-delay:.02s; }
+  .rcard:nth-child(2) { animation-delay:.07s; }
+  .rcard:nth-child(3) { animation-delay:.12s; }
+  .rcard:nth-child(4) { animation-delay:.17s; }
+  .rcard:nth-child(5) { animation-delay:.22s; }
+  .rcard:nth-child(n+6) { animation-delay:.26s; }
+}
+@keyframes rise { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
+
+@media (max-width:520px) {
+  .mchip { padding:0 9px; font-size:11px; }
+  .ochip { padding:0 8px; font-size:10px; }
+  #brand b { font-size:11px; }
+  .chip { padding:0 7px; }
+}
+
+@media (max-width:899px) {
+  /* 移动端: 结果卡片同样错落入场 */
+  .rcard { animation:rise .4s var(--ease-smooth) both; }
+  .rcard:nth-child(1) { animation-delay:.02s; }
+  .rcard:nth-child(2) { animation-delay:.07s; }
+  .rcard:nth-child(3) { animation-delay:.12s; }
+  .rcard:nth-child(n+4) { animation-delay:.16s; }
+}
+
+/* ══════ 方案卡线路色条 / 中间站展开(层级) / 输入框清除 ══════ */
+.rbar { display:flex; gap:1.5px; height:4px; border-radius:2px; overflow:hidden; margin-bottom:7px; }
+.rbar i { display:block; height:100%; border-radius:2px; min-width:3px; }
+.stops-btn { display:flex; align-items:center; gap:5px; width:100%; padding:6px 10px; border:0;
+  border-top:1px solid var(--line); background:transparent; color:var(--dim); font-size:10.5px;
+  font-weight:800; cursor:pointer; transition:background .15s, color .15s; }
+@media (hover:hover) { .stops-btn:hover { background:var(--acc-soft); color:var(--acc-txt); } }
+.stops-btn .cv { flex:none; transition:transform .3s var(--ease-spring); }
+.stops-btn.open { color:var(--acc-txt); background:var(--acc-soft); }
+.stops-btn.open .cv { transform:rotate(90deg); }
+.stops-list { display:grid; grid-template-rows:0fr; transition:grid-template-rows .32s var(--ease-smooth); }
+.stops-list.open { grid-template-rows:1fr; }
+.stops-list > div { overflow:hidden; min-height:0; }
+.sitem { display:flex; align-items:center; gap:8px; padding:6px 10px 6px 18px; border-top:1px solid var(--line); font-size:11px; }
+.sitem .sn { font-weight:700; color:var(--txt); }
+.sitem .st2 { margin-left:auto; font-variant-numeric:tabular-nums; font-weight:800; color:var(--dim); white-space:nowrap; }
+.sitem .dw { color:var(--dim); opacity:.75; font-weight:600; }
+.sfield input { padding-right:34px; }
+.clr { position:absolute; right:5px; top:50%; transform:translateY(-50%); width:24px; height:24px;
+  border:0; border-radius:50%; background:var(--glass-2); color:var(--dim); display:none;
+  align-items:center; justify-content:center; cursor:pointer; z-index:2;
+  transition:background .15s, color .15s, transform .2s var(--ease-spring); }
+.sfield.has-v .clr { display:flex; }
+@media (hover:hover) { .clr:hover { background:var(--acc-soft); color:var(--txt); } }
+.clr:active { transform:translateY(-50%) scale(.85); }
+
+
+/* ══════ 打磨追加(2026-11): 搜索态 / 无路径空态 / 分享 / 键盘与触控 / 原生控件配色 ══════ */
+:root { color-scheme:dark; }
+:root[data-theme="light"] { color-scheme:light; }
+button { touch-action:manipulation; }
+#goBtn:disabled { opacity:.72; cursor:wait; filter:saturate(.7); }
+#goBtn.busy svg { animation:busyPulse .8s ease-in-out infinite alternate; }
+@keyframes busyPulse { from { opacity:.35; transform:translateX(0); } to { opacity:1; transform:translateX(2px); } }
+#panel[aria-busy="true"] #result { opacity:.55; }
+.share-btn { margin-left:auto; align-self:center; width:32px; height:32px; flex:none; border-radius:50%;
+  border:1px solid var(--glass-edge); background:var(--glass); color:var(--dim); cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  transition:background .15s, color .15s, transform .25s var(--ease-spring); }
+.share-btn svg { width:14px; height:14px; }
+@media (hover:hover) { .share-btn:hover { background:var(--glass-2); color:var(--txt); } }
+.share-btn:active { transform:scale(.88); }
+#noRoute { display:none; flex-direction:column; align-items:center; text-align:center; gap:7px;
+  padding:26px 20px 24px; border-top:1px solid var(--line); }
+#noRoute.show { display:flex; animation:resIn .32s var(--ease-smooth) both; }
+#noRoute .nr-ic { width:46px; height:46px; border-radius:50%; background:var(--glass); border:1px solid var(--glass-edge);
+  display:flex; align-items:center; justify-content:center; color:var(--dim); }
+#noRoute .nr-ic svg { width:20px; height:20px; }
+#noRoute .nr-t { font-size:14.5px; font-weight:800; }
+#noRoute .nr-s { font-size:11px; color:var(--dim); font-weight:600; line-height:1.6; max-width:300px; }
+#noRoute .nr-act { display:flex; gap:7px; margin-top:7px; flex-wrap:wrap; justify-content:center; }
+.nr-btn { height:32px; padding:0 14px; border-radius:var(--r-pill); border:1px solid var(--glass-edge);
+  background:var(--glass); color:var(--txt); font-size:11.5px; font-weight:800; cursor:pointer; font-family:inherit;
+  transition:background .15s, transform .25s var(--ease-spring); }
+.nr-btn.primary { background:var(--acc); border-color:var(--acc); color:#fff; }
+@media (hover:hover) { .nr-btn:hover { background:var(--glass-2); } .nr-btn.primary:hover { filter:brightness(1.12); } }
+.nr-btn:active { transform:scale(.94); }
+.rcard:focus-visible { outline:2px solid var(--acc-border); outline-offset:2px; }
+/* 粗指针(触屏)下输入框 <16px 会触发 iOS Safari 聚焦自动放大整页, 强制 16px */
+@media (pointer:coarse) { .sfield input { font-size:16px; } }
+
+/* ══════ 打磨追加二轮(2026-11): UI 细节 ══════ */
+::selection { background:var(--acc-soft); }
+/* 搜索按钮定宽: 切到「検索中…」时不再宽度跳动顶动整行布局 */
+#goBtn { min-width:96px; justify-content:center; }
+/* 方案卡横滚: 贴合吸附 + 右缘渐隐, 一眼可知还能往右滑(原为硬裁切, 第三张卡像被切坏) */
+#routes { scroll-snap-type:x proximity;
+  -webkit-mask-image:linear-gradient(90deg, #000 0, #000 calc(100% - 26px), transparent 100%);
+  mask-image:linear-gradient(90deg, #000 0, #000 calc(100% - 26px), transparent 100%); }
+.rcard { scroll-snap-align:start; }
+.rcard .rt .nd { flex:none; }
+@media (hover:hover) and (pointer:fine) {
+  #routes { scrollbar-width:thin; }
+  #routes::-webkit-scrollbar { height:4px; display:block; }
+}
+/* 内层滚动容器阻断滚动链: 联想/行程滑到底不再带动背景地图与抽屉 */
+#sug, #legs, #result, #routes { overscroll-behavior:contain; }
+/* 行程末尾避开 Home 指示条 */
+#legs { padding-bottom:calc(12px + env(safe-area-inset-bottom)); }
+/* 联想长站名省略号截断, 不把右侧计数顶出面板 */
+.sug-it > span:first-child { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#timeWrap.show { animation:resIn .25s var(--ease-smooth) both; }
+/* 窄屏 HUD: 主题按钮只留图标、品牌胶囊收紧, 给语言 chip 让出横向空间 */
+@media (max-width:560px) {
+  #brand { padding-right:10px; }
+}
+/* 触屏: 时刻输入同样 <16px 会触发 iOS 聚焦放大, 提到 16px 并给胶囊增高 */
+@media (pointer:coarse) {
+  #timeWrap { height:34px; }
+  #timeWrap input { font-size:16px; }
+}
+
+/* ══════ 打磨追加三轮(2026-11): 移动端适配重做 + 顶栏精简 ══════ */
+@media (max-width:899px) {
+  /* 顶栏改整行: 品牌靠左、主题靠右。原居中双胶囊在窄屏互相挤压, 也是语言 chip 竖排的根源 */
+  #topHud { left:8px; right:8px; transform:none; justify-content:space-between; }
+  /* ★主抽屉超高内容够不到: 搜索卡+快速开始在小屏总高超过 max-height 时,
+     快速开始区原本被 .sheet 的 overflow:hidden 直接裁掉且无处可滚(热门路线点不到)。
+     改为该区内部滚动, 搜索卡常驻顶部。 */
+  #quick { flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
+  /* 移动端间距收紧: 搜索卡与模式行更紧凑, 给地图与结果让出竖向空间 */
+  #searchCard { padding:10px 12px 10px; }
+  .mchip { height:28px; }
+  .mrow { margin-top:7px; }
+  #optSec { margin-top:7px; }
+}
+
+/* ══════ 打磨追加四轮(2026-11): 简化繁重 UI ══════ */
+/* 概要一行式元信息, 取代三格统计盒 */
+.sum-line { margin-top:7px; font-size:12px; font-weight:700; color:var(--dim); font-variant-numeric:tabular-nums; letter-spacing:.1px; }
+#sumBar { padding-bottom:11px; }
+/* 品牌胶囊单行化(副标题元素已在第六轮整改中连同 DOM 一并移除) */
+#brand { padding-right:14px; }
+/* 移动端抽屉减负: 大面积 26px 模糊在中低端机上是滚动掉帧主因, 降到 18px 观感几乎无差 */
+@media (max-width:899px) {
+  .sheet { backdrop-filter:blur(18px) saturate(1.6); -webkit-backdrop-filter:blur(18px) saturate(1.6); }
+}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div id="mapCtl">
+  <button id="mcFit" type="button" title="适配路线" aria-label="适配路线"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+</div>
+
+<header id="topHud">
+  <a id="brand" href="./index.html" title="Mini JapanRail">
+    <span class="lg"><img src="https://jr-static.suki.ing/logo.png" alt=""></span>
+    <span><b>Mini JapanRail</b></span>
+  </a>
+</header>
+
+<section id="panel">
+  <div id="sheetMain" class="sheet">
+  <button id="grip" aria-label="收起/展开面板"><span></span></button>
+  <div id="searchCard">
+    <div class="srow">
+      <div class="sfield">
+        <label id="lbFrom">起点</label>
+        <input id="rFrom" type="text" autocomplete="off" spellcheck="false" placeholder="東京 / Tokyo" role="combobox" aria-expanded="false" aria-controls="sug" aria-autocomplete="list" inputmode="search" enterkeyhint="next" data-clarity-mask="true">
+        <button class="clr" data-clr="from" type="button" aria-label="clear"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      </div>
+      <button id="swapBtn" class="gcircle" title="Swap">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v13M7 17l-3-3M7 17l3-3M17 20V7M17 7l-3 3M17 7l3 3"/></svg>
+      </button>
+      <div class="sfield">
+        <label id="lbTo">终点</label>
+        <input id="rTo" type="text" autocomplete="off" spellcheck="false" placeholder="京都 / Kyoto" role="combobox" aria-expanded="false" aria-controls="sug" aria-autocomplete="list" inputmode="search" enterkeyhint="search" data-clarity-mask="true">
+        <button class="clr" data-clr="to" type="button" aria-label="clear"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      </div>
+      <button id="goBtn">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h14M13 6l6 6-6 6"/></svg>
+        <span id="goTxt">搜索</span>
+      </button>
+    </div>
+    <div class="mrow">
+      <button class="mchip on" data-mode="dep"><span id="mDep">出发</span></button>
+      <button class="mchip" data-mode="now"><span id="mNow">现在</span></button>
+      <button class="mchip" data-mode="first"><span id="mFirst">始発</span></button>
+      <button class="mchip" data-mode="last"><span id="mLast">終電</span></button>
+      <button class="mchip" data-mode="arr"><span id="mArr">到达</span></button>
+      <span id="timeWrap"><input type="time" id="depTime" value="09:00"><span id="dayLb" style="font-size:10px;color:var(--dim);font-weight:700">曜日</span>
+        <select id="daySel" class="daySel">
+          <option value="wd">平日</option>
+          <option value="sa">土曜</option>
+          <option value="su">休日</option>
+        </select>
+      </span>
+    </div>
+    <div id="optSec">
+      <button id="optToggle" type="button" aria-expanded="false" aria-controls="optWrap">
+        <svg class="cv" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+        <span id="optTglLb">詳細条件</span>
+        <span class="sum" id="optSum"></span>
+      </button>
+      <div id="optCollapse">
+    <div id="optWrap">
+      <span class="olb" id="optLb">列车种别</span>
+      <button class="ochip on" data-cat="shinkansen" id="catSk">新幹線</button>
+      <button class="ochip on" data-cat="tokkyu" id="catTk">特急</button>
+      <button class="ochip on" data-cat="liner" id="catLn">Liner</button>
+      <button class="ochip on" data-cat="express" id="catEx">急行・快速</button>
+      <button class="ochip on" data-cat="local" id="catLo">普通</button>
+      <span class="osep"></span>
+      <span class="olb" id="xfrLb">乗換</span>
+      <select id="xfrSel" class="daySel">
+        <option value="3" id="xfrFew">少</option>
+        <option value="5" id="xfrStd">标准</option>
+        <option value="7" id="xfrAny">不限</option>
+      </select>
+    </div>
+      </div>
+    </div>
+    <div id="sug" role="listbox"></div>
+  </div>
+  <div id="quick">
+    <div class="q-sec" id="qRecSec" style="display:none">
+      <div class="q-lb"><span id="qRecLb">最近</span><button id="qClear" type="button">清除</button></div>
+      <div class="q-row" id="qRec"></div>
+    </div>
+  </div>
+  <div id="noRoute">
+    <div class="nr-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M8.5 11h5"/></svg></div>
+    <div class="nr-t" id="nrTitle"></div>
+    <div class="nr-s" id="nrHint"></div>
+    <div class="nr-act">
+      <button id="nrRelax" class="nr-btn primary" type="button"></button>
+      <button id="nrSwap" class="nr-btn" type="button"></button>
+    </div>
+  </div>
+  <div id="result">
+    <div id="sumBar"></div>
+    <div id="routes"></div>
+  </div>
+  </div>
+
+  <div id="sheetDetail" class="sheet" aria-hidden="true">
+    <button id="dgrip" aria-label="收起路线详情"><span></span></button>
+    <div id="detailHead">
+      <button id="backBtn" type="button">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+        <span id="backTxt">返回</span>
+      </button>
+      <div id="dTitle"></div>
+    </div>
+    <div id="legs"></div>
+  </div>
+</section>
+
+<div id="loader">
+  <div class="brand2"><span class="lg"><img src="https://jr-static.suki.ing/logo.png" alt=""></span><b>Mini JapanRail</b></div>
+  <div class="lb2"><i id="lbar"></i></div>
+  <div class="lt" id="lmsg">准备中…</div>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+<script>
+'use strict';
+/* ══════════════════ 工具 ══════════════════ */
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2, '0');
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+function debounce(fn, ms) { let t; return function (...a) { clearTimeout(t); t = setTimeout(() => fn.apply(this, a), ms); }; }
+const toastEl = $('toast');
+let toastT = 0;
+/* 安全存储: 隐私模式/禁用 Cookie 时 localStorage 访问会直接抛错,
+   原代码在脚本顶层裸调用 getItem, 存储不可用时整页脚本未启动就死。统一走此封装。 */
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch (e) { } },
+  del(k) { try { localStorage.removeItem(k); } catch (e) { } },
+};
+function toast(s, ms = 2600) { toastEl.textContent = s; toastEl.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => toastEl.classList.remove('show'), ms); }
+/* 绝对分钟(可跨日) → HH:MM */
+function fmtMin(m) {
+  const d = Math.floor(m / 1440), mm = m % 1440;
+  return pad(Math.floor(mm / 60)) + ':' + pad(mm % 60) + (d > 0 ? '<span class="nd">+' + d + 'd</span>' : '');
+}
+function fmtMinRaw(m) { const d = Math.floor(m / 1440), mm = m % 1440; return pad(Math.floor(mm / 60)) + ':' + pad(mm % 60) + (d > 0 ? '+' + d + 'd' : ''); }
+function fmtDur(m) { const h = Math.floor(m / 60), mm = m % 60; return h > 0 ? h + 'h' + pad(mm) + 'm' : mm + 'm'; }
+function minToTime(m) { const mm = ((m % 1440) + 1440) % 1440; return pad(Math.floor(mm / 60)) + ':' + pad(mm % 60); }
+function timeToMin(v) { const p = (v || '0:0').split(':'); return (+p[0] || 0) * 60 + (+p[1] || 0); }
+
+/* ══════════════════ i18n ══════════════════ */
+const I18N = {
+  zh: {
+    sub: '乗換案内', from: '起点', to: '终点', go: '搜索', swap: '交换起终点',
+    mNow: '现在', mNowK: '从现在起', mDep: '出发', mDepK: '指定出发', mFirst: '始発', mFirstK: '首班车',
+    mLast: '終電', mLastK: '末班车', mArr: '到达', mArrK: '指定到达',
+    dayWd: '平日', daySa: '土曜', daySu: '休日', day: '曜日',
+    loading: '加载中', noMatch: '无匹配', searching: '検索中…',
+    sumDep: '発', sumArr: '着', sumDur: '所要', sumXfr: '乗換', sumKm: '营业', sumTimes: '次', kmUnit: 'km',
+    noRoute: '未找到连通路径', sameSta: '起终点相同', badSta: '找不到车站，请从列表中选择',
+    walk: '步行', xfrWait: '乗換', dep: '発', arr: '着', via: '経由', stops: '駅',
+    xfrN: '乗換{0}回', dirTo: '{0}行', firstDep: '始発',
+    themeTip: '主题', backHome: '返回主页', errData: '数据加载失败，请检查网络后重试', retry: '重试',
+    autoFirst: '该时刻已无班次，已改为首班车检索',
+    arrEarliest: '指定时刻前无法到达，已显示最早到达方案',
+    lastNote: '可到达终点的末班路线(可能跨日)', arrNote: '按 {0} 前到达检索',
+    dataNote: '时刻为静态数据快照，与最新时刻表可能有数分钟偏差。换乘时间为按站规模估算的站内走行时间。',
+    mapOff: '地图不可用（WebGL2 缺失或加载失败），检索功能不受影响',
+    tagFast: '最快', tagEasy: '乗換少', tagAlt: '备选',
+    nextTrips: '后续班次', nextNone: '今日已无后续班次', arriveAt: '到达 {0}', noConn: '改乘后无法到达',
+    walkMin: '徒步 {0} 分', xfrAt: '乗換 {0} 分', legInfo: '{0} 駅 · {1} {2}', boarding: '乗', alighting: '降',
+    emptyLegs: '未找到可连接的班次', dayAuto: '自动',
+    backList: '返回',
+    midStops: '途中 {0} 駅',
+    detail: '詳細条件', catAll: '全種別', optLb: '列车种别', catSk: '新幹線', catTk: '特急', catLn: 'Liner', catEx: '急行・快速', catLo: '普通',
+    xfrLb: '乗換', xfrFew: '少', xfrStd: '标准', xfrAny: '不限', optTip: '关闭的种别不参与检索', optMin: '至少保留一种列车种别',
+    qRecent: '最近', qClear: '清除', themeDark: '暗', themeLight: '亮', themeAuto: '自动',
+    mapFit: '适配路线',
+    badTime: '请选择出发/到达时刻', errSearch: '搜索出错，请重试', stations: '车站',
+    nrTitle: '未找到连通路径', nrHint: '试试放宽列车种别 / 换乘条件，或确认起终点站名是否正确。',
+    nrRelax: '放宽条件重试', nrSwap: '交换起终点',
+    copyLink: '复制链接', copied: '链接已复制，可直接分享', copyFail: '复制失败，请从地址栏复制链接',
+    titleRoute: '{0} → {1} 的路线', titleDefault: '换乘案内',
+  },
+  ja: {
+    sub: '乗換案内', from: '出発', to: '到着', go: '検索', swap: '出発/到着を入れ替え',
+    mNow: '現在', mNowK: '現在時刻から', mDep: '出発', mDepK: '時刻指定', mFirst: '始発', mFirstK: '始発で行く',
+    mLast: '終電', mLastK: '最終で行く', mArr: '到着', mArrK: '到着指定',
+    dayWd: '平日', daySa: '土曜', daySu: '休日', day: '曜日',
+    loading: '読込中', noMatch: '該当なし', searching: '検索中…',
+    sumDep: '発', sumArr: '着', sumDur: '所要', sumXfr: '乗換', sumKm: '営業', sumTimes: '回', kmUnit: 'km',
+    noRoute: '連絡経路が見つかりません', sameSta: '同じ駅です', badSta: '駅が見つかりません。一覧から選んでください',
+    walk: '徒歩', xfrWait: '乗換', dep: '発', arr: '着', via: '経由', stops: '駅',
+    xfrN: '乗換{0}回', dirTo: '{0}行', firstDep: '始発',
+    themeTip: 'テーマ', backHome: 'トップへ戻る', errData: 'データの読み込みに失敗しました', retry: '再試行',
+    autoFirst: 'この時刻に便がないため始発で検索しました',
+    arrEarliest: '指定時刻までに到着できないため、最早到着の経路を表示します',
+    lastNote: '終点まで到着できる最終の経路です(日付を跨ぐ場合あり)', arrNote: '{0} までに到着する経路',
+    dataNote: '時刻は静的スナップショットです。最新の時刻表と数分異なる場合があります。乗換時間は駅規模による推定です。',
+    mapOff: '地図を利用できません（WebGL2 未対応）。検索機能は影響ありません',
+    tagFast: '最速', tagEasy: '乗換少', tagAlt: '別経路',
+    nextTrips: '後の便', nextNone: '本日の便はもうありません', arriveAt: '{0} 着', noConn: 'この便では到着できません',
+    walkMin: '徒歩 {0} 分', xfrAt: '乗換 {0} 分', legInfo: '{0} 駅 · {1} {2}', boarding: '乗', alighting: '降',
+    emptyLegs: '接続できる便が見つかりません', dayAuto: '自動',
+    backList: '戻る',
+    midStops: '途中{0}駅',
+    detail: '詳細条件', catAll: '全種別', optLb: '列車種別', catSk: '新幹線', catTk: '特急', catLn: 'ライナー', catEx: '急行・快速', catLo: '普通',
+    xfrLb: '乗換', xfrFew: '少なめ', xfrStd: '標準', xfrAny: '制限なし', optTip: 'オフの種別は検索対象外です', optMin: '列車種別は1つ以上選んでください',
+    qRecent: '最近', qClear: '消去', themeDark: '暗い', themeLight: '明るい', themeAuto: '自動',
+    mapFit: '全体表示',
+    badTime: '時刻を選んでください', errSearch: '検索でエラーが発生しました', stations: '駅',
+    nrTitle: '連絡経路が見つかりません', nrHint: '列車種別・乗換条件を緩めるか、駅名をご確認ください。',
+    nrRelax: '条件を緩めて再検索', nrSwap: '出発/到着を入れ替え',
+    copyLink: 'リンクをコピー', copied: 'リンクをコピーしました', copyFail: 'コピーできませんでした。アドレスバーのURLをご利用ください',
+    titleRoute: '{0} → {1} のルート', titleDefault: '乗換案内',
+  },
+  en: {
+    sub: 'Route planner', from: 'From', to: 'To', go: 'Search', swap: 'Swap from/to',
+    mNow: 'Now', mNowK: 'depart now', mDep: 'Depart', mDepK: 'set time', mFirst: 'First', mFirstK: 'first train',
+    mLast: 'Last', mLastK: 'last train', mArr: 'Arrive', mArrK: 'arrive by',
+    dayWd: 'Weekday', daySa: 'Saturday', daySu: 'Sunday', day: 'Day',
+    loading: 'Loading', noMatch: 'No matches', searching: 'Searching…',
+    sumDep: 'dep', sumArr: 'arr', sumDur: 'Time', sumXfr: 'Changes', sumKm: 'Dist', sumTimes: '', kmUnit: 'km',
+    noRoute: 'No connected route found', sameSta: 'Same station', badSta: 'Station not found — pick one from the list',
+    walk: 'Walk', xfrWait: 'Change', dep: 'dep', arr: 'arr', via: 'via', stops: 'stops',
+    xfrN: '{0} changes', dirTo: 'to {0}', firstDep: 'First train',
+    themeTip: 'Theme', backHome: 'Back home', errData: 'Failed to load data. Check your network and retry', retry: 'Retry',
+    autoFirst: 'No trains at that time; searched from the first departure',
+    arrEarliest: 'Cannot arrive by that time; showing the earliest arrival',
+    lastNote: 'Last route reaching the destination (may pass midnight)', arrNote: 'Arriving by {0}',
+    dataNote: 'Timetable is a static snapshot; may differ by a few minutes. Transfer times are estimates by station size.',
+    mapOff: 'Map unavailable (WebGL2 unsupported); search still works',
+    tagFast: 'Fastest', tagEasy: 'Fewest', tagAlt: 'Alt',
+    nextTrips: 'Later trains', nextNone: 'No later trains today', arriveAt: 'arr {0}', noConn: 'Cannot arrive on this train',
+    walkMin: 'Walk {0} min', xfrAt: 'Change {0} min', legInfo: '{0} stops · {1} {2}', boarding: 'board', alighting: 'alight',
+    emptyLegs: 'No connecting services found', dayAuto: 'Auto',
+    backList: 'Back',
+    midStops: '{0} intermediate stops',
+    detail: 'Options', catAll: 'All types', optLb: 'Train type', catSk: 'Shinkansen', catTk: 'Ltd. Exp.', catLn: 'Liner', catEx: 'Rapid', catLo: 'Local',
+    xfrLb: 'Changes', xfrFew: 'Few', xfrStd: 'Normal', xfrAny: 'Any', optTip: 'Disabled types are excluded from search', optMin: 'Keep at least one train type',
+    qRecent: 'Recent', qClear: 'Clear', themeDark: 'Dark', themeLight: 'Light', themeAuto: 'Auto',
+    mapFit: 'Fit route',
+    badTime: 'Pick a departure/arrival time', errSearch: 'Search failed, please retry', stations: 'Stations',
+    nrTitle: 'No connected route found', nrHint: 'Try relaxing train-type / change limits, or check the station names.',
+    nrRelax: 'Relax filters & retry', nrSwap: 'Swap from/to',
+    copyLink: 'Copy link', copied: 'Link copied — ready to share', copyFail: 'Copy failed; use the URL in the address bar',
+    titleRoute: '{0} → {1}', titleDefault: 'Route planner',
+  },
+};
+let lang = store.get('mjrj_lang') || (['ja', 'en'].indexOf((navigator.language || '').slice(0, 2)) >= 0 ? navigator.language.slice(0, 2) : 'zh');
+if (!I18N[lang]) lang = 'zh';
+const T = () => I18N[lang];
+function tf(s, ...a) { return String(s).replace(/\{(\d)\}/g, (_, i) => a[+i] ?? ''); }
+/* 乗換回数: 英文需处理 0/1/复数 */
+function xfrLabel(n) {
+  if (lang === 'en') return n === 0 ? 'Direct' : n + (n === 1 ? ' change' : ' changes');
+  return tf(T().xfrN, n);
+}
+
+/* ══════════════════ 全局状态 ══════════════════ */
+const state = {
+  from: null, to: null, mode: 'dep', day: 'wd', depTime: 9 * 60,
+  /* 列车种别开关(对应 CAT_KEY) 与乗換回数上限 */
+  catOn: { shinkansen: true, tokkyu: true, liner: true, express: true, local: true },
+  maxXfr: 5,
+};
+let ST = null, LINES = null, TYPES = null, TM = null, TRIPS = null, TRF = null, SEG = null;
+let node2tmaps = null, nameIndex = null, patCache = null, groupsByDay = null;
+let WALK = null, walkMin = null, tmapLine = null, tmapKm = null, tmapEnd = null;
+let lineColor = null;
+let shinkLineIds = null;               /* 新干线线路 id 集合(名字含「新幹線」) */
+let map = null, mapReady = false, mapTried = false;
+let curResult = null;      /* 当前结果 {cands:[], idx, ...} */
+let openNext = -1;         /* 展开后续班次的 leg 下标 */
+let openStops = -1;        /* 展开中间停靠站的 leg 下标 */
+
+/* ══════════════════ 主题(与主页同 key: mjr3d_theme) ══════════════════ */
+const mqLight = window.matchMedia('(prefers-color-scheme: light)');
+function resolveTheme(mode) { return mode === 'auto' ? (mqLight.matches ? 'light' : 'dark') : mode; }
+function applyThemeMode() {
+  const mode = 'auto';   /* 主题切换已摘除: 恒跟随系统深浅色, 系统切换时由 mqLight 监听实时跟随 */
+  const t = resolveTheme(mode);
+  document.documentElement.setAttribute('data-theme', t);
+  const mb = document.querySelector('meta[name=theme-color]');
+  if (mb) mb.content = t === 'light' ? '#dfe4ec' : '#0b0f16';
+  document.querySelectorAll('.lg img').forEach(im => { im.src = t === 'dark' ? 'https://jr-static.suki.ing/logo-dark.png' : 'https://jr-static.suki.ing/logo.png'; });
+  if (mapReady) { refreshTrackColors(); syncMapTheme(); }
+}
+mqLight.addEventListener('change', () => applyThemeMode());
+applyThemeMode();
+
+/* 语言: 无切换 UI, 按已存偏好/浏览器语言自动决定(见文件顶部 lang 初始化) */
+function applyI18n() {
+  const t = T();
+  $('lbFrom').textContent = t.from; $('lbTo').textContent = t.to; $('goTxt').textContent = t.go;
+  $('mNow').textContent = t.mNow;
+  $('mDep').textContent = t.mDep;
+  $('mFirst').textContent = t.mFirst;
+  $('mLast').textContent = t.mLast;
+  $('mArr').textContent = t.mArr;
+  $('dayLb').textContent = t.day;
+  const ds = $('daySel'); ds.options[0].textContent = t.dayWd; ds.options[1].textContent = t.daySa; ds.options[2].textContent = t.daySu;
+  $('optLb').textContent = t.optLb;
+  $('optTglLb').textContent = t.detail;
+  $('backTxt').textContent = t.backList;
+  $('optToggle').title = t.optTip;
+  $('catSk').textContent = t.catSk; $('catTk').textContent = t.catTk; $('catLn').textContent = t.catLn;
+  $('catEx').textContent = t.catEx; $('catLo').textContent = t.catLo;
+  $('xfrLb').textContent = t.xfrLb;
+  $('xfrFew').textContent = t.xfrFew; $('xfrStd').textContent = t.xfrStd; $('xfrAny').textContent = t.xfrAny;
+  $('optWrap').title = t.optTip;
+  $('swapBtn').title = t.swap; $('brand').title = t.backHome;
+  $('rFrom').placeholder = lang === 'en' ? 'Tokyo' : '東京 / Tokyo';
+  $('rTo').placeholder = lang === 'en' ? 'Kyoto' : '京都 / Kyoto';
+  document.documentElement.lang = lang === 'zh' ? 'zh-Hans' : lang;
+  /* 空态 + 地图控件 + 主题按钮(依赖语言) */
+  $('nrTitle').textContent = t.nrTitle; $('nrHint').textContent = t.nrHint;
+  $('nrRelax').textContent = t.nrRelax; $('nrSwap').textContent = t.nrSwap;
+  $('qRecLb').textContent = t.qRecent;
+  $('qClear').textContent = t.qClear;
+  $('mcFit').title = t.mapFit; $('mcFit').setAttribute('aria-label', t.mapFit);
+  updateDocTitle();
+  applyThemeMode();
+}
+/* 浏览器标签标题:有起终点时显示「A → B 的路线」,否则回退到默认站名 */
+function updateDocTitle() {
+  try {
+    if (state.from != null && state.to != null && ST && ST.D) {
+      document.title = tf(T().titleRoute, ST.D[state.from], ST.D[state.to]) + ' · Mini JapanRail';
+    } else {
+      document.title = T().titleDefault + ' · Mini JapanRail';
+    }
+  } catch (e) {}
+}
+applyI18n();
+
+/* ══════════════════ 检索选项: 列车种别 + 乗換上限 ══════════════════ */
+function syncOptUI() {
+  document.querySelectorAll('#optWrap .ochip').forEach(b => b.classList.toggle('on', !!state.catOn[b.dataset.cat]));
+  $('xfrSel').value = String(state.maxXfr);
+  updateOptSum();
+}
+/* 条件摘要: 层级菜单收起时也能一眼看到当前筛选 */
+function updateOptSum() {
+  const el = $('optSum'); if (!el) return;
+  const on = CAT_KEY.filter(k => state.catOn[k]).length;
+  const t = T(), xl = $('xfrSel');
+  const xt = xl && xl.selectedIndex >= 0 ? xl.options[xl.selectedIndex].textContent : '';
+  el.textContent = (on === CAT_KEY.length ? t.catAll : on + '/' + CAT_KEY.length) + ' · ' + t.xfrLb + ' ' + xt;
+}
+function saveOpt() {
+  try { store.set('mjrj_opt', JSON.stringify({ c: state.catOn, x: state.maxXfr })); } catch (e) { }
+}
+function loadOpt() {
+  try {
+    const o = JSON.parse(store.get('mjrj_opt') || 'null');
+    if (o && o.c) for (const k of CAT_KEY) if (typeof o.c[k] === 'boolean') state.catOn[k] = o.c[k];
+    if (o && [3, 5, 7].indexOf(+o.x) >= 0) state.maxXfr = +o.x;
+  } catch (e) { }
+  if (!CAT_KEY.some(k => state.catOn[k])) for (const k of CAT_KEY) state.catOn[k] = true;
+  syncOptUI();
+}
+document.querySelectorAll('#optWrap .ochip').forEach(b => b.addEventListener('click', () => {
+  const k = b.dataset.cat;
+  state.catOn[k] = !state.catOn[k];
+  /* 全关必然无解, 拒绝并提示 */
+  if (!CAT_KEY.some(x => state.catOn[x])) { state.catOn[k] = true; toast(T().optMin); }
+  syncOptUI(); saveOpt(); stateHash();
+  if (state.from != null && state.to != null) doSearch();
+}));
+$('xfrSel').addEventListener('change', () => {
+  state.maxXfr = +$('xfrSel').value || 5;
+  updateOptSum(); saveOpt(); stateHash();
+  if (state.from != null && state.to != null) doSearch();
+});
+
+/* ══════════════════ 移动端抽屉: 折叠/展开(把手可点可拖) ══════════════════ */
+const isMobileView = () => window.matchMedia('(max-width:899px)').matches;
+function peekHeight() {
+  const g = $('grip'), sc = $('searchCard');
+  return (g && sc && sc.offsetHeight) ? g.offsetHeight + sc.offsetHeight + 14 : 162;
+}
+function setCollapsed(v) {
+  const pn = $('sheetMain');
+  if (!isMobileView()) { pn.classList.remove('collapsed'); pn.style.removeProperty('--peek'); return; }
+  pn.style.setProperty('--peek', peekHeight() + 'px');
+  pn.classList.toggle('collapsed', !!v);
+  /* 折叠态变化后, 把已选径路重新聚焦到可见地图区域 */
+  if (curResult) setTimeout(() => highlightOnMap(curResult.cands[curResult.idx].r), 80);
+}
+(function () {
+  const g = $('grip'), pn = $('sheetMain');
+  let y0 = 0, base = 0, dragging = false, moved = false;
+  const maxOff = () => Math.max(120, pn.offsetHeight - peekHeight());
+  g.addEventListener('pointerdown', e => {
+    if (!isMobileView()) return;
+    dragging = true; moved = false; y0 = e.clientY;
+    base = pn.classList.contains('collapsed') ? maxOff() : 0;
+    try { g.setPointerCapture(e.pointerId); } catch (err) { }
+  });
+  g.addEventListener('pointermove', e => {
+    if (!dragging) return;
+    const dy = e.clientY - y0;
+    if (!moved && Math.abs(dy) > 7) { moved = true; pn.classList.add('dragging'); }
+    if (!moved) return;
+    pn.style.transform = 'translateY(' + Math.min(maxOff(), Math.max(0, base + dy)) + 'px)';
+  });
+  const end = e => {
+    if (!dragging) return; dragging = false;
+    pn.classList.remove('dragging'); pn.style.removeProperty('transform');
+    if (!moved) { setCollapsed(!pn.classList.contains('collapsed')); return; }
+    const off = Math.min(maxOff(), Math.max(0, base + (e.clientY - y0)));
+    setCollapsed(off > maxOff() * 0.35);
+  };
+  g.addEventListener('pointerup', end);
+  g.addEventListener('pointercancel', end);
+  /* 折叠时点输入框 → 展开(否则联想列表被抽屉裁掉) */
+  $('rFrom').addEventListener('focus', () => { if (pn.classList.contains('collapsed')) setCollapsed(false); });
+  $('rTo').addEventListener('focus', () => { if (pn.classList.contains('collapsed')) setCollapsed(false); });
+  /* 视口变化: 重算折叠留白 / 退出移动端时复位 */
+  window.addEventListener('resize', () => {
+    if (!isMobileView()) setCollapsed(false);
+    else if (pn.classList.contains('collapsed')) setCollapsed(true);
+  });
+})();
+
+/* ══════════════════ IndexedDB 缓存(与主页同款) ══════════════════ */
+const DATA_VERSION = 'mjrj-2026-11-03a';   // 静态数据变更必须递增(refresh.yml 已自动递增)
+let idb = null;
+function openIDB() {
+  return new Promise((res, rej) => {
+    try {
+      const r = indexedDB.open('mjrj-cache', 1);
+      r.onupgradeneeded = () => { try { r.result.createObjectStore('files'); } catch (e) { } };
+      r.onsuccess = () => res(r.result);
+      r.onerror = () => rej(r.error);
+    } catch (e) { rej(e); }
+  });
+}
+function idbGet(key) {
+  return new Promise(res => {
+    if (!idb) return res(null);
+    try {
+      const tx = idb.transaction('files', 'readonly');
+      const req = tx.objectStore('files').get(key);
+      req.onsuccess = () => res(req.result || null);
+      req.onerror = () => res(null);
+    } catch (e) { res(null); }
+  });
+}
+function idbPut(key, val) {
+  return new Promise(res => {
+    if (!idb) return res();
+    try {
+      const tx = idb.transaction('files', 'readwrite');
+      tx.objectStore('files').put(val, key);
+      tx.oncomplete = () => res();
+      tx.onerror = () => res();
+    } catch (e) { res(); }
+  });
+}
+/* 带超时的 fetch: CDN 连接挂死时原实现会让加载页永远转圈, 现在 45s 必达终态 */
+function fetchTO(url, opts, ms) {
+  const ctl = new AbortController();
+  const tm = setTimeout(() => ctl.abort(), ms || 30000);
+  return fetch(url, { ...(opts || {}), signal: ctl.signal }).finally(() => clearTimeout(tm));
+}
+async function fetchJSONWithCache(url, onProg) {
+  const key = DATA_VERSION + '|' + url;
+  try {
+    if (!idb) idb = await openIDB();
+    const cached = await idbGet(key);
+    if (cached && cached.v === DATA_VERSION && cached.j != null) {
+      const lm = cached.lm, etag = cached.etag;
+      if (lm || etag) {
+        try {
+          const hdrs = {};
+          if (lm) hdrs['If-Modified-Since'] = lm;
+          if (etag) hdrs['If-None-Match'] = etag;   /* jr-static 不返回 Last-Modified 且忽略 IMS,但 If-None-Match(ETag) 正确返回 304 */
+          const res = await fetchTO(url, { headers: hdrs }, 12000);
+          if (res.status === 304) { if (onProg) onProg(1, 1); return cached.j; }
+          if (res.ok) {
+            const j = await res.json();
+            if (onProg) onProg(1, 1);
+            await idbPut(key, { v: DATA_VERSION, j, lm: res.headers.get('Last-Modified') || lm, etag: res.headers.get('ETag') || etag });
+            return j;
+          }
+        } catch (e) { /* 走缓存 */ }
+      }
+      if (onProg) onProg(1, 1);
+      return cached.j;
+    }
+  } catch (e) { console.warn('[cache]', e); }
+  const ctl = new AbortController();
+  const kill = setTimeout(() => ctl.abort(), 45000);
+  let res;
+  try { res = await fetch(url, { signal: ctl.signal }); }
+  catch (e) { clearTimeout(kill); throw e; }
+  if (!res.ok) { clearTimeout(kill); throw new Error(url + ' HTTP ' + res.status); }
+  let j;
+  if (res.body && res.headers.get('content-length')) {
+    const reader = res.body.getReader(), chunks = [];
+    let got = 0;
+    const total = +res.headers.get('content-length') || 0;
+    for (; ;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value); got += value.length;
+      if (onProg) onProg(got, total);
+    }
+    j = JSON.parse(new TextDecoder().decode(await new Blob(chunks).arrayBuffer()));
+  } else j = await res.json();
+  clearTimeout(kill);
+  if (onProg) onProg(1, 1);
+  try { if (idb) await idbPut(key, { v: DATA_VERSION, j, lm: res.headers.get('Last-Modified') || '', etag: res.headers.get('ETag') || '' }); } catch (e) { }
+  return j;
+}
+
+/* ══════════════════ 数据加载 ══════════════════ */
+const FILES = [
+  ['stations.json', 'stations'], ['lines.json', 'lines'], ['types.json', 'types'],
+  ['tmaps.json', 'tmaps'], ['transfers.json', 'transfers'],
+  ['trips_wd.json', 'tripsWd'], ['trips_sa.json', 'tripsSa'], ['trips_su.json', 'tripsSu'],
+];
+function setLoad(p, msg) {
+  p = Math.max(0, Math.min(1, p));
+  $('lbar').style.width = Math.round(p * 100) + '%';
+  if (msg) $('lmsg').textContent = msg;
+}
+async function loadData() {
+  const n = FILES.length;
+  let done = 0;
+  const bump = () => setLoad(++done / n, T().loading + ' ' + Math.round(done / n * 100) + '%');
+  const tasks = FILES.map(async ([f, key]) => {
+    const url = 'https://jr-static.suki.ing/data/journey/' + f;
+    const prog = (g, t) => setLoad((done + Math.min(1, t ? g / t : 0)) / n);
+    let j;
+    try { j = await fetchJSONWithCache(url, prog); }
+    catch (e) { await new Promise(r => setTimeout(r, 700)); j = await fetchJSONWithCache(url, prog); }  /* 单文件失败重试一次, 不让一次抖动杀掉整页 */
+    assignData(key, j); bump();
+  });
+  /* 3D 几何(约 11MB)不阻塞启动: 搜索/换乘计算均不依赖它, 到齐后再建索引并按需初始化地图 */
+  fetchJSONWithCache('https://jr-static.suki.ing/data/segments3d.geojson')
+    .then(j => { SEG = j; buildSegIndex(); if (!mapTried) initMap(); })
+    .catch(e => { console.warn('[segments3d]', e); mapNote(T().mapOff); });
+  await Promise.all(tasks);
+  bump();
+}
+function assignData(key, j) {
+  if (key === 'stations') ST = j;
+  else if (key === 'lines') LINES = j.L;
+  else if (key === 'types') TYPES = j.T;
+  else if (key === 'tmaps') TM = j;
+  else if (key === 'transfers') TRF = j;
+  else if (key === 'tripsWd') (TRIPS = TRIPS || {}).wd = j.T;
+  else if (key === 'tripsSa') (TRIPS = TRIPS || {}).sa = j.T;
+  else if (key === 'tripsSu') (TRIPS = TRIPS || {}).su = j.T;
+}
+
+/* ══════════════════ 运行时索引 ══════════════════ */
+/* 换乘时间: 按站的 tmap 引用数分档(大枢纽走行更长) */
+function transferMin(p) {
+  const r = ST.R[p];
+  return r >= 600 ? 7 : r >= 250 ? 6 : r >= 60 ? 5 : 4;
+}
+function buildIndexes() {
+  const NT = TM.T.length;
+  node2tmaps = new Array(ST.N.length);
+  for (let ti = 0; ti < NT; ti++) {
+    const S = TM.T[ti][0];
+    for (let i = 0; i < S.length; i++) {
+      const s = S[i];
+      let a = node2tmaps[s];
+      if (!a) node2tmaps[s] = a = [];
+      if (a[a.length - 1] !== ti) a.push(ti);
+    }
+  }
+  /* tmap 主导线路: 全程区间线路的众数。
+     不用「上车区间」的线路 —— 并行几何会让 JR中央線 在 新宿→四ツ谷 被误判为 丸ノ内線。 */
+  tmapLine = new Int32Array(NT);
+  tmapKm = new Float32Array(NT);
+  tmapEnd = new Int32Array(NT);
+  for (let ti = 0; ti < NT; ti++) {
+    const t = TM.T[ti], L = t[1], K = t[2], S = t[0];
+    const cnt = new Map();
+    let best = -1, bestN = 0, km = 0;
+    for (let i = 0; i < L.length; i++) {
+      const li = L[i];
+      if (li >= 0) { const c = (cnt.get(li) || 0) + 1; cnt.set(li, c); if (c > bestN) { bestN = c; best = li; } }
+      km += K[i];
+    }
+    tmapLine[ti] = best; tmapKm[ti] = km / 10; tmapEnd[ti] = S[S.length - 1];
+  }
+  patCache = new Map();
+  /* nameIndex 同时索引三种名字:
+       n = 规范名 ST.N (重名站不带消歧后缀)
+       d = 显示名 ST.D (重名站带括号后缀, 如 大宮(埼玉県) / 大宮(京都府))
+       z = 中文名 ST.Z
+     必须索引 d —— 输入框里填的就是 D, 只查 N 会让 858 个重名站全部「搜得到却点不了」。 */
+  nameIndex = [];
+  const seen = new Set();
+  for (let i = 0; i < ST.N.length; i++) { nameIndex.push({ i, n: ST.N[i], d: ST.D[i], z: ST.Z[i] }); seen.add(i); }
+  for (const [i, al] of (ST.X || [])) {
+    if (seen.has(i)) continue;
+    nameIndex.push({ i, n: al[0], d: ST.D[i], z: ST.Z[i] || al[0] }); seen.add(i);
+  }
+  lineColor = new Map();
+  for (const l of LINES) if (l[2]) lineColor.set(l[0], l[2]);
+}
+function prepRuntime() {
+  WALK = new Map(); walkMin = new Map();
+  for (const e of TRF.walk) {
+    const a = e[0], b = e[1], m = e[2];
+    if (!WALK.has(a)) WALK.set(a, []); if (!WALK.has(b)) WALK.set(b, []);
+    WALK.get(a).push([b, m]); WALK.get(b).push([a, m]);
+    walkMin.set(a + ',' + b, m); walkMin.set(b + ',' + a, m);
+  }
+  groupsByDay = {};
+  for (const day of ['wd', 'sa', 'su']) {
+    const m = new Map();
+    for (const g of TRIPS[day]) {
+      let a = m.get(g[0]); if (!a) m.set(g[0], a = []);
+      a.push(g);
+    }
+    for (const a of m.values()) for (const g of a) {
+      if (g.length > 4) { const tail = g.slice(3).sort((x, y) => x - y); g.length = 3; for (const v of tail) g.push(v); }
+    }
+    groupsByDay[day] = m;
+  }
+}
+/* pattern → [arrOffsets, depOffsets]。
+   pattern 串 = 首站 d0 之后的 2N-3 个差值: 偶数位 run_i, 奇数位 dwell_i; 首站 dep 偏移 = 0。
+   递推: arr[i] = dep[i-1] + run_i。 */
+function patOffsets(ti, pi) {
+  const key = ti * 8192 + pi;
+  let r = patCache.get(key);
+  if (r) return r;
+  const raw = TM.T[ti][3][pi];
+  const n = TM.T[ti][0].length;
+  /* pattern 串是交替的 run/dwell: [run1, dwell1, run2, dwell2, ...]
+     (长度 2N-3; 末站无 dwell)。手写解析避免 split().map(Number) 的临时数组。 */
+  const vals = [];
+  let cur = 0;
+  for (let k = 0; k < raw.length; k++) {
+    const c = raw.charCodeAt(k);
+    if (c === 44) { vals.push(cur); cur = 0; }
+    else cur = cur * 10 + (c - 48);
+  }
+  vals.push(cur);
+  const arr = new Int32Array(n), dep = new Int32Array(n);
+  let vi = 0;
+  for (let s = 1; s < n; s++) {
+    arr[s] = dep[s - 1] + (vals[vi++] || 0);
+    dep[s] = arr[s] + (vals[vi++] || 0);
+  }
+  r = [arr, dep];
+  if (patCache.size > 40000) patCache.clear();
+  patCache.set(key, r);
+  return r;
+}
+function bisectLeftG(g, x) {
+  let lo = 3, hi = g.length;
+  while (lo < hi) { const mid = (lo + hi) >> 1; if (g[mid] < x) lo = mid + 1; else hi = mid; }
+  return lo;
+}
+function bisectRightG(g, x) {
+  let lo = 3, hi = g.length;
+  while (lo < hi) { const mid = (lo + hi) >> 1; if (g[mid] <= x) lo = mid + 1; else hi = mid; }
+  return lo;
+}
+/* ti 的第 si 站、出发 >= tmin 的最早班次 → [depAbs, pi, ty, d0] */
+function earliestTrip(ti, si, tmin, day, catOff) {
+  const gs = groupsByDay[day].get(ti);
+  if (!gs) return null;
+  let best = null;
+  for (let gi = 0; gi < gs.length; gi++) {
+    const g = gs[gi];
+    if (catOff && catOff[TYPE_CAT[g[2]]]) continue;
+    const dep = patOffsets(ti, g[1])[1][si];
+    /* 跨日等待: 当日该站已无 ≥tmin 的班次时, 顺延到次日(+1440)、再日(+2880)…的首班,
+       取最早者(最多 +3 天)。数据只有一份时刻表, 次日按同一份表近似。
+       用于跨日长途(如 宿毛→藻琴), 否则「末班已过、需隔夜再走」会被误判为无路径。
+       注意必须保证 上车时刻 ≥ tmin(用 sh 偏移后再二分), 否则会产生早于到达的上车。 */
+    let k = -1, sh = 0;
+    for (sh = 0; sh <= 4320; sh += 1440) {
+      k = bisectLeftG(g, tmin - dep - sh);
+      if (k < g.length) break;
+    }
+    if (k >= g.length) continue;
+    const da = g[k] + dep + sh;
+    if (best === null || da < best[0]) best = [da, g[1], g[2], g[k] + sh];
+  }
+  return best;
+}
+/* ti 的第 sj 站、到达 <= tmax 的最晚班次 → [arrAbs, pi, ty, d0](反向搜索用) */
+function latestArrive(ti, sj, tmax, day, catOff) {
+  const gs = groupsByDay[day].get(ti);
+  if (!gs) return null;
+  let best = null;
+  for (let gi = 0; gi < gs.length; gi++) {
+    const g = gs[gi];
+    if (catOff && catOff[TYPE_CAT[g[2]]]) continue;
+    const arr = patOffsets(ti, g[1])[0][sj];
+    /* 跨日(反向): 当日已无 ≤tmax 的班次时, 顺延到前一日(−1440)…(最多 −3 天),
+       取最晚者, 保证到达时刻 ≤ tmax。用于跨日长途的 終電/指定到达。 */
+    let k = -1, sh = 0;
+    for (sh = 0; sh >= -4320; sh -= 1440) {
+      k = bisectRightG(g, tmax - arr - sh) - 1;
+      if (k >= 3) break;
+    }
+    if (k >= 3) {
+      const aa = g[k] + arr + sh;
+      if (best === null || aa > best[0]) best = [aa, g[1], g[2], g[k] + sh];
+    }
+  }
+  return best;
+}
+/* ── 列车种别分类 ──
+   用户可逐类开关(新幹線 / 特急 / Liner / 急行・快速 / 普通)。
+   分类优先看新幹線爱称, 再看日文种别名, 最后按图标兜底。 */
+const CAT_LOCAL = 0, CAT_EXPRESS = 1, CAT_TOKKYU = 2, CAT_LINER = 3, CAT_SHINKANSEN = 4;
+const CAT_N = 5;
+const CAT_KEY = ['local', 'express', 'tokkyu', 'liner', 'shinkansen'];
+const SHINKANSEN_TYPES = new Set(['Nozomi', 'Hikari', 'Kodama', 'Tsubasa', 'Hayabusa', 'Komachi', 'Asama',
+  'Kagayaki', 'Yamabiko', 'Toki', 'Tanigawa', 'Nasuno', 'Hakutaka', 'Hayate', 'Mizuho', 'Sakura',
+  'Tsubame', 'Kamome', 'Tsurugi']);
+const CAT_BY_JA = {
+  '普通': CAT_LOCAL, '各停': CAT_LOCAL,
+  '特急': CAT_TOKKYU, 'Liner': CAT_LINER,
+  '急行': CAT_EXPRESS, '準急': CAT_EXPRESS, '快速': CAT_EXPRESS, '新快速': CAT_EXPRESS,
+  '区間': CAT_EXPRESS, '直行': CAT_EXPRESS, '通勤': CAT_EXPRESS, '机场快速': CAT_EXPRESS,
+};
+/* 日文名无法区分的, 按图标兜底: 寝台=寝台特急, ミュースカイ=名鉄有料 */
+const CAT_BY_ICON = { '寝': CAT_TOKKYU, 'ミ': CAT_TOKKYU };
+let TYPE_CAT = null;
+function buildTypeFlags() {
+  TYPE_CAT = new Int8Array(TYPES.length);
+  for (let i = 0; i < TYPES.length; i++) {
+    const ic = TYPES[i][0], ja = TYPES[i][1];
+    let c;
+    if (SHINKANSEN_TYPES.has(ic)) c = CAT_SHINKANSEN;
+    else if (CAT_BY_ICON[ic] !== undefined) c = CAT_BY_ICON[ic];
+    else if (CAT_BY_JA[ja] !== undefined) c = CAT_BY_JA[ja];
+    else c = CAT_EXPRESS;            /* 未知种别归入快速类, 默认可见 */
+    TYPE_CAT[i] = c;
+  }
+  /* 新干线线路 id 集合: 部分在来线列车(寝台/特急/普通)的 tmap 区间标签误带了新干线 id
+     (如 サンライズ瀬戸 的 東京→高松 tmap 中 浜松→姫路 等段被标成 東海道新幹線),
+     按里程推主导线路时会整段显示成新干线。日本在来线定期列车不走新干线轨道,
+     故对非新干线种别的 leg, 主导线路候选一律排除新干线线路。 */
+  shinkLineIds = new Set();
+  for (let i = 0; i < LINES.length; i++) if (LINES[i][0].indexOf('新幹線') >= 0) shinkLineIds.add(i);
+}
+/* state.catOn → 每类是否屏蔽(1=屏蔽)。路由/后续班次共用。 */
+function catOffArr() {
+  const a = new Uint8Array(CAT_N);
+  for (let c = 0; c < CAT_N; c++) a[c] = state.catOn[CAT_KEY[c]] ? 0 : 1;
+  return a;
+}
+
+/* ══════════════════ 正向 RAPTOR(多轮快照 → 换乘次数 Pareto) ══════════════════ */
+const INF = 1 << 30;
+function raptorFwd(orig, dest, tStart, day, opt) {
+  const maxK = opt.maxK || 5, banned = opt.banned, catOff = opt.catOff;
+  if (orig < 0 || dest < 0 || orig === dest) return null;
+  const N = ST.N.length;
+  const tau = new Int32Array(N).fill(INF);
+  const par = new Array(N).fill(null);
+  tau[orig] = tStart;
+  const rounds = [];
+  let marked = [orig];
+  const ow = new Map();
+  const wl0 = WALK.get(orig);
+  if (wl0) for (const e of wl0) ow.set(e[0], e[1]);
+  for (let k = 1; k <= maxK; k++) {
+    const scan = new Set();
+    for (let mi = 0; mi < marked.length; mi++) {
+      const l = node2tmaps[marked[mi]];
+      if (l) for (let i = 0; i < l.length; i++) scan.add(l[i]);
+    }
+    if (k === 1) for (const nb of ow.keys()) {
+      const l = node2tmaps[nb];
+      if (l) for (let i = 0; i < l.length; i++) scan.add(l[i]);
+    }
+    const newMarked = [];
+    for (const ti of scan) {
+      if (banned && banned.has(ti)) continue;
+      const t = TM.T[ti], S = t[0];
+      let bestTrip = null, bestBoard = -1, bestWalk = -1;
+      for (let si = 0; si < S.length; si++) {
+        const p = S[si];
+        let tmin = INF, wf = -1;
+        if (p === orig && k === 1) tmin = tStart;
+        else if (k === 1 && ow.has(p)) { tmin = tStart + ow.get(p); wf = orig; }
+        else {
+          if (tau[p] < INF) { tmin = tau[p] + transferMin(p); wf = -1; }
+          /* 步行接驳: 从「已到达的邻站」走到本上车点 p —— 即使 p 本身尚未到达。
+             原实现把步行边放在 tau[p]<INF 分支内, 只有当 p 已被到达时才考虑,
+             导致「异名邻站需步行换乘」的接续永远走不通
+             (如 西田原本[近鉄田原本線] —步行4分— 田原本[橿原線]), 大量跨线换乘被判为无路径。 */
+          const wl = WALK.get(p);
+          if (wl) for (let wi = 0; wi < wl.length; wi++) {
+            const e = wl[wi];
+            if (tau[e[0]] < INF && tau[e[0]] + e[1] < tmin) { tmin = tau[e[0]] + e[1]; wf = e[0]; }
+          }
+        }
+        if (tmin >= INF) continue;
+        const tr = earliestTrip(ti, si, tmin, day, catOff);
+        if (tr && (bestTrip === null || tr[0] < bestTrip[0])) { bestTrip = tr; bestBoard = si; bestWalk = wf; }
+      }
+      if (bestTrip === null) continue;
+      const pi = bestTrip[1], ty = bestTrip[2], d0 = bestTrip[3];
+      const arr = patOffsets(ti, pi)[0];
+      for (let sj = bestBoard + 1; sj < S.length; sj++) {
+        const p2 = S[sj], aa = d0 + arr[sj];
+        if (aa < tau[p2]) {
+          tau[p2] = aa;
+          par[p2] = [ti, pi, ty, d0, bestBoard, bestWalk, sj];
+          newMarked.push(p2);
+        }
+      }
+    }
+    /* 把本轮新到达站的「步行邻站」也纳入下一轮扫描:
+       否则「步行到尚未到达的邻站再上车」的接续, 其邻站的线路不会被检索到,
+       跨线换乘(如 西田原本[田原本線] —步行— 田原本[橿原線])会被误判为无路径。 */
+    const nmLen = newMarked.length;
+    for (let ni = 0; ni < nmLen; ni++) {
+      const wl = WALK.get(newMarked[ni]);
+      if (wl) for (let wi = 0; wi < wl.length; wi++) newMarked.push(wl[wi][0]);
+    }
+    if (!newMarked.length) break;
+    rounds.push([k, Int32Array.from(tau), par.slice()]);
+    marked = newMarked;
+  }
+  return rounds;
+}
+/* ══════════════════ 反向 RAPTOR(終電 / 指定到达) ══════════════════
+   rev[p] = 最晚从 p 出发仍能在 tLimit 前到达 dest 的时刻。
+   从 dest 倒推: 若某班次在 sj 的到达 ≤ rev[S[sj]] − 换乘时间, 则它所有上游站 si 都可上车。 */
+function raptorRev(orig, dest, tLimit, day, opt) {
+  const maxK = opt.maxK || 5, banned = opt.banned;
+  const N = ST.N.length;
+  const rev = new Int32Array(N).fill(-INF);
+  const par = new Array(N).fill(null);
+  rev[dest] = tLimit;
+  /* 终点步行衔接: 到邻站后徒步到终点 */
+  const dwl = WALK.get(dest);
+  let marked = [dest];
+  if (dwl) for (const e of dwl) { rev[e[0]] = tLimit - e[1]; marked.push(e[0]); }
+  for (let k = 1; k <= maxK; k++) {
+    const scan = new Set();
+    for (let mi = 0; mi < marked.length; mi++) {
+      const l = node2tmaps[marked[mi]];
+      if (l) for (let i = 0; i < l.length; i++) scan.add(l[i]);
+    }
+    const newMarked = [];
+    for (const ti of scan) {
+      if (banned && banned.has(ti)) continue;
+      const S = TM.T[ti][0];
+      /* 逐「下车站 sj」处理: 对每个可达下车站取「最晚到达该站」的班次, 用它更新全部上游站 si<sj。
+         不能只取全局最晚到达的那一班 —— 长 tmap(如 八幡浜→…→喜多灘→…→松山) 上,
+         「到达较早站(松山)最晚的班次」的上游覆盖不到更晚的站(喜多灘),
+         只取全局最优会漏掉这些站的更晚出发班次, 使終電/指定到达低估最晚出发时刻。 */
+      for (let sj = S.length - 1; sj >= 1; sj--) {
+        const p2 = S[sj];
+        if (rev[p2] <= -INF) continue;
+        let tmax = rev[p2];
+        if (p2 !== dest) tmax -= transferMin(p2);
+        const tr = latestArrive(ti, sj, tmax, day, opt.catOff);
+        if (!tr) continue;
+        const pi = tr[1], ty = tr[2], d0 = tr[3];
+        const dep = patOffsets(ti, pi)[1];
+        for (let si = 0; si < sj; si++) {
+          const p1 = S[si], da = d0 + dep[si];
+          if (da > rev[p1]) {
+            rev[p1] = da;
+            par[p1] = [ti, pi, ty, d0, si, -1, sj];
+            newMarked.push(p1);
+            /* 步行接驳(反向, 与正向对称): p1 为上车点, 也可从它的步行邻站 q 走来再上车,
+               → rev[q] = rev[p1] − walkMin, 且 q 的线路下一轮也要扫描。
+               否则「异名邻站步行换乘」在終電/指定到达模式下同样会被漏掉。 */
+            const wl = WALK.get(p1);
+            if (wl) for (let wi = 0; wi < wl.length; wi++) {
+              const q = wl[wi][0], wm = wl[wi][1];
+              if (da - wm > rev[q]) {
+                rev[q] = da - wm;
+                par[q] = [ti, pi, ty, d0, si, q, sj];
+                newMarked.push(q);
+              }
+            }
+          }
+        }
+      }
+    }
+    if (!newMarked.length) break;
+    marked = newMarked;
+  }
+  return { rev, par };
+}
+
+/* ══════════════════ 方案提取 ══════════════════ */
+function finishFwd(rounds, orig, dest) {
+  const out = [];
+  for (const [k, tau, par] of rounds) {
+    let bestArr = tau[dest], fw = null;
+    const dwl = WALK.get(dest);
+    if (dwl) for (const e of dwl) {
+      if (tau[e[0]] < INF && tau[e[0]] + e[1] < bestArr) { bestArr = tau[e[0]] + e[1]; fw = [e[0], e[1]]; }
+    }
+    if (bestArr >= INF) continue;
+    if (!par[dest] && !fw) continue;
+    const legs = [];
+    let cur = fw ? fw[0] : dest, ok = true;
+    while (cur !== orig) {
+      const pr = par[cur];
+      if (!pr) { ok = false; break; }
+      legs.push({ tmap: pr[0], pi: pr[1], ty: pr[2], d0: pr[3], board: pr[4], walkFrom: pr[5], alight: pr[6] });
+      cur = pr[5] >= 0 ? pr[5] : TM.T[pr[0]][0][pr[4]];
+      if (legs.length > 12) { ok = false; break; }
+    }
+    if (!ok) continue;
+    legs.reverse();
+    const r = finalizeLegs(legs, orig, dest, fw);
+    if (r) { r.k = k; out.push(r); }
+  }
+  return out;
+}
+/* 从反向搜索结果回溯出正向行程 */
+function finishRev(res, orig, dest) {
+  const par = res.par;
+  if (res.rev[orig] <= -INF) return [];
+  const chain = [];
+  let node = orig, guard = 0;
+  while (node !== dest && guard++ < 14) {
+    const pr = par[node];
+    if (!pr) return [];
+    chain.push(pr);
+    const nxt = TM.T[pr[0]][0][pr[6]];
+    if (nxt === node) return [];
+    node = nxt;
+  }
+  if (node !== dest) return [];
+  const legs = chain.map(pr => ({ tmap: pr[0], pi: pr[1], ty: pr[2], d0: pr[3], board: pr[4], walkFrom: pr[5], alight: pr[6] }));
+  /* 末段若为「到邻站后徒步到终点」, 转成 finalWalk */
+  let fw = null;
+  const last = legs[legs.length - 1];
+  const lastNode = TM.T[last.tmap][0][last.alight];
+  if (lastNode !== dest) {
+    const m = walkMin.get(lastNode + ',' + dest);
+    if (m) fw = [lastNode, m];
+  }
+  const r = finalizeLegs(legs, orig, dest, fw);
+  return r ? [r] : [];
+}
+/* 补全 leg 字段 + 时序校验 */
+function finalizeLegs(legs, orig, dest, finalWalk) {
+  if (!legs.length) return null;
+  let prevArr = -1, km = 0;
+  for (const lg of legs) {
+    const t = TM.T[lg.tmap], S = t[0];
+    const off = patOffsets(lg.tmap, lg.pi);
+    lg.dep = lg.d0 + off[1][lg.board];
+    lg.arr = lg.d0 + off[0][lg.alight];
+    lg.fromNode = lg.walkFrom >= 0 ? lg.walkFrom : S[lg.board];
+    lg.toNode = S[lg.alight];
+    if (prevArr >= 0 && lg.dep < prevArr) return null;
+    prevArr = lg.arr;
+    for (let i = lg.board; i < lg.alight; i++) km += t[2][i];
+    lg.walkMin = lg.walkFrom >= 0 ? (walkMin.get(lg.walkFrom + ',' + S[lg.board]) || 0) : 0;
+  }
+  const lastArr = legs[legs.length - 1].arr + (finalWalk ? finalWalk[1] : 0);
+  return {
+    arr: lastArr, dep: legs[0].dep, xfr: legs.length - 1, legs, finalWalk,
+    km: km / 10, from: orig, to: dest,
+  };
+}
+function sig(r) {
+  let s = '';
+  for (const lg of r.legs) s += lg.tmap + ':' + lg.d0 + ':' + lg.board + ':' + lg.alight + '|';
+  return s;
+}
+/* 主搜索: 迭代禁用已用列车 → 生成走不同线路/班次的备选 */
+function searchRoutes(orig, dest, tStart, day, opt) {
+  const seen = new Set(), out = [], banned = new Set();
+  const want = opt.want || 4;
+  for (let it = 0; it <= want; it++) {
+    const rounds = raptorFwd(orig, dest, tStart, day, { maxK: opt.maxK || 5, banned, catOff: opt.catOff });
+    if (rounds) for (const r of finishFwd(rounds, orig, dest)) {
+      const s = sig(r);
+      if (!seen.has(s)) { seen.add(s); out.push(r); }
+    }
+    if (out.length >= want) break;
+    const cand = out.slice().sort((a, b) => a.arr - b.arr || a.xfr - b.xfr)[0];
+    if (!cand) break;
+    let added = false;
+    for (const lg of cand.legs) if (!banned.has(lg.tmap)) { banned.add(lg.tmap); added = true; }
+    if (!added) break;
+  }
+  out.sort((a, b) => a.arr - b.arr || a.xfr - b.xfr);
+  return out;
+}
+/* 挑选展示方案: 最快 / 乗換少 / 备选。严格过滤荒谬慢方案。 */
+function pickRoutes(cands, maxShow) {
+  if (!cands.length) return [];
+  const fastest = cands.reduce((a, b) => (b.arr < a.arr || (b.arr === a.arr && b.xfr < a.xfr)) ? b : a);
+  const dur = fastest.arr - fastest.dep;
+  const lim = fastest.arr + Math.max(25, dur * 0.5);
+  const ok = cands.filter(r => r.arr <= lim);
+  const res = [{ tag: 'fast', r: fastest }];
+  let easy = null;
+  const byX = ok.slice().sort((a, b) => a.xfr - b.xfr || b.dep - a.dep || a.arr - b.arr);
+  for (const r of byX) if (sig(r) !== sig(fastest)) { easy = r; break; }
+  if (easy) res.push({ tag: 'easy', r: easy });
+  for (const r of ok) {
+    if (res.length >= (maxShow || 4)) break;
+    if (res.some(x => sig(x.r) === sig(r))) continue;
+    res.push({ tag: 'alt', r });
+  }
+  return res;
+}
+/* 起点当日最早出发 */
+function firstDeparture(orig, day) {
+  const list = node2tmaps[orig];
+  if (!list) return null;
+  let best = null;
+  for (const ti of list) {
+    const S = TM.T[ti][0];
+    const si = S.indexOf(orig);
+    if (si < 0) continue;
+    const gs = groupsByDay[day].get(ti);
+    if (!gs) continue;
+    for (const g of gs) {
+      if (g.length > 3) { const d = g[3] + patOffsets(ti, g[1])[1][si]; if (best === null || d < best) best = d; }
+    }
+  }
+  return best;
+}
+/* 无路径兜底(now/dep 模式): ①放宽乗換上限 ②退回当日首班起检索。
+   跨日/隔夜等待已由 raptorFwd 的 earliestTrip 处理, 此处不再做整条方案的时间平移。 */
+function noRouteFallback(f, t, tStart, day, opt) {
+  if ((opt.maxK || 5) < 9) {
+    const c = searchRoutes(f, t, tStart, day, { ...opt, maxK: 9 });
+    if (c.length) return { cands: c, note: '' };
+  }
+  const fd = firstDeparture(f, day);
+  if (fd != null && fd < tStart) {
+    const c = searchRoutes(f, t, fd, day, { ...opt, maxK: 9 });
+    if (c.length) return { cands: c, note: T().autoFirst };
+  }
+  return { cands: [], note: '' };
+}
+/* 終電: 反向搜索起点最晚可出发时刻(当日 24:00 + 4h 的运行窗口内) */
+function lastDeparture(orig, dest, day, opt) {
+  for (let limit = 1440 + 300; limit >= 1440 - 120; limit -= 30) {
+    const res = raptorRev(orig, dest, limit, day, opt || {});
+    if (res.rev[orig] > -INF) {
+      const legs = finishRev(res, orig, dest);
+      if (legs.length) return { dep: res.rev[orig], limit, cands: legs };
+    }
+  }
+  return null;
+}
+/* 某 tmap 在 si 站、after 之后的后续 n 班 */
+function nextTrips(ti, si, after, day, n) {
+  const gs = groupsByDay[day].get(ti);
+  if (!gs) return [];
+  const all = [];
+  for (const g of gs) {
+    const dep = patOffsets(ti, g[1])[1][si];
+    for (let k = 3; k < g.length; k++) {
+      const da = g[k] + dep;
+      if (da > after) all.push({ dep: da, pi: g[1], ty: g[2], d0: g[k] });
+    }
+  }
+  all.sort((a, b) => a.dep - b.dep);
+  return all.slice(0, n);
+}
+/* 后续班次 = 同一「乘→下车」区间上、同一主导线路的后续列车。
+   只在原 tmap 内找是不够的: 单个 tmap 往往一天只有几班(如新宿→大船的直通 tmap 仅 4 班),
+   而同一区间实际上十几分钟就有一班, 分布在不同的 tmap 上。 */
+function nextLegTrips(lg, day, n, catOff) {
+  const ti = lg.tmap, S = TM.T[ti][0];
+  const bNode = S[lg.board], aNode = S[lg.alight];
+  const after = lg.dep;
+  const mainLine = legLine(ti, lg.board, lg.alight, lg.ty);
+  const out = [];
+  const seen = new Set();
+  const list = node2tmaps[bNode] || [];
+  for (const tj of list) {
+    const T2 = TM.T[tj], S2 = T2[0];
+    const bi = S2.indexOf(bNode); if (bi < 0) continue;
+    const ai = S2.indexOf(aNode); if (ai <= bi) continue;
+    const gs = groupsByDay[day].get(tj);
+    if (!gs) continue;
+    for (const g of gs) {
+      if (legLine(tj, bi, ai, g[2]) !== mainLine) continue;   /* 只保留同一条线路。
+        ★原代码把此行写在 for(g) 循环外引用 g —— 严格模式下直接抛 ReferenceError,
+        「后续班次」一点就崩、整段结果渲染中断。移到循环内按班次种别判定。 */
+      if (catOff && catOff[TYPE_CAT[g[2]]]) continue;
+      const off = patOffsets(tj, g[1])[1][bi];
+      for (let k = 3; k < g.length; k++) {
+        const da = g[k] + off;
+        if (da <= after) continue;
+        const key = tj + '|' + g[k];
+        if (seen.has(key)) continue;
+        seen.add(key);
+        out.push({ tmap: tj, board: bi, alight: ai, dep: da, pi: g[1], ty: g[2], d0: g[k] });
+      }
+    }
+  }
+  out.sort((a, b) => a.dep - b.dep);
+  return out.slice(0, n || 6);
+}
+
+/* ══════════════════ 检索执行 ══════════════════ */
+/* 无路径空态: 取代「只弹一个会消失的 toast」, 给出原因和可一键执行的下一步 */
+function showNoRoute() {
+  toast(T().noRoute);
+  $('legs').innerHTML = '';   /* 桌面布局下详情区常驻, 不清会把上一次的行程留在空态下方 */
+  $('result').classList.remove('show');
+  $('quick').classList.remove('show');
+  $('noRoute').classList.add('show');
+  $('panel').classList.remove('empty');
+  closeDetail();
+}
+function hideNoRoute() { $('noRoute').classList.remove('show'); }
+$('nrRelax').addEventListener('click', () => {
+  for (const k of CAT_KEY) state.catOn[k] = true;
+  state.maxXfr = 7;
+  syncOptUI(); saveOpt();
+  hideNoRoute();
+  doSearch();
+});
+$('nrSwap').addEventListener('click', () => { hideNoRoute(); $('swapBtn').click(); });
+
+let searching = false;
+async function doSearch() {
+  if (searching) return;                       /* 搜索进行中忽略重复触发, 防并发改写结果 */
+  hideSug();
+  /* 优先用点击建议列表时记录的节点: 输入框里是显示名 D, 重名站(带括号)必须靠它精确定位,
+     否则 大宮(京都府) 会被 nodeIdx 解析成另一个 大宮。文本没变才复用, 改过就重新解析。 */
+  const fv = normName($('rFrom').value), tv = normName($('rTo').value);
+  let f = state.from != null && ST && ST.D[state.from] === fv ? state.from : nodeIdx(fv);
+  let t = state.to != null && ST && ST.D[state.to] === tv ? state.to : nodeIdx(tv);
+  if (f < 0 || t < 0) { toast(T().badSta); (f < 0 ? $('rFrom') : $('rTo')).focus(); return; }
+  if (f === t) { toast(T().sameSta); return; }
+  if ((state.mode === 'dep' || state.mode === 'arr') && !$('depTime').value) {
+    toast(T().badTime); $('depTime').focus(); return;   /* 时刻被清空时原代码会静默按 00:00 检索 */
+  }
+  state.from = f; state.to = t;
+  $('rFrom').value = ST.D[f]; $('rTo').value = ST.D[t];
+  syncClr();
+  searching = true;
+  const gb = $('goBtn');
+  gb.disabled = true; gb.classList.add('busy');
+  $('goTxt').textContent = T().searching;
+  $('panel').setAttribute('aria-busy', 'true');
+  /* 先让浏览器把「検索中」画出来再跑同步的 RAPTOR —— 原实现点搜索后整页冻结到出结果,
+     长距离/多备选时数百毫秒毫无反馈, 容易被误认为卡死而重复点击。 */
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+  try {
+    const day = state.day, mode = state.mode;
+    let cands = [], note = '';
+    const opt = { catOff: catOffArr(), maxK: state.maxXfr || 5, want: 8 };
+    if (mode === 'first') {
+      const fd = firstDeparture(f, day);
+      if (fd != null) cands = searchRoutes(f, t, fd, day, opt);
+    } else if (mode === 'last') {
+      const lr = lastDeparture(f, t, day, opt);
+      if (lr) {
+        cands = searchRoutes(f, t, lr.dep, day, opt);
+        if (!cands.length) cands = lr.cands;
+        note = T().lastNote;
+      }
+    } else if (mode === 'arr') {
+      const tArr = timeToMin($('depTime').value);
+      const res = raptorRev(f, t, tArr, day, opt);
+      cands = finishRev(res, f, t);
+      note = tf(T().arrNote, fmtMinRaw(tArr));
+      /* 指定时刻前无法到达 → 退回「最早到达」方案, 避免直接显示「未找到连通路径」 */
+      if (!cands.length) {
+        const fd = firstDeparture(f, day);
+        if (fd != null) {
+          cands = searchRoutes(f, t, fd, day, opt);
+          if (!cands.length && (opt.maxK || 5) < 9) cands = searchRoutes(f, t, fd, day, { ...opt, maxK: 9 });
+          if (cands.length) note = T().arrEarliest;
+        }
+      }
+    } else {
+      let tStart = mode === 'now' ? Math.floor(nowMin()) : Math.floor(timeToMin($('depTime').value));
+      cands = searchRoutes(f, t, tStart, day, opt);
+      /* 该时刻起已无衔接班次 → 次日检索(跨日, +1 天) + 放宽乗換上限, 最后退回当日首班。
+         偏远小站/长途(喜多灘→秋田/大阪等)晚间出发时不再直接显示「未找到连通路径」。 */
+      if (!cands.length) { const fb = noRouteFallback(f, t, tStart, day, opt); cands = fb.cands; note = fb.note; }
+    }
+    if (!cands.length) { showNoRoute(); return; }
+    hideNoRoute();
+    const picked = pickRoutes(cands, 4);
+    curResult = { cands: picked, all: cands, idx: 0, note, from: f, to: t, day, mode };
+    openNext = -1;
+    renderResult(curResult);
+    highlightOnMap(picked[0].r);
+    stateHash();
+    $('result').classList.add('show');
+    $('quick').classList.remove('show');
+    pushRecent(f, t); renderQuick();
+    $('panel').classList.remove('empty');
+    if ($('legs')) $('legs').scrollTop = 0;
+    /* 移动端: 新结果出来时展开抽屉 */
+    closeDetail();
+    if (isMobileView() && $('sheetMain').classList.contains('collapsed')) setCollapsed(false);
+  } catch (e) {
+    console.error('[search]', e);
+    toast(T().errSearch);
+  } finally {
+    searching = false;
+    gb.disabled = false; gb.classList.remove('busy');
+    $('goTxt').textContent = T().go;
+    $('panel').removeAttribute('aria-busy');
+  }
+}
+/* 改乘后续班次: 前 i 段固定, 第 i 段换成新班次, 后续重算。
+   新班次可能属于另一个 tmap(同区间不同停站), 所以按「乘/下车站节点」在新 tmap 重新定位。 */
+function reRouteWith(legIdx, newTrip, alightNode) {
+  const cur = curResult.cands[curResult.idx].r;
+  const prefix = cur.legs.slice(0, legIdx);
+  const lg = cur.legs[legIdx];
+  const oldS = TM.T[lg.tmap][0];
+  const bNode = oldS[lg.board];
+  const ti = (newTrip && newTrip.tmap != null) ? newTrip.tmap : lg.tmap;
+  const S = TM.T[ti][0];
+  const board = (newTrip && newTrip.board != null) ? newTrip.board : S.indexOf(bNode);
+  if (board < 0) return null;
+  let alight = -1;
+  if (newTrip && newTrip.alight != null) alight = newTrip.alight;
+  else {
+    const aNode = alightNode != null ? alightNode : oldS[lg.alight];
+    const ai = S.indexOf(aNode);
+    alight = ai > board ? ai : -1;
+  }
+  if (alight < 0 || alight <= board) return null;
+  const nl = {
+    tmap: ti, pi: newTrip.pi, ty: newTrip.ty, d0: newTrip.d0,
+    board, walkFrom: lg.walkFrom, alight,
+  };
+  const off = patOffsets(ti, nl.pi);
+  nl.dep = nl.d0 + off[1][nl.board];
+  nl.arr = nl.d0 + off[0][nl.alight];
+  nl.fromNode = nl.walkFrom >= 0 ? nl.walkFrom : S[nl.board];
+  nl.toNode = S[nl.alight];
+  nl.walkMin = nl.walkFrom >= 0 ? (walkMin.get(nl.walkFrom + ',' + S[nl.board]) || 0) : 0;
+  const prevEnd = prefix.length ? prefix[prefix.length - 1].arr : -1;
+  if (prevEnd >= 0 && nl.dep < prevEnd) return null;
+  const legs = prefix.concat([nl]);
+  /* 从下车站重跑后续 */
+  if (nl.toNode !== cur.to) {
+    const tStart = nl.arr + transferMin(nl.toNode);
+    const rounds = raptorFwd(nl.toNode, cur.to, tStart, curResult.day, { maxK: state.maxXfr || 5, catOff: catOffArr() });
+    if (rounds && rounds.length) {
+      const rest = finishFwd(rounds, nl.toNode, cur.to).sort((a, b) => a.arr - b.arr || a.xfr - b.xfr)[0];
+      if (rest) {
+        for (const rl of rest.legs) legs.push(rl);
+        const r = finalizeLegs(legs, cur.from, cur.to, rest.finalWalk);
+        if (r) return r;
+      }
+    }
+    return null;
+  }
+  const r = finalizeLegs(legs, cur.from, cur.to, null);
+  return r;
+}
+
+/* ══════════════════ 站名解析与联想 ══════════════════ */
+/* 输入归一化: 全角括号 → 半角。数据里 858 个重名站的消歧后缀统一用半角 ()。 */
+function normName(s) {
+  return String(s || '').trim().replace(/（/g, '(').replace(/）/g, ')');
+}
+/* 名字 → 节点。精确匹配优先, 且必须覆盖显示名 d(带括号后缀)。
+   否则「大宮(京都府)」这类站搜得到却解析不了。 */
+function nodeIdx(nm) {
+  nm = normName(nm);
+  if (!nm || !nameIndex) return -1;   /* nameIndex: 索引建好前(小数据 build 未完)直接返回未命中 */
+  let best = -1, bestSc = 99;
+  for (const e of nameIndex) {
+    let sc = -1;
+    if (nm === e.d || nm === e.n || nm === e.z) sc = 0;
+    else if (e.d.startsWith(nm) || e.n.startsWith(nm) || (e.z && e.z.startsWith(nm))) sc = 1;
+    else if (e.d.indexOf(nm) >= 0 || e.n.indexOf(nm) >= 0 || (e.z && e.z.indexOf(nm) >= 0)) sc = 2;
+    if (sc >= 0 && sc < bestSc) { bestSc = sc; best = e.i; if (sc === 0) break; }
+  }
+  return best;
+}
+let sugWhich = null, sugItems = [], sugIdx = 0;
+function hlText(text, q) {
+  if (!q) return esc(text);
+  const i = text.indexOf(q);
+  if (i < 0) return esc(text);
+  return esc(text.slice(0, i)) + '<span class="hl">' + esc(text.slice(i, i + q.length)) + '</span>' + esc(text.slice(i + q.length));
+}
+function doSuggest(which) {
+  const input = which === 'from' ? $('rFrom') : $('rTo');
+  const q = normName(input.value);
+  const box = $('sug');
+  if (!q || !nameIndex) { box.style.display = 'none'; sugItems = []; sugWhich = null; return; }   /* 索引未就绪时不联想 */
+  /* 动态定位: 紧贴当前聚焦的 input 下方(适配横向/上下排布两种 srow 布局) */
+  const cardRect = $('searchCard').getBoundingClientRect();
+  const inpRect = input.getBoundingClientRect();
+  box.style.top = (inpRect.bottom - cardRect.top + 6) + 'px';
+  const items = [];
+  for (const e of nameIndex) {
+    let sc = -1;
+    if (q === e.d || q === e.n || q === e.z) sc = 0;
+    else if (e.d.startsWith(q) || e.n.startsWith(q) || (e.z && e.z.startsWith(q))) sc = 1;
+    else if (e.d.indexOf(q) >= 0 || e.n.indexOf(q) >= 0 || (e.z && e.z.indexOf(q) >= 0)) sc = 2;
+    if (sc >= 0) items.push([sc, e.n.length, -ST.R[e.i], e]);
+  }
+  items.sort((a, b) => a[0] - b[0] || a[1] - b[1] || a[2] - b[2]);
+  sugItems = items.slice(0, 12).map(x => x[3]);
+  sugIdx = 0;
+  sugWhich = which;
+  input.setAttribute('aria-expanded', 'true');
+  if (!sugItems.length) {
+    box.innerHTML = '<div class="sug-empty"><span class="sug-q" data-clarity-mask="true">' + esc(q) + '</span> — ' + esc(T().noMatch) + '</div>';
+    box.style.display = 'block'; return;
+  }
+  box.innerHTML = '<div class="sug-grp">' + esc(T().stations) + '</div>' +
+    sugItems.map((e, i) =>
+      '<div class="sug-it' + (i === sugIdx ? ' hl-it' : '') + '" id="sug-it-' + i + '" role="option" aria-selected="' + (i === sugIdx) + '" data-i="' + e.i + '" data-n="' + i + '">' +
+      '<span>' + hlText(ST.D[e.i], q) + (ST.Z[e.i] && ST.Z[e.i] !== ST.D[e.i] ? ' <span class="k">' + hlText(ST.Z[e.i], q) + '</span>' : '') + '</span>' +
+      '<span class="rt">' + ST.R[e.i] + '</span>' +
+      '</div>').join('');
+  box.style.display = 'block';
+}
+function hideSug() {
+  $('sug').style.display = 'none'; sugWhich = null;
+  for (const id of ['rFrom', 'rTo']) { const el = $(id); el.setAttribute('aria-expanded', 'false'); el.removeAttribute('aria-activedescendant'); }
+}
+/* 键盘/鼠标共用的高亮移动: 同步样式、aria 与滚动位置 */
+function setSugIdx(i) {
+  if (!sugItems.length) return;
+  sugIdx = ((i % sugItems.length) + sugItems.length) % sugItems.length;
+  $('sug').querySelectorAll('.sug-it').forEach((el, j) => {
+    el.classList.toggle('hl-it', j === sugIdx);
+    el.setAttribute('aria-selected', j === sugIdx ? 'true' : 'false');
+    if (j === sugIdx) el.scrollIntoView({ block: 'nearest' });
+  });
+  const inp = sugWhich === 'from' ? $('rFrom') : $('rTo');
+  inp.setAttribute('aria-activedescendant', 'sug-it-' + sugIdx);
+}
+function pickStation(i, which) {
+  state[which] = i;
+  (which === 'from' ? $('rFrom') : $('rTo')).value = ST.D[i];
+  hideSug();
+}
+$('sug').addEventListener('mousedown', ev => {
+  const it = ev.target.closest('.sug-it');
+  if (it && sugWhich) { ev.preventDefault(); pickStation(+it.dataset.i, sugWhich); syncClr(); }
+});
+$('sug').addEventListener('mousemove', ev => {
+  const it = ev.target.closest('.sug-it');
+  if (it && sugWhich && +it.dataset.n !== sugIdx) setSugIdx(+it.dataset.n);
+});
+function bindInput(which) {
+  const input = which === 'from' ? $('rFrom') : $('rTo');
+  input.addEventListener('input', debounce(() => doSuggest(which), 110));
+  input.addEventListener('focus', () => doSuggest(which));
+  input.addEventListener('keydown', ev => {
+    const sugOpen = sugWhich === which && sugItems.length > 0 && $('sug').style.display !== 'none';
+    if (ev.key === 'ArrowDown' && sugOpen) { ev.preventDefault(); setSugIdx(sugIdx + 1); }
+    else if (ev.key === 'ArrowUp' && sugOpen) { ev.preventDefault(); setSugIdx(sugIdx - 1); }
+    else if (ev.key === 'Enter') {
+      ev.preventDefault();
+      if (sugOpen) {
+        pickStation(sugItems[sugIdx].i, which); syncClr();
+        if (which === 'from') $('rTo').focus(); else doSearch();   /* 终点选完直接搜, 少一次操作 */
+      }
+      else if (which === 'from' && !normName($('rTo').value)) $('rTo').focus();
+      else doSearch();
+    } else if (ev.key === 'Escape') hideSug();
+  });
+  input.addEventListener('blur', () => setTimeout(hideSug, 130));
+}
+bindInput('from'); bindInput('to');
+
+/* ══════════════════ 模式 / 控件 ══════════════════ */
+function setMode(m) {
+  state.mode = m;
+  document.querySelectorAll('.mchip[data-mode]').forEach(c => c.classList.toggle('on', c.dataset.mode === m));
+  $('timeWrap').classList.toggle('show', m === 'dep' || m === 'arr');
+}
+document.querySelectorAll('.mchip[data-mode]').forEach(c => c.addEventListener('click', () => {
+  setMode(c.dataset.mode);
+  if (state.from != null && state.to != null) doSearch();
+  stateHash();
+}));
+$('swapBtn').addEventListener('click', () => {
+  const a = $('rFrom').value, b = $('rTo').value;
+  $('rFrom').value = b; $('rTo').value = a;
+  const t = state.from; state.from = state.to; state.to = t;
+  syncClr();
+  if (state.from != null && state.to != null) doSearch();
+  stateHash();
+});
+$('daySel').addEventListener('change', () => {
+  state.day = $('daySel').value;
+  if (state.from != null && state.to != null) doSearch();
+  stateHash();
+});
+$('depTime').addEventListener('change', () => {
+  state.depTime = timeToMin($('depTime').value);
+  if ((state.mode === 'dep' || state.mode === 'arr') && state.from != null && state.to != null) doSearch();
+});
+$('goBtn').addEventListener('click', doSearch);
+
+/* ══════════════════ 结果渲染 ══════════════════ */
+const TYPE_JA = { Nozomi: 'のぞみ', Hikari: 'ひかり', Kodama: 'こだま', Tsubasa: 'つばさ', Hayabusa: 'はやぶさ', Komachi: 'こまち', Asama: 'あさま', Kagayaki: 'かがやき', Yamabiko: 'やまびこ', Toki: 'とき', Tanigawa: 'たにがわ', Nasuno: 'なすの', Hakutaka: 'はくたか', Hayate: 'はやて', Mizuho: 'みずほ', Sakura: 'さくら', Tsubame: 'つばめ', Kamome: 'かもめ', Tsurugi: 'つるぎ' };
+function typeJa(ty) { const n = TYPES[ty] ? TYPES[ty][0] : ''; return TYPE_JA[n] || n; }
+function typeZh(ty) { return TYPES[ty] ? TYPES[ty][1] : ''; }
+/* 乘车区间内的「主导线路」= 区间线路众数, 平局取里程大者。
+   不能直接用全程众数: 直通运行会把「大船→鎌倉」的横須賀線误标成総武線,
+   把「新宿→大船」的湘南新宿ライン误标成高崎線。 */
+function legLine(ti, board, alight, ty) {
+  const t = TM.T[ti], L = t[1], K = t[2];
+  const cnt = new Map(), km = new Map();
+  let best = -1, bestN = 0, bestK = -1;
+  /* ty: 该 leg 的列车种别索引。非新干线种别(寝台/特急/普通…)排除新干线线路候选——
+     数据里在来线 tmap 的区间标签可能误带新干线 id(如 サンライズ瀬戸 tmap),
+     不排除就会按里程把整段推成新干线。日本在来线定期列车不走新干线轨道。 */
+  const noShink = ty != null && TYPE_CAT && TYPE_CAT[ty] !== CAT_SHINKANSEN;
+  for (let i = board; i < alight; i++) {
+    const li = L[i];
+    if (li < 0) continue;
+    if (noShink && shinkLineIds.has(li)) continue;
+    const n = (cnt.get(li) || 0) + 1, k = (km.get(li) || 0) + K[i];
+    cnt.set(li, n); km.set(li, k);
+    if (n > bestN || (n === bestN && k > bestK)) { bestN = n; bestK = k; best = li; }
+  }
+  return best >= 0 ? best : tmapLine[ti];
+}
+function lineName(ti, b, a, ty) { const li = (b == null) ? tmapLine[ti] : legLine(ti, b, a, ty); return li >= 0 ? LINES[li] : null; }
+function lineColorOf(ti, b, a, ty) { const li = (b == null) ? tmapLine[ti] : legLine(ti, b, a, ty); return li >= 0 && LINES[li][2] ? LINES[li][2] : '#4f8ef7'; }
+/* 列车爱称: tmap 的 TN 表按种别取 */
+function trainName(ti, ty) {
+  const TN = TM.T[ti][4];
+  if (!TN) return '';
+  const ic = TYPES[ty] ? TYPES[ty][0] : '';
+  return TN[ic] || TN['_'] || '';
+}
+function renderResult(res) {
+  const t = T();
+  updateDocTitle();
+  const cur = res.cands[res.idx].r;
+  const depS = fmtMin(cur.dep), arrS = fmtMin(cur.arr);
+  const durS = fmtDur(cur.arr - cur.dep);
+  let html = '<div class="sum-head">' +
+    '<div class="sum-t"><span class="tm">' + depS + '</span><span class="lb">' + t.sumDep + '</span></div>' +
+    '<span class="sum-arw">→</span>' +
+    '<div class="sum-t"><span class="tm">' + arrS + '</span><span class="lb">' + t.sumArr + '</span></div>' +
+    '<button id="shareBtn" class="share-btn" type="button" title="' + esc(t.copyLink) + '" aria-label="' + esc(t.copyLink) + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a5 5 0 0 0 7.1 0l2.4-2.4a5 5 0 0 0-7.1-7.1l-1.7 1.7"/><path d="M14 10a5 5 0 0 0-7.1 0L4.5 12.4a5 5 0 0 0 7.1 7.1l1.7-1.7"/></svg></button>' +
+    '</div>' +
+    '<div class="sum-line">' + durS + ' · ' + xfrLabel(cur.xfr) + ' · ' + cur.km.toFixed(1) + ' ' + t.kmUnit + '</div>';
+  if (res.note) html += '<div class="sum-note">' + esc(res.note) + '</div>';
+  $('sumBar').innerHTML = html;
+  const shareEl = $('shareBtn');
+  if (shareEl) shareEl.addEventListener('click', async ev => {
+    ev.stopPropagation();   /* 概要区点击会打开详情抽屉, 分享按钮需拦截 */
+    stateHash();
+    try { await navigator.clipboard.writeText(location.href); toast(T().copied); }
+    catch (e) { toast(T().copyFail, 3400); }
+  });
+  $('dTitle').textContent = fmtMinRaw(cur.dep) + ' → ' + fmtMinRaw(cur.arr) + ' · ' + durS;
+  /* 方案卡 */
+  $('routes').innerHTML = res.cands.map((c, i) => {
+    const r = c.r;
+    const tg = c.tag === 'fast' ? t.tagFast : c.tag === 'easy' ? t.tagEasy : t.tagAlt;
+    const cls = c.tag === 'fast' ? '' : ' g';
+    /* 线路色条: 按区间营业里程分配宽度, 换乘处自然分段 */
+    let bar = '';
+    if (r.legs && r.legs.length) {
+      const segs = r.legs.map(lg => {
+        let km = 0; const K = TM.T[lg.tmap][2];
+        if (K) for (let k = lg.board; k < lg.alight; k++) km += (K[k] || 0);
+        return { c: lineColorOf(lg.tmap, lg.board, lg.alight, lg.ty), km: Math.max(km / 10, 0.2) };
+      });
+      const tot = segs.reduce((a, b) => a + b.km, 0) || 1;
+      bar = '<div class="rbar">' + segs.map(s =>
+        '<i style="flex:' + (s.km / tot * 100).toFixed(2) + ';background:' + esc(s.c) + '"></i>').join('') + '</div>';
+    }
+    return '<div class="rcard' + (i === res.idx ? ' on' : '') + '" data-i="' + i + '" tabindex="0" role="button" aria-pressed="' + (i === res.idx) + '">' + bar +
+      '<div class="rt">' + fmtMin(r.dep) + '<span style="color:var(--dim);font-size:10px">→</span>' + fmtMin(r.arr) + '</div>' +
+      '<div class="rd">' + fmtDur(r.arr - r.dep) + ' · ' + xfrLabel(r.xfr) + '</div>' +
+      '<span class="rtag' + cls + '">' + esc(tg) + '</span>' +
+      '</div>';
+  }).join('');
+  $('routes').querySelectorAll('.rcard').forEach(el => el.addEventListener('click', () => {
+    curResult.idx = +el.dataset.i; openNext = -1; openStops = -1;
+    renderResult(curResult);
+    openDetail();
+    highlightOnMap(curResult.cands[curResult.idx].r);
+    stateHash();
+  }));
+  $('routes').querySelectorAll('.rcard').forEach(el => el.addEventListener('keydown', ev => {
+    if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); el.click(); }
+  }));
+  $('routes').scrollLeft = 0;
+  renderLegs(cur);
+}
+function renderLegs(r) {
+  const t = T();
+  if (!r.legs.length) { $('legs').innerHTML = '<div class="tl-empty">' + esc(t.emptyLegs) + '</div>'; return; }
+  const stRow = (ni, time, label, isEnd) =>
+    '<div class="tl-node"><div class="tl-ic">' + (isEnd ? '<div class="tl-dot end"></div>' : '<div class="tl-dot"></div>') +
+    (isEnd ? '' : '<div class="tl-line"></div>') + '</div><div class="tl-body"><div class="tl-st">' +
+    '<span class="nm">' + esc(ST.D[ni]) + '</span>' +
+    (ST.Z[ni] && ST.Z[ni] !== ST.D[ni] && lang !== 'ja' ? '<span class="zh">' + esc(ST.Z[ni]) + '</span>' : '') +
+    '<span class="t"><span class="lb">' + label + '</span>' + fmtMin(time) + '</span></div></div></div>';
+  let tl = '<div class="tl">';
+  r.legs.forEach((lg, li) => {
+    const ti = lg.tmap, S = TM.T[ti][0];
+    const ln = lineName(ti, lg.board, lg.alight, lg.ty);
+    const color = lineColorOf(ti, lg.board, lg.alight, lg.ty);
+    const nm = trainName(ti, lg.ty);
+    const dst = ST.D[S[S.length - 1]];
+    const nStop = lg.alight - lg.board;
+    let kmLeg = 0;
+    for (let i = lg.board; i < lg.alight; i++) kmLeg += TM.T[ti][2][i];
+    kmLeg /= 10;
+    /* 中间停靠站(可展开层级): 长距离乘车默认收起, 释放移动端竖向空间 */
+    const nMid = lg.alight - lg.board - 1;
+    let stopsHtml = '';
+    if (nMid > 0) {
+      const off = patOffsets(ti, lg.pi);
+      let rows = '';
+      for (let s = lg.board + 1; s < lg.alight; s++) {
+        const aT = lg.d0 + off[0][s], dT = lg.d0 + off[1][s];
+        rows += '<div class="sitem"><span class="sn">' + esc(ST.D[S[s]]) + '</span>' +
+          '<span class="st2">' + fmtMin(aT) +
+          (dT > aT ? '<span class="dw">/' + fmtMin(dT) + '</span>' : '') + '</span></div>';
+      }
+      stopsHtml = '<button class="stops-btn' + (openStops === li ? ' open' : '') + '" data-sli="' + li + '">' +
+        '<svg class="cv" viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>' +
+        '<span>' + esc(tf(t.midStops, nMid)) + '</span></button>' +
+        '<div class="stops-list' + (openStops === li ? ' open' : '') + '"><div>' + rows + '</div></div>';
+    }
+    /* 起点前徒步 */
+    if (li === 0 && lg.walkFrom >= 0 && lg.walkMin > 0)
+      tl += '<div class="tl-walk"><span>🚶</span><span>' + esc(ST.D[lg.walkFrom]) + ' → ' + esc(ST.D[S[lg.board]]) + '</span><span>' + tf(t.walkMin, lg.walkMin) + '</span></div>';
+    tl += stRow(lg.fromNode, lg.dep, t.dep, false);
+    /* 列车卡 */
+    tl += '<div style="display:flex;gap:10px"><div style="width:20px;flex:none;display:flex;justify-content:center">' +
+      '<div style="width:2.5px;background:' + esc(color) + ';opacity:.55;border-radius:2px"></div></div>' +
+      '<div style="flex:1;min-width:0">' +
+      '<div class="tcard" style="--lc:' + esc(color) + '">' +
+      '<div class="th">' +
+      '<span class="tn">' + esc(lang === 'zh' && ln ? ln[1] : (ln ? ln[0] : '?')) + '</span>' +
+      '<span class="ty">' + esc(lang === 'ja' ? typeJa(lg.ty) : typeZh(lg.ty)) + '</span>' +
+      (nm ? '<span class="tnm">' + esc(nm) + '</span>' : '') +
+      '<span class="dst">' + esc(tf(t.dirTo, dst)) + '</span>' +
+      '</div>' +
+      '<div class="tf">' + esc(tf(t.legInfo, nStop, kmLeg.toFixed(1), t.kmUnit)) + '</div>' +
+      stopsHtml +
+      '<button class="nxt' + (openNext === li ? ' open' : '') + '" data-li="' + li + '">' +
+      '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .2s var(--ease-smooth);transform:rotate(' + (openNext === li ? 90 : 0) + 'deg)"><path d="M9 6l6 6-6 6"/></svg>' +
+      esc(t.nextTrips) + '</button>' +
+      (openNext === li ? renderNextList(li, lg) : '') +
+      '</div></div></div>';
+    /* 换乘 / 终到徒步 */
+    if (li + 1 < r.legs.length) {
+      const nx = r.legs[li + 1];
+      if (nx.walkFrom >= 0 && nx.walkMin > 0)
+        tl += '<div class="tl-walk"><span>🚶</span><span>' + esc(ST.D[nx.walkFrom]) + ' → ' + esc(ST.D[TM.T[nx.tmap][0][nx.board]]) + '</span><span>' + tf(t.walkMin, nx.walkMin) + '</span></div>';
+      else
+        tl += '<div class="tl-xfr"><span class="xm">⇄</span><span>' + esc(ST.D[lg.toNode]) + '</span><span>' + tf(t.xfrAt, nx.dep - lg.arr) + '</span></div>';
+    } else if (r.finalWalk) {
+      tl += '<div class="tl-walk"><span>🚶</span><span>' + esc(ST.D[r.finalWalk[0]]) + ' → ' + esc(ST.D[r.to]) + '</span><span>' + tf(t.walkMin, r.finalWalk[1]) + '</span></div>';
+    }
+  });
+  tl += stRow(r.to, r.arr, t.arr, true);
+  tl += '<div class="tl-note">' + esc(t.dataNote) + '</div>';
+  tl += '</div>';
+  $('legs').innerHTML = tl;
+  $('legs').querySelectorAll('.stops-btn').forEach(b => b.addEventListener('click', ev => {
+    ev.stopPropagation();
+    const li = +b.dataset.sli;
+    openStops = (openStops === li) ? -1 : li;
+    renderResult(curResult);
+  }));
+  $('legs').querySelectorAll('.nxt').forEach(b => b.addEventListener('click', ev => {
+    ev.stopPropagation();
+    const li = +b.dataset.li;
+    openNext = (openNext === li) ? -1 : li;
+    renderResult(curResult);
+  }));
+  $('legs').querySelectorAll('.nitem').forEach(b => b.addEventListener('click', () => {
+    if (b.dataset.d0 == null || b.dataset.d0 === '') return;   /* 「今日已无后续班次」占位行同用 .nitem 类却无班次数据, 原代码点击会以 NaN 下标进 reRouteWith 抛 TypeError */
+    const li = +b.dataset.li, pi = +b.dataset.pi, d0 = +b.dataset.d0, ty = +b.dataset.ty;
+    const tm = b.dataset.tm != null && b.dataset.tm !== '' ? +b.dataset.tm : null;
+    const bd = b.dataset.bd != null && b.dataset.bd !== '' ? +b.dataset.bd : null;
+    const al = b.dataset.al != null && b.dataset.al !== '' ? +b.dataset.al : null;
+    const nr = reRouteWith(li, { tmap: tm, board: bd, alight: al, pi, ty, d0 }, null);
+    if (!nr) { toast(T().noConn); return; }
+    curResult.cands[curResult.idx] = { tag: 'alt', r: nr };
+    openNext = -1; openStops = -1;
+    renderResult(curResult);
+    highlightOnMap(nr);
+    stateHash();
+  }));
+}
+function renderNextList(li, lg) {
+  const t = T();
+  const list = nextLegTrips(lg, curResult.day, 6, catOffArr());
+  if (!list.length) return '<div class="nlist"><div class="nitem" style="cursor:default;color:var(--dim)">' + esc(t.nextNone) + '</div></div>';
+  return '<div class="nlist">' + list.map(x => {
+    const off = patOffsets(x.tmap, x.pi);
+    const arrAt = x.d0 + off[0][x.alight];
+    /* 只展示该班次到达下车站的时刻(本地可算)。原实现为给每班标注终点可达性,
+       展开列表要同步跑 6 次全网 RAPTOR —— 长距离路线点开明显卡顿甚至数秒冻结。
+       终点可达性改在点击时验算(接不上会有 toast 提示), 展开恢复为即时。 */
+    const okTxt = tf(t.arriveAt, fmtMinRaw(arrAt));
+    const cls = 'ok';
+    const S2 = TM.T[x.tmap][0];
+    const sameTmap = x.tmap === lg.tmap;
+    return '<div class="nitem" data-li="' + li + '" data-tm="' + x.tmap + '" data-bd="' + x.board + '" data-al="' + x.alight +
+      '" data-pi="' + x.pi + '" data-d0="' + x.d0 + '" data-ty="' + x.ty + '"' + (sameTmap ? '' : ' style="opacity:.86"') + '>' +
+      '<span class="nt">' + fmtMinRaw(x.dep) + '</span>' +
+      '<span class="nty">' + esc(lang === 'ja' ? typeJa(x.ty) : typeZh(x.ty)) + '</span>' +
+      '<span class="nty">' + esc(tf(t.dirTo, ST.D[S2[S2.length - 1]])) + '</span>' +
+      '<span class="nr ' + cls + '">' + esc(okTxt) + '</span>' +
+      '</div>';
+  }).join('') + '</div>';
+}
+
+/* ══════════════════ 时刻基准(全站 JST + 日本祝日→休日) ══════════════════ */
+const JST = 9 * 3600 * 1000;
+const HOLIDAY_BASE = {
+  /* 基表只列法定假日(含落在周日的假日与国民の休日);振替休日一律由下方算法推导,
+     不得手工重复列入,否则会与算法重复生成(如 2026-05-07 假振替)。 */
+  2024: [[1,1],[1,8],[2,11],[2,23],[3,20],[4,29],[5,3],[5,4],[5,5],[7,15],[8,11],[9,16],[9,22],[10,14],[11,3],[11,23]],
+  2025: [[1,1],[1,13],[2,11],[2,23],[3,20],[4,29],[5,3],[5,4],[5,5],[7,21],[8,11],[9,15],[9,23],[10,13],[11,3],[11,23]],
+  2026: [[1,1],[1,12],[2,11],[2,23],[3,20],[4,29],[5,3],[5,4],[5,5],[7,20],[8,11],[9,21],[9,22],[9,23],[10,12],[11,3],[11,23]],
+  2027: [[1,1],[1,11],[2,11],[2,23],[3,21],[4,29],[5,3],[5,4],[5,5],[7,19],[8,11],[9,20],[9,23],[10,11],[11,3],[11,23]],
+  2028: [[1,1],[1,10],[2,11],[2,23],[3,20],[4,29],[5,3],[5,4],[5,5],[7,17],[8,11],[9,18],[9,22],[10,9],[11,3],[11,23]],
+  2029: [[1,1],[1,8],[2,11],[2,23],[3,20],[4,29],[5,3],[5,4],[5,5],[7,16],[8,11],[9,17],[9,23],[10,8],[11,3],[11,23]],
+  2030: [[1,1],[1,14],[2,11],[2,23],[3,20],[4,29],[5,3],[5,4],[5,5],[7,15],[8,11],[9,16],[9,23],[10,14],[11,3],[11,23]],
+};
+const HOLIDAYS = (() => {
+  const set = new Set();
+  const keyOf = d => d.toISOString().slice(0, 10);
+  for (const y in HOLIDAY_BASE) {
+    for (const [m, d] of HOLIDAY_BASE[y]) set.add(`${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`);
+    const days = HOLIDAY_BASE[y].map(([m, d]) => new Date(Date.UTC(y, m-1, d)));
+    for (const dt of days) {
+      if (dt.getUTCDay() === 0) { const nx = new Date(dt); do { nx.setUTCDate(nx.getUTCDate()+1); } while (set.has(keyOf(nx)) || nx.getUTCDay() === 0); set.add(keyOf(nx)); }
+    }
+    for (let t = 0; t < 370; t++) {
+      const dt = new Date(Date.UTC(y, 0, 1+t));
+      const t0 = dt.getTime(), k = keyOf(dt), kp = keyOf(new Date(t0-86400000)), kn = keyOf(new Date(t0+86400000));
+      const wd = dt.getUTCDay();
+      if (wd >= 1 && wd <= 5 && set.has(kp) && set.has(kn) && !set.has(k)) set.add(k);
+    }
+  }
+  return set;
+})();
+function jstParts(ms) { const d = new Date(ms + JST); return { y: d.getUTCFullYear(), m: d.getUTCMonth()+1, d: d.getUTCDate(), wd: d.getUTCDay(), key: d.toISOString().slice(0,10) }; }
+function todayDayMode() {
+  const p = jstParts(Date.now());
+  if (HOLIDAYS.has(p.key)) return 'su';
+  return p.wd === 6 ? 'sa' : p.wd === 0 ? 'su' : 'wd';
+}
+function nowMin() { return Math.floor((Date.now() + JST) % 86400000 / 60000); }
+
+/* ══════════════════ 小地图 ══════════════════ */
+function isDarkUI() { return document.documentElement.getAttribute('data-theme') !== 'light'; }
+function baseStyle() {
+  const dark = isDarkUI();
+  return {
+    version: 8,
+    glyphs: 'https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf',
+    sources: { basemap: { type: 'raster', tiles: ['https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png'], tileSize: 256, minzoom: 2, maxzoom: 17, attribution: '© 国土地理院' } },
+    layers: [
+      { id: 'bg', type: 'background', paint: { 'background-color': dark ? '#101724' : '#eef2f8' } },
+      { id: 'basemap', type: 'raster', source: 'basemap', paint: dark
+          ? { 'raster-saturation': -0.5, 'raster-brightness-max': 0.58, 'raster-brightness-min': 0.05, 'raster-contrast': 0.06, 'raster-opacity': 0.98 }
+          : { 'raster-saturation': 0, 'raster-brightness-max': 1, 'raster-brightness-min': 0, 'raster-contrast': 0, 'raster-opacity': 1 } },
+    ],
+  };
+}
+/* 主题切换时同步底图明暗(避免深色主题下地图糊成一块黑) */
+function syncMapTheme() {
+  if (!mapReady || !map) return;
+  const dark = isDarkUI();
+  try {
+    map.setPaintProperty('bg', 'background-color', dark ? '#101724' : '#eef2f8');
+    map.setPaintProperty('basemap', 'raster-saturation', dark ? -0.5 : 0);
+    map.setPaintProperty('basemap', 'raster-brightness-max', dark ? 0.58 : 1);
+    map.setPaintProperty('basemap', 'raster-brightness-min', dark ? 0.05 : 0);
+    map.setPaintProperty('basemap', 'raster-contrast', dark ? 0.06 : 0);
+  } catch (e) { }
+}
+function mapNote(msg) {
+  const el = $('map');
+  if (!el || el.dataset.note) return;
+  $('mapCtl').classList.remove('show');
+  el.dataset.note = '1';
+  const d = document.createElement('div');
+  d.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:20px;text-align:center;font-size:12px;color:var(--dim);background:var(--panel)';
+  d.textContent = msg || T().mapOff;
+  el.appendChild(d);
+}
+async function initMap() {
+  if (mapReady || mapTried || !SEG) return;
+  mapTried = true;
+  let mg;
+  try { mg = await import('https://cdn.jsdelivr.net/npm/maplibre-gl@6.12.0/dist/maplibre-gl.mjs'); }
+  catch (e) { console.warn('[map] import failed', e); mapNote(T().mapOff); return; }
+  try {
+    map = new mg.Map({
+      container: 'map', style: baseStyle(),
+      center: [137.2, 36.8], zoom: 3.4, minZoom: 1.2, maxZoom: 16,
+      attributionControl: new mg.AttributionControl({ compact: true }),
+      fadeDuration: 0, refreshExpiredTiles: false,
+    });
+  } catch (e) { console.warn('[map] init failed', e); mapNote(T().mapOff); return; }
+  map.on('error', e => console.warn('[map]', e && e.error));
+  map.on('load', () => {
+    mapReady = true;
+    $('mapCtl').classList.add('show');
+    map.addSource('segs', { type: 'geojson', data: SEG });
+    map.addLayer({ id: 'segs-glow', type: 'line', source: 'segs', paint: {
+      'line-color': ['get', 'color'], 'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 2, 2.2, 9, 5, 14, 9],
+      'line-opacity': 0.16, 'line-blur': 2.5 } });
+    map.addLayer({ id: 'segs', type: 'line', source: 'segs', paint: {
+      'line-color': ['get', 'color'], 'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 2, 0.7, 9, 1.7, 14, 3.6],
+      'line-opacity': 0.92 } });
+    map.addSource('hl', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+    map.addLayer({ id: 'hl-line', type: 'line', source: 'hl', layout: { 'line-cap': 'round' }, paint: {
+      'line-color': ['get', 'color'], 'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 2, 2, 9, 4.5, 14, 8],
+      'line-opacity': 0.28, 'line-blur': 1.5 } });
+    map.addLayer({ id: 'hl-core', type: 'line', source: 'hl', layout: { 'line-cap': 'round' }, paint: {
+      'line-color': ['get', 'color'], 'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 2, 1, 9, 2.2, 14, 4],
+      'line-opacity': 0.98 } });
+    map.addSource('hlwalk', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+    map.addLayer({ id: 'hlwalk', type: 'line', source: 'hlwalk', layout: { 'line-cap': 'round' }, paint: {
+      'line-color': '#7dd3fc', 'line-width': 2, 'line-dasharray': [2, 2], 'line-opacity': 0.9 } });
+    map.addSource('hl-sta', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+    map.addLayer({ id: 'hl-sta', type: 'circle', source: 'hl-sta', paint: {
+      'circle-radius': ['interpolate', ['exponential', 1.5], ['zoom'], 3, 6, 10, 9, 14, 13],
+      'circle-color': '#ffffff', 'circle-opacity': 0.25, 'circle-stroke-color': '#6ee7f7', 'circle-stroke-width': 2 } });
+    map.addLayer({ id: 'hl-sta-label', type: 'symbol', source: 'hl-sta', layout: {
+      'text-field': ['get', 'n'], 'text-size': 12, 'text-font': ['Noto Sans Regular'],
+      'text-offset': [0, 1.1], 'text-anchor': 'top', 'text-allow-overlap': false },
+      paint: { 'text-color': '#eaf2ff', 'text-halo-color': 'rgba(6,8,14,0.85)', 'text-halo-width': 1.4 } });
+    refreshTrackColors();
+    if (curResult) highlightOnMap(curResult.cands[curResult.idx].r);
+  });
+}
+/* mapDim: 有查询径路时, 无关线路整体灰化, 只留径路的线路色 */
+let mapDim = false;
+function refreshTrackColors() {
+  if (!map || !mapReady) return;
+  const light = document.documentElement.getAttribute('data-theme') === 'light';
+  const paint = light
+    ? { 'raster-saturation': 0, 'raster-brightness-max': 1.0, 'raster-brightness-min': 0.0, 'raster-contrast': 0.0, 'raster-opacity': 1.0 }
+    : { 'raster-saturation': -0.5, 'raster-brightness-max': 0.58, 'raster-brightness-min': 0.05, 'raster-contrast': 0.06, 'raster-opacity': 0.98 };
+  for (const k in paint) { try { map.setPaintProperty('basemap', k, paint[k]); } catch (e) { } }
+  try {
+    map.setPaintProperty('bg', 'background-color', light ? '#eef2f8' : '#101724');
+    if (mapDim) {
+      /* 聚焦模式: 全网线路灰化退后, 径路成为唯一彩色元素 */
+      const gray = light ? '#a6afba' : '#46505f';
+      map.setPaintProperty('segs', 'line-color', gray);
+      map.setPaintProperty('segs', 'line-opacity', light ? 0.55 : 0.42);
+      map.setPaintProperty('segs-glow', 'line-color', gray);
+      map.setPaintProperty('segs-glow', 'line-opacity', 0.07);
+    } else {
+      map.setPaintProperty('segs', 'line-color', ['get', 'color']);
+      map.setPaintProperty('segs', 'line-opacity', light ? 0.95 : 0.92);
+      map.setPaintProperty('segs-glow', 'line-color', ['get', 'color']);
+      map.setPaintProperty('segs-glow', 'line-opacity', 0.16);
+    }
+    map.setPaintProperty('hl-sta-label', 'text-color', light ? '#0f172a' : '#eaf2ff');
+    map.setPaintProperty('hl-sta-label', 'text-halo-color', light ? 'rgba(255,255,255,0.9)' : 'rgba(6,8,14,0.85)');
+  } catch (e) { }
+}
+let segIndex = null, segAdj = null;
+function buildSegIndex() {
+  segIndex = new Map(); segAdj = new Map();
+  if (!SEG || !SEG.features) return;
+  const F = SEG.features;
+  for (let i = 0; i < F.length; i++) {
+    const p = F[i].properties, a = p.from, b = p.to, ln = p.line;
+    if (!a || !b || !ln) continue;
+    const k = ln + '|' + a + '|' + b;
+    let arr = segIndex.get(k); if (!arr) segIndex.set(k, arr = []);
+    arr.push(i);
+    if (!segAdj.has(a)) segAdj.set(a, []);
+    segAdj.get(a).push({ to: b, line: ln, color: p.color || '#888', fi: i });
+  }
+}
+function legGeomIdx(fromN, toN, line) {
+  let arr = segIndex.get(line + '|' + fromN + '|' + toN) || segIndex.get(line + '|' + toN + '|' + fromN);
+  if (arr) return arr;
+  if (!segAdj.has(fromN)) return null;
+  const q = [[fromN, []]], seen = new Set([fromN]);
+  for (let hop = 0; hop < 9 && q.length; hop++) {
+    const nxt = [];
+    for (const [cur, path] of q) {
+      const edges = segAdj.get(cur);
+      if (!edges) continue;
+      for (let pass = 0; pass < 2; pass++) {
+        for (const e of edges) {
+          if ((pass === 0) !== (e.line === line)) continue;
+          if (e.to === toN) return path.concat(e.fi);
+          if (!seen.has(e.to)) { seen.add(e.to); nxt.push([e.to, path.concat(e.fi)]); }
+        }
+      }
+    }
+    q.length = 0; for (const n of nxt) q.push(n);
+  }
+  return null;
+}
+function highlightOnMap(r) {
+  if (!mapReady || !r) return;
+  const feats = [], walkFeats = [], pts = [];
+  const addPt = ni => pts.push({ type: 'Feature', properties: { n: ST.D[ni] }, geometry: { type: 'Point', coordinates: ST.S[ni] } });
+  addPt(r.from); addPt(r.to);
+  for (const lg of r.legs) {
+    const ti = lg.tmap, S = TM.T[ti][0], L = TM.T[ti][1];
+    const color = lineColorOf(ti, lg.board, lg.alight, lg.ty);
+    const ln = lineName(ti, lg.board, lg.alight, lg.ty);
+    const lineNameJa = ln ? ln[0] : null;
+    if (lg.walkFrom >= 0) walkFeats.push({ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: [ST.S[lg.walkFrom], ST.S[S[lg.board]]] } });
+    for (let i = lg.board; i < lg.alight; i++) {
+      /* 几何优先按该区间真实的线路名匹配(并行区间主导名可能不同), 回落主导名 */
+      const segJa = L[i] >= 0 && LINES[L[i]] ? LINES[L[i]][0] : null;
+      let idxArr = segJa ? legGeomIdx(ST.N[S[i]], ST.N[S[i + 1]], segJa) : null;
+      if ((!idxArr || !idxArr.length) && lineNameJa) idxArr = legGeomIdx(ST.N[S[i]], ST.N[S[i + 1]], lineNameJa);
+      if (idxArr && idxArr.length) {
+        for (const fi of idxArr) feats.push({ type: 'Feature', properties: { color }, geometry: SEG.features[fi].geometry });
+      } else {
+        feats.push({ type: 'Feature', properties: { color }, geometry: { type: 'LineString', coordinates: [ST.S[S[i]], ST.S[S[i + 1]]] } });
+      }
+    }
+  }
+  if (r.finalWalk) walkFeats.push({ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: [ST.S[r.finalWalk[0]], ST.S[r.to]] } });
+  /* 有径路 → 全网灰化, 只保留径路彩色(初次进入时保持原样) */
+  const dim = feats.length > 0;
+  if (dim !== mapDim && mapReady) { mapDim = dim; refreshTrackColors(); }
+  try {
+    map.getSource('hl').setData({ type: 'FeatureCollection', features: feats });
+    map.getSource('hlwalk').setData({ type: 'FeatureCollection', features: walkFeats });
+    map.getSource('hl-sta').setData({ type: 'FeatureCollection', features: pts });
+  } catch (e) { return; }
+  let minX = 1e9, minY = 1e9, maxX = -1e9, maxY = -1e9;
+  const acc = c => {
+    if (!c) return;
+    if (typeof c[0] === 'number') { if (c[0] < minX) minX = c[0]; if (c[0] > maxX) maxX = c[0]; if (c[1] < minY) minY = c[1]; if (c[1] > maxY) maxY = c[1]; }
+    else for (const cc of c) acc(cc);
+  };
+  for (const f of feats) acc(f.geometry.coordinates);
+  for (const f of walkFeats) acc(f.geometry.coordinates);
+  for (const p of pts) acc(p.geometry.coordinates);
+  if (minX <= maxX) {
+    /* 移动端: 抽屉占据下半屏, 径路聚焦到抽屉以上的可见区域 */
+    const pad = isMobileView()
+      ? { top: 64, left: 26, right: 26, bottom: detailVisible()
+          ? Math.round(($('sheetDetail').offsetHeight || 300) + 24)
+          : ($('sheetMain').classList.contains('collapsed') ? 140 : Math.round(window.innerHeight * 0.5)) }
+      : { top: 44, left: Math.round(($('panel').offsetWidth || 400) + 56), right: 44, bottom: 44 };
+    map.fitBounds([[minX, minY], [maxX, maxY]], { padding: pad, maxZoom: 12, duration: 900 });
+  }
+}
+
+/* ══════════════════ 空态: 快速开始(最近搜索) ══════════════════ */
+function recentList() {
+  try { return (JSON.parse(store.get('mjrj_recent') || '[]') || []).filter(x => x && ST.D[x.f] && ST.D[x.t]); }
+  catch (e) { return []; }
+}
+function pushRecent(f, t) {
+  try {
+    const rec = recentList().filter(x => !(x.f === f && x.t === t));
+    rec.unshift({ f: f, t: t });
+    store.set('mjrj_recent', JSON.stringify(rec.slice(0, 4)));
+  } catch (e) { }
+}
+function quickChip(f, t) {
+  return '<button class="qchip" type="button" data-f="' + f + '" data-t="' + t + '">' +
+    '<span class="nm">' + esc(ST.D[f]) + '</span><span class="ar">→</span><span class="nm">' + esc(ST.D[t]) + '</span></button>';
+}
+function renderQuick() {
+  if (!ST.D || !ST.D.length) return;
+  const t = T();
+  $('qRecLb').textContent = t.qRecent;
+  $('qClear').textContent = t.qClear;
+  const rec = recentList().slice(0, 4);
+  $('qRecSec').style.display = rec.length ? '' : 'none';
+  $('qRec').innerHTML = rec.map(x => quickChip(x.f, x.t)).join('');
+  document.querySelectorAll('#quick .qchip').forEach(el => el.addEventListener('click', () => {
+    const f = +el.dataset.f, to = +el.dataset.t;
+    $('rFrom').value = ST.D[f]; $('rTo').value = ST.D[to];
+    state.from = f; state.to = to;
+    syncClr();
+    if (isMobileView()) setCollapsed(false);
+    doSearch();
+  }));
+}
+$('qClear').addEventListener('click', () => {
+  try { store.del('mjrj_recent'); } catch (e) { }
+  renderQuick();
+});
+/* 地图控件: 只留「适配路线」(缩放交给滚轮/捏合手势) */
+function bindMapCtl() {
+  $('mcFit').addEventListener('click', () => {
+    if (!mapReady) return;
+    if (curResult) highlightOnMap(curResult.cands[curResult.idx].r);
+    else map.easeTo({ center: [137.2, 36.8], zoom: 3.4, duration: 700 });
+  });
+}
+bindMapCtl();
+
+/* ══════════════════ hash 持久化 + 启动 ══════════════════ */
+function stateHash() {
+  if (state.from == null || state.to == null) {
+    /* 起/终点不全(如清除了输入框)时必须清掉旧 hash,
+       否则刷新页面会把刚清掉的车站又从链接里解析回来。 */
+    try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { }
+    return;
+  }
+  const p = new URLSearchParams();
+  /* 写显示名 D 而非规范名 N: 重名站(大宮(埼玉県)/大宮(京都府))只有 D 能区分,
+     用 N 会让分享出去的链接在下次打开时解析到错误的同名站。 */
+  p.set('f', ST.D[state.from]); p.set('t', ST.D[state.to]);
+  p.set('m', state.mode); p.set('d', state.day);
+  /* 只在非默认时写入, 保持链接简短 */
+  const cb = CAT_KEY.map(k => state.catOn[k] ? '1' : '0').join('');
+  if (cb !== '11111') p.set('c', cb);
+  if (state.maxXfr !== 5) p.set('x', state.maxXfr);
+  if (state.mode === 'dep' || state.mode === 'arr') p.set('tm', minToTime(timeToMin($('depTime').value)));
+  if (curResult) p.set('i', curResult.idx);
+  history.replaceState(null, '', '#mjrj=' + p.toString());
+}
+function parseHash() {
+  const h = location.hash;
+  if (!h.startsWith('#mjrj=')) return false;
+  let p;
+  try { p = new URLSearchParams(h.slice(6)); } catch (e) { return false; }
+  const f = nodeIdx(p.get('f') || ''), t = nodeIdx(p.get('t') || '');
+  if (f < 0 || t < 0 || f === t) return false;
+  state.from = f; state.to = t;
+  $('rFrom').value = ST.D[f]; $('rTo').value = ST.D[t];
+  const m = p.get('m'); if (['now', 'dep', 'first', 'last', 'arr'].indexOf(m) >= 0) setMode(m);
+  const d = p.get('d'); if (['wd', 'sa', 'su'].indexOf(d) >= 0) { state.day = d; $('daySel').value = d; }
+  /* c = 5 位种别开关位图(顺序同 CAT_KEY), x = 乗換上限 */
+  /* 双向还原: 链接是权威来源, 否则本地存过关闭项时链接里的「开启」位无法覆盖 */
+  const cb = p.get('c');
+  if (cb && cb.length === CAT_N) for (let i = 0; i < CAT_N; i++) state.catOn[CAT_KEY[i]] = cb[i] !== '0';
+  const xv = +p.get('x'); if ([3, 5, 7].indexOf(xv) >= 0) state.maxXfr = xv;
+  syncOptUI();
+  if (p.get('tm')) { $('depTime').value = p.get('tm'); state.depTime = timeToMin(p.get('tm')); }
+  return true;
+}
+(async function bootRun() {
+  try {
+    await loadData();
+    buildTypeFlags();
+    loadOpt();                       /* 恢复上次选择的列车种别 / 乗換上限 */
+    buildIndexes();
+    prepRuntime();
+    buildSegIndex();
+    setMode(state.mode);          /* 必须: timeWrap 的 show 由 setMode 控制 */
+    state.day = todayDayMode();
+    $('daySel').value = state.day;
+    const now5 = Math.floor(nowMin() / 5) * 5;
+    $('depTime').value = minToTime(now5);
+    state.depTime = now5;
+    syncClr();
+    renderQuick();
+    if (parseHash()) doSearch(); else { $('quick').classList.add('show'); $('panel').classList.add('empty'); }
+    syncClr();
+  } catch (e) {
+    console.error(e);
+    $('lmsg').textContent = T().errData + (e && e.message ? ' (' + String(e.message).slice(0, 90) + ')' : '');
+    const b = document.createElement('button');
+    b.className = 'mchip'; b.textContent = T().retry; b.style.marginTop = '4px';
+    b.onclick = () => location.reload();
+    $('loader').appendChild(b);
+    return;
+  }
+  $('loader').classList.add('done');
+  setTimeout(() => { $('loader').style.display = 'none'; initMap(); }, 480);
+})();
+/* ══════════════════ 层级菜单: 詳細条件 折叠/展开 ══════════════════ */
+(function () {
+  const tg = $('optToggle'), col = $('optCollapse');
+  if (!tg || !col) return;
+  const KEY = 'mjrj_optopen';
+  const isWide = () => window.matchMedia('(min-width:900px)').matches;
+  let saved = null;
+  try { saved = store.get(KEY); } catch (e) { }
+  function applyAnim(v) {
+    tg.setAttribute('aria-expanded', v ? 'true' : 'false');
+    col.classList.toggle('open', v);
+    try { store.set(KEY, v ? '1' : '0'); } catch (e) { }
+  }
+  /* 首次访问: 桌面展开、移动端收起(释放空间) */
+  applyAnim(saved === null ? isWide() : saved === '1');
+  tg.addEventListener('click', () => {
+    applyAnim(tg.getAttribute('aria-expanded') !== 'true');
+    /* 移动端抽屉折叠态下展开条件会改变高度 → 重算留白 */
+    if ($('sheetMain').classList.contains('collapsed')) setTimeout(() => setCollapsed(true), 400);
+    else setTimeout(() => { if (curResult) highlightOnMap(curResult.cands[curResult.idx].r); }, 400);
+  });
+})();
+
+/* ══════════════════ 输入框清除按钮 ══════════════════ */
+function syncClr() {
+  [['rFrom', 'from'], ['rTo', 'to']].forEach(p => {
+    const el = $(p[0]); if (!el) return;
+    const f = el.closest('.sfield'); if (!f) return;
+    f.classList.toggle('has-v', !!el.value);
+  });
+}
+['rFrom', 'rTo'].forEach(id => {
+  const el = $(id); if (!el) return;
+  el.addEventListener('input', syncClr);
+  el.addEventListener('change', syncClr);
+});
+document.querySelectorAll('.clr').forEach(b => b.addEventListener('click', () => {
+  const isFrom = b.dataset.clr === 'from';
+  const el = $(isFrom ? 'rFrom' : 'rTo');
+  el.value = '';
+  if (isFrom) state.from = null; else state.to = null;
+  syncClr(); el.focus();
+  hideNoRoute();
+  $('result').classList.remove('show');
+  $('quick').classList.add('show');
+  $('panel').classList.add('empty');
+  stateHash();
+}));
+
+/* ══════════════════ Apple Maps 式两级抽屉 ══════════════════ */
+let detailState = 'hidden';               /* hidden | medium | full */
+const detailVisible = () => detailState !== 'hidden' && isMobileView();
+function openDetail() {
+  if (!isMobileView()) return;
+  const m = $('sheetMain'), d = $('sheetDetail');
+  m.classList.remove('collapsed');
+  m.classList.add('stowed');              /* 隐藏上一级(带输入框的)主抽屉 */
+  d.setAttribute('aria-hidden', 'false');
+  detailState = 'full';
+  d.classList.add('show'); d.classList.remove('medium');
+  d.style.removeProperty('transform');
+  setTimeout(() => { if (curResult) highlightOnMap(curResult.cands[curResult.idx].r); }, 420);
+}
+function closeDetail() {
+  const m = $('sheetMain'), d = $('sheetDetail');
+  detailState = 'hidden';
+  d.classList.remove('show', 'medium');
+  d.style.removeProperty('transform');
+  d.setAttribute('aria-hidden', 'true');
+  m.classList.remove('stowed');
+  setTimeout(() => { if (curResult) highlightOnMap(curResult.cands[curResult.idx].r); }, 420);
+}
+$('backBtn').addEventListener('click', () => { closeDetail(); });
+/* 点概要区也可进入详情(更大的点击目标) */
+$('sumBar').addEventListener('click', () => {
+  if (isMobileView() && curResult && !detailVisible()) openDetail();
+});
+/* 详情抽屉把手: 点击在 full↔medium 间切换, medium 再点则关闭回到主抽屉; 可拖拽 */
+(function () {
+  const g = $('dgrip'), d = $('sheetDetail');
+  let y0 = 0, base = 0, dragging = false, moved = false;
+  const H = () => d.offsetHeight || 1;
+  const medOff = () => Math.max(110, H() - Math.round(window.innerHeight * 0.34));
+  const curOff = () => detailState === 'full' ? 0 : medOff();
+  g.addEventListener('pointerdown', e => {
+    if (!isMobileView() || detailState === 'hidden') return;
+    dragging = true; moved = false; y0 = e.clientY; base = curOff();
+    try { g.setPointerCapture(e.pointerId); } catch (err) { }
+  });
+  g.addEventListener('pointermove', e => {
+    if (!dragging) return;
+    const dy = e.clientY - y0;
+    if (!moved && Math.abs(dy) > 7) { moved = true; d.classList.add('dragging'); }
+    if (!moved) return;
+    d.style.transform = 'translateY(' + Math.min(H(), Math.max(0, base + dy)) + 'px)';
+  });
+  const end = e => {
+    if (!dragging) return; dragging = false;
+    d.classList.remove('dragging'); d.style.removeProperty('transform');
+    if (!moved) {
+      if (detailState === 'full') { detailState = 'medium'; d.classList.add('medium'); }
+      else closeDetail();
+      setTimeout(() => { if (curResult) highlightOnMap(curResult.cands[curResult.idx].r); }, 420);
+      return;
+    }
+    const off = Math.min(H(), Math.max(0, base + (e.clientY - y0)));
+    if (detailState === 'full') {
+      /* 一次拖过「关闭阈值」→ 直接关闭(Apple Maps 式连续拖拽); 否则落到 medium 档 */
+      if (off > medOff() + 90) closeDetail();
+      else if (off > medOff() * 0.45) { detailState = 'medium'; d.classList.add('medium'); }
+    } else {
+      if (off > medOff() + 90) closeDetail();
+      else { detailState = 'full'; d.classList.remove('medium'); }
+    }
+    setTimeout(() => { if (curResult) highlightOnMap(curResult.cands[curResult.idx].r); }, 420);
+  };
+  g.addEventListener('pointerup', end);
+  g.addEventListener('pointercancel', end);
+})();
+/* 视口切到桌面时复位抽屉层级 */
+window.addEventListener('resize', () => { if (!isMobileView() && detailState !== 'hidden') closeDetail(); });
+
+/* ══════════════════ 根滚动锁定说明(无 JS 触摸拦截) ══════════════════
+   早期版本曾在文档级挂 touchmove 守卫在边界 preventDefault, 阻断橡皮筋黑边;
+   但真机上误 preventDefault 会直接掐死抽屉内正常滚动(信息看不全)。
+   现改为纯结构方案, 滚动路径保持原生:
+   1) #panel overflow:hidden —— 隐藏/拖出态抽屉被裁切, 不向文档传播可滚溢出,
+      文档 scrollHeight 恒等于视口, 根无可滚内容(规范级行为, 各 iOS 版本一致);
+   2) body position:fixed —— 应用外壳模式, 根本身不参与滚动;
+   3) html/body/panel overscroll-behavior:none —— 现代浏览器双保险, 阻断滚动链。
+   内层滚动容器(#legs/#result/#routes/#sug)均为原生 overflow:auto, 不加任何
+   overscroll-behavior/JS 拦截, 保证真机触摸滚动 100% 原生行为。 */
+
+</script>
+</body>
+</html>

@@ -1,0 +1,521 @@
+{
+ "source": "2970424931",
+ "name": "Izukyu 8000 Series_Data",
+ "car_length_m": 20.06,
+ "cars": [
+  {
+   "name": "Izukyu 8000 Series_Data",
+   "model": "mc8500.002.glb",
+   "texture": "MainTex_be5147a7.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.064,
+    9.964
+   ],
+   "lod": {
+    "model": "mc8500.002.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "mc8500_lod.obj"
+   },
+   "parts": [
+    {
+     "name": "iz8156_headlight(7FD482E5)",
+     "model": "AdditiveShader_0_0_20_3_59a1ec61.glb",
+     "texture": "MainTex_6a3473c9.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    },
+    {
+     "name": "iz8156_taillight(E2B39CC9)",
+     "model": "AdditiveShader_0_0_20_1_3d2d7724.glb",
+     "texture": "MainTex_6a3473c9.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 1
+     }
+    },
+    {
+     "name": "iz8156_LED(88974DC2)",
+     "model": "AdditiveShader_0_0_20_3_efdb3f85.glb",
+     "texture": "MainTex_6a3473c9.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.1,
+      -7.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.1,
+      -7.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.1,
+      -2.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.1,
+      -2.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.5,
+      1,
+      2.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1,
+      2.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.5,
+      1.1,
+      7.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1.1,
+      7.2
+     ]
+    }
+   ],
+   "lights": [
+    [
+     0.98,
+     1.7,
+     -0.3
+    ],
+    [
+     -0.98,
+     1.7,
+     -0.3
+    ]
+   ]
+  },
+  {
+   "name": "TrailerIzukyu 8000 Series0",
+   "model": "8206Izukyu_8000_Series.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    9.876,
+    9.996
+   ],
+   "lod": {
+    "model": "8206Izukyu_8000_Series.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "m18500_lodIzukyu_8000_Series.obj"
+   },
+   "parts": [
+    {
+     "name": "iz8206_LED(18BD64F1)",
+     "model": "AdditiveShader_0_0_20_3.glb",
+     "texture": "MainTex_6a3473c9.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.1,
+      -7.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.1,
+      -7.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.1,
+      -2.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.1,
+      -2.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.5,
+      1,
+      2.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1,
+      2.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.5,
+      1.1,
+      7.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1.1,
+      7.2
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TrailerIzukyu 8000 Series1",
+   "model": "mc8500.001Izukyu_8000_Series.glb",
+   "texture": "MainTex.ktx2",
+   "flip": true,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.064,
+    9.974
+   ],
+   "lod": {
+    "model": "mc8500.001Izukyu_8000_Series.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "tc8500_lodIzukyu_8000_Series.obj"
+   },
+   "parts": [
+    {
+     "name": "iz8016_headlight(7E220410)",
+     "model": "AdditiveShader_0_0_20_3_59a1ec61.glb",
+     "texture": "MainTex_6a3473c9.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    },
+    {
+     "name": "iz8016_taillight(1061E0BC)",
+     "model": "AdditiveShader_0_0_20_1.glb",
+     "texture": "MainTex_6a3473c9.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 1
+     }
+    },
+    {
+     "name": "iz8016_LED(4FB5EAD2)",
+     "model": "AdditiveShader_0_0_20_3_c2df954b.glb",
+     "texture": "MainTex_6a3473c9.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 3
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.1,
+      -7.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.1,
+      -7.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.1,
+      -2.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.1,
+      -2.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.5,
+      1,
+      2.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1,
+      2.4
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.5,
+      1.1,
+      7.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.5,
+      1.1,
+      7.2
+     ]
+    }
+   ],
+   "lights": [
+    [
+     -1,
+     1.7,
+     -0.3
+    ],
+    [
+     1,
+     1.7,
+     -0.3
+    ]
+   ]
+  }
+ ],
+ "material": {
+  "brightness": 2.667,
+  "alphaCutout": 0.5,
+  "steel": {
+   "skin": 80,
+   "gain": 1.536
+  },
+  "lodSteel": {
+   "skin": 60,
+   "gain": 2.76
+  }
+ },
+ "fixed_by": "izukyu-8000-series-2970424931-izukyu-8000-series-crp-3cf55604"
+}

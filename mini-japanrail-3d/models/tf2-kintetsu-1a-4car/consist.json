@@ -1,0 +1,64 @@
+{
+ "source": "3662409874/Kintetsu_1A02jp",
+ "name": "Kintetsu_1A02jp",
+ "car_length_m": 21.07,
+ "middle_car_length_m": 21.07,
+ "cars": [
+  {
+   "name": "kintetsu1A102",
+   "model": "kintetsu1A102.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "kintetsu1A102_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    10.35,
+    10.35
+   ]
+  },
+  {
+   "name": "kintetsu1A202jp",
+   "model": "kintetsu1A202jp.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "kintetsu1A202jp_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    10.35,
+    10.35
+   ]
+  },
+  {
+   "name": "kintetsu1A302",
+   "model": "kintetsu1A302.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "kintetsu1A302_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    10.35,
+    10.35
+   ]
+  },
+  {
+   "name": "kintetsu1A402jp",
+   "model": "kintetsu1A402jp.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "kintetsu1A402jp_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    10.35,
+    10.35
+   ]
+  }
+ ]
+}

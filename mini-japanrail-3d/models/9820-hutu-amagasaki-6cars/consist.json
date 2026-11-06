@@ -1,0 +1,998 @@
+{
+ "source": "2812376524",
+ "name": "9820_hutu_amagasaki_6cars_Data",
+ "car_length_m": 21.04,
+ "cars": [
+  {
+   "name": "9820_hutu_amagasaki_6cars_Data",
+   "model": "225-0.001.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.581,
+    10.581
+   ],
+   "lod": {
+    "model": "225-0.001.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "9020_1_lod.obj"
+   },
+   "parts": [
+    {
+     "name": "hutu_amagasaki1",
+     "model": "AdditiveShader_0_0_20_4.glb",
+     "texture": "MainTex_28205f81.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 4
+     }
+    },
+    {
+     "name": "赤灯",
+     "model": "AdditiveShader_0_0_20_5.glb",
+     "texture": "MainTex_9016efd5.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 5
+     }
+    },
+    {
+     "name": "種別標識灯1off",
+     "model": "asset_6d26ebae.glb",
+     "texture": "MainTex_71103245.ktx2",
+     "kind": "part",
+     "shader": "Custom/Vehicles/Vehicle/Default",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "種別表示hutu1",
+     "model": "AdditiveShader_0_0_20_4_d0da4c36.glb",
+     "texture": "MainTex_5c803269.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 4
+     }
+    },
+    {
+     "name": "行先表示ama1",
+     "model": "AdditiveShader_0_0_20_4_c1d1035f.glb",
+     "texture": "MainTex_28205f81.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 4
+     }
+    },
+    {
+     "name": "ライト1",
+     "model": "AdditiveShader_0_0_20_5_5ffab028.glb",
+     "texture": "MainTex_55ada4c8.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 5
+     }
+    },
+    {
+     "name": "hutu_saidaiji1",
+     "model": "AdditiveShader_0_0_20_4.glb",
+     "texture": "MainTex_4959b4d0.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 4
+     }
+    },
+    {
+     "name": "行先表示sai1",
+     "model": "AdditiveShader_0_0_20_4_545ccec4.glb",
+     "texture": "MainTex_250723a0.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 4
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.03
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.13
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      0.1
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      7.2
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      7.2
+     ]
+    }
+   ],
+   "lights": [
+    [
+     1.1,
+     3.4,
+     -1
+    ],
+    [
+     -1.1,
+     3.4,
+     -1
+    ]
+   ]
+  },
+  {
+   "name": "Trailer9820_hutu_amagasaki_6cars0",
+   "model": "225-0.0029820_hutu_amagasaki_6cars.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.125,
+    10.455
+   ],
+   "lod": {
+    "model": "225-0.0019820_hutu_amagasaki_6cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "9020_1_lod9820_hutu_amagasaki_6cars.obj"
+   },
+   "parts": [
+    {
+     "name": "hutu_amagasaki2",
+     "model": "AdditiveShader_0_0_20_4.glb",
+     "texture": "MainTex_28205f81.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 4
+     }
+    },
+    {
+     "name": "hutu_saidaiji2",
+     "model": "AdditiveShader_0_0_20_4.glb",
+     "texture": "MainTex_4959b4d0.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 4
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      7.24
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Trailer9820_hutu_amagasaki_6cars1",
+   "model": "225-0.0029820_hutu_amagasaki_6cars.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.255,
+    10.455
+   ],
+   "lod": {
+    "model": "225-0.0019820_hutu_amagasaki_6cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "9020_1_lod9820_hutu_amagasaki_6cars.obj"
+   },
+   "parts": [
+    {
+     "name": "hutu_amagasaki3",
+     "model": "AdditiveShader_0_0_20_4.glb",
+     "texture": "MainTex_28205f81.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 4
+     }
+    },
+    {
+     "name": "hutu_saidaiji3",
+     "model": "AdditiveShader_0_0_20_4.glb",
+     "texture": "MainTex_4959b4d0.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 4
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      7.24
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Trailer9820_hutu_amagasaki_6cars2",
+   "model": "225-0.0019820_hutu_amagasaki_6cars.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.255,
+    10.455
+   ],
+   "lod": {
+    "model": "225-0.0019820_hutu_amagasaki_6cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "9020_1_lod9820_hutu_amagasaki_6cars.obj"
+   },
+   "parts": [
+    {
+     "name": "hutu_amagasaki4",
+     "model": "AdditiveShader_0_0_20_4.glb",
+     "texture": "MainTex_28205f81.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 4
+     }
+    },
+    {
+     "name": "hutu_saidaiji4",
+     "model": "AdditiveShader_0_0_20_4.glb",
+     "texture": "MainTex_4959b4d0.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 4
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      7.24
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Trailer9820_hutu_amagasaki_6cars3",
+   "model": "225-0.0019820_hutu_amagasaki_6cars_9b91344c.glb",
+   "texture": "MainTex.ktx2",
+   "flip": false,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.255,
+    10.455
+   ],
+   "lod": {
+    "model": "225-0.0019820_hutu_amagasaki_6cars.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "9020_1_lod9820_hutu_amagasaki_6cars.obj"
+   },
+   "parts": [
+    {
+     "name": "hutu_amagasaki5",
+     "model": "AdditiveShader_0_0_20_4.glb",
+     "texture": "MainTex_28205f81.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 4
+     }
+    },
+    {
+     "name": "hutu_saidaiji5",
+     "model": "AdditiveShader_0_0_20_4.glb",
+     "texture": "MainTex_4959b4d0.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 4
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      7.24
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Trailer9820_hutu_amagasaki_6cars4",
+   "model": "225-0.0019820_hutu_amagasaki_6cars_5a05435f.glb",
+   "texture": "MainTex.ktx2",
+   "flip": true,
+   "shader": "Custom/Vehicles/Vehicle/Train",
+   "couple": [
+    10.581,
+    10.251
+   ],
+   "lod": {
+    "model": "225-0.0019820_hutu_amagasaki_6cars_5a05435f.stand-in.glb",
+    "texture": "stand-ins.ktx2",
+    "baked_from": "9020_1_lod9820_hutu_amagasaki_6cars_f313e785.obj"
+   },
+   "parts": [
+    {
+     "name": "hutu_amagasaki6",
+     "model": "AdditiveShader_0_0_20_4.glb",
+     "texture": "MainTex_28205f81.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 4
+     }
+    },
+    {
+     "name": "赤灯2",
+     "model": "AdditiveShader_0_0_20_5.glb",
+     "texture": "MainTex_9016efd5.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 5
+     }
+    },
+    {
+     "name": "種別標識灯2off",
+     "model": "asset_6d26ebae.glb",
+     "texture": null,
+     "kind": "part",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "種別表示hutu6",
+     "model": "AdditiveShader_0_0_20_4_d0da4c36.glb",
+     "texture": "MainTex_5c803269.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 4
+     }
+    },
+    {
+     "name": "行先表示ama6",
+     "model": "AdditiveShader_0_0_20_4_c1d1035f.glb",
+     "texture": "MainTex_28205f81.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "forbidden": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 4
+     }
+    },
+    {
+     "name": "ライト2",
+     "model": "AdditiveShader_0_0_20_5_5ffab028.glb",
+     "texture": "MainTex_55ada4c8.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 5
+     }
+    },
+    {
+     "name": "hutu_saidaiji6",
+     "model": "AdditiveShader_0_0_20_4.glb",
+     "texture": "MainTex_4959b4d0.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 4
+     }
+    },
+    {
+     "name": "行先表示sai2",
+     "model": "AdditiveShader_0_0_20_4_545ccec4.glb",
+     "texture": "MainTex_250723a0.ktx2",
+     "kind": "glow",
+     "shader": "Custom/Particles/Additive (Soft)",
+     "when": {
+      "required": [
+       "Reversed"
+      ]
+     },
+     "glow": {
+      "on": 0,
+      "off": 0,
+      "fade": 20,
+      "intensity": 4
+     }
+    }
+   ],
+   "effects": [
+    {
+     "name": "Train Movement",
+     "when": {
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Left",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "forbidden": [
+       "Inverted",
+       "Reversed"
+      ],
+      "required": [
+       "Created"
+      ]
+     }
+    },
+    {
+     "name": "Train Light Right",
+     "when": {
+      "required": [
+       "Inverted",
+       "Reversed"
+      ]
+     }
+    }
+   ],
+   "doors": [
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      7.24
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      -7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      -7.14
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      -1.4,
+      1.2,
+      0
+     ]
+    },
+    {
+     "type": 3,
+     "position": [
+      1.4,
+      1.2,
+      0
+     ]
+    }
+   ],
+   "lights": [
+    [
+     -1.1,
+     3.4,
+     -1
+    ],
+    [
+     1.1,
+     3.4,
+     -1
+    ]
+   ]
+  }
+ ],
+ "tint": "none",
+ "material": {
+  "brightness": 1.693,
+  "lodBrightness": 1.785
+ },
+ "fixed_by": "2812376524"
+}

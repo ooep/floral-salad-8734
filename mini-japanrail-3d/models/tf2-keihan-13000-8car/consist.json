@@ -1,0 +1,120 @@
+{
+ "source": "2965215668/asia/kh13000_8car",
+ "name": "asia/kh13000_8car",
+ "car_length_m": 18.9,
+ "middle_car_length_m": 18.9,
+ "cars": [
+  {
+   "name": "ciina_kh13000type1",
+   "model": "ciina_kh13000type1.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "ciina_kh13000type1_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    9.343,
+    9.536
+   ]
+  },
+  {
+   "name": "ciina_kh13000type3",
+   "model": "ciina_kh13000type3.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "ciina_kh13000type3_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    9.363,
+    9.536
+   ]
+  },
+  {
+   "name": "ciina_kh13000type3",
+   "model": "ciina_kh13000type3.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "ciina_kh13000type3_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    9.363,
+    9.536
+   ]
+  },
+  {
+   "name": "ciina_kh13000type3",
+   "model": "ciina_kh13000type3.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "ciina_kh13000type3_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    9.363,
+    9.536
+   ]
+  },
+  {
+   "name": "ciina_kh13000type2",
+   "model": "ciina_kh13000type2.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "ciina_kh13000type2_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    9.363,
+    9.536
+   ]
+  },
+  {
+   "name": "ciina_kh13000type3",
+   "model": "ciina_kh13000type3.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "ciina_kh13000type3_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    9.363,
+    9.536
+   ]
+  },
+  {
+   "name": "ciina_kh13000type3",
+   "model": "ciina_kh13000type3.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "ciina_kh13000type3_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    9.363,
+    9.536
+   ]
+  },
+  {
+   "name": "ciina_kh13000type4",
+   "model": "ciina_kh13000type4.glb",
+   "texture": null,
+   "flip": true,
+   "lod": {
+    "model": "ciina_kh13000type4_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    9.343,
+    9.536
+   ]
+  }
+ ]
+}

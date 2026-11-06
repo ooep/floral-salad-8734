@@ -1,0 +1,124 @@
+{
+ "source": "2983744770/nAE/nAE_8car",
+ "name": "nAE/nAE_8car",
+ "car_length_m": 19.85,
+ "middle_car_length_m": 19.45,
+ "cars": [
+  {
+   "name": "1",
+   "model": "1.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "1_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    9.9,
+    9.5
+   ]
+  },
+  {
+   "name": "2",
+   "model": "2.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "2_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    9.5,
+    9.5
+   ]
+  },
+  {
+   "name": "3",
+   "model": "3.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "3_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    9.5,
+    9.5
+   ]
+  },
+  {
+   "name": "4",
+   "model": "4.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "4_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    9.5,
+    9.5
+   ]
+  },
+  {
+   "name": "5",
+   "model": "5.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "5_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    9.5,
+    9.5
+   ]
+  },
+  {
+   "name": "6",
+   "model": "6.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "6_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    9.5,
+    9.5
+   ]
+  },
+  {
+   "name": "7",
+   "model": "7.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "7_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    9.5,
+    9.5
+   ]
+  },
+  {
+   "name": "8",
+   "model": "8.glb",
+   "texture": null,
+   "flip": false,
+   "lod": {
+    "model": "8_lod.glb",
+    "texture": null
+   },
+   "couple": [
+    9.5,
+    9.9
+   ]
+  }
+ ],
+ "material": {
+  "brightness": 1.049
+ },
+ "fixed_by": "tf2-ae-8car"
+}

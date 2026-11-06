@@ -160,7 +160,7 @@ const I18N = {
     about1:'Mini JapanRail — 全日本列车实时运行可视化地图（列車走行位置・運行情報）。基于本地时刻表在浏览器端实时推算新干线・特急・在来线・地铁・路面电车约 4,000 列列车的走行位置，支持 3D 地球投影、时钟回放与路线搜索。', about2:'收录全国 600+ 条铁路线路、8,900+ 个车站。列车数据源为日本全国铁路计划时刻表，每周自动刷新；底图来自 OpenFreeMap / 国土地理院等公开地图服务。', about3:'本站为个人爱好项目，数据仅供学习参考。', about4:'隐私政策',
     about5:'主要功能：实时列车位置・走行位置动画 / 3D 地球投影与 2D/3D 视角切换（矢量底图 3D 建筑）/ 时钟回放（0.5–32×）/ 起终点路线搜索 / 车站查询与途经线路 / 运行日切换 / 线路类型过滤 / 日・中・英三语。', about6:'浏览静态页面：',
     about7:'车站配线图：ooep/jr-track（源自 配線略図.net 配线图），许可 CC BY 4.0。',
-    sw1:'车站标签', sw2:'轨道光晕', sw3:'车站点', sw4:'底图瓦片', sw5:'列车光晕', sw6:'复制异常车辆', sw7:'列车悬浮提示', sw8:'车站轮廓', sw9:'出入口', sw10:'详细股道', sw12:'车站徽章', sw13:'3D 列车模型', sw14:'实时列车延误', dlyAgo:'来自互联网 · 数据 {0} 分钟前', dlyLate:'晚点', cfoTitle:'车内状况', cfoLow:'宽松', cfoMid:'略挤', cfoHigh:'拥挤', cfoAvg:'5日均', cfoGreen:'绿色车厢', cfoTemp:'车内温度', cfoAccess:'无障碍', cfoWheel:'轮椅', cfoStroller:'婴儿车', cfoWifi:'Wi-Fi', cfoToilet:'厕所', cfoLuggage:'行李架', cfoWifiNote8000:'JR四国官方：8000/8600系车设有免费Wi-Fi，8000系仅部分车厢（非实时信息）', cfoWifiNote2700:'JR四国官方：2700/2600系车设有免费Wi-Fi（非实时信息）', cfoWifiNoteML:'JR四国官方：快速マリンライナー仅绿色车厢・指定席设有免费Wi-Fi（非实时信息）', cfoCarsHint:'点按展开每车厢拥挤度', cfoCarTip:'{0}号车 {1}%',
+    sw1:'车站标签', sw2:'轨道光晕', sw3:'车站点', sw4:'底图瓦片', sw5:'列车光晕', sw6:'复制异常车辆', sw7:'列车悬浮提示', sw8:'车站轮廓', sw9:'出入口', sw10:'详细股道', sw12:'车站徽章', sw13:'3D 列车模型', sw14:'实时列车延误', t3dNoGl:'当前浏览器不支持 WebGL2,3D 列车模型不可用', t3dNoDev:'设备性能不足,3D 列车模型已停用(可在设置中查看开关)', t3dModelFail:'部分 3D 模型加载失败,相关列车暂以 2D 图标显示', dlyAgo:'来自互联网 · 数据 {0} 分钟前', dlyLate:'晚点', cfoTitle:'车内状况', cfoLow:'宽松', cfoMid:'略挤', cfoHigh:'拥挤', cfoAvg:'5日均', cfoGreen:'绿色车厢', cfoTemp:'车内温度', cfoAccess:'无障碍', cfoWheel:'轮椅', cfoStroller:'婴儿车', cfoWifi:'Wi-Fi', cfoToilet:'厕所', cfoLuggage:'行李架', cfoWifiNote8000:'JR四国官方：8000/8600系车设有免费Wi-Fi，8000系仅部分车厢（非实时信息）', cfoWifiNote2700:'JR四国官方：2700/2600系车设有免费Wi-Fi（非实时信息）', cfoWifiNoteML:'JR四国官方：快速マリンライナー仅绿色车厢・指定席设有免费Wi-Fi（非实时信息）', cfoCarsHint:'点按展开每车厢拥挤度', cfoCarTip:'{0}号车 {1}%',
     m3dRowL:'模型', m3dBtn:'查看 3D 模型', m3dHint:'拖动旋转 · 滚轮/双指缩放 · 选视点自动回中', m3dLoadT:'正在加载模型…', m3dNone:'该车型暂无 3D 模型', m3dVpL:'视点', m3dMdL:'编组', m3dVp:['斜视','侧面','正面','俯视'], m3dMdAll:'全编组', m3dMdHead:'先头车', m3dMdAuto:'自动旋转', m3dDOp:'运营商', m3dDCars:'编组', m3dDLen:'编组长', m3dDDim:'车体', m3dDUnit:'辆', m3dSaved:'已保存截图',
     sw11:'性能改善', sw11Note:'只渲染新干线・特急，放大后逐级加入其他列车',
     modeT:'列车显示', mode3d:'3D', modeIcon:'图标', modeCute:'可爱',
@@ -206,7 +206,7 @@ const I18N = {
     about1:'ミニ日本鉄道 — 全国鉄道リアルタイム3Dマップ（列車走行位置・運行情報）。ローカル時刻表から新幹線・特急・在来線・地下鉄・路面電車 約 4,000 列の走行位置をブラウザ上でリアルタイムに再現。3D 地球投影・時刻表再生・経路検索に対応。', about2:'全国 600 以上の路線・8,900 以上の駅を収録。列車データは全国鉄道の計画時刻表で毎週自動更新。ベースマップは OpenFreeMap / 国土地理院などの公開地図サービスを利用しています。', about3:'個人の趣味プロジェクトです。データは学習・参考用です。', about4:'プライバシーポリシー',
     about5:'主な機能：リアルタイム列車位置・走行位置アニメーション / 3D 地球投影と 2D/3D 視点切替（ベクター地図の 3D 建物）/ 時刻表再生（0.5〜32倍速）/ 経路検索 / 駅検索と経由路線 / 運行日切替 / 路線種別フィルタ / 日・中・英 3 言語。', about6:'静的ページを見る：',
     about7:'駅配線図：ooep/jr-track（配線略図.net の配線図由来）、ライセンス CC BY 4.0。',
-    sw1:'駅ラベル', sw2:'軌道グロー', sw3:'駅ドット', sw4:'背景タイル', sw5:'列車グロー', sw6:'異常列車コピー', sw7:'列車ホバーチップ', sw8:'駅舎ポリゴン', sw9:'出入口', sw10:'詳細軌道', sw12:'駅バッジ', sw13:'3D 列車モデル', sw14:'リアルタイム列車遅延', dlyAgo:'インターネットから · データ {0} 分前', dlyLate:'遅延', cfoTitle:'車内状況', cfoLow:'空いている', cfoMid:'やや混雑', cfoHigh:'混雑', cfoAvg:'5日平均', cfoGreen:'グリーン車', cfoTemp:'車内温度', cfoAccess:'バリアフリー', cfoWheel:'車いす', cfoStroller:'ベビーカー', cfoWifi:'Wi-Fi', cfoToilet:'トイレ', cfoLuggage:'荷物置き', cfoWifiNote8000:'JR四国公式：8000系・8600系車両で無料Wi-Fiあり。8000系は一部車両のみ（リアルタイム情報ではありません）', cfoWifiNote2700:'JR四国公式：2700系・2600系車両で無料Wi-Fiあり（リアルタイム情報ではありません）', cfoWifiNoteML:'JR四国公式：快速マリンライナーはグリーン席・指定席のみ無料Wi-Fiあり（リアルタイム情報ではありません）', cfoCarsHint:'車両別の混雑度を表示', cfoCarTip:'{0}号車 {1}%',
+    sw1:'駅ラベル', sw2:'軌道グロー', sw3:'駅ドット', sw4:'背景タイル', sw5:'列車グロー', sw6:'異常列車コピー', sw7:'列車ホバーチップ', sw8:'駅舎ポリゴン', sw9:'出入口', sw10:'詳細軌道', sw12:'駅バッジ', sw13:'3D 列車モデル', sw14:'リアルタイム列車遅延', t3dNoGl:'このブラウザは WebGL2 非対応のため 3D 列車モデルは利用できません', t3dNoDev:'端末性能が不足のため 3D 列車モデルを無効化しました(設定でスイッチ確認可)', t3dModelFail:'一部の 3D モデルの読み込みに失敗したため、該当列車は 2D アイコンで表示中です', dlyAgo:'インターネットから · データ {0} 分前', dlyLate:'遅延', cfoTitle:'車内状況', cfoLow:'空いている', cfoMid:'やや混雑', cfoHigh:'混雑', cfoAvg:'5日平均', cfoGreen:'グリーン車', cfoTemp:'車内温度', cfoAccess:'バリアフリー', cfoWheel:'車いす', cfoStroller:'ベビーカー', cfoWifi:'Wi-Fi', cfoToilet:'トイレ', cfoLuggage:'荷物置き', cfoWifiNote8000:'JR四国公式：8000系・8600系車両で無料Wi-Fiあり。8000系は一部車両のみ（リアルタイム情報ではありません）', cfoWifiNote2700:'JR四国公式：2700系・2600系車両で無料Wi-Fiあり（リアルタイム情報ではありません）', cfoWifiNoteML:'JR四国公式：快速マリンライナーはグリーン席・指定席のみ無料Wi-Fiあり（リアルタイム情報ではありません）', cfoCarsHint:'車両別の混雑度を表示', cfoCarTip:'{0}号車 {1}%',
     m3dRowL:'モデル', m3dBtn:'3Dモデルを見る', m3dHint:'ドラッグで回転・ホイール/2本指でズーム · 視点を選ぶと中央に戻ります', m3dLoadT:'モデルを読み込み中…', m3dNone:'この車種の3Dモデルはありません', m3dVpL:'視点', m3dMdL:'編成', m3dVp:['斜め','側面','正面','上面'], m3dMdAll:'全編成', m3dMdHead:'先頭車', m3dMdAuto:'自動回転', m3dDOp:'事業者', m3dDCars:'編成', m3dDLen:'編成長', m3dDDim:'車体', m3dDUnit:'両', m3dSaved:'スクリーンショットを保存しました',
     sw11:'パフォーマンス改善', sw11Note:'低ズームでは新幹線・特急のみ描画し、拡大するにつれ他の列車を段階的に追加',
     modeT:'列車表示', mode3d:'3D', modeIcon:'アイコン', modeCute:'かわいい',
@@ -252,7 +252,7 @@ const I18N = {
     about1:'Mini JapanRail — a real-time 3D map of all Japan railways (train live positions). Driven by local timetables, it animates the positions of ~4,000 Shinkansen, limited express, local, subway and tram trains, with 3D globe projection, timetable replay and route search.', about2:'Covers 600+ railway lines and 8,900+ stations. Train data comes from scheduled timetables for all Japan railways, auto-refreshed weekly; basemaps are served by public map services such as OpenFreeMap and GSI Japan.', about3:'A personal hobby project — data provided for reference only.', about4:'Privacy Policy',
     about5:'Key features: live train positions / 3D globe projection with 2D/3D view toggle (extruded buildings on the vector basemap) / timetable replay (0.5–32×) / route search / station lookup and its lines / service-day switch / line-type filter / Japanese, Chinese and English UI.', about6:'Browse static pages:',
     about7:'Station track diagrams: ooep/jr-track (derived from haisenryakuzu.net diagrams), license CC BY 4.0.',
-    sw1:'Station labels', sw2:'Track glow', sw3:'Station dots', sw4:'Basemap tiles', sw5:'Train glow', sw6:'Copy off-rail trains', sw7:'Train hover tooltip', sw8:'Station footprint', sw9:'Station exits', sw10:'Detailed tracks', sw12:'Station badges', sw13:'3D train models', sw14:'Live train delays', dlyAgo:'from web · data {0} min ago', dlyLate:'delayed', cfoTitle:'Onboard conditions', cfoLow:'Roomy', cfoMid:'Busy', cfoHigh:'Crowded', cfoAvg:'5-day avg', cfoGreen:'Green car', cfoTemp:'Car temp', cfoAccess:'Accessible', cfoWheel:'wheelchair', cfoStroller:'stroller', cfoWifi:'Wi-Fi', cfoToilet:'toilet', cfoLuggage:'luggage', cfoWifiNote8000:'JR Shikoku: free Wi-Fi on 8000/8600 series trains; some 8000-series cars only (not live data)', cfoWifiNote2700:'JR Shikoku: free Wi-Fi on 2700/2600 series trains (not live data)', cfoWifiNoteML:'JR Shikoku: Marine Liner offers free Wi-Fi in green cars and reserved seats only (not live data)', cfoCarsHint:'Tap for per-car crowding', cfoCarTip:'Car {0}: {1}%',
+    sw1:'Station labels', sw2:'Track glow', sw3:'Station dots', sw4:'Basemap tiles', sw5:'Train glow', sw6:'Copy off-rail trains', sw7:'Train hover tooltip', sw8:'Station footprint', sw9:'Station exits', sw10:'Detailed tracks', sw12:'Station badges', sw13:'3D train models', sw14:'Live train delays', t3dNoGl:'WebGL2 is not supported in this browser, so 3D train models are unavailable', t3dNoDev:'3D train models are disabled on this device due to limited performance (see the switch in Settings)', t3dModelFail:'Some 3D models failed to load; those trains are shown as 2D icons for now', dlyAgo:'from web · data {0} min ago', dlyLate:'delayed', cfoTitle:'Onboard conditions', cfoLow:'Roomy', cfoMid:'Busy', cfoHigh:'Crowded', cfoAvg:'5-day avg', cfoGreen:'Green car', cfoTemp:'Car temp', cfoAccess:'Accessible', cfoWheel:'wheelchair', cfoStroller:'stroller', cfoWifi:'Wi-Fi', cfoToilet:'toilet', cfoLuggage:'luggage', cfoWifiNote8000:'JR Shikoku: free Wi-Fi on 8000/8600 series trains; some 8000-series cars only (not live data)', cfoWifiNote2700:'JR Shikoku: free Wi-Fi on 2700/2600 series trains (not live data)', cfoWifiNoteML:'JR Shikoku: Marine Liner offers free Wi-Fi in green cars and reserved seats only (not live data)', cfoCarsHint:'Tap for per-car crowding', cfoCarTip:'Car {0}: {1}%',
     m3dRowL:'Model', m3dBtn:'View 3D model', m3dHint:'Drag to rotate · Scroll/pinch to zoom · Picking a view re-centers', m3dLoadT:'Loading model…', m3dNone:'No 3D model for this type', m3dVpL:'View', m3dMdL:'Consist', m3dVp:['Diagonal','Side','Front','Top'], m3dMdAll:'Full', m3dMdHead:'Head car', m3dMdAuto:'Auto-rotate', m3dDOp:'Operator', m3dDCars:'Cars', m3dDLen:'Length', m3dDDim:'Car', m3dDUnit:' cars', m3dSaved:'Screenshot saved',
     sw11:'Performance boost', sw11Note:'Only Shinkansen and limited express are drawn at low zoom; other trains are added progressively as you zoom in',
     modeT:'Train display', mode3d:'3D', modeIcon:'Icon', modeCute:'Cute',
@@ -4657,6 +4657,10 @@ function updateTrains(M, dtms) {
      若仍用它做门限会把在屏列车挡在推送门外(3D 淡入却无推送→inst 淡出) */
   const T3DH = (t3dMasterOn && z >= ((window.__T3D && window.__T3D.baseMaxZoom) || map.getMaxZoom()) - 1.8 && window.__T3D && window.__T3D.f > 0.01) ? window.__T3D : null;
   if (T3DH) T3DH.begin();
+  /* EXP 模型加载失败不再静默:有映射候选但 M3D 失败表非空 → 每会话一次 toast 说明已回退 2D */
+  if (T3DH && !t3dFailToastDone && (frameC % 240 === 0) && window.M3D && window.M3D.__dbg) {
+    try { if ((window.M3D.__dbg().failed || []).length) { t3dFailToastDone = true; toast(T().t3dModelFail, 4000); } } catch (e) {}
+  }
   let stopped = -1;
   drawnPosSeen.clear();
   /* EXP 去重优选预判:用上一帧缓存位置/航向/槽位预投 dkey,有 3D 映射者胜出 ——
@@ -6391,8 +6395,20 @@ let wRect = null;
    移动端/低端(IS_MOBILE/PERF_LOW)不加载 → 全程保持 2D 图标(回退策略) */
 let t3dModP = null;
 let lastT3dPushT = 0; /* EXP train3d:静态帧补推送节流戳 */
+/* EXP 真机能力门(替代一刀切 IS_MOBILE):WebGL2 必备;移动端另需 ≥4 核且 ≥3GB 内存
+   (navigator.deviceMemory 缺省按 4 计,桌面不受限)。不满足时给出用户可见 toast,不静默。 */
+const t3dCapable = (() => {
+  if (!hasWebgl2) return 'nogl';
+  if (IS_MOBILE && ((navigator.hardwareConcurrency || 4) < 4 || (navigator.deviceMemory || 4) < 3)) return 'lowdev';
+  return '';
+})();
+let t3dCapToastDone = false, t3dFailToastDone = false;
 function t3dEnsure() {
-  if (t3dModP || IS_MOBILE || PERF_LOW || !t3dMasterOn) return; /* 主开关关:零请求(不 import train3d/three/模型) */
+  if (t3dModP || PERF_LOW || !t3dMasterOn) return; /* 主开关关:零请求(不 import train3d/three/模型) */
+  if (t3dCapable) { /* 能力不足:用户可见原因,每会话一次 */
+    if (!t3dCapToastDone) { t3dCapToastDone = true; try { toast(t3dCapable === 'nogl' ? T().t3dNoGl : T().t3dNoDev, 4000); } catch (e) {} }
+    return;
+  }
   t3dModP = import('https://jr-static.suki.ing/app/train3d.js?v=t3d1')
     .then(m => { m.init(map); })
     .catch(e => { pushErrSafe('t3d ' + (e && e.message || e)); });

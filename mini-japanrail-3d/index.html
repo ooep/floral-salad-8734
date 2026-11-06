@@ -366,10 +366,12 @@ button { font-family:inherit; }
      慢网络下要等整包才出现加载条。 -->
 <!-- 抽屉改版(2026-11-04 合并):CDN 引用已还原并 bump ?v=20261105-sd1(站点圆点线路色;与 perf 的 20261108-perf1 并存避让) -->
 <!-- 信息板原生整合(2026-11-05):验收完毕,CDN 绝对地址已还原并 bump ?v=20261105-ib2 破缓存 -->
-<!-- 列车抽屉终着站时刻修复(2026-11-06):app.js bump ?v=20261106-ib7 破缓存 -->
+<!-- 列车抽屉终着站时刻修复(2026-11-06):app.js bump ?v=20261106-ib8 破缓存
+     (任务原定 ib7,但 ib 线已先行上线占用 20261106-ib7 且内容不同;复用同串会使
+      破缓存失效——b8592de 事故同类,故顺延取下一个未占用串 ib8) -->
 <link rel="preload" as="style" href="https://jr-static.suki.ing/app/app.css?v=20261105-ib2" onload="this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://jr-static.suki.ing/app/app.css?v=20261105-ib2"></noscript>
-<link rel="modulepreload" href="https://jr-static.suki.ing/app/app.js?v=20261106-ib7" crossorigin="anonymous">
+<link rel="modulepreload" href="https://jr-static.suki.ing/app/app.js?v=20261106-ib8" crossorigin="anonymous">
 
 </head>
 <body>
@@ -939,7 +941,7 @@ window.addEventListener('unhandledrejection', e => { __pushErr('REJ ' + (e.reaso
     "three/addons/": "https://jr-static.suki.ing/vendor/three/jsm/"
 } }
 </script>
-<script type="module" src="https://jr-static.suki.ing/app/app.js?v=20261106-ib7"></script>
+<script type="module" src="https://jr-static.suki.ing/app/app.js?v=20261106-ib8"></script>
 <div id="m3dMask"></div>
 <div id="m3dViewer">
   <canvas id="m3dCanvas"></canvas>

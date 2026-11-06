@@ -6390,7 +6390,7 @@ let t3dModP = null;
 let lastT3dPushT = 0; /* EXP train3d:静态帧补推送节流戳 */
 function t3dEnsure() {
   if (t3dModP || IS_MOBILE || PERF_LOW) return;
-  t3dModP = import('./train3d.js?v=t3d1')
+  t3dModP = import('https://jr-static.suki.ing/app/train3d.js?v=t3d1')
     .then(m => { m.init(map); })
     .catch(e => { pushErrSafe('t3d ' + (e && e.message || e)); });
 }

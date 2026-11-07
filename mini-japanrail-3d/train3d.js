@@ -87,7 +87,7 @@ const axisChecked = new Set();
 
 window.__T3D = {
   f: 0, zOn: Z_ON,
-  push(trip, lng, lat, brg, path) { frameFlat.push(trip, lng, lat, brg, path); },
+  push(trip, lng, lat, brg, path, color) { frameFlat.push(trip, lng, lat, brg, path, color); },
   begin() { frameFlat.length = 0; },
   end() { frameSeq++; },
   wake() { if (map && layerOn) map.triggerRepaint(); },
@@ -233,16 +233,55 @@ const T3DLAYER = {
 
 const candTmp = [];
 const pendingMeta = [];
+/* ── 占位编组(对标 dokorail.jp 的见本车辆):模型加载失败/缺失/轴向不可校正时按节生成
+   线路色盒车,高倍缩放永不整列不画。尺寸口径取 dokorail train-body 默认:车体宽 2.8m、
+   高 3.65m、窗带 1.55–1.9m;车体长=节长−0.6m(其 Ve_gap 视觉缝)。占位车已是极简几何,
+   不再走 stand-in 加载。 ── */
+const PH_BODY = 0xd4d6d9, PH_ROOF = 0xa2a6ab, PH_WIN = 0x263238;
+function synthMeta() {
+  const cars = []; let z = 0;
+  for (let i = 0; i < 4; i++) { const L = 20; cars.push({ model: null, len: L, d: z }); z += L + 0.03; }
+  return { cars, length: z - 0.03, n: 4, synth: true };
+}
+function placeholderTmpl(meta, colorHex) {
+  const m = (meta && meta.cars && meta.cars.length) ? meta : synthMeta();
+  const group = new THREE.Group();
+  const bodyMat = new THREE.MeshStandardMaterial({ color: PH_BODY, roughness: 0.55, metalness: 0 });
+  const roofMat = new THREE.MeshStandardMaterial({ color: PH_ROOF, roughness: 0.7, metalness: 0 });
+  const winMat = new THREE.MeshStandardMaterial({ color: PH_WIN, roughness: 0.35, metalness: 0 });
+  let bandCol = 0x888888;
+  try { if (colorHex) bandCol = new THREE.Color(colorHex); } catch (e) {}
+  const bandMat = new THREE.MeshStandardMaterial({ color: bandCol, roughness: 0.5, metalness: 0 });
+  const carNodes = [];
+  for (let i = 0; i < m.cars.length; i++) {
+    const L = Math.max(6, (m.cars[i].len || 20) - 0.6);
+    const wrap = new THREE.Group();
+    wrap.userData.m3dCar = 1;
+    const body = new THREE.Mesh(new THREE.BoxGeometry(2.8, 2.9, L), bodyMat);
+    body.position.y = 0.5 + 1.45;
+    const band = new THREE.Mesh(new THREE.BoxGeometry(2.86, 0.35, L * 0.995), bandMat);
+    band.position.y = 1.375;
+    const win = new THREE.Mesh(new THREE.BoxGeometry(2.84, 0.35, L * 0.99), winMat);
+    win.position.y = 1.725;
+    const roof = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.25, L * 0.98), roofMat);
+    roof.position.y = 3.525;
+    wrap.add(body, band, win, roof);
+    wrap.traverse(o => { if (o.isMesh) o.frustumCulled = false; });
+    group.add(wrap);
+    carNodes.push({ node: wrap, d: m.cars[i].d || 0 });
+  }
+  return { group, cars: carNodes, length: m.length || m.cars.length * 20, path: 'placeholder', placeholder: true };
+}
 function consume(now) {
   const v = view();
   const W = v.W, c = v.center;
   const cwx = (c.lng + 180) / 360 * W, cwy = mercY(c.lat) * W;
   candTmp.length = 0;
-  for (let i = 0; i < frameFlat.length; i += 5) {
-    const trip = frameFlat[i], lng = frameFlat[i + 1], lat = frameFlat[i + 2], brg = frameFlat[i + 3], path = frameFlat[i + 4];
+  for (let i = 0; i < frameFlat.length; i += 6) {
+    const trip = frameFlat[i], lng = frameFlat[i + 1], lat = frameFlat[i + 2], brg = frameFlat[i + 3], path = frameFlat[i + 4], color = frameFlat[i + 5];
     const wx = (lng + 180) / 360 * W, wy = mercY(lat) * W;
     const dx = wx - cwx, dy = wy - cwy;
-    candTmp.push({ trip, lng, lat, brg, path, d2: dx * dx + dy * dy });
+    candTmp.push({ trip, lng, lat, brg, path, color, d2: dx * dx + dy * dy });
   }
   frameFlat.length = 0;
   stats.cand = candTmp.length;
@@ -257,18 +296,33 @@ function consume(now) {
       insts.set(cd.trip.t, it);
     }
     it.lng = cd.lng; it.lat = cd.lat; it.brg = cd.brg; it.seenFr = stats.frame; it.lastPush = now;
+    if (cd.color) it.phColor = cd.color;
     if (!it.req) {
       it.pending = true;
-      it.req = Promise.all([window.M3D && window.M3D.ensure(it.path), consistMeta(it.path)]).then(([tmpl, meta]) => {
-        it.pending = false;
-        if (!tmpl || !meta || it.dead) { it.dead = true; return; }
-        checkAxis(it.path, tmpl, meta);
-        if (!window.__T3D.modelOk(it.path)) { it.dead = true; return; }
-        it.tmpl = tmpl; it.carsMeta = meta;
+      /* 占位回退:真模板不可用(加载失败/缺失/轴向不可校正)时用线路色盒车顶上,
+         3D 层永不整列不画;让位门禁照常生效(占位车真实渲染才藏 2D) */
+      const adopt = (tmpl, meta, isPh) => {
+        it.tmpl = tmpl; it.carsMeta = meta; it.isPlaceholder = !!isPh;
         it.lenM = tmpl.length;   /* 必须先于 buildRoot：gap/carD 依赖 lenM（曾因此 NaN 致全列只画头车） */
         it.rootF = buildRoot(tmpl, it);
         it.aFrom = 0; it.aTo = 1; it.aT0 = performance.now();
-      }).catch(() => { it.pending = false; it.dead = true; });
+        if (isPh) stats.ph = (stats.ph || 0) + 1;
+      };
+      it.req = Promise.all([window.M3D && window.M3D.ensure(it.path), consistMeta(it.path)]).then(([tmpl, meta]) => {
+        it.pending = false;
+        if (it.dead) return;
+        const useMeta = meta || synthMeta();
+        if (tmpl && window.__T3D.modelOk(it.path)) {
+          checkAxis(it.path, tmpl, useMeta);
+          if (window.__T3D.modelOk(it.path)) { adopt(tmpl, useMeta, false); return; }
+        }
+        adopt(placeholderTmpl(useMeta, it.phColor), useMeta, true);
+      }).catch(() => {
+        it.pending = false;
+        if (it.dead) return;
+        const useMeta = synthMeta();
+        adopt(placeholderTmpl(useMeta, it.phColor), useMeta, true);
+      });
     }
   }
   for (const [k, it] of insts) {
@@ -455,7 +509,7 @@ function placeInstances(now) {
                             : (pxLen < LOD_PX ? 'stand' : 'full'));
     if (wantLod !== it.lod) {
       it.lod = wantLod;
-      if (wantLod === 'stand' && !it.stand && it.carsMeta && !it.reqS) {
+      if (wantLod === 'stand' && !it.stand && it.carsMeta && !it.reqS && !it.isPlaceholder) {
         it.reqS = standTmpl(it.path, it.carsMeta).then(st => {
           if (!st || it.dead) return;
           it.stand = st;
@@ -1052,7 +1106,7 @@ window.__t3dProbe = () => {
 };
 
 const _push = window.__T3D.push;
-window.__T3D.push = (trip, lng, lat, brg, path, M2, kmh) => {
-  _push(trip, lng, lat, brg, path);
+window.__T3D.push = (trip, lng, lat, brg, path, M2, kmh, color) => {
+  _push(trip, lng, lat, brg, path, color);
   pendingMeta.push([trip.t, M2, kmh]);
 };

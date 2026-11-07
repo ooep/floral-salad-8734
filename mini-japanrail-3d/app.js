@@ -4802,7 +4802,7 @@ function updateTrains(M, dtms) {
       /* v3:无单节资产/轴向不可校正的模型回退 2D(modelOk 由 train3d 维护) */
       if (t._t3du && (!T3DH.modelOk || T3DH.modelOk(t._t3du))) {
         t._t3dpF = frameC; /* EXP 诊断:本帧已推送 3D 的帧戳(__appVisTrips 归因 2D/3D 用) */
-        T3DH.push(t, lng, lat, p[2], t._t3du, M2, p[5]);
+        T3DH.push(t, lng, lat, p[2], t._t3du, M2, p[5], color);
         /* EXP 让位门禁(空白缺陷修):仅当该班次 3D 实例确已可见才藏 2D/降 alpha;
            3D 未起来(模型未就绪/渲染未起/能力不足)时 2D 图标保持全可见 */
         const t3dVisNow = T3DH.trainVis ? T3DH.trainVis(t.t) : false;
@@ -6496,7 +6496,7 @@ function t3dAttempt(force) {
   /* 重试 nonce:ES 模块对失败的 dynamic import 会按 specifier 缓存拒绝,重试(含手动强制)
      必须换 URL 才会真正重新发请求;Worker 按路径服务、忽略查询串,内容不变 */
   const nonce = ++t3dAttemptN;
-  t3dModP = import('https://jr-static.suki.ing/app/train3d.js?v=t3d4&r=' + nonce)
+  t3dModP = import('https://jr-static.suki.ing/app/train3d.js?v=t3d9&r=' + nonce)
     .then(m => {
       m.init(map);
       /* 首帧渲染看门狗:init 后 8s 仍无渲染帧 → 视为失败(软件渲染/驱动挂等)降级;

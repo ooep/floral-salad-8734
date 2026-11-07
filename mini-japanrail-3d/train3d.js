@@ -556,16 +556,24 @@ function placeInstances(now) {
          后续车厢回退距离须减去 carD[0](半车头长),否则头车→第2节多出半车长,
          超出 chain 守卫容差被拉直(弯道逐节转折失效的表观根因之一)。 */
       const d0 = (it.carD && it.carD[0]) || 0;
+      /* EXP 朝向同源修(头车斜/停站垂直两缺陷):头车与后续车厢统一用「弧长±转向架弦」
+         采样定向(对标 dokorail placeTrain 全车统一口径),头车不再单独吃推送 bearing ——
+         咽喉处推送 bearing 与车体链可能差一条腿(实测 head leg19/-160.1° vs 车体 leg18/-163.7°);
+         采样退化时逐节回退「上一帧朝向」,再退推送 bearing,杜绝零向量/默认朝向兜底。 */
+      const win0 = Math.max(0.5, ((meta.cars[0] ? meta.cars[0].len : 20) / 2 - 2.2)) / 1000;
+      const pHRaw = sam.at(0, win0);
+      const pH = (pHRaw && isFinite(pHRaw[0]) && isFinite(pHRaw[1]) && isFinite(pHRaw[2])) ? pHRaw : null;
       for (let i = 0; i < nCars; i++) {
         /* EXP 友商式转向架弦:朝向取 ±(carLen/2−2.2)m 窗弦(替代固定 ±15m),过渡曲线上邻节角更自洽 */
-        const winI = Math.max(0.5, ((meta.cars[i] ? meta.cars[i].len : 20) / 2 - 2.2)) / 1000;
-        const pRaw = i === 0 ? null : sam.at(it.carD[i] - d0, winI);
+        const winI = i === 0 ? win0 : Math.max(0.5, ((meta.cars[i] ? meta.cars[i].len : 20) / 2 - 2.2)) / 1000;
+        const pRaw = i === 0 ? pH : sam.at(it.carD[i] - d0, winI);
         const p = (pRaw && isFinite(pRaw[0]) && isFinite(pRaw[1]) && isFinite(pRaw[2])) ? pRaw : null;
         let cb, px, py, mode = 'arc';
         let repos = false; /* 本节是否被漂移守卫重铺(供下一节防 chain 连锁) */
-        if (i === 0) { cb = it.brg; px = head[0]; py = head[1]; mode = 'head'; }
+        if (i === 0 && p) { cb = p[2]; const r2 = rel(p[0], p[1], [0, 0]); px = r2[0]; py = r2[1]; mode = 'head'; }
+        else if (i === 0) { cb = (it.prevCbs && isFinite(it.prevCbs[0])) ? it.prevCbs[0] : it.brg; px = head[0]; py = head[1]; mode = 'head-fb'; }
         else if (p) { cb = p[2]; const r2 = rel(p[0], p[1], [0, 0]); px = r2[0]; py = r2[1]; }
-        else { cb = ssB; mode = 'rigid'; const dd = (it.carD[i] - d0) || i * 25; px = head[0] - Math.sin(cb) * dd; py = head[1] + Math.cos(cb) * dd; }
+        else { cb = (it.prevCbs && isFinite(it.prevCbs[i])) ? it.prevCbs[i] : ssB; mode = 'rigid'; const dd = (it.carD[i] - d0) || i * 25; px = head[0] - Math.sin(cb) * dd; py = head[1] + Math.cos(cb) * dd; }
         if (!isFinite(px) || !isFinite(py) || !isFinite(cb)) { px = head[0] - Math.sin(ssB) * ((it.carD[i] - d0) || 0); py = head[1] + Math.cos(ssB) * ((it.carD[i] - d0) || 0); cb = ssB; mode = 'rigid'; }
         if (i > 0 && tfs.length) {
           const prev = tfs[i - 1];
@@ -652,9 +660,13 @@ function placeInstances(now) {
         it.carDiag.push({ i, s: +((it.carD && it.carD[i]) || 0).toFixed(1), mode: tf.mode, lng: +rlng.toFixed(6), lat: +rlat.toFixed(6), head: +(tf.cb * 180 / Math.PI).toFixed(2), dTan: +(wrapPi(tf.cb - tg) * 180 / Math.PI).toFixed(3), adjDeg: tf.adjDeg, yaw: +(tf.cb * 180 / Math.PI).toFixed(2), pitch: +((tf.pitch || 0) * 180 / Math.PI).toFixed(3), roll: +((tf.rollQ || 0) * 180 / Math.PI).toFixed(3) });
       }
     } else {
+      /* sam 缺失(停站投影失败等):整列沿「上一帧头车切线」共线重铺,逐节朝向优先上一帧
+         (停站前最后有效切线),杜绝停站瞬间整列吃推送 bearing 退化值(垂直缺陷放大点) */
+      const cb0 = (it.prevCbs && isFinite(it.prevCbs[0])) ? it.prevCbs[0] : it.brg;
       for (let i = 0; i < (it.carD || []).length; i++) {
         const dd = it.carD[i] - ((it.carD && it.carD[0]) || 0);
-        tfs.push({ px: head[0] - Math.sin(it.brg) * dd, py: head[1] + Math.cos(it.brg) * dd, cb: it.brg, adjDeg: 0, p: null, mode: 'rigid', roll: 0 });
+        const cb = (it.prevCbs && isFinite(it.prevCbs[i])) ? it.prevCbs[i] : cb0;
+        tfs.push({ px: head[0] - Math.sin(cb0) * dd, py: head[1] + Math.cos(cb0) * dd, cb, adjDeg: 0, p: null, mode: 'rigid', roll: 0 });
       }
       const applyTo = (nset, on) => {
         if (!on || !nset) return;
@@ -668,6 +680,7 @@ function placeInstances(now) {
       applyTo(it.carNodesS, it.rootS && it.rootS.visible);
       it.carDiag = tfs.map((tf, i) => ({ i, s: +((it.carD && it.carD[i]) || 0).toFixed(1), mode: 'rigid', lng: +it.lng.toFixed(6), lat: +it.lat.toFixed(6), head: +(tf.cb * 180 / Math.PI).toFixed(2), dTan: 0, adjDeg: 0, yaw: +(tf.cb * 180 / Math.PI).toFixed(2), pitch: 0, roll: 0 }));
     }
+    it.prevCbs = tfs.map(tf => tf.cb); /* 朝向同源修:逐节本帧朝向留存,供退化帧回退 */
     if (window.__t3dRecOn && (it.carDiag.length === 0 || (it.carNodesF || []).length !== (it.carsMeta ? it.carsMeta.n : -1))) {
       const rec = window.__t3dRec || (window.__t3dRec = []);
       if (rec.length < 240 && (!it._recT || now - it._recT > 500)) {

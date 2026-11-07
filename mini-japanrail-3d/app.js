@@ -2054,7 +2054,7 @@ function parseTrip(t) {
     if (run > 0) { sStart[i] = dep[i]; sRun[i] = run; }
     else {
       const dwell = dep[i] - arr[i];           // 本站停车时长
-      const borrow = Math.min(0.5, Math.max(0, dwell));
+      const borrow = Math.min(0.25, Math.max(0, dwell));
       sRun[i] = borrow > 0.05 ? borrow : 0.25;
       sStart[i] = arr[i+1] - sRun[i];
     }

@@ -164,10 +164,14 @@ jobs:
 
       - name: Configure Pages
         if: ${{ !inputs.dry_run }}
+        id: pages_config
+        continue-on-error: true
         uses: actions/configure-pages@v5
 
       - name: Upload Pages artifact
         if: ${{ !inputs.dry_run }}
+        id: pages_upload
+        continue-on-error: true
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist
@@ -175,7 +179,8 @@ jobs:
       # 主站(Cloudflare Pages, jr.suki.ing)与回读门禁先于 GH Pages 镜像执行：
       # 2026-11-06 GH Pages deploy-pages 平台瞬断(timeout/重跑重复 artifact)连红三次,
       # 镜像步骤失败曾使主站部署被跳过、线上滞留旧版。镜像归镜像,不得劫持主站上线;
-      # 镜像失败仍会让本 run 变红(可见),但主站与回读已完成。
+      # 2026-11-07 起镜像三步(configure/upload/deploy)降级为 continue-on-error:
+      # 镜像失败只记 warning + step summary,run 仍绿;主站门禁(preflight/CF Pages/readback)失败即红。
       - name: Deploy Mini JapanRail frontend to Cloudflare Pages
         if: ${{ env.CF_API_TOKEN != '' && !inputs.dry_run }}
         env:
@@ -193,7 +198,15 @@ jobs:
       - name: Deploy to GitHub Pages
         if: ${{ !inputs.dry_run }}
         id: deployment
+        continue-on-error: true
         uses: actions/deploy-pages@v4
+
+      # 镜像失败显式记账：写 step summary + warning 注解,避免把平台故障误读成代码失败。
+      - name: Note GH Pages mirror failure (non-blocking)
+        if: ${{ always() && !inputs.dry_run && (steps.pages_config.outcome == 'failure' || steps.pages_upload.outcome == 'failure' || steps.deployment.outcome == 'failure') }}
+        run: |
+          echo "GH Pages mirror failed — main site unaffected" >> "$GITHUB_STEP_SUMMARY"
+          echo "::warning::GH Pages mirror failed — main site unaffected (preflight / CF Pages / readback passed)"
 
       # 常开收尾：再清一次（幂等）并断言工作区干净。
       - name: Finalize (cleanup + worktree assertion)

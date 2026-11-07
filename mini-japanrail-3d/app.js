@@ -659,7 +659,7 @@ function lmStart() {
 const FILES_PCT = 55, IDX_PCT = 78, PRS_PCT = 97;
 /* 数据版本号:segments/stations/station_map 等静态数据每次变更时必须递增,
    否则 IndexedDB 缓存可能让旧数据(如已修的幽灵直线)继续生效 */
-const DATA_VERSION = '2026-11-03a';   // 静态数据变更必须递增(refresh.yml 已自动递增)——不递增会让老访客 IDB 旧索引×新时刻表错配「乱飞」(2026-10-25 事故,见 PERF.md)
+const DATA_VERSION = '2026-11-07a';   // 静态数据变更必须递增(refresh.yml 已自动递增)——不递增会让老访客 IDB 旧索引×新时刻表错配「乱飞」(2026-10-25 事故,见 PERF.md)。本次递增:plat_track_index.json 扩覆(総武/横須賀族+同名站消歧+门 300m)
 /* 时刻表整包同样按版本取数。/data/*.json 是 5 分钟边缘缓存，周更后「同 URL 仍命中旧副本」
    最长 5 分钟 —— 新索引/新站点坐标配旧时刻表正是 2026-10-25 乱飞事故的形态。
    整包内容当周必然变化（没变则 DATA_VERSION 不递增、URL 不变，缓存照常命中），
@@ -2760,10 +2760,206 @@ function stopPoint(t, i) {
   cache[i] = r;
   return r;
 }
+/* ── 详细股道身份:回退记账(不静默) ──
+   腿几何匹配与身份(四元组)解析的失败在此累计:计数 + 原因分类 + 前 50 条
+   「线路/站」缺失清单 —— 后续补 platform_map/股道几何的输入。
+   结构类原因(渲染路径计一次/同 tmap 组×腿):fallback-path=无注册段但兜底有几何
+   (新干线等设计内,不进清单)、orient-reject=注册段与站对不符被弃、no-geo=兜底也无
+   几何(后两者进清单);
+   身份类原因(__t3dTrackFbScan 按视口在显班次计):id:* 四类。回退率报数见 __t3dTrackFb。 */
+const _tidFb = { n: 0, fb: 0, byReason: Object.create(null), missing: [], _mk: new Set() };
+/* list=false:只计数/分类,不进缺失清单(如新干线走 officialPath 的设计内回退) */
+function tidFbNote(reason, line, stA, stB, list) {
+  _tidFb.n++; _tidFb.fb++;
+  _tidFb.byReason[reason] = (_tidFb.byReason[reason] || 0) + 1;
+  if (list === false) return;
+  const key = reason + '\u0001' + (line || '') + '\u0001' + (stA || '') + '\u0001' + (stB || '');
+  if (_tidFb.missing.length < 50 && !_tidFb._mk.has(key)) {
+    _tidFb._mk.add(key);
+    _tidFb.missing.push({ reason, line: line || '', from: stA || '', to: stB || '' });
+  }
+}
+function tidFbOk() { _tidFb.n++; }
+/* 腿缓存 epoch:详细股道开/关切换几何源时 +1,各级缓存(班次/同 tmap 组)惰性失效重算,
+   无需遍历全量班次;稳态下只是一次整数比较 */
+let _legEpoch = 0;
+window.__t3dLegInvalidate = () => ++_legEpoch;
+window.__t3dLegEpoch = () => _legEpoch;
+/* byRid 线路键解析:PLATMAP 键是真实运营线名(已消歧),与渲染侧线路名做分级匹配。
+   唯一键时直接采用(单线班次);多键无匹配 → null(记 noLineMatch) */
+function _platRidFor(pm, line, N) {
+  if (!pm) return null;
+  /* 重复车次号(同 tid 双对象)防线:pm[rid] 按 tmaps[tid].s_jas 索引,长度须等于本对象 N */
+  const ok = rid => !N || (pm[rid] && pm[rid].length === N);
+  if (line && pm[line] && ok(line)) return line;
+  if (line) {
+    const nl = normCached(line);
+    for (const rid in pm) if (normCached(rid) === nl && ok(rid)) return rid;
+    for (const rid in pm) if (matchLineCached(rid, line) >= 2 && ok(rid)) return rid;
+  }
+  const keys = Object.keys(pm);
+  const okKeys = keys.filter(ok);
+  if (okKeys.length === 1) return okKeys[0];
+  /* 长度无匹配(重复车次号副本 N 异):线级单键采纳仍可用,站级番线已由 dupTid 守卫禁用 */
+  if (keys.length === 1) return keys[0];
+  return null;
+}
+/* 站内番线反查:站名带括号时做区域校验(与 buildPlatIndex 同口径,防同名站串线)。
+   返回 {plat, rid, st} 或 {plat:null, reason} */
+function jasHash(jas) { const n = jas.length; return n + '|' + jas[0] + '|' + jas[n >> 1] + '|' + jas[n - 1]; }
+function platForStop(t, k, line) {
+  const pm = PLATMAP && PLATMAP.t ? PLATMAP.t[t.t] : null;
+  if (!pm) return { plat: null, reason: 'noPlatmap' };
+  const rid = _platRidFor(pm, line, t.N);
+  if (!rid) return { plat: null, reason: 'noLineMatch' };
+  /* 重复车次号(同 tid 双对象):线级 rid 仍可用(经 line 匹配/单键采纳),站级番线禁用 */
+  const tmj = tmaps && tmaps[t.t];
+  if (tmj && tmj.s_jas && jasHash(tmj.s_jas) !== jasHash(t.jas)) return { plat: null, reason: 'dupTid', rid };
+  const pws = pm[rid];
+  const pw = k < pws.length ? pws[k] : null;
+  if (!pw) return { plat: null, reason: 'noPlatAtStation', rid };
+  if (!platOk(t.jas[k], rid)) return { plat: null, reason: 'platRegionReject', rid };
+  return { plat: String(pw), rid, st: t.jas[k] };
+}
+/* 班次×腿 身份四元组(运营商/线/方向/番线),按腿缓存(与时刻无关):
+   line 与渲染同源(lineOfPair,即该股实际走行线);
+   dir 用 orientSeg 口径 —— 本班次行进向相对 segIndex 注册向('fwd' 同向 / 'rev' 反向孪生);
+   番线取本腿出发侧站(i)的 PLATMAP 反查,站外/无条目退化为 (运营商,线,方向),绝不猜股。
+   身份解析失败只记身份类原因;几何结构缺失已在 legSegEntry/fallbackSeg 记过,不重复计。 */
+function trackIdentity(t, i) {
+  const c4 = t._tid4 || (t._tid4 = []);
+  if (c4[i]) return c4[i];
+  const line = lineOfPair(t, i) || '';
+  /* lineOp 在 buildBoard 内懒建;诊断四元组按需建表(幂等,单次 O(段数) 遍历) */
+  if (line && !lineOp && segFC && segFC.features) { try { buildLineOp(); } catch (e) {} }
+  let op = '';
+  if (line) { try { op = opForLine(line); } catch (e) { op = ''; } }  /* lineOp 异步建表前不炸 */
+  let dir = 'na';
+  const used = legSegEntry(t, i);
+  const raw = used ? pickSeg(t, t.jasN[i], t.jasN[i + 1], t.stopC && t.stopC[i], i) : null;
+  if (raw && used && used.coords && used.coords.length >= 2 && raw.coords && raw.coords.length >= 2) {
+    const rh = raw.coords[0], uh = used.coords[0], ut = used.coords[used.coords.length - 1];
+    dir = geoKm(rh, uh) <= geoKm(rh, ut) ? 'fwd' : 'rev';
+  }
+  const pr = platForStop(t, i, line);
+  const r = { op, line, dir, plat: pr.plat || null, platRid: pr.rid || null, platAt: pr.plat ? t.jas[i] : null };
+  c4[i] = r;
+  if (!pr.plat && pr.reason) tidFbNote('id:' + pr.reason, line, t.jasN[i], t.jasN[i + 1]);
+  return r;
+}
+/* 几何源 A 案:身份约束腿源 —— 站内影响区换 (站, 身份线) 的 ORM 股道中心线。
+   候选集 = 索引中该站该身份线的 ORM 折线(不跨线最近邻吸附,错股率 0 的结构性保证);
+   约束三重:停站锚横向距离 ≤45m(站心到通过轨可达 30-40m,候选限身份线不跨线) +
+   最近点切线与腿端行进向共线(|cos|≥0.5) + span 自站伸入区间 ≥100m。
+   拼接:站 A 股道段(外端→站) + 原腿中段(离两站 >min(250m, 站距/3)) + 站 B 股道段(站→外端)。 */
+function _ovlPick(cands, anchor, brgOut, thr, stat) {
+  const cf = Math.cos(anchor[1] * Math.PI / 180);
+  let best = null, bd = thr || 45;
+  for (const co0 of cands) {
+    let m = 1e18, mk = 0;
+    for (let k = 0; k + 1 < co0.length; k++) {
+      const a = co0[k], b = co0[k + 1];
+      const ax = (a[0] - anchor[0]) * cf * 111320, ay = (a[1] - anchor[1]) * 110540;
+      const dx = (b[0] - a[0]) * cf * 111320, dy = (b[1] - a[1]) * 110540;
+      const L2 = dx * dx + dy * dy;
+      const f = L2 > 1e-12 ? Math.min(1, Math.max(0, -(ax * dx + ay * dy) / L2)) : 0;
+      const d = Math.hypot(ax + dx * f, ay + dy * f);
+      if (d < m) { m = d; mk = k; }
+    }
+    if (m > (thr || 45)) { if (stat) stat.dist++; continue; }
+    const a = co0[mk], b = co0[mk + 1];
+    const tb = Math.atan2((b[0] - a[0]) * cf, b[1] - a[1]);
+    let dd = Math.abs(tb - brgOut); if (dd > Math.PI) dd = 2 * Math.PI - dd;
+    if (Math.abs(Math.cos(dd)) < 0.5) { if (stat) stat.tan++; continue; }
+    const far = Math.max(geoKm(co0[0], anchor), geoKm(co0[co0.length - 1], anchor));
+    if (far < 0.1) continue;
+    if (m < bd || !best) { best = { co: co0, m }; bd = m; }
+  }
+  if (!best) return null;
+  return { co: best.co, m: best.m }; /* 定向交由 overlayStationTracks 按 A/B 侧处理 */
+}
+function overlayStationTracks(t, i, e) {
+  if (!PLATTRACK || !ormEnabled || !e || !e.coords || e.coords.length < 2) return null;
+  const cA = t.stopC && t.stopC[i], cB = t.stopC && t.stopC[i + 1];
+  if (!cA && !cB) return null;
+  /* 不经过 trackIdentity/legSegEntry(避免递归):身份线 = PLATMAP 运营线键优先,其次腿线 */
+  const line0 = e.line || lineOfPair(t, i) || '';
+  const pr = platForStop(t, i, line0);
+  /* rid 信任规则:番线已解算(强身份)或 rid 与腿线同族/强匹配时才进候选;
+     单键采纳的 rid 与腿线冲突且无番线时弃用(防 総武線车切総武快速線轨 的引入型错股) */
+  const ridTrusted = pr.rid && (pr.plat || matchLineCached(pr.rid, line0) >= 2 || normCached(pr.rid) === normCached(line0)) ? pr.rid : null;
+  const want = [ridTrusted, line0].filter(Boolean);
+  /* 线名族归一:运营前缀/地铁番号/本線→線,使 東海道線↔東海道本線、三田線↔6号線三田線 同族 */
+  const normFam = s => normCached(s).replace(/^(JR|東京メトロ|東京都交通局|都営)/, '').replace(/^\d+号線/, '').replace(/本線$/, '線');
+  const candsFor = (stN, c) => {
+    const per = PLATTRACK.st[normName(stN)];
+    if (!per) return null;
+    for (const w of want) {
+      const nw = normCached(w), fw = normFam(w);
+      for (const k in per) if (normCached(k) === nw) return per[k];
+      for (const k in per) if (normFam(k) === fw) return per[k];
+      for (const k in per) if (matchLineCached(k, w) === 3) return per[k];
+      const a = LINES_MAP && LINES_MAP[w];
+      if (a) for (const k in per) if (a.includes(k) || normFam(k) === normFam(a[0])) return per[k];
+      /* 族级包含(千葉・総武 等复合族名);want 序=身份线优先,防「東海道線压山手線」 */
+      for (const k in per) { const fk = normFam(k); if (fk.includes(fw) || fw.includes(fk)) return per[k]; }
+    }
+    return null;
+  };
+  const n = e.coords.length;
+  const brgA = Math.atan2((e.coords[1][0] - e.coords[0][0]) * Math.cos(cA ? cA[1] : e.coords[0][1] * Math.PI / 180), e.coords[1][1] - e.coords[0][1]);
+  const brgB = Math.atan2((e.coords[n - 1][0] - e.coords[n - 2][0]) * Math.cos(cB ? cB[1] : e.coords[n - 1][1] * Math.PI / 180), e.coords[n - 1][1] - e.coords[n - 2][1]);
+  const stat = { dist: 0, tan: 0 };
+  /* 门限 220m:深埋地下线(東京総武/横須賀喉 153–165m)站坐标在地面,轨道水平投影远;
+     候选已按 (站,身份线族) 限定,最近者胜。相邻腿外延端点错位由 __t3dArc 重叠投影接入消化。 */
+  const coAp = cA ? _ovlPick(candsFor(t.jas[i], cA) || [], cA, brgA, 220, stat) : null;
+  const coBp = cB ? _ovlPick(candsFor(t.jas[i + 1], cB) || [], cB, brgB, 220, stat) : null;
+  const ovlR = (coAp || coBp) ? 'ok'
+    : (!PLATTRACK.st[normName(t.jas[i])] && !PLATTRACK.st[normName(t.jas[i + 1])] ? 'noIndex'
+      : (stat.dist ? 'dist' : (stat.tan ? 'tangent' : 'noCand')));
+  (t._ovlR = t._ovlR || [])[i] = ovlR;
+  if (!coAp && !coBp) { tidFbNote('ovl:' + ovlR, e.line, t.jasN[i], t.jasN[i + 1], false); return null; }
+  const chord = geoKm(cA || e.coords[0], cB || e.coords[n - 1]);
+  /* 拆分拼接(防回折=过站折返):coA 只取「站后」半段+cA,coB 取 cB+「站外」半段,
+     中段用原腿全部 —— 邻腿在站外 600m 共享点严格相接(seam≈0),尾/头车越界被站外 span 覆盖 */
+  const kstar = (co, c) => { let k = 0, m = 1e18; for (let q = 0; q < co.length; q++) { const d = geoKm(co[q], c); if (d < m) { m = d; k = q; } } return k; };
+  let coA = null, coB = null;
+  if (coAp && cA) {
+    let co = coAp.co;
+    if (cB && geoKm(co[0], cB) < geoKm(co[co.length - 1], cB)) co = co.slice().reverse(); /* co[0]=站后侧 */
+    const ks = kstar(co, cA);
+    coA = co.slice(0, ks).concat([cA]);
+    if (coA.length < 2) coA = null;
+  }
+  if (coBp && cB) {
+    let co = coBp.co;
+    if (cA && geoKm(co[co.length - 1], cA) < geoKm(co[0], cA)) co = co.slice().reverse(); /* co[last]=站外侧 */
+    const ks = kstar(co, cB);
+    coB = [cB].concat(co.slice(ks + 1));
+    if (coB.length < 2) coB = null;
+  }
+  if (!coA && !coB) { (t._ovlR = t._ovlR || [])[i] = 'split'; return null; }
+  const mid = e.coords;
+  let co = [];
+  if (coA) co = co.concat(coA);
+  co = co.concat(mid);
+  if (coB) co = co.concat(coB);
+  if (co.length < 4) return null;
+  const ded = [co[0]];
+  for (let k = 1; k < co.length; k++) if (geoKm(co[k], ded[ded.length - 1]) > 0.004) ded.push(co[k]);
+  if (ded.length < 4) return null;
+  const w = withLen(ded);
+  /* 回折守卫:拼接出错/定向反置会产生「过站折返」型回折几何(端点弦远小于总长),弃用降级 */
+  if (geoKm(ded[0], ded[ded.length - 1]) < w.len * 0.45) { (t._ovlR = t._ovlR || [])[i] = 'fold'; tidFbNote('ovl:fold', e.line, t.jasN[i], t.jasN[i + 1], false); return null; }
+  /* 健全性:总长不得相对原腿畸变(拼接错会暴涨/暴跌) */
+  if (!(w.len > e.len * 0.6 && w.len < e.len * 1.6 + 1.4)) { (t._ovlR = t._ovlR || [])[i] = 'sanity'; tidFbNote('ovl:sanity', e.line, t.jasN[i], t.jasN[i + 1], false); return null; }
+  (t._ovlR = t._ovlR || [])[i] = 'ok';
+  return { coords: w.coords, cum: w.cum, len: w.len, line: e.line, kind: e.kind, _ovl: 1 };
+}
 /* 本段主几何(按 班次×区间 缓存):pickSeg → 定向 → 站端吸附。停站朝向与行车共用同一对象,
    吸附必须在这里做 —— stopBearing 先于 trainPosition 缓存时也拿到吸附后的几何 */
 function legSegEntry(t, i) {
-  if (t._seg && t._seg[i] !== undefined) return t._seg[i];
+  if (t._seg && t._segEp && t._segEp[i] === _legEpoch) return t._seg[i];
   /* 区间几何只由 tmap(停站序列/坐标/线路集合)决定,与班次的时刻无关:
      同 tmap 的数千班次共享一份结果。旧实现按「班次×区间」缓存,首帧切窗口时
      4k 列车各自重跑 pickSeg/lineMatches/orientSeg/snapToStops,是卡顿主因。 */
@@ -2771,23 +2967,32 @@ function legSegEntry(t, i) {
   let e;
   if (g) {
     const sc = g.segI || (g.segI = []);
-    if (sc[i]) e = sc[i][0];
+    if (sc[i] && sc[i][1] === _legEpoch) e = sc[i][0];
     else {
-      e = orientSeg(t, i, pickSeg(t, t.jasN[i], t.jasN[i + 1], t.stopC && t.stopC[i], i) || null);
+      const raw = pickSeg(t, t.jasN[i], t.jasN[i + 1], t.stopC && t.stopC[i], i) || null;
+      e = orientSeg(t, i, raw);
+      /* 结构记账:有注册几何=ok;无则由 fallbackSeg 按最终结果分类记账(避免新干线
+         设计内 officialPath 回退灌满缺失清单) */
+      if (e) tidFbOk();
       if (e) {
         const sn = snapToStops(t, i, e.coords);
         if (sn) e = { coords: sn.coords, cum: sn.cum, len: sn.len, line: e.line, kind: e.kind };
       }
-      sc[i] = [e];
+      sc[i] = [e, _legEpoch];
     }
   } else {
-    e = orientSeg(t, i, pickSeg(t, t.jasN[i], t.jasN[i + 1], t.stopC && t.stopC[i], i) || null);
+    const raw = pickSeg(t, t.jasN[i], t.jasN[i + 1], t.stopC && t.stopC[i], i) || null;
+    e = orientSeg(t, i, raw);
+    if (e) tidFbOk();
     if (e) {
       const sn = snapToStops(t, i, e.coords);
       if (sn) e = { coords: sn.coords, cum: sn.cum, len: sn.len, line: e.line, kind: e.kind };
     }
   }
+  /* 几何源 A 案:站内影响区换身份线 ORM 股道中心线(计算路径统一 overlay 后入缓存) */
+  if (e && PLATTRACK && ormEnabled) { const ov = overlayStationTracks(t, i, e); if (ov) e = ov; }
   (t._seg = t._seg || [])[i] = e;
+  (t._segEp = t._segEp || [])[i] = _legEpoch;
   return e;
 }
 /* 停站朝向:_pos 为全列车共享数组,分支必须自己赋值 —— 否则图标朝向沿用上一辆车的方位,
@@ -2875,22 +3080,25 @@ function snapToStops(t, i, coords) {
   const chord = cA && cB ? geoKm(cA, cB) : 0;
   const lim = Math.max(0.5, chord * 0.5);
   const gH = cA ? geoKm(cA, coords[0]) : 0, gT = cB ? geoKm(cB, coords[coords.length - 1]) : 0;
-  if (gH <= 0.03 && gT <= 0.03) return null;
+  /* 吸附阈 4m(原 30m):邻腿各自端点「都在站坐标 30m 内」但互差可达 30m(東京総武喉
+     实测 25.5m 缝),旧阈值视为已吸附不处理 → 详细股道关闭时尾车跨缝被 chain 重铺。
+     收紧到 4m:只要端点离站坐标 >4m 就直弦接上,邻腿共享同一站坐标 → 缝恒≈0。 */
+  if (gH <= 0.004 && gT <= 0.004) return null;
   if (gH > lim || gT > lim) return null;
   /* 2026-11-07 折返清洗:补站坐标弦之前先判方向 —— 弦与末段/首段夹角 >150° 时
      不补(补了就是「过站又折回」,列车沿弧长倒着走)。改用「裁到站投影」:
      把折线裁到站坐标在轨道上的最近点,停点仍在轨道离站最近处,不会停在站台外。 */
-  const revH = gH > 0.03 && coords.length >= 2 && revChord(coords[1], coords[0], cA);
-  const revT = gT > 0.03 && coords.length >= 2 && revChord(coords[coords.length-2], coords[coords.length-1], cB);
+  const revH = gH > 0.004 && coords.length >= 2 && revChord(coords[1], coords[0], cA);
+  const revT = gT > 0.004 && coords.length >= 2 && revChord(coords[coords.length-2], coords[coords.length-1], cB);
   let base = coords;
   if (revH || revT) {
     const tb = trimToStops(coords, revH ? cA : null, revT ? cB : null);
     if (tb) base = tb;
   }
   const path = [];
-  if (gH > 0.03 && !revH) path.push([cA[0], cA[1]]);
+  if (gH > 0.004 && !revH) path.push([cA[0], cA[1]]);
   for (const p of base) path.push(p);
-  if (gT > 0.03 && !revT) path.push([cB[0], cB[1]]);
+  if (gT > 0.004 && !revT) path.push([cB[0], cB[1]]);
   return withLen(path);
 }
 /* per-trip 区间路径兜底(站坐标消歧/同段截取/站序折线/骨架):
@@ -2898,7 +3106,7 @@ function snapToStops(t, i, coords) {
    渲染帧不再重复 resolveCoord/segSubPath/bfs/route */
 function fallbackSeg(t, i) {
   const fc = t._fp || (t._fp = []);
-  let fb = fc[i];
+  let fb = (t._fpEp && t._fpEp[i] === _legEpoch) ? fc[i] : undefined;
   if (fb) return fb;
   const A = t.jasN[i], B = t.jasN[i + 1];
   /* 同 tmap 共享兜底几何:cA/cB 都来自 t.stopC 时,路径/钳制/吸附只由
@@ -2909,9 +3117,10 @@ function fallbackSeg(t, i) {
   if (share) {
     const gc = g.fbI || (g.fbI = []);
     const slot = gc[i];
-    if (slot) {
+    if (slot && slot.ep === _legEpoch) {
       fb = { coords: slot.coords, cum: slot.cum, len: slot.len, line: '', kind: '', m0: t.dep[i], m1: Math.max(t.arr[i + 1], t.dep[i] + 1), single: slot.single, clamp: slot.clamp };
       fc[i] = fb;
+      (t._fpEp = t._fpEp || [])[i] = _legEpoch;
       return fb;
     }
   }
@@ -2992,8 +3201,18 @@ function fallbackSeg(t, i) {
   }
   /* 终点校验(成对,见 pathAnchors):同名站错配/残段路径弃用,末段落回骨架线插值 */
   if (fb.coords && cA && cB && !pathAnchors(fb, cA, cB)) { fb.coords = null; fb.cum = null; fb.len = 0; }
+  /* 回退记账(按最终结果分严重度):
+     no-geo=兜底也无几何(落骨架插值),真缺失,进清单;
+     orient-reject=注册段存在但几何与站对不符被弃,数据异常,进清单;
+     fallback-path=无注册段但 officialPath 等兜底有几何(新干线等设计内路径),只计数不进清单 */
+  if (!fb.coords) tidFbNote('no-geo', lineOfPair(t, i), A, B);
+  else {
+    const rawX = pickSeg(t, A, B, t.stopC && t.stopC[i], i);
+    tidFbNote(rawX ? 'orient-reject' : 'fallback-path', lineOfPair(t, i), A, B, !rawX ? false : true);
+  }
   fc[i] = fb;
-  if (share) (g.fbI || (g.fbI = []))[i] = { coords: fb.coords, cum: fb.cum, len: fb.len, single: fb.single, clamp: fb.clamp };
+  (t._fpEp = t._fpEp || [])[i] = _legEpoch;
+  if (share) (g.fbI || (g.fbI = []))[i] = { coords: fb.coords, cum: fb.cum, len: fb.len, single: fb.single, clamp: fb.clamp, ep: _legEpoch };
   return fb;
 }
 let _stopReg = [], _stopRegFrame = -1; /* 帧内停站位置簇登记:20m 内归一簇 */
@@ -6576,6 +6795,7 @@ function fetchOrmTracks() {
   if (ormLoaded || ormFetching) return;
   ormFetching = true;
   addOrmLayer();
+  fetchPlatTrackIndex(); /* 几何源 A 案小索引(~1MB)随 ORM 按需拉 */
 }
 
 /* ---------------- 重数据懒加载(性能优化,2026-10-24/25) ----------------
@@ -6611,6 +6831,23 @@ function fetchStationDetailData() {
   stationDetailFetched = true;
   detailWanted = true;
   addDetailLayers(); /* 建源即返回;数据由 MapLibre worker 拉取/解析,不占主线程 */
+}
+/* 几何源 A 案:(站,线路)→站内股道中心线小索引(~1MB,离线自 ORM 推导,见
+   .cdp/build_plat_track_index.js)。随 ORM 按需拉;缺失/未到时身份约束腿源优雅降级
+   为现有简化腿,不影响主路径。到达后 bump epoch 让腿缓存惰性重算。 */
+let PLATTRACK = null, platTrackP = null;
+function fetchPlatTrackIndex() {
+  if (PLATTRACK) return Promise.resolve(PLATTRACK);
+  if (platTrackP) return platTrackP;
+  platTrackP = fetchJSONWithCache('https://jr-static.suki.ing/data/plat_track_index.json', '', 11)
+    .then(j => {
+      PLATTRACK = (j && j.st) ? j : null;
+      if (PLATTRACK) window.__t3dLegInvalidate();
+      return PLATTRACK;
+    })
+    .catch(() => { PLATTRACK = null; })
+    .then(() => { if (!PLATTRACK) platTrackP = null; return PLATTRACK; });
+  return platTrackP;
 }
 function bindLazyHeavyData() {
   if (lazyHeavyBound || !map) return;
@@ -6706,7 +6943,7 @@ function t3dAttempt(force) {
   /* 重试 nonce:ES 模块对失败的 dynamic import 会按 specifier 缓存拒绝,重试(含手动强制)
      必须换 URL 才会真正重新发请求;Worker 按路径服务、忽略查询串,内容不变 */
   const nonce = ++t3dAttemptN;
-  t3dModP = import('https://jr-static.suki.ing/app/train3d.js?v=t3d14&r=' + nonce)
+  t3dModP = import('https://jr-static.suki.ing/app/train3d.js?v=t3d15&r=' + nonce)
     .then(m => {
       m.init(map);
       /* 首帧渲染看门狗:init 后 8s 仍无渲染帧 → 视为失败(软件渲染/驱动挂等)降级;
@@ -6993,7 +7230,20 @@ window.__t3dArc = (t, M, hlng, hlat, hbrg) => {
       const lag = (orient > 0 && atStart) || (orient < 0 && atEnd);
       if (lag && distM <= 600) { pushClamp = true; pushOffM = distM; bsPush = orient > 0 ? bs - distM / 1000 : bs + distM / 1000; } /* m→km */
     }
-    const aHead = orient > 0 ? bsPush : L0 - bsPush;
+    const aHead0 = orient > 0 ? bsPush : L0 - bsPush;
+    /* 详细股道开/关切换帧(epoch 变化):弧长比例映射 r=s/L_old → s'=r·L_new,不重投影 ——
+       保持整列相对位置、消除切换帧 devM 突增(父裁决口径);稳态帧仍走头车投影 */
+    let aHead = aHead0;
+    const prevArc = t._arcPrev;
+    if (prevArc && prevArc.epoch !== _legEpoch && prevArc.L0 > 0 && L0 > 0) {
+      const r = Math.min(1, Math.max(0, prevArc.aHead / prevArc.L0));
+      const mapped = r * L0;
+      /* 比例映射只在腿长变化温和时保相对位;腿长剧变(総武喉 overlay 站外 span 伸缩)
+         时映射点远离推送投影,头车跳出 2D 位置 → 切换帧 devM 突增(实测 11081 57m)。
+         此时回退头车投影(物理位置连续)。阈值 50m ≈ 两节车长。 */
+      aHead = Math.abs(mapped - aHead0) < 0.05 ? mapped : aHead0;
+    }
+    t._arcPrev = { epoch: _legEpoch, aHead, L0 };
     const rigid = d => {
       const brg = segAt(e, Math.min(bs, L0))[2];
       const dlat = Math.cos(brg) * d / 110540, dlng = Math.sin(brg) * d / (111319 * Math.cos(hlat * Math.PI / 180));
@@ -7049,14 +7299,45 @@ window.__t3dArc = (t, M, hlng, hlat, hbrg) => {
         /* 端点匹配定向：前一腿行进终点必须等于 conn */
         const dEnd = geoD(ptAt(e2, e2.coords.length - 1), conn), dSt = geoD(ptAt(e2, 0), conn);
         const mDeg = Math.min(dEnd, dSt);
-        if (mDeg * 111319 > 60) return { e2, L2, seamM: +(mDeg * 111319).toFixed(1), end: dEnd <= dSt ? 'e' : 's' };
+        if (mDeg * 111319 > 60) {
+          /* EXP 重叠投影接入:overlay 站喉外延把邻腿端点挪走(到腿外延与发腿外延在站的两侧,
+             端点缝恒 >100m),但邻腿折线仍穿过 conn 附近(外延与本腿走廊重叠)→ 投影接入,
+             从投影点弧长起回退,取代切线直延(chain-oob 整列 30–70m 偏差的来源)。 */
+          const co2 = e2.coords, cum2 = e2.cum, cf2 = Math.cos(hlat * Math.PI / 180);
+          let bk = 0, bf = 0, bd = 1e18, bs2 = 0;
+          for (let q = 0; q + 1 < co2.length; q++) {
+            const x0 = co2[q][0], y0 = co2[q][1], x1 = co2[q + 1][0], y1 = co2[q + 1][1];
+            const ax = (x1 - x0) * cf2, ay = y1 - y0;
+            const px = (conn[0] - x0) * cf2, py = conn[1] - y0;
+            const Lv = ax * ax + ay * ay;
+            const f = Lv > 1e-18 ? Math.min(1, Math.max(0, (px * ax + py * ay) / Lv)) : 0;
+            const dx = px - ax * f, dy = py - ay * f;
+            const d2 = dx * dx + dy * dy;
+            if (d2 < bd) { bd = d2; bk = q; bf = f; bs2 = cum2[q] + f * (cum2[q + 1] - cum2[q]); }
+          }
+          if (Math.sqrt(bd) * 111319 <= 50) {
+            const p0 = segAt(ee, or > 0 ? 0 : cumLen(ee));
+            const travel = or > 0 ? p0[2] : wrapPiBrg(p0[2] + Math.PI);
+            const backward = wrapPiBrg(travel + Math.PI);
+            const a2 = co2[bk], b2 = co2[bk + 1];
+            const tb = Math.atan2((b2[0] - a2[0]) * cf2, b2[1] - a2[1]);
+            const along = Math.cos(wrapPiBrg(tb - backward)) > 0; /* 邻腿折线增向≈回退向 */
+            const or2 = along ? -1 : 1;
+            const entryKm = along ? L2 - bs2 : bs2;
+            return { e2, L2, or2, m: Math.sqrt(bd) * 111319, entryKm };
+          }
+          return { e2, L2, seamM: +(mDeg * 111319).toFixed(1), end: dEnd <= dSt ? 'e' : 's' };
+        }
         return { e2, L2, or2: dEnd <= dSt ? 1 : -1, m: mDeg * 111319 };
       };
       while (a < 0) {
         if (dir < 0 ? idx <= 0 : idx >= t.N - 2) {
           if (trc) trc[trc.length - 1].oob = true;
-          /* 真越界：路线端点之外（车尾还在站喉）→ 沿端点切线反向延伸，标 k=-2（chain 计数） */
-          return extrapConn(-a * 1000, 'oob');
+          /* 端点夹持:越过 path 末端的车厢不再线性外推(会把车甩出站场),夹到 path 末端
+             按末端切线压缩(记 __t3dArcClampN);站台 span 已延伸覆盖整列时不会走到这里 */
+          window.__t3dArcClampN = (window.__t3dArcClampN || 0) + 1;
+          const p0 = segAt(ee, or > 0 ? 0 : cumLen(ee));
+          return [p0[0], p0[1], p0[2], -2, 0, gapM, +(consumedKm * 1000).toFixed(1)];
         }
         let cand = idx + dir;
         let r = tryCand(cand);
@@ -7091,9 +7372,11 @@ window.__t3dArc = (t, M, hlng, hlat, hbrg) => {
         }
         const or2 = r.or2;
         gapM += r.m;
-        a += r.L2;
-        consumedKm += r.L2;
-        if (wb) wb.push({ idx, L2: +r.L2.toFixed(4), m: +r.m.toFixed(1), or2, dir });
+        /* 重叠投影接入只消耗「入口点→回退端」的弧长(entryKm),外延重叠段不重复消耗 */
+        const takeKm = r.entryKm != null ? r.entryKm : r.L2;
+        a += takeKm;
+        consumedKm += takeKm;
+        if (wb) wb.push({ idx, L2: +r.L2.toFixed(4), m: +r.m.toFixed(1), or2, dir, entryKm: r.entryKm != null ? +r.entryKm.toFixed(4) : null });
         if (trc) trc.push({ idx, L2: +r.L2.toFixed(1), a: +a.toFixed(1), or2, n: r.e2.coords.length, gapM: +gapM.toFixed(1), dir });
         ee = r.e2; or = or2; L = r.L2;
         chainLegs.add(idx);
@@ -7187,6 +7470,102 @@ window.__t3dLegSan = (tid, M2, legOverride) => {
     }
     return { tid, locI: i, legs };
   } catch (err) { return { err: String(err && err.message || err) }; }
+};
+/* ── 详细股道身份:可解释钩子(调试开关) ──
+   __t3dTrackId()      无参 = 视口在显班次身份一览(抽查用,≤60 行);
+   __t3dTrackId(tid,M) 有参 = 该班次当前身份四元组(运营商/线/方向/番线) + 所用腿
+                         (来源 seg/fallback/none、线路、端点、长度) + 下一站番线。
+   回归定位:身份与几何逐字段可见,配合 __t3dTrackFb 的缺失清单即可复现任一回退。 */
+window.__t3dTrackId = (tid, M) => {
+  const MM = (M == null) ? +((document.getElementById('cSlider') || {}).value || 0) : M;
+  if (tid == null) {
+    let b0 = null;
+    try { const b = window.__map && window.__map.getBounds(); if (b) b0 = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()]; } catch (e) {}
+    const rows = [];
+    for (const t of fadeList) {
+      if (t._f < 0.02) continue;
+      const ms = windowShift(t, MM);
+      const p = trainPosition(t, ms);
+      if (!p) continue;
+      if (b0 && (p[0] < b0[0] - 0.01 || p[0] > b0[2] + 0.01 || p[1] < b0[1] - 0.01 || p[1] > b0[3] + 0.01)) continue;
+      let i = locateSeg(t, ms); if (i > t.N - 2) i = t.N - 2;
+      const id = trackIdentity(t, i);
+      const e = legSegEntry(t, i);
+      rows.push({ t: t.t, nm: t.nm || '', op: id.op, line: id.line, dir: id.dir, plat: id.plat,
+        legI: i, src: e ? 'seg' : 'none', stopN: (p[7] | 0) >= 0 ? (t.jasN[p[7] | 0] || '') : '' });
+      if (rows.length >= 60) break;
+    }
+    return { M: MM, frameC, n: rows.length, rows };
+  }
+  const t = (typeof tid === 'object' && tid.jasN) ? tid : fadeList.find(q => q.t === tid) || tripList.find(q => q.t === tid);
+  if (!t) return { err: 'no trip ' + tid };
+  const ms = windowShift(t, MM);
+  const p = trainPosition(t, ms);
+  let i = locateSeg(t, ms); if (i > t.N - 2) i = t.N - 2;
+  const id = trackIdentity(t, i);
+  const e = legSegEntry(t, i);
+  const fb = e ? null : fallbackSeg(t, i);
+  const stopI = p ? (p[7] | 0) : -1;
+  const pn = platForStop(t, Math.min(i + 1, t.N - 1), id.line);
+  return {
+    tid: t.t, nm: t.nm || '', M: MM, stopI, stopN: stopI >= 0 ? (t.jasN[stopI] || '') : '',
+    pos: p ? [+p[0].toFixed(6), +p[1].toFixed(6), +(p[2] * 57.29578).toFixed(1), +p[5].toFixed(0)] : null,
+    id: { op: id.op, line: id.line, dir: id.dir, plat: id.plat, platAt: id.platAt, platRid: id.platRid },
+    leg: {
+      i, from: t.jasN[i], to: t.jasN[i + 1], src: e ? 'seg' : (fb && fb.coords ? 'fallback' : 'none'),
+      ovl: (t._ovlR && t._ovlR[i]) || null,
+      line: e ? (e.line || '') : '', kind: e ? (e.kind || '') : '',
+      n: e && e.coords ? e.coords.length : (fb && fb.coords ? fb.coords.length : 0),
+      lenKm: e ? +((e.cum ? e.cum[e.cum.length - 1] : e.len) || 0).toFixed(3) : (fb ? +fb.len.toFixed(3) : 0),
+      c0: e && e.coords ? e.coords[0].map(v => +v.toFixed(5)) : (fb && fb.coords ? fb.coords[0].map(v => +v.toFixed(5)) : null),
+      c1: e && e.coords ? e.coords[e.coords.length - 1].map(v => +v.toFixed(5)) : (fb && fb.coords ? fb.coords[fb.coords.length - 1].map(v => +v.toFixed(5)) : null)
+    },
+    platNext: pn.plat ? { st: t.jas[Math.min(i + 1, t.N - 1)], plat: pn.plat } : null
+  };
+};
+/* 回退记账读数:结构类(渲染路径累计)+身份类(最近一次 scan)合并报数。
+   rate = 回退占比;missing = 前 50 条缺失(线/站/原因)—— 补 platform_map 的输入 */
+window.__t3dTrackFb = () => ({
+  n: _tidFb.n, fb: _tidFb.fb, rate: _tidFb.n ? +(_tidFb.fb / _tidFb.n).toFixed(4) : null,
+  byReason: Object.assign({}, _tidFb.byReason), missing: _tidFb.missing.slice()
+});
+window.__t3dTrackFbReset = () => {
+  _tidFb.n = 0; _tidFb.fb = 0;
+  for (const k in _tidFb.byReason) delete _tidFb.byReason[k];
+  _tidFb.missing.length = 0; _tidFb._mk.clear();
+  return true;
+};
+/* 视口在显班次身份普查:逐班解析当前腿四元组,身份不全即记回退(缺哪档记哪档)。
+   与 __t3dTrackFb 的累计账本合并;返回值即本次扫描的回退率报数。 */
+window.__t3dTrackFbScan = (M) => {
+  const MM = (M == null) ? +((document.getElementById('cSlider') || {}).value || 0) : M;
+  let b0 = null;
+  try { const b = window.__map && window.__map.getBounds(); if (b) b0 = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()]; } catch (e) {}
+  let n = 0, fb = 0; const byReason = Object.create(null); const rows = [];
+  for (const t of fadeList) {
+    if (t._f < 0.02) continue;
+    const ms = windowShift(t, MM);
+    const p = trainPosition(t, ms);
+    if (!p) continue;
+    if (b0 && (p[0] < b0[0] - 0.01 || p[0] > b0[2] + 0.01 || p[1] < b0[1] - 0.01 || p[1] > b0[3] + 0.01)) continue;
+    let i = locateSeg(t, ms); if (i > t.N - 2) i = t.N - 2;
+    n++;
+    const e = legSegEntry(t, i);
+    const fbe = e ? null : fallbackSeg(t, i);
+    let reason = null;
+    if (!e && !(fbe && fbe.coords)) reason = 'noGeo';
+    else {
+      const pr = platForStop(t, i, lineOfPair(t, i) || '');
+      if (!pr.plat) reason = pr.reason;
+    }
+    if (reason) {
+      fb++;
+      byReason[reason] = (byReason[reason] || 0) + 1;
+      tidFbNote('id:' + reason, lineOfPair(t, i), t.jasN[i], t.jasN[i + 1]);
+      if (rows.length < 30) rows.push({ t: t.t, nm: t.nm || '', line: lineOfPair(t, i) || '', reason, from: t.jasN[i], to: t.jasN[i + 1] });
+    } else tidFbOk();
+  }
+  return { M: MM, n, fb, rate: n ? +(fb / n).toFixed(4) : null, byReason: Object.assign({}, byReason), rows };
 };
 /* EXP 覆盖率统计(仅实验分支):全量平日班次 × 真实 pathOf 映射,按等级/线路聚合 */
 window.__t3dCoverage = async () => {
@@ -9599,7 +9978,7 @@ $('subDep').addEventListener('click', function () { sheetDepArr = 'dep'; $('subD
 $('subArr').addEventListener('click', function () { sheetDepArr = 'arr'; $('subArr').classList.add('on'); $('subDep').classList.remove('on'); renderStationBody(); });
 window.showStationDetail = showStationDetail;  // 调试/自动化钩子：供控制台与 E2E 直接打开车站抽屉
 // E2E 钩子：列车详情/站台数据（确定性验证用，只读引用）
-window.__mjr3d = { showTrainDetail, tripList: () => tripList, PLATMAP: () => PLATMAP, tmaps: () => tmaps, badgeKeyOfFeature, badgeEntriesOfStation, badgeEntriesOf, showStationDetail, stationCoord: () => stationCoord, stationMap: () => stationMap, badgeNorm, badgeFamilyHit, map: () => map, ormState: () => ({ enabled: ormEnabled, loaded: ormLoaded, fetching: ormFetching }), detailState: () => ({ wanted: detailWanted, fetched: stationDetailFetched }), bufState: () => ({ bytes: bufArr.byteLength, trains: Math.min(MAXT, fadeList.length) }), boardCacheStats: () => ({ size: boardCache.size, items: boardCacheItems, cap: BOARD_CACHE_MAX_ITEMS }), platState: () => ({ loaded: !!PLATMAP, pending: !!(platmapP && !PLATMAP) }), detailRetry: () => Object.assign({}, detailRetry), sheetState: () => ({ partial: sheetIsPartial, rows: document.querySelectorAll('#shBody .lrow').length, open: document.querySelectorAll('#shBody .lrow.open').length, scroll: $('shBody').scrollTop }), ttState: () => (ttState ? { mode: ttState.mode, bucket: ttState.bucket, key: ttState.key } : null), ibTickMock: v => { ibTickMock = Array.isArray(v) ? v : null; try { renderStationBody(); } catch (e) {} }, ttCache: () => ({ station: stationTripsCache.size, miss: stationTripsMiss.size, partial: stationPartialCache.size, raw: !!ttRaw, sets: !!ttStopNames }) };
+window.__mjr3d = { showTrainDetail, tripList: () => tripList, PLATMAP: () => PLATMAP, platTrackState: () => ({ loaded: !!PLATTRACK, orm: ormEnabled }), platTrackKeys: st => (PLATTRACK && PLATTRACK.st[normName(st)]) ? Object.keys(PLATTRACK.st[normName(st)]) : null, tmaps: () => tmaps, badgeKeyOfFeature, badgeEntriesOfStation, badgeEntriesOf, showStationDetail, stationCoord: () => stationCoord, stationMap: () => stationMap, badgeNorm, badgeFamilyHit, map: () => map, ormState: () => ({ enabled: ormEnabled, loaded: ormLoaded, fetching: ormFetching }), detailState: () => ({ wanted: detailWanted, fetched: stationDetailFetched }), bufState: () => ({ bytes: bufArr.byteLength, trains: Math.min(MAXT, fadeList.length) }), boardCacheStats: () => ({ size: boardCache.size, items: boardCacheItems, cap: BOARD_CACHE_MAX_ITEMS }), platState: () => ({ loaded: !!PLATMAP, pending: !!(platmapP && !PLATMAP) }), detailRetry: () => Object.assign({}, detailRetry), sheetState: () => ({ partial: sheetIsPartial, rows: document.querySelectorAll('#shBody .lrow').length, open: document.querySelectorAll('#shBody .lrow.open').length, scroll: $('shBody').scrollTop }), ttState: () => (ttState ? { mode: ttState.mode, bucket: ttState.bucket, key: ttState.key } : null), ibTickMock: v => { ibTickMock = Array.isArray(v) ? v : null; try { renderStationBody(); } catch (e) {} }, ttCache: () => ({ station: stationTripsCache.size, miss: stationTripsMiss.size, partial: stationPartialCache.size, raw: !!ttRaw, sets: !!ttStopNames }) };
 // E2E 钩子：列车叠加弹窗（确定性验证，不依赖实时列车密度）
 window.__trPick = { n: () => visibleTrips.length, near: (x, y) => collectTrains(x, y, 14).length, open: (x, y) => showTrPick(collectTrains(x, y, 14), x, y) };
 /* E2E 回归钩子(确定性验证):两条历史事故的防线
@@ -11667,6 +12046,9 @@ $('swOrm').addEventListener('click', function () {
   localStorage.setItem('mjr3d_showorm', ormEnabled ? '1' : '0');
   applyTrackMode();
   if (ormEnabled && !ormLoaded) fetchOrmTracks(); /* 低配设备首次开启时按需拉取 */
+  if (ormEnabled) fetchPlatTrackIndex();
+  else { PLATTRACK = null; platTrackP = null; } /* 关闭不留索引开销(内存释放,重开走 IDB 缓存) */
+  window.__t3dLegInvalidate(); /* 详细股道开/关:腿缓存整体惰性失效,切换帧原子重算 */
 });
 $('swTrail').addEventListener('click', function () { this.classList.toggle('on'); });
 /* 实时延误:默认开。关 = 停拉取并立即恢复全部正点;开 = 立即拉取 */

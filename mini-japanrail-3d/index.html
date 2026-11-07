@@ -385,7 +385,11 @@ button { font-family:inherit; }
 <!-- 3D 接管后 2D 图标让位修复(2026-11-07):app.js/train3d.js bump ?v=20261107-t3d17 / t3d14 破缓存
      (让位门禁改连续可见度 V:rootF∥rootS 含 stand LOD/交叉淡化;图标 alpha×(1−V) 严格互补,
       接管无叠影、回退/出屏/降级无空窗;V 连续缓动+滞回,缩放推拉不闪) -->
-<link rel="modulepreload" href="https://jr-static.suki.ing/app/app.js?v=20261107-t3d20" crossorigin="anonymous">
+<!-- 几何源 A 案收尾(2026-11-07):app.js/train3d.js bump ?v=20261107-t3d21 / t3d15 破缓存
+     (股道索引扩覆:総武/横須賀族+同名站消歧+门 300m,DATA_VERSION→2026-11-07a;
+      walk-back 重叠投影接入消 chain-oob;__t3dFit 参考线改净化腿;弯道弦损补偿;
+      站端吸附阈 30→4m 闭合基缝;复测 strict 错节 0、切换双态 0、无突增) -->
+<link rel="modulepreload" href="https://jr-static.suki.ing/app/app.js?v=20261107-t3d21" crossorigin="anonymous">
 
 </head>
 <body>
@@ -956,7 +960,7 @@ window.addEventListener('unhandledrejection', e => { __pushErr('REJ ' + (e.reaso
     "three/addons/": "https://jr-static.suki.ing/vendor/three/jsm/"
 } }
 </script>
-<script type="module" src="https://jr-static.suki.ing/app/app.js?v=20261107-t3d20"></script>
+<script type="module" src="https://jr-static.suki.ing/app/app.js?v=20261107-t3d21"></script>
 <div id="m3dMask"></div>
 <div id="m3dViewer">
   <canvas id="m3dCanvas"></canvas>

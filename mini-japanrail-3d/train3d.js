@@ -646,9 +646,24 @@ function placeInstances(now) {
             { const D = (it.carD[i] - d0) || 0; px = head[0] - Math.sin(ssB) * D; py = head[1] + Math.cos(ssB) * D; cb = ssB; mode = 'chain'; drift = 0; }
           } else {
             /* 累积漂移守卫:残桩折叠/腿接缝错位使逐节间距偏离 step,单节 <0.5m 难察、
-               累积 >1m 破坏总长恒等(真实弯道弦损全列 ≤0.5m 不误伤)→ 单源共线重铺并标 spike */
-            drift += dd2 - expct;
-            if (Math.abs(drift) > 1.0) {
+               累积 >1m 破坏总长恒等 → 单源共线重铺并标 spike。
+               弯道弦损补偿:真实弯道上弦长 dd2 恒小于弧长步长 expct,逐节差≈step·θ²/24
+               (θ=本节转向角);急弯(新幹線进站/海岸線/総武喉)单节弦损可达 0.4m,不补偿会
+               误触发重铺把车从弯道上拉直(实测偏出 5–11m)。仅对负漂移(车距偏短)补偿。 */
+            let dinc = dd2 - expct;
+            if (dinc < 0 && prevH !== null) {
+              const tn = Math.abs(wrapPi(cb - prevH));
+              if (tn < 1.0) dinc = Math.min(0, dinc + step * tn * tn / 24);
+            }
+            drift += dinc;
+            if (drift < -1.0) {
+              /* 负漂移=车距偏短=弯道弦损(弧长采样已把车放在弯道上):不重铺拉直,
+                 仅清零累计、信任弧长位;否则急弯车被拉直出曲线(实测偏 5–11m) */
+              drift = 0;
+            } else if (drift > 2.5) {
+              /* 正漂移=车距偏长。均匀小幅偏长(投影/弦长微差,~0.1m/节)累积到 1m 即重铺
+                 会把好车拉直偏出 5–6m,比重铺前更糟;阈值放宽到 2.5m 只拦真实断节/错缝
+                 (腿缝断口已由投影接入经 gapM 计入 expct,不再灌入漂移) */
               const D = (it.carD[i] - d0) || 0; px = head[0] - Math.sin(ssB) * D; py = head[1] + Math.cos(ssB) * D;
               cb = ssB; mode = 'spike'; stats.spike = (stats.spike || 0) + 1; drift = 0; repos = true;
             }
@@ -857,7 +872,10 @@ window.__t3dFit = (opt) => {
   for (const it of insts.values()) {
     if (!it.rootF || !it.rootF.visible || !it.carDiag || !it.carDiag.length || it.M2 == null) continue;
     if (opt && opt.trip != null && it.trip.t !== opt.trip) continue;
-    const raw = window.__t3dLegRaw ? window.__t3dLegRaw(it.trip, it.M2, it._samLeg) : null;
+    /* 参考线取净化腿(与 __t3dArc 采样同源):原始绘制折线在站喉回折尖峰处与采样线
+       相差数十米(单点回折短桩),车实际贴的是净化线 —— 与走廊断言同口径,
+       避免把绘制尖峰误判为错节。__t3dLegSan 缺失时退回 LegRaw。 */
+    const raw = (window.__t3dLegSan || window.__t3dLegRaw) ? (window.__t3dLegSan || window.__t3dLegRaw)(it.trip, it.M2, it._samLeg) : null;
     if (!raw || raw.err) continue;
     const segs = [];
     for (const lg of raw.legs || []) {

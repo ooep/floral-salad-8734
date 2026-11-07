@@ -3268,15 +3268,15 @@ function chainsFor(t) {
     let j = i;
     while (j < N - 1 && dep[j] <= arr[j] + 1e-9 && arr[j+1] <= dep[j] + 1e-9) j++;
     /* j = 零运行序列后的第一个站:链覆盖 legs i..j-1,站 i..j */
-    let e = j - 1, m = j, T = 0;
+    let e = j - 1, m = j, mode = 'dwell', dwellEnd = 0, runT = 0;
     if (j < N - 1) {
       const nd = dep[j] - arr[j], nr = arr[j+1] - dep[j];
-      if (nd > 1e-9) T = Math.min(0.25, nd);           /* 链尾站有停站:借 ≤15s */
-      else if (nr > 1e-9) { e = j; m = j + 1; T = nr; } /* 链尾站 dwell=0 但有正运行:并入该 leg */
+      if (nd > 1e-9) { mode = 'dwell'; dwellEnd = nd; }   /* 链尾站有停站 */
+      else if (nr > 1e-9) { mode = 'run'; runT = nr; e = j; m = j + 1; } /* 并入正运行 leg */
     } else {
-      T = 0.25;                                        /* 零运行链直达终点:兜底 15s */
+      mode = 'term';                                      /* 零运行链直达终点 */
     }
-    if (T > 1e-9) {
+    {
       const coords = []; let line = '', kind = '';
       for (let l = i; l <= e; l++) {
         /* 主几何缺失(土佐電/临时站等 1,526 段恰好是 fallback 类)时用兜底路径,
@@ -3288,8 +3288,30 @@ function chainsFor(t) {
           if (!coords.length || geoKm(coords[coords.length - 1], p) * 1000 > 0.5) coords.push(p);
         }
       }
+      /* 主几何/兜底几何都缺(バルーンさが 等临时站,无站坐标):用骨架几何。
+         骨架只含已知站,链首临时站按前后已知站的站序比例插值。 */
+      if (coords.length < 2 && t.skStop && t.skX && t.skY) {
+        let p = -1, q = -1;
+        for (let k = 0; k < t.skStop.length; k++) {
+          if (t.skStop[k] <= i) p = k;
+          if (q < 0 && t.skStop[k] >= m) { q = k; break; }
+        }
+        if (p >= 0 && q >= 0 && q > p) {
+          const f = (i - t.skStop[p]) / Math.max(1e-9, t.skStop[q] - t.skStop[p]);
+          coords.length = 0;
+          coords.push([t.skX[p] + (t.skX[q] - t.skX[p]) * f,
+                       t.skY[p] + (t.skY[q] - t.skY[p]) * f]);
+          for (let k = p + 1; k <= q; k++) coords.push([t.skX[k], t.skY[k]]);
+          line = (t.lines && t.lines[0]) || ''; kind = '';
+        }
+      }
       if (coords.length >= 2) {
         const w = withLen(coords);
+        const vmax = t.g === 0 ? 300 : 130;              /* km/h */
+        const T = mode === 'run' ? runT
+          : (mode === 'dwell'
+              ? Math.min(Math.max(0.05, dwellEnd - 0.1), Math.max(0.25, (w.len / vmax) * 60))
+              : Math.max(0.25, (w.len / vmax) * 60));
         const pf = chainProfile(w.len * 1000, T * 60, t.g);
         if (pf) out.push({ i, m, t0: dep[i], dur: T, coords: w.coords, cum: w.cum, len: w.len, pf, line, kind });
       }

@@ -371,12 +371,12 @@ button { font-family:inherit; }
 <!-- 信息板运营商品牌主题色(2026-11-07):app.js bump ?v=20261106-ib10 破缓存
      (主题色按本站主导运营商品牌渲染:原版 12 主题复刻+线色推导,杜绝每站同绿;
       ib9 已被抽屉修复线占用,顺延避让) -->
-<!-- 3D 能力门 v2(2026-11-07):app.js bump ?v=20261107-t3d4 破缓存
+<!-- 3D 能力门 v2(2026-11-07):app.js bump ?v=20261107-t3d5 破缓存
      (WebGL2 唯一硬门槛,核数/内存/软件渲染改「先尝试、失败降级+提示+可重试」;
       手动开关强制尝试;连续失败 2 次本会话不自动尝试) -->
 <link rel="preload" as="style" href="https://jr-static.suki.ing/app/app.css?v=20261105-ib2" onload="this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://jr-static.suki.ing/app/app.css?v=20261105-ib2"></noscript>
-<link rel="modulepreload" href="https://jr-static.suki.ing/app/app.js?v=20261107-t3d4" crossorigin="anonymous">
+<link rel="modulepreload" href="https://jr-static.suki.ing/app/app.js?v=20261107-t3d5" crossorigin="anonymous">
 
 </head>
 <body>
@@ -946,7 +946,7 @@ window.addEventListener('unhandledrejection', e => { __pushErr('REJ ' + (e.reaso
     "three/addons/": "https://jr-static.suki.ing/vendor/three/jsm/"
 } }
 </script>
-<script type="module" src="https://jr-static.suki.ing/app/app.js?v=20261107-t3d4"></script>
+<script type="module" src="https://jr-static.suki.ing/app/app.js?v=20261107-t3d5"></script>
 <div id="m3dMask"></div>
 <div id="m3dViewer">
   <canvas id="m3dCanvas"></canvas>

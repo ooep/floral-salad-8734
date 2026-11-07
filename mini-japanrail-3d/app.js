@@ -3334,8 +3334,17 @@ function trainPosition(t, M) {
          几何站端点距站 >40m(已吸附/缺几何)才回退站中心。
          A 类修复:同锚点(同几何端点或同回退点)同时刻停多车时按帧内序分配横向槽位
          (4.2m≈邻线轨距),绝不两车画同一处;槽序=fadeList 稳定序。 */
+      /* 2026-11-07 arrival 跳变:C 类原先只看下一区间起点(发车侧),到站帧在上一区间末端、
+         停站帧却切到 30m 外的下一区间起点 → arrival 单帧跳 20–30m。
+         与 C 类对称:上一区间末端距 stopC ≤40m 时优先用它,先把到站帧与停站帧对齐。 */
       let sp = c;
-      if (e && e.coords && e.coords.length && geoKm(c, e.coords[0]) <= 0.04) sp = e.coords[0];
+      const ePrev = i > 0 ? (t._seg[i-1] || legSegEntry(t, i-1)) : null;
+      if (ePrev && ePrev.coords && ePrev.coords.length &&
+          geoKm(c, ePrev.coords[ePrev.coords.length-1]) <= 0.04) {
+        sp = ePrev.coords[ePrev.coords.length-1];
+      } else if (e && e.coords && e.coords.length && geoKm(c, e.coords[0]) <= 0.04) {
+        sp = e.coords[0];
+      }
       sp = stopSlotAt(_pos[2], sp[0], sp[1]);
       _pos[8] = _stopLastS;
       sp = leftTrackOff(_pos[2], sp[0], sp[1]);

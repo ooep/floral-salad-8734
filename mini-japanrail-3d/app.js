@@ -4782,7 +4782,7 @@ function updateTrains(M, dtms) {
 
   /* ── 阶段 3:位置解算 + 顶点构建(只对 alpha>0 的班次,即真正画到屏幕上的那一批) ── */
   /* EXP train3d(exp/train3d-20261105):z≥14.2 且模块就绪时收集 3D 候选;
-     命中模型的班次按全局交叉淡化系数 f 降 2D alpha,f≥0.985 时 2D 完全让位 */
+     命中模型的班次按 3D 连续可见度 V 互补降 2D alpha(图标×(1−V)),V=1 时 2D 完全让位(见写循环内让位 v2) */
   /* 门限相对 baseMaxZoom(3D 动态放宽上限前的基准):放宽后 getMaxZoom() 上移,
      若仍用它做门限会把在屏列车挡在推送门外(3D 淡入却无推送→inst 淡出) */
   const T3DH = (t3dMasterOn && z >= ((window.__T3D && window.__T3D.baseMaxZoom) || map.getMaxZoom()) - 1.8 && window.__T3D && window.__T3D.f > 0.01) ? window.__T3D : null;
@@ -4887,16 +4887,22 @@ function updateTrains(M, dtms) {
       if (t._t3du && (!T3DH.modelOk || T3DH.modelOk(t._t3du))) {
         t._t3dpF = frameC; /* EXP 诊断:本帧已推送 3D 的帧戳(__appVisTrips 归因 2D/3D 用) */
         T3DH.push(t, lng, lat, p[2], t._t3du, M2, p[5], color);
-        /* EXP 让位门禁(空白缺陷修):仅当该班次 3D 实例确已可见才藏 2D/降 alpha;
-           3D 未起来(模型未就绪/渲染未起/能力不足)时 2D 图标保持全可见 */
-        const t3dVisNow = T3DH.trainVis ? T3DH.trainVis(t.t) : false;
-        if (T3DH.f >= 0.985 && t3dVisNow) {
+        /* EXP 让位 v2(图标压车体修):让位门禁改 trainVisAmt 连续可见度 V(rootF∥rootS,
+           含 stand LOD/双根交叉淡化;旧门禁仅判 rootF 且 a>0.5:stand LOD(中低倍短编组)
+           与实例淡入/淡出瞬态(各高倍到达/离场)判 false → 2D 图标含延误环全 alpha 压在
+           半透明车体上,即「一列车+一个图标」。图标 alpha ×= (1−V):与 3D 实际可见度
+           严格互补 —— V=1(完全接管)图标隐藏并跳过 2D 顶点;V 下降(实例淡出/出屏/降级/
+           模型未就绪/未映射)图标同步回补,连续变化无闪断、任何时刻无「车没了」空窗。
+           防抖由连续性天然保证:V 源自 240ms 缓动的 a/f 与阈值滞回(Z_HYST/LOD 滞回),
+           缩放来回推拉只产生平滑交叉淡化,不产生二值闪;接管全程图标+3D≡1,无叠影窗口 */
+        const V = T3DH.trainVisAmt ? T3DH.trainVisAmt(t.t) : 0;
+        if (V >= 0.985) {
           /* 3D 完全接管:仍进拾取集(点击详情/跟随不失效),只跳过 2D 顶点 */
           visibleTrips.push(t); visibleXY[n * 2] = lng; visibleXY[n * 2 + 1] = lat;
           drawnCouple.add(t); n++;
           continue;
         }
-        al *= (1 - (t3dVisNow ? T3DH.f : 0));
+        al *= (1 - V);
       }
     }
     const mx = (lng + 180) / 360 - cxo;
@@ -6582,7 +6588,7 @@ function t3dAttempt(force) {
   /* 重试 nonce:ES 模块对失败的 dynamic import 会按 specifier 缓存拒绝,重试(含手动强制)
      必须换 URL 才会真正重新发请求;Worker 按路径服务、忽略查询串,内容不变 */
   const nonce = ++t3dAttemptN;
-  t3dModP = import('https://jr-static.suki.ing/app/train3d.js?v=t3d13&r=' + nonce)
+  t3dModP = import('https://jr-static.suki.ing/app/train3d.js?v=t3d14&r=' + nonce)
     .then(m => {
       m.init(map);
       /* 首帧渲染看门狗:init 后 8s 仍无渲染帧 → 视为失败(软件渲染/驱动挂等)降级;
@@ -6662,7 +6668,7 @@ window.__appVisTrips = (M) => {
     if (b0 && (p[0] < b0[0] - 0.01 || p[0] > b0[2] + 0.01 || p[1] < b0[1] - 0.01 || p[1] > b0[3] + 0.01)) continue;
     const si = p[7] | 0;
     out.push({ t: t.t, nm: t.nm || '', line: p[3] || '', lines: t.lines || [], stopN: si >= 0 ? (t.jasN[si] || '') : '',
-      kmh: +(+p[5]).toFixed(0), pushed: t._t3dpF === frameC, t3du: t._t3du === undefined ? 'undef' : (t._t3du || ''),
+      kmh: +(+p[5]).toFixed(0), pushed: t._t3dpF === frameC, v: (window.__T3D && window.__T3D.trainVisAmt) ? +window.__T3D.trainVisAmt(t.t).toFixed(2) : 0, t3du: t._t3du === undefined ? 'undef' : (t._t3du || ''),
       lng: +p[0].toFixed(5), lat: +p[1].toFixed(5) });
     if (out.length >= 40) break;
   }

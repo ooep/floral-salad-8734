@@ -103,6 +103,18 @@ window.__T3D = {
   /* EXP 让位门禁:2D 图标只在「该班次 3D 实例确已可见(淡入过半且 rootF 可见)」时才让位,
      杜绝「f 到阈值就藏 2D、3D 却因模型未就绪/渲染未起而空白」的设计缺陷 */
   trainVis(tid) { const it = insts.get(tid); return !!(it && it.rootF && it.rootF.visible && it.a > 0.5); },
+  /* EXP 让位 v2:连续有效可见度 V∈[0,1] = min(1, a·f) × (rootF∥rootS 可见)。
+     旧 trainVis 仅判 rootF:stand LOD(中低倍短编组)或双根交叉淡化时 rootF 不可见
+     而 rootS 可见 → 判 false → 2D 图标全 alpha 压在车体上;淡入/淡出瞬态同理。
+     app.js 图标 alpha ×= (1−V),与 3D 实际可见度严格互补 ——
+     V 降(实例淡出/出屏/降级/模型未就绪)图标同步回补,任何时刻不出现「车没了」空窗;
+     V 源自 240ms 缓动与阈值滞回,缩放推拉只产生平滑交叉淡化(天然防抖) */
+  trainVisAmt(tid) {
+    const it = insts.get(tid);
+    if (!it) return 0;
+    const rv = (it.rootF && it.rootF.visible) || (it.rootS && it.rootS.visible);
+    return rv ? Math.min(1, it.a * f) : 0;
+  },
 };
 function setHover(it, on) { if (it && it.mats) for (const m of it.mats) { if (m.emissive) m.emissive.setScalar(on ? 0.22 : 0); } }
 

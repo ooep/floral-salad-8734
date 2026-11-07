@@ -382,7 +382,10 @@ button { font-family:inherit; }
      (金属漆面 envMap 兜底 + metallic 缺省=1 纠正;浅色主题白昼光照/曝光) -->
 <link rel="preload" as="style" href="https://jr-static.suki.ing/app/app.css?v=20261105-ib2" onload="this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://jr-static.suki.ing/app/app.css?v=20261105-ib2"></noscript>
-<link rel="modulepreload" href="https://jr-static.suki.ing/app/app.js?v=20261107-t3d16" crossorigin="anonymous">
+<!-- 3D 接管后 2D 图标让位修复(2026-11-07):app.js/train3d.js bump ?v=20261107-t3d17 / t3d14 破缓存
+     (让位门禁改连续可见度 V:rootF∥rootS 含 stand LOD/交叉淡化;图标 alpha×(1−V) 严格互补,
+      接管无叠影、回退/出屏/降级无空窗;V 连续缓动+滞回,缩放推拉不闪) -->
+<link rel="modulepreload" href="https://jr-static.suki.ing/app/app.js?v=20261107-t3d17" crossorigin="anonymous">
 
 </head>
 <body>
@@ -953,7 +956,7 @@ window.addEventListener('unhandledrejection', e => { __pushErr('REJ ' + (e.reaso
     "three/addons/": "https://jr-static.suki.ing/vendor/three/jsm/"
 } }
 </script>
-<script type="module" src="https://jr-static.suki.ing/app/app.js?v=20261107-t3d16"></script>
+<script type="module" src="https://jr-static.suki.ing/app/app.js?v=20261107-t3d17"></script>
 <div id="m3dMask"></div>
 <div id="m3dViewer">
   <canvas id="m3dCanvas"></canvas>

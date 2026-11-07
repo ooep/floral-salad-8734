@@ -125,6 +125,16 @@ def main():
     else:
         print('[platform_map] SKIP (not present)')
 
+    # 5.3b) stop_platforms.json —— 按线站台停点表（2026-11-07，仅“末端越过站台”的修剪类）；
+    #       由 scripts/build_stop_platforms.py 生成，数据周更后需重建（tmap id 会变）。
+    sp_src = os.path.join(MINI, 'data', 'stop_platforms.json')
+    if os.path.isfile(sp_src):
+        shutil.copy2(sp_src, os.path.join(out, 'data', 'stop_platforms.json'))
+        total += 1
+        print('[stop_platforms] copied')
+    else:
+        print('[stop_platforms] SKIP (not present)')
+
     # 5.4) vendor/ —— 核心库自托管（maplibre-gl 6.12）
     #      依赖 jsdelivr 等外部 CDN 在部分网络不可达，自托管到 jr-static 保证页面可加载。
     vendor_src = os.path.join(MINI, 'vendor')

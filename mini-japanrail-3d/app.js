@@ -344,6 +344,9 @@ let segFC = null, staFC = null, tmaps = null, PLATMAP = null;
 let stationMap = null;
 let stationMapPromise = null; /* boot 期并行发起、不阻塞首帧的 station_map 加载承诺 */
 let segIndex = null, edgeInfo = null, adj = null, stationCoord = null, stationCoordLine = null;
+/* 按线站台停点表(2026-11-07):仅「几何末端越过站台」的修剪类,tmap|到站站序 -> [lng,lat]。
+   由 scripts/build_stop_platforms.py 生成;数据周更后需重建(tmap id 会变)。 */
+let STOP_PLAT = null;
 let LINES_MAP = {};
 let lineColor = new Map(), lineKind = new Map(), stationLines = new Map();
 let tripList = [], activeList = [], visibleCount = 0, totalTripsToday = 0;
@@ -2025,6 +2028,10 @@ function buildTripGeo(tid, N, jas, lines, arr, dep) {
   const lineSet = pooledLineSet(linesN);
   const smStops = officialStopsFor(tid, N);
   function stopCoordAt(i) {
+    /* 站台停点表优先(仅 2026-11-07 批准的修剪类:末端越过站台,如 中央線 金山→名古屋 43m)。
+       命中即用站台投影点;未命中走原有站坐标/几何端点链路。 */
+    const sp = STOP_PLAT && STOP_PLAT[tid + '|' + i];
+    if (sp) return [sp[0], sp[1]];
     /* 两侧相邻轨道段在本站的端点若重合(同一几何流水线,差 <0.1km)= 轨道给出的站址。
        三河知立 2024 迁址:station_map 官方站坐标(旧站) 与 segments3d 轨道(新站)
        差 0.88km,官方坐标优先会让列车在旧站位置停、发车瞬移上新线。两端自洽时
@@ -5484,7 +5491,7 @@ async function boot() {
     let smapTimer;
     const smapDeadline = new Promise(r => { smapTimer = setTimeout(() => r(SMAP_TIMEOUT), 8000); });
     let smapSkipped = false;
-    const [s, st, tm, lm, tk, ni, tt] = await Promise.all([
+    const [s, st, tm, lm, tk, ni, tt, sp] = await Promise.all([
       fetchJSONWithCache('https://jr-static.suki.ing/data/segments3d.geojson', 'loadingSeg', 0),
       fetchJSONWithCache('https://jr-static.suki.ing/data/stations3d.geojson', 'loadingSta', 1),
       fetchJSONWithCache('https://jr-static.suki.ing/data/tmaps.json', 'loadingTm', 2),
@@ -5492,8 +5499,10 @@ async function boot() {
       fetchJSONWithCache('https://jr-static.suki.ing/data/tokkyu.json', '', 5).catch(() => null),
       fetchJSONWithCache('https://jr-static.suki.ing/data/names_i18n.json', '', 6).catch(() => null),
       fetchTimetableBoot(dayBit),
+      fetchJSONWithCache('https://jr-static.suki.ing/data/stop_platforms.json', '', 7).catch(() => null),
     ]);
     segFC = s; staFC = st; tmaps = tm; LINES_MAP = lm || {}; TOKKYU = tk;
+    STOP_PLAT = (sp && sp.p) || null;
     /* 新干线图标表以数据为准(时刻表新增列车名时自动纳入 G0 等级) */
     if (tk && tk.sh) for (const k in tk.sh) GRADE_SH.add(k);
     NAME_I18N = ni;

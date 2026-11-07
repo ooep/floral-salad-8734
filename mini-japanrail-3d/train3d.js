@@ -87,7 +87,7 @@ const axisChecked = new Set();
 
 window.__T3D = {
   f: 0, zOn: Z_ON,
-  push(trip, lng, lat, brg, path) { frameFlat.push(trip, lng, lat, brg, path); },
+  push(trip, lng, lat, brg, path, color) { frameFlat.push(trip, lng, lat, brg, path, color); },
   begin() { frameFlat.length = 0; },
   end() { frameSeq++; },
   wake() { if (map && layerOn) map.triggerRepaint(); },
@@ -233,16 +233,55 @@ const T3DLAYER = {
 
 const candTmp = [];
 const pendingMeta = [];
+/* ── 占位编组(对标 dokorail.jp 的见本车辆):模型加载失败/缺失/轴向不可校正时按节生成
+   线路色盒车,高倍缩放永不整列不画。尺寸口径取 dokorail train-body 默认:车体宽 2.8m、
+   高 3.65m、窗带 1.55–1.9m;车体长=节长−0.6m(其 Ve_gap 视觉缝)。占位车已是极简几何,
+   不再走 stand-in 加载。 ── */
+const PH_BODY = 0xd4d6d9, PH_ROOF = 0xa2a6ab, PH_WIN = 0x263238;
+function synthMeta() {
+  const cars = []; let z = 0;
+  for (let i = 0; i < 4; i++) { const L = 20; cars.push({ model: null, len: L, d: z }); z += L + 0.03; }
+  return { cars, length: z - 0.03, n: 4, synth: true };
+}
+function placeholderTmpl(meta, colorHex) {
+  const m = (meta && meta.cars && meta.cars.length) ? meta : synthMeta();
+  const group = new THREE.Group();
+  const bodyMat = new THREE.MeshStandardMaterial({ color: PH_BODY, roughness: 0.55, metalness: 0 });
+  const roofMat = new THREE.MeshStandardMaterial({ color: PH_ROOF, roughness: 0.7, metalness: 0 });
+  const winMat = new THREE.MeshStandardMaterial({ color: PH_WIN, roughness: 0.35, metalness: 0 });
+  let bandCol = 0x888888;
+  try { if (colorHex) bandCol = new THREE.Color(colorHex); } catch (e) {}
+  const bandMat = new THREE.MeshStandardMaterial({ color: bandCol, roughness: 0.5, metalness: 0 });
+  const carNodes = [];
+  for (let i = 0; i < m.cars.length; i++) {
+    const L = Math.max(6, (m.cars[i].len || 20) - 0.6);
+    const wrap = new THREE.Group();
+    wrap.userData.m3dCar = 1;
+    const body = new THREE.Mesh(new THREE.BoxGeometry(2.8, 2.9, L), bodyMat);
+    body.position.y = 0.5 + 1.45;
+    const band = new THREE.Mesh(new THREE.BoxGeometry(2.86, 0.35, L * 0.995), bandMat);
+    band.position.y = 1.375;
+    const win = new THREE.Mesh(new THREE.BoxGeometry(2.84, 0.35, L * 0.99), winMat);
+    win.position.y = 1.725;
+    const roof = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.25, L * 0.98), roofMat);
+    roof.position.y = 3.525;
+    wrap.add(body, band, win, roof);
+    wrap.traverse(o => { if (o.isMesh) o.frustumCulled = false; });
+    group.add(wrap);
+    carNodes.push({ node: wrap, d: m.cars[i].d || 0 });
+  }
+  return { group, cars: carNodes, length: m.length || m.cars.length * 20, path: 'placeholder', placeholder: true };
+}
 function consume(now) {
   const v = view();
   const W = v.W, c = v.center;
   const cwx = (c.lng + 180) / 360 * W, cwy = mercY(c.lat) * W;
   candTmp.length = 0;
-  for (let i = 0; i < frameFlat.length; i += 5) {
-    const trip = frameFlat[i], lng = frameFlat[i + 1], lat = frameFlat[i + 2], brg = frameFlat[i + 3], path = frameFlat[i + 4];
+  for (let i = 0; i < frameFlat.length; i += 6) {
+    const trip = frameFlat[i], lng = frameFlat[i + 1], lat = frameFlat[i + 2], brg = frameFlat[i + 3], path = frameFlat[i + 4], color = frameFlat[i + 5];
     const wx = (lng + 180) / 360 * W, wy = mercY(lat) * W;
     const dx = wx - cwx, dy = wy - cwy;
-    candTmp.push({ trip, lng, lat, brg, path, d2: dx * dx + dy * dy });
+    candTmp.push({ trip, lng, lat, brg, path, color, d2: dx * dx + dy * dy });
   }
   frameFlat.length = 0;
   stats.cand = candTmp.length;
@@ -257,18 +296,33 @@ function consume(now) {
       insts.set(cd.trip.t, it);
     }
     it.lng = cd.lng; it.lat = cd.lat; it.brg = cd.brg; it.seenFr = stats.frame; it.lastPush = now;
+    if (cd.color) it.phColor = cd.color;
     if (!it.req) {
       it.pending = true;
-      it.req = Promise.all([window.M3D && window.M3D.ensure(it.path), consistMeta(it.path)]).then(([tmpl, meta]) => {
-        it.pending = false;
-        if (!tmpl || !meta || it.dead) { it.dead = true; return; }
-        checkAxis(it.path, tmpl, meta);
-        if (!window.__T3D.modelOk(it.path)) { it.dead = true; return; }
-        it.tmpl = tmpl; it.carsMeta = meta;
+      /* 占位回退:真模板不可用(加载失败/缺失/轴向不可校正)时用线路色盒车顶上,
+         3D 层永不整列不画;让位门禁照常生效(占位车真实渲染才藏 2D) */
+      const adopt = (tmpl, meta, isPh) => {
+        it.tmpl = tmpl; it.carsMeta = meta; it.isPlaceholder = !!isPh;
         it.lenM = tmpl.length;   /* 必须先于 buildRoot：gap/carD 依赖 lenM（曾因此 NaN 致全列只画头车） */
         it.rootF = buildRoot(tmpl, it);
         it.aFrom = 0; it.aTo = 1; it.aT0 = performance.now();
-      }).catch(() => { it.pending = false; it.dead = true; });
+        if (isPh) stats.ph = (stats.ph || 0) + 1;
+      };
+      it.req = Promise.all([window.M3D && window.M3D.ensure(it.path), consistMeta(it.path)]).then(([tmpl, meta]) => {
+        it.pending = false;
+        if (it.dead) return;
+        const useMeta = meta || synthMeta();
+        if (tmpl && window.__T3D.modelOk(it.path)) {
+          checkAxis(it.path, tmpl, useMeta);
+          if (window.__T3D.modelOk(it.path)) { adopt(tmpl, useMeta, false); return; }
+        }
+        adopt(placeholderTmpl(useMeta, it.phColor), useMeta, true);
+      }).catch(() => {
+        it.pending = false;
+        if (it.dead) return;
+        const useMeta = synthMeta();
+        adopt(placeholderTmpl(useMeta, it.phColor), useMeta, true);
+      });
     }
   }
   for (const [k, it] of insts) {
@@ -455,7 +509,7 @@ function placeInstances(now) {
                             : (pxLen < LOD_PX ? 'stand' : 'full'));
     if (wantLod !== it.lod) {
       it.lod = wantLod;
-      if (wantLod === 'stand' && !it.stand && it.carsMeta && !it.reqS) {
+      if (wantLod === 'stand' && !it.stand && it.carsMeta && !it.reqS && !it.isPlaceholder) {
         it.reqS = standTmpl(it.path, it.carsMeta).then(st => {
           if (!st || it.dead) return;
           it.stand = st;
@@ -516,16 +570,24 @@ function placeInstances(now) {
          后续车厢回退距离须减去 carD[0](半车头长),否则头车→第2节多出半车长,
          超出 chain 守卫容差被拉直(弯道逐节转折失效的表观根因之一)。 */
       const d0 = (it.carD && it.carD[0]) || 0;
+      /* EXP 朝向同源修(头车斜/停站垂直两缺陷):头车与后续车厢统一用「弧长±转向架弦」
+         采样定向(对标 dokorail placeTrain 全车统一口径),头车不再单独吃推送 bearing ——
+         咽喉处推送 bearing 与车体链可能差一条腿(实测 head leg19/-160.1° vs 车体 leg18/-163.7°);
+         采样退化时逐节回退「上一帧朝向」,再退推送 bearing,杜绝零向量/默认朝向兜底。 */
+      const win0 = Math.max(0.5, ((meta.cars[0] ? meta.cars[0].len : 20) / 2 - 2.2)) / 1000;
+      const pHRaw = sam.at(0, win0);
+      const pH = (pHRaw && isFinite(pHRaw[0]) && isFinite(pHRaw[1]) && isFinite(pHRaw[2])) ? pHRaw : null;
       for (let i = 0; i < nCars; i++) {
         /* EXP 友商式转向架弦:朝向取 ±(carLen/2−2.2)m 窗弦(替代固定 ±15m),过渡曲线上邻节角更自洽 */
-        const winI = Math.max(0.5, ((meta.cars[i] ? meta.cars[i].len : 20) / 2 - 2.2)) / 1000;
-        const pRaw = i === 0 ? null : sam.at(it.carD[i] - d0, winI);
+        const winI = i === 0 ? win0 : Math.max(0.5, ((meta.cars[i] ? meta.cars[i].len : 20) / 2 - 2.2)) / 1000;
+        const pRaw = i === 0 ? pH : sam.at(it.carD[i] - d0, winI);
         const p = (pRaw && isFinite(pRaw[0]) && isFinite(pRaw[1]) && isFinite(pRaw[2])) ? pRaw : null;
         let cb, px, py, mode = 'arc';
         let repos = false; /* 本节是否被漂移守卫重铺(供下一节防 chain 连锁) */
-        if (i === 0) { cb = it.brg; px = head[0]; py = head[1]; mode = 'head'; }
+        if (i === 0 && p) { cb = p[2]; const r2 = rel(p[0], p[1], [0, 0]); px = r2[0]; py = r2[1]; mode = 'head'; }
+        else if (i === 0) { cb = (it.prevCbs && isFinite(it.prevCbs[0])) ? it.prevCbs[0] : it.brg; px = head[0]; py = head[1]; mode = 'head-fb'; }
         else if (p) { cb = p[2]; const r2 = rel(p[0], p[1], [0, 0]); px = r2[0]; py = r2[1]; }
-        else { cb = ssB; mode = 'rigid'; const dd = (it.carD[i] - d0) || i * 25; px = head[0] - Math.sin(cb) * dd; py = head[1] + Math.cos(cb) * dd; }
+        else { cb = (it.prevCbs && isFinite(it.prevCbs[i])) ? it.prevCbs[i] : ssB; mode = 'rigid'; const dd = (it.carD[i] - d0) || i * 25; px = head[0] - Math.sin(cb) * dd; py = head[1] + Math.cos(cb) * dd; }
         if (!isFinite(px) || !isFinite(py) || !isFinite(cb)) { px = head[0] - Math.sin(ssB) * ((it.carD[i] - d0) || 0); py = head[1] + Math.cos(ssB) * ((it.carD[i] - d0) || 0); cb = ssB; mode = 'rigid'; }
         if (i > 0 && tfs.length) {
           const prev = tfs[i - 1];
@@ -612,9 +674,13 @@ function placeInstances(now) {
         it.carDiag.push({ i, s: +((it.carD && it.carD[i]) || 0).toFixed(1), mode: tf.mode, lng: +rlng.toFixed(6), lat: +rlat.toFixed(6), head: +(tf.cb * 180 / Math.PI).toFixed(2), dTan: +(wrapPi(tf.cb - tg) * 180 / Math.PI).toFixed(3), adjDeg: tf.adjDeg, yaw: +(tf.cb * 180 / Math.PI).toFixed(2), pitch: +((tf.pitch || 0) * 180 / Math.PI).toFixed(3), roll: +((tf.rollQ || 0) * 180 / Math.PI).toFixed(3) });
       }
     } else {
+      /* sam 缺失(停站投影失败等):整列沿「上一帧头车切线」共线重铺,逐节朝向优先上一帧
+         (停站前最后有效切线),杜绝停站瞬间整列吃推送 bearing 退化值(垂直缺陷放大点) */
+      const cb0 = (it.prevCbs && isFinite(it.prevCbs[0])) ? it.prevCbs[0] : it.brg;
       for (let i = 0; i < (it.carD || []).length; i++) {
         const dd = it.carD[i] - ((it.carD && it.carD[0]) || 0);
-        tfs.push({ px: head[0] - Math.sin(it.brg) * dd, py: head[1] + Math.cos(it.brg) * dd, cb: it.brg, adjDeg: 0, p: null, mode: 'rigid', roll: 0 });
+        const cb = (it.prevCbs && isFinite(it.prevCbs[i])) ? it.prevCbs[i] : cb0;
+        tfs.push({ px: head[0] - Math.sin(cb0) * dd, py: head[1] + Math.cos(cb0) * dd, cb, adjDeg: 0, p: null, mode: 'rigid', roll: 0 });
       }
       const applyTo = (nset, on) => {
         if (!on || !nset) return;
@@ -628,6 +694,7 @@ function placeInstances(now) {
       applyTo(it.carNodesS, it.rootS && it.rootS.visible);
       it.carDiag = tfs.map((tf, i) => ({ i, s: +((it.carD && it.carD[i]) || 0).toFixed(1), mode: 'rigid', lng: +it.lng.toFixed(6), lat: +it.lat.toFixed(6), head: +(tf.cb * 180 / Math.PI).toFixed(2), dTan: 0, adjDeg: 0, yaw: +(tf.cb * 180 / Math.PI).toFixed(2), pitch: 0, roll: 0 }));
     }
+    it.prevCbs = tfs.map(tf => tf.cb); /* 朝向同源修:逐节本帧朝向留存,供退化帧回退 */
     if (window.__t3dRecOn && (it.carDiag.length === 0 || (it.carNodesF || []).length !== (it.carsMeta ? it.carsMeta.n : -1))) {
       const rec = window.__t3dRec || (window.__t3dRec = []);
       if (rec.length < 240 && (!it._recT || now - it._recT > 500)) {
@@ -1039,7 +1106,7 @@ window.__t3dProbe = () => {
 };
 
 const _push = window.__T3D.push;
-window.__T3D.push = (trip, lng, lat, brg, path, M2, kmh) => {
-  _push(trip, lng, lat, brg, path);
+window.__T3D.push = (trip, lng, lat, brg, path, M2, kmh, color) => {
+  _push(trip, lng, lat, brg, path, color);
   pendingMeta.push([trip.t, M2, kmh]);
 };

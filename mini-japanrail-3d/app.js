@@ -2042,9 +2042,20 @@ function buildTripGeo(tid, N, jas, lines, arr, dep) {
       if (segJoint && geoKm(sm, segJoint) > 0.3 && geoKm(sm, segJoint) < 2) return segJoint;
       return sm;
     }
-    let c = null;
-    if (i - 1 >= 0) { const e = segIndex.get(jasN[i-1] + '|' + jasN[i]); if (e) c = e[0].coords[e[0].coords.length - 1]; }
-    if (!c && i + 1 < N) { const e = segIndex.get(jasN[i] + '|' + jasN[i+1]); if (e) c = e[0].coords[0]; }
+    let c = null, cSeg = null;
+    if (i - 1 >= 0) { const e = segIndex.get(jasN[i-1] + '|' + jasN[i]); if (e) { c = e[0].coords[e[0].coords.length - 1]; cSeg = e[0].coords; } }
+    if (!c && i + 1 < N) { const e = segIndex.get(jasN[i] + '|' + jasN[i+1]); if (e) { c = e[0].coords[0]; cSeg = e[0].coords; } }
+    /* 2026-11-07 停站位置修正:段端点冒充站址时,若官方站坐标就在这段轨道旁(最近点≤50m)
+       且沿轨偏移 >30m,改用官方站坐标 —— 后续 legSegEntry 的 snapToStops 会按最近点
+       精确裁剪越过站台的尾桩,列车停在站台中心而非轨道接头。
+       数据:无官方 lids 的 597 条区间里 584 条属此类(30-100m 388、100-500m 196,最大 438m
+       中央線 新守山→大曽根);离线迁址(三河知立 官方坐标离轨道 0.88km >50m)保持豁免。 */
+    if (c && cSeg) {
+      let ref = null;
+      for (const ln of linesN) { const r0 = stationCoordLine.get(ln + '|' + jasN[i]); if (r0) { ref = r0; break; } }
+      if (!ref) ref = stationCoord.get(jasN[i]);
+      if (ref && geoKm(c, ref) > 0.03 && nearKm(ref, cSeg) <= 0.05) c = ref;
+    }
     /* 段端点与已有停靠点重合而站名不同 = 官方残段退化(成田線 久住/大戸 不在站表,
        两段共用同一端点):骨架出现零长弦,该区间整段冻结在站上。视为无坐标,交给
        站表线语境/跨站路径/骨架兜底 */
@@ -2233,6 +2244,20 @@ function bfsRaw(A, B, lineFilter) {
 const bridgeMemo = new Map();
 function geoKm(a, b) {
   return Math.hypot((b[0]-a[0]) * Math.cos((a[1]+b[1])/2 * Math.PI/180) * 111.32, (b[1]-a[1]) * 110.57);
+}
+/* 点到折线的最近距离(km):站坐标是否“就在轨道旁”的判据(迁址站豁免用) */
+function nearKm(p, coords) {
+  let bd = Infinity;
+  for (let k = 1; k < coords.length; k++) {
+    const a = coords[k-1], b = coords[k];
+    const cosf = Math.cos((a[1] + b[1]) / 2 * Math.PI / 180);
+    const ax = (b[0]-a[0]) * cosf * 111.32, ay = (b[1]-a[1]) * 110.57;
+    const l2 = ax*ax + ay*ay;
+    const f = l2 > 1e-12 ? Math.max(0, Math.min(1, (((p[0]-a[0]) * cosf * 111.32) * ax + ((p[1]-a[1]) * 110.57) * ay) / l2)) : 0;
+    const d = Math.hypot((p[0]-a[0]) * cosf * 111.32 - ax*f, (p[1]-a[1]) * 110.57 - ay*f);
+    if (d < bd) bd = d;
+  }
+  return bd;
 }
 function bridgePath(A, B, lineSet, rawA, rawB) {
   const lsKey = lineSet ? [...lineSet].sort().join(',') : '';

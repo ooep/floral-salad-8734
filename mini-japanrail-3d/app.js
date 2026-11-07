@@ -4452,15 +4452,25 @@ function updateTrains(M, dtms) {
     const my0 = Math.max(0, myN - vm * 1.35);
     const my1 = Math.min(1, myS + vm * 1.35);
     vp = { mx0, mx1, my0, my1 };
-    /* 十四轮:写矩形(视口外免写判定用)= 当前视锥 + 64px 车身/光晕余量,远小于
+    /* 十四轮:写矩形(2D 视口外免写)= 当前视锥 + 64px 车身/光晕余量,远小于
        扫描缓冲 vm(高 zoom 下 ~14km)。写出只关心「本帧在不在屏内」,屏缘出现
        即可见、无淡入突变;扫描仍用大缓冲保证 bbox 命中,两层矩形各司其职 */
     const wPx = 64 / (512 * Math.pow(2, z));
     wRect = { lng0: w - wPx * 360, lng1: e + wPx * 360,
       lat0: Math.atan(Math.sinh(Math.PI * (1 - 2 * Math.min(1, myS + wPx)))) * 180 / Math.PI,
       lat1: Math.atan(Math.sinh(Math.PI * (1 - 2 * Math.max(0, myN - wPx)))) * 180 / Math.PI };
+    /* 3D keep 矩形:视锥 + max(64px, 1/4 屏宽, 200m)。3D 实例按推送点(车头)裁切,
+       余量须覆盖整列长度量级,否则车头刚出屏(车体大半仍在视内)即停推、1.5s 后
+       原地淡出(用户所见"自己消失")。仅用于 3D 续命,不影响 2D 免写性能。 */
+    const mppHere = 40075016.686 * Math.cos(((n + s) / 2) * Math.PI / 180) / (512 * Math.pow(2, z));
+    const cssW = (map.getCanvas() || {}).clientWidth || 1024;
+    const kPx = Math.max(64, cssW / 4, 200 / mppHere) / (512 * Math.pow(2, z));
+    kpRect = { lng0: w - kPx * 360, lng1: e + kPx * 360,
+      lat0: Math.atan(Math.sinh(Math.PI * (1 - 2 * Math.min(1, myS + kPx)))) * 180 / Math.PI,
+      lat1: Math.atan(Math.sinh(Math.PI * (1 - 2 * Math.max(0, myN - kPx)))) * 180 / Math.PI };
   } else {
     wRect = null; /* 全国视图(z<5):所有在途班次都可能入屏,不裁切 */
+    kpRect = null;
   }
   let L, W;
   // 尺寸曲线(以 CSS 像素计,配合 dpr 补偿):国家/区域视图(低 zoom)小巧不遮挡,
@@ -4649,6 +4659,13 @@ function updateTrains(M, dtms) {
     vpLng0 = wRect.lng0; vpLng1 = wRect.lng1;
     vpLat0 = wRect.lat0; vpLat1 = wRect.lat1;
   }
+  /* 3D keep 矩形(kpRect)→ 经纬度:3D 激活时裁切门用宽余量(整列长度量级),
+     避免车头刚出屏即停推导致实例 1.5s 后原地淡出;3D 关闭时退回紧写矩形保性能 */
+  let kpLng0 = 0, kpLng1 = 0, kpLat0 = 0, kpLat1 = 0;
+  if (kpRect) {
+    kpLng0 = kpRect.lng0; kpLng1 = kpRect.lng1;
+    kpLat0 = kpRect.lat0; kpLat1 = kpRect.lat1;
+  }
 
   /* ── 阶段 3:位置解算 + 顶点构建(只对 alpha>0 的班次,即真正画到屏幕上的那一批) ── */
   /* EXP train3d(exp/train3d-20261105):z≥14.2 且模块就绪时收集 3D 候选;
@@ -4703,10 +4720,15 @@ function updateTrains(M, dtms) {
     t._lpx = p[0]; t._lpy = p[1]; t._lpxM = M2; /* 位置缓存(屏外远车跳过判定用) */
     t._brg2 = p[2]; t._slot = p[8] | 0; /* EXP 去重优选预判缓存(下一帧 dkey 预投用) */
     /* 视口外免写(十轮/十四轮):bbox 级 eligible 含大量「线路穿过视口但车在远处」的班次。
-       解算位置在写矩形(视锥+64px)外 → 本帧不写顶点:GL 本来就会裁掉,视觉零差异;
+       解算位置在裁切矩形外 → 本帧不写顶点:GL 本来就会裁掉,视觉零差异;
        顶点流/GPU 处理量与颜色/图标解算同省。班次仍在 fadeList(alpha 保持),
-       驶入视锥即恢复写出(屏缘出现,无淡入突变)。z<5 全国无裁切。 */
-    if (wRect && (p[0] < vpLng0 || p[0] > vpLng1 || p[1] < vpLat0 || p[1] > vpLat1)) continue;
+       驶入视锥即恢复写出(屏缘出现,无淡入突变)。z<5 全国无裁切。
+       ★ 3D 激活时裁切门改用宽 keep 矩形(视锥+max(200m,1/4屏)):3D 实例按车头推送点
+       续命,余量不足会让车头刚出屏(车体大半仍在视内)即停推、1.5s 后原地淡出。
+       3D 关闭(T3DH null)时退回紧写矩形,保住 mid-zoom 的免写性能。 */
+    if (T3DH
+      ? (kpRect && (p[0] < kpLng0 || p[0] > kpLng1 || p[1] < kpLat0 || p[1] > kpLat1))
+      : (wRect && (p[0] < vpLng0 || p[0] > vpLng1 || p[1] < vpLat0 || p[1] > vpLat1))) continue;
     /* 记录本帧线路类型,供下一帧阶段 2 判断是否被类型过滤(被过滤时目标 alpha=0,渐隐) */
     t._k = p[4];
     let color = t.color;
@@ -6394,6 +6416,7 @@ let scanStamp = 0, scanMinute = -1, scanGates = -1, scanPure = null, scanHasVp =
 let scanList = null, scanDay = null;
 /* 写矩形(z≥5 时按当前视锥+64px 余量填充;z<5 为 null 不裁切) */
 let wRect = null;
+let kpRect = null; /* 3D keep 矩形(视锥+max(64px,1/4屏,200m)),仅 3D 激活时作裁切门 */
 /* ── EXP train3d(exp/train3d-20261105):高缩放 3D 列车,模块懒加载 ──
    移动端/低端(IS_MOBILE/PERF_LOW)不加载 → 全程保持 2D 图标(回退策略) */
 let t3dModP = null;
@@ -6412,7 +6435,7 @@ function t3dEnsure() {
     if (!t3dCapToastDone) { t3dCapToastDone = true; try { toast(t3dCapable === 'nogl' ? T().t3dNoGl : T().t3dNoDev, 4000); } catch (e) {} }
     return;
   }
-  t3dModP = import('https://jr-static.suki.ing/app/train3d.js?v=t3d3')
+  t3dModP = import('https://jr-static.suki.ing/app/train3d.js?v=t3d4')
     .then(m => { m.init(map); })
     .catch(e => { pushErrSafe('t3d ' + (e && e.message || e)); });
 }

@@ -31,6 +31,8 @@ let disabled = false, inited = false;
 let f = 0, fFrom = 0, fTo = 0, fT0 = 0;
 let Z_ON = 16, Z_FULL = 17.5;
 const Z_MAX = 18.5; /* 放宽硬顶:无论 base(?t3dmax 可抬至 18.5)多少,上限不超过 18.5 */
+const Z_HYST = 0.4; /* 阈值滞回:进入=Z_ON,退出=Z_ON−Z_HYST(差≥0.3),防阈值附近缩放抖动使 f 来回归零闪断 */
+let engaged = false; /* 滞回状态:已越入 Z_ON 后,需跌破 Z_ON−Z_HYST 才退出 */
 /* 3D 开启时动态放宽缩放上限:baseMaxZoom=init 时的地图上限(不受放宽影响),
    模块激活(未 __t3dOff)即放宽 maxZoom=base+plus,关闭立即恢复 base。
    放宽不能等 f>0.5:Z_ON=16=基础上限,f>0 需 z>16,等 f 放宽则永远推不过去(死锁)。
@@ -181,7 +183,13 @@ const T3DLAYER = {
     stats.lastT = now;
     stats.frame++;
     const z = map.getZoom(); stats.z = z;
-    const target = window.__t3dOff ? 0 : Math.min(1, Math.max(0, (z - Z_ON) / (Z_FULL - Z_ON)));
+    /* 阈值滞回:进入用 Z_ON,退出用 Z_ON−Z_HYST;已越入后 ramp 基准下移到 Z_ON−Z_HYST,
+       使阈值附近的缩放抖动(z 在 16 上下小幅往返)不把 f 拉回 0 造成闪断 */
+    if (window.__t3dOff) engaged = false;
+    else if (!engaged && z >= Z_ON) engaged = true;
+    else if (engaged && z < Z_ON - Z_HYST) engaged = false;
+    const zb = Z_ON - Z_HYST;
+    const target = (engaged && !window.__t3dOff) ? Math.min(1, Math.max(0, (z - zb) / (Z_FULL - zb))) : 0;
     if (target !== fTo) { fFrom = f; fTo = target; fT0 = now; }
     f = animTo(now, fFrom, fTo, fT0);
     window.__T3D.f = f; stats.f = f;

@@ -371,11 +371,12 @@ button { font-family:inherit; }
 <!-- 信息板运营商品牌主题色(2026-11-07):app.js bump ?v=20261106-ib10 破缓存
      (主题色按本站主导运营商品牌渲染:原版 12 主题复刻+线色推导,杜绝每站同绿;
       ib9 已被抽屉修复线占用,顺延避让) -->
-<!-- 3D 列车可见性/阈值链(2026-11-07):app.js bump ?v=20261107-t3d1、train3d.js ?v=t3d2 同批破缓存
-     (Z_ON=16/Z_FULL=17.5、上限 18.5、模块激活即放宽;ib 序列留给信息板线,改用 t3d 序列) -->
+<!-- 3D 列车可见性/阈值链(2026-11-07):app.js bump ?v=20261107-t3d2、train3d.js ?v=t3d3 同批破缓存
+     (Z_ON=16/Z_FULL=17.5、上限 18.5、模块激活即放宽;编组元数据改走 jr-static 绝对源,
+      修主站相对路径 404 → 实例判死、3D 永不出现;ib 序列留给信息板线,改用 t3d 序列) -->
 <link rel="preload" as="style" href="https://jr-static.suki.ing/app/app.css?v=20261105-ib2" onload="this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://jr-static.suki.ing/app/app.css?v=20261105-ib2"></noscript>
-<link rel="modulepreload" href="https://jr-static.suki.ing/app/app.js?v=20261107-t3d1" crossorigin="anonymous">
+<link rel="modulepreload" href="https://jr-static.suki.ing/app/app.js?v=20261107-t3d2" crossorigin="anonymous">
 
 </head>
 <body>
@@ -945,7 +946,7 @@ window.addEventListener('unhandledrejection', e => { __pushErr('REJ ' + (e.reaso
     "three/addons/": "https://jr-static.suki.ing/vendor/three/jsm/"
 } }
 </script>
-<script type="module" src="https://jr-static.suki.ing/app/app.js?v=20261107-t3d1"></script>
+<script type="module" src="https://jr-static.suki.ing/app/app.js?v=20261107-t3d2"></script>
 <div id="m3dMask"></div>
 <div id="m3dViewer">
   <canvas id="m3dCanvas"></canvas>

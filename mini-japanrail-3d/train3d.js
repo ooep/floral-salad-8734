@@ -20,6 +20,11 @@ const MAX_INST = 30;
 const EARTH_C = 40075016.686;
 const LOD_PX = 130;
 const LOD_PX_BACK = 165; /* 滞回:full→stand 用 LOD_PX,stand→full 需 >LOD_PX_BACK,防边界来回跳(打磨轮) */
+/* 资产源:生产环境大资产在 jr-static Worker(主站 jr.suki.ing 不服务 /models/,
+   相对路径会 404 → 编组元数据加载失败 → 全部实例判死、3D 永不出现);
+   本地预览(file:/localhost)走同源相对路径。与 app.js M3D 的 BASE 口径一致。 */
+const LOCAL = location.protocol === 'file:' || ['localhost', '127.0.0.1'].includes(location.hostname);
+const assetUrl = p => LOCAL ? p.replace(/^\//, '') : 'https://jr-static.suki.ing' + p;
 
 let map = null, renderer = null, scene = null, camera = null, layerOn = false;
 let disabled = false, inited = false;
@@ -274,7 +279,7 @@ const metaCache = new Map();
 function consistMeta(path) {
   if (metaCache.has(path)) return metaCache.get(path);
   const base = path.slice(0, path.lastIndexOf('/') + 1);
-  const p = fetch(base + 'consist.json').then(r => r.ok ? r.json() : null).then(jj => {
+  const p = fetch(assetUrl(base + 'consist.json')).then(r => r.ok ? r.json() : null).then(jj => {
     if (!jj) return null;
     const n = (jj.cars || []).length || 1;
     const lenOf = i => (i === 0 || i === n - 1) ? (jj.car_length_m || 20) : (jj.middle_car_length_m || jj.car_length_m || 20);
@@ -385,8 +390,8 @@ function standTmpl(path, meta) {
       const cm = meta.cars[i];
       const standPath = cm.model ? cm.model.replace(/\.glb$/, '.stand-in.glb') : null;
       let g = null;
-      if (standPath) { try { g = (await loader.loadAsync(base + standPath)).scene; } catch (e) { g = null; } }
-      if (!g && cm.model) { try { g = (await loader.loadAsync(base + cm.model)).scene; } catch (e) { g = null; } }
+      if (standPath) { try { g = (await loader.loadAsync(assetUrl(base + standPath))).scene; } catch (e) { g = null; } }
+      if (!g && cm.model) { try { g = (await loader.loadAsync(assetUrl(base + cm.model))).scene; } catch (e) { g = null; } }
       if (!g) continue;
       g.updateMatrixWorld(true);
       let box = new THREE.Box3().setFromObject(g), sz = box.getSize(new THREE.Vector3());

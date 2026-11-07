@@ -6412,7 +6412,7 @@ function t3dEnsure() {
     if (!t3dCapToastDone) { t3dCapToastDone = true; try { toast(t3dCapable === 'nogl' ? T().t3dNoGl : T().t3dNoDev, 4000); } catch (e) {} }
     return;
   }
-  t3dModP = import('https://jr-static.suki.ing/app/train3d.js?v=t3d2')
+  t3dModP = import('https://jr-static.suki.ing/app/train3d.js?v=t3d3')
     .then(m => { m.init(map); })
     .catch(e => { pushErrSafe('t3d ' + (e && e.message || e)); });
 }

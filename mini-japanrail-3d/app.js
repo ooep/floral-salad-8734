@@ -2342,6 +2342,15 @@ function tailExtend(coords, ref) {
   return [p1[0] + dx * along / (cosf * 111.32 * 1000),
           p1[1] + dy * along / (110.57 * 1000)];
 }
+/* 反向弦判据:在 b 处,入向 a→b 与出向 b→c 夹角 >150° 且弦 >20m = 补了会折返 */
+function revChord(a, b, c) {
+  const cosf = Math.cos(b[1] * Math.PI / 180);
+  const ax = (b[0]-a[0]) * cosf * 111.32, ay = (b[1]-a[1]) * 110.57;
+  const bx = (c[0]-b[0]) * cosf * 111.32, by = (c[1]-b[1]) * 110.57;
+  const la = Math.hypot(ax, ay), lb = Math.hypot(bx, by);
+  if (la < 0.02 || lb < 0.02) return false;
+  return (ax*bx + ay*by) / la / lb < -0.866;
+}
 function bridgePath(A, B, lineSet, rawA, rawB) {
   const lsKey = lineSet ? [...lineSet].sort().join(',') : '';
   const key = A + '|' + B + '|' + lsKey;
@@ -2770,9 +2779,18 @@ function snapToStops(t, i, coords) {
   if (gH <= 0.03 && gT <= 0.03) return null;
   if (gH > lim || gT > lim) return null;
   const path = [];
-  if (gH > 0.03) path.push([cA[0], cA[1]]);
+  /* 2026-11-07 折返清洗:补站坐标弦之前先判方向 —— 弦与末段/首段夹角 >120° 时
+     不补(补了就是「过站又折回」,列车沿弧长倒着走)。保留原几何端点,首末点不挪。 */
+  if (gH > 0.03) {
+    const rev = coords.length >= 2 && revChord(coords[1], coords[0], cA);
+    if (!rev) path.push([cA[0], cA[1]]);
+  }
   for (const p of coords) path.push(p);
-  if (gT > 0.03) path.push([cB[0], cB[1]]);
+  if (gT > 0.03) {
+    const n = path.length;
+    const rev = n >= 2 && revChord(path[n-2], coords[coords.length-1], cB);
+    if (!rev) path.push([cB[0], cB[1]]);
+  }
   return withLen(path);
 }
 /* per-trip 区间路径兜底(站坐标消歧/同段截取/站序折线/骨架):

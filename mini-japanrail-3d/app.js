@@ -6527,7 +6527,7 @@ function t3dAttempt(force) {
   /* 重试 nonce:ES 模块对失败的 dynamic import 会按 specifier 缓存拒绝,重试(含手动强制)
      必须换 URL 才会真正重新发请求;Worker 按路径服务、忽略查询串,内容不变 */
   const nonce = ++t3dAttemptN;
-  t3dModP = import('https://jr-static.suki.ing/app/train3d.js?v=t3d9&r=' + nonce)
+  t3dModP = import('https://jr-static.suki.ing/app/train3d.js?v=t3d13&r=' + nonce)
     .then(m => {
       m.init(map);
       /* 首帧渲染看门狗:init 后 8s 仍无渲染帧 → 视为失败(软件渲染/驱动挂等)降级;

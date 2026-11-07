@@ -13,6 +13,7 @@
      __t3dRec 异常逐帧记录；__t3dTable 逐节表（mode/dTan/adjDeg/yaw/pitch/roll）。
    ══════════════════════════════════════════════════════════════════════ */
 import * as THREE from 'three';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 const FADE_MS = 240;
 const LOD_FADE_MS = 400; /* LOD 交叉淡化比启用淡化更长:远景切换更柔(打磨轮) */
@@ -118,7 +119,9 @@ export function init(mapObj) {
   const plus0 = window.__t3dZoomPlus != null ? Math.max(0, Math.min(3, +window.__t3dZoomPlus || 0)) : zoomPlus;
   appliedMax = Math.min(Z_MAX, baseMaxZoom + (!window.__t3dOff ? plus0 : 0));
   try { map.setMaxZoom(appliedMax); } catch (e) {}
-  nightOn = nightByClock() || new URLSearchParams(location.search).has('t3dnight');
+  /* 主题优先:浅色主题按白昼材质/光照,夜间也不进夜光(否则浅底图上黑块);深色主题保留昼夜时钟 */
+  const themeLight = document.documentElement.getAttribute('data-theme') === 'light';
+  nightOn = !themeLight && (nightByClock() || new URLSearchParams(location.search).has('t3dnight'));
   const add = () => {
     if (layerOn || !map.getLayer || map.getLayer('trains-3d-exp')) { layerOn = true; return; }
     try { map.addLayer(T3DLAYER); layerOn = true; } catch (e) { disabled = true; console.warn('[t3d] addLayer failed', e); }
@@ -143,8 +146,16 @@ const T3DLAYER = {
       renderer.setPixelRatio(1);
       renderer.autoClear = false;
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
-      renderer.toneMappingExposure = 1.22;
+      renderer.toneMappingExposure = nightOn ? 1.22 : 1.3;
       scene = new THREE.Scene();
+      /* 环境反射兜底:glTF 多数车体 metallicFactor 缺省=1,无 envMap 时金属无漫反射 → 浅底图上呈黑块。
+         与查看器同源:RoomEnvironment PMREM(每个 WebGL 上下文各自生成,不跨上下文)。 */
+      try {
+        const pm = new THREE.PMREMGenerator(renderer);
+        scene.environment = pm.fromScene(new RoomEnvironment(), 0.04).texture;
+        scene.environmentIntensity = nightOn ? 0.4 : 1.0;
+        pm.dispose();
+      } catch (e) {}
       camera = new THREE.PerspectiveCamera();
       camera.matrixAutoUpdate = false;
       camera.matrixWorld.identity();
@@ -369,6 +380,7 @@ function buildRoot(tmpl, it) {
       o.frustumCulled = false;
       const m = o.material.clone();
       m.transparent = true; m.opacity = 0;
+      fixTrainMat(m);
       if (nightOn && m.roughnessMap) applyNight(m);
       o.material = m; it.mats.push(m);
     }
@@ -423,6 +435,11 @@ function checkAxis(path, tmpl, meta) {
     if (!(sz.z >= sz.x * 0.999 && sz.z >= sz.y * 0.999) || Math.abs(sz.z - L) / L > 0.5) bad.push({ i, sz: [+sz.x.toFixed(1), +sz.y.toFixed(1), +sz.z.toFixed(1)], L: +L.toFixed(1) });
   }
   if (bad.length) { axisBadSet.add(path); axisReport[path] = { reason: 'local-axis-mismatch', bad }; }
+}
+function fixTrainMat(m) {
+  /* 涂装车身纠正:glTF 未写 metallicFactor 时缺省=1,带 albedo 贴图的漆面被当作纯金属,
+     无 envMap 时漫反射=0 → 浅色主题黑块。保留真金属(无贴图/低粗糙度),漆面压到 0.12。 */
+  if (m && m.isMeshStandardMaterial && m.map && m.metalness > 0.6 && m.roughness >= 0.35) m.metalness = 0.12;
 }
 function applyNight(mat) {
   const uni = { nightAmt: { value: 1.0 } };
@@ -516,7 +533,7 @@ function placeInstances(now) {
           it.rootS = st.group.clone(true);
           it.matsS = []; it.carNodesS = [];
           it.rootS.traverse(o => {
-            if (o.isMesh) { o.frustumCulled = false; const m = o.material.clone(); m.transparent = true; m.opacity = 0; o.material = m; it.matsS.push(m); }
+            if (o.isMesh) { o.frustumCulled = false; const m = o.material.clone(); m.transparent = true; m.opacity = 0; fixTrainMat(m); o.material = m; it.matsS.push(m); }
             if (o.userData && o.userData.m3dCar) it.carNodesS.push(o);
           });
           scene.add(it.rootS);

@@ -2650,6 +2650,81 @@ function trackIdentity(t, i) {
   if (!pr.plat && pr.reason) tidFbNote('id:' + pr.reason, line, t.jasN[i], t.jasN[i + 1]);
   return r;
 }
+/* 几何源 A 案:身份约束腿源 —— 站内影响区换 (站, 身份线) 的 ORM 股道中心线。
+   候选集 = 索引中该站该身份线的 ORM 折线(不跨线最近邻吸附,错股率 0 的结构性保证);
+   约束三重:停站锚横向距离 ≤45m(站心到通过轨可达 30-40m,候选限身份线不跨线) +
+   最近点切线与腿端行进向共线(|cos|≥0.5) + span 自站伸入区间 ≥100m。
+   拼接:站 A 股道段(外端→站) + 原腿中段(离两站 >min(250m, 站距/3)) + 站 B 股道段(站→外端)。 */
+function _ovlPick(cands, anchor, brgOut) {
+  const cf = Math.cos(anchor[1] * Math.PI / 180);
+  let best = null, bd = 0.015; /* 15m,度≈0.000135 → 用米比较 */
+  for (const co0 of cands) {
+    let m = 1e18, mk = 0;
+    for (let k = 0; k + 1 < co0.length; k++) {
+      const a = co0[k], b = co0[k + 1];
+      const ax = (a[0] - anchor[0]) * cf * 111320, ay = (a[1] - anchor[1]) * 110540;
+      const dx = (b[0] - a[0]) * cf * 111320, dy = (b[1] - a[1]) * 110540;
+      const L2 = dx * dx + dy * dy;
+      const f = L2 > 1e-12 ? Math.min(1, Math.max(0, -(ax * dx + ay * dy) / L2)) : 0;
+      const d = Math.hypot(ax + dx * f, ay + dy * f);
+      if (d < m) { m = d; mk = k; }
+    }
+    if (m > 45) continue; /* 站心锚到通过轨横向可达 30-40m;候选已限身份线,不跨线 */
+    const a = co0[mk], b = co0[mk + 1];
+    const tb = Math.atan2((b[0] - a[0]) * cf, b[1] - a[1]);
+    let dd = Math.abs(tb - brgOut); if (dd > Math.PI) dd = 2 * Math.PI - dd;
+    if (Math.abs(Math.cos(dd)) < 0.5) continue;
+    const far = Math.max(geoKm(co0[0], anchor), geoKm(co0[co0.length - 1], anchor));
+    if (far < 0.1) continue;
+    if (m < bd || !best) { best = { co: co0, m }; bd = m; }
+  }
+  if (!best) return null;
+  /* 定向:使 co[0] 在站侧(向区间外端延伸) */
+  let co = best.co;
+  if (geoKm(co[0], anchor) > geoKm(co[co.length - 1], anchor)) co = co.slice().reverse();
+  return co;
+}
+function overlayStationTracks(t, i, e) {
+  if (!PLATTRACK || !ormEnabled || !e || !e.coords || e.coords.length < 2) return null;
+  const cA = t.stopC && t.stopC[i], cB = t.stopC && t.stopC[i + 1];
+  if (!cA && !cB) return null;
+  /* 不经过 trackIdentity/legSegEntry(避免递归):身份线 = PLATMAP 运营线键优先,其次腿线 */
+  const line0 = e.line || lineOfPair(t, i) || '';
+  const pr = platForStop(t, i, line0);
+  const want = [pr.rid, line0].filter(Boolean);
+  const candsFor = (stN, c) => {
+    const per = PLATTRACK.st[normName(stN)];
+    if (!per) return null;
+    for (const w of want) {
+      const nw = normCached(w);
+      for (const k in per) if (normCached(k) === nw) return per[k];
+      for (const k in per) if (matchLineCached(k, w) >= 2) return per[k];
+      for (const k in per) if (matchLineCached(k, w) >= 1) return per[k]; /* 身份线弱匹配兜底(候选仍限本线) */
+    }
+    return null;
+  };
+  const n = e.coords.length;
+  const brgA = Math.atan2((e.coords[1][0] - e.coords[0][0]) * Math.cos(cA ? cA[1] : e.coords[0][1] * Math.PI / 180), e.coords[1][1] - e.coords[0][1]);
+  const brgB = Math.atan2((e.coords[n - 1][0] - e.coords[n - 2][0]) * Math.cos(cB ? cB[1] : e.coords[n - 1][1] * Math.PI / 180), e.coords[n - 1][1] - e.coords[n - 2][1]);
+  const coA = cA ? _ovlPick(candsFor(t.jas[i], cA) || [], cA, brgA) : null;
+  const coB = cB ? _ovlPick(candsFor(t.jas[i + 1], cB) || [], cB, brgB) : null;
+  if (!coA && !coB) { tidFbNote('ovl-miss', e.line, t.jasN[i], t.jasN[i + 1], false); return null; }
+  const chord = geoKm(cA || e.coords[0], cB || e.coords[n - 1]);
+  const infl = Math.min(0.25, chord / 3);
+  const mid = e.coords.filter(p => (!cA || geoKm(p, cA) > infl) && (!cB || geoKm(p, cB) > infl));
+  let co = [];
+  if (coA) co = co.concat(coA);
+  co = co.concat(mid);
+  if (coB) co = co.concat(coB);
+  if (co.length < 4) return null;
+  const ded = [co[0]];
+  for (let k = 1; k < co.length; k++) if (geoKm(co[k], ded[ded.length - 1]) > 0.004) ded.push(co[k]);
+  if (ded.length < 4) return null;
+  const w = withLen(ded);
+  /* 健全性:总长不得相对原腿畸变(拼接错会暴涨/暴跌) */
+  if (!(w.len > e.len * 0.6 && w.len < e.len * 1.6)) return null;
+  return { coords: w.coords, cum: w.cum, len: w.len, line: e.line, kind: e.kind, _ovl: 1 };
+}
 /* 本段主几何(按 班次×区间 缓存):pickSeg → 定向 → 站端吸附。停站朝向与行车共用同一对象,
    吸附必须在这里做 —— stopBearing 先于 trainPosition 缓存时也拿到吸附后的几何 */
 function legSegEntry(t, i) {
@@ -2683,6 +2758,8 @@ function legSegEntry(t, i) {
       if (sn) e = { coords: sn.coords, cum: sn.cum, len: sn.len, line: e.line, kind: e.kind };
     }
   }
+  /* 几何源 A 案:站内影响区换身份线 ORM 股道中心线(计算路径统一 overlay 后入缓存) */
+  if (e && PLATTRACK && ormEnabled) { const ov = overlayStationTracks(t, i, e); if (ov) e = ov; }
   (t._seg = t._seg || [])[i] = e;
   (t._segEp = t._segEp || [])[i] = _legEpoch;
   return e;
@@ -6461,6 +6538,7 @@ function fetchOrmTracks() {
   if (ormLoaded || ormFetching) return;
   ormFetching = true;
   addOrmLayer();
+  fetchPlatTrackIndex(); /* 几何源 A 案小索引(~1MB)随 ORM 按需拉 */
 }
 
 /* ---------------- 重数据懒加载(性能优化,2026-10-24/25) ----------------
@@ -6496,6 +6574,23 @@ function fetchStationDetailData() {
   stationDetailFetched = true;
   detailWanted = true;
   addDetailLayers(); /* 建源即返回;数据由 MapLibre worker 拉取/解析,不占主线程 */
+}
+/* 几何源 A 案:(站,线路)→站内股道中心线小索引(~1MB,离线自 ORM 推导,见
+   .cdp/build_plat_track_index.js)。随 ORM 按需拉;缺失/未到时身份约束腿源优雅降级
+   为现有简化腿,不影响主路径。到达后 bump epoch 让腿缓存惰性重算。 */
+let PLATTRACK = null, platTrackP = null;
+function fetchPlatTrackIndex() {
+  if (PLATTRACK) return Promise.resolve(PLATTRACK);
+  if (platTrackP) return platTrackP;
+  platTrackP = fetchJSONWithCache('https://jr-static.suki.ing/data/plat_track_index.json', '', 11)
+    .then(j => {
+      PLATTRACK = (j && j.st) ? j : null;
+      if (PLATTRACK) window.__t3dLegInvalidate();
+      return PLATTRACK;
+    })
+    .catch(() => { PLATTRACK = null; })
+    .then(() => { if (!PLATTRACK) platTrackP = null; return PLATTRACK; });
+  return platTrackP;
 }
 function bindLazyHeavyData() {
   if (lazyHeavyBound || !map) return;
@@ -9579,7 +9674,7 @@ $('subDep').addEventListener('click', function () { sheetDepArr = 'dep'; $('subD
 $('subArr').addEventListener('click', function () { sheetDepArr = 'arr'; $('subArr').classList.add('on'); $('subDep').classList.remove('on'); renderStationBody(); });
 window.showStationDetail = showStationDetail;  // 调试/自动化钩子：供控制台与 E2E 直接打开车站抽屉
 // E2E 钩子：列车详情/站台数据（确定性验证用，只读引用）
-window.__mjr3d = { showTrainDetail, tripList: () => tripList, PLATMAP: () => PLATMAP, tmaps: () => tmaps, badgeKeyOfFeature, badgeEntriesOfStation, badgeEntriesOf, showStationDetail, stationCoord: () => stationCoord, stationMap: () => stationMap, badgeNorm, badgeFamilyHit, map: () => map, ormState: () => ({ enabled: ormEnabled, loaded: ormLoaded, fetching: ormFetching }), detailState: () => ({ wanted: detailWanted, fetched: stationDetailFetched }), bufState: () => ({ bytes: bufArr.byteLength, trains: Math.min(MAXT, fadeList.length) }), boardCacheStats: () => ({ size: boardCache.size, items: boardCacheItems, cap: BOARD_CACHE_MAX_ITEMS }), platState: () => ({ loaded: !!PLATMAP, pending: !!(platmapP && !PLATMAP) }), detailRetry: () => Object.assign({}, detailRetry), sheetState: () => ({ partial: sheetIsPartial, rows: document.querySelectorAll('#shBody .lrow').length, open: document.querySelectorAll('#shBody .lrow.open').length, scroll: $('shBody').scrollTop }), ttState: () => (ttState ? { mode: ttState.mode, bucket: ttState.bucket, key: ttState.key } : null), ibTickMock: v => { ibTickMock = Array.isArray(v) ? v : null; try { renderStationBody(); } catch (e) {} }, ttCache: () => ({ station: stationTripsCache.size, miss: stationTripsMiss.size, partial: stationPartialCache.size, raw: !!ttRaw, sets: !!ttStopNames }) };
+window.__mjr3d = { showTrainDetail, tripList: () => tripList, PLATMAP: () => PLATMAP, platTrackState: () => ({ loaded: !!PLATTRACK, orm: ormEnabled }), tmaps: () => tmaps, badgeKeyOfFeature, badgeEntriesOfStation, badgeEntriesOf, showStationDetail, stationCoord: () => stationCoord, stationMap: () => stationMap, badgeNorm, badgeFamilyHit, map: () => map, ormState: () => ({ enabled: ormEnabled, loaded: ormLoaded, fetching: ormFetching }), detailState: () => ({ wanted: detailWanted, fetched: stationDetailFetched }), bufState: () => ({ bytes: bufArr.byteLength, trains: Math.min(MAXT, fadeList.length) }), boardCacheStats: () => ({ size: boardCache.size, items: boardCacheItems, cap: BOARD_CACHE_MAX_ITEMS }), platState: () => ({ loaded: !!PLATMAP, pending: !!(platmapP && !PLATMAP) }), detailRetry: () => Object.assign({}, detailRetry), sheetState: () => ({ partial: sheetIsPartial, rows: document.querySelectorAll('#shBody .lrow').length, open: document.querySelectorAll('#shBody .lrow.open').length, scroll: $('shBody').scrollTop }), ttState: () => (ttState ? { mode: ttState.mode, bucket: ttState.bucket, key: ttState.key } : null), ibTickMock: v => { ibTickMock = Array.isArray(v) ? v : null; try { renderStationBody(); } catch (e) {} }, ttCache: () => ({ station: stationTripsCache.size, miss: stationTripsMiss.size, partial: stationPartialCache.size, raw: !!ttRaw, sets: !!ttStopNames }) };
 // E2E 钩子：列车叠加弹窗（确定性验证，不依赖实时列车密度）
 window.__trPick = { n: () => visibleTrips.length, near: (x, y) => collectTrains(x, y, 14).length, open: (x, y) => showTrPick(collectTrains(x, y, 14), x, y) };
 /* E2E 回归钩子(确定性验证):两条历史事故的防线
@@ -11647,6 +11742,8 @@ $('swOrm').addEventListener('click', function () {
   localStorage.setItem('mjr3d_showorm', ormEnabled ? '1' : '0');
   applyTrackMode();
   if (ormEnabled && !ormLoaded) fetchOrmTracks(); /* 低配设备首次开启时按需拉取 */
+  if (ormEnabled) fetchPlatTrackIndex();
+  window.__t3dLegInvalidate(); /* 详细股道开/关:腿缓存整体惰性失效,切换帧原子重算 */
 });
 $('swTrail').addEventListener('click', function () { this.classList.toggle('on'); });
 /* 实时延误:默认开。关 = 停拉取并立即恢复全部正点;开 = 立即拉取 */

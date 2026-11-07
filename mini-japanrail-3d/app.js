@@ -1654,6 +1654,41 @@ async function buildStaticIndexAsync(onPhase) {
     if (!c) return null;
     return (geoKm(c, coords[0]) < 30 || geoKm(c, coords[coords.length - 1]) < 30) ? c : null;
   }
+  /* 2026-11-07 源几何纯尖刺清洗(仅批准的两处):
+     成田線 成田|下総松崎、池袋線・西武秩父線 飯能|東飯能 的 A→B→C→B→A 原路往返。
+     只删整段重复往返(前后点距≤0.8m、中间≥2点),首末点与其余几何不动。 */
+  const SPIKE_FIX = new Set(['成田線|成田|下総松崎', '池袋線・西武秩父線|飯能|東飯能']);
+  function stripRetrace(coords) {
+    const n = coords.length;
+    if (n < 4) return coords;
+    const out = [coords[0]];
+    let i = 1;
+    while (i < n) {
+      let j = i + 1;
+      while (j < n && geoKm(coords[j], out[out.length-1]) * 1000 > 0.8) j++;
+      if (j < n && j - i >= 2) {
+        let ok = true;
+        for (let k = 0; k <= (j - i - 1) / 2; k++) {
+          if (geoKm(coords[i+k], coords[j-1-k]) * 1000 > 0.8) { ok = false; break; }
+        }
+        if (ok) { i = j + 1; continue; }
+      }
+      out.push(coords[i]); i++;
+    }
+    return out;
+  }
+  /* 尖刺根部:回程终点与出发端重合,根部顶点与相邻两点近共线(>170°)。
+     只查首端(这两处尖刺都在 feature 起点),不碰尾部几何。 */
+  function stripStartBase(coords) {
+    if (coords.length < 3) return coords;
+    const a = coords[0], b = coords[1], c = coords[2];
+    const cosf = Math.cos(b[1] * Math.PI / 180);
+    const ax = (b[0]-a[0]) * cosf * 111.32, ay = (b[1]-a[1]) * 110.57;
+    const bx = (c[0]-b[0]) * cosf * 111.32, by = (c[1]-b[1]) * 110.57;
+    const la = Math.hypot(ax, ay), lb = Math.hypot(bx, by);
+    if (la < 0.02 || lb < 0.02) return coords;
+    return (ax*bx + ay*by) / la / lb < -0.985 ? [a].concat(coords.slice(2)) : coords;
+  }
   function register(a, b, coords, line, color, kind) {
     /* 方向修复:源数据部分段 from/to 与坐标方向相反(如上越新幹線「大宮|熊谷」coords 实为熊谷→大宮),
        导致路径从错误端开始。用站表权威坐标判断:coords[0] 应接近 key 前站 */
@@ -1705,8 +1740,15 @@ async function buildStaticIndexAsync(onPhase) {
   for (const f of segFC.features) {
     const p = f.properties, g = f.geometry;
     const parts = g.type === 'MultiLineString' ? g.coordinates : [g.coordinates];
-    for (const co of parts) {
+    for (let pi = 0; pi < parts.length; pi++) {
+      let co = parts[pi];
       if (co.length < 2) continue;
+      /* 纯尖刺清洗只动批准的两条源折线;结果回写 segFC,渲染层也同步干净 */
+      if (SPIKE_FIX.has(p.line + '|' + p.from + '|' + p.to)) {
+        co = stripStartBase(stripRetrace(co));
+        parts[pi] = co;
+        if (g.type !== 'MultiLineString') g.coordinates = co;
+      }
       register(p.from, p.to, co, p.line, p.color, p.kind);
       const rev = co.slice().reverse();
       register(p.to, p.from, rev, p.line, p.color, p.kind);

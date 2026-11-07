@@ -1654,19 +1654,26 @@ async function buildStaticIndexAsync(onPhase) {
     if (!c) return null;
     return (geoKm(c, coords[0]) < 30 || geoKm(c, coords[coords.length - 1]) < 30) ? c : null;
   }
-  /* 2026-11-07 源几何纯尖刺清洗(仅批准的两处):
-     成田線 成田|下総松崎、池袋線・西武秩父線 飯能|東飯能 的 A→B→C→B→A 原路往返。
-     只删整段重复往返(前后点距≤0.8m、中间≥2点),首末点与其余几何不动。 */
-  const SPIKE_FIX = new Set(['成田線|成田|下総松崎', '池袋線・西武秩父線|飯能|東飯能']);
-  function stripRetrace(coords) {
+  /* 2026-11-07 源几何纯尖刺清洗(逐条白名单):
+     成田線 成田|下総松崎、池袋線 飯能|東飯能、名古屋・三重線 久居|桃園(≥2 中间点);
+     宝塚南口|宝塚、伊万里|東山代(单段 A→B→A,minSpan=1)。
+     只删整段重复往返(前后点距≤0.8m),首末点与其余几何不动。 */
+  const SPIKE_FIX = new Map([
+    ['成田線|成田|下総松崎', 2],
+    ['池袋線・西武秩父線|飯能|東飯能', 2],
+    ['名古屋・三重線|久居|桃園', 2],
+    ['神戸線・宝塚線・伊丹線|宝塚南口|宝塚', 1],
+    ['西九州線|伊万里|東山代', 1],
+  ]);
+  function stripRetrace(coords, minSpan) {
     const n = coords.length;
-    if (n < 4) return coords;
+    if (n < 3) return coords;
     const out = [coords[0]];
     let i = 1;
     while (i < n) {
       let j = i + 1;
       while (j < n && geoKm(coords[j], out[out.length-1]) * 1000 > 0.8) j++;
-      if (j < n && j - i >= 2) {
+      if (j < n && j - i >= minSpan) {
         let ok = true;
         for (let k = 0; k <= (j - i - 1) / 2; k++) {
           if (geoKm(coords[i+k], coords[j-1-k]) * 1000 > 0.8) { ok = false; break; }
@@ -1743,9 +1750,10 @@ async function buildStaticIndexAsync(onPhase) {
     for (let pi = 0; pi < parts.length; pi++) {
       let co = parts[pi];
       if (co.length < 2) continue;
-      /* 纯尖刺清洗只动批准的两条源折线;结果回写 segFC,渲染层也同步干净 */
-      if (SPIKE_FIX.has(p.line + '|' + p.from + '|' + p.to)) {
-        co = stripStartBase(stripRetrace(co));
+      /* 纯尖刺清洗只动白名单源折线;结果回写 segFC,渲染层也同步干净 */
+      const minSpan = SPIKE_FIX.get(p.line + '|' + p.from + '|' + p.to);
+      if (minSpan) {
+        co = stripStartBase(stripRetrace(co, minSpan));
         parts[pi] = co;
         if (g.type !== 'MultiLineString') g.coordinates = co;
       }

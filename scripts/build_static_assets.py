@@ -135,6 +135,16 @@ def main():
     else:
         print('[stop_platforms] SKIP (not present)')
 
+    # 5.3c) line_anchors.json —— 按线站台锚点(2026-11-07,東京/両国 B 类;
+    #       只覆盖平台数据可靠的线,JR 大站上层层平台缺失的线不进表)。
+    la_src = os.path.join(MINI, 'data', 'line_anchors.json')
+    if os.path.isfile(la_src):
+        shutil.copy2(la_src, os.path.join(out, 'data', 'line_anchors.json'))
+        total += 1
+        print('[line_anchors] copied')
+    else:
+        print('[line_anchors] SKIP (not present)')
+
     # 5.4) vendor/ —— 核心库自托管（maplibre-gl 6.12）
     #      依赖 jsdelivr 等外部 CDN 在部分网络不可达，自托管到 jr-static 保证页面可加载。
     vendor_src = os.path.join(MINI, 'vendor')

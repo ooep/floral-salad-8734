@@ -12106,10 +12106,11 @@ const M3D = (() => {
       c.wrap.userData.m3dCar = 1; c.wrap.userData.m3dZ = c.wrap.position.z; /* 克隆保留:逐车厢采样偏移 */
       group.add(c.wrap); carNodes.push({ node: c.wrap, z: c.wrap.position.z });
     }
-    /* 前灯光束:首车前端(车头 +z),仅夜间显示 */
+    /* 前灯光束:首车鼻端(-z),仅夜间显示 */
     try {
       const bm = beamMesh(32, 14, 3.2, 0xfff3dd);
-      bm.position.set(0, 0.10, loaded[0].coupleF + 0.20);
+      bm.position.set(0, 0.10, -loaded[0].coupleF - 0.20);
+      bm.rotation.y = Math.PI; /* 光带向车头前方(-z)铺开:局部 +z 为编组向后方向 */
       carNodes[0].node.add(bm);
     } catch (e) {}
     return { group, cars: carNodes, length: maxZ - minZ, path };

@@ -2263,6 +2263,32 @@ function nearPt(p, coords) {
   }
   return bp;
 }
+/* 2026-11-07 目标里程统一约束(快径/慢径共用):
+   ① 同区间只许前进;② 反向(目标在车后)钳住不倒车;
+   ③ 正向跳变(延误变短)限速追赶:每帧 ≤ max(1.2×当前速度, 30m/s);
+   ④ 追赶期间速度按 2.5m/s² 连续爬升,并用 sqrt(2*a*剩余) 保证到站前减速到 0,
+      不会因追赶冲过站台。 */
+function limitTarget(t, li, target, len, kmh) {
+  const nowW = Date.now();
+  const dt = (t._lt != null && nowW - t._lt < 400) ? Math.min(0.1, Math.max(0.008, (nowW - t._lt) / 1000)) : 0.016;
+  t._lt = nowW;
+  if (!(len > 0)) return { target: target, kmh: kmh };
+  if (t._mxI !== li) { t._mxI = li; t._mxS = target; t._vMs = kmh / 3.6; return { target: target, kmh: kmh }; }
+  if (target < t._mxS) return { target: t._mxS, kmh: Math.min(kmh, (t._vMs || 0) * 3.6) };  /* 只停不退 */
+  const step = Math.max(1.2 * (t._vMs || 0), 30) * dt;
+  if (target - t._mxS > step + 1e-9) {
+    const out = t._mxS + step;
+    const remain = Math.max(0, len - out);
+    const vStop = Math.sqrt(2 * 2.0 * remain);
+    const vShow = Math.max(0, Math.min(Math.max(1.2 * (t._vMs || 0), 30), (t._vMs || 0) + 2.5 * dt, vStop));
+    t._mxS = out;
+    t._vMs = vShow;
+    return { target: out, kmh: Math.min(kmh, vShow * 3.6) };
+  }
+  t._mxS = Math.max(t._mxS, target);
+  t._vMs = Math.max(0, Math.min(kmh / 3.6, (t._vMs || 0) + 2.5 * dt));
+  return { target: target, kmh: Math.min(kmh, t._vMs * 3.6 + 1e-6) };
+}
 function bridgePath(A, B, lineSet, rawA, rawB) {
   const lsKey = lineSet ? [...lineSet].sort().join(',') : '';
   const key = A + '|' + B + '|' + lsKey;
@@ -2839,7 +2865,8 @@ function trainPosition(t, M) {
       kmh = d[1] * 3.6;
       unrel = pf.unrel;
     } else frac = (M - fk.m0) / fk.runRaw;   /* 距离异常区间:回退旧线性 */
-    const target = frac * fk.len;
+    let target = frac * fk.len;
+    { const ltd = limitTarget(t, fk.i, target, fk.len, kmh); target = ltd.target; kmh = ltd.kmh; }
     /* ★ 子段有效域检查(21a 轮修复「线路外乱飞/抽搐」):十九轮的守卫只验时间窗 [m0,m1],
        漏验了 target 是否仍在缓存子段 [kLo, kLo+kSpan] 内 —— M 在同一区间内跨过子段边界后,
        位置沿旧子段的弦线性外推(f 越出 [0,1]),弯道多的线(日豊本線/仙山線/奥羽線 等)
@@ -2959,14 +2986,11 @@ function trainPosition(t, M) {
       anchor = 1;
     }
     else {
-      /* 2026-11-07 一步到位:同区间目标里程只许前进(延迟时间窗/重算/兜底分支回退都钳住);
-         一旦目标被算到车后,钳到已到达的最远点并停住,绝不倒车。 */
-      const targetRaw = fPos * len;
-      let target = targetRaw;
-      if (t._mxI === i) {
-        if (target < t._mxS) target = t._mxS;   /* 目标在车后 → 钳到当前最远点(停站) */
-        else t._mxS = target;
-      } else { t._mxI = i; t._mxS = target; }
+      /* 2026-11-07 目标里程统一约束:同区间只许前进;反向钳住不倒车;
+         正向跳变限速追赶(≤max(1.2v,30m/s)),速度连续且到站前减速,不越站。 */
+      const ltd = limitTarget(t, i, fPos * len, len, kmh);
+      let target = ltd.target;
+      kmh = ltd.kmh;
       let lo = 1, hi = cum.length - 1;
       while (lo < hi) { const mid = (lo + hi) >> 1; if (cum[mid] < target) lo = mid + 1; else hi = mid; }
       const k = lo, c0 = coords[k-1], c1 = coords[k];

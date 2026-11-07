@@ -73,16 +73,26 @@ def main():
     h = data_hash()
     v_app, v_j = current_versions()
 
-    if v_j is not None and v_j != 'mjrj-' + v_app:
-        print('::error::journey.html DATA_VERSION(%s) 与 app.js(%s) 不同源' % (v_j, v_app))
-        sys.exit(1)
-
     if args.update:
+        # bump 助手:app.js 的 DATA_VERSION 变了,这里同步 journey.html 与 .version-lock,
+        # 不再让 CI 去发现「只 bump 了一处」。检查仍由 --check 兜底。
+        if os.path.isfile(JOURNEY):
+            want = 'mjrj-' + v_app
+            if v_j != want:
+                jt = open(JOURNEY, encoding='utf-8').read()
+                jt = re.sub(r"const DATA_VERSION = 'mjrj-[^']+';",
+                            "const DATA_VERSION = '%s';" % want, jt)
+                open(JOURNEY, 'w', encoding='utf-8').write(jt)
+                print('[data-version] journey.html DATA_VERSION -> %s' % want)
         with open(LOCK, 'w', encoding='utf-8') as f:
             json.dump({'hash': h, 'version': v_app}, f, ensure_ascii=False)
             f.write('\n')
         print('[data-version] lock updated: %s @ %s...' % (v_app, h[:16]))
         return
+
+    if v_j is not None and v_j != 'mjrj-' + v_app:
+        print('::error::journey.html DATA_VERSION(%s) 与 app.js(%s) 不同源' % (v_j, v_app))
+        sys.exit(1)
 
     # --check
     if not os.path.isfile(LOCK):

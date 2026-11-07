@@ -2680,6 +2680,17 @@ function trapezAt(pf, tau) {
   const r = pf.T - tau;
   return [pf.D - 0.5 * pf.o * r * r, pf.o * r];
 }
+/* 链式通过(D=几何里程,T=时刻表总运行秒,grade=0 新干线):与 trapezProfile 同式,
+   但不依赖单 leg 的 arr/dep,用于 dwell=0 连续通过链。 */
+function chainProfile(D, T, grade) {
+  if (!(D > 0) || !isFinite(D) || !(T > 0)) return null;
+  const vmax = grade === 0 ? 300 / 3.6 : 130 / 3.6;
+  let o = TRAPEZ_A, disc = T * T - 4 * D / o, c;
+  if (disc < 0) { o = 4 * D / (T * T); c = o * T / 2; }
+  else c = o * (T - Math.sqrt(disc)) / 2;
+  if (c > vmax && D < vmax * T) { c = vmax; o = c * c / (c * T - D); }
+  return { D, T, o, c, l: c / o };
+}
 /* 二十三轮「整区间反向行驶」修复:segIndex 存在键为 A|B 但坐标实为 B→A 的反向注册段
    (宝殿|曽根、香取|佐原 等,列车整区间倒行、终点停在出发站)。主路径 pickSeg 后按
    stopC[i] 定向:尾端更近本站 → 换用惰性反向孪生(cum 反演 newCum[j]=len-oldCum[N-j],
@@ -3244,11 +3255,85 @@ function leftTrackOff(cb, lng, lat) {
   const lx = -Math.cos(cb), ly = Math.sin(cb), clat = Math.cos(lat * Math.PI / 180);
   return [lng + lx * 2.1 / (111320 * clat), lat + ly * 2.1 / 110540];
 }
+/* dwell=0 连续通过链:从第一个 dwell=0 站开始,合并到下一个有停站的站(或终点),
+   整段几何 + 时刻表总运行时间做一条梯形剖面;中间 dwell=0 站不停留。 */
+function chainsFor(t) {
+  if (t._chains !== undefined) return t._chains;
+  const N = t.N, dep = t.dep, arr = t.arr;
+  const out = [];
+  let i = 0;
+  while (i < N - 1) {
+    /* 链首:本站 dwell=0 且本 leg 零运行时长 */
+    if (!(dep[i] <= arr[i] + 1e-9 && arr[i+1] <= dep[i] + 1e-9)) { i++; continue; }
+    let j = i;
+    while (j < N - 1 && dep[j] <= arr[j] + 1e-9 && arr[j+1] <= dep[j] + 1e-9) j++;
+    /* j = 零运行序列后的第一个站:链覆盖 legs i..j-1,站 i..j */
+    let e = j - 1, m = j, T = 0;
+    if (j < N - 1) {
+      const nd = dep[j] - arr[j], nr = arr[j+1] - dep[j];
+      if (nd > 1e-9) T = Math.min(0.25, nd);           /* 链尾站有停站:借 ≤15s */
+      else if (nr > 1e-9) { e = j; m = j + 1; T = nr; } /* 链尾站 dwell=0 但有正运行:并入该 leg */
+    } else {
+      T = 0.25;                                        /* 零运行链直达终点:兜底 15s */
+    }
+    if (T > 1e-9) {
+      const coords = []; let line = '', kind = '';
+      for (let l = i; l <= e; l++) {
+        /* 主几何缺失(土佐電/临时站等 1,526 段恰好是 fallback 类)时用兜底路径,
+           否则链在这些段完全不生效。 */
+        const leg = legSegEntry(t, l) || fallbackSeg(t, l);
+        if (!leg || !leg.coords || leg.coords.length < 2) { coords.length = 0; break; }
+        if (!line) { line = leg.line; kind = leg.kind; }
+        for (const p of leg.coords) {
+          if (!coords.length || geoKm(coords[coords.length - 1], p) * 1000 > 0.5) coords.push(p);
+        }
+      }
+      if (coords.length >= 2) {
+        const w = withLen(coords);
+        const pf = chainProfile(w.len * 1000, T * 60, t.g);
+        if (pf) out.push({ i, m, t0: dep[i], dur: T, coords: w.coords, cum: w.cum, len: w.len, pf, line, kind });
+      }
+    }
+    i = Math.max(i + 1, e + 1);
+  }
+  t._chains = out;
+  return out;
+}
+function chainPosition(t, ch, M) {
+  const d = trapezAt(ch.pf, (M - ch.t0) * 60);
+  const frac = Math.min(1, d[0] / ch.pf.D);
+  const target = frac * ch.len;
+  const co = ch.coords, cum = ch.cum;
+  let lo = 1, hi = cum.length - 1;
+  while (lo < hi) { const mid = (lo + hi) >> 1; if (cum[mid] < target) lo = mid + 1; else hi = mid; }
+  const k = lo, c0 = co[k - 1], c1 = co[k];
+  const segLen = cum[k] - cum[k - 1];
+  const f = segLen <= 0 ? 0 : (target - cum[k - 1]) / segLen;
+  _pos[0] = c0[0] + (c1[0] - c0[0]) * f;
+  _pos[1] = c0[1] + (c1[1] - c0[1]) * f;
+  _pos[2] = pathBrgAt(co, cum, target, ch.len);
+  _pos[3] = ch.line; _pos[4] = ch.kind; _pos[5] = d[1] * 3.6;
+  _pos[6] = 0; _pos[7] = -1; _pos[8] = 0;
+  const q = leftTrackOff(_pos[2], _pos[0], _pos[1]);
+  _pos[0] = q[0]; _pos[1] = q[1];
+  return _pos;
+}
 function trainPosition(t, M) {
   const { dep, arr, N, jas } = t;
   _pos[6] = 0;   /* 共享数组:每次调用先清零,防上一班次的 unrel 标记残留 */
   _pos[7] = -1;  /* 停站索引标记(__appCollide 诊断用):-1=在途,≥0=停在 jas[i] */
   _pos[8] = 0;   /* 槽位标记:0=未加槽位偏移(参与同点去重),≥1=已错开到邻轨 */
+  /* dwell=0 连续通过链:优先于快径/leg 解算,整段一条梯形剖面,中间站不停留。
+     联挂/联挂偏移班次跳过,保持原逐 leg 行为。 */
+  if (!t.cpl && !t._coupleOff) {
+    const cs = chainsFor(t);
+    if (cs && cs.length) {
+      for (let ci = 0; ci < cs.length; ci++) {
+        const ch = cs[ci];
+        if (M >= ch.t0 && M <= ch.t0 + ch.dur + 1e-6) return chainPosition(t, ch, M);
+      }
+    }
+  }
   /* 段内快径(十九轮,二十四轮并入梯形剖面):缓存上次解算的(时间窗 m0/m1、折线子段 kLo/kSpan、
      子段起点/方向/方位角、线路/种类)。M 仍落在同一时间窗与同一折线子段内时,直接复用子段几何;
      frac 与速度改由梯形剖面按加减速非线性推进(与全量解算同一算法),免去 locateSeg 与 skCum

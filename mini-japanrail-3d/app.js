@@ -6461,7 +6461,7 @@ function t3dAttempt(force) {
   }
   if (!force && t3dFailCount >= T3D_FAIL_MAX) return;   /* 安全阀:连续失败后不自动尝试 */
   window.__t3dOff = false;
-  t3dModP = import('https://jr-static.suki.ing/app/train3d.js?v=t3d4')
+  t3dModP = import('https://jr-static.suki.ing/app/train3d.js?v=t3d5')
     .then(m => {
       m.init(map);
       /* 首帧渲染看门狗:init 后 8s 仍无渲染帧 → 视为失败(软件渲染/驱动挂等)降级;

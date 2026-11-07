@@ -40,12 +40,45 @@ let engaged = false; /* 滞回状态:已越入 Z_ON 后,需跌破 Z_ON−Z_HYST 
    plus 默认 2.5(生产 z18.5):z17.5 淡入完成后仍有 1 档近观余量;
    window.__t3dZoomPlus 可覆盖 0–3。移动端不加载本模块→天然不放宽。 */
 let baseMaxZoom = 0, zoomPlus = 2.5, appliedMax = -1;
+/* 性能收口 3(2026-11-07):实例创建门(滞回 0.30/0.24)——f 低于门限不新建实例,
+   存量按 1.5s+240ms 既有路径自然淡出(无硬切);越门后推送恢复、a 0→1 淡入,
+   图标互补恒等式(图标+3D≡1,V=a·f)全程不变;z16(f=0.21)档不再养 20+ 实例 */
+let createGate = false;
 const insts = new Map();
 let frameFlat = [], frameSeq = 0, consumedSeq = -1;
 let nightOn = false, hoverId = null, lastEntHide = false;
 let Mloc = new THREE.Matrix4();
 let curMpp = 1, curW = 1;
-const stats = { fps: 0, n: 0, cand: 0, calls: 0, tris: 0, z: 0, f: 0, inst: 0, lod: 0, visN: 0, mpp: 1, lastT: 0, frame: 0 };
+const stats = { fps: 0, n: 0, cand: 0, calls: 0, tris: 0, z: 0, f: 0, inst: 0, lod: 0, visN: 0, mpp: 1, lastT: 0, frame: 0,
+  /* 性能收口插桩(2026-11-07):jsMs=本层 render 的 JS 耗时 EMA;cars=在渲染实例的车节数;
+     vramMB=已上传几何+纹理字节估算(geometry/texture 按 uuid 去重,clone 共享不重复计) */
+  jsMs: 0, cars: 0, vramMB: 0 };
+let perfGeoB = 0, perfTexB = 0;
+const perfGeoSeen = new Set(), perfTexSeen = new Set();
+function accountPerf(root) {
+  if (!root || !root.traverse) return;
+  root.traverse(o => {
+    if (!o.isMesh) return;
+    const g = o.geometry;
+    if (g && !perfGeoSeen.has(g.uuid)) {
+      perfGeoSeen.add(g.uuid);
+      for (const k in g.attributes) { const a = g.attributes[k]; if (a && a.array) perfGeoB += a.array.byteLength || 0; }
+      if (g.index && g.index.array) perfGeoB += g.index.array.byteLength || 0;
+    }
+    const mats = Array.isArray(o.material) ? o.material : [o.material];
+    for (const m of mats) {
+      if (!m) continue;
+      for (const key of ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'emissiveMap']) {
+        const tx = m[key];
+        if (tx && tx.image && !perfTexSeen.has(tx.uuid)) {
+          perfTexSeen.add(tx.uuid);
+          const w = tx.image.width || 0, h = tx.image.height || 0;
+          perfTexB += w * h * 4 * 1.33;   /* RGBA + mip 链估算 */
+        }
+      }
+    }
+  });
+}
 
 function cubicBezier(x1, y1, x2, y2) {
   const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx;
@@ -202,6 +235,7 @@ const T3DLAYER = {
     gl.disable(gl.SCISSOR_TEST);
     gl.disable(gl.STENCIL_TEST);
     const now = performance.now();
+    const pj = now;   /* 性能收口:本层 JS 耗时起点(含 placeInstances+render) */
     if (stats.lastT) { const dt = now - stats.lastT; if (dt > 0 && dt < 500) stats.fps = stats.fps ? stats.fps * 0.9 + (1000 / dt) * 0.1 : 1000 / dt; }
     stats.lastT = now;
     stats.frame++;
@@ -216,6 +250,7 @@ const T3DLAYER = {
     if (target !== fTo) { fFrom = f; fTo = target; fT0 = now; }
     f = animTo(now, fFrom, fTo, fT0);
     window.__T3D.f = f; stats.f = f;
+    createGate = f >= 0.3 ? true : (f < 0.24 ? false : createGate);   /* 性能收口 3:创建门滞回 */
     /* 动态缩放上限:模块激活(未 __t3dOff)即放宽,关闭/关停立即恢复 base。
        不含 f 条件:Z_ON=16=基础上限,等 f>0.5 再放宽则用户永远推不过 z16(死锁) */
     const plus = window.__t3dZoomPlus != null ? Math.max(0, Math.min(3, +window.__t3dZoomPlus || 0)) : zoomPlus;
@@ -250,6 +285,9 @@ const T3DLAYER = {
     stats.calls = renderer.info.render.calls;
     stats.tris = renderer.info.render.triangles;
     stats.n = insts.size;
+    const dj = performance.now() - pj;
+    if (dj > 0 && dj < 500) stats.jsMs = stats.jsMs ? stats.jsMs * 0.9 + dj * 0.1 : dj;
+    stats.vramMB = +((perfGeoB + perfTexB) / 1048576).toFixed(1);
     if (animating) map.triggerRepaint();
   },
 };
@@ -311,6 +349,7 @@ function consume(now) {
   if (candTmp.length > MAX_INST) { candTmp.sort((a, b) => a.d2 - b.d2); candTmp.length = MAX_INST; }
   const seen = new Set();
   for (const cd of candTmp) {
+    if (!createGate) break;   /* 性能收口 3:门限下不续命/不新建,存量走淡出路径 */
     seen.add(cd.trip.t);
     let it = insts.get(cd.trip.t);
     if (!it) {
@@ -320,6 +359,9 @@ function consume(now) {
     }
     it.lng = cd.lng; it.lat = cd.lat; it.brg = cd.brg; it.seenFr = stats.frame; it.lastPush = now;
     if (cd.color) it.phColor = cd.color;
+    /* 性能收口 3 补充:淡出中被重新 sight 的实例复活(a 连续回升,不 pop)——
+       阈值往返只产生浅 dip,不销毁重建振荡;长离场仍照旧走 1.5s+240ms 淡出路径 */
+    if (it.aTo === 0 && !it.pending && !it.dead && it.a > 0.004) { it.aFrom = it.a; it.aTo = 1; it.aT0 = now; }
     if (!it.req) {
       it.pending = true;
       /* 占位回退:真模板不可用(加载失败/缺失/轴向不可校正)时用线路色盒车顶上,
@@ -422,6 +464,7 @@ function buildRoot(tmpl, it) {
   }
   it.shadows = shadows;
   it.carNodesF = carWraps;
+  accountPerf(root);
   scene.add(root);
   return root;
 }
@@ -470,20 +513,70 @@ function applyNight(mat) {
 
 const standCache = new Map();
 let standOrder = [];
+/* 性能收口 1(2026-11-07):url→Promise 去重缓存 —— 同编组同模型车节旧实现每槽位各
+   loadAsync+解析一次同一 glb(实测同 URL ×2–×6、每次 160–513ms、串行 await);
+   现解析一次、槽位间 clone(true) 共享几何/材质。__t3dNoDedup=1 回旧路径(A/B 实测用)。 */
+const standLoadCache = new Map();
+let standLoaderP = null;
+function standLoader() { if (!standLoaderP) standLoaderP = import('three/addons/loaders/GLTFLoader.js').then(m => new m.GLTFLoader()); return standLoaderP; }
+function loadSceneOnce(url, cnt) {
+  const e = standLoadCache.get(url);
+  if (e) { cnt.hit++; return e.p; }
+  const p = standLoader().then(ld => ld.loadAsync(url).then(g => g.scene)).catch(() => null);
+  standLoadCache.set(url, { p });
+  cnt.miss++;
+  while (standLoadCache.size > 96) { const k = standLoadCache.keys().next().value; standLoadCache.delete(k); }
+  return p;
+}
+/* 性能收口 2:缺 stand-in 的回退车改从 M3D 已缓存全模模板 clone 车 wrapper(共享几何),
+   杜绝旧回退对全模的二次下载+解析+第二份 GPU 几何;视觉与旧回退一致(同为全模)。 */
+async function m3dCarNode(path, i) {
+  try {
+    const t = window.M3D && (await window.M3D.ensure(path));
+    if (!t || !t.group) return null;
+    if (!t.__carWraps) { t.__carWraps = []; t.group.traverse(o => { if (o.userData && o.userData.m3dCar) t.__carWraps.push(o); }); }
+    return t.__carWraps[i] || null;
+  } catch (e) { return null; }
+}
+const standLog = [];
+window.__t3dStandLog = () => standLog.slice(-14);
 function standTmpl(path, meta) {
   if (standCache.has(path)) return standCache.get(path);
   const base = path.slice(0, path.lastIndexOf('/') + 1);
+  const t0 = performance.now();
+  const cnt = { miss: 0, hit: 0 };
   const p = (async () => {
-    const { GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js');
-    const loader = new GLTFLoader();
     const group = new THREE.Group(); const nodes = [];
-    for (let i = 0; i < meta.cars.length; i++) {
+    const n = meta.cars.length;
+    const srcs = new Array(n).fill(null);
+    if (window.__t3dNoDedup) {
+      /* A/B 旗标:旧路径(每槽位串行重载;回退再解析全模),仅供 before 实测 */
+      const loader = await standLoader();
+      for (let i = 0; i < n; i++) {
+        const cm = meta.cars[i];
+        const standPath = cm.model ? cm.model.replace(/\.glb$/, '.stand-in.glb') : null;
+        let src = null;
+        if (standPath) { try { src = (await loader.loadAsync(assetUrl(base + standPath))).scene; } catch (e) { src = null; } }
+        if (!src && cm.model) { try { src = (await loader.loadAsync(assetUrl(base + cm.model))).scene; } catch (e) { src = null; } }
+        srcs[i] = src;
+      }
+    } else {
+      /* 去重+并行:唯一 URL 并发加载(缓存命中即时resolve),槽位间 clone 共享几何 */
+      const jobs = [];
+      for (let i = 0; i < n; i++) {
+        const cm = meta.cars[i];
+        const standPath = cm.model ? cm.model.replace(/\.glb$/, '.stand-in.glb') : null;
+        if (standPath) jobs.push([i, loadSceneOnce(assetUrl(base + standPath), cnt).then(s => s || m3dCarNode(path, i))]);
+        else if (cm.model) jobs.push([i, m3dCarNode(path, i)]);
+      }
+      const res = await Promise.all(jobs.map(j => j[1].then(s => [j[0], s])));
+      for (const [i, s] of res) srcs[i] = s;
+    }
+    for (let i = 0; i < n; i++) {
       const cm = meta.cars[i];
-      const standPath = cm.model ? cm.model.replace(/\.glb$/, '.stand-in.glb') : null;
-      let g = null;
-      if (standPath) { try { g = (await loader.loadAsync(assetUrl(base + standPath))).scene; } catch (e) { g = null; } }
-      if (!g && cm.model) { try { g = (await loader.loadAsync(assetUrl(base + cm.model))).scene; } catch (e) { g = null; } }
-      if (!g) continue;
+      const src = srcs[i];
+      if (!src) continue;
+      const g = src.clone(true);   /* 共享几何/材质;归一化只作用于 clone */
       g.updateMatrixWorld(true);
       let box = new THREE.Box3().setFromObject(g), sz = box.getSize(new THREE.Vector3());
       if (sz.x > sz.z) { g.rotation.y += Math.PI / 2; g.updateMatrixWorld(true); box = new THREE.Box3().setFromObject(g); sz = box.getSize(new THREE.Vector3()); }
@@ -497,6 +590,8 @@ function standTmpl(path, meta) {
       wrap.traverse(o => { if (o.isMesh) o.frustumCulled = false; });
       group.add(wrap); nodes.push({ node: wrap, d: cm.d });
     }
+    standLog.push({ path: path.slice(8, 42), ms: Math.round(performance.now() - t0), slots: meta.cars.length, miss: cnt.miss, hit: cnt.hit, legacy: !!window.__t3dNoDedup });
+    if (standLog.length > 40) standLog.shift();
     return { group, nodes };
   })().catch(() => null);
   standCache.set(path, p); standOrder.push(path);
@@ -519,7 +614,7 @@ function placeInstances(now) {
   const W = v.W, c = v.center;
   const cwx = (c.lng + 180) / 360 * W, cwy = mercY(c.lat) * W;
   const mpp = EARTH_C * Math.cos(c.lat * Math.PI / 180) / W;
-  stats.mpp = mpp; stats.visN = 0; stats.lod = 0;
+  stats.mpp = mpp; stats.visN = 0; stats.lod = 0; stats.cars = 0;
   let animating = false;
   const rel = (lng, lat, out) => { out[0] = ((lng + 180) / 360 * W - cwx) * mpp; out[1] = (mercY(lat) * W - cwy) * mpp; return out; };
   const tmp = [0, 0];
@@ -548,6 +643,7 @@ function placeInstances(now) {
             if (o.isMesh) { o.frustumCulled = false; const m = o.material.clone(); m.transparent = true; m.opacity = 0; fixTrainMat(m); o.material = m; it.matsS.push(m); }
             if (o.userData && o.userData.m3dCar) it.carNodesS.push(o);
           });
+          accountPerf(it.rootS);
           scene.add(it.rootS);
         });
       }
@@ -565,6 +661,7 @@ function placeInstances(now) {
     if (it.rootS) it.rootS.visible = oS > 0.02;
     if (!it.rootF.visible && !(it.rootS && it.rootS.visible)) continue;
     stats.visN++;
+    stats.cars += it.carsMeta ? (it.carsMeta.n || 0) : 0;   /* 性能收口:在渲染实例车节数 */
     const head = rel(it.lng, it.lat, tmp);
     const meta = it.carsMeta;
     const sam = (window.__t3dArc && it.M2 != null) ? window.__t3dArc(it.trip, it.M2, it.lng, it.lat, it.brg) : null;

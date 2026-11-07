@@ -391,7 +391,10 @@ button { font-family:inherit; }
       站端吸附阈 30→4m 闭合基缝;复测 strict 错节 0、切换双态 0、无突增) -->
 <!-- 停站质量(2026-11-07):app.js bump ?v=20261107-t3d25
      (arrival 停站优先上一区间末端;零运行时长借用 15s;大曽根站台点) -->
-<link rel="modulepreload" href="https://jr-static.suki.ing/app/app.js?v=20261107-t3d25" crossorigin="anonymous">
+<!-- 3D 性能收口(2026-11-07):app.js/train3d.js bump ?v=20261107-t3d26 / t3d16 破缓存
+     (standTmpl url→Promise 去重+唯一 URL 并行+回退车 M3D 模板 clone;z16 实例创建门 f≥0.3 滞回+淡出复活;
+      stats 增 jsMs/cars/vramMB;__t3dStandLog/__t3dPathCensus 诊断;__t3dNoDedup A/B 旗标) -->
+<link rel="modulepreload" href="https://jr-static.suki.ing/app/app.js?v=20261107-t3d26" crossorigin="anonymous">
 
 </head>
 <body>
@@ -962,7 +965,7 @@ window.addEventListener('unhandledrejection', e => { __pushErr('REJ ' + (e.reaso
     "three/addons/": "https://jr-static.suki.ing/vendor/three/jsm/"
 } }
 </script>
-<script type="module" src="https://jr-static.suki.ing/app/app.js?v=20261107-t3d25"></script>
+<script type="module" src="https://jr-static.suki.ing/app/app.js?v=20261107-t3d26"></script>
 <div id="m3dMask"></div>
 <div id="m3dViewer">
   <canvas id="m3dCanvas"></canvas>

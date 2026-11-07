@@ -7079,7 +7079,7 @@ function t3dAttempt(force) {
   /* 重试 nonce:ES 模块对失败的 dynamic import 会按 specifier 缓存拒绝,重试(含手动强制)
      必须换 URL 才会真正重新发请求;Worker 按路径服务、忽略查询串,内容不变 */
   const nonce = ++t3dAttemptN;
-  t3dModP = import('https://jr-static.suki.ing/app/train3d.js?v=t3d15&r=' + nonce)
+  t3dModP = import('https://jr-static.suki.ing/app/train3d.js?v=t3d16&r=' + nonce)
     .then(m => {
       m.init(map);
       /* 首帧渲染看门狗:init 后 8s 仍无渲染帧 → 视为失败(软件渲染/驱动挂等)降级;
@@ -7164,6 +7164,19 @@ window.__appVisTrips = (M) => {
     if (out.length >= 40) break;
   }
   return { M: MM, frameC, n: out.length, rows: out };
+};
+/* EXP 编组普查(性能收口 2026-11-07):全国在运班次按 3D 映射路径计数(降序),
+   供 stand-in 补齐优先级排序;''=未映射。只读 fadeList + 映射查表,不触发位置解算 */
+window.__t3dPathCensus = () => {
+  const m = new Map();
+  const M3D = window.M3D;
+  for (const t of fadeList) {
+    if (t._f < 0.02) continue;
+    let u = t._t3du;
+    if (u === undefined) u = (M3D && M3D.ready) ? (M3D.pathOf(t) || '') : '';
+    m.set(u, (m.get(u) || 0) + 1);
+  }
+  return [...m.entries()].sort((a, b) => b[1] - a[1]);
 };
 window.__uidC = 0;
 /* fadeList 内同 t.t 重复对象普查(数据层重复班次诊断) */

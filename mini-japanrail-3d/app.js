@@ -2610,8 +2610,12 @@ function _platRidFor(pm, line, N) {
     for (const rid in pm) if (normCached(rid) === nl && ok(rid)) return rid;
     for (const rid in pm) if (matchLineCached(rid, line) >= 2 && ok(rid)) return rid;
   }
-  const keys = Object.keys(pm).filter(ok);
-  return keys.length === 1 ? keys[0] : null;
+  const keys = Object.keys(pm);
+  const okKeys = keys.filter(ok);
+  if (okKeys.length === 1) return okKeys[0];
+  /* 长度无匹配(重复车次号副本 N 异):线级单键采纳仍可用,站级番线已由 dupTid 守卫禁用 */
+  if (keys.length === 1) return keys[0];
+  return null;
 }
 /* 站内番线反查:站名带括号时做区域校验(与 buildPlatIndex 同口径,防同名站串线)。
    返回 {plat, rid, st} 或 {plat:null, reason} */
@@ -2619,11 +2623,11 @@ function jasHash(jas) { const n = jas.length; return n + '|' + jas[0] + '|' + ja
 function platForStop(t, k, line) {
   const pm = PLATMAP && PLATMAP.t ? PLATMAP.t[t.t] : null;
   if (!pm) return { plat: null, reason: 'noPlatmap' };
-  /* 重复车次号(同 tid 双对象)断扇出:身份键按对象 jas 哈希 —— 与 tmaps 规范序列不一致即不信任按 tid 的 PLATMAP */
-  const tmj = tmaps && tmaps[t.t];
-  if (tmj && tmj.s_jas && jasHash(tmj.s_jas) !== jasHash(t.jas)) return { plat: null, reason: 'dupTid' };
   const rid = _platRidFor(pm, line, t.N);
   if (!rid) return { plat: null, reason: 'noLineMatch' };
+  /* 重复车次号(同 tid 双对象):线级 rid 仍可用(经 line 匹配/单键采纳),站级番线禁用 */
+  const tmj = tmaps && tmaps[t.t];
+  if (tmj && tmj.s_jas && jasHash(tmj.s_jas) !== jasHash(t.jas)) return { plat: null, reason: 'dupTid', rid };
   const pws = pm[rid];
   const pw = k < pws.length ? pws[k] : null;
   if (!pw) return { plat: null, reason: 'noPlatAtStation', rid };
@@ -2661,7 +2665,7 @@ function trackIdentity(t, i) {
    约束三重:停站锚横向距离 ≤45m(站心到通过轨可达 30-40m,候选限身份线不跨线) +
    最近点切线与腿端行进向共线(|cos|≥0.5) + span 自站伸入区间 ≥100m。
    拼接:站 A 股道段(外端→站) + 原腿中段(离两站 >min(250m, 站距/3)) + 站 B 股道段(站→外端)。 */
-function _ovlPick(cands, anchor, brgOut, thr) {
+function _ovlPick(cands, anchor, brgOut, thr, stat) {
   const cf = Math.cos(anchor[1] * Math.PI / 180);
   let best = null, bd = thr || 45;
   for (const co0 of cands) {
@@ -2675,11 +2679,11 @@ function _ovlPick(cands, anchor, brgOut, thr) {
       const d = Math.hypot(ax + dx * f, ay + dy * f);
       if (d < m) { m = d; mk = k; }
     }
-    if (m > 45) continue; /* 站心锚到通过轨横向可达 30-40m;候选已限身份线,不跨线 */
+    if (m > (thr || 45)) { if (stat) stat.dist++; continue; }
     const a = co0[mk], b = co0[mk + 1];
     const tb = Math.atan2((b[0] - a[0]) * cf, b[1] - a[1]);
     let dd = Math.abs(tb - brgOut); if (dd > Math.PI) dd = 2 * Math.PI - dd;
-    if (Math.abs(Math.cos(dd)) < 0.5) continue;
+    if (Math.abs(Math.cos(dd)) < 0.5) { if (stat) stat.tan++; continue; }
     const far = Math.max(geoKm(co0[0], anchor), geoKm(co0[co0.length - 1], anchor));
     if (far < 0.1) continue;
     if (m < bd || !best) { best = { co: co0, m }; bd = m; }
@@ -2695,42 +2699,56 @@ function overlayStationTracks(t, i, e) {
   const line0 = e.line || lineOfPair(t, i) || '';
   const pr = platForStop(t, i, line0);
   const want = [pr.rid, line0].filter(Boolean);
+  /* 线名族归一:运营前缀/地铁番号/本線→線,使 東海道線↔東海道本線、三田線↔6号線三田線 同族 */
+  const normFam = s => normCached(s).replace(/^(JR|東京メトロ|東京都交通局|都営)/, '').replace(/^\d+号線/, '').replace(/本線$/, '線');
   const candsFor = (stN, c) => {
     const per = PLATTRACK.st[normName(stN)];
     if (!per) return null;
     for (const w of want) {
-      const nw = normCached(w);
+      const nw = normCached(w), fw = normFam(w);
       for (const k in per) if (normCached(k) === nw) return per[k];
-      /* 线名族匹配:仅 norm 全等 / matchLine=3 / LINES_MAP 别名;禁用包含匹配
-         (防「東海道線压过山手線」式弱匹配串线回退) */
+      for (const k in per) if (normFam(k) === fw) return per[k];
       for (const k in per) if (matchLineCached(k, w) === 3) return per[k];
-      for (const k in per) { const a = LINES_MAP && LINES_MAP[k], b = LINES_MAP && LINES_MAP[w]; if ((a && a.includes(w)) || (b && b.includes(k))) return per[k]; }
+      const a = LINES_MAP && LINES_MAP[w];
+      if (a) for (const k in per) if (a.includes(k) || normFam(k) === normFam(a[0])) return per[k];
+      /* 族级包含(千葉・総武 等复合族名);want 序=身份线优先,防「東海道線压山手線」 */
+      for (const k in per) { const fk = normFam(k); if (fk.includes(fw) || fw.includes(fk)) return per[k]; }
     }
     return null;
   };
   const n = e.coords.length;
   const brgA = Math.atan2((e.coords[1][0] - e.coords[0][0]) * Math.cos(cA ? cA[1] : e.coords[0][1] * Math.PI / 180), e.coords[1][1] - e.coords[0][1]);
   const brgB = Math.atan2((e.coords[n - 1][0] - e.coords[n - 2][0]) * Math.cos(cB ? cB[1] : e.coords[n - 1][1] * Math.PI / 180), e.coords[n - 1][1] - e.coords[n - 2][1]);
-  const coAp = cA ? _ovlPick(candsFor(t.jas[i], cA) || [], cA, brgA, pr.rid ? 80 : 45) : null;
-  const coBp = cB ? _ovlPick(candsFor(t.jas[i + 1], cB) || [], cB, brgB, pr.rid ? 80 : 45) : null;
-  if (!coAp && !coBp) { tidFbNote('ovl-miss', e.line, t.jasN[i], t.jasN[i + 1], false); return null; }
+  const stat = { dist: 0, tan: 0 };
+  const perA = cA ? candsFor(t.jas[i], cA) : null, perB = cB ? candsFor(t.jas[i + 1], cB) : null;
+  const coAp = cA ? _ovlPick(perA || [], cA, brgA, pr.rid ? 80 : 45, stat) : null;
+  const coBp = cB ? _ovlPick(perB || [], cB, brgB, pr.rid ? 80 : 45, stat) : null;
+  const ovlR = (coAp || coBp) ? 'ok'
+    : (!PLATTRACK.st[normName(t.jas[i])] && !PLATTRACK.st[normName(t.jas[i + 1])] ? 'noIndex'
+      : (!perA && !perB ? 'noCand' : (stat.dist ? 'dist' : 'tangent')));
+  (t._ovlR = t._ovlR || [])[i] = ovlR;
+  if (!coAp && !coBp) { tidFbNote('ovl:' + ovlR, e.line, t.jasN[i], t.jasN[i + 1], false); return null; }
   const chord = geoKm(cA || e.coords[0], cB || e.coords[n - 1]);
-  /* 全 span 拼接。定向必须用「区间内侧」判定(站两侧端点距站等远,按站距定向会随机反置
-     → 腿几何回折 = 过站折返跑根因之一):coA 首端=远离 cB 侧(站后),coB 首端=靠近 cA 侧(站内),
-     邻腿在共享 span 上反向遍历、端点严格相接,缝≈0 */
+  /* 拆分拼接(防回折=过站折返):coA 只取「站后」半段+cA,coB 取 cB+「站外」半段,
+     中段用原腿全部 —— 邻腿在站外 600m 共享点严格相接(seam≈0),尾/头车越界被站外 span 覆盖 */
+  const kstar = (co, c) => { let k = 0, m = 1e18; for (let q = 0; q < co.length; q++) { const d = geoKm(co[q], c); if (d < m) { m = d; k = q; } } return k; };
   let coA = null, coB = null;
-  if (coAp) {
+  if (coAp && cA) {
     let co = coAp.co;
-    if (cB ? (geoKm(co[0], cB) < geoKm(co[co.length - 1], cB)) : (geoKm(co[0], cA) > geoKm(co[co.length - 1], cA))) co = co.slice().reverse();
-    coA = co;
+    if (cB && geoKm(co[0], cB) < geoKm(co[co.length - 1], cB)) co = co.slice().reverse(); /* co[0]=站后侧 */
+    const ks = kstar(co, cA);
+    coA = co.slice(0, ks).concat([cA]);
+    if (coA.length < 2) coA = null;
   }
-  if (coBp) {
+  if (coBp && cB) {
     let co = coBp.co;
-    if (cA ? (geoKm(co[0], cA) > geoKm(co[co.length - 1], cA)) : (geoKm(co[0], cB) < geoKm(co[co.length - 1], cB))) co = co.slice().reverse();
-    coB = co;
+    if (cA && geoKm(co[co.length - 1], cA) < geoKm(co[0], cA)) co = co.slice().reverse(); /* co[last]=站外侧 */
+    const ks = kstar(co, cB);
+    coB = [cB].concat(co.slice(ks + 1));
+    if (coB.length < 2) coB = null;
   }
-  const infl = Math.min(0.25, chord / 3);
-  const mid = e.coords.filter(p => (!cA || geoKm(p, cA) > infl) && (!cB || geoKm(p, cB) > infl));
+  if (!coA && !coB) { (t._ovlR = t._ovlR || [])[i] = 'split'; return null; }
+  const mid = e.coords;
   let co = [];
   if (coA) co = co.concat(coA);
   co = co.concat(mid);
@@ -2741,9 +2759,10 @@ function overlayStationTracks(t, i, e) {
   if (ded.length < 4) return null;
   const w = withLen(ded);
   /* 回折守卫:拼接出错/定向反置会产生「过站折返」型回折几何(端点弦远小于总长),弃用降级 */
-  if (geoKm(ded[0], ded[ded.length - 1]) < w.len * 0.45) return null;
+  if (geoKm(ded[0], ded[ded.length - 1]) < w.len * 0.45) { (t._ovlR = t._ovlR || [])[i] = 'fold'; tidFbNote('ovl:fold', e.line, t.jasN[i], t.jasN[i + 1], false); return null; }
   /* 健全性:总长不得相对原腿畸变(拼接错会暴涨/暴跌) */
-  if (!(w.len > e.len * 0.6 && w.len < e.len * 1.6 + 1.4)) return null;
+  if (!(w.len > e.len * 0.6 && w.len < e.len * 1.6 + 1.4)) { (t._ovlR = t._ovlR || [])[i] = 'sanity'; tidFbNote('ovl:sanity', e.line, t.jasN[i], t.jasN[i + 1], false); return null; }
+  (t._ovlR = t._ovlR || [])[i] = 'ok';
   return { coords: w.coords, cum: w.cum, len: w.len, line: e.line, kind: e.kind, _ovl: 1 };
 }
 /* 本段主几何(按 班次×区间 缓存):pickSeg → 定向 → 站端吸附。停站朝向与行车共用同一对象,
@@ -7243,6 +7262,7 @@ window.__t3dTrackId = (tid, M) => {
     id: { op: id.op, line: id.line, dir: id.dir, plat: id.plat, platAt: id.platAt, platRid: id.platRid },
     leg: {
       i, from: t.jasN[i], to: t.jasN[i + 1], src: e ? 'seg' : (fb && fb.coords ? 'fallback' : 'none'),
+      ovl: (t._ovlR && t._ovlR[i]) || null,
       line: e ? (e.line || '') : '', kind: e ? (e.kind || '') : '',
       n: e && e.coords ? e.coords.length : (fb && fb.coords ? fb.coords.length : 0),
       lenKm: e ? +((e.cum ? e.cum[e.cum.length - 1] : e.len) || 0).toFixed(3) : (fb ? +fb.len.toFixed(3) : 0),

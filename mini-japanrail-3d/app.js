@@ -2615,9 +2615,13 @@ function _platRidFor(pm, line, N) {
 }
 /* 站内番线反查:站名带括号时做区域校验(与 buildPlatIndex 同口径,防同名站串线)。
    返回 {plat, rid, st} 或 {plat:null, reason} */
+function jasHash(jas) { const n = jas.length; return n + '|' + jas[0] + '|' + jas[n >> 1] + '|' + jas[n - 1]; }
 function platForStop(t, k, line) {
   const pm = PLATMAP && PLATMAP.t ? PLATMAP.t[t.t] : null;
   if (!pm) return { plat: null, reason: 'noPlatmap' };
+  /* 重复车次号(同 tid 双对象)断扇出:身份键按对象 jas 哈希 —— 与 tmaps 规范序列不一致即不信任按 tid 的 PLATMAP */
+  const tmj = tmaps && tmaps[t.t];
+  if (tmj && tmj.s_jas && jasHash(tmj.s_jas) !== jasHash(t.jas)) return { plat: null, reason: 'dupTid' };
   const rid = _platRidFor(pm, line, t.N);
   if (!rid) return { plat: null, reason: 'noLineMatch' };
   const pws = pm[rid];
@@ -2697,8 +2701,10 @@ function overlayStationTracks(t, i, e) {
     for (const w of want) {
       const nw = normCached(w);
       for (const k in per) if (normCached(k) === nw) return per[k];
-      for (const k in per) if (matchLineCached(k, w) >= 2) return per[k];
-      for (const k in per) if (matchLineCached(k, w) >= 1) return per[k]; /* 身份线弱匹配兜底(候选仍限本线) */
+      /* 线名族匹配:仅 norm 全等 / matchLine=3 / LINES_MAP 别名;禁用包含匹配
+         (防「東海道線压过山手線」式弱匹配串线回退) */
+      for (const k in per) if (matchLineCached(k, w) === 3) return per[k];
+      for (const k in per) { const a = LINES_MAP && LINES_MAP[k], b = LINES_MAP && LINES_MAP[w]; if ((a && a.includes(w)) || (b && b.includes(k))) return per[k]; }
     }
     return null;
   };
@@ -2709,10 +2715,20 @@ function overlayStationTracks(t, i, e) {
   const coBp = cB ? _ovlPick(candsFor(t.jas[i + 1], cB) || [], cB, brgB, pr.rid ? 80 : 45) : null;
   if (!coAp && !coBp) { tidFbNote('ovl-miss', e.line, t.jasN[i], t.jasN[i + 1], false); return null; }
   const chord = geoKm(cA || e.coords[0], cB || e.coords[n - 1]);
-  /* 全 span 拼接(站两侧各 ≤350m):实测停站车对齐最优;邻腿缝与终到尾车直延为已知残差 */
+  /* 全 span 拼接。定向必须用「区间内侧」判定(站两侧端点距站等远,按站距定向会随机反置
+     → 腿几何回折 = 过站折返跑根因之一):coA 首端=远离 cB 侧(站后),coB 首端=靠近 cA 侧(站内),
+     邻腿在共享 span 上反向遍历、端点严格相接,缝≈0 */
   let coA = null, coB = null;
-  if (coAp) { let co = coAp.co; if (geoKm(co[0], cA) > geoKm(co[co.length - 1], cA)) co = co.slice().reverse(); coA = co; }
-  if (coBp) { let co = coBp.co; if (geoKm(co[0], cB) > geoKm(co[co.length - 1], cB)) co = co.slice().reverse(); coB = co; }
+  if (coAp) {
+    let co = coAp.co;
+    if (cB ? (geoKm(co[0], cB) < geoKm(co[co.length - 1], cB)) : (geoKm(co[0], cA) > geoKm(co[co.length - 1], cA))) co = co.slice().reverse();
+    coA = co;
+  }
+  if (coBp) {
+    let co = coBp.co;
+    if (cA ? (geoKm(co[0], cA) > geoKm(co[co.length - 1], cA)) : (geoKm(co[0], cB) < geoKm(co[co.length - 1], cB))) co = co.slice().reverse();
+    coB = co;
+  }
   const infl = Math.min(0.25, chord / 3);
   const mid = e.coords.filter(p => (!cA || geoKm(p, cA) > infl) && (!cB || geoKm(p, cB) > infl));
   let co = [];
@@ -2724,8 +2740,10 @@ function overlayStationTracks(t, i, e) {
   for (let k = 1; k < co.length; k++) if (geoKm(co[k], ded[ded.length - 1]) > 0.004) ded.push(co[k]);
   if (ded.length < 4) return null;
   const w = withLen(ded);
+  /* 回折守卫:拼接出错/定向反置会产生「过站折返」型回折几何(端点弦远小于总长),弃用降级 */
+  if (geoKm(ded[0], ded[ded.length - 1]) < w.len * 0.45) return null;
   /* 健全性:总长不得相对原腿畸变(拼接错会暴涨/暴跌) */
-  if (!(w.len > e.len * 0.6 && w.len < e.len * 1.6)) return null;
+  if (!(w.len > e.len * 0.6 && w.len < e.len * 1.6 + 1.4)) return null;
   return { coords: w.coords, cum: w.cum, len: w.len, line: e.line, kind: e.kind, _ovl: 1 };
 }
 /* 本段主几何(按 班次×区间 缓存):pickSeg → 定向 → 站端吸附。停站朝向与行车共用同一对象,
@@ -6976,7 +6994,16 @@ window.__t3dArc = (t, M, hlng, hlat, hbrg) => {
       const lag = (orient > 0 && atStart) || (orient < 0 && atEnd);
       if (lag && distM <= 600) { pushClamp = true; pushOffM = distM; bsPush = orient > 0 ? bs - distM / 1000 : bs + distM / 1000; } /* m→km */
     }
-    const aHead = orient > 0 ? bsPush : L0 - bsPush;
+    const aHead0 = orient > 0 ? bsPush : L0 - bsPush;
+    /* 详细股道开/关切换帧(epoch 变化):弧长比例映射 r=s/L_old → s'=r·L_new,不重投影 ——
+       保持整列相对位置、消除切换帧 devM 突增(父裁决口径);稳态帧仍走头车投影 */
+    let aHead = aHead0;
+    const prevArc = t._arcPrev;
+    if (prevArc && prevArc.epoch !== _legEpoch && prevArc.L0 > 0 && L0 > 0) {
+      const r = Math.min(1, Math.max(0, prevArc.aHead / prevArc.L0));
+      aHead = r * L0;
+    }
+    t._arcPrev = { epoch: _legEpoch, aHead, L0 };
     const rigid = d => {
       const brg = segAt(e, Math.min(bs, L0))[2];
       const dlat = Math.cos(brg) * d / 110540, dlng = Math.sin(brg) * d / (111319 * Math.cos(hlat * Math.PI / 180));
@@ -7038,8 +7065,11 @@ window.__t3dArc = (t, M, hlng, hlat, hbrg) => {
       while (a < 0) {
         if (dir < 0 ? idx <= 0 : idx >= t.N - 2) {
           if (trc) trc[trc.length - 1].oob = true;
-          /* 真越界：路线端点之外（车尾还在站喉）→ 沿端点切线反向延伸，标 k=-2（chain 计数） */
-          return extrapConn(-a * 1000, 'oob');
+          /* 端点夹持:越过 path 末端的车厢不再线性外推(会把车甩出站场),夹到 path 末端
+             按末端切线压缩(记 __t3dArcClampN);站台 span 已延伸覆盖整列时不会走到这里 */
+          window.__t3dArcClampN = (window.__t3dArcClampN || 0) + 1;
+          const p0 = segAt(ee, or > 0 ? 0 : cumLen(ee));
+          return [p0[0], p0[1], p0[2], -2, 0, gapM, +(consumedKm * 1000).toFixed(1)];
         }
         let cand = idx + dir;
         let r = tryCand(cand);
@@ -11746,6 +11776,7 @@ $('swOrm').addEventListener('click', function () {
   applyTrackMode();
   if (ormEnabled && !ormLoaded) fetchOrmTracks(); /* 低配设备首次开启时按需拉取 */
   if (ormEnabled) fetchPlatTrackIndex();
+  else { PLATTRACK = null; platTrackP = null; } /* 关闭不留索引开销(内存释放,重开走 IDB 缓存) */
   window.__t3dLegInvalidate(); /* 详细股道开/关:腿缓存整体惰性失效,切换帧原子重算 */
 });
 $('swTrail').addEventListener('click', function () { this.classList.toggle('on'); });

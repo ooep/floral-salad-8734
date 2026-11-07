@@ -2055,8 +2055,16 @@ function parseTrip(t) {
     else {
       const dwell = dep[i] - arr[i];           // 本站停车时长
       const borrow = Math.min(0.25, Math.max(0, dwell));
-      sRun[i] = borrow > 0.05 ? borrow : 0.25;
-      sStart[i] = arr[i+1] - sRun[i];
+      if (borrow > 0.05) {
+        sRun[i] = borrow;
+        sStart[i] = arr[i+1] - borrow;         // 有停站:借用停站时间,提前 ≤15s
+      } else {
+        /* dwell=0:不停站、不借时间。窗口推到 dep 之后 0.25min,列车到站即按
+           通过速度离开:视觉停站 0、发车不提前;到下一站晚 ≤15s,仍在时刻表
+           1min 量化内。位置从本站连续滑到下一站,不插停站保持。 */
+        sRun[i] = 0.25;
+        sStart[i] = dep[i];
+      }
     }
   }
   const lines = tm.lines || [];

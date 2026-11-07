@@ -12092,6 +12092,19 @@ const M3D = (() => {
     if (n >= 2 && !isShinkansenPath(path)) {
       const tmp = cars[0]; cars[0] = cars[n - 1]; cars[n - 1] = tmp;
     }
+    /* 部件状态:Reversed 与上面的首尾对调同一判据(普通编组按反向状态展示,新干线保持原序)。
+       Spawned/Created/Arriving/Stopped 属列车实例状态,模板缓存跨车次共享,不能在此求值;
+       同现有行为视为满足,只按静态的 Reversed 取舍头/尾灯部件。 */
+    const reversed = !isShinkansenPath(path);
+    const whenOk = w => {
+      if (!w) return true;
+      const req = w.required || [], forb = w.forbidden || [];
+      if (req.indexOf('Reversed') >= 0 && !reversed) return false;
+      if (forb.indexOf('Reversed') >= 0 && reversed) return false;
+      return true;
+    };
+    const isHeadPart = nm => /head|front\s*light|front-light|frontlight/i.test(nm || '');
+    const isTailPart = nm => /tail|rear\s*light|rear-light|rearlight/i.test(nm || '');
     let progN = 0;
     const progTick = () => { progN++; const el = $('m3dLoadTx'); if (el && $('m3dLoad').style.display !== 'none') el.textContent = (T().m3dLoadT || 'Loading…') + ' ' + progN + '/' + n; };
     const lenOf = i => (i === 0 || i === n - 1) ? (consist.car_length_m || 20) : (consist.middle_car_length_m || consist.car_length_m || 20);
@@ -12156,9 +12169,17 @@ const M3D = (() => {
       }
       const wrap = new THREE.Group();
       wrap.add(gScene);
-      /* LED 发光部件(kind:glow,与车厢同坐标系导出 → 同一变换链) */
-      for (const part of (car.parts || [])) {
-        if (part.kind !== 'glow') continue;
+      /* LED 发光部件(kind:glow,与车厢同坐标系导出 → 同一变换链)
+         when 静态条件按 Reversed 取舍;首端车若头/尾都命中,按展示角色只留头灯(首车)或尾灯(尾车) */
+      const glowParts = (car.parts || []).filter(p => p.kind === 'glow' && whenOk(p.when));
+      const hasHead = glowParts.some(p => isHeadPart(p.name));
+      const hasTail = glowParts.some(p => isTailPart(p.name));
+      const keptParts = glowParts.filter(p => {
+        if (ci === 0 && hasHead && isTailPart(p.name)) return false;
+        if (ci === n - 1 && hasTail && isHeadPart(p.name)) return false;
+        return true;
+      });
+      for (const part of keptParts) {
         try {
           const [pg, pt] = await Promise.all([
             loader.loadAsync(base + part.model),
@@ -12191,10 +12212,13 @@ const M3D = (() => {
       c.wrap.userData.m3dCar = 1; c.wrap.userData.m3dZ = c.wrap.position.z; /* 克隆保留:逐车厢采样偏移 */
       group.add(c.wrap); carNodes.push({ node: c.wrap, z: c.wrap.position.z });
     }
-    /* 前灯光束:首车前端(车头 +z),仅夜间显示 */
+    /* 前灯光束:首车鼻端(-z),仅夜间显示。
+       原点取归一化车体半长(lenOf(0)/2):车厢经 normalizeCar 后 z 向恰为车长并以中心为 0,
+       鼻尖即在 -L/2;coupleF 是车钩面,部分车型鼻锥比车钩外伸 0.7~1.1m,用它会让光源缩进鼻锥。 */
     try {
       const bm = beamMesh(32, 14, 3.2, 0xfff3dd);
-      bm.position.set(0, 0.10, loaded[0].coupleF + 0.20);
+      bm.position.set(0, 0.10, -lenOf(0) / 2 - 0.20);
+      bm.rotation.y = Math.PI; /* 光带向车头前方(-z)铺开:局部 +z 为编组向后方向 */
       carNodes[0].node.add(bm);
     } catch (e) {}
     return { group, cars: carNodes, length: maxZ - minZ, path };

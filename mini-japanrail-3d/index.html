@@ -376,9 +376,11 @@ button { font-family:inherit; }
 <!-- 3D 能力门 v2(2026-11-07):app.js bump ?v=20261107-t3d6 破缓存
      (WebGL2 唯一硬门槛,核数/内存/软件渲染改「先尝试、失败降级+提示+可重试」;
       手动开关强制尝试;连续失败 2 次本会话不自动尝试) -->
+<!-- 3D 夜灯根因修复(2026-11-07):app.js bump ?v=20261107-t3d7 破缓存
+     (共用模板层:光源原点改车体半长+光带180°,部件 when 按 Reversed 取舍;避开 t3d6) -->
 <link rel="preload" as="style" href="https://jr-static.suki.ing/app/app.css?v=20261105-ib2" onload="this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://jr-static.suki.ing/app/app.css?v=20261105-ib2"></noscript>
-<link rel="modulepreload" href="https://jr-static.suki.ing/app/app.js?v=20261107-t3d6" crossorigin="anonymous">
+<link rel="modulepreload" href="https://jr-static.suki.ing/app/app.js?v=20261107-t3d7" crossorigin="anonymous">
 
 </head>
 <body>
@@ -949,7 +951,7 @@ window.addEventListener('unhandledrejection', e => { __pushErr('REJ ' + (e.reaso
     "three/addons/": "https://jr-static.suki.ing/vendor/three/jsm/"
 } }
 </script>
-<script type="module" src="https://jr-static.suki.ing/app/app.js?v=20261107-t3d6"></script>
+<script type="module" src="https://jr-static.suki.ing/app/app.js?v=20261107-t3d7"></script>
 <div id="m3dMask"></div>
 <div id="m3dViewer">
   <canvas id="m3dCanvas"></canvas>

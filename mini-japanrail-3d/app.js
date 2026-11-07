@@ -2042,9 +2042,27 @@ function buildTripGeo(tid, N, jas, lines, arr, dep) {
       if (segJoint && geoKm(sm, segJoint) > 0.3 && geoKm(sm, segJoint) < 2) return segJoint;
       return sm;
     }
+    /* 站址候选选择:同一站对可能登记多条线/上下行/反向几何(三河島 常磐線 vs 東北本線
+       相距 852m)。旧实现固定取 e[0],stopC 可能落到别线站台;改为取「端点离官方站坐标
+       最近」的那条,停站落在本线站台上。 */
+    let ref0 = null;
+    for (const ln of linesN) { const r0 = stationCoordLine.get(ln + '|' + jasN[i]); if (r0) { ref0 = r0; break; } }
+    if (!ref0) ref0 = stationCoord.get(jasN[i]);
     let c = null, cSeg = null;
-    if (i - 1 >= 0) { const e = segIndex.get(jasN[i-1] + '|' + jasN[i]); if (e) { c = e[0].coords[e[0].coords.length - 1]; cSeg = e[0].coords; } }
-    if (!c && i + 1 < N) { const e = segIndex.get(jasN[i] + '|' + jasN[i+1]); if (e) { c = e[0].coords[0]; cSeg = e[0].coords; } }
+    const pickEnd = (arr, tail) => {
+      let best = null, bd = Infinity;
+      for (const e of arr) {
+        if (!e.coords || e.coords.length < 2) continue;
+        const p = tail ? e.coords[e.coords.length - 1] : e.coords[0];
+        const d = ref0 ? geoKm(p, ref0) : 0;
+        if (d < bd) { bd = d; best = e; }
+      }
+      if (!best) return;
+      c = tail ? best.coords[best.coords.length - 1] : best.coords[0];
+      cSeg = best.coords;
+    };
+    if (i - 1 >= 0) { const e = segIndex.get(jasN[i-1] + '|' + jasN[i]); if (e) pickEnd(e, true); }
+    if (!c && i + 1 < N) { const e = segIndex.get(jasN[i] + '|' + jasN[i+1]); if (e) pickEnd(e, false); }
     /* 2026-11-07 停站位置修正:段端点冒充站址时,若官方站坐标就在这段轨道旁(最近点≤50m)
        且沿轨偏移 >30m,改用「官方站坐标在该段折线上的最近点投影」——不是直接把站坐标
        补到折线末端(那会横向拉出 10–50m 短弦,车停在轨道旁)。
@@ -2052,12 +2070,17 @@ function buildTripGeo(tid, N, jas, lines, arr, dep) {
        数据:无官方 lids 的 597 条区间里 584 条属此类(30-100m 444、100-500m 160,最大 438m
        中央線 新守山→大曽根);离线迁址(三河知立 官方坐标离轨道 0.88km >50m)保持豁免。 */
     if (c && cSeg) {
-      let ref = null;
-      for (const ln of linesN) { const r0 = stationCoordLine.get(ln + '|' + jasN[i]); if (r0) { ref = r0; break; } }
-      if (!ref) ref = stationCoord.get(jasN[i]);
+      const ref = ref0;
       if (ref && geoKm(c, ref) > 0.03) {
         const pj = nearPt(ref, cSeg);
         if (pj && geoKm(ref, pj) <= 0.05) c = pj;
+        /* 反向残段(几何在站外截断,官方坐标离折线 >50m):若末段方向的延长线上有站
+           (横向≤50m、沿轨 30–300m),停点取延长线落点 —— 与末段共线,不产生横向折角,
+           车不再停在站台前方 100–270m。数据:faithful pickSeg 口径下 48 个物理段。 */
+        else {
+          const te = tailExtend(cSeg, ref);
+          if (te) c = te;
+        }
       }
     }
     /* 段端点与已有停靠点重合而站名不同 = 官方残段退化(成田線 久住/大戸 不在站表,
@@ -2288,6 +2311,29 @@ function limitTarget(t, li, target, len, kmh) {
   t._mxS = Math.max(t._mxS, target);
   t._vMs = Math.max(0, Math.min(kmh / 3.6, (t._vMs || 0) + 2.5 * dt));
   return { target: target, kmh: Math.min(kmh, t._vMs * 3.6 + 1e-6) };
+}
+/* 反向残段补齐:几何在站外截断时,把站投影到末段方向的延长线上。
+   基线取末 40m(短基线=接点折角 ≤5.5°,250m 长基线会到 40°);
+   返回延长线落点(与末段共线);横向 >50m、沿轨 <30m 或 >300m 时返回 null。 */
+function tailExtend(coords, ref) {
+  const n = coords.length;
+  if (n < 2) return null;
+  const p1 = coords[n-1];
+  let p0 = coords[n-2], acc = 0;
+  for (let k = n - 1; k >= 1; k--) {
+    acc += geoKm(coords[k-1], coords[k]) * 1000;
+    if (acc >= 40 || k === 1) { p0 = coords[k-1]; break; }
+  }
+  const cosf = Math.cos((p0[1] + p1[1]) / 2 * Math.PI / 180);
+  let dx = (p1[0]-p0[0]) * cosf * 111.32 * 1000, dy = (p1[1]-p0[1]) * 110.57 * 1000;
+  const L = Math.hypot(dx, dy);
+  if (L < 1e-9) return null;
+  dx /= L; dy /= L;
+  const rx = (ref[0]-p1[0]) * cosf * 111.32 * 1000, ry = (ref[1]-p1[1]) * 110.57 * 1000;
+  const along = rx*dx + ry*dy, lat = Math.abs(rx*dy - ry*dx);
+  if (along < 30 || along > 300 || lat > 50) return null;
+  return [p1[0] + dx * along / (cosf * 111.32 * 1000),
+          p1[1] + dy * along / (110.57 * 1000)];
 }
 function bridgePath(A, B, lineSet, rawA, rawB) {
   const lsKey = lineSet ? [...lineSet].sort().join(',') : '';

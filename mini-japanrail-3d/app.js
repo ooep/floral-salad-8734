@@ -160,7 +160,7 @@ const I18N = {
     about1:'Mini JapanRail — 全日本列车实时运行可视化地图（列車走行位置・運行情報）。基于本地时刻表在浏览器端实时推算新干线・特急・在来线・地铁・路面电车约 4,000 列列车的走行位置，支持 3D 地球投影、时钟回放与路线搜索。', about2:'收录全国 600+ 条铁路线路、8,900+ 个车站。列车数据源为日本全国铁路计划时刻表，每周自动刷新；底图来自 OpenFreeMap / 国土地理院等公开地图服务。', about3:'本站为个人爱好项目，数据仅供学习参考。', about4:'隐私政策',
     about5:'主要功能：实时列车位置・走行位置动画 / 3D 地球投影与 2D/3D 视角切换（矢量底图 3D 建筑）/ 时钟回放（0.5–32×）/ 起终点路线搜索 / 车站查询与途经线路 / 运行日切换 / 线路类型过滤 / 日・中・英三语。', about6:'浏览静态页面：',
     about7:'车站配线图：ooep/jr-track（源自 配線略図.net 配线图），许可 CC BY 4.0。',
-    sw1:'车站标签', sw2:'轨道光晕', sw3:'车站点', sw4:'底图瓦片', sw5:'列车光晕', sw6:'复制异常车辆', sw7:'列车悬浮提示', sw8:'车站轮廓', sw9:'出入口', sw10:'详细股道', sw12:'车站徽章', sw13:'3D 列车模型', sw14:'实时列车延误', t3dNoGl:'当前浏览器不支持 WebGL2,3D 列车模型不可用', t3dNoDev:'设备性能不足,3D 列车模型已停用(可在设置中查看开关)', t3dModelFail:'部分 3D 模型加载失败,相关列车暂以 2D 图标显示', dlyAgo:'来自互联网 · 数据 {0} 分钟前', dlyLate:'晚点', cfoTitle:'车内状况', cfoLow:'宽松', cfoMid:'略挤', cfoHigh:'拥挤', cfoAvg:'5日均', cfoGreen:'绿色车厢', cfoTemp:'车内温度', cfoAccess:'无障碍', cfoWheel:'轮椅', cfoStroller:'婴儿车', cfoWifi:'Wi-Fi', cfoToilet:'厕所', cfoLuggage:'行李架', cfoWifiNote8000:'JR四国官方：8000/8600系车设有免费Wi-Fi，8000系仅部分车厢（非实时信息）', cfoWifiNote2700:'JR四国官方：2700/2600系车设有免费Wi-Fi（非实时信息）', cfoWifiNoteML:'JR四国官方：快速マリンライナー仅绿色车厢・指定席设有免费Wi-Fi（非实时信息）', cfoCarsHint:'点按展开每车厢拥挤度', cfoCarTip:'{0}号车 {1}%',
+    sw1:'车站标签', sw2:'轨道光晕', sw3:'车站点', sw4:'底图瓦片', sw5:'列车光晕', sw6:'复制异常车辆', sw7:'列车悬浮提示', sw8:'车站轮廓', sw9:'出入口', sw10:'详细股道', sw12:'车站徽章', sw13:'3D 列车模型', sw14:'实时列车延误', t3dNoGl:'当前浏览器不支持 WebGL2,3D 列车模型不可用', t3dNoDev:'设备性能不足,3D 列车模型已停用(可在设置中查看开关)', t3dDegraded:'3D 列车模型本次启动失败,已回退 2D 图标;可在设置中重新打开 3D 开关重试', t3dModelFail:'部分 3D 模型加载失败,相关列车暂以 2D 图标显示', dlyAgo:'来自互联网 · 数据 {0} 分钟前', dlyLate:'晚点', cfoTitle:'车内状况', cfoLow:'宽松', cfoMid:'略挤', cfoHigh:'拥挤', cfoAvg:'5日均', cfoGreen:'绿色车厢', cfoTemp:'车内温度', cfoAccess:'无障碍', cfoWheel:'轮椅', cfoStroller:'婴儿车', cfoWifi:'Wi-Fi', cfoToilet:'厕所', cfoLuggage:'行李架', cfoWifiNote8000:'JR四国官方：8000/8600系车设有免费Wi-Fi，8000系仅部分车厢（非实时信息）', cfoWifiNote2700:'JR四国官方：2700/2600系车设有免费Wi-Fi（非实时信息）', cfoWifiNoteML:'JR四国官方：快速マリンライナー仅绿色车厢・指定席设有免费Wi-Fi（非实时信息）', cfoCarsHint:'点按展开每车厢拥挤度', cfoCarTip:'{0}号车 {1}%',
     m3dRowL:'模型', m3dBtn:'查看 3D 模型', m3dHint:'拖动旋转 · 滚轮/双指缩放 · 选视点自动回中', m3dLoadT:'正在加载模型…', m3dNone:'该车型暂无 3D 模型', m3dVpL:'视点', m3dMdL:'编组', m3dVp:['斜视','侧面','正面','俯视'], m3dMdAll:'全编组', m3dMdHead:'先头车', m3dMdAuto:'自动旋转', m3dDOp:'运营商', m3dDCars:'编组', m3dDLen:'编组长', m3dDDim:'车体', m3dDUnit:'辆', m3dSaved:'已保存截图',
     sw11:'性能改善', sw11Note:'只渲染新干线・特急，放大后逐级加入其他列车',
     modeT:'列车显示', mode3d:'3D', modeIcon:'图标', modeCute:'可爱',
@@ -206,7 +206,7 @@ const I18N = {
     about1:'ミニ日本鉄道 — 全国鉄道リアルタイム3Dマップ（列車走行位置・運行情報）。ローカル時刻表から新幹線・特急・在来線・地下鉄・路面電車 約 4,000 列の走行位置をブラウザ上でリアルタイムに再現。3D 地球投影・時刻表再生・経路検索に対応。', about2:'全国 600 以上の路線・8,900 以上の駅を収録。列車データは全国鉄道の計画時刻表で毎週自動更新。ベースマップは OpenFreeMap / 国土地理院などの公開地図サービスを利用しています。', about3:'個人の趣味プロジェクトです。データは学習・参考用です。', about4:'プライバシーポリシー',
     about5:'主な機能：リアルタイム列車位置・走行位置アニメーション / 3D 地球投影と 2D/3D 視点切替（ベクター地図の 3D 建物）/ 時刻表再生（0.5〜32倍速）/ 経路検索 / 駅検索と経由路線 / 運行日切替 / 路線種別フィルタ / 日・中・英 3 言語。', about6:'静的ページを見る：',
     about7:'駅配線図：ooep/jr-track（配線略図.net の配線図由来）、ライセンス CC BY 4.0。',
-    sw1:'駅ラベル', sw2:'軌道グロー', sw3:'駅ドット', sw4:'背景タイル', sw5:'列車グロー', sw6:'異常列車コピー', sw7:'列車ホバーチップ', sw8:'駅舎ポリゴン', sw9:'出入口', sw10:'詳細軌道', sw12:'駅バッジ', sw13:'3D 列車モデル', sw14:'リアルタイム列車遅延', t3dNoGl:'このブラウザは WebGL2 非対応のため 3D 列車モデルは利用できません', t3dNoDev:'端末性能が不足のため 3D 列車モデルを無効化しました(設定でスイッチ確認可)', t3dModelFail:'一部の 3D モデルの読み込みに失敗したため、該当列車は 2D アイコンで表示中です', dlyAgo:'インターネットから · データ {0} 分前', dlyLate:'遅延', cfoTitle:'車内状況', cfoLow:'空いている', cfoMid:'やや混雑', cfoHigh:'混雑', cfoAvg:'5日平均', cfoGreen:'グリーン車', cfoTemp:'車内温度', cfoAccess:'バリアフリー', cfoWheel:'車いす', cfoStroller:'ベビーカー', cfoWifi:'Wi-Fi', cfoToilet:'トイレ', cfoLuggage:'荷物置き', cfoWifiNote8000:'JR四国公式：8000系・8600系車両で無料Wi-Fiあり。8000系は一部車両のみ（リアルタイム情報ではありません）', cfoWifiNote2700:'JR四国公式：2700系・2600系車両で無料Wi-Fiあり（リアルタイム情報ではありません）', cfoWifiNoteML:'JR四国公式：快速マリンライナーはグリーン席・指定席のみ無料Wi-Fiあり（リアルタイム情報ではありません）', cfoCarsHint:'車両別の混雑度を表示', cfoCarTip:'{0}号車 {1}%',
+    sw1:'駅ラベル', sw2:'軌道グロー', sw3:'駅ドット', sw4:'背景タイル', sw5:'列車グロー', sw6:'異常列車コピー', sw7:'列車ホバーチップ', sw8:'駅舎ポリゴン', sw9:'出入口', sw10:'詳細軌道', sw12:'駅バッジ', sw13:'3D 列車モデル', sw14:'リアルタイム列車遅延', t3dNoGl:'このブラウザは WebGL2 非対応のため 3D 列車モデルは利用できません', t3dNoDev:'端末性能が不足のため 3D 列車モデルを無効化しました(設定でスイッチ確認可)', t3dDegraded:'3D 列車モデルの起動に失敗したため 2D アイコンへ戻しました。設定の 3D スイッチで再試行できます', t3dModelFail:'一部の 3D モデルの読み込みに失敗したため、該当列車は 2D アイコンで表示中です', dlyAgo:'インターネットから · データ {0} 分前', dlyLate:'遅延', cfoTitle:'車内状況', cfoLow:'空いている', cfoMid:'やや混雑', cfoHigh:'混雑', cfoAvg:'5日平均', cfoGreen:'グリーン車', cfoTemp:'車内温度', cfoAccess:'バリアフリー', cfoWheel:'車いす', cfoStroller:'ベビーカー', cfoWifi:'Wi-Fi', cfoToilet:'トイレ', cfoLuggage:'荷物置き', cfoWifiNote8000:'JR四国公式：8000系・8600系車両で無料Wi-Fiあり。8000系は一部車両のみ（リアルタイム情報ではありません）', cfoWifiNote2700:'JR四国公式：2700系・2600系車両で無料Wi-Fiあり（リアルタイム情報ではありません）', cfoWifiNoteML:'JR四国公式：快速マリンライナーはグリーン席・指定席のみ無料Wi-Fiあり（リアルタイム情報ではありません）', cfoCarsHint:'車両別の混雑度を表示', cfoCarTip:'{0}号車 {1}%',
     m3dRowL:'モデル', m3dBtn:'3Dモデルを見る', m3dHint:'ドラッグで回転・ホイール/2本指でズーム · 視点を選ぶと中央に戻ります', m3dLoadT:'モデルを読み込み中…', m3dNone:'この車種の3Dモデルはありません', m3dVpL:'視点', m3dMdL:'編成', m3dVp:['斜め','側面','正面','上面'], m3dMdAll:'全編成', m3dMdHead:'先頭車', m3dMdAuto:'自動回転', m3dDOp:'事業者', m3dDCars:'編成', m3dDLen:'編成長', m3dDDim:'車体', m3dDUnit:'両', m3dSaved:'スクリーンショットを保存しました',
     sw11:'パフォーマンス改善', sw11Note:'低ズームでは新幹線・特急のみ描画し、拡大するにつれ他の列車を段階的に追加',
     modeT:'列車表示', mode3d:'3D', modeIcon:'アイコン', modeCute:'かわいい',
@@ -252,7 +252,7 @@ const I18N = {
     about1:'Mini JapanRail — a real-time 3D map of all Japan railways (train live positions). Driven by local timetables, it animates the positions of ~4,000 Shinkansen, limited express, local, subway and tram trains, with 3D globe projection, timetable replay and route search.', about2:'Covers 600+ railway lines and 8,900+ stations. Train data comes from scheduled timetables for all Japan railways, auto-refreshed weekly; basemaps are served by public map services such as OpenFreeMap and GSI Japan.', about3:'A personal hobby project — data provided for reference only.', about4:'Privacy Policy',
     about5:'Key features: live train positions / 3D globe projection with 2D/3D view toggle (extruded buildings on the vector basemap) / timetable replay (0.5–32×) / route search / station lookup and its lines / service-day switch / line-type filter / Japanese, Chinese and English UI.', about6:'Browse static pages:',
     about7:'Station track diagrams: ooep/jr-track (derived from haisenryakuzu.net diagrams), license CC BY 4.0.',
-    sw1:'Station labels', sw2:'Track glow', sw3:'Station dots', sw4:'Basemap tiles', sw5:'Train glow', sw6:'Copy off-rail trains', sw7:'Train hover tooltip', sw8:'Station footprint', sw9:'Station exits', sw10:'Detailed tracks', sw12:'Station badges', sw13:'3D train models', sw14:'Live train delays', t3dNoGl:'WebGL2 is not supported in this browser, so 3D train models are unavailable', t3dNoDev:'3D train models are disabled on this device due to limited performance (see the switch in Settings)', t3dModelFail:'Some 3D models failed to load; those trains are shown as 2D icons for now', dlyAgo:'from web · data {0} min ago', dlyLate:'delayed', cfoTitle:'Onboard conditions', cfoLow:'Roomy', cfoMid:'Busy', cfoHigh:'Crowded', cfoAvg:'5-day avg', cfoGreen:'Green car', cfoTemp:'Car temp', cfoAccess:'Accessible', cfoWheel:'wheelchair', cfoStroller:'stroller', cfoWifi:'Wi-Fi', cfoToilet:'toilet', cfoLuggage:'luggage', cfoWifiNote8000:'JR Shikoku: free Wi-Fi on 8000/8600 series trains; some 8000-series cars only (not live data)', cfoWifiNote2700:'JR Shikoku: free Wi-Fi on 2700/2600 series trains (not live data)', cfoWifiNoteML:'JR Shikoku: Marine Liner offers free Wi-Fi in green cars and reserved seats only (not live data)', cfoCarsHint:'Tap for per-car crowding', cfoCarTip:'Car {0}: {1}%',
+    sw1:'Station labels', sw2:'Track glow', sw3:'Station dots', sw4:'Basemap tiles', sw5:'Train glow', sw6:'Copy off-rail trains', sw7:'Train hover tooltip', sw8:'Station footprint', sw9:'Station exits', sw10:'Detailed tracks', sw12:'Station badges', sw13:'3D train models', sw14:'Live train delays', t3dNoGl:'WebGL2 is not supported in this browser, so 3D train models are unavailable', t3dNoDev:'3D train models are disabled on this device due to limited performance (see the switch in Settings)', t3dDegraded:'3D trains failed to start this time; falling back to 2D icons. Re-enable the 3D switch in Settings to retry.', t3dModelFail:'Some 3D models failed to load; those trains are shown as 2D icons for now', dlyAgo:'from web · data {0} min ago', dlyLate:'delayed', cfoTitle:'Onboard conditions', cfoLow:'Roomy', cfoMid:'Busy', cfoHigh:'Crowded', cfoAvg:'5-day avg', cfoGreen:'Green car', cfoTemp:'Car temp', cfoAccess:'Accessible', cfoWheel:'wheelchair', cfoStroller:'stroller', cfoWifi:'Wi-Fi', cfoToilet:'toilet', cfoLuggage:'luggage', cfoWifiNote8000:'JR Shikoku: free Wi-Fi on 8000/8600 series trains; some 8000-series cars only (not live data)', cfoWifiNote2700:'JR Shikoku: free Wi-Fi on 2700/2600 series trains (not live data)', cfoWifiNoteML:'JR Shikoku: Marine Liner offers free Wi-Fi in green cars and reserved seats only (not live data)', cfoCarsHint:'Tap for per-car crowding', cfoCarTip:'Car {0}: {1}%',
     m3dRowL:'Model', m3dBtn:'View 3D model', m3dHint:'Drag to rotate · Scroll/pinch to zoom · Picking a view re-centers', m3dLoadT:'Loading model…', m3dNone:'No 3D model for this type', m3dVpL:'View', m3dMdL:'Consist', m3dVp:['Diagonal','Side','Front','Top'], m3dMdAll:'Full', m3dMdHead:'Head car', m3dMdAuto:'Auto-rotate', m3dDOp:'Operator', m3dDCars:'Cars', m3dDLen:'Length', m3dDDim:'Car', m3dDUnit:' cars', m3dSaved:'Screenshot saved',
     sw11:'Performance boost', sw11Note:'Only Shinkansen and limited express are drawn at low zoom; other trains are added progressively as you zoom in',
     modeT:'Train display', mode3d:'3D', modeIcon:'Icon', modeCute:'Cute',
@@ -2650,22 +2650,83 @@ function pathAnchors(p, cA, cB) {
   if (p.len < chord * 0.3) return false;
   return true;
 }
-/* 站端吸附:行车几何首/尾离站坐标有可见距离(残段端点、股道偏移、线间距)时,用直弦把
+/* 站端吸附/裁剪:行车几何首/尾离站坐标有可见距离(残段端点、股道偏移、线间距)时,用直弦把
    站坐标接上 —— 停站画在站坐标、行车画在几何端点,切换瞬间平移 0.3-2km 的「发车瞬移」。
-   弦长上限 = 区间站距的一半(超过说明选错路径,不遮丑,交给 pathAnchors 弃用) */
+   弦长上限 = 区间站距的一半(超过说明选错路径,不遮丑,交给 pathAnchors 弃用)
+
+   2026-11-07 修「冲过站台后才减速、再倒车退回站台」:旧实现只补弦,几何「越过站台再延伸」
+   的尾桩(cb 在几何尾端之前)会被接成一条回折弦 —— 弧长继续增加、地理位置却往回走;
+   而 trainPosition 的 frac 按含回折的总长推进,梯形剖面的制动尾段正好落在回折上,于是
+   列车按巡航速度冲过站台、在站台外开始减速、再沿回折弦倒着退回站台。
+   改为「最近点精确裁剪」:站坐标在折线上的最近点即站台切点 ——
+     · 切点之后还有几何(越过站台的尾桩)→ 裁掉,到站位置=站台投影,制动尾段回到直线区间;
+     · 切点之前还有几何(区间起点在站台之前)→ 裁掉;
+     · 几何没到站(最近点就在端点)→ 保留旧补弦(直线延续,不会回折)。
+   数据来源:segments3d 段几何 × station_map 官方站坐标(实测无官方 lids 的 842 段里
+   至少 377 段尾桩越过站台 >30m,最大 438m;如 中央本線 新守山→大曽根 436m、
+   鹿児島本線 肥後高田→八代 214m),见 2026-11-07 缺陷排查。 */
 function snapToStops(t, i, coords) {
   const cA = t.stopC && t.stopC[i], cB = t.stopC && t.stopC[i + 1];
   if (!cA && !cB) return null;
   const chord = cA && cB ? geoKm(cA, cB) : 0;
   const lim = Math.max(0.5, chord * 0.5);
-  const gH = cA ? geoKm(cA, coords[0]) : 0, gT = cB ? geoKm(cB, coords[coords.length - 1]) : 0;
-  if (gH <= 0.03 && gT <= 0.03) return null;
-  if (gH > lim || gT > lim) return null;
-  const path = [];
-  if (gH > 0.03) path.push([cA[0], cA[1]]);
-  for (const p of coords) path.push(p);
-  if (gT > 0.03) path.push([cB[0], cB[1]]);
-  return withLen(path);
+  const n = coords.length;
+  if (n < 2) return null;
+  /* 折线累计里程(km,与 withLen/segIndex 同口径) */
+  const cum = new Array(n); cum[0] = 0;
+  for (let k = 1; k < n; k++) {
+    const dx = (coords[k][0] - coords[k-1][0]) * Math.cos((coords[k][1] + coords[k-1][1]) / 2 * Math.PI / 180) * 111.32;
+    const dy = (coords[k][1] - coords[k-1][1]) * 110.57;
+    cum[k] = cum[k-1] + Math.hypot(dx, dy);
+  }
+  const L = cum[n-1];
+  /* 站坐标 → 折线最近点投影:{d: 距离km, s: 弧长km} */
+  const near = c => {
+    let bd = Infinity, bs = 0;
+    for (let k = 1; k < n; k++) {
+      const a = coords[k-1], b = coords[k];
+      const cosf = Math.cos((a[1] + b[1]) / 2 * Math.PI / 180);
+      const ax = (b[0]-a[0]) * cosf * 111.32, ay = (b[1]-a[1]) * 110.57;
+      const l2 = ax*ax + ay*ay;
+      const f = l2 > 1e-12 ? Math.max(0, Math.min(1, (((c[0]-a[0]) * cosf * 111.32) * ax + ((c[1]-a[1]) * 110.57) * ay) / l2)) : 0;
+      const d = Math.hypot((c[0]-a[0]) * cosf * 111.32 - ax*f, (c[1]-a[1]) * 110.57 - ay*f);
+      if (d < bd) { bd = d; bs = cum[k-1] + Math.sqrt(l2) * f; }
+    }
+    return { d: bd, s: bs };
+  };
+  const pa = cA ? near(cA) : null, pb = cB ? near(cB) : null;
+  if ((pa && pa.d > lim) || (pb && pb.d > lim)) return null;   // 站坐标离整段几何太远 = 选错段,不遮丑
+  const gH = cA ? geoKm(cA, coords[0]) : 0, gT = cB ? geoKm(cB, coords[n-1]) : 0;
+  const cutH = !!pa && pa.s > 0.03;          // 站台之前还有几何 → 裁掉
+  const cutT = !!pb && L - pb.s > 0.03;      // 站台之后还有尾桩(越过站台)→ 裁掉,消除回折
+  if (!cutH && !cutT && gH <= 0.03 && gT <= 0.03) return null;
+  /* 精确切点(按弧长插值,保证端点落在站台投影上) */
+  const at = s => {
+    let lo = 1, hi = n - 1;
+    while (lo < hi) { const mid = (lo + hi) >> 1; if (cum[mid] < s) lo = mid + 1; else hi = mid; }
+    const k = lo, a = coords[k-1], b = coords[k], seg = cum[k] - cum[k-1];
+    if (seg <= 1e-12) return [b[0], b[1]];
+    const f = Math.max(0, Math.min(1, (s - cum[k-1]) / seg));
+    return [a[0] + (b[0]-a[0]) * f, a[1] + (b[1]-a[1]) * f];
+  };
+  const s0 = pa ? pa.s : 0, s1 = pb ? pb.s : L;
+  if (!(s1 > s0)) return null;
+  const eps = 1e-9, path = [];
+  if (cutH) path.push(at(s0));
+  else path.push(coords[0]);
+  const inside = s => (cutT ? s < s1 - eps : s <= L + eps);
+  for (let k = 1; k < n; k++) if (cum[k] > s0 + eps && inside(cum[k])) path.push(coords[k]);
+  if (cutT) path.push(at(s1));
+  /* 端点补齐:未到站(或偏移 >2m)才补弦,消除「停站坐标 ↔ 行车起点」的发车瞬移;
+     裁掉的尾桩已不在折线上,这里的弦只会直线延续,不会形成回折 */
+  if (cA && path.length && geoKm(cA, path[0]) > 0.002) path.unshift([cA[0], cA[1]]);
+  if (cB && path.length && geoKm(cB, path[path.length-1]) > 0.002) path.push([cB[0], cB[1]]);
+  if (path.length < 2) return null;
+  const w = withLen(path);
+  if (!(w.len > 0)) return null;
+  /* 裁剪自检:端点必须仍贴近站坐标(裁过头 = 把站点裁掉) */
+  if ((cA && geoKm(cA, w.coords[0]) > lim) || (cB && geoKm(cB, w.coords[w.coords.length-1]) > lim)) return null;
+  return w;
 }
 /* per-trip 区间路径兜底(站坐标消歧/同段截取/站序折线/骨架):
    对同一班次是固定结果 —— 按 班次×区间 缓存,行车路径与停站朝向共用,
@@ -2863,11 +2924,22 @@ function trainPosition(t, M) {
         } else frac = (M - dep[i]) / runRaw;   /* 距离异常(缺几何/同坐标站):回退旧线性 */
       } else frac = (M - dep[i]) / runRaw; /* 停站等待期:负 frac → 走停車分支 */
     } else {
-      /* 零运行时长(分钟取整): 在平滑窗 sStart..arr[i+1] 内沿区间滑动, 窗外停起点站 */
+      /* 零运行时长(分钟取整): 在平滑窗 sStart..arr[i+1] 内沿区间滑动, 窗外停起点站。
+         2026-11-07 起止速度归零:旧实现窗内匀速、到点速度从 120km/h 直接跳 0(末段冲进站台),
+         改为窗内三角形剖面 —— 从 0 加速到峰值再对称制动,到站瞬时速度 = 0(与普通区间同一套
+         位置/速度同源公式,制动距离由 D/T 算出,不是写死的一段)。 */
       const r0 = (t.sRun && t.sRun[i]) || 0.25;
       const t0 = (t.sStart && t.sStart[i] != null) ? t.sStart[i] : arr[i+1] - r0;
-      if (M >= t0) { frac = Math.min(1, (M - t0) / r0); kmh = Math.min(pairKm(t, i) / (r0 / 60), 120); }
-      else frac = 0;
+      if (M >= t0) {
+        const Dm = pairKm(t, i) * 1000, T = r0 * 60, tau = (M - t0) * 60;
+        if (!(Dm > 0) || !(T > 0)) { frac = Math.min(1, (M - t0) / r0); kmh = 0; }
+        else {
+          const o = 4 * Dm / (T * T);
+          if (tau >= T) { frac = 1; kmh = 0; }
+          else if (tau <= T / 2) { frac = Math.min(1, 0.5 * o * tau * tau / Dm); kmh = o * tau * 3.6; }
+          else { const r = T - tau; frac = Math.min(1, (Dm - 0.5 * o * r * r) / Dm); kmh = o * r * 3.6; }
+        }
+      } else frac = 0;
     }
   }
   /* 零运行时长区间在平滑窗之前同样处于「本站停车」状态:此时 frac=0 并非行车,
@@ -6418,28 +6490,69 @@ let scanList = null, scanDay = null;
 let wRect = null;
 let kpRect = null; /* 3D keep 矩形(视锥+max(64px,1/4屏,200m)),仅 3D 激活时作裁切门 */
 /* ── EXP train3d(exp/train3d-20261105):高缩放 3D 列车,模块懒加载 ──
-   移动端/低端(IS_MOBILE/PERF_LOW)不加载 → 全程保持 2D 图标(回退策略) */
+   能力门 v2:WebGL2 唯一硬门槛,其余「先尝试、失败再降级」(见 t3dAttempt);
+   主开关关时零请求(不 import train3d/three/模型)。 */
 let t3dModP = null;
 let lastT3dPushT = 0; /* EXP train3d:静态帧补推送节流戳 */
-/* EXP 真机能力门(替代一刀切 IS_MOBILE):WebGL2 必备;移动端另需 ≥4 核且 ≥3GB 内存
-   (navigator.deviceMemory 缺省按 4 计,桌面不受限)。不满足时给出用户可见 toast,不静默。 */
-const t3dCapable = (() => {
-  if (!hasWebgl2) return 'nogl';
-  if (IS_MOBILE && ((navigator.hardwareConcurrency || 4) < 4 || (navigator.deviceMemory || 4) < 3)) return 'lowdev';
-  return '';
-})();
+/* EXP 能力门 v2(2026-11-07 策略改):WebGL2 为唯一硬门槛;核数/内存/软件渲染(PERF_LOW)
+   不再硬拒 3D,改「先尝试、失败再降级」:模块加载或首帧渲染失败 → 回 2D 并给一次可见
+   提示(含原因与可重试);设置手动开启=强制尝试(绕过能力门与安全阀);本会话连续失败
+   T3D_FAIL_MAX 次后不再「自动」尝试(安全阀,防低端机反复卡死),手动仍可强制。
+   PERF_LOW 仍用于它处渲染降载,只是不再拦 3D。 */
+const T3D_FAIL_MAX = 2;
+let t3dFailCount = 0;     /* 本会话连续失败计数(安全阀) */
+let t3dDegraded = false;  /* 已降级 2D(模块或已加载但 __t3dOff=true) */
+let t3dHintDone = false;  /* 降级提示每次降级给一次 */
+let t3dFirstFrameTimer = 0;
+let t3dAttemptN = 0;      /* 尝试 nonce(破 dynamic-import 失败缓存) */
 let t3dCapToastDone = false, t3dFailToastDone = false;
-function t3dEnsure() {
-  if (t3dModP || PERF_LOW || !t3dMasterOn) return; /* 主开关关:零请求(不 import train3d/three/模型) */
-  if (t3dCapable) { /* 能力不足:用户可见原因,每会话一次 */
-    if (!t3dCapToastDone) { t3dCapToastDone = true; try { toast(t3dCapable === 'nogl' ? T().t3dNoGl : T().t3dNoDev, 4000); } catch (e) {} }
+function t3dHint(key) {
+  if (t3dHintDone) return;
+  t3dHintDone = true;
+  try { toast(T()[key] || '', 6000); } catch (e) {}
+}
+function t3dDegrade(reason) {
+  t3dFailCount++;
+  t3dDegraded = true;
+  window.__t3dOff = true;   /* 回 2D:train3d 见 __t3dOff 淡出并恢复 base maxZoom */
+  try { if (window.__T3D) window.__T3D.wake(); } catch (e) {}
+  t3dHintDone = false;      /* 每次降级都给一次新提示 */
+  t3dHint(reason === 'nogl' ? 't3dNoGl' : 't3dDegraded');
+  pushErrSafe('t3d degrade ' + reason);
+}
+function t3dAttempt(force) {
+  if (!hasWebgl2) {          /* 唯一硬门槛:无 WebGL2 不尝试,提示原因 */
+    if (force || t3dMasterOn) t3dDegrade('nogl');
     return;
   }
-  t3dModP = import('https://jr-static.suki.ing/app/train3d.js?v=t3d4')
-    .then(m => { m.init(map); })
-    .catch(e => { pushErrSafe('t3d ' + (e && e.message || e)); });
+  if (t3dModP) {             /* 已加载/在途:强制且曾降级 → 重新启用(=重试) */
+    if (force && t3dDegraded) {
+      t3dDegraded = false; window.__t3dOff = false;
+      try { if (window.__T3D) window.__T3D.wake(); } catch (e) {}
+    }
+    return;
+  }
+  if (!force && t3dFailCount >= T3D_FAIL_MAX) return;   /* 安全阀:连续失败后不自动尝试 */
+  window.__t3dOff = false;
+  /* 重试 nonce:ES 模块对失败的 dynamic import 会按 specifier 缓存拒绝,重试(含手动强制)
+     必须换 URL 才会真正重新发请求;Worker 按路径服务、忽略查询串,内容不变 */
+  const nonce = ++t3dAttemptN;
+  t3dModP = import('https://jr-static.suki.ing/app/train3d.js?v=t3d4&r=' + nonce)
+    .then(m => {
+      m.init(map);
+      /* 首帧渲染看门狗:init 后 8s 仍无渲染帧 → 视为失败(软件渲染/驱动挂等)降级;
+         有帧 → 成功,清零连续失败计数 */
+      clearTimeout(t3dFirstFrameTimer);
+      t3dFirstFrameTimer = setTimeout(() => {
+        let fr = 0; try { fr = window.__t3dStats ? window.__t3dStats().frame : 0; } catch (e) {}
+        if (!fr) { t3dModP = null; t3dDegrade('firstframe'); }
+        else { t3dFailCount = 0; t3dDegraded = false; }
+      }, 8000);
+    })
+    .catch(e => { t3dModP = null; t3dDegrade('load'); pushErrSafe('t3d ' + (e && e.message || e)); });
 }
-window.__t3dForce = () => { t3dEnsure(); return !!window.__T3D; };
+function t3dEnsure() { if (t3dMasterOn) t3dAttempt(false); }   /* 自动路径(受安全阀约束) */
+window.__t3dForce = () => { t3dAttempt(true); return !!window.__T3D; };
 /* EXP train3d:逐车厢铰接需要沿程采样位置(车头回溯 di/速度),暴露只读解算 */
 window.__t3dSolve = (t, M) => { const p = trainPosition(t, windowShift(t, M)); return p ? [p[0], p[1], p[2], p[5], p[7] | 0] : null; };
 /* 按班次号解算(诊断用):返回 [lng,lat,brg,kmh,stopI] */
@@ -11369,7 +11482,8 @@ $('swT3d').addEventListener('click', function () {
   t3dMasterOn = !t3dMasterOn;
   this.classList.toggle('on', t3dMasterOn);
   localStorage.setItem('mjr3d_t3d', t3dMasterOn ? '1' : '0');
-  applyT3dMaster();
+  /* 手动开启=强制尝试:绕过能力门与安全阀(用户明确意愿优先);关闭=淡出回 2D */
+  if (t3dMasterOn) t3dAttempt(true); else applyT3dMaster();
 });
 applyT3dMaster(); /* 启动即应用持久化状态:关=__t3dOff 且永不 import */
 /* 性能改善(默认关):低倍率分层显示 + 淡入淡出。开启 = 低缩放只渲染新干线/特急。

@@ -2650,83 +2650,22 @@ function pathAnchors(p, cA, cB) {
   if (p.len < chord * 0.3) return false;
   return true;
 }
-/* 站端吸附/裁剪:行车几何首/尾离站坐标有可见距离(残段端点、股道偏移、线间距)时,用直弦把
+/* 站端吸附:行车几何首/尾离站坐标有可见距离(残段端点、股道偏移、线间距)时,用直弦把
    站坐标接上 —— 停站画在站坐标、行车画在几何端点,切换瞬间平移 0.3-2km 的「发车瞬移」。
-   弦长上限 = 区间站距的一半(超过说明选错路径,不遮丑,交给 pathAnchors 弃用)
-
-   2026-11-07 修「冲过站台后才减速、再倒车退回站台」:旧实现只补弦,几何「越过站台再延伸」
-   的尾桩(cb 在几何尾端之前)会被接成一条回折弦 —— 弧长继续增加、地理位置却往回走;
-   而 trainPosition 的 frac 按含回折的总长推进,梯形剖面的制动尾段正好落在回折上,于是
-   列车按巡航速度冲过站台、在站台外开始减速、再沿回折弦倒着退回站台。
-   改为「最近点精确裁剪」:站坐标在折线上的最近点即站台切点 ——
-     · 切点之后还有几何(越过站台的尾桩)→ 裁掉,到站位置=站台投影,制动尾段回到直线区间;
-     · 切点之前还有几何(区间起点在站台之前)→ 裁掉;
-     · 几何没到站(最近点就在端点)→ 保留旧补弦(直线延续,不会回折)。
-   数据来源:segments3d 段几何 × station_map 官方站坐标(实测无官方 lids 的 842 段里
-   至少 377 段尾桩越过站台 >30m,最大 438m;如 中央本線 新守山→大曽根 436m、
-   鹿児島本線 肥後高田→八代 214m),见 2026-11-07 缺陷排查。 */
+   弦长上限 = 区间站距的一半(超过说明选错路径,不遮丑,交给 pathAnchors 弃用) */
 function snapToStops(t, i, coords) {
   const cA = t.stopC && t.stopC[i], cB = t.stopC && t.stopC[i + 1];
   if (!cA && !cB) return null;
   const chord = cA && cB ? geoKm(cA, cB) : 0;
   const lim = Math.max(0.5, chord * 0.5);
-  const n = coords.length;
-  if (n < 2) return null;
-  /* 折线累计里程(km,与 withLen/segIndex 同口径) */
-  const cum = new Array(n); cum[0] = 0;
-  for (let k = 1; k < n; k++) {
-    const dx = (coords[k][0] - coords[k-1][0]) * Math.cos((coords[k][1] + coords[k-1][1]) / 2 * Math.PI / 180) * 111.32;
-    const dy = (coords[k][1] - coords[k-1][1]) * 110.57;
-    cum[k] = cum[k-1] + Math.hypot(dx, dy);
-  }
-  const L = cum[n-1];
-  /* 站坐标 → 折线最近点投影:{d: 距离km, s: 弧长km} */
-  const near = c => {
-    let bd = Infinity, bs = 0;
-    for (let k = 1; k < n; k++) {
-      const a = coords[k-1], b = coords[k];
-      const cosf = Math.cos((a[1] + b[1]) / 2 * Math.PI / 180);
-      const ax = (b[0]-a[0]) * cosf * 111.32, ay = (b[1]-a[1]) * 110.57;
-      const l2 = ax*ax + ay*ay;
-      const f = l2 > 1e-12 ? Math.max(0, Math.min(1, (((c[0]-a[0]) * cosf * 111.32) * ax + ((c[1]-a[1]) * 110.57) * ay) / l2)) : 0;
-      const d = Math.hypot((c[0]-a[0]) * cosf * 111.32 - ax*f, (c[1]-a[1]) * 110.57 - ay*f);
-      if (d < bd) { bd = d; bs = cum[k-1] + Math.sqrt(l2) * f; }
-    }
-    return { d: bd, s: bs };
-  };
-  const pa = cA ? near(cA) : null, pb = cB ? near(cB) : null;
-  if ((pa && pa.d > lim) || (pb && pb.d > lim)) return null;   // 站坐标离整段几何太远 = 选错段,不遮丑
-  const gH = cA ? geoKm(cA, coords[0]) : 0, gT = cB ? geoKm(cB, coords[n-1]) : 0;
-  const cutH = !!pa && pa.s > 0.03;          // 站台之前还有几何 → 裁掉
-  const cutT = !!pb && L - pb.s > 0.03;      // 站台之后还有尾桩(越过站台)→ 裁掉,消除回折
-  if (!cutH && !cutT && gH <= 0.03 && gT <= 0.03) return null;
-  /* 精确切点(按弧长插值,保证端点落在站台投影上) */
-  const at = s => {
-    let lo = 1, hi = n - 1;
-    while (lo < hi) { const mid = (lo + hi) >> 1; if (cum[mid] < s) lo = mid + 1; else hi = mid; }
-    const k = lo, a = coords[k-1], b = coords[k], seg = cum[k] - cum[k-1];
-    if (seg <= 1e-12) return [b[0], b[1]];
-    const f = Math.max(0, Math.min(1, (s - cum[k-1]) / seg));
-    return [a[0] + (b[0]-a[0]) * f, a[1] + (b[1]-a[1]) * f];
-  };
-  const s0 = pa ? pa.s : 0, s1 = pb ? pb.s : L;
-  if (!(s1 > s0)) return null;
-  const eps = 1e-9, path = [];
-  if (cutH) path.push(at(s0));
-  else path.push(coords[0]);
-  const inside = s => (cutT ? s < s1 - eps : s <= L + eps);
-  for (let k = 1; k < n; k++) if (cum[k] > s0 + eps && inside(cum[k])) path.push(coords[k]);
-  if (cutT) path.push(at(s1));
-  /* 端点补齐:未到站(或偏移 >2m)才补弦,消除「停站坐标 ↔ 行车起点」的发车瞬移;
-     裁掉的尾桩已不在折线上,这里的弦只会直线延续,不会形成回折 */
-  if (cA && path.length && geoKm(cA, path[0]) > 0.002) path.unshift([cA[0], cA[1]]);
-  if (cB && path.length && geoKm(cB, path[path.length-1]) > 0.002) path.push([cB[0], cB[1]]);
-  if (path.length < 2) return null;
-  const w = withLen(path);
-  if (!(w.len > 0)) return null;
-  /* 裁剪自检:端点必须仍贴近站坐标(裁过头 = 把站点裁掉) */
-  if ((cA && geoKm(cA, w.coords[0]) > lim) || (cB && geoKm(cB, w.coords[w.coords.length-1]) > lim)) return null;
-  return w;
+  const gH = cA ? geoKm(cA, coords[0]) : 0, gT = cB ? geoKm(cB, coords[coords.length - 1]) : 0;
+  if (gH <= 0.03 && gT <= 0.03) return null;
+  if (gH > lim || gT > lim) return null;
+  const path = [];
+  if (gH > 0.03) path.push([cA[0], cA[1]]);
+  for (const p of coords) path.push(p);
+  if (gT > 0.03) path.push([cB[0], cB[1]]);
+  return withLen(path);
 }
 /* per-trip 区间路径兜底(站坐标消歧/同段截取/站序折线/骨架):
    对同一班次是固定结果 —— 按 班次×区间 缓存,行车路径与停站朝向共用,
@@ -2924,22 +2863,11 @@ function trainPosition(t, M) {
         } else frac = (M - dep[i]) / runRaw;   /* 距离异常(缺几何/同坐标站):回退旧线性 */
       } else frac = (M - dep[i]) / runRaw; /* 停站等待期:负 frac → 走停車分支 */
     } else {
-      /* 零运行时长(分钟取整): 在平滑窗 sStart..arr[i+1] 内沿区间滑动, 窗外停起点站。
-         2026-11-07 起止速度归零:旧实现窗内匀速、到点速度从 120km/h 直接跳 0(末段冲进站台),
-         改为窗内三角形剖面 —— 从 0 加速到峰值再对称制动,到站瞬时速度 = 0(与普通区间同一套
-         位置/速度同源公式,制动距离由 D/T 算出,不是写死的一段)。 */
+      /* 零运行时长(分钟取整): 在平滑窗 sStart..arr[i+1] 内沿区间滑动, 窗外停起点站 */
       const r0 = (t.sRun && t.sRun[i]) || 0.25;
       const t0 = (t.sStart && t.sStart[i] != null) ? t.sStart[i] : arr[i+1] - r0;
-      if (M >= t0) {
-        const Dm = pairKm(t, i) * 1000, T = r0 * 60, tau = (M - t0) * 60;
-        if (!(Dm > 0) || !(T > 0)) { frac = Math.min(1, (M - t0) / r0); kmh = 0; }
-        else {
-          const o = 4 * Dm / (T * T);
-          if (tau >= T) { frac = 1; kmh = 0; }
-          else if (tau <= T / 2) { frac = Math.min(1, 0.5 * o * tau * tau / Dm); kmh = o * tau * 3.6; }
-          else { const r = T - tau; frac = Math.min(1, (Dm - 0.5 * o * r * r) / Dm); kmh = o * r * 3.6; }
-        }
-      } else frac = 0;
+      if (M >= t0) { frac = Math.min(1, (M - t0) / r0); kmh = Math.min(pairKm(t, i) / (r0 / 60), 120); }
+      else frac = 0;
     }
   }
   /* 零运行时长区间在平滑窗之前同样处于「本站停车」状态:此时 frac=0 并非行车,
@@ -6505,6 +6433,7 @@ let t3dDegraded = false;  /* 已降级 2D(模块或已加载但 __t3dOff=true) *
 let t3dHintDone = false;  /* 降级提示每次降级给一次 */
 let t3dFirstFrameTimer = 0;
 let t3dAttemptN = 0;      /* 尝试 nonce(破 dynamic-import 失败缓存) */
+let t3dDegradeReason = ''; /* 最近一次降级原因(nogl/load/firstframe),供诊断 */
 let t3dCapToastDone = false, t3dFailToastDone = false;
 function t3dHint(key) {
   if (t3dHintDone) return;
@@ -6514,6 +6443,7 @@ function t3dHint(key) {
 function t3dDegrade(reason) {
   t3dFailCount++;
   t3dDegraded = true;
+  t3dDegradeReason = reason;
   window.__t3dOff = true;   /* 回 2D:train3d 见 __t3dOff 淡出并恢复 base maxZoom */
   try { if (window.__T3D) window.__T3D.wake(); } catch (e) {}
   t3dHintDone = false;      /* 每次降级都给一次新提示 */
@@ -6541,18 +6471,59 @@ function t3dAttempt(force) {
     .then(m => {
       m.init(map);
       /* 首帧渲染看门狗:init 后 8s 仍无渲染帧 → 视为失败(软件渲染/驱动挂等)降级;
-         有帧 → 成功,清零连续失败计数 */
+         有帧 → 成功,清零连续失败计数。
+         ★ 判定前先 wake() 强制一次重绘再读 frame:低缩放/地图空闲时 custom layer 的
+         render() 不被调用、frame 恒 0,不 wake 会把「尚未到 3D 缩放」误判成首帧失败
+         (iOS/手动低缩放开启场景)。wake 后仍无帧才是真失败。 */
       clearTimeout(t3dFirstFrameTimer);
       t3dFirstFrameTimer = setTimeout(() => {
-        let fr = 0; try { fr = window.__t3dStats ? window.__t3dStats().frame : 0; } catch (e) {}
-        if (!fr) { t3dModP = null; t3dDegrade('firstframe'); }
-        else { t3dFailCount = 0; t3dDegraded = false; }
+        try { if (window.__T3D) window.__T3D.wake(); } catch (e) {}
+        setTimeout(() => {
+          let fr = 0; try { fr = window.__t3dStats ? window.__t3dStats().frame : 0; } catch (e) {}
+          if (!fr) { t3dModP = null; t3dDegrade('firstframe'); }
+          else { t3dFailCount = 0; t3dDegraded = false; t3dDegradeReason = ''; }
+        }, 600);
       }, 8000);
     })
     .catch(e => { t3dModP = null; t3dDegrade('load'); pushErrSafe('t3d ' + (e && e.message || e)); });
 }
 function t3dEnsure() { if (t3dMasterOn) t3dAttempt(false); }   /* 自动路径(受安全阀约束) */
 window.__t3dForce = () => { t3dAttempt(true); return !!window.__T3D; };
+/* ── 3D 自查诊断(轻量):设置面板状态行 + ?t3ddiag=1 角标浮层,真机一眼看判定 ──
+   只读已有标量(WebGL2/核/内存/软渲染/门结果/降级原因/失败次数),不建开发者工具级重物 */
+window.__t3dDiag = () => {
+  let frame = 0; try { frame = window.__t3dStats ? window.__t3dStats().frame : 0; } catch (e) {}
+  return {
+    webgl2: hasWebgl2,
+    cores: navigator.hardwareConcurrency || 0,
+    mem: (navigator.deviceMemory == null ? null : navigator.deviceMemory),
+    soft: !!window.__perfSoft,
+    renderer: String(window.__perfRenderer || '').slice(0, 32),
+    gate: hasWebgl2 ? 'allow-attempt' : 'hard-nogl',
+    degraded: t3dDegraded, reason: t3dDegradeReason || '',
+    failCount: t3dFailCount, off: !!window.__t3dOff, loaded: !!window.__T3D, frame,
+  };
+};
+function t3dDiagText() {
+  const d = window.__t3dDiag();
+  const st = d.degraded ? ('降级:' + (d.reason || '?')) : (d.loaded ? ('已加载 frame=' + d.frame) : '待尝试');
+  return '3D诊断 WebGL2:' + (d.webgl2 ? 'yes' : 'no') + ' 核:' + d.cores + ' 内存:' + (d.mem == null ? 'n/a' : d.mem + 'GB')
+    + ' 软渲染:' + (d.soft ? 'yes' : 'no') + ' 门:' + d.gate + ' 状态:' + st + ' 失败:' + d.failCount
+    + (d.soft && d.renderer ? ' [' + d.renderer + ']' : '');
+}
+setInterval(() => {
+  try {
+    const el = document.getElementById('t3dDiag'); if (el) el.textContent = t3dDiagText();
+    const ov = document.getElementById('t3dDiagOv'); if (ov) ov.textContent = t3dDiagText();
+  } catch (e) {}
+}, 2000);
+if (new URLSearchParams(location.search).has('t3ddiag')) {
+  const ov = document.createElement('div');
+  ov.id = 't3dDiagOv';
+  ov.style.cssText = 'position:fixed;left:6px;bottom:6px;z-index:9999;background:rgba(0,0,0,.75);color:#fff;font:11px/1.5 ui-monospace,monospace;padding:6px 8px;border-radius:6px;max-width:92vw;white-space:pre-wrap;pointer-events:none';
+  document.documentElement.appendChild(ov);
+  ov.textContent = t3dDiagText();
+}
 /* EXP train3d:逐车厢铰接需要沿程采样位置(车头回溯 di/速度),暴露只读解算 */
 window.__t3dSolve = (t, M) => { const p = trainPosition(t, windowShift(t, M)); return p ? [p[0], p[1], p[2], p[5], p[7] | 0] : null; };
 /* 按班次号解算(诊断用):返回 [lng,lat,brg,kmh,stopI] */

@@ -211,6 +211,8 @@
       var gl = c.getContext('webgl') || c.getContext('experimental-webgl');
       if (gl) { var r = String(gl.getParameter(gl.RENDERER) || ''); soft = /swiftshader|llvmpipe|softpipe|software/i.test(r); }
     } catch (e) {}
+    /* 暴露给设置面板 3D 诊断行(?t3dDiag),只读两个标量,不额外建上下文 */
+    try { window.__perfSoft = soft; window.__perfRenderer = (typeof r !== 'undefined' ? r : '').slice(0, 40); } catch (e) {}
     if (soft || (mobile && (cores <= 4 || mem <= 3)) || (!mobile && cores <= 2 && mem <= 2)) {
       document.documentElement.classList.add('perf-low');
       window.__PERF_LOW = true;
@@ -371,7 +373,7 @@ button { font-family:inherit; }
 <!-- 信息板运营商品牌主题色(2026-11-07):app.js bump ?v=20261106-ib10 破缓存
      (主题色按本站主导运营商品牌渲染:原版 12 主题复刻+线色推导,杜绝每站同绿;
       ib9 已被抽屉修复线占用,顺延避让) -->
-<!-- 3D 能力门 v2(2026-11-07):app.js bump ?v=20261107-t3d5 破缓存
+<!-- 3D 能力门 v2(2026-11-07):app.js bump ?v=20261107-t3d6 破缓存
      (WebGL2 唯一硬门槛,核数/内存/软件渲染改「先尝试、失败降级+提示+可重试」;
       手动开关强制尝试;连续失败 2 次本会话不自动尝试) -->
 <link rel="preload" as="style" href="https://jr-static.suki.ing/app/app.css?v=20261105-ib2" onload="this.rel='stylesheet'">
@@ -520,6 +522,7 @@ button { font-family:inherit; }
         <div class="sw on" id="swTip"><span id="tSw7">列车悬浮提示</span><span class="trk"></span></div>
         <div class="sw on" id="swDelay"><span id="tSw14">实时列车延误</span><span class="trk"></span></div>
         <div class="sw on" id="swT3d"><span id="tSw13">3D 列车模型</span><span class="trk"></span></div>
+        <div class="swnote" id="t3dDiag"></div>
         <div class="swnote" id="tSw14Note" style="display:none"></div>
         <div class="sec-t" id="tMode" style="margin-top:12px">列车显示</div>
         <div class="frow" id="trainModeRow">

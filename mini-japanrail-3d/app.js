@@ -2959,7 +2959,14 @@ function trainPosition(t, M) {
       anchor = 1;
     }
     else {
-      const target = fPos * len;
+      /* 2026-11-07 一步到位:同区间目标里程只许前进(延迟时间窗/重算/兜底分支回退都钳住);
+         一旦目标被算到车后,钳到已到达的最远点并停住,绝不倒车。 */
+      const targetRaw = fPos * len;
+      let target = targetRaw;
+      if (t._mxI === i) {
+        if (target < t._mxS) target = t._mxS;   /* 目标在车后 → 钳到当前最远点(停站) */
+        else t._mxS = target;
+      } else { t._mxI = i; t._mxS = target; }
       let lo = 1, hi = cum.length - 1;
       while (lo < hi) { const mid = (lo + hi) >> 1; if (cum[mid] < target) lo = mid + 1; else hi = mid; }
       const k = lo, c0 = coords[k-1], c1 = coords[k];

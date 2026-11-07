@@ -2342,6 +2342,55 @@ function tailExtend(coords, ref) {
   return [p1[0] + dx * along / (cosf * 111.32 * 1000),
           p1[1] + dy * along / (110.57 * 1000)];
 }
+/* 最近点 + 所在子段/比例(裁站投影用,与 nearPt 同省道) */
+function nearAt(p, coords) {
+  let bd = Infinity, bk = 1, bf = 0;
+  for (let k = 1; k < coords.length; k++) {
+    const a = coords[k-1], b = coords[k];
+    const cosf = Math.cos((a[1] + b[1]) / 2 * Math.PI / 180);
+    const ax = (b[0]-a[0]) * cosf * 111.32, ay = (b[1]-a[1]) * 110.57;
+    const l2 = ax*ax + ay*ay;
+    const f = l2 > 1e-12 ? Math.max(0, Math.min(1, (((p[0]-a[0]) * cosf * 111.32) * ax + ((p[1]-a[1]) * 110.57) * ay) / l2)) : 0;
+    const d = Math.hypot((p[0]-a[0]) * cosf * 111.32 - ax*f, (p[1]-a[1]) * 110.57 - ay*f);
+    if (d < bd) { bd = d; bk = k; bf = f; }
+  }
+  return { d: bd, k: bk, f: bf };
+}
+/* 反向弦护栏的替代:不补反向弦,也不让车停在站外 —— 把折线裁到站坐标在轨道上的
+   投影点(停点在轨道上,且是几何离站最近处)。裁完仍是原子路径,不会新增折角。
+   站坐标离本轨道 >150m(错配/他线站)时不裁,退回「只拦弦」。 */
+function trimToStops(coords, pA, pB) {
+  const n = coords.length;
+  let ka = 0, fa = 0, kb = n - 1, fb = 1;
+  if (pA) {
+    const na = nearAt(pA, coords);
+    if (na.d > 0.15) return null;
+    ka = na.k; fa = na.f;
+    if (fa >= 0.999) { ka++; fa = 0; }
+  }
+  if (pB) {
+    const nb = nearAt(pB, coords);
+    if (nb.d > 0.15) return null;
+    kb = nb.k; fb = nb.f;
+    if (fb <= 0.001) { kb--; fb = 1; }
+  }
+  if (ka > kb || (ka === kb && fa >= fb)) return null;
+  /* 只有「投影落到轨道首点/末点、裁完不足一段」才放弃;落在首/末子段内仍可裁 */
+  if (pA && ka >= n) return null;
+  if (pB && kb <= 0) return null;
+  const pts = [];
+  if (pA) pts.push([pA[0], pA[1]]);
+  /* pB 落在子段内,该子段末端顶点不能再收(否则 pB 会沿同段回走,形成假折角) */
+  const stop = pB ? kb - 1 : n - 1;
+  for (let j = Math.max(ka, 0); j <= Math.min(stop, n - 1); j++) {
+    if (!pts.length || geoKm(pts[pts.length-1], coords[j]) * 1000 > 0.2) pts.push([coords[j][0], coords[j][1]]);
+  }
+  if (pB && (!pts.length || geoKm(pts[pts.length-1], pB) * 1000 > 0.2)) pts.push([pB[0], pB[1]]);
+  if (pts.length < 2) return null;
+  let L = 0;
+  for (let k = 1; k < pts.length; k++) L += geoKm(pts[k-1], pts[k]);
+  return L * 1000 >= 30 ? pts : null;
+}
 /* 反向弦判据:在 b 处,入向 a→b 与出向 b→c 夹角 >150° 且弦 >20m = 补了会折返 */
 function revChord(a, b, c) {
   const cosf = Math.cos(b[1] * Math.PI / 180);
@@ -2778,19 +2827,20 @@ function snapToStops(t, i, coords) {
   const gH = cA ? geoKm(cA, coords[0]) : 0, gT = cB ? geoKm(cB, coords[coords.length - 1]) : 0;
   if (gH <= 0.03 && gT <= 0.03) return null;
   if (gH > lim || gT > lim) return null;
+  /* 2026-11-07 折返清洗:补站坐标弦之前先判方向 —— 弦与末段/首段夹角 >150° 时
+     不补(补了就是「过站又折回」,列车沿弧长倒着走)。改用「裁到站投影」:
+     把折线裁到站坐标在轨道上的最近点,停点仍在轨道离站最近处,不会停在站台外。 */
+  const revH = gH > 0.03 && coords.length >= 2 && revChord(coords[1], coords[0], cA);
+  const revT = gT > 0.03 && coords.length >= 2 && revChord(coords[coords.length-2], coords[coords.length-1], cB);
+  let base = coords;
+  if (revH || revT) {
+    const tb = trimToStops(coords, revH ? cA : null, revT ? cB : null);
+    if (tb) base = tb;
+  }
   const path = [];
-  /* 2026-11-07 折返清洗:补站坐标弦之前先判方向 —— 弦与末段/首段夹角 >120° 时
-     不补(补了就是「过站又折回」,列车沿弧长倒着走)。保留原几何端点,首末点不挪。 */
-  if (gH > 0.03) {
-    const rev = coords.length >= 2 && revChord(coords[1], coords[0], cA);
-    if (!rev) path.push([cA[0], cA[1]]);
-  }
-  for (const p of coords) path.push(p);
-  if (gT > 0.03) {
-    const n = path.length;
-    const rev = n >= 2 && revChord(path[n-2], coords[coords.length-1], cB);
-    if (!rev) path.push([cB[0], cB[1]]);
-  }
+  if (gH > 0.03 && !revH) path.push([cA[0], cA[1]]);
+  for (const p of base) path.push(p);
+  if (gT > 0.03 && !revT) path.push([cB[0], cB[1]]);
   return withLen(path);
 }
 /* per-trip 区间路径兜底(站坐标消歧/同段截取/站序折线/骨架):

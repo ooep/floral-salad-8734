@@ -2600,15 +2600,17 @@ window.__t3dLegInvalidate = () => ++_legEpoch;
 window.__t3dLegEpoch = () => _legEpoch;
 /* byRid 线路键解析:PLATMAP 键是真实运营线名(已消歧),与渲染侧线路名做分级匹配。
    唯一键时直接采用(单线班次);多键无匹配 → null(记 noLineMatch) */
-function _platRidFor(pm, line) {
+function _platRidFor(pm, line, N) {
   if (!pm) return null;
-  if (line && pm[line]) return line;
+  /* 重复车次号(同 tid 双对象)防线:pm[rid] 按 tmaps[tid].s_jas 索引,长度须等于本对象 N */
+  const ok = rid => !N || (pm[rid] && pm[rid].length === N);
+  if (line && pm[line] && ok(line)) return line;
   if (line) {
     const nl = normCached(line);
-    for (const rid in pm) { if (normCached(rid) === nl) return rid; }
-    for (const rid in pm) { if (matchLineCached(rid, line) >= 2) return rid; }
+    for (const rid in pm) if (normCached(rid) === nl && ok(rid)) return rid;
+    for (const rid in pm) if (matchLineCached(rid, line) >= 2 && ok(rid)) return rid;
   }
-  const keys = Object.keys(pm);
+  const keys = Object.keys(pm).filter(ok);
   return keys.length === 1 ? keys[0] : null;
 }
 /* 站内番线反查:站名带括号时做区域校验(与 buildPlatIndex 同口径,防同名站串线)。
@@ -2616,10 +2618,10 @@ function _platRidFor(pm, line) {
 function platForStop(t, k, line) {
   const pm = PLATMAP && PLATMAP.t ? PLATMAP.t[t.t] : null;
   if (!pm) return { plat: null, reason: 'noPlatmap' };
-  const rid = _platRidFor(pm, line);
+  const rid = _platRidFor(pm, line, t.N);
   if (!rid) return { plat: null, reason: 'noLineMatch' };
   const pws = pm[rid];
-  const pw = (pws && k < pws.length) ? pws[k] : null;
+  const pw = k < pws.length ? pws[k] : null;
   if (!pw) return { plat: null, reason: 'noPlatAtStation', rid };
   if (!platOk(t.jas[k], rid)) return { plat: null, reason: 'platRegionReject', rid };
   return { plat: String(pw), rid, st: t.jas[k] };
@@ -2655,9 +2657,9 @@ function trackIdentity(t, i) {
    约束三重:停站锚横向距离 ≤45m(站心到通过轨可达 30-40m,候选限身份线不跨线) +
    最近点切线与腿端行进向共线(|cos|≥0.5) + span 自站伸入区间 ≥100m。
    拼接:站 A 股道段(外端→站) + 原腿中段(离两站 >min(250m, 站距/3)) + 站 B 股道段(站→外端)。 */
-function _ovlPick(cands, anchor, brgOut) {
+function _ovlPick(cands, anchor, brgOut, thr) {
   const cf = Math.cos(anchor[1] * Math.PI / 180);
-  let best = null, bd = 0.015; /* 15m,度≈0.000135 → 用米比较 */
+  let best = null, bd = thr || 45;
   for (const co0 of cands) {
     let m = 1e18, mk = 0;
     for (let k = 0; k + 1 < co0.length; k++) {
@@ -2679,10 +2681,7 @@ function _ovlPick(cands, anchor, brgOut) {
     if (m < bd || !best) { best = { co: co0, m }; bd = m; }
   }
   if (!best) return null;
-  /* 定向:使 co[0] 在站侧(向区间外端延伸) */
-  let co = best.co;
-  if (geoKm(co[0], anchor) > geoKm(co[co.length - 1], anchor)) co = co.slice().reverse();
-  return co;
+  return { co: best.co, m: best.m }; /* 定向交由 overlayStationTracks 按 A/B 侧处理 */
 }
 function overlayStationTracks(t, i, e) {
   if (!PLATTRACK || !ormEnabled || !e || !e.coords || e.coords.length < 2) return null;
@@ -2706,10 +2705,14 @@ function overlayStationTracks(t, i, e) {
   const n = e.coords.length;
   const brgA = Math.atan2((e.coords[1][0] - e.coords[0][0]) * Math.cos(cA ? cA[1] : e.coords[0][1] * Math.PI / 180), e.coords[1][1] - e.coords[0][1]);
   const brgB = Math.atan2((e.coords[n - 1][0] - e.coords[n - 2][0]) * Math.cos(cB ? cB[1] : e.coords[n - 1][1] * Math.PI / 180), e.coords[n - 1][1] - e.coords[n - 2][1]);
-  const coA = cA ? _ovlPick(candsFor(t.jas[i], cA) || [], cA, brgA) : null;
-  const coB = cB ? _ovlPick(candsFor(t.jas[i + 1], cB) || [], cB, brgB) : null;
-  if (!coA && !coB) { tidFbNote('ovl-miss', e.line, t.jasN[i], t.jasN[i + 1], false); return null; }
+  const coAp = cA ? _ovlPick(candsFor(t.jas[i], cA) || [], cA, brgA, pr.rid ? 80 : 45) : null;
+  const coBp = cB ? _ovlPick(candsFor(t.jas[i + 1], cB) || [], cB, brgB, pr.rid ? 80 : 45) : null;
+  if (!coAp && !coBp) { tidFbNote('ovl-miss', e.line, t.jasN[i], t.jasN[i + 1], false); return null; }
   const chord = geoKm(cA || e.coords[0], cB || e.coords[n - 1]);
+  /* 全 span 拼接(站两侧各 ≤350m):实测停站车对齐最优;邻腿缝与终到尾车直延为已知残差 */
+  let coA = null, coB = null;
+  if (coAp) { let co = coAp.co; if (geoKm(co[0], cA) > geoKm(co[co.length - 1], cA)) co = co.slice().reverse(); coA = co; }
+  if (coBp) { let co = coBp.co; if (geoKm(co[0], cB) > geoKm(co[co.length - 1], cB)) co = co.slice().reverse(); coB = co; }
   const infl = Math.min(0.25, chord / 3);
   const mid = e.coords.filter(p => (!cA || geoKm(p, cA) > infl) && (!cB || geoKm(p, cB) > infl));
   let co = [];

@@ -662,7 +662,7 @@ function lmStart() {
 const FILES_PCT = 55, IDX_PCT = 78, PRS_PCT = 97;
 /* 数据版本号:segments/stations/station_map 等静态数据每次变更时必须递增,
    否则 IndexedDB 缓存可能让旧数据(如已修的幽灵直线)继续生效 */
-const DATA_VERSION = '2026-11-07a';   // 静态数据变更必须递增(refresh.yml 已自动递增)——不递增会让老访客 IDB 旧索引×新时刻表错配「乱飞」(2026-10-25 事故,见 PERF.md)。本次递增:plat_track_index.json 扩覆(総武/横須賀族+同名站消歧+门 300m)
+const DATA_VERSION = '2026-11-08a';   // 静态数据变更必须递增(refresh.yml 已自动递增)——不递增会让老访客 IDB 旧索引×新时刻表错配「乱飞」(2026-10-25 事故,见 PERF.md)。本次递增:plat_track_index.json 扩覆(総武/横須賀族+同名站消歧+门 300m)
 /* 时刻表整包同样按版本取数。/data/*.json 是 5 分钟边缘缓存，周更后「同 URL 仍命中旧副本」
    最长 5 分钟 —— 新索引/新站点坐标配旧时刻表正是 2026-10-25 乱飞事故的形态。
    整包内容当周必然变化（没变则 DATA_VERSION 不递增、URL 不变，缓存照常命中），

@@ -573,3 +573,49 @@ gzip 1.68 MB（约 −75% wire / −97% 解析量）。校验：
 
 删除 `build_static_assets.py` 的 5.95 步或让 manifest/分片不可用即可：
 客户端检测到 manifest/分片不可用会自动回退原 monolith；原端点从未改动。
+
+## 二十五轮(2026-11-09):主段弧长窗 + 停站采样锁定 + 全程股道映射 —— 过站折返/停稳车厢乱/股道不随ORM 三合一根治
+
+**症状(用户实测)**:3D 列车进站刹停正常,一停稳就串线/断节/脱轨/抽搐;站内列车横七竖八;
+详细股道(ORM)开启后列车过站又折回;ORM 开了但列车仍跑简易线,不附着股道。
+
+**根因(三层,互相咬合)**:
+1. `overlayStationTracks` 把腿拼成「站A股道外延→原腿→站B股道外延」,而 `trainPosition`
+   用 `target=frac×len` 在整条加长折线上推进 —— 发车时车头其实在站A外延(站外)、
+   到站后还要开到站B外延(过站),停站时再跳回站坐标 = 过站折返。
+2. 停站后 `__t3dArc` 重新按投影选腿(出发腿 i),与运行末帧(到达腿 i−1)不同路径,
+   头车弧长坐标系瞬切;叠加 stopSlotAt 槽位随帧内集合变化横移、停站朝向取出发向,
+   3D 车厢逐帧重排 = 停稳后串线/断节/抽搐。
+3. ORM 只换站内两小段,区间中段仍简易腿;主站 447 线名 vs ORM 1919 线名口径差异
+   (函館線/JR函館本線/英文/番线),单线名匹配覆盖率仅 11%。
+
+**修复(机制,改渲染/位置解算前必读)**:
+- **主段弧长窗(s0/s1)**:overlay 拼接时按「站坐标首次/最后一次出现」求主段起止弧长,
+  挂到腿对象上;`trainPosition`(含快径 `_fk`)与 `limitTarget` 一律只在 [s0,s1] 内推进,
+  外延段仅由 `__t3dArc.at()` 跨腿回退用于车尾。车头永不越站。iB≤iA 记 `ovl:mainwin` 弃用。
+- **停站分支**:位置直接取站坐标(主段端点,拼接时明确放入),不再在 ePrev/e 两端点间切换;
+  `stopBearing` 优先取到达腿主段末端切线(与进站末帧同源),不再取出发向。
+- **停站采样锁定**:updateTrains 推送帧写 `t._stopI=p[7]`;`__t3dArc` 在停站窗内
+  (M≤dep[k])以「到达腿主段末端(站坐标最近点弧长)」为头锚构造采样器并缓存
+  `t._arcStop={k,epoch,sam}`,整个停站窗返回同一对象,逐帧输出逐点一致;
+  发车/换日/epoch 变化自动解锁。始发站无到达腿时用出发腿主段起点。
+- **全程股道映射(leg_orm_map.json)**:`scripts/build_leg_orm_map.py` 离线把每条简易腿
+  吸附到「线名族(去JR前缀/本線→線/族包含) ∪ 线路色」双通道 ORM 股道走廊
+  (densify 80m、空间网格索引、覆盖≥0.55、均偏≤32m、跳变>150m 回原几何)。
+  产出 5,555/6,874 段(80.8%),6.5MB,随 ORM 懒加载;`ormLegReplace` 按 from|to|line
+  取映射、首点 proximity 定向(反向注册段兼容)、长度比 0.55–1.9+1.5 健全性门、
+  端点再 snapToStops;legSegEntry 在站内 overlay 之前接入。映射缺失/弃用→简易腿。
+- **缓存一致性**:`_legEpoch` 在 LEGORM/PLATTRACK 到位与 ORM 开关时递增,腿缓存整体
+  惰性失效;DATA_VERSION 同步递增(2026-11-09a)。
+
+**台架(test_bench.mjs 21 断言 / test_overlay.mjs 40 断言 / test_sweep.mjs 400 段)**:
+- frac=0→站A、frac=1→站B、任意时刻不越站;limitTarget target≤主段末端;
+- 停站窗多次调用返回同一采样器、头腿=到达腿、头车=站坐标、车尾沿到达腿回退、
+  任意车厢位置/朝向逐点一致;发车解锁;非停站标记不锁定;始发站不 NaN;
+- 真实段(山手線 品川→大崎 等反向注册段)映射端点 snap 0m、长度比 0.90–1.14、
+  主段端点=站坐标;400 段扫描 ormLegReplace 0 弃用、主段窗 0 异常;
+  overlay 失败 143 段均为地方小站 noIndex/split(无股道索引,按设计回退全程 ORM 走廊)。
+
+**复测**:`cd mini-japanrail-3d && node test_bench.mjs && node test_overlay.mjs && node test_sweep.mjs`。
+重建映射:`python3 scripts/build_leg_orm_map.py`(输入 segments3d+orm_tracks,输出 data/leg_orm_map.json,
+build_static_assets.py 的 data/ 合并自动部署到 jr-static)。

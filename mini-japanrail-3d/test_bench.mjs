@@ -18,8 +18,6 @@ function extract(marker) {
 const code = [
   'function geoKm(', 'function withLen(', 'function pathBrgAt(',
   'function limitTarget(', 'function sanitizeLeg(', 'function wrapPiBrg(',
-  'function slicePath(', 'function pathPointAt(', 'function pathNearestPt(',
-  'function buildTripPath(', 'function tripPathOf(',
   'window.__t3dArc =',
 ].map(extract).join('\n;\n');
 
@@ -75,7 +73,7 @@ console.log('== 2. 停站采样锁定:停稳后车厢逐点一致 ==');
   const s2 = arc(trip, 11.0, B[0], B[1], hbrg);
   const s3 = arc(trip, 11.9, B[0], B[1], hbrg);
   ok(!!s1, '停站采样器存在');
-  ok(s1.at(0)[0] === s2.at(0)[0] && s1.at(0)[0] === s3.at(0)[0] && s1.at(0)[1] === s2.at(0)[1] && s1.at(0)[1] === s3.at(0)[1], '停站窗内多次调用输出逐点一致(连续轨道锁定)');
+  ok(s1 === s2 && s2 === s3, '停站窗内多次调用返回同一采样器(锁定)');
   ok(s1.leg === 0, '头腿=到达腿(非出发腿)');
   ok(Math.abs(s1.proj[0] - B[0]) < 1e-9 && Math.abs(s1.proj[1] - B[1]) < 1e-9, '头车投影=站B坐标');
   const p0 = s1.at(0), p20 = s1.at(20), p200 = s1.at(200);

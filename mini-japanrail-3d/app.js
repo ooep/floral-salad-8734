@@ -2997,124 +2997,6 @@ function overlayStationTracks(t, i, e) {
   (t._ovlR = t._ovlR || [])[i] = 'ok';
   return { coords: w.coords, cum: w.cum, len: w.len, line: e.line, kind: e.kind, _ovl: 1, s0, s1 };
 }
-/* ══════════════════════════════════════════════════════════════════════
-   班次连续轨道(对标 dokorail.jp 的 track/trackM 模型):
-   把班次所有腿按站序拼接成一条连续折线,每站记录全局弧长 stopArc[i]。
-   列车位置 = 连续折线上的全局弧长插值,3D 车厢 = 同一折线上 头弧长−d 采样 ——
-   与友商 placeTrain(track,trackM) 同构:不换段、不投影选腿、无站间缝跳变,
-   停站/过站折返/3D断节从数据模型上消除。无全程几何的班次回退旧逐腿逻辑。
-   ══════════════════════════════════════════════════════════════════════ */
-function slicePath(coords, cum, s0, s1) {
-  /* 截取 [s0,s1] 子折线(含两端点),返回 {coords,cum}(cum 从 0 起算) */
-  const pts = [pathPointAt(coords, cum, s0)];
-  for (let k = 0; k < coords.length; k++) if (cum[k] > s0 && cum[k] < s1) pts.push(coords[k]);
-  pts.push(pathPointAt(coords, cum, s1));
-  const oc = [0];
-  for (let k = 1; k < pts.length; k++) oc.push(oc[k - 1] + geoKm(pts[k - 1], pts[k]));
-  return { coords: pts, cum: oc, len: oc[oc.length - 1] };
-}
-function buildTripPath(t) {
-  const g = t._g;
-  if (g && g.path && g.pathEp === _legEpoch) return g.path;
-  if (t._path && t._pathEp === _legEpoch) return t._path;
-  const N = t.N;
-  const coords = [], stopArc = new Array(N).fill(-1);
-  let acc = 0;
-  for (let i = 0; i < N - 1; i++) {
-    const e = legSegEntry(t, i) || fallbackSeg(t, i);   /* 与 __t3dArc entry 同口径:兜底腿也纳入,提高覆盖 */
-    if (!e || !e.coords || e.coords.length < 2) return null;   /* 缺几何腿:整图弃用,回退逐腿 */
-    const s0 = e.s0 || 0, s1 = (e.s1 != null) ? e.s1 : e.len;
-    if (!(s1 > s0)) return null;
-    const sub = slicePath(e.coords, e.cum, s0, s1);
-    stopArc[i] = acc;
-    for (let k = 0; k < sub.coords.length; k++) {
-      const q = sub.coords[k];
-      if (coords.length && geoKm(coords[coords.length - 1], q) < 0.002) continue;  /* 站缝<2m 去重 */
-      coords.push(q);
-    }
-    acc += sub.len;
-  }
-  stopArc[N - 1] = acc;
-  const w = withLen(coords);
-  const path = { coords: w.coords, cum: w.cum, len: w.len, stopArc };
-  if (g) { g.path = path; g.pathEp = _legEpoch; }
-  t._path = path; t._pathEp = _legEpoch;
-  return path;
-}
-function tripPathOf(t) {
-  const g = t._g;
-  if (g && g.path && g.pathEp === _legEpoch) return g.path;
-  if (t._path && t._pathEp === _legEpoch) return t._path;
-  return buildTripPath(t);
-}
-/* 连续路径版位置解算:与旧 trainPosition 同一输出数组/同一辅助函数口径。
-   全局弧长 target 只进不退(limitTarget 在整线里程上),停站=stopArc[k] 股道点。 */
-function trainPositionPath(t, M, tp) {
-  const { dep, arr, N } = t;
-  _pos[6] = 0; _pos[7] = -1; _pos[8] = 0;
-  if (M < dep[0] - 1e-6 || M > arr[N - 1] + 1e-6) return null;
-  /* dwell=0 连续通过链:整段梯形剖面在 tp 子段 stopArc[i]→stopArc[m] 上推进
-     (链几何与 tp 同源,中间站不停留;与旧 chainPosition 同剖面,几何换连续轨道) */
-  const cs = chainsFor(t);
-  if (cs && cs.length) {
-    for (const ch of cs) {
-      if (M >= ch.t0 && M <= ch.t0 + ch.dur + 1e-6) {
-        const d = trapezAt(ch.pf, (M - ch.t0) * 60);
-        const frac = Math.min(1, d[0] / ch.pf.D);
-        const a0 = tp.stopArc[ch.i], a1 = tp.stopArc[ch.m];
-        const target = a0 + frac * (a1 - a0);
-        t._arcS = target;
-        const q = pathPointAt(tp.coords, tp.cum, target);
-        _pos[0] = q[0]; _pos[1] = q[1];
-        _pos[2] = pathBrgAt(tp.coords, tp.cum, target, tp.len);
-        _pos[3] = ch.line; _pos[4] = ch.kind; _pos[5] = d[1] * 3.6;
-        return _pos;
-      }
-    }
-  }
-  let i = locateSeg(t, M);
-  if (i > N - 2) i = N - 2;
-  let shifted = false;
-  if (i < N - 2 && arr[i + 1] - dep[i] > 0 && arr[i + 2] - dep[i + 1] <= 0 &&
-      M >= t.sStart[i + 1] && M <= arr[i + 2] + 1e-6) { i += 1; shifted = true; }
-  const runRaw = arr[i + 1] - dep[i];
-  const running = M <= arr[i + 1] + 1e-6;
-  let frac = -1, kmh = 0;
-  if (running) {
-    if (runRaw > 0) {
-      if (M >= dep[i] - 1e-9) {
-        const pf = trapezProfile(t, i);
-        if (pf) { const d = trapezAt(pf, (M - dep[i]) * 60); frac = Math.min(1, d[0] / pf.D); kmh = d[1] * 3.6; _pos[6] = pf.unrel; }
-        else frac = (M - dep[i]) / runRaw;
-      } else frac = (M - dep[i]) / runRaw;
-    } else {
-      const r0 = (t.sRun && t.sRun[i]) || 0.25;
-      const t0 = (t.sStart && t.sStart[i] != null) ? t.sStart[i] : arr[i + 1] - r0;
-      if (M >= t0) { frac = Math.min(1, (M - t0) / r0); kmh = Math.min(pairKm(t, i) / (r0 / 60), 120); }
-      else frac = 0;
-    }
-  }
-  if (!shifted && frac <= 0 && M < dep[i] - 1e-9) frac = -1;
-  const a0 = tp.stopArc[i], a1 = tp.stopArc[i + 1];
-  let target, stopped = false;
-  if (frac < 0) { target = a0; kmh = 0; stopped = true; _pos[7] = i; }
-  else {
-    target = a0 + Math.min(1, Math.max(0, frac)) * (a1 - a0);
-    const ltd = limitTarget(t, i, target, a1, kmh);
-    target = ltd.target; kmh = ltd.kmh;
-    if (frac >= 1) target = a1;
-  }
-  t._arcS = target;   /* 3D 同源:推送帧的全局弧长(不含槽位/左偏) */
-  const q = pathPointAt(tp.coords, tp.cum, target);
-  /* 严格在轨道上(对标 dokorail):连续轨道模型下各线路班次各有其股道弧长,
-     不需要槽位横移/复线左偏这类「把图标挪出轨道」的旧补偿 —— 2D/3D 位置完全一致,
-     同线同站多车真实共点(同站台),前后车由弧长自然区分,消灭站内横七竖八。 */
-  _pos[0] = q[0]; _pos[1] = q[1];
-  _pos[2] = pathBrgAt(tp.coords, tp.cum, target, tp.len);
-  const e = t._seg && t._seg[i];
-  _pos[3] = e ? e.line : lineOfPair(t, i); _pos[4] = kindOfPair(t, i); _pos[5] = stopped ? 0 : kmh;
-  return _pos;
-}
 /* 本段主几何(按 班次×区间 缓存):pickSeg → 定向 → 站端吸附。停站朝向与行车共用同一对象,
    吸附必须在这里做 —— stopBearing 先于 trainPosition 缓存时也拿到吸附后的几何 */
 function legSegEntry(t, i) {
@@ -3503,12 +3385,7 @@ function trainPosition(t, M) {
   _pos[8] = 0;   /* 槽位标记:0=未加槽位偏移(参与同点去重),≥1=已错开到邻轨 */
   /* dwell=0 连续通过链:优先于快径/leg 解算,整段一条梯形剖面,中间站不停留。
      联挂/联挂偏移班次跳过,保持原逐 leg 行为。 */
-  /* 连续轨道优先(对标 dokorail track/trackM):有全程几何时位置=全局弧长插值,
-     不换段、不越站;dwell=0 连续通过链也在 tp 子段上推进(trainPositionPath 内含)。
-     3D 由 __t3dArc 在同一折线上采样,2D/3D 完全同源。无 tp 才回退逐腿/旧链逻辑。 */
   if (!t.cpl && !t._coupleOff) {
-    const tp = tripPathOf(t);
-    if (tp) return trainPositionPath(t, M, tp);
     const cs = chainsFor(t);
     if (cs && cs.length) {
       for (let ci = 0; ci < cs.length; ci++) {
@@ -7156,33 +7033,6 @@ function fetchLegOrmMap() {
 }
 /* 简易腿 → ORM 股道走廊替换(区间中段):按登记站对+线名取映射,方向与 orientSeg 后
    的腿对齐,端点再走一次 snapToStops(站端接站坐标,主段端点=站)。 */
-/* 简易腿 → 真实 ORM 股道连通路径(v3):Dijkstra 拼接的真实折线,列车严格沿股道走。
-   主段端点 = 股道上距站坐标最近点(站房中心≠股道,绝不再把几何吸附到站坐标),
-   运动学在主段 [s0,s1] 内推进,停站即停在股道与站台对应的位置。 */
-/* 折线上距 c 最近的点(逐子段投影):返回 {arc,pt,d}(弧长km/坐标/距km) */
-function pathNearestPt(coords, cum, c) {
-  const cf = Math.cos(c[1] * Math.PI / 180);
-  let best = null, bd = 1e18;
-  for (let k = 0; k + 1 < coords.length; k++) {
-    const x0 = coords[k][0], y0 = coords[k][1], x1 = coords[k + 1][0], y1 = coords[k + 1][1];
-    const ax = (x1 - x0) * cf, ay = y1 - y0;
-    const px = (c[0] - x0) * cf, py = c[1] - y0;
-    const L2 = ax * ax + ay * ay;
-    const f = L2 > 1e-18 ? Math.min(1, Math.max(0, (px * ax + py * ay) / L2)) : 0;
-    const dx = px - ax * f, dy = py - ay * f;
-    const d2 = dx * dx + dy * dy;
-    if (d2 < bd) { bd = d2; best = { arc: cum[k] + f * (cum[k + 1] - cum[k]), pt: [x0 + (x1 - x0) * f, y0 + (y1 - y0) * f] }; }
-  }
-  return best ? { arc: best.arc, pt: best.pt, d: Math.sqrt(bd) * 111.32 } : null;
-}
-/* 按弧长取折线上的点(km) */
-function pathPointAt(coords, cum, s) {
-  let k = 1;
-  while (k < cum.length - 1 && cum[k] < s) k++;
-  const L = Math.max(1e-9, cum[k] - cum[k - 1]);
-  const f = Math.min(1, Math.max(0, (s - cum[k - 1]) / L));
-  return [coords[k - 1][0] + (coords[k][0] - coords[k - 1][0]) * f, coords[k - 1][1] + (coords[k][1] - coords[k - 1][1]) * f];
-}
 function ormLegReplace(t, i, e) {
   if (!LEGORM || !e || !e.coords || e.coords.length < 2) return null;
   const A = t.jasN[i], B = t.jasN[i + 1], ln = e.line || '';
@@ -7196,14 +7046,9 @@ function ormLegReplace(t, i, e) {
   const w = withLen(mc.map(q => [q[0], q[1]]));
   /* 长度健全性:映射折线与简易腿长径比异常(吸错线)时弃用,保持简易腿 */
   if (e.len > 0.3 && (w.len < e.len * 0.55 || w.len > e.len * 1.9 + 1.5)) return null;
-  /* 主段端点=股道上距站坐标最近点(不再 snapToStops 把几何拉到站房中心):
-     列车严格沿真实股道运行;停站位置=股道与站台对应点,与行进路径同源。 */
-  const cA = t.stopC && t.stopC[i], cB = t.stopC && t.stopC[i + 1];
-  let s0 = 0, s1 = w.len;
-  if (cA) { const n = pathNearestPt(w.coords, w.cum, cA); if (n && n.d < 0.25) s0 = n.arc; }
-  if (cB) { const n = pathNearestPt(w.coords, w.cum, cB); if (n && n.d < 0.25) s1 = n.arc; }
-  if (!(s1 > s0 + 0.01)) return null;   /* 主段退化(映射错腿)弃用 */
-  return { coords: w.coords, cum: w.cum, len: w.len, line: e.line, kind: e.kind, s0, s1 };
+  const sn = snapToStops(t, i, w.coords);
+  return sn ? { coords: sn.coords, cum: sn.cum, len: sn.len, line: e.line, kind: e.kind }
+            : { coords: w.coords, cum: w.cum, len: w.len, line: e.line, kind: e.kind };
 }
 function fetchPlatTrackIndex() {
   if (PLATTRACK) return Promise.resolve(PLATTRACK);
@@ -7507,38 +7352,6 @@ window.__t3dArc = (t, M, hlng, hlat, hbrg) => {
     const entry = idx => legSegEntry(t, idx) || fallbackSeg(t, idx);
     const cosf = Math.cos(hlat * Math.PI / 180);
     const sanitize = ee => sanitizeLeg(ee, cosf);
-    /* 连续轨道采样(与 dokorail placeTrain 同构):头弧长由运动学直接给出(推送帧
-       trainPositionPath 写入 t._arcS),逐节 at(d)=全局弧长−d 取点+转向架弦窗定向。
-       停站时头弧长恒为 stopArc[k](停站分支 target=a0 恒定),整列自然静止,
-       无需投影选腿/跨腿回退/链式守卫 —— 数据模型保证不抖。 */
-    const tp = tripPathOf(t);
-    /* 全班次统一连续轨道(含 dwell=0 链:trainPositionPath 链分支写 _arcS 同源),
-       头弧长唯一来源 = 当帧运动学 target,无需任何停站/链特判。 */
-    if (tp && !t.cpl && !t._coupleOff) {
-      /* 头弧长唯一来源 = 当帧运动学 target(t._arcS):运行=全局弧长,停站=stopArc[k]
-         (停站分支 target=a0 恒定,自然锁定)。不做任何额外停站特判 —— 旧 stopK 分支
-         只看 M<=dep[k],在 M 早于停站窗时会把头锚错钉到下一站,致 2D/3D 差一个站距。 */
-      const headArc = (t._arcS != null) ? t._arcS : tp.stopArc[Math.max(0, Math.min(t.N - 2, locateSeg(t, M)))];
-      const L = tp.len, co = tp.coords, cum = tp.cum;
-      const pointAt = a => pathPointAt(co, cum, Math.max(0, Math.min(L, a)));
-      const brgAt = (a, win) => {
-        const w = win || 0.015;
-        const A = pointAt(Math.max(0, a - w)), B = pointAt(Math.min(L, a + w));
-        const dx = (B[0] - A[0]) * cosf, dy = B[1] - A[1];
-        return (dx * dx + dy * dy > 1e-18) ? Math.atan2(dx, dy) : pathBrgAt(co, cum, a, L);
-      };
-      const at = (d, win) => {
-        const a = headArc - d / 1000;
-        if (a < 0) {   /* 越出线路起点:沿首点切线反延(与旧 extrapConn 同口径) */
-          const p0 = pointAt(0), b0 = brgAt(0, win);
-          return [p0[0] + Math.sin(b0) * a / (111319 * cosf), p0[1] + Math.cos(b0) * a / 110540, b0, -2, 0, 0, 0];
-        }
-        const p = pointAt(a), b = brgAt(a, win);
-        return [p[0], p[1], b, 0, 0, 0, Math.max(0, a * 1000)];
-      };
-      const hp = pointAt(headArc);
-      return { at, leg: 0, sHead: headArc, projErrM: 0, orient: 1, proj: hp, L0: L, pushClamp: false, pushOffM: 0, chainLegs: new Set([0]), conn0: co[0], connBrg0: brgAt(0) };
-    }
     /* 停站采样锁定(停稳后车厢乱根治):停站期间(t._stopI≥0,由 updateTrains 推送帧
        的 trainPosition 停站分支标记)不再逐帧投影选腿 —— 运行末帧整列在到达腿上,
        停站后若改按出发腿重解,头车弧长坐标系瞬切,叠加槽位横移/槽序变化,

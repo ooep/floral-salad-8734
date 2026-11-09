@@ -2930,8 +2930,8 @@ function overlayStationTracks(t, i, e) {
       for (const k in per) if (matchLineCached(k, w) === 3) return per[k];
       const a = LINES_MAP && LINES_MAP[w];
       if (a) for (const k in per) if (a.includes(k) || normFam(k) === normFam(a[0])) return per[k];
-      /* 族级包含(千葉・総武 等复合族名);want 序=身份线优先,防「東海道線压山手線」 */
-      for (const k in per) { const fk = normFam(k); if (fk.includes(fw) || fw.includes(fk)) return per[k]; }
+      /* 禁用「族级包含」模糊匹配(山手貨物線→山手線、東海道貨物線→東海道線 等
+         是多股道区列车窜线的直接根因);仅保留精确/归一/强匹配/官方别名。 */
     }
     return null;
   };

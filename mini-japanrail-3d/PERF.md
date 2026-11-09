@@ -639,3 +639,34 @@ build_static_assets.py 的 data/ 合并自动部署到 jr-static)。
   app_old.js 再 `node sim.mjs app_old.js`,两份统计须逐项一致(允许 null 数相同)。
 - DATA_VERSION 门禁(check_data_version.py)要求 app.js/journey.html/version-lock
   三方同源,手工 bump 必须同步三处并跑 --update;未动时刻表数据时不得 bump。
+
+## 二十六轮(2026-11-09c):连续轨道模型 —— 对标 dokorail.jp 的 track/trackM 架构
+
+**友商学习(读 dokorail.jp 源码)**:其列车位置以「轨道 track + 轨道里程 trackM」表达,
+placeTrain 仅 ~20 行(每节车取 ±转向架弦窗两点定中心与朝向)。无跨腿/投影/槽位补丁,
+因为数据模型是**连续轨道里程**,渲染必然稳定。几何目录每线路一条 OSM relation 折线。
+主站旧架构是「站对分段腿 + 站坐标吸附 + 槽位/左偏 + 跨腿回退」——段间缝/换段跳变/
+停稳乱/过站折返都是这一模型的结构性产物,补丁无法根治。
+
+**重构(连续轨道,与友商同构)**:
+- `buildTripPath(t)`:班次全部腿(legSegEntry||fallbackSeg,含 ORM 真实股道)按站序
+  拼接为一条连续折线,记录每站全局弧长 stopArc[i];按 tmap 共享缓存,随 _legEpoch 失效。
+- `trainPositionPath(t,M,tp)`:位置 = stopArc[i]+frac×(stopArc[i+1]−stopArc[i])
+  (全局弧长插值),limitTarget 在整线里程上只进不退(天然不越站);
+  停站 = stopArc[k] 股道点;朝向 = 该点切线。**不再槽位横移/复线左偏**
+  (各线班次各有其股道弧长,2D/3D 位置完全一致,消灭站内横七竖八)。
+  dwell=0 连续通过链 = tp 子段 stopArc[i]→stopArc[m] 上的整段梯形剖面(全班次统一)。
+- `__t3dArc` 连续分支:头弧长唯一来源 = 当帧运动学 target(t._arcS),
+  at(d)=全局弧长−d 取点+转向架弦窗定向(与友商 placeTrain 完全一致);
+  停站 target=a0 恒定 → 整列自然静止,无需投影选腿/跨腿回退/链式守卫。
+  无 tp 班次(缺全程几何)回退旧逐腿/旧投影逻辑,行为不变。
+- 数据 `leg_orm_map.json` v3:真实 ORM 折线 Dijkstra 连通路径(非逐点吸附锯齿线),
+  2265 段;主段端点 = 股道上站坐标最近点(不再吸附站房中心)。
+
+**仿真(sim.mjs 全量+专项)**:主统计与回退基线一致(ok=5172/null=3828/err=0/nan=0);
+连续轨道覆盖 400/400;位置与折线偏差平均 0.20m;停站 35/35 逐点一致;
+3D 同源检查 757 次(含 dwell=0 链)**0 异常**;整帧 fadeList=4397 顶点 NaN=0。
+
+**排坑记录**:① stopK 特判在 M 早于停站窗时会把头锚错钉到下一站 → 头弧长只取
+当帧 target,不做任何停站特判;② dwell=0 链班次 trainPosition 走 chainPosition
+不写 _arcS,3D 用陈旧值会差一个站距 → 链也并入 tp 子段(统一写 _arcS)。

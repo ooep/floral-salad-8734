@@ -94,7 +94,7 @@ function mapStub() {
 // 生成仿真模块:替换 import URL,末尾导出内部函数
 let src = fs.readFileSync(APP, 'utf8');
 src = src.replace("from 'https://jr-static.suki.ing/vendor/maplibre/maplibre-gl.mjs'", "from './sim_vendor_maplibre.mjs'");
-src += '\nexport { trainPosition, updateTrains, tripList, segIndex, fadeList, bufArr };\n';
+src += '\nexport { trainPosition, updateTrains, tripList, segIndex, fadeList, bufArr, tripPathOf, pathPointAt, pathNearestPt };\n';
 const simFile = path.join(ROOT, 'app_sim_' + path.basename(APP, '.js') + '.mjs');
 fs.writeFileSync(simFile, src);
 fs.writeFileSync(path.join(ROOT, 'sim_vendor_maplibre.mjs'), 'export const Map = class { constructor() { return globalThis.__mapStub(); } };\nexport default { Map };\n');
@@ -161,5 +161,56 @@ try {
   console.log('[sim] updateTrains 成功, fadeList =', fl, '顶点 NaN(前6万):', nanV);
 } catch (e) {
   console.log('[sim] updateTrains 异常:', e.message, '\n', (e.stack || '').split('\n').slice(0, 6).join('\n'));
+}
+
+// ── 连续轨道专项(若该版本支持 tripPathOf):股道贴合/停站稳定/3D同源/不过站
+if (mod.tripPathOf && mod.pathNearestPt) {
+  const tpOf = mod.tripPathOf, near = mod.pathNearestPt, pAt = mod.pathPointAt;
+  const arcFn = g.__t3dArc;
+  let cov = 0, tested = 0, devSum = 0, devMax = 0, devN = 0, overStation = 0, stopStable = 0, stopBad = 0, arcOff = 0, arcN = 0;
+  const arcSamples = [];
+  for (const t of active.slice(0, 400)) {
+    const tp = tpOf(t);
+    if (!tp) continue;
+    cov++;
+    for (const M of [MIN - 2, MIN, MIN + 2]) {
+      const p = trainPosition(t, M);
+      if (!p) continue;
+      tested++;
+      // 过站检查:全局弧长不得越过 stopArc[i+1](用 locateSeg 推估)
+      const n = near(tp.coords, tp.cum, [p[0], p[1]]);
+      if (n) {
+        const dm = n.d * 1000;
+        devSum += dm; devN++; if (dm > devMax) devMax = dm;
+      }
+      // 停站稳定性:同一班次同一停站窗内两次调用位置差
+      const t2 = Object.assign({}, t);
+      const p2 = trainPosition(t2, M);
+      if (p2 && p[7] >= 0 && p2[7] === p[7]) {
+        const dd = Math.hypot((p2[0] - p[0]) * 111320, (p2[1] - p[1]) * 110540);
+        if (dd < 0.001) stopStable++; else stopBad++;
+      }
+      // 3D 同源:仅对当帧确实走连续轨道分支的班次判定(先清 _arcS,trainPositionPath 当帧写入才算)
+      t._arcS = null;
+      const pMain = trainPosition(t, M);
+      if (arcFn && t._arcS != null && pMain) {
+        try {
+          const sam = arcFn(t, M, p[0], p[1], p[2]);
+          if (sam && sam.at) {
+            const a0 = sam.at(0);
+            const dd = Math.hypot((a0[0] - p[0]) * 111320, (a0[1] - p[1]) * 110540);
+            arcN++;
+            if (dd > 12) { arcOff++; if (arcSamples.length < 5) arcSamples.push({ tid: t.t, M, kind: 'at0', dd: +dd.toFixed(1), sHead: sam.sHead }); }
+            const a100 = sam.at(100);
+            const n2 = near(tp.coords, tp.cum, [a100[0], a100[1]]);
+            if (n2 && n2.d * 1000 > 5 && (sam.sHead == null || sam.sHead >= 0.1)) { arcOff++; if (arcSamples.length < 8) arcSamples.push({ tid: t.t, M, kind: 'at100', dev: +(n2.d * 1000).toFixed(1) }); }
+          }
+        } catch (e) {}
+      }
+    }
+  }
+  console.log('[sim] 连续轨道覆盖:', cov, '/400 班次;位置点与折线偏差 平均', devN ? (devSum / devN).toFixed(2) : '-', 'm, 最大', devMax.toFixed(1), 'm(含槽位/左偏)');
+  console.log('[sim] 停站稳定:', stopStable, '一致 /', stopBad, '不一致;3D 采样检查', arcN, '次, 异常', arcOff);
+  if (arcSamples.length) console.log('[sim] 3D 异常样例:', JSON.stringify(arcSamples));
 }
 process.exit(0);

@@ -9939,16 +9939,469 @@ function bindSheet() {
     };
   });
 }
+/* ===== 车站抽屉：上拉展开 + 重绘图（原型 v1.1 移植）=====
+   设计要点：抽屉固定 100dvh，露出多少只由 --sheet-y 决定。
+   逐帧仅写 transform / opacity，绝不改 height —— 改高度会让 flex 重新分配、
+   文字每帧重排重栅格化，这正是旧版「字一闪一闪」的根因。
+   超拉（超过全屏继续上拉）不移动抽屉本体，改由内容层承担，避免底部露缝。 */
+const ART_HOST = 'https://jr-art.suki.ing/';
+const _artQ = new URLSearchParams(location.search);
+const _artOff = _artQ.get('art') === '0';
+const _artGray = _artQ.get('art') === 'gray';
+const ART_GRAY = new Set(['東京', '松山', '日本橋', '佐世保']);
+let _artIdx = null, _artIdxP = null, _artBlock = null, _artBlockP = null;
+
+const shSheet = $('sheet'), shStack = $('shStack'), shHero = $('shHero'), shGrab = $('shGrab');
+const shArtImg = $('shArtImg'), shHeroImg = $('shHeroImg'), shHeroBlur = $('shHeroBlur');
+/* 联动层：遮罩 / 地图 / 顶栏，逐帧只写 opacity 与 transform */
+const shMaskEl = $('sheetMask'), shMapEl = $('map'), shHudEl = $('topHud');
+const SH_HERO_H = 200;
+/* 初始必须是 closed：写 'half' 会让抽屉还没打开时把手就能被拖，
+   shOnDown 里 shMode!=='closed' 的守卫形同虚设（--sheet-y 会被改成 186）。 */
+let shMode = 'closed', curH = 0, shPeek = 0, shFullCache = 0;
+/* 无重绘图的站不给拉满：hero 里只有一层 #0d1622 深色底，拉到全屏就是把空白铺满，
+   除了「我拉到顶了」没有任何信息。闸门由 shApplyArt 维护 —— 索引已在内存时同步判定，
+   否则先乐观放行，异步结果回来再收（见 shSetArt）。 */
+let shArtOk = true;
+/* 索引里有、文件却取不到（CDN 404 / 图损坏）等于同样没有重绘图：图挂了也不给拉满，
+   否则拉开就是一块纯深色。用 shArtUrl 认准「当前这张」—— 换站之后旧图的 error
+   才姗姗来迟时，img 的 src 已经换成新站的了，不该由它关掉新站的闸门。 */
+let shArtUrl = '';
+if (shHeroImg) {
+  shHeroImg.addEventListener('error', () => {
+    if (shArtUrl && shHeroImg.getAttribute('src') === shArtUrl) shSetArt(false);
+  });
+  shHeroImg.addEventListener('load', () => {
+    if (shArtUrl && shHeroImg.getAttribute('src') === shArtUrl) shSetArt(true);
+  });
+}
+let shDragging = false, shFromBody = false, shStartY = 0, shStartH = 0, shStartT = 0, shLastY = 0;
+let shPending = 0, shDragRaf = 0, shSpringRaf = 0, shSpringOn = false, shBodyArmed = false, shBodyY = 0;
+/* 顶栏入场动画 topIn 带 fill:both，结束后会冻结 opacity，压过内联值。
+   抽屉一旦开始驱动联动量就挂 sh-live 把它摘掉，并一直保留（关闭时不摘回）。 */
+let shHudLive = false;
+let shDragReleaseT = 0;
+/* 放在这里而不是 shSpring 之后：函数体引用它，声明写在使用点之后属于侥幸逃过 TDZ */
+let shSpringTarget = null;
+/* 正在拖拽的 pointerId：多指场景下只认第一根手指，否则第二根按下就把位移算飞 */
+let shPointerId = 0;
+
+/* FULL = 卡片自身高度（底部贴地、顶部让出 max(18px,安全区)）；
+   HALF / MINH 按原型口径取「视口高度」的 .76 / .30 —— 换算成卡片高度会让
+   半屏档整体矮一截（76% 视口 vs 76% 卡片），观感比原型收得更紧。 */
+function shFull() {
+  if (!shFullCache) shFullCache = Math.round(shSheet.getBoundingClientRect().height) || innerHeight;
+  return shFullCache;
+}
+function shHalfH() { if (!shPeek) shPeek = Math.round(innerHeight * 0.76); return shPeek; }
+function shMinH() { return Math.min(Math.round(innerHeight * 0.30), shHalfH() - 1); }
+/* 可停靠的上限：无图站封顶半屏。所有「能不能到 full」的判断都必须过这里 ——
+   只在拖动位移上钳制是不够的，上甩（v>500）那一条会直接切档绕过阻尼。 */
+function shTopH() { return shArtOk ? shFull() : shHalfH(); }
+
+/* 唯一的逐帧函数：把高度 h 翻译成三个合成层属性 */
+function shApply(h, withPad) {
+  curH = h;
+  const full = shFull(), half = shHalfH();
+  const p = Math.min(1, Math.max(0, (h - half) / Math.max(1, full - half)));
+  const over = Math.min(120, Math.max(0, h - full));
+  shSheet.style.setProperty('--sheet-y', Math.max(0, full - h).toFixed(1) + 'px');
+  shStack.style.transform = 'translate3d(0,' + (p * SH_HERO_H - over * 0.08).toFixed(1) + 'px,0)';
+  shHero.style.transform = 'translate3d(0,' + (-SH_HERO_H * (1 - p)).toFixed(1) + 'px,0) scale(' + (1 + over * 0.0006).toFixed(4) + ')';
+  /* hero 容器的 opacity 同时管住模糊层与清晰层，模糊层不必单独写 */
+  shHero.style.opacity = Math.min(1, Math.max(0, (p - 0.12) / 0.55)).toFixed(3);
+  shHeroImg.style.opacity = Math.min(1, Math.max(0, (p - 0.25) / 0.5)).toFixed(3);
+  /* 底纹随上拉让位：原型同样是逐帧写。图片虽带 blur(22px)，但 will-change:opacity
+     已把它常驻成独立合成层，改透明度只走合成，不重绘纹理。 */
+  if (shArtImg.getAttribute('src')) {
+    const light = document.documentElement.getAttribute('data-theme') === 'light';
+    shArtImg.style.opacity = (light ? 0.88 - p * 0.62 : 0.86 - p * 0.60).toFixed(3);
+  }
+  /* 遮罩随上拉变淡 .45 → .12：全屏档地图只剩顶部一条缝，再压一层黑只会发灰。
+     底色已是实心 #050a12，透明度即最终的压暗强度，与原型 1:1 对齐。 */
+  if (shMaskEl) shMaskEl.style.opacity = shMode === 'closed' ? '0' : (0.45 - p * 0.33).toFixed(3);
+  /* 地图轻微放大 3.5% 制造纵深；半屏 p=0 时恰为 1，指针坐标不受影响 */
+  if (shMapEl) shMapEl.style.transform = 'scale(' + (1 + p * 0.035).toFixed(4) + ')';
+  /* 顶栏随 progress 连续淡出：全屏档顶部露 18px 缝，不淡出会看到它的残片 */
+  if (shHudEl) {
+    if (!shHudLive && shMode !== 'closed') { shHudLive = true; document.documentElement.classList.add('sh-live'); }
+    shHudEl.style.opacity = Math.min(1, Math.max(0, 1 - (p - 0.18) / 0.34)).toFixed(3);
+  }
+  /* 底部留白只在定档时算一次：拖动中逐帧改 padding 会逐帧 reflow 整个列表 */
+  if (withPad) {
+    const pad = Math.round(Math.max(0, full - h) + p * SH_HERO_H);
+    document.querySelectorAll('#sheet .sh-body').forEach(b => b.style.setProperty('--sh-pad', pad + 'px'));
+  }
+}
+
+/* 摘掉拖动期的 no-transition 开关。原先只在 stop() 里 setTimeout(60) 试一次，
+   若那一刻 shDragging 恰好为 true 就永久残留 —— 而 html.sh-drag 会把 #sheet 的
+   transform 过渡整条摘掉，残留一次就够让之后每次关闭都变成瞬移。改为失败重试。 */
+function shDropDrag() {
+  if (shDragging || shSpringOn) return false;
+  document.documentElement.classList.remove('sh-drag');
+  shSheet.classList.remove('sh-drag');
+  return true;
+}
+function shDropDragSoon(delay) {
+  clearTimeout(shDragReleaseT);
+  shDragReleaseT = setTimeout(() => {
+    if (!shDropDrag()) shDragReleaseT = setTimeout(shDropDrag, 240);
+  }, delay === undefined ? 60 : delay);
+}
+function shSpring(to, v0, bounce) {
+  const K0 = bounce ? 140 : 170, C0 = bounce ? 11 : 24;
+  if (shSpringRaf) cancelAnimationFrame(shSpringRaf);
+  shSpringOn = true;
+  document.documentElement.classList.add('sh-drag');
+  const stop = () => {
+    shSpringOn = false; shSpringTarget = null;
+    /* 不能与 shApply(to) 同帧摘 sh-drag：浏览器下一帧才统一算样式，会看到
+       「上一帧 transform → 目标值」的差，给弹簧补一段 .38s 尾巴。
+       等两帧再恢复过渡，新值已经落到 transform 上，摘掉也不产生补间。 */
+    shDropDragSoon(60);
+  };
+  if (Math.abs(to - curH) < 0.8) { shApply(to, true); stop(); return; }
+  let h = curH, v = v0, last = performance.now(), t0 = last, frames = 0;
+  const top = shTopH(), lo = shMinH(), hi = bounce ? Math.max(top, curH + 2) : top;
+  const step = now => {
+    if (!shSpringOn) return;
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    const n = Math.max(1, Math.ceil(dt / 0.008)), sdt = dt / n;
+    for (let i = 0; i < n; i++) {
+      const a = -K0 * (h - to) - C0 * v;
+      v += a * sdt; h += v * sdt;
+      if (h < lo) { h = lo; v = Math.max(0, v) * .2; }
+      if (h > hi) { h = hi; v = Math.min(0, v) * .2; }
+    }
+    frames++;
+    shApply(h, false);
+    const done = Math.abs(h - to) < 0.6 && Math.abs(v) < 12;
+    const bail = now - t0 > 1600 || frames > 160;
+    if (done || bail) { shApply(to, true); stop(); return; }
+    shSpringRaf = requestAnimationFrame(step);
+  };
+  shSpringRaf = requestAnimationFrame(step);
+}
+
+function shGoto(m, animate, v0, bounce) {
+  if (shSpringRaf) cancelAnimationFrame(shSpringRaf);
+  shSpringOn = false; shSpringTarget = null;
+  clearTimeout(shDragReleaseT);
+  document.documentElement.classList.remove('sh-drag');
+  if (m === 'closed') { shMode = 'closed'; shSheet.classList.remove('full'); closeSheet(); return; }
+  /* 兜底：轻点、键盘、上甩最终都汇到这里，闸门放在入口处一次拦干净 */
+  if (m === 'full' && !shArtOk) m = 'half';
+  shMode = m;
+  shSheet.classList.toggle('full', m === 'full');
+  shSyncAria();
+  const target = m === 'full' ? shFull() : shHalfH();
+  if (!animate) { shApply(target, true); return; }
+  shSpring(target, v0 || 0, !!bounce);
+}
+
+/* 打开抽屉时归位到半屏（不带动画，由 .open 的 transform 过渡负责入场） */
+/* 档位变了就同步 aria：role=separator 带 valuenow 时，辅助技术是按 slider 念的，
+   值不更新等于一直告诉用户「半屏」。 */
+function shSyncAria() {
+  const g = $('shGrab'); if (!g) return;
+  const full = shMode === 'full', closed = shMode === 'closed';
+  /* 无图站只有「收起 / 半屏」两档：valuemax 跟着降，否则读屏会念出够不到的第三档 */
+  g.setAttribute('aria-valuemax', shArtOk ? '2' : '1');
+  g.setAttribute('aria-label', shArtOk ? '上拉展开车站照片' : '车站详情面板');
+  g.setAttribute('aria-valuenow', closed ? '0' : (full ? '2' : '1'));
+  g.setAttribute('aria-valuetext', closed ? '已收起' : (full ? '全屏' : '半屏'));
+}
+function shResetDetent() {
+  /* 换站必须先把在跑的弹簧掐掉：上一站的「轻点切档」若还没收敛（低帧率下能拖到一秒以上），
+     它会在归位之后的下一帧继续把 --sheet-y 写回上一个目标值，抽屉就停在半屏之上。
+     实测切站后停在 top=18 而 aria 已经念「半屏」—— 视觉与无障碍状态互相矛盾。 */
+  if (shSpringRaf) { cancelAnimationFrame(shSpringRaf); shSpringRaf = 0; }
+  if (shDragRaf) { cancelAnimationFrame(shDragRaf); shDragRaf = 0; }
+  clearTimeout(shDragReleaseT);
+  shSpringOn = false; shSpringTarget = null; shDragging = false;
+  shMode = 'half';
+  shSheet.classList.remove('full');
+  shSheet.classList.remove('sh-drag');
+  document.documentElement.classList.remove('sh-drag');
+  shPeek = 0; shFullCache = 0;
+  shApply(shHalfH(), true);
+  shSyncAria();
+}
+
+/* ---- 手势：把手 / 标题 / hero 三处热区 ---- */
+function shOnDown(e) {
+  if (shMode === 'closed') return;
+  /* 已经在拖：第二根手指按下来不能重置起点，否则位移会从新手指算起、抽屉瞬跳 */
+  if (shDragging) return;
+  if (!curH) shResetDetent();
+  if (e.target.closest && e.target.closest('button')) return;
+  shFromBody = false;
+  if (shSpringRaf) cancelAnimationFrame(shSpringRaf);
+  shSpringOn = false; shSpringTarget = null;
+  clearTimeout(shDragReleaseT);
+  document.documentElement.classList.add('sh-drag');
+  shDragging = true;
+  shPointerId = e.pointerId || 0;
+  shStartY = e.clientY; shLastY = e.clientY; shStartH = curH; shPending = curH; shStartT = performance.now();
+  shSheet.classList.add('sh-drag');
+  try { e.currentTarget.setPointerCapture(e.pointerId); } catch (_) {}
+  e.preventDefault();
+}
+function shOnMove(e) {
+  if (!shDragging) return;
+  if (shPointerId && e.pointerId && e.pointerId !== shPointerId) return;
+  if (typeof e.clientY === 'number') shLastY = e.clientY;
+  let raw = shStartH + (shStartY - shLastY);
+  /* 内容区接管后方向锁定为「只收起」：回滑不推高、不判 full */
+  if (shFromBody && raw > shStartH) raw = shStartH;
+  /* 无图站超拉阻尼压到 .10（有图 .28）：拉到头应该是「撞住」而不是「还能再走一段」 */
+  const top = shTopH();
+  if (raw > top) raw = top + (raw - top) * (shArtOk ? .28 : .10);
+  else if (raw < shMinH()) raw = shMinH() - (shMinH() - raw) * .35;
+  shPending = raw;
+  if (!shDragRaf) shDragRaf = requestAnimationFrame(() => {
+    shDragRaf = 0;
+    if (!shDragging) return;
+    shApply(shPending, false);
+  });
+}
+function shOnUp(e) {
+  if (!shDragging) return;
+  if (shPointerId && e.pointerId && e.pointerId !== shPointerId) return;
+  shPointerId = 0;
+  shDragging = false;
+  if (shDragRaf) { cancelAnimationFrame(shDragRaf); shDragRaf = 0; shApply(shPending, false); }
+  shSheet.classList.remove('sh-drag');
+  const wasBody = shFromBody; shFromBody = false;
+  const endY = (typeof e.clientY === 'number') ? e.clientY : shStartY;
+  const v = (shStartY - endY) / Math.max(1, performance.now() - shStartT) * 1000;
+  /* 轻点（位移 <5px）不带惯性，直接在 half / full 之间切档。
+     缺这一条时轻点把手毫无反应，只能靠拖过半屏才换档 —— 与原型手感差得最明显的一处。 */
+  if (Math.abs(endY - shStartY) < 5 && !wasBody) {
+    /* 无图站轻点不该切档。但指头难免把抽屉蹭高一点（超拉阻尼那段），
+       所以不能直接 return —— 停在半屏之上一个说不清的高度比不动更怪。 */
+    if (!shArtOk) { if (Math.abs(curH - shHalfH()) > 1) shGoto('half', true, 0); return; }
+    shGoto(shMode === 'full' ? 'half' : 'full', true, 0);
+    return;
+  }
+  let t;
+  if (wasBody) {
+    if (v < -500) t = 'closed';
+    else if (curH < shHalfH() * .55) t = 'closed';
+    else t = 'half';
+  } else {
+    if (v > 500 && shArtOk) t = 'full';
+    else if (v < -500) t = 'closed';
+    else if (curH > shHalfH() + (shFull() - shHalfH()) * .45) t = 'full';
+    else if (curH < shHalfH() * .55) t = 'closed';
+    else t = 'half';
+  }
+  /* 闸门可能在拖动途中才合上（索引比手指慢），这里再按一次，保证松手不会停在半屏之上 */
+  if (!shArtOk && t !== 'closed') t = 'half';
+  /* 全屏后继续上拉再松手 → 弹性回弹分支，向上初速度归零交给弹簧自回 */
+  const bounce = t === 'full' && curH > shFull() + 2;
+  shGoto(t, true, bounce ? 0 : (wasBody ? Math.min(0, v) : v), bounce);
+}
+/* 键盘：把手是 role=separator + tabindex=0，得能真的用键盘切档 */
+if (shGrab) {
+  shGrab.addEventListener('keydown', e => {
+    if (shMode === 'closed') return;
+    const k = e.key;
+    if (k === 'ArrowUp' || k === 'ArrowRight' || k === 'Home') { e.preventDefault(); shGoto('full', true, 0); }
+    else if (k === 'ArrowDown' || k === 'ArrowLeft') { e.preventDefault(); shGoto('half', true, 0); }
+    else if (k === 'End') { e.preventDefault(); shGoto('closed', true, 0); }
+    /* 不接 Enter / Space：Space 已被全局「播放/暂停」占用（e.code==='Space' 直接
+       preventDefault），Enter 又会被首次引导的 tourKey 在 document 捕获阶段吃掉，
+       接过来只会出现「有时灵有时不灵」。方向键 + Home/End 已覆盖全部档位。 */
+  });
+}
+[shGrab, document.querySelector('#sheet .sh-head'), shHero].forEach(el => {
+  if (!el) return;
+  el.addEventListener('pointerdown', shOnDown);
+  el.addEventListener('pointermove', shOnMove);
+  el.addEventListener('pointerup', shOnUp);
+  el.addEventListener('pointercancel', shOnUp);
+  el.addEventListener('lostpointercapture', () => { if (shDragging) shOnUp({ clientY: shLastY }); });
+  /* 注意：补位点必须是 lastY 而不是 startY —— 否则一次意外丢捕获会被算成
+     「位移 0 的轻点」，把抽屉误切到另一档。 */
+});
+
+/* ---- 内容区：滚到顶后继续下拉可收起，不干扰正常滚动 ---- */
+$('shBody').addEventListener('pointerdown', e => {
+  if (shMode === 'closed' || shDragging) return;
+  if (e.target.closest && e.target.closest('button, a, input, label')) return;
+  shBodyArmed = true; shBodyY = e.clientY;
+});
+$('shBody').addEventListener('pointermove', e => {
+  if (!shBodyArmed) return;
+  if (shDragging) { shOnMove(e); return; }
+  const sb = $('shBody'), dy = e.clientY - shBodyY;
+  if (sb.scrollTop > 0 || dy <= 0) return;
+  if (shSpringRaf) cancelAnimationFrame(shSpringRaf);
+  shSpringOn = false; shSpringTarget = null;
+  clearTimeout(shDragReleaseT);
+  document.documentElement.classList.add('sh-drag');
+  shDragging = true; shFromBody = true;
+  shStartY = e.clientY; shStartH = curH; shPending = curH; shStartT = performance.now();
+  shSheet.classList.add('sh-drag');
+  /* 内容区这条路径原先没抓指针：手指一旦滑出 #shBody 的盒子（列表短、拖得远时很常见），
+     pointerup 就派发到别的元素上，这里永远等不到 —— 抽屉停在拖到的位置、sh-drag 还挂着。
+     触摸指针靠隐式捕获侥幸躲过，鼠标/手写笔必现。 */
+  try { e.currentTarget.setPointerCapture(e.pointerId); } catch (_) {}
+});
+['pointerup', 'pointercancel'].forEach(ev => $('shBody').addEventListener(ev, e => {
+  shBodyArmed = false;
+  if (shDragging && shFromBody) shOnUp(e);
+}));
+/* 兜底：指针捕获也可能被系统收回（切后台、来电、触摸被中断），
+   收不到 pointerup 就等于抽屉卡在半空且 sh-drag 常驻。window 上再挂一道，
+   shOnUp 开头的 shDragging 守卫保证不会重复收尾。 */
+addEventListener('pointerup', e => { if (shDragging && shFromBody) shOnUp(e); }, { passive: true });
+addEventListener('pointercancel', e => { if (shDragging && shFromBody) shOnUp(e); }, { passive: true });
+
+/* ---- 重绘图：索引懒加载 + 坐标消歧 ---- */
+function shLoadArt() {
+  if (_artIdx) return Promise.resolve(_artIdx);
+  if (_artIdxP) return _artIdxP;
+  _artIdxP = fetch(ART_HOST + 'station_art_map.json', { mode: 'cors', credentials: 'omit' })
+    .then(r => r.ok ? r.json() : null)
+    .then(j => { _artIdx = j; return j; })
+    .catch(() => { _artIdx = null; _artIdxP = null; return null; });
+  return _artIdxP;
+}
+function shLoadBlock() {
+  if (_artBlock) return Promise.resolve(_artBlock);
+  if (_artBlockP) return _artBlockP;
+  _artBlockP = fetch(ART_HOST + 'art_blocklist.json', { mode: 'cors', credentials: 'omit' })
+    .then(r => r.ok ? r.json() : { items: [] })
+    .then(j => { _artBlock = new Set((j.items || []).map(x => x.slug)); return _artBlock; })
+    .catch(() => { _artBlock = new Set(); _artBlockP = null; return _artBlock; });
+  return _artBlockP;
+}
+function shClearArt() {
+  shArtUrl = '';
+  shSheet.classList.remove('has-art');
+  shArtImg.removeAttribute('src'); shHeroImg.removeAttribute('src'); shHeroBlur.removeAttribute('src');
+  shArtImg.style.opacity = '';
+}
+/* 闸门：把「这一站能不能拉满」落成布尔。判定分两次到达 —— 同步那次（索引已在内存）
+   用于换站瞬间就给对答案；异步那次兜首次加载与索引失败重试。
+   只负责「收」不负责「放」：确认有图时不会顺手把抽屉拉上去，用户没要求就别动。 */
+function shSetArt(ok) {
+  shArtOk = !!ok;
+  shSyncAria();
+  if (!shArtOk && shMode === 'full' && !shDragging) shGoto('half', true, 0);
+}
+/* 同步判定：索引未就绪时返回 true（乐观放行）—— 网络失败不等于「这个站没图」，
+   拿不到索引就剥夺展开，代价比偶尔看到一张空 hero 大得多。 */
+function shArtVerdict(key, coord, line) {
+  if (_artOff) return true;                       /* 内部调试开关：只关图，不改交互 */
+  if (_artGray && !ART_GRAY.has(key)) return false;
+  if (!_artIdx || !_artIdx.keys) return true;
+  const list = _artIdx.keys[key];
+  if (!list || !list.length) return false;
+  const pick = shPickArt(list, coord, line);
+  if (!pick) return false;
+  return !(_artBlock && _artBlock.has(pick[0]));
+}
+
+/* coord 是 GeoJSON 的 [lon, lat]；同名站按坐标就近取，超过 0.3°（约 33km）判为不同站 */
+function shPickArt(list, coord, line) {
+  if (list.length === 1) return list[0];
+  const lon = coord && coord[0], lat = coord && coord[1];
+  if (typeof lat === 'number' && typeof lon === 'number') {
+    let best = null, bd = Infinity;
+    for (const it of list) {
+      const dLat = it[3] - lat, dLon = (it[4] - lon) * Math.cos(lat * Math.PI / 180);
+      const d = dLat * dLat + dLon * dLon;
+      if (d < bd) { bd = d; best = it; }
+    }
+    return bd <= 0.09 ? best : null;
+  }
+  if (line) {
+    const hit = list.find(it => (it[2] || '').indexOf(String(line).replace(/駅$/, '')) >= 0);
+    if (hit) return hit;
+  }
+  return list[0];
+}
+function shApplyArt(name, coord, line) {
+  const key = normName(name);
+  /* 换站先把闸门设成「这一站」的答案，否则会沿用上一站的值：从有图站切到无图站，
+     用户在一次 fetch 的时间窗里仍能把抽屉拉满 */
+  shSetArt(shArtVerdict(key, coord, line));
+  if (_artOff) { shClearArt(); return; }
+  if (_artGray && !ART_GRAY.has(key)) { shClearArt(); return; }
+  Promise.all([shLoadArt(), shLoadBlock()]).then(([idx, blocked]) => {
+    if (sheetStation !== name) return;
+    if (!idx || !idx.keys) { shClearArt(); return; }   /* 索引没取到：保持乐观，不动闸门 */
+    const list = idx.keys[key];
+    if (!list || !list.length) { shClearArt(); shSetArt(false); return; }
+    const pick = shPickArt(list, coord, line);
+    if (!pick || blocked.has(pick[0])) { shClearArt(); shSetArt(false); return; }
+    const url = (idx.base || ART_HOST + 'art/') + pick[0] + '.webp';
+    shArtUrl = url;
+    if (shArtImg.getAttribute('src') !== url) {
+      shArtImg.src = url; shHeroBlur.src = url; shHeroImg.src = url;
+    }
+    shSheet.classList.add('has-art');
+    if (!shArtOk) shSetArt(true);   /* 上一站的无图判定不该跟着过来 */
+    /* 图片是异步就位的：到位时补一次定档写入，否则首屏只能吃 CSS 初值，
+       第一次拖动才跳到 p=0 对应的透明度，观感上是「图突然亮一下」。 */
+    if (shMode !== 'closed') shApply(curH, true);
+  });
+}
+
+addEventListener('resize', () => { shFullCache = 0; shPeek = 0; }, { passive: true });
+
+/* 首屏稳定后预取索引与屏蔽表：开站那一刻就能同步给出闸门答案。
+   不预取的话，每次首次开站都要等一次 fetch，这期间无图站是敞开的。 */
+setTimeout(() => { shLoadArt(); shLoadBlock(); }, 2600);
+
+let shPurgeT = 0;
 function closeSheet() {
+  /* 顺序是关键：先把「拖动期无 transform 过渡」的开关摘掉并逼一次样式重算，
+     再摘 .open。反过来的话浏览器会拿 html.sh-drag 那套（transform 不在过渡列表里）
+     去算这一帧的 --close-y 变化，滑出动画被整条吃掉，观感是一帧闪到屏幕外。 */
+  if (shSpringRaf) { cancelAnimationFrame(shSpringRaf); shSpringRaf = 0; }
+  if (shDragRaf) { cancelAnimationFrame(shDragRaf); shDragRaf = 0; }
+  clearTimeout(shDragReleaseT);
+  shSpringOn = false; shSpringTarget = null; shDragging = false; shBodyArmed = false;
+  document.documentElement.classList.remove('sh-drag');
+  shSheet.classList.remove('sh-drag');
+  void shSheet.offsetHeight;   /* 强制样式重算，让下滑拿到「有过渡」的起点 */
   $('sheet').classList.remove('open'); $('sheetMask').classList.remove('open');
   if (muOpen) muResetPanel();
-  /* 关闭即卸载站牌 DOM:大站单面板约 3.9 万节点/1.16MB HTML 且每行挂 onclick,
-     旧实现只摘 open class,内容会一直附着到下次换站,成为 Nodes/堆高位常驻。
-     boardCache 不动,重开走缓存毫秒级重建;dayLazyBuild 里未展开的方向网格闭包一并释放。
-     sheetOpenSeq++ 使在途的全日升级/重试回调作废,防止关闭后异步回写空面板。 */
-  $('shBody').innerHTML = '';
-  dayLazyBuild.clear();
-  sheetOpenSeq++;
+  /* sheetOpenSeq++ 使在途的全日升级/重试回调作废,防止关闭后异步回写空面板。 */
+  const seq = ++sheetOpenSeq;
+  /* 抽屉收起：退回半屏档 */
+  shMode = 'closed';
+  /* 关闭态切断键盘焦点树：否则连续 Tab 会钻进不可见的抽屉内部
+     （grab / 关闭按钮 / 页签），读屏也会念出已经滑出屏幕的内容。 */
+  shSheet.setAttribute('inert', '');
+  shSheet.setAttribute('aria-hidden', 'true');
+  shSyncAria();
+  shSheet.classList.remove('full');
+  /* 联动量就地归位：遮罩交回 CSS 淡出、地图回 1:1、顶栏复现，全部跟 .38s 下滑同步 */
+  if (shMaskEl) shMaskEl.style.opacity = '';
+  if (shMapEl) shMapEl.style.transform = '';
+  if (shHudEl) shHudEl.style.opacity = '';
+  /* 不摘 sh-live：摘掉会让 topIn 的 fill:both 重新生效，入场动画在每次关闭时
+     重放一遍（带 12px 上移 + scale），连着开关几次就闪几次。首次加载时还没挂
+     sh-live，入场动画照常播；抽屉一旦被驱动过就常驻摘除，之后顶栏透明度
+     完全由内联值决定（关闭时清空 = 基础值 1，无动画）。 */
+  /* 内容延后到滑出结束再卸:大站单面板约 3.9 万节点/1.16MB HTML 且每行挂 onclick,
+     旧实现只摘 open class 会一直附着到下次换站,成为 Nodes/堆高位常驻。
+     但立刻清空又会让抽屉在整段下滑动画里变成一张空卡片 —— 原型是保留 DOM 滑走的。
+     折中:等 420ms(transform .38s + 余量),内容已随卡片移出屏幕且不可见时再拆。
+     seq 校验保证这 420ms 内重新开站不会被误清。boardCache 不动,重开仍走缓存毫秒级重建。 */
+  clearTimeout(shPurgeT);
+  shPurgeT = setTimeout(() => {
+    if (shMode !== 'closed' || seq !== sheetOpenSeq) return;
+    $('shBody').innerHTML = '';
+    dayLazyBuild.clear();
+    shClearArt();
+  }, 420);
 }
 /* ===== 渐进式站牌（分片模式）=====
    打开车站时先用当前窗口的 tripList 把「当前时段」零等待画出来，整包（既有端点不变）
@@ -10074,6 +10527,10 @@ function showStationDetail(name, coord, featLine, featOp) {
   $('tabGrid').classList.add('on');
   $('shBody').hidden = false;
   $('shSubTabs').classList.remove('hidden');
+  /* 换站必须回到列表顶部：captureSheetUi/restoreSheetUi 是为「同日重载保状态」
+     写的，会把上一站的 scrollTop 一并恢复过来（实测东京滚到底 2437 → 换新大阪
+     仍停在 1289）。开站是同步的，异步回调捕获时这里已经是 0。 */
+  $('shBody').scrollTop = 0;
   // 新站打开：出发/到达视图重置为「出发」，宿主 #subDep/#subArr 选中态同步（板内芯片随板重建自动一致）
   sheetDepArr = 'dep';
   $('subDep').classList.add('on');
@@ -10081,8 +10538,12 @@ function showStationDetail(name, coord, featLine, featOp) {
   $('panelInfo').hidden = true;
   $('panelGuide').hidden = true;
   _infoKey = null;
+  shResetDetent();
   $('sheet').classList.add('open');
   $('sheetMask').classList.add('open');
+  /* 关闭态用 inert 切断焦点树与命中测试，打开时要还回来 */
+  $('sheet').removeAttribute('inert');
+  $('sheet').removeAttribute('aria-hidden');
   closeDetail();
   sheetOpenSeq++;
   if (tripList && tripList.length) {
@@ -10115,6 +10576,7 @@ function showStationDetail(name, coord, featLine, featOp) {
     }
   }
   renderStationBadges(name, sheetLine, sheetOp);
+  shApplyArt(name, c, featLine);
   if (c) map.flyTo({ center: c, zoom: Math.max(map.getZoom(), 12), pitch: Math.min(map.getPitch(), 55), duration: 1200 });
 }
 document.getElementById('shX').addEventListener('click', closeSheet);

@@ -1,4 +1,6 @@
 /* ---------- 顶部极简 HUD(品牌 + 在途统计,非导航栏) ---------- */
+/* 抽屉驱动期间摘掉 topIn 的 fill 冻结，否则内联 opacity 被动画 to 帧压住 */
+html.sh-live #topHud { animation:none; }
 #topHud { position:absolute; top:10px; left:50%; transform:translateX(-50%); z-index:9; display:flex; justify-content:center; pointer-events:none; max-width:calc(100vw - 16px); animation:topIn .55s var(--ease-smooth) both; }
 @keyframes topIn { from { opacity:0; transform:translateX(-50%) translateY(-12px) scale(.96); } to { opacity:1; transform:translateX(-50%) translateY(0) scale(1); } }
 #brand { pointer-events:auto; display:flex; align-items:center; gap:8px; height:38px; padding:0 15px 0 6px; cursor:pointer;
@@ -759,6 +761,15 @@
 /* ── 老旧设备自适应降载(仅 html.perf-low 生效;新设备视觉/动效完全不变)──
    低端 GPU/合成器对 backdrop-filter 多层模糊、高频动效与投影开销大,
    降载后保留液态玻璃配色与布局,仅关闭模糊/投影与高频动效,换取流畅操作。 */
+/* 上拉展开的降级：低性能 / 减少动效 / 手动关图 */
+html.perf-low #sheet .sh-art img{filter:none;transform:none;opacity:.42}
+html.perf-low #sheet .sh-hero #shHeroBlur{display:none}
+html.perf-low #sheet .sh-hero #shHeroImg{opacity:1!important;filter:none;transform:none}
+html.no-art #sheet .sh-art,html.no-art #sheet .sh-hero{display:none}
+@media (prefers-reduced-motion: reduce){
+  #sheet .sh-art{transition:none}
+  #sheet .sh-hero{transition:none}
+}
 html.perf-low #brand, html.perf-low .gcircle, html.perf-low #clock, html.perf-low #clock .daychip,
 html.perf-low #side .sec, html.perf-low #sideTabs, html.perf-low .spb, html.perf-low .btn,
 html.perf-low #detail, html.perf-low #sheet, html.perf-low .lrow, html.perf-low .type-chips .tc,
@@ -776,24 +787,101 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
 }
 
 /* ============ 车站底部抽屉(时刻表 · Liquid Glass,保留抽屉形态) ============ */
-#sheetMask { position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:20; display:block; opacity:0; visibility:hidden; transition:opacity .3s ease, visibility 0s linear .3s; }
-#sheetMask.open { opacity:1; visibility:visible; transition:opacity .3s ease, visibility 0s linear 0s; }
+/* 底色取实心 #050a12、把压暗强度全交给 opacity：JS 才能按 progress 写 .45 -> .12
+   （原型 #mask{background:#050a12;opacity:.45}）。用 rgba 半透明底会把两层透明度相乘，
+   半屏只剩 .20，看起来比原型淡一大截。 */
+#sheetMask { position:fixed; inset:0; background:#050a12; z-index:20; display:block; opacity:0; visibility:hidden;
+  /* 常驻：关闭那 .38s 里它还要淡出，此时若没有合成层，全屏纯色层会逐帧重绘整屏 */
+  will-change:opacity; transition:opacity .38s cubic-bezier(.32,.72,0,1), visibility 0s linear .38s; }
+#sheetMask.open { opacity:.45; visibility:visible; transition:opacity .38s cubic-bezier(.32,.72,0,1), visibility 0s linear 0s; }
 /* 底部锚定(2026-11-04):站牌抽屉同为 bottom sheet —— 入场自底部滑入(translateY(102%)→0),
    加载态(時刻表読込中)与正式态共用 #sheet.open 同一定位;高度 76vh 已满足 ≤min(78vh,100dvh-顶部安全区),
    显式 max-height 兜底;底部留 safe-area-inset-bottom,内容超高由 .sh-body 内部滚动。 */
-#sheet { position:fixed; left:50%; bottom:0; width:min(520px,100vw); height:76vh;
-  max-height:min(78vh, calc(100dvh - env(safe-area-inset-top, 0px)));
+@property --sheet-y{syntax:'<length>';inherits:false;initial-value:0px}
+/* --close-y 必须与 --sheet-y 一样注册成 typed property：
+   未注册时它在 calc() 里变化，Chromium 无法对 transform 做补间，
+   实测表现为「先原地不动约 100ms、然后一帧跳到终点」——滑出动画被吃掉。
+   注册后它自身可插值，transform 每帧跟着重算，才是连续下滑。 */
+@property --close-y{syntax:'<length-percentage>';inherits:false;initial-value:102%}
+#sheet { position:fixed; left:50%; bottom:0; width:min(520px,100vw);
+  /* v1.1 对齐：全屏档顶部留 max(18px, 安全区)，露出一点地图边缘；
+     配合 .full 的 14px 圆角，形成「卡片浮起」而非顶到天灵盖 */
+  height:100vh; height:calc(100dvh - max(18px, env(safe-area-inset-top, 0px)));
   padding-bottom:env(safe-area-inset-bottom, 0px);
   background:var(--glass-panel); border:1px solid var(--glass-edge); border-bottom:0; border-radius:26px 26px 0 0;
   box-shadow:inset 0 1px 0 var(--glass-hi), inset 0 -1px 1px var(--glass-lo), 0 -12px 44px rgba(0,0,0,.45);
-  z-index:21; display:flex; flex-direction:column;
+  z-index:21; display:flex; flex-direction:column; overflow:hidden; contain:layout paint;
+  --close-y:102%; --sheet-y:0px;
   opacity:0; visibility:hidden; pointer-events:none;
-  backdrop-filter:blur(0) saturate(1); -webkit-backdrop-filter:blur(0) saturate(1); transform:translate(-50%,102%);
-  transition:opacity .24s cubic-bezier(.4,0,.2,1), transform .24s cubic-bezier(.4,0,.2,1), height .24s cubic-bezier(.4,0,.2,1), visibility 0s linear .3s; }
-#sheet.open { opacity:1; visibility:visible; pointer-events:auto; transform:translate(-50%,0);
+  backdrop-filter:blur(0) saturate(1); -webkit-backdrop-filter:blur(0) saturate(1);
+  transform:translate3d(-50%, calc(var(--sheet-y) + var(--close-y)), 0);
+  will-change:transform;
+  transition:opacity .3s cubic-bezier(.32,.72,0,1), transform .38s cubic-bezier(.32,.72,0,1),
+             border-radius .38s cubic-bezier(.32,.72,0,1),
+             --close-y .38s cubic-bezier(.32,.72,0,1), visibility 0s linear .38s; }
+#sheet.full { border-radius:14px 14px 0 0; }
+#sheet.open { opacity:1; visibility:visible; pointer-events:auto; --close-y:0%;
   backdrop-filter:blur(34px) saturate(1.9); -webkit-backdrop-filter:blur(34px) saturate(1.9);
-  transition:opacity .24s cubic-bezier(.4,0,.2,1), transform .24s cubic-bezier(.4,0,.2,1), height .24s cubic-bezier(.4,0,.2,1), visibility 0s linear 0s; }
-#sheet .grab { width:44px; height:5px; border-radius:3px; background:rgba(150,170,200,.5); margin:11px auto 3px; flex:none; }
+  transition:opacity .3s cubic-bezier(.32,.72,0,1), transform .38s cubic-bezier(.32,.72,0,1),
+             border-radius .38s cubic-bezier(.32,.72,0,1),
+             --close-y .38s cubic-bezier(.32,.72,0,1), visibility 0s linear 0s; }
+/* 拖动期间 JS 逐帧写 --sheet-y，必须摘掉 transform 自身的过渡，否则每个位移值都在做 .38s 追赶 */
+html.sh-drag #sheet { transition:opacity .3s, border-radius .38s cubic-bezier(.32,.72,0,1), visibility 0s linear 0s; }
+/* 最关键的一条：全屏 backdrop-filter 在 transform 动画里每帧重算整屏模糊。
+   实测 3.9 万节点的大站列表下，开着 34px 是 21fps，关掉立刻回到 42fps。
+   拖动期间一律关掉，定档后由下面的规则恢复。 */
+html.sh-drag #sheet { backdrop-filter:none; -webkit-backdrop-filter:none; }
+/* 有重绘图时图已铺满整张抽屉，再对身后的地图做全屏模糊纯属浪费：
+   直接关掉 backdrop-filter，改用深色底承接图片，文字对比度反而更稳。 */
+#sheet.has-art { backdrop-filter:none; -webkit-backdrop-filter:none;
+  background:var(--glass-solid); }   /* 实心主题底色兜底，图片叠在其上 —— 不透出地图文字 */
+/* 触摸热区 88x22，视觉条由伪元素居中绘制；原 44x5 的可点区域太窄，拇指拖不准 */
+/* 上拉时地图轻微放大 3.5%：抽屉升起的纵深来源。只动 transform 合成层，不重排；
+   半屏 p=0 时缩放恰为 1，地图指针坐标不受影响。 */
+#map{transform-origin:50% 32%;will-change:transform;transition:transform .38s cubic-bezier(.32,.72,0,1)}
+html.sh-drag #map{transition:none}
+html.sh-drag #sheetMask{transition:none}
+html.sh-drag #sheet .sh-art img{transition:none}
+html.perf-low #map{will-change:auto}
+/* 全屏档顶部露 18px 缝会看到顶栏残片：#topHud 的 opacity 由 shApply 按 progress
+   连续写 inline（p>=.18 起淡出，.52 到 0）。不用 class 切档 —— 摘掉 .sh-dim 会让
+   #topHud 自带的 topIn 入场动画重放一次，收放之间反而闪。 */
+#sheet .grab { width:88px; height:22px; margin:4px auto 0; position:relative; flex:none;
+  cursor:grab; touch-action:none; user-select:none; -webkit-user-select:none; -webkit-tap-highlight-color:transparent; }
+#sheet .grab::after { content:''; position:absolute; left:50%; top:50%; width:44px; height:5px;
+  transform:translate(-50%,-50%); border-radius:3px; background:rgba(150,170,200,.5);
+  transition:background .18s, width .18s; }
+#sheet .grab:hover::after { background:rgba(150,170,200,.82); width:56px; }
+#sheet .grab:active::after, #sheet.sh-drag .grab::after { background:var(--acc); width:56px; }
+#sheet.sh-drag .grab { cursor:grabbing; }
+/* 键盘可达：Tab 到把手时给一圈主色环，否则聚焦态完全不可见 */
+#sheet .grab:focus-visible { outline:none; }
+#sheet .grab:focus-visible::after { background:var(--acc); width:56px; box-shadow:0 0 0 6px color-mix(in srgb, var(--acc) 22%, transparent); }
+/* ===== 底层背景图：重绘照片做抽屉底纹（毛玻璃质感来自图片自带的静态 blur）===== */
+#sheet .sh-art,#sheet .sh-art-glass,#sheet .sh-art-veil{position:absolute;inset:0;pointer-events:none;overflow:hidden;border-radius:inherit}
+#sheet .sh-art{z-index:0;opacity:0;transition:opacity .32s ease}
+#sheet.has-art .sh-art{opacity:1}
+#sheet .sh-art img{width:100%;height:100%;object-fit:cover;object-position:50% 42%;opacity:.86;
+  filter:blur(22px) saturate(1.3);transform:scale(1.18);transform-origin:50% 50%;will-change:opacity;
+  transition:opacity .25s ease}
+#sheet .sh-art-glass{z-index:1;background:rgba(20,28,42,.24)}
+#sheet .sh-art-veil{z-index:1;background:linear-gradient(180deg,rgba(8,14,24,.14),rgba(8,14,24,.34) 58%,rgba(8,14,24,.58))}
+/* 浅色主题：遮罩翻成白色系，否则深色压顶会让整张抽屉发灰，与浅色 UI 脱节 */
+:root[data-theme="light"] #sheet .sh-art-glass{background:rgba(255,255,255,.10)}
+:root[data-theme="light"] #sheet .sh-art-veil{background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.22) 52%,rgba(255,255,255,.46))}
+/* ===== 顶部 hero：上推到全屏时从顶部长出 200px 的大图 =====
+   blur 只加在模糊层上且保持静态（纹理可被 GPU 缓存一次），清晰层逐帧只改 opacity */
+#sheet .sh-hero{position:absolute;left:0;right:0;top:26px;height:200px;z-index:2;
+  opacity:0;overflow:hidden;background:#0d1622;will-change:transform,opacity;
+  transform:translate3d(0,-200px,0);touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
+#sheet .sh-hero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 42%;transform:scale(1.06)}
+#sheet .sh-hero #shHeroImg{will-change:opacity;opacity:0}
+#sheet .sh-hero #shHeroBlur{filter:blur(11px) saturate(1.15)}
+#sheet .sh-hero::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(6,12,22,.46),transparent 38%,transparent 62%,rgba(6,12,22,.55))}
+/* ===== 内容层：整体下移给 hero 让位，自身布局宽度恒定，文字不重排 ===== */
+#sheet .sh-stack{position:relative;z-index:2;flex:1;min-height:0;display:flex;flex-direction:column;
+  transform:translate3d(0,0,0);will-change:transform}
 #sheet .sh-head { padding:9px 20px 4px; display:flex; align-items:flex-start; flex:none; } /* 第十二版:顶部空隙 13→9 上提 */
 #sheet .sh-titles { flex:1; min-width:0; }
 #sheet .sh-nmrow { display:flex; align-items:center; gap:8px; min-width:0; } /* 徽标与站名同行、纵向居中 */
@@ -992,7 +1080,10 @@ html.perf-low *, html.perf-low *::before, html.perf-low *::after {
 #sheet .sh-note .sh-retry { color:var(--acc); cursor:pointer; margin-left:2px; }
 #sheet .sh-note .sh-retry:hover { text-decoration:underline; }
 #sheet .sh-day-wait { padding:10px 12px; }
-#sheet .sh-body { flex:1; overflow-y:auto; padding:6px 20px 28px; -webkit-overflow-scrolling:touch; }
+#sheet .sh-body { flex:1; overflow-y:auto; padding:6px 20px 28px; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; }
+/* 抽屉下移多少、hero 占多高，底部就要补多少空白，否则滚到底时最后几行停在屏幕外看不见。
+   用 ::after 占位而不是改 padding —— 它只撑长滚动范围，不移动任何已有内容。 */
+#sheet .sh-body::after { content:''; display:block; height:var(--sh-pad, 0px); }
 #sheet .grp-op { display:flex; align-items:center; gap:8px; padding:14px 4px 6px; font-size:12px; font-weight:800; color:var(--txt); }
 #sheet .grp-op .op-logo { max-height:22px; max-width:72px; width:auto; height:auto; object-fit:contain; background:#fff; border-radius:4px; padding:2px 5px; flex:none; }
 #sheet .grp-op .op-ic { min-width:22px; height:22px; padding:0 4px; border-radius:6px; background:#1a853c; color:#fff; font-size:10px; font-weight:900; display:flex; align-items:center; justify-content:center; }

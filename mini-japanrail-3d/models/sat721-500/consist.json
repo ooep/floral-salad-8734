@@ -1,0 +1,14 @@
+{
+ "name": "SAT721系",
+ "car_length_m": 19.57,
+ "cars": [
+  {
+   "model": "sat721-1.glb",
+   "flip": true
+  },
+  {
+   "model": "sat721-1.glb",
+   "flip": false
+  }
+ ]
+}

@@ -1,7 +1,7 @@
 {
  "_meta": {
-  "v": 7,
-  "generated": "2026-10-25",
+  "v": 8,
+  "generated": "2026-11-21",
   "principle": "车型目录直接取自 DokoRail 車両コレクション作者目录(odpt.Railway 184 线 + 爱称 15 组),ja 线名对齐本站 tmaps 实体;跨公司区段(東海道/山陽本線)与东京圈共线实体用规则消歧;判不了的回退图标;v5 补齐 29 条借用/别名义线路(取自 DokoRail 收藏页 stockRailways 与运营者层级映射);v6 修复关西私铁/JR西短实体名前缀错位并回补 JR 东日本地方线;v7 高缩放 3D 列车全量上线:新增京浜東北線映射与节数补齐 slug(京急 8 编组/e233-3000 10・15/W7 12/Metro 16000 10)",
   "rules_engine": "names → lines → rules(exact/all/none/hasStop/firstStopIn/stopsIn)",
   "models": {
@@ -281,7 +281,8 @@
   "狭山線": "/models/tokyu5050-8cars/consist.json",
   "豊島線": "/models/tokyu5050-8cars/consist.json",
   "西武秩父線": "/models/tokyu5050-8cars/consist.json",
-  "西武有楽町線": "/models/tokyu5050-8cars/consist.json"
+  "西武有楽町線": "/models/tokyu5050-8cars/consist.json",
+  "仙台空港線": "/models/sat721-500/consist.json"
  },
  "rules": [
   {

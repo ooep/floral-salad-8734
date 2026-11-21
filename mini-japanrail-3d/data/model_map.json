@@ -282,10 +282,10 @@
   "豊島線": "/models/tokyu5050-8cars/consist.json",
   "西武秩父線": "/models/tokyu5050-8cars/consist.json",
   "西武有楽町線": "/models/tokyu5050-8cars/consist.json",
-  "鹿児島市電第一期線": "/models/kagoshimasiden-9500/consist.json",
-  "鹿児島市電第二期線": "/models/kagoshimasiden-9500/consist.json",
-  "鹿児島市電唐湊線": "/models/kagoshimasiden-9500/consist.json",
-  "鹿児島市電谷山線": "/models/kagoshimasiden-9500/consist.json"
+  "長崎電気軌道本線": "/models/nagasakidenki-3000/consist.json",
+  "赤迫支線": "/models/nagasakidenki-3000/consist.json",
+  "蛍茶屋支線": "/models/nagasakidenki-3000/consist.json",
+  "桜町支線": "/models/nagasakidenki-3000/consist.json"
  },
  "rules": [
   {

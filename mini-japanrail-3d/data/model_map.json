@@ -282,10 +282,7 @@
   "豊島線": "/models/tokyu5050-8cars/consist.json",
   "西武秩父線": "/models/tokyu5050-8cars/consist.json",
   "西武有楽町線": "/models/tokyu5050-8cars/consist.json",
-  "東田本線": "/models/tosaden-2000/consist.json",
-  "桟橋線": "/models/tosaden-2000/consist.json",
-  "伊野線": "/models/tosaden-2000/consist.json",
-  "後免線": "/models/tosaden-2000/consist.json"
+  "野田線": "/models/tobu-8000/consist.json"
  },
  "rules": [
   {

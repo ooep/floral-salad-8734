@@ -282,8 +282,7 @@
   "豊島線": "/models/tokyu5050-8cars/consist.json",
   "西武秩父線": "/models/tokyu5050-8cars/consist.json",
   "西武有楽町線": "/models/tokyu5050-8cars/consist.json",
-  "福岡市地下鉄空港線": "/models/hukuokasub-1000/consist.json",
-  "箱崎線": "/models/hukuokasub-1000/consist.json"
+  "ポートアイランド線": "/models/kobesinkotu-portliner8000/consist.json"
  },
  "rules": [
   {

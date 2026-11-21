@@ -1,0 +1,9 @@
+{
+  "name": "とさでん2000形",
+  "car_length_m": 12.2,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

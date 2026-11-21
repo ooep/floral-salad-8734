@@ -1,0 +1,25 @@
+{
+  "name": "つくばエクスプレスTX-1000",
+  "car_length_m": 21.098,
+  "middle_car_length_m": 20.708,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    },
+    {
+      "model": "car3.glb"
+    },
+    {
+      "model": "car4.glb"
+    },
+    {
+      "model": "car5.glb"
+    },
+    {
+      "model": "car6.glb"
+    }
+  ]
+}

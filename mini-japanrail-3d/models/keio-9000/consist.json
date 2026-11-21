@@ -1,0 +1,39 @@
+{
+ "name": "京王9000系",
+ "car_length_m": 20.3,
+ "middle_car_length_m": 20.28,
+ "cars": [
+  {
+   "model": "car1.glb",
+   "flip": false
+  },
+  {
+   "model": "car2.glb",
+   "flip": false
+  },
+  {
+   "model": "car3.glb",
+   "flip": false
+  },
+  {
+   "model": "car4.glb",
+   "flip": false
+  },
+  {
+   "model": "car5.glb",
+   "flip": false
+  },
+  {
+   "model": "car6.glb",
+   "flip": false
+  },
+  {
+   "model": "car7.glb",
+   "flip": false
+  },
+  {
+   "model": "car8.glb",
+   "flip": false
+  }
+ ]
+}

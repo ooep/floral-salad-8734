@@ -1,0 +1,9 @@
+{
+  "name": "鹿児島市電9500形",
+  "car_length_m": 12.35,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

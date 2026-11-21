@@ -282,11 +282,8 @@
   "豊島線": "/models/tokyu5050-8cars/consist.json",
   "西武秩父線": "/models/tokyu5050-8cars/consist.json",
   "西武有楽町線": "/models/tokyu5050-8cars/consist.json",
-  "西武新宿線": "/models/seibu-2000/consist.json",
-  "拝島線": "/models/seibu-2000/consist.json",
-  "多摩湖線": "/models/seibu-2000/consist.json",
-  "国分寺線": "/models/seibu-2000/consist.json",
-  "西武園線": "/models/seibu-2000/consist.json"
+  "福岡市地下鉄空港線": "/models/hukuokasub-1000/consist.json",
+  "箱崎線": "/models/hukuokasub-1000/consist.json"
  },
  "rules": [
   {

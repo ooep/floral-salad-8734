@@ -282,7 +282,7 @@
   "豊島線": "/models/tokyu5050-8cars/consist.json",
   "西武秩父線": "/models/tokyu5050-8cars/consist.json",
   "西武有楽町線": "/models/tokyu5050-8cars/consist.json",
-  "ポートアイランド線": "/models/kobesinkotu-portliner8000/consist.json"
+  "南港ポートタウン線": "/models/osakanewtram-200/consist.json"
  },
  "rules": [
   {

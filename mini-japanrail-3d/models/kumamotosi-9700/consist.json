@@ -1,0 +1,9 @@
+{
+ "name": "熊本市電9700形",
+ "car_length_m": 14.6,
+ "cars": [
+  {
+   "model": "car1.glb"
+  }
+ ]
+}

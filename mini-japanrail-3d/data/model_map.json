@@ -282,7 +282,11 @@
   "豊島線": "/models/tokyu5050-8cars/consist.json",
   "西武秩父線": "/models/tokyu5050-8cars/consist.json",
   "西武有楽町線": "/models/tokyu5050-8cars/consist.json",
-  "南港ポートタウン線": "/models/osakanewtram-200/consist.json"
+  "熊本市電幹線": "/models/kumamotosi-9700/consist.json",
+  "水前寺線": "/models/kumamotosi-9700/consist.json",
+  "健軍線": "/models/kumamotosi-9700/consist.json",
+  "上熊本線": "/models/kumamotosi-9700/consist.json",
+  "田崎線": "/models/kumamotosi-9700/consist.json"
  },
  "rules": [
   {

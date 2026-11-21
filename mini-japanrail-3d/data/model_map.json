@@ -282,10 +282,14 @@
   "豊島線": "/models/tokyu5050-8cars/consist.json",
   "西武秩父線": "/models/tokyu5050-8cars/consist.json",
   "西武有楽町線": "/models/tokyu5050-8cars/consist.json",
-  "長崎電気軌道本線": "/models/nagasakidenki-3000/consist.json",
-  "赤迫支線": "/models/nagasakidenki-3000/consist.json",
-  "蛍茶屋支線": "/models/nagasakidenki-3000/consist.json",
-  "桜町支線": "/models/nagasakidenki-3000/consist.json"
+  "広電本線": "/models/hiroden-3900/consist.json",
+  "宇品線": "/models/hiroden-3900/consist.json",
+  "城南線": "/models/hiroden-3900/consist.json",
+  "江波線": "/models/hiroden-3900/consist.json",
+  "横川線": "/models/hiroden-3900/consist.json",
+  "白島線": "/models/hiroden-3900/consist.json",
+  "皆実線": "/models/hiroden-3900/consist.json",
+  "広島電鉄循環線": "/models/hiroden-3900/consist.json"
  },
  "rules": [
   {

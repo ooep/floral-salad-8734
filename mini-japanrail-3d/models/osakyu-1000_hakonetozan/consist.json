@@ -1,0 +1,19 @@
+{
+  "name": "小田急電鉄1000形",
+  "car_length_m": 19.65,
+  "middle_car_length_m": 19.5,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    },
+    {
+      "model": "car3.glb"
+    },
+    {
+      "model": "car4.glb"
+    }
+  ]
+}

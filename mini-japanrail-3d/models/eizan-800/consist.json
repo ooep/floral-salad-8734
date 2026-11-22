@@ -1,0 +1,13 @@
+{
+  "name": "叡山電鉄800系",
+  "car_length_m": 15.22,
+  "middle_car_length_m": 15.22,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

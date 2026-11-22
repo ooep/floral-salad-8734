@@ -368,7 +368,9 @@
   "湯の川線": "/models/hakodatesiden-9600/consist.json",
   "函館市電本線": "/models/hakodatesiden-9600/consist.json",
   "大森線": "/models/hakodatesiden-9600/consist.json",
-  "宝来・谷地頭線": "/models/hakodatesiden-9600/consist.json"
+  "宝来・谷地頭線": "/models/hakodatesiden-9600/consist.json",
+  "叡山本線": "/models/eizan-800/consist.json",
+  "鞍馬線": "/models/eizan-800/consist.json"
  },
  "rules": [
   {

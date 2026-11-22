@@ -1,0 +1,10 @@
+{
+  "name": "ハピラインふくいHTR400形",
+  "car_length_m": 14.222,
+  "middle_car_length_m": 14.222,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

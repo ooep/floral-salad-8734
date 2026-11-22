@@ -1,0 +1,10 @@
+{
+  "name": "富山地方鉄道8000形",
+  "car_length_m": 13.05,
+  "middle_car_length_m": 13.05,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

@@ -282,7 +282,8 @@
   "豊島線": "/models/tokyu5050-8cars/consist.json",
   "西武秩父線": "/models/tokyu5050-8cars/consist.json",
   "西武有楽町線": "/models/tokyu5050-8cars/consist.json",
-  "長野電鉄長野線": "/models/nagano-2100/consist.json"
+  "長野電鉄長野線": "/models/nagano-2100/consist.json",
+  "ハピラインふくい線": "/models/happylinefukui-521/consist.json"
  },
  "rules": [
   {

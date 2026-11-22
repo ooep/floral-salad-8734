@@ -1,0 +1,13 @@
+{
+  "name": "irishikawa-ir521",
+  "car_length_m": 20.716,
+  "middle_car_length_m": 20.716,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

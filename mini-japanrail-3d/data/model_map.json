@@ -282,8 +282,12 @@
   "豊島線": "/models/tokyu5050-8cars/consist.json",
   "西武秩父線": "/models/tokyu5050-8cars/consist.json",
   "西武有楽町線": "/models/tokyu5050-8cars/consist.json",
-  "函館本線": "/models/jr-hokkaido-731/consist.json",
-  "千歳線": "/models/jr-hokkaido-731/consist.json"
+  "根室本線": "/models/jr-hokkaido-h100/consist.json",
+  "石北本線": "/models/jr-hokkaido-h100/consist.json",
+  "釧網本線": "/models/jr-hokkaido-h100/consist.json",
+  "富良野線": "/models/jr-hokkaido-h100/consist.json",
+  "宗谷本線": "/models/jr-hokkaido-h100/consist.json",
+  "札沼線": "/models/jr-hokkaido-h100/consist.json"
  },
  "rules": [
   {

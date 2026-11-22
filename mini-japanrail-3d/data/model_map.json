@@ -355,7 +355,10 @@
   "桟橋線": "/models/tosaden-2000/consist.json",
   "富山軌道線支線": "/models/toyamatihou-8000/consist.json",
   "富山軌道線本線": "/models/toyamatihou-8000/consist.json",
-  "つくばエクスプレス線": "/models/tukubaexpress-tx1000/consist.json"
+  "つくばエクスプレス線": "/models/tukubaexpress-tx1000/consist.json",
+  "有馬線": "/models/kobedentetu-6000/consist.json",
+  "神鉄三田線": "/models/kobedentetu-6000/consist.json",
+  "粟生線": "/models/kobedentetu-6000/consist.json"
  },
  "rules": [
   {

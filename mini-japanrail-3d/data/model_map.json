@@ -282,7 +282,10 @@
   "豊島線": "/models/tokyu5050-8cars/consist.json",
   "西武秩父線": "/models/tokyu5050-8cars/consist.json",
   "西武有楽町線": "/models/tokyu5050-8cars/consist.json",
-  "札幌市営地下鉄東豊線": "/models/sapporosub-9000/consist.json"
+  "1条線": "/models/sapporosiden-8500/consist.json",
+  "山鼻西線": "/models/sapporosiden-8500/consist.json",
+  "山鼻線": "/models/sapporosiden-8500/consist.json",
+  "都心線": "/models/sapporosiden-8500/consist.json"
  },
  "rules": [
   {

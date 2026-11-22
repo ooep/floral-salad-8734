@@ -1,0 +1,9 @@
+{
+ "name": "sapporosiden-8500",
+ "car_length_m": 12.98,
+ "cars": [
+  {
+   "model": "sapporosiden-8500.glb"
+  }
+ ]
+}

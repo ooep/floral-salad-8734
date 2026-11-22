@@ -1,0 +1,16 @@
+{
+  "name": "nagano-2100",
+  "car_length_m": 20.622,
+  "middle_car_length_m": 20.622,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    },
+    {
+      "model": "car3.glb"
+    }
+  ]
+}

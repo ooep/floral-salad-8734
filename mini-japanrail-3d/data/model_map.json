@@ -284,7 +284,17 @@
   "西武有楽町線": "/models/tokyu5050-8cars/consist.json",
   "長野電鉄長野線": "/models/nagano-2100/consist.json",
   "ハピラインふくい線": "/models/happylinefukui-521/consist.json",
-  "富山地方鉄道本線": "/models/toyamatiho-10030/consist.json"
+  "富山地方鉄道本線": "/models/toyamatiho-10030/consist.json",
+  "小海線": "/models/jr-east-kiha110/consist.json",
+  "陸羽東線": "/models/jr-east-kiha110/consist.json",
+  "石巻線": "/models/jr-east-kiha110/consist.json",
+  "只見線": "/models/jr-east-kiha110/consist.json",
+  "磐越東線": "/models/jr-east-kiha110/consist.json",
+  "花輪線": "/models/jr-east-kiha110/consist.json",
+  "釜石線": "/models/jr-east-kiha110/consist.json",
+  "陸羽西線": "/models/jr-east-kiha110/consist.json",
+  "気仙沼線": "/models/jr-east-kiha110/consist.json",
+  "米坂線": "/models/jr-east-kiha110/consist.json"
  },
  "rules": [
   {

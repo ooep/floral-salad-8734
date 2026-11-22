@@ -1,0 +1,9 @@
+{
+  "name": "名古屋鉄道4000系",
+  "car_length_m": 18.385,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

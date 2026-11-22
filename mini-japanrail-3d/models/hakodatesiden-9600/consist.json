@@ -1,0 +1,10 @@
+{
+  "name": "函館市電9600形",
+  "car_length_m": 12.3,
+  "middle_car_length_m": 12.3,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

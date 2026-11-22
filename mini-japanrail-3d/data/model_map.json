@@ -364,7 +364,11 @@
   "阪堺線": "/models/hankai-1001/consist.json",
   "上町線": "/models/hankai-1001/consist.json",
   "大江戸線": "/models/tokyotoei-12000/consist.json",
-  "都営地下鉄新宿線": "/models/tokyotoei-10300/consist.json"
+  "都営地下鉄新宿線": "/models/tokyotoei-10300/consist.json",
+  "湯の川線": "/models/hakodatesiden-9600/consist.json",
+  "函館市電本線": "/models/hakodatesiden-9600/consist.json",
+  "大森線": "/models/hakodatesiden-9600/consist.json",
+  "宝来・谷地頭線": "/models/hakodatesiden-9600/consist.json"
  },
  "rules": [
   {

@@ -281,8 +281,7 @@
   "狭山線": "/models/tokyu5050-8cars/consist.json",
   "豊島線": "/models/tokyu5050-8cars/consist.json",
   "西武秩父線": "/models/tokyu5050-8cars/consist.json",
-  "西武有楽町線": "/models/tokyu5050-8cars/consist.json",
-  "irいしかわ鉄道線": "/models/irishikawa-ir521/consist.json"
+  "西武有楽町線": "/models/tokyu5050-8cars/consist.json"
  },
  "rules": [
   {

@@ -1,0 +1,25 @@
+{
+  "name": "sapporosub-5000",
+  "car_length_m": 18.542,
+  "middle_car_length_m": 18.208,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    },
+    {
+      "model": "car3.glb"
+    },
+    {
+      "model": "car4.glb"
+    },
+    {
+      "model": "car5.glb"
+    },
+    {
+      "model": "car6.glb"
+    }
+  ]
+}

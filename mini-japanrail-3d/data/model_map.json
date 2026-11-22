@@ -294,7 +294,10 @@
   "釜石線": "/models/jr-east-kiha110/consist.json",
   "陸羽西線": "/models/jr-east-kiha110/consist.json",
   "気仙沼線": "/models/jr-east-kiha110/consist.json",
-  "米坂線": "/models/jr-east-kiha110/consist.json"
+  "米坂線": "/models/jr-east-kiha110/consist.json",
+  "宮福線": "/models/jr-west-113/consist.json",
+  "山陰本線": "/models/jr-west-113/consist.json",
+  "舞鶴線": "/models/jr-west-113/consist.json"
  },
  "rules": [
   {

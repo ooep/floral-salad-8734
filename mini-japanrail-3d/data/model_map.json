@@ -358,7 +358,9 @@
   "つくばエクスプレス線": "/models/tukubaexpress-tx1000/consist.json",
   "有馬線": "/models/kobedentetu-6000/consist.json",
   "神鉄三田線": "/models/kobedentetu-6000/consist.json",
-  "粟生線": "/models/kobedentetu-6000/consist.json"
+  "粟生線": "/models/kobedentetu-6000/consist.json",
+  "筑肥線": "/models/jr-kyusyu-303/consist.json",
+  "唐津線": "/models/jr-kyusyu-303/consist.json"
  },
  "rules": [
   {

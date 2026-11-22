@@ -1,0 +1,13 @@
+{
+  "name": "東京都交通局12-000形",
+  "car_length_m": 16.5,
+  "middle_car_length_m": 16.5,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

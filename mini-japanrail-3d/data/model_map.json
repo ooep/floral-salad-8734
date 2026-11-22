@@ -371,7 +371,8 @@
   "宝来・谷地頭線": "/models/hakodatesiden-9600/consist.json",
   "叡山本線": "/models/eizan-800/consist.json",
   "鞍馬線": "/models/eizan-800/consist.json",
-  "仙台市地下鉄南北線": "/models/sendai-sub-1000/consist.json"
+  "仙台市地下鉄南北線": "/models/sendai-sub-1000/consist.json",
+  "仙台市地下鉄東西線": "/models/sendai-sub-2000/consist.json"
  },
  "rules": [
   {

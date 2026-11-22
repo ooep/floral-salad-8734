@@ -1,0 +1,12 @@
+{
+  "name": "仙台市地下鉄2000系",
+  "car_length_m": 16.25,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

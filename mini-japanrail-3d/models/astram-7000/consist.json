@@ -1,0 +1,19 @@
+{
+  "name": "広島高速交通7000系 (部分編成 4/6)",
+  "car_length_m": 8.21,
+  "middle_car_length_m": 8.0,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    },
+    {
+      "model": "car3.glb"
+    },
+    {
+      "model": "car4.glb"
+    }
+  ]
+}

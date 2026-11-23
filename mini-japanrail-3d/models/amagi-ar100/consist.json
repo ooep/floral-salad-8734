@@ -1,0 +1,10 @@
+{
+  "name": "甘木鉄道AR100形",
+  "car_length_m": 15.5,
+  "middle_car_length_m": 15.5,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

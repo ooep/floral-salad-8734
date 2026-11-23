@@ -416,7 +416,8 @@
   "西尾線": "/models/meitetsu-6000/consist.json",
   "蒲郡線": "/models/meitetsu-6000/consist.json",
   "仙山線": "/models/jr-east-e721/consist.json",
-  "磐越西線": "/models/jr-east-e721/consist.json"
+  "磐越西線": "/models/jr-east-e721/consist.json",
+  "阿佐線": "/models/tosakuroshio-9640/consist.json"
  },
  "rules": [
   {

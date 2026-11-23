@@ -1,0 +1,9 @@
+{
+  "name": "tosakuroshio-9640",
+  "car_length_m": 20.8,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

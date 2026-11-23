@@ -407,7 +407,9 @@
   "尾西線": "/models/meitetsu-3500/consist.json",
   "竹鼻線": "/models/meitetsu-3500/consist.json",
   "羽島線": "/models/meitetsu-3500/consist.json",
-  "津島線": "/models/meitetsu-3500/consist.json"
+  "津島線": "/models/meitetsu-3500/consist.json",
+  "指宿枕崎線": "/models/jr-kyusyu-kiha47/consist.json",
+  "日南線": "/models/jr-kyusyu-kiha47/consist.json"
  },
  "rules": [
   {

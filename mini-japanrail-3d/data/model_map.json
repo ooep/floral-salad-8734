@@ -454,7 +454,8 @@
   "伊丹線": "/models/hankyu-6000/consist.json",
   "遠州鉄道線": "/models/ensyu-2000/consist.json",
   "日田彦山線": "/models/jr-kyusyu-kiha40/consist.json",
-  "後藤寺線": "/models/jr-kyusyu-kiha40/consist.json"
+  "後藤寺線": "/models/jr-kyusyu-kiha40/consist.json",
+  "水島本線": "/models/mizushima-mrt300/consist.json"
  },
  "rules": [
   {

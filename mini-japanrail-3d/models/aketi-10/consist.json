@@ -1,0 +1,9 @@
+{
+  "name": "aketi-10",
+  "car_length_m": 15.0,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

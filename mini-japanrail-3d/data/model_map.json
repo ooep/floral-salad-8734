@@ -460,7 +460,8 @@
   "西武山口線": "/models/seibu-8500/consist.json",
   "伊田線": "/models/heichiku-400/consist.json",
   "糸田線": "/models/heichiku-400/consist.json",
-  "田川線": "/models/heichiku-400/consist.json"
+  "田川線": "/models/heichiku-400/consist.json",
+  "上毛線": "/models/jomo-700/consist.json"
  },
  "rules": [
   {

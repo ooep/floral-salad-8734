@@ -461,7 +461,8 @@
   "伊田線": "/models/heichiku-400/consist.json",
   "糸田線": "/models/heichiku-400/consist.json",
   "田川線": "/models/heichiku-400/consist.json",
-  "上毛線": "/models/jomo-700/consist.json"
+  "上毛線": "/models/jomo-700/consist.json",
+  "上信線": "/models/joshin-7000/consist.json"
  },
  "rules": [
   {

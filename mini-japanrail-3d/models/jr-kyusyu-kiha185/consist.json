@@ -1,0 +1,13 @@
+{
+  "name": "JR九州キハ185系「AROUND THE KYUSHU」",
+  "car_length_m": 20.8,
+  "middle_car_length_m": 20.8,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

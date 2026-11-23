@@ -411,7 +411,10 @@
   "指宿枕崎線": "/models/jr-kyusyu-kiha47/consist.json",
   "日南線": "/models/jr-kyusyu-kiha47/consist.json",
   "豊肥本線": "/models/jr-kyusyu-kiha200/consist.json",
-  "久大本線": "/models/jr-kyusyu-kiha200/consist.json"
+  "久大本線": "/models/jr-kyusyu-kiha200/consist.json",
+  "広見線": "/models/meitetsu-6000/consist.json",
+  "西尾線": "/models/meitetsu-6000/consist.json",
+  "蒲郡線": "/models/meitetsu-6000/consist.json"
  },
  "rules": [
   {

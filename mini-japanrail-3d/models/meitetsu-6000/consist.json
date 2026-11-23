@@ -1,0 +1,12 @@
+{
+  "name": "名古屋鉄道6000系1次車",
+  "car_length_m": 18.95,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

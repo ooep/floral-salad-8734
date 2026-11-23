@@ -1,0 +1,23 @@
+{
+  "name": "多摩都市モノレール1000系",
+  "car_length_m": [
+    15.5,
+    14.6,
+    14.6,
+    15.5
+  ],
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    },
+    {
+      "model": "car3.glb"
+    },
+    {
+      "model": "car4.glb"
+    }
+  ]
+}

@@ -375,7 +375,8 @@
   "仙台市地下鉄東西線": "/models/sendai-sub-2000/consist.json",
   "瀬戸線": "/models/meitetsu-4000/consist.json",
   "池上線": "/models/tokyu-7000/consist.json",
-  "東急多摩川線": "/models/tokyu-7000/consist.json"
+  "東急多摩川線": "/models/tokyu-7000/consist.json",
+  "多摩都市モノレール線": "/models/tamamono-1000/consist.json"
  },
  "rules": [
   {

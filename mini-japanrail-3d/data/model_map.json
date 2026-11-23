@@ -494,7 +494,8 @@
   "上飯田線": "/models/meitetsu-300/consist.json",
   "五能線": "/models/jr-east-gve400/consist.json",
   "不二越線": "/models/toyamatihou-14760/consist.json",
-  "上滝線": "/models/toyamatihou-14760/consist.json"
+  "上滝線": "/models/toyamatihou-14760/consist.json",
+  "青い森鉄道線": "/models/aoimori-703/consist.json"
  },
  "rules": [
   {

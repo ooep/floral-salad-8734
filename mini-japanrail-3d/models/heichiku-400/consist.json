@@ -1,0 +1,9 @@
+{
+  "name": "heichiku-400",
+  "car_length_m": 18.363,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

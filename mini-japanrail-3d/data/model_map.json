@@ -429,7 +429,8 @@
   "浅野川線": "/models/hokuriku-03/consist.json",
   "水間線": "/models/mizuma-1000/consist.json",
   "伊賀線": "/models/iga-200/consist.json",
-  "天竜浜名湖線": "/models/tenhama-th2100/consist.json"
+  "天竜浜名湖線": "/models/tenhama-th2100/consist.json",
+  "大糸線": "/models/jr-west-kiha120-oito/consist.json"
  },
  "rules": [
   {

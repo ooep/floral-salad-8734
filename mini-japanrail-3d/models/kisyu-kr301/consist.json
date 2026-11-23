@@ -1,0 +1,10 @@
+{
+  "name": "紀州鉄道KR301形",
+  "car_length_m": 15.5,
+  "middle_car_length_m": 15.5,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

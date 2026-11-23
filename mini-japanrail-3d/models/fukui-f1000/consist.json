@@ -1,0 +1,10 @@
+{
+  "name": "福井鉄道F1000形「FUKURAM」",
+  "car_length_m": 27.16,
+  "middle_car_length_m": 27.16,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

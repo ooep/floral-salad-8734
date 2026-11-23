@@ -1,0 +1,13 @@
+{
+  "name": "上毛電気鉄道800形",
+  "car_length_m": 18.04,
+  "middle_car_length_m": 18.04,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

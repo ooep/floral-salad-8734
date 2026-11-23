@@ -1,0 +1,16 @@
+{
+  "name": "阪急電鉄6000系",
+  "car_length_m": 18.4,
+  "middle_car_length_m": 18.4,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    },
+    {
+      "model": "car3.glb"
+    }
+  ]
+}

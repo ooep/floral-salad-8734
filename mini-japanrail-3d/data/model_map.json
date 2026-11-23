@@ -484,7 +484,7 @@
   "武庫川線": "/models/hansin-5500/consist.json",
   "勝山永平寺線": "/models/etizen-mc7000/consist.json",
   "三国芦原線": "/models/etizen-mc7000/consist.json",
-  "石川線": "/models/hokuriku-7100/consist.json",
+  "石川線": "/models/hokuriku-7200/consist.json",
   "肥薩おれんじ鉄道線": "/models/hisatuorange-hsor100/consist.json"
  },
  "rules": [

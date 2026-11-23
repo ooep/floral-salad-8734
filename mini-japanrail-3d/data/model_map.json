@@ -441,7 +441,8 @@
   "木次線": "/models/jr-west-kiha120/consist.json",
   "愛知環状鉄道線": "/models/aitikanzyo-2000/consist.json",
   "流山線": "/models/ryutetsu-5000/consist.json",
-  "島原鉄道線": "/models/simabara-kiha2500/consist.json"
+  "島原鉄道線": "/models/simabara-kiha2500/consist.json",
+  "岳南鉄道線": "/models/gakunan-7000/consist.json"
  },
  "rules": [
   {

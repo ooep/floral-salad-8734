@@ -1,0 +1,10 @@
+{
+  "name": "nishikigawa-nt3000_3002",
+  "car_length_m": 18.0,
+  "middle_car_length_m": 18.0,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

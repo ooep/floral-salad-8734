@@ -1,0 +1,19 @@
+{
+  "name": "京阪電鉄800系",
+  "car_length_m": 16.5,
+  "middle_car_length_m": 16.5,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    },
+    {
+      "model": "car3.glb"
+    },
+    {
+      "model": "car4.glb"
+    }
+  ]
+}

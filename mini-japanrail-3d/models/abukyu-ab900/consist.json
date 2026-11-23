@@ -1,0 +1,13 @@
+{
+  "name": "阿武隈急行AB900系 AB-1編成",
+  "car_length_m": 20.21,
+  "middle_car_length_m": 20.21,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "富山地方鉄道14760系 新塗装",
+  "car_length_m": 17.96,
+  "middle_car_length_m": 17.96,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

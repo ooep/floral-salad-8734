@@ -1,0 +1,9 @@
+{
+  "name": "真岡鐵道モオカ14形",
+  "car_length_m": 18.0,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

@@ -446,7 +446,8 @@
   "のと鉄道七尾線": "/models/noto-nt200/consist.json",
   "紀州鉄道線": "/models/kisyu-kr201/consist.json",
   "高森線": "/models/minamiaso-mt2000/consist.json",
-  "錦川清流線": "/models/nishikigawa-nt3000/consist.json"
+  "錦川清流線": "/models/nishikigawa-nt3000/consist.json",
+  "真岡線": "/models/mooka-14/consist.json"
  },
  "rules": [
   {

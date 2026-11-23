@@ -473,7 +473,9 @@
   "伊予鉄道城北線": "/models/iyotetu-2000/consist.json",
   "道南いさりび鉄道線": "/models/donanisaribi-kiha40/consist.json",
   "日高本線": "/models/jr-hokkaido-h100-hidakasen/consist.json",
-  "学園都市線": "/models/jr-hokkaido-733/consist.json"
+  "学園都市線": "/models/jr-hokkaido-733/consist.json",
+  "大月線": "/models/fujikyu-6000/consist.json",
+  "河口湖線": "/models/fujikyu-6000/consist.json"
  },
  "rules": [
   {

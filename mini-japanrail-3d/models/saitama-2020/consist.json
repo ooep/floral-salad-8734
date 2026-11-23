@@ -1,0 +1,13 @@
+{
+  "name": "埼玉新都市交通2020系",
+  "car_length_m": 8.0,
+  "middle_car_length_m": 8.0,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

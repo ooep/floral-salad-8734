@@ -426,7 +426,8 @@
   "大社線": "/models/itibata-1000-2100/consist.json",
   "弘南線": "/models/konan-7000/consist.json",
   "大鰐線": "/models/konan-7000/consist.json",
-  "浅野川線": "/models/hokuriku-03/consist.json"
+  "浅野川線": "/models/hokuriku-03/consist.json",
+  "水間線": "/models/mizuma-1000/consist.json"
  },
  "rules": [
   {

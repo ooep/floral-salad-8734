@@ -1,0 +1,10 @@
+{
+  "name": "のと鉄道NT200形「連続テレビ小説『まれ』」",
+  "car_length_m": 18.0,
+  "middle_car_length_m": 18.0,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

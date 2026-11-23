@@ -289,7 +289,7 @@
   "宮福線": "/models/jr-west-113/consist.json",
   "山陰本線": "/models/jr-west-113/consist.json",
   "舞鶴線": "/models/jr-west-113/consist.json",
-  "城南線": "/models/hiroden-3900/consist.json",
+  "城南線": "/models/iyotetu-2000/consist.json",
   "宇品線": "/models/hiroden-3900/consist.json",
   "広島電鉄循環線": "/models/hiroden-3900/consist.json",
   "広電本線": "/models/hiroden-3900/consist.json",
@@ -468,7 +468,9 @@
   "左沢線": "/models/jr-east-kiha101/consist.json",
   "大湊線": "/models/jr-east-kiha100/consist.json",
   "八戸線": "/models/jr-east-kiha-e131-500/consist.json",
-  "広島新交通1号線": "/models/astram-7000/consist.json"
+  "広島新交通1号線": "/models/astram-7000/consist.json",
+  "花園線": "/models/iyotetu-2000/consist.json",
+  "伊予鉄道城北線": "/models/iyotetu-2000/consist.json"
  },
  "rules": [
   {

@@ -1,0 +1,13 @@
+{
+  "name": "流鉄 5000系「流星」",
+  "car_length_m": 20.04,
+  "middle_car_length_m": 20.02,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

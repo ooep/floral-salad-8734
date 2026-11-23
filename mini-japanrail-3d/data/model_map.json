@@ -434,7 +434,9 @@
   "樽見線": "/models/tarumi-295/consist.json",
   "リアス線": "/models/sanriku-36/consist.json",
   "小湊鉄道線": "/models/kominato-kiha200/consist.json",
-  "北条線": "/models/hojo-flower2000/consist.json"
+  "北条線": "/models/hojo-flower2000/consist.json",
+  "妙見線": "/models/noseden-5100/consist.json",
+  "日生線": "/models/noseden-5100/consist.json"
  },
  "rules": [
   {

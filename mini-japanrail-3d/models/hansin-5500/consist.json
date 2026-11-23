@@ -1,0 +1,13 @@
+{
+  "name": "阪神5500系",
+  "car_length_m": 18.98,
+  "middle_car_length_m": 18.88,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

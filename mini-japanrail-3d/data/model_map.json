@@ -480,7 +480,8 @@
   "日本海ひすいライン": "/models/echigotokimeki-et122/consist.json",
   "男鹿線": "/models/jr-east-eve801/consist.json",
   "いすみ線": "/models/isumi-300/consist.json",
-  "大雄山線": "/models/izuhakone-5000/consist.json"
+  "大雄山線": "/models/izuhakone-5000/consist.json",
+  "武庫川線": "/models/hansin-5500/consist.json"
  },
  "rules": [
   {

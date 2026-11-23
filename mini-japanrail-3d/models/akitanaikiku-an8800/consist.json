@@ -1,0 +1,10 @@
+{
+  "name": "秋田内陸縦貫鉄道AN8800形8801",
+  "car_length_m": 18.5,
+  "middle_car_length_m": 18.5,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

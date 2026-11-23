@@ -398,7 +398,8 @@
   "飯田線": "/models/jr-central-313-series-1912805926-jrc-313-6-crp-39ac872d/consist.json",
   "身延線": "/models/jr-central-313-series-1912805926-jrc-313-6-crp-39ac872d/consist.json",
   "飯山線": "/models/jr-east-kiha110/consist.json",
-  "あいの風とやま鉄道線": "/models/ainokaze-521/consist.json"
+  "あいの風とやま鉄道線": "/models/ainokaze-521/consist.json",
+  "沖縄都市モノレール線": "/models/yuirail-1000/consist.json"
  },
  "rules": [
   {

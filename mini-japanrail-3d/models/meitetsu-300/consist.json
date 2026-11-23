@@ -1,0 +1,13 @@
+{
+  "name": "名古屋鉄道300系",
+  "car_length_m": 19.4,
+  "middle_car_length_m": 19.3,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

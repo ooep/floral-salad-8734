@@ -1,0 +1,13 @@
+{
+  "name": "一畑電車1000系・2100系",
+  "car_length_m": 18.02,
+  "middle_car_length_m": 18.0,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

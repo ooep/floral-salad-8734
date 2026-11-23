@@ -421,7 +421,9 @@
   "秩父本線": "/models/titibu-7500/consist.json",
   "北勢線": "/models/sangi-270/consist.json",
   "甘木鉄道甘木線": "/models/amagi-ar100/consist.json",
-  "別所線": "/models/ueda-1000/consist.json"
+  "別所線": "/models/ueda-1000/consist.json",
+  "北松江線": "/models/itibata-1000-2100/consist.json",
+  "大社線": "/models/itibata-1000-2100/consist.json"
  },
  "rules": [
   {

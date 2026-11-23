@@ -420,7 +420,8 @@
   "阿佐線": "/models/tosakuroshio-9640/consist.json",
   "秩父本線": "/models/titibu-7500/consist.json",
   "北勢線": "/models/sangi-270/consist.json",
-  "甘木鉄道甘木線": "/models/amagi-ar100/consist.json"
+  "甘木鉄道甘木線": "/models/amagi-ar100/consist.json",
+  "別所線": "/models/ueda-1000/consist.json"
  },
  "rules": [
   {

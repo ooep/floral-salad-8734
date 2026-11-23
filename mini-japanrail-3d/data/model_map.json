@@ -487,7 +487,8 @@
   "石川線": "/models/hokuriku-7200/consist.json",
   "肥薩おれんじ鉄道線": "/models/hisatuorange-hsor100/consist.json",
   "姫新線": "/models/jr-west-kiha120-okayama/consist.json",
-  "京津線": "/models/keihan-800/consist.json"
+  "京津線": "/models/keihan-800/consist.json",
+  "会津線": "/models/aidu-at700/consist.json"
  },
  "rules": [
   {

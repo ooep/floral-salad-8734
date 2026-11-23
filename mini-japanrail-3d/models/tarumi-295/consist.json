@@ -1,0 +1,9 @@
+{
+  "name": "tarumi-295",
+  "car_length_m": 18.0,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

@@ -477,7 +477,8 @@
   "大月線": "/models/fujikyu-6000/consist.json",
   "河口湖線": "/models/fujikyu-6000/consist.json",
   "妙高はねうまライン": "/models/echigotokimeki-et127/consist.json",
-  "日本海ひすいライン": "/models/echigotokimeki-et122/consist.json"
+  "日本海ひすいライン": "/models/echigotokimeki-et122/consist.json",
+  "男鹿線": "/models/jr-east-eve801/consist.json"
  },
  "rules": [
   {

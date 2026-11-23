@@ -57,7 +57,6 @@
  },
  "lines": {
   "浅草線": "/models/toei-5300-series/consist.json",
-  "三田線": "/models/6500-train-8-car/consist.json",
   "JR東日本": "/models/toden-8900-blue-tram-ver/consist.json",
   "山形新幹線": "/models/tf2-e3-2000-7car/consist.json",
   "秋田新幹線": "/models/tf2-e6-7car/consist.json",
@@ -109,11 +108,9 @@
   "丸ノ内線": "/models/tokyo-metro-2000-series/consist.json",
   "丸ノ内線支線": "/models/tokyo-metro-2000-series/consist.json",
   "日比谷線": "/models/tokyo-metro-03-series/consist.json",
-  "東西線": "/models/tokyo-metro-15000-series/consist.json",
   "千代田線": "/models/tokyo-metro-16000-series-10/consist.json",
   "有楽町線": "/models/tokyo-metro-7000-series/consist.json",
   "半蔵門線": "/models/tokyo-metro-08-series/consist.json",
-  "南北線": "/models/tokyo-metro-9000series-5th/consist.json",
   "東急電鉄": "/models/tokyo-metro-7000-series/consist.json",
   "田園都市線": "/models/tokyu-2000-series/consist.json",
   "東横線": "/models/tokyu5050-8cars/consist.json",
@@ -122,14 +119,11 @@
   "大井町線": "/models/tokyu9000om-blocal/consist.json",
   "小田原線": "/models/3000-10cars/consist.json",
   "多摩線": "/models/3000-10cars/consist.json",
-  "江ノ島線": "/models/3000-10cars/consist.json",
   "東武スカイツリーライン": "/models/tobu-70000-series/consist.json",
   "伊勢崎線": "/models/tobu-70000-series/consist.json",
   "東武アーバンパークライン": "/models/td6000f/consist.json",
-  "東上線": "/models/tobu10030-2x5/consist.json",
   "京急本線": "/models/keikyu-n1000-al-8c/consist.json",
   "空港線": "/models/keikyu-n1000-al-6c/consist.json",
-  "大師線": "/models/keikyu-n1000-al-6c/consist.json",
   "逗子線": "/models/keikyu-n1000-al-6c/consist.json",
   "京成電鉄": "/models/keikyu-n1000-al-6c/consist.json",
   "京成本線": "/models/keisei3001f/consist.json",
@@ -152,9 +146,6 @@
   "北総鉄道": "/models/20000series-10cars-train/consist.json",
   "芝山鉄道": "/models/hokso7503/consist.json",
   "首都圏新都市鉄道": "/models/keisei3700-6cars/consist.json",
-  "ブルーライン": "/models/blueline-6cars/consist.json",
-  "千葉都市モノレール": "/models/green-line/consist.json",
-  "千葉モノレール1号線": "/models/urban-flyer-2cars/consist.json",
   "横浜シーサイドライン": "/models/urban-flyer-2cars/consist.json",
   "多摩都市モノレール": "/models/shonanmono-5601f-series5000/consist.json",
   "小田急箱根": "/models/enoden305/consist.json",
@@ -341,7 +332,6 @@
   "山鼻西線": "/models/sapporosiden-8500/consist.json",
   "札幌市営地下鉄南北線": "/models/sapporosub-5000/consist.json",
   "札幌市営地下鉄東西線": "/models/sapporosub-8000/consist.json",
-  "札幌市営地下鉄東豊線": "/models/sapporosub-9000/consist.json",
   "仙台空港線": "/models/sat721-500/consist.json",
   "国分寺線": "/models/seibu-2000/consist.json",
   "多摩湖線": "/models/seibu-2000/consist.json",
@@ -377,7 +367,37 @@
   "池上線": "/models/tokyu-7000/consist.json",
   "東急多摩川線": "/models/tokyu-7000/consist.json",
   "多摩都市モノレール線": "/models/tamamono-1000/consist.json",
-  "ディズニーリゾートライン": "/models/desneyrline-100/consist.json"
+  "ディズニーリゾートライン": "/models/desneyrline-100/consist.json",
+  "東上本線": "/models/tobu10030-2x5/consist.json",
+  "東京メトロ東西線": "/models/tokyo-metro-15000-series/consist.json",
+  "江の島線": "/models/3000-10cars/consist.json",
+  "京急大師線": "/models/keikyu-n1000-al-6c/consist.json",
+  "都営地下鉄三田線": "/models/6500-train-8-car/consist.json",
+  "東京メトロ南北線": "/models/tokyo-metro-9000series-5th/consist.json",
+  "横浜市営地下鉄1号線": "/models/blueline-6cars/consist.json",
+  "横浜市営地下鉄3号線": "/models/blueline-6cars/consist.json",
+  "横浜市営地下鉄4号線": "/models/green-line/consist.json",
+  "千葉都市モノレール1号線": "/models/urban-flyer-2cars/consist.json",
+  "東豊線": "/models/sapporosub-9000/consist.json",
+  "池袋線": "/models/seibu-2000/consist.json",
+  "三河線": "/models/meitetsu-9500-series/consist.json",
+  "亀戸線": "/models/tobu-8000/consist.json",
+  "東武大師線": "/models/tobu-8000/consist.json",
+  "佐野線": "/models/tobu-8000/consist.json",
+  "桐生線": "/models/tobu-8000/consist.json",
+  "小泉線": "/models/tobu-8000/consist.json",
+  "越生線": "/models/tobu-8000/consist.json",
+  "相模原線": "/models/keio-9000/consist.json",
+  "高尾線": "/models/keio-9000/consist.json",
+  "宮島線": "/models/hiroden-3900/consist.json",
+  "草津線": "/models/221-4/consist.json",
+  "北陸本線": "/models/irishikawa-ir521/consist.json",
+  "大船渡線": "/models/jr-east-kiha110/consist.json",
+  "jr山田線": "/models/jr-east-kiha110/consist.json",
+  "北上線": "/models/jr-east-kiha110/consist.json",
+  "飯田線": "/models/jr-central-313-series-1912805926-jrc-313-6-crp-39ac872d/consist.json",
+  "身延線": "/models/jr-central-313-series-1912805926-jrc-313-6-crp-39ac872d/consist.json",
+  "飯山線": "/models/jr-east-kiha110/consist.json"
  },
  "rules": [
   {
@@ -570,7 +590,7 @@
    "model": "/models/jr-east-e231-0-10-car/consist.json"
   },
   {
-   "comment": "中央・総武各停(跨御茶ノ水;E235-1000 现役)",
+   "comment": "中央・総武各停(跨御茶ノ水;E231-500 现役)",
    "all": [
     "中央本線",
     "総武本線"
@@ -584,7 +604,7 @@
     "河口湖線",
     "千葉線"
    ],
-   "model": "/models/jr-east-e235-1000-series/consist.json"
+   "model": "/models/e231-500s-10cars/consist.json"
   },
   {
    "comment": "総武本線东京侧(各停/総武快速 E235-1000;千葉以远 209 由下条覆盖不全则回退)",
@@ -748,12 +768,6 @@
     "常総線"
    ],
    "model": "/models/kanto-railway-dc2100-dmu/consist.json"
-  },
-  {
-   "all": [
-    "竜ヶ崎線"
-   ],
-   "model": "/models/kanto-railway-dc2200-dmu/consist.json"
   }
  ]
 }

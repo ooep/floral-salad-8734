@@ -403,7 +403,11 @@
   "伊奈線": "/models/saitama-2020/consist.json",
   "高岡軌道線": "/models/manyosen-mlrv1000/consist.json",
   "新湊港線": "/models/manyosen-mlrv1000/consist.json",
-  "今津線": "/models/hankyu-5000/consist.json"
+  "今津線": "/models/hankyu-5000/consist.json",
+  "尾西線": "/models/meitetsu-3500/consist.json",
+  "竹鼻線": "/models/meitetsu-3500/consist.json",
+  "羽島線": "/models/meitetsu-3500/consist.json",
+  "津島線": "/models/meitetsu-3500/consist.json"
  },
  "rules": [
   {

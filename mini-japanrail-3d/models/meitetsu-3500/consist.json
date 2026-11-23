@@ -1,0 +1,14 @@
+{
+  "name": "名古屋鉄道3500系",
+  "car_length_m": 18.5,
+  "cars": [
+    {
+      "model": "car1.glb",
+      "car": "ク3522 (Tc1)"
+    },
+    {
+      "model": "car2.glb",
+      "car": "ク3622 (Tc2)"
+    }
+  ]
+}

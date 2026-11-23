@@ -471,7 +471,8 @@
   "広島新交通1号線": "/models/astram-7000/consist.json",
   "花園線": "/models/iyotetu-2000/consist.json",
   "伊予鉄道城北線": "/models/iyotetu-2000/consist.json",
-  "道南いさりび鉄道線": "/models/donanisaribi-kiha40/consist.json"
+  "道南いさりび鉄道線": "/models/donanisaribi-kiha40/consist.json",
+  "日高本線": "/models/jr-hokkaido-h100-hidakasen/consist.json"
  },
  "rules": [
   {

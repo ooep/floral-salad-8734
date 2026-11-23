@@ -449,7 +449,8 @@
   "錦川清流線": "/models/nishikigawa-nt3000/consist.json",
   "真岡線": "/models/mooka-14/consist.json",
   "津軽鉄道線": "/models/tugaru-21/consist.json",
-  "井原線": "/models/ibara-irt355/consist.json"
+  "井原線": "/models/ibara-irt355/consist.json",
+  "鹿児島本線": "/models/jr-kyusyu-787/consist.json"
  },
  "rules": [
   {

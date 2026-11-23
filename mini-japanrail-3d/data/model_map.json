@@ -402,7 +402,8 @@
   "沖縄都市モノレール線": "/models/yuirail-1000/consist.json",
   "伊奈線": "/models/saitama-2020/consist.json",
   "高岡軌道線": "/models/manyosen-mlrv1000/consist.json",
-  "新湊港線": "/models/manyosen-mlrv1000/consist.json"
+  "新湊港線": "/models/manyosen-mlrv1000/consist.json",
+  "今津線": "/models/hankyu-5000/consist.json"
  },
  "rules": [
   {

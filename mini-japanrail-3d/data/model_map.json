@@ -456,7 +456,8 @@
   "日田彦山線": "/models/jr-kyusyu-kiha40/consist.json",
   "後藤寺線": "/models/jr-kyusyu-kiha40/consist.json",
   "水島本線": "/models/mizushima-mrt300/consist.json",
-  "阿武隈急行線": "/models/abukyu-ab900/consist.json"
+  "阿武隈急行線": "/models/abukyu-ab900/consist.json",
+  "西武山口線": "/models/seibu-8500/consist.json"
  },
  "rules": [
   {

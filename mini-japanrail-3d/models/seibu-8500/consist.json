@@ -1,0 +1,15 @@
+{
+  "name": "西武鉄道8500系",
+  "car_length_m": [
+    8.5,
+    8.5
+  ],
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

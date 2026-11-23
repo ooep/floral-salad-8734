@@ -1,0 +1,10 @@
+{
+  "name": "JR東日本キハ100形200番台",
+  "car_length_m": 17.0,
+  "middle_car_length_m": 17.0,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

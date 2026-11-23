@@ -1,0 +1,12 @@
+{
+  "name": "北陸鉄道 7100形",
+  "car_length_m": 18.0,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

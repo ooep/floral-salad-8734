@@ -400,7 +400,9 @@
   "飯山線": "/models/jr-east-kiha110/consist.json",
   "あいの風とやま鉄道線": "/models/ainokaze-521/consist.json",
   "沖縄都市モノレール線": "/models/yuirail-1000/consist.json",
-  "伊奈線": "/models/saitama-2020/consist.json"
+  "伊奈線": "/models/saitama-2020/consist.json",
+  "高岡軌道線": "/models/manyosen-mlrv1000/consist.json",
+  "新湊港線": "/models/manyosen-mlrv1000/consist.json"
  },
  "rules": [
   {

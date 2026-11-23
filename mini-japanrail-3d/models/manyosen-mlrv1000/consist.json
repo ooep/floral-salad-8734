@@ -1,0 +1,10 @@
+{
+  "name": "万葉線MLRV1000形",
+  "car_length_m": 17.48,
+  "middle_car_length_m": 17.48,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

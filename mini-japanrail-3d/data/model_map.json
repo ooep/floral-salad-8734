@@ -475,7 +475,8 @@
   "日高本線": "/models/jr-hokkaido-h100-hidakasen/consist.json",
   "学園都市線": "/models/jr-hokkaido-733/consist.json",
   "大月線": "/models/fujikyu-6000/consist.json",
-  "河口湖線": "/models/fujikyu-6000/consist.json"
+  "河口湖線": "/models/fujikyu-6000/consist.json",
+  "妙高はねうまライン": "/models/echigotokimeki-et127/consist.json"
  },
  "rules": [
   {

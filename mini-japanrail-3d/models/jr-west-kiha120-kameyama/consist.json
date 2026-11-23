@@ -1,0 +1,10 @@
+{
+  "name": "JR西日本キハ120形 亀山色",
+  "car_length_m": 15.8,
+  "middle_car_length_m": 15.8,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

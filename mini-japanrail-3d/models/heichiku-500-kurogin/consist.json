@@ -1,0 +1,9 @@
+{
+  "name": "heichiku-500-kurogin",
+  "car_length_m": 18.395,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

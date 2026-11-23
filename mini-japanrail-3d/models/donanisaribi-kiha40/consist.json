@@ -1,0 +1,10 @@
+{
+  "name": "道南いさりび鉄道キハ40系1700番台",
+  "car_length_m": 20.8,
+  "middle_car_length_m": 20.8,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

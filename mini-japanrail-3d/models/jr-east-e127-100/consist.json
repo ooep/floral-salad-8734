@@ -1,0 +1,13 @@
+{
+  "name": "JR東日本E127系100番台",
+  "car_length_m": 19.28,
+  "middle_car_length_m": 19.28,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

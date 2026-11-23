@@ -466,7 +466,8 @@
   "明知線": "/models/aketi-10/consist.json",
   "秋田内陸線": "/models/akitanaikiku-an8800/consist.json",
   "左沢線": "/models/jr-east-kiha101/consist.json",
-  "大湊線": "/models/jr-east-kiha100/consist.json"
+  "大湊線": "/models/jr-east-kiha100/consist.json",
+  "八戸線": "/models/jr-east-kiha-e131-500/consist.json"
  },
  "rules": [
   {

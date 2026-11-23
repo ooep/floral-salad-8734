@@ -1,0 +1,13 @@
+{
+  "name": "遠州鉄道2000系",
+  "car_length_m": 18.95,
+  "middle_car_length_m": 18.95,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

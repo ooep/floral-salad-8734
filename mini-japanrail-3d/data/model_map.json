@@ -491,7 +491,8 @@
   "会津線": "/models/aidu-at700/consist.json",
   "福武線": "/models/fukui-f1000/consist.json",
   "小牧線": "/models/meitetsu-300/consist.json",
-  "上飯田線": "/models/meitetsu-300/consist.json"
+  "上飯田線": "/models/meitetsu-300/consist.json",
+  "五能線": "/models/jr-east-gve400/consist.json"
  },
  "rules": [
   {

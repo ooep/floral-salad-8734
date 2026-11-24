@@ -1,0 +1,16 @@
+{
+  "name": "山万1000形「コアラ1号」",
+  "car_length_m": 5.3,
+  "middle_car_length_m": 5.3,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    },
+    {
+      "model": "car3.glb"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+ "name": "JR西日本 521系 七尾線",
+ "car_length_m": 20.0,
+ "cars": [
+  {
+   "model": "car1.glb"
+  },
+  {
+   "model": "car2.glb"
+  }
+ ]
+}

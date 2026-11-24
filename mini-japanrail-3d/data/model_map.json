@@ -528,7 +528,8 @@
   "こどもの国線": "/models/kodomonokuni-y000/consist.json",
   "競馬場線": "/models/keio-8000/consist.json",
   "西名古屋港線": "/models/aonami-1000/consist.json",
-  "御岳登山ケーブル": "/models/mitaketozan/consist.json"
+  "御岳登山ケーブル": "/models/mitaketozan/consist.json",
+  "jr七尾線": "/models/jr-west-521/consist.json"
  },
  "rules": [
   {

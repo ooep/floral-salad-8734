@@ -1,0 +1,16 @@
+{
+  "name": "近畿日本鉄道1020系",
+  "car_length_m": 21.22,
+  "middle_car_length_m": 21.22,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    },
+    {
+      "model": "car3.glb"
+    }
+  ]
+}

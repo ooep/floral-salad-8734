@@ -1,0 +1,22 @@
+{
+  "name": "名古屋鉄道2200系",
+  "car_length_m": 19.41,
+  "middle_car_length_m": 19.41,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    },
+    {
+      "model": "car3.glb"
+    },
+    {
+      "model": "car4.glb"
+    },
+    {
+      "model": "car5.glb"
+    }
+  ]
+}

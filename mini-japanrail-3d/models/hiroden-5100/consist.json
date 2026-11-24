@@ -1,0 +1,22 @@
+{
+  "name": "広島電鉄5100形「グリーンムーバーマックス」",
+  "car_length_m": 5.3,
+  "middle_car_length_m": 6.6,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    },
+    {
+      "model": "car3.glb"
+    },
+    {
+      "model": "car4.glb"
+    },
+    {
+      "model": "car5.glb"
+    }
+  ]
+}

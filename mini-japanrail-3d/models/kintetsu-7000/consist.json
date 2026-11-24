@@ -1,0 +1,13 @@
+{
+  "name": "近畿日本鉄道7000系",
+  "car_length_m": 20.9,
+  "middle_car_length_m": 20.9,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

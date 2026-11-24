@@ -1,0 +1,9 @@
+{
+  "name": "東武60000系",
+  "car_length_m": 20.13,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

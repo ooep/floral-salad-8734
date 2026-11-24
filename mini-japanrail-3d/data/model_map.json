@@ -514,7 +514,8 @@
   "東部丘陵線": "/models/linimo-100/consist.json",
   "宇都宮芳賀ライトレール線": "/models/utsunomiya-hu300/consist.json",
   "南大阪線": "/models/kintetsu-16000/consist.json",
-  "吉野線": "/models/kintetsu-16000/consist.json"
+  "吉野線": "/models/kintetsu-16000/consist.json",
+  "生駒鋼索線": "/models/kintetsu-ikomocable/consist.json"
  },
  "rules": [
   {

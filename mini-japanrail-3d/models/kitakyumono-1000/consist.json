@@ -1,0 +1,15 @@
+{
+  "name": "北九州モノレール1000系",
+  "car_length_m": [
+    15.81,
+    14.72
+  ],
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

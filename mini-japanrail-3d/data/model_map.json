@@ -611,7 +611,8 @@
   "本町線": "/models/iyotetu-5000/consist.json",
   "大手町線": "/models/iyotetu-5000/consist.json",
   "名城線": "/models/nagoyasub-2000/consist.json",
-  "名港線": "/models/nagoyasub-2000/consist.json"
+  "名港線": "/models/nagoyasub-2000/consist.json",
+  "山陽電鉄網干線": "/models/sanyo-5000/consist.json"
  },
  "rules": [
   {

@@ -1,0 +1,12 @@
+{
+ "name": "南海電鉄 1000系",
+ "car_length_m": 20.7,
+ "cars": [
+  {
+   "model": "car1.glb"
+  },
+  {
+   "model": "car2.glb"
+  }
+ ]
+}

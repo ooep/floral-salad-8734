@@ -635,7 +635,8 @@
   "都電荒川線": "/models/toden-8800/consist.json",
   "ほくほく線": "/models/hokuetu-hk100/consist.json",
   "山万ユーカリが丘線": "/models/yamaman-1000/consist.json",
-  "しなの鉄道線": "/models/sinano-sr1/consist.json"
+  "しなの鉄道線": "/models/sinano-sr1/consist.json",
+  "西鉄貝塚線": "/models/nisitetu-600/consist.json"
  },
  "rules": [
   {

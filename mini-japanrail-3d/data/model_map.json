@@ -547,7 +547,11 @@
   "摩耶ケーブル線": "/models/mayacable/consist.json",
   "信楽線": "/models/shigarakikogen-skr310/consist.json",
   "西信貴鋼索線": "/models/nisisigicabele/consist.json",
-  "若桜線": "/models/wakasa-wt3000/consist.json"
+  "若桜線": "/models/wakasa-wt3000/consist.json",
+  "予讃線": "/models/jr-shikoku-2700/consist.json",
+  "土讃線": "/models/jr-shikoku-2700/consist.json",
+  "宿毛線": "/models/jr-shikoku-2700/consist.json",
+  "本四備讃線": "/models/jr-shikoku-2700/consist.json"
  },
  "rules": [
   {

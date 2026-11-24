@@ -1,0 +1,13 @@
+{
+  "name": "JR四国2700系",
+  "car_length_m": 20.22,
+  "middle_car_length_m": 20.22,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

@@ -232,7 +232,7 @@
   "名鉄空港線": "/models/meitetsu-9500-series/consist.json",
   "みなとみらい21線": "/models/tokyu5050-8cars/consist.json",
   "泉北線": "/models/tf2-nankai-8300-4car/consist.json",
-  "箱根登山鉄道線": "/models/hakonetozan-3000/consist.json",
+  "箱根登山鉄道線": "/models/hakonetozan-2000/consist.json",
   "長堀鶴見緑地線": "/models/osaka-metro-80-series/consist.json",
   "埼玉高速鉄道線": "/models/tokyo-metro-9000series-5th/consist.json",
   "芝山鉄道線": "/models/keisei3700-6cars/consist.json",

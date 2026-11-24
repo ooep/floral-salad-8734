@@ -527,7 +527,8 @@
   "越美北線": "/models/jr-west-kiha120-kuzuryuko/consist.json",
   "こどもの国線": "/models/kodomonokuni-y000/consist.json",
   "競馬場線": "/models/keio-8000/consist.json",
-  "西名古屋港線": "/models/aonami-1000/consist.json"
+  "西名古屋港線": "/models/aonami-1000/consist.json",
+  "御岳登山ケーブル": "/models/mitaketozan/consist.json"
  },
  "rules": [
   {

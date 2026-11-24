@@ -559,7 +559,9 @@
   "志度線": "/models/kotoden-1080/consist.json",
   "因美線": "/models/jr-west-kiha121/consist.json",
   "伯備線": "/models/jr-west-kiha121/consist.json",
-  "智頭線": "/models/tizukyu-hot7000/consist.json"
+  "智頭線": "/models/tizukyu-hot7000/consist.json",
+  "小浜線": "/models/jr-west-125/consist.json",
+  "加古川線": "/models/jr-west-125/consist.json"
  },
  "rules": [
   {

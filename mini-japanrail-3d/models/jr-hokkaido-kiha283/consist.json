@@ -1,9 +1,16 @@
 {
  "name": "JR北海道キハ283系「大雪」",
  "car_length_m": 21.3,
+ "middle_car_length_m": 21.3,
  "cars": [
   {
    "model": "car1.glb"
+  },
+  {
+   "model": "car2.glb"
+  },
+  {
+   "model": "car3.glb"
   }
  ]
 }

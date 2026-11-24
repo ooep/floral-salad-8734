@@ -538,7 +538,8 @@
   "日豊本線": "/models/jr-kyusyu-783/consist.json",
   "八栗ケーブル": "/models/yakuri-ko1/consist.json",
   "いわて銀河鉄道線": "/models/igriwate-7000/consist.json",
-  "養老線": "/models/yoro-600/consist.json"
+  "養老線": "/models/yoro-600/consist.json",
+  "日暮里・舎人ライナー": "/models/nipporitoneri-300/consist.json"
  },
  "rules": [
   {

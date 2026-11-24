@@ -577,7 +577,9 @@
   "長野線": "/models/kintetsu-6400/consist.json",
   "道明寺線": "/models/kintetsu-6400/consist.json",
   "大阪モノレール本線": "/models/osakamono-3000/consist.json",
-  "彩都線": "/models/osakamono-3000/consist.json"
+  "彩都線": "/models/osakamono-3000/consist.json",
+  "内部線": "/models/yokkaitiasunaro-260/consist.json",
+  "八王子線": "/models/yokkaitiasunaro-260/consist.json"
  },
  "rules": [
   {

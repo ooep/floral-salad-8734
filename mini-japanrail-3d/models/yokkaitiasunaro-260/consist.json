@@ -1,0 +1,16 @@
+{
+  "name": "四日市あすなろう鉄道260系更新車U61編成",
+  "car_length_m": 15.6,
+  "middle_car_length_m": 11.46,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    },
+    {
+      "model": "car3.glb"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "name": "京急電鉄600形",
+  "car_length_m": 18.0,
+  "middle_car_length_m": 18.0,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    },
+    {
+      "model": "car3.glb"
+    },
+    {
+      "model": "car4.glb"
+    }
+  ]
+}

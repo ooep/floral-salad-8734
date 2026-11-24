@@ -1,0 +1,16 @@
+{
+  "name": "山陽電気鉄道3000系",
+  "car_length_m": 19.0,
+  "middle_car_length_m": 19.0,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    },
+    {
+      "model": "car3.glb"
+    }
+  ]
+}

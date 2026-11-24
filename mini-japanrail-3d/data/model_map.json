@@ -583,7 +583,8 @@
   "宮舞線": "/models/kyototango-ktr8000/consist.json",
   "宮豊線": "/models/kyototango-ktr8000/consist.json",
   "けいはんな線": "/models/kintetsu-7000/consist.json",
-  "世田谷線": "/models/tokyu-300/consist.json"
+  "世田谷線": "/models/tokyu-300/consist.json",
+  "山陽電気鉄道本線": "/models/sanyo-3000/consist.json"
  },
  "rules": [
   {

@@ -1,0 +1,13 @@
+{
+  "name": "西武6000系 アルミ車",
+  "car_length_m": 19.53,
+  "middle_car_length_m": 19.51,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

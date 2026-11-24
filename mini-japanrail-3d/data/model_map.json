@@ -307,8 +307,8 @@
   "富良野線": "/models/jr-hokkaido-h100/consist.json",
   "札沼線": "/models/jr-hokkaido-h100/consist.json",
   "根室本線": "/models/jr-hokkaido-h100/consist.json",
-  "石北本線": "/models/jr-hokkaido-h100/consist.json",
-  "釧網本線": "/models/jr-hokkaido-h100/consist.json",
+  "石北本線": "/models/jr-hokkaido-kiha54/consist.json",
+  "釧網本線": "/models/jr-hokkaido-kiha54/consist.json",
   "鹿児島市電唐湊線": "/models/kagoshimasiden-9500/consist.json",
   "鹿児島市電第一期線": "/models/kagoshimasiden-9500/consist.json",
   "鹿児島市電第二期線": "/models/kagoshimasiden-9500/consist.json",
@@ -533,7 +533,8 @@
   "渥美線": "/models/toyohasi-1800/consist.json",
   "石勝線": "/models/jr-hokkaido-kiha283/consist.json",
   "西九州線": "/models/matuura-mr600/consist.json",
-  "飯坂線": "/models/fukushimakotu-1000/consist.json"
+  "飯坂線": "/models/fukushimakotu-1000/consist.json",
+  "花咲線": "/models/jr-hokkaido-kiha54/consist.json"
  },
  "rules": [
   {

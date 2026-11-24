@@ -502,7 +502,9 @@
   "近江鉄道本線": "/models/oumi-900/consist.json",
   "八日市線": "/models/oumi-900/consist.json",
   "多賀線": "/models/oumi-900/consist.json",
-  "箕面線": "/models/hankyu-8000/consist.json"
+  "箕面線": "/models/hankyu-8000/consist.json",
+  "東山本線": "/models/okayamadenki-9200/consist.json",
+  "清輝橋線": "/models/okayamadenki-9200/consist.json"
  },
  "rules": [
   {

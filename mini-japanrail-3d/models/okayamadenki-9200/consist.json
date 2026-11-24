@@ -1,0 +1,10 @@
+{
+  "name": "岡山電気軌道9200形",
+  "car_length_m": 17.08,
+  "middle_car_length_m": 17.08,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

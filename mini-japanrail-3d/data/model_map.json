@@ -634,7 +634,8 @@
   "みなとみらい線": "/models/minatomirai-y500/consist.json",
   "都電荒川線": "/models/toden-8800/consist.json",
   "ほくほく線": "/models/hokuetu-hk100/consist.json",
-  "山万ユーカリが丘線": "/models/yamaman-1000/consist.json"
+  "山万ユーカリが丘線": "/models/yamaman-1000/consist.json",
+  "しなの鉄道線": "/models/sinano-sr1/consist.json"
  },
  "rules": [
   {

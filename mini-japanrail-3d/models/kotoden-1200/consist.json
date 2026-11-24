@@ -1,0 +1,13 @@
+{
+  "name": "高松琴平電気鉄道1200形",
+  "car_length_m": 18.81,
+  "middle_car_length_m": 18.81,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

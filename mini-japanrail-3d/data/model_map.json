@@ -602,7 +602,8 @@
   "郡中線": "/models/iyotetu-3000/consist.json",
   "山田線": "/models/kintetsu-23000/consist.json",
   "鳥羽線": "/models/kintetsu-23000/consist.json",
-  "志摩線": "/models/kintetsu-23000/consist.json"
+  "志摩線": "/models/kintetsu-23000/consist.json",
+  "東山線": "/models/nagoyasub-n1000/consist.json"
  },
  "rules": [
   {

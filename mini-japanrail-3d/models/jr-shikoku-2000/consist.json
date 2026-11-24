@@ -1,0 +1,16 @@
+{
+  "name": "JR四国2000系",
+  "car_length_m": 20.8,
+  "middle_car_length_m": 20.3,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    },
+    {
+      "model": "car3.glb"
+    }
+  ]
+}

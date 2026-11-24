@@ -1,0 +1,9 @@
+{
+ "name": "京王8000系",
+ "car_length_m": 19.5,
+ "cars": [
+  {
+   "model": "car1.glb"
+  }
+ ]
+}

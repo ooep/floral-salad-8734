@@ -525,7 +525,8 @@
   "室蘭本線": "/models/jr-hokkaido-737/consist.json",
   "西武多摩川線": "/models/seibu-101/consist.json",
   "越美北線": "/models/jr-west-kiha120-kuzuryuko/consist.json",
-  "こどもの国線": "/models/kodomonokuni-y000/consist.json"
+  "こどもの国線": "/models/kodomonokuni-y000/consist.json",
+  "競馬場線": "/models/keio-8000/consist.json"
  },
  "rules": [
   {

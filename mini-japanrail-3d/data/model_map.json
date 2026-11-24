@@ -337,7 +337,7 @@
   "多摩湖線": "/models/seibu-2000/consist.json",
   "拝島線": "/models/seibu-2000/consist.json",
   "西武園線": "/models/seibu-2000/consist.json",
-  "西武新宿線": "/models/seibu-2000/consist.json",
+  "西武新宿線": "/models/seibu-30000/consist.json",
   "野田線": "/models/tobu-8000/consist.json",
   "伊野線": "/models/tosaden-2000/consist.json",
   "後免線": "/models/tosaden-2000/consist.json",

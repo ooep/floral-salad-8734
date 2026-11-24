@@ -1,0 +1,16 @@
+{
+  "name": "名鉄2000系「ミュースカイ」",
+  "car_length_m": 19.13,
+  "middle_car_length_m": 19.07,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    },
+    {
+      "model": "car3.glb"
+    }
+  ]
+}

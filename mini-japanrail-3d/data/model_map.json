@@ -573,7 +573,9 @@
   "鬼怒川線": "/models/tobu-20400/consist.json",
   "東武日光線": "/models/tobu-20400/consist.json",
   "湯前線": "/models/kumagawa-kt500/consist.json",
-  "西武池袋線": "/models/seibu-001/consist.json"
+  "西武池袋線": "/models/seibu-001/consist.json",
+  "長野線": "/models/kintetsu-6400/consist.json",
+  "道明寺線": "/models/kintetsu-6400/consist.json"
  },
  "rules": [
   {

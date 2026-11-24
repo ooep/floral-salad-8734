@@ -1,0 +1,12 @@
+{
+ "name": "江ノ島電鉄 1000形",
+ "car_length_m": 12.7,
+ "cars": [
+  {
+   "model": "car1.glb"
+  },
+  {
+   "model": "car2.glb"
+  }
+ ]
+}

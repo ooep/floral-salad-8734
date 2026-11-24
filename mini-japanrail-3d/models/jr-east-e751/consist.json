@@ -1,0 +1,19 @@
+{
+  "name": "JR東日本E751系「つがる」",
+  "car_length_m": 21.38,
+  "middle_car_length_m": 20.04,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    },
+    {
+      "model": "car3.glb"
+    },
+    {
+      "model": "car4.glb"
+    }
+  ]
+}

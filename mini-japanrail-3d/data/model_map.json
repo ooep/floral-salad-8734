@@ -591,7 +591,12 @@
   "京都線": "/models/kintetsu-1020/consist.json",
   "海岸線": "/models/kobesub-5000/consist.json",
   "中村線": "/models/tosakuroshio-2700/consist.json",
-  "三岐線": "/models/sangi-5000/consist.json"
+  "三岐線": "/models/sangi-5000/consist.json",
+  "徳島線": "/models/jr-shikoku-1000/consist.json",
+  "牟岐線": "/models/jr-shikoku-1000/consist.json",
+  "鳴門線": "/models/jr-shikoku-1000/consist.json",
+  "予土線": "/models/jr-shikoku-1000/consist.json",
+  "内子線": "/models/jr-shikoku-1000/consist.json"
  },
  "rules": [
   {

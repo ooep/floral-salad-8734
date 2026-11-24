@@ -546,7 +546,8 @@
   "大井川本線": "/models/oigawa-16000/consist.json",
   "摩耶ケーブル線": "/models/mayacable/consist.json",
   "信楽線": "/models/shigarakikogen-skr310/consist.json",
-  "西信貴鋼索線": "/models/nisisigicabele/consist.json"
+  "西信貴鋼索線": "/models/nisisigicabele/consist.json",
+  "若桜線": "/models/wakasa-wt3000/consist.json"
  },
  "rules": [
   {

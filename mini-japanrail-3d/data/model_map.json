@@ -346,9 +346,9 @@
   "富山軌道線支線": "/models/toyamatihou-8000/consist.json",
   "富山軌道線本線": "/models/toyamatihou-8000/consist.json",
   "つくばエクスプレス線": "/models/tukubaexpress-tx1000/consist.json",
-  "有馬線": "/models/kobedentetu-6000/consist.json",
-  "神鉄三田線": "/models/kobedentetu-6000/consist.json",
-  "粟生線": "/models/kobedentetu-6000/consist.json",
+  "有馬線": "/models/kobedentetu-5000/consist.json",
+  "神鉄三田線": "/models/kobedentetu-5000/consist.json",
+  "粟生線": "/models/kobedentetu-5000/consist.json",
   "筑肥線": "/models/jr-kyusyu-303/consist.json",
   "唐津線": "/models/jr-kyusyu-303/consist.json",
   "阪堺線": "/models/hankai-1001/consist.json",
@@ -515,7 +515,8 @@
   "宇都宮芳賀ライトレール線": "/models/utsunomiya-hu300/consist.json",
   "南大阪線": "/models/kintetsu-16000/consist.json",
   "吉野線": "/models/kintetsu-16000/consist.json",
-  "生駒鋼索線": "/models/kintetsu-ikomocable/consist.json"
+  "生駒鋼索線": "/models/kintetsu-ikomocable/consist.json",
+  "公園都市線": "/models/kobedentetu-5000/consist.json"
  },
  "rules": [
   {

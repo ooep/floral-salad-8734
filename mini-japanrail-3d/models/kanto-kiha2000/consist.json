@@ -1,0 +1,10 @@
+{
+  "name": "関東鉄道キハ2000形",
+  "car_length_m": 20.39,
+  "middle_car_length_m": 20.39,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

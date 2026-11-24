@@ -563,7 +563,8 @@
   "小浜線": "/models/jr-west-125/consist.json",
   "加古川線": "/models/jr-west-125/consist.json",
   "湊線": "/models/hitatinaka-kiha11/consist.json",
-  "高徳線": "/models/jr-shikoku-2600/consist.json"
+  "高徳線": "/models/jr-shikoku-2600/consist.json",
+  "竜ヶ崎線": "/models/kanto-kiha2000/consist.json"
  },
  "rules": [
   {

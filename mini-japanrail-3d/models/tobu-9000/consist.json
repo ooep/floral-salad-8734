@@ -1,0 +1,13 @@
+{
+  "name": "東武9000系",
+  "car_length_m": 21.41,
+  "middle_car_length_m": 21.32,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

@@ -247,7 +247,7 @@
   "宝塚本線": "/models/hankyu9003/consist.json",
   "神戸本線": "/models/hankyu9000/consist.json",
   "千里線": "/models/hankyu1305/consist.json",
-  "嵐山本線": "/models/hankyu-6300-series/consist.json",
+  "嵐山本線": "/models/keihuku-2001/consist.json",
   "阪神本線": "/models/hansin-1000/consist.json",
   "名古屋本線": "/models/meitetsu-2000/consist.json",
   "常滑線": "/models/meitetsu-3300-series/consist.json",
@@ -564,7 +564,8 @@
   "加古川線": "/models/jr-west-125/consist.json",
   "湊線": "/models/hitatinaka-kiha11/consist.json",
   "高徳線": "/models/jr-shikoku-2600/consist.json",
-  "竜ヶ崎線": "/models/kanto-kiha2000/consist.json"
+  "竜ヶ崎線": "/models/kanto-kiha2000/consist.json",
+  "北野線": "/models/keihuku-2001/consist.json"
  },
  "rules": [
   {

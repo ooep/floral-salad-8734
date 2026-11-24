@@ -1,0 +1,10 @@
+{
+  "name": "京福電鉄モボ2001形",
+  "car_length_m": 15.24,
+  "middle_car_length_m": 15.24,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

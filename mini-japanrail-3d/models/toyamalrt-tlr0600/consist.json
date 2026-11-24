@@ -1,0 +1,10 @@
+{
+  "name": "富山ライトレールTLR0600形",
+  "car_length_m": 18.4,
+  "middle_car_length_m": 18.4,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

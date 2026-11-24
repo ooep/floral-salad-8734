@@ -1,0 +1,16 @@
+{
+  "name": "近畿日本鉄道22600系「Ace」",
+  "car_length_m": 20.8,
+  "middle_car_length_m": 20.5,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    },
+    {
+      "model": "car3.glb"
+    }
+  ]
+}

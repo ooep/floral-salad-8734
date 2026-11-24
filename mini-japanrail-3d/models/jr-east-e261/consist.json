@@ -1,0 +1,13 @@
+{
+  "name": "JR東日本E261系",
+  "car_length_m": 21.45,
+  "middle_car_length_m": 20.64,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

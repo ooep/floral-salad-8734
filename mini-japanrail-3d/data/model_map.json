@@ -511,7 +511,8 @@
   "石山坂本線": "/models/keihan-600/consist.json",
   "富山港線": "/models/toyamalrt-tlr0600/consist.json",
   "富山駅南北接続線": "/models/toyamalrt-tlr0600/consist.json",
-  "東部丘陵線": "/models/linimo-100/consist.json"
+  "東部丘陵線": "/models/linimo-100/consist.json",
+  "宇都宮芳賀ライトレール線": "/models/utsunomiya-hu300/consist.json"
  },
  "rules": [
   {

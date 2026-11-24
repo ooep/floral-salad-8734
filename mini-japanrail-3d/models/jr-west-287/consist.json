@@ -1,0 +1,13 @@
+{
+  "name": "JR西日本 287系「ロケットカイロス号」",
+  "car_length_m": 20.67,
+  "middle_car_length_m": 20.67,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

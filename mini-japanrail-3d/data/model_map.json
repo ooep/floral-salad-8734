@@ -565,7 +565,8 @@
   "湊線": "/models/hitatinaka-kiha11/consist.json",
   "高徳線": "/models/jr-shikoku-2600/consist.json",
   "竜ヶ崎線": "/models/kanto-kiha2000/consist.json",
-  "北野線": "/models/keihuku-2001/consist.json"
+  "北野線": "/models/keihuku-2001/consist.json",
+  "阿佐東線": "/models/asakaigan-asa300/consist.json"
  },
  "rules": [
   {

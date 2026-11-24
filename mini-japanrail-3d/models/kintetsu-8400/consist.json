@@ -1,0 +1,13 @@
+{
+  "name": "近鉄8400系",
+  "car_length_m": 21.42,
+  "middle_car_length_m": 21.29,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

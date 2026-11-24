@@ -1,0 +1,13 @@
+{
+  "name": "E653系1000番台",
+  "car_length_m": 21.74,
+  "middle_car_length_m": 21.74,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

@@ -534,7 +534,8 @@
   "石勝線": "/models/jr-hokkaido-kiha283/consist.json",
   "西九州線": "/models/matuura-mr600/consist.json",
   "飯坂線": "/models/fukushimakotu-1000/consist.json",
-  "花咲線": "/models/jr-hokkaido-kiha54/consist.json"
+  "花咲線": "/models/jr-hokkaido-kiha54/consist.json",
+  "日豊本線": "/models/jr-kyusyu-783/consist.json"
  },
  "rules": [
   {

@@ -624,7 +624,8 @@
   "JR神戸線": "/models/jr-west-225/consist.json",
   "北大阪急行南北線": "/models/kitaosaka-9000/consist.json",
   "大村線": "/models/jr-kyusyu-yc1/consist.json",
-  "西鉄天神大牟田線": "/models/nisitetu-3000/consist.json"
+  "西鉄天神大牟田線": "/models/nisitetu-3000/consist.json",
+  "桜通線": "/models/nagoyasub-6050/consist.json"
  },
  "rules": [
   {

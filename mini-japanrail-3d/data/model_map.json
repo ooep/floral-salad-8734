@@ -510,7 +510,8 @@
   "横河原線": "/models/iyotetu-610/consist.json",
   "石山坂本線": "/models/keihan-600/consist.json",
   "富山港線": "/models/toyamalrt-tlr0600/consist.json",
-  "富山駅南北接続線": "/models/toyamalrt-tlr0600/consist.json"
+  "富山駅南北接続線": "/models/toyamalrt-tlr0600/consist.json",
+  "東部丘陵線": "/models/linimo-100/consist.json"
  },
  "rules": [
   {

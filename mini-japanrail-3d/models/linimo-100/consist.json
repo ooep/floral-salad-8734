@@ -1,0 +1,15 @@
+{
+  "name": "愛知高速交通100形",
+  "car_length_m": 14.6,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    },
+    {
+      "model": "car3.glb"
+    }
+  ]
+}

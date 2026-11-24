@@ -1,0 +1,17 @@
+{
+  "cars": [
+    {
+      "length_m": 20.72,
+      "file": "car1.glb"
+    },
+    {
+      "length_m": 20.72,
+      "file": "car2.glb"
+    }
+  ],
+  "car_length_m": [
+    20.72,
+    20.72
+  ],
+  "gap_m": 0.3
+}

@@ -615,7 +615,8 @@
   "山陽電鉄網干線": "/models/sanyo-5000/consist.json",
   "南武支線": "/models/jr-east-e127/consist.json",
   "東武東上線": "/models/tobu-9000/consist.json",
-  "羽越本線": "/models/jr-east-e653/consist.json"
+  "羽越本線": "/models/jr-east-e653/consist.json",
+  "信貴線": "/models/kintetsu-1430/consist.json"
  },
  "rules": [
   {

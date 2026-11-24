@@ -1,0 +1,13 @@
+{
+  "name": "日暮里・舎人ライナー330形",
+  "car_length_m": 8.55,
+  "middle_car_length_m": 8.55,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

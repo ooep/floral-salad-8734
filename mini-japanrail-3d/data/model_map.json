@@ -630,7 +630,8 @@
   "越美南線": "/models/nagara-300/consist.json",
   "六甲アイランド線": "/models/kobesinkotu-3000/consist.json",
   "宮崎空港線": "/models/jr-kyusyu-815/consist.json",
-  "京成成田空港線": "/models/keisei-3100/consist.json"
+  "京成成田空港線": "/models/keisei-3100/consist.json",
+  "みなとみらい線": "/models/minatomirai-y500/consist.json"
  },
  "rules": [
   {

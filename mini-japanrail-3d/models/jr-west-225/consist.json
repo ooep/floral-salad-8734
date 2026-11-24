@@ -1,0 +1,13 @@
+{
+  "name": "225系0番台",
+  "car_length_m": 20.32,
+  "middle_car_length_m": 20.32,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

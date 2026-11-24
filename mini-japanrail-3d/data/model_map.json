@@ -562,7 +562,8 @@
   "智頭線": "/models/tizukyu-hot7000/consist.json",
   "小浜線": "/models/jr-west-125/consist.json",
   "加古川線": "/models/jr-west-125/consist.json",
-  "湊線": "/models/hitatinaka-kiha11/consist.json"
+  "湊線": "/models/hitatinaka-kiha11/consist.json",
+  "高徳線": "/models/jr-shikoku-2600/consist.json"
  },
  "rules": [
   {

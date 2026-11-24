@@ -1,0 +1,19 @@
+{
+  "name": "神戸新交通3000形",
+  "car_length_m": 8.4,
+  "middle_car_length_m": 8.4,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    },
+    {
+      "model": "car3.glb"
+    },
+    {
+      "model": "car4.glb"
+    }
+  ]
+}

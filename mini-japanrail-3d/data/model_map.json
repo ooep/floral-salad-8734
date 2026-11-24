@@ -627,7 +627,8 @@
   "西鉄天神大牟田線": "/models/nisitetu-3000/consist.json",
   "桜通線": "/models/nagoyasub-6050/consist.json",
   "新京成線": "/models/sinkeisei-80000/consist.json",
-  "越美南線": "/models/nagara-300/consist.json"
+  "越美南線": "/models/nagara-300/consist.json",
+  "六甲アイランド線": "/models/kobesinkotu-3000/consist.json"
  },
  "rules": [
   {

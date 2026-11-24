@@ -519,7 +519,9 @@
   "公園都市線": "/models/kobedentetu-5000/consist.json",
   "肥薩線": "/models/jr-kyusyu-kiha140/consist.json",
   "吉都線": "/models/jr-kyusyu-kiha140/consist.json",
-  "三角線": "/models/jr-kyusyu-kiha140/consist.json"
+  "三角線": "/models/jr-kyusyu-kiha140/consist.json",
+  "津山線": "/models/jr-west-kiha47/consist.json",
+  "吉備線": "/models/jr-west-kiha47/consist.json"
  },
  "rules": [
   {

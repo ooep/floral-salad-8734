@@ -1,0 +1,13 @@
+{
+  "name": "伊豆箱根鉄道 7000系",
+  "car_length_m": 19.9,
+  "middle_car_length_m": 19.9,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "name": "JR西日本キハ121系",
+  "car_length_m": 19.67,
+  "middle_car_length_m": 19.67,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

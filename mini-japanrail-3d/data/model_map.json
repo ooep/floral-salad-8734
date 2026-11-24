@@ -556,7 +556,9 @@
   "田原本線": "/models/kintetsu-8400/consist.json",
   "琴平線": "/models/kotoden-1080/consist.json",
   "長尾線": "/models/kotoden-1080/consist.json",
-  "志度線": "/models/kotoden-1080/consist.json"
+  "志度線": "/models/kotoden-1080/consist.json",
+  "因美線": "/models/jr-west-kiha121/consist.json",
+  "伯備線": "/models/jr-west-kiha121/consist.json"
  },
  "rules": [
   {

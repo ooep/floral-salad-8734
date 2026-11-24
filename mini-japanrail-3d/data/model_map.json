@@ -609,7 +609,9 @@
   "静岡清水線": "/models/shizuoka-a3000/consist.json",
   "城北線": "/models/iyotetu-5000/consist.json",
   "本町線": "/models/iyotetu-5000/consist.json",
-  "大手町線": "/models/iyotetu-5000/consist.json"
+  "大手町線": "/models/iyotetu-5000/consist.json",
+  "名城線": "/models/nagoyasub-2000/consist.json",
+  "名港線": "/models/nagoyasub-2000/consist.json"
  },
  "rules": [
   {

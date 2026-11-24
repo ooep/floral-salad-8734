@@ -1,0 +1,10 @@
+{
+  "name": "東急 300系",
+  "car_length_m": 23.98,
+  "middle_car_length_m": 23.98,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

@@ -498,7 +498,10 @@
   "青い森鉄道線": "/models/aoimori-703/consist.json",
   "筑豊本線": "/models/jr-kyusyu-103/consist.json",
   "香椎線": "/models/jr-kyusyu-103/consist.json",
-  "篠栗線": "/models/jr-kyusyu-103/consist.json"
+  "篠栗線": "/models/jr-kyusyu-103/consist.json",
+  "近江鉄道本線": "/models/oumi-900/consist.json",
+  "八日市線": "/models/oumi-900/consist.json",
+  "多賀線": "/models/oumi-900/consist.json"
  },
  "rules": [
   {

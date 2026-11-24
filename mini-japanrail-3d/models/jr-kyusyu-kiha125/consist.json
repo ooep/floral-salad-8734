@@ -1,0 +1,10 @@
+{
+  "name": "JR九州キハ125形",
+  "car_length_m": 18.5,
+  "middle_car_length_m": 18.5,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

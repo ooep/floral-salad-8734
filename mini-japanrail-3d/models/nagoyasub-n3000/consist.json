@@ -1,0 +1,13 @@
+{
+  "name": "名古屋市営地下鉄N3000形",
+  "car_length_m": 18.85,
+  "middle_car_length_m": 19.23,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

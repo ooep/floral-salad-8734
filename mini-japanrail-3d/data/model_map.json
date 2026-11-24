@@ -551,7 +551,8 @@
   "予讃線": "/models/jr-shikoku-2700/consist.json",
   "土讃線": "/models/jr-shikoku-2700/consist.json",
   "宿毛線": "/models/jr-shikoku-2700/consist.json",
-  "本四備讃線": "/models/jr-shikoku-2700/consist.json"
+  "本四備讃線": "/models/jr-shikoku-2700/consist.json",
+  "鶴舞線": "/models/nagoyasub-n3000/consist.json"
  },
  "rules": [
   {

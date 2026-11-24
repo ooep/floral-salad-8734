@@ -516,7 +516,10 @@
   "南大阪線": "/models/kintetsu-16000/consist.json",
   "吉野線": "/models/kintetsu-16000/consist.json",
   "生駒鋼索線": "/models/kintetsu-ikomocable/consist.json",
-  "公園都市線": "/models/kobedentetu-5000/consist.json"
+  "公園都市線": "/models/kobedentetu-5000/consist.json",
+  "肥薩線": "/models/jr-kyusyu-kiha140/consist.json",
+  "吉都線": "/models/jr-kyusyu-kiha140/consist.json",
+  "三角線": "/models/jr-kyusyu-kiha140/consist.json"
  },
  "rules": [
   {

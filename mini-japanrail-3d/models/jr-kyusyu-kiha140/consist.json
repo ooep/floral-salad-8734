@@ -1,0 +1,9 @@
+{
+ "name": "キハ140形",
+ "car_length_m": 21.3,
+ "cars": [
+  {
+   "model": "car1.glb"
+  }
+ ]
+}

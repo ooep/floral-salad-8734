@@ -506,7 +506,8 @@
   "東山本線": "/models/okayamadenki-9200/consist.json",
   "清輝橋線": "/models/okayamadenki-9200/consist.json",
   "富山港線": "/models/toyamalrt-tlr0600/consist.json",
-  "富山駅南北接続線": "/models/toyamalrt-tlr0600/consist.json"
+  "富山駅南北接続線": "/models/toyamalrt-tlr0600/consist.json",
+  "石山坂本線": "/models/keihan-600/consist.json"
  },
  "rules": [
   {

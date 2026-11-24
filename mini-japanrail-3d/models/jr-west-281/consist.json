@@ -1,0 +1,13 @@
+{
+  "name": "281系はるか",
+  "car_length_m": 20.59,
+  "middle_car_length_m": 20.59,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

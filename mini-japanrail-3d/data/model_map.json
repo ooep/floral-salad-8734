@@ -543,7 +543,8 @@
   "多奈川線": "/models/nankai-1000/consist.json",
   "高師浜線": "/models/nankai-1000/consist.json",
   "京都本線": "/models/hankyu-7300/consist.json",
-  "大井川本線": "/models/oigawa-16000/consist.json"
+  "大井川本線": "/models/oigawa-16000/consist.json",
+  "摩耶ケーブル線": "/models/mayacable/consist.json"
  },
  "rules": [
   {

@@ -605,7 +605,8 @@
   "志摩線": "/models/kintetsu-23000/consist.json",
   "東山線": "/models/nagoyasub-n1000/consist.json",
   "河和線": "/models/meitetsu-2200/consist.json",
-  "知多新線": "/models/meitetsu-2200/consist.json"
+  "知多新線": "/models/meitetsu-2200/consist.json",
+  "静岡清水線": "/models/shizuoka-a3000/consist.json"
  },
  "rules": [
   {

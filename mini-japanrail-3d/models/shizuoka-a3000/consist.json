@@ -1,0 +1,13 @@
+{
+  "name": "静岡鉄道A3000系 エレガントブルー",
+  "car_length_m": 17.58,
+  "middle_car_length_m": 17.58,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

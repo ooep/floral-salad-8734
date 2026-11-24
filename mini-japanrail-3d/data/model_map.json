@@ -571,7 +571,8 @@
   "越後線": "/models/jr-east-e129/consist.json",
   "弥彦線": "/models/jr-east-e129/consist.json",
   "鬼怒川線": "/models/tobu-20400/consist.json",
-  "東武日光線": "/models/tobu-20400/consist.json"
+  "東武日光線": "/models/tobu-20400/consist.json",
+  "湯前線": "/models/kumagawa-kt500/consist.json"
  },
  "rules": [
   {

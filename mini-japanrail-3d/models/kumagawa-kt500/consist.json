@@ -1,0 +1,10 @@
+{
+  "name": "くま川鉄道 KT500形",
+  "car_length_m": 18.5,
+  "middle_car_length_m": 18.5,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

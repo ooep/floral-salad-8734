@@ -532,7 +532,8 @@
   "jr七尾線": "/models/jr-west-521/consist.json",
   "渥美線": "/models/toyohasi-1800/consist.json",
   "石勝線": "/models/jr-hokkaido-kiha283/consist.json",
-  "西九州線": "/models/matuura-mr600/consist.json"
+  "西九州線": "/models/matuura-mr600/consist.json",
+  "飯坂線": "/models/fukushimakotu-1000/consist.json"
  },
  "rules": [
   {

@@ -1,0 +1,13 @@
+{
+  "name": "土佐くろしお鉄道2700系",
+  "car_length_m": 21.04,
+  "middle_car_length_m": 21.02,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

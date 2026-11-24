@@ -589,7 +589,8 @@
   "津軽線": "/models/jr-east-e751/consist.json",
   "生駒線": "/models/kintetsu-1020/consist.json",
   "京都線": "/models/kintetsu-1020/consist.json",
-  "海岸線": "/models/kobesub-5000/consist.json"
+  "海岸線": "/models/kobesub-5000/consist.json",
+  "中村線": "/models/tosakuroshio-2700/consist.json"
  },
  "rules": [
   {

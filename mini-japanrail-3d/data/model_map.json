@@ -566,7 +566,10 @@
   "高徳線": "/models/jr-shikoku-2600/consist.json",
   "竜ヶ崎線": "/models/kanto-kiha2000/consist.json",
   "北野線": "/models/keihuku-2001/consist.json",
-  "阿佐東線": "/models/asakaigan-asa300/consist.json"
+  "阿佐東線": "/models/asakaigan-asa300/consist.json",
+  "白新線": "/models/jr-east-e129/consist.json",
+  "越後線": "/models/jr-east-e129/consist.json",
+  "弥彦線": "/models/jr-east-e129/consist.json"
  },
  "rules": [
   {

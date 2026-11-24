@@ -1,0 +1,13 @@
+{
+  "name": "伊予鉄道610系",
+  "car_length_m": 17.73,
+  "middle_car_length_m": 17.73,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

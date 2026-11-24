@@ -505,7 +505,9 @@
   "箕面線": "/models/hankyu-8000/consist.json",
   "東山本線": "/models/okayamadenki-9200/consist.json",
   "清輝橋線": "/models/okayamadenki-9200/consist.json",
-  "長崎本線": "/models/jr-kyusyu-817/consist.json"
+  "長崎本線": "/models/jr-kyusyu-817/consist.json",
+  "高浜線": "/models/iyotetu-610/consist.json",
+  "横河原線": "/models/iyotetu-610/consist.json"
  },
  "rules": [
   {

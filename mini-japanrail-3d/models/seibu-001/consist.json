@@ -1,0 +1,9 @@
+{
+  "name": "西武001系「ラビュー」",
+  "car_length_m": 21.08,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

@@ -271,7 +271,7 @@
   "近鉄奈良線": "/models/9820-hutu-amagasaki-6cars/consist.json",
   "狭山線": "/models/seibu-2000/consist.json",
   "豊島線": "/models/tokyu5050-8cars/consist.json",
-  "西武秩父線": "/models/tokyu5050-8cars/consist.json",
+  "西武秩父線": "/models/seibu-001/consist.json",
   "西武有楽町線": "/models/tokyu5050-8cars/consist.json",
   "長野電鉄長野線": "/models/nagano-2100/consist.json",
   "ハピラインふくい線": "/models/happylinefukui-521/consist.json",
@@ -572,7 +572,8 @@
   "弥彦線": "/models/jr-east-e129/consist.json",
   "鬼怒川線": "/models/tobu-20400/consist.json",
   "東武日光線": "/models/tobu-20400/consist.json",
-  "湯前線": "/models/kumagawa-kt500/consist.json"
+  "湯前線": "/models/kumagawa-kt500/consist.json",
+  "西武池袋線": "/models/seibu-001/consist.json"
  },
  "rules": [
   {

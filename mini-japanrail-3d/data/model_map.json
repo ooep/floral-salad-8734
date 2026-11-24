@@ -622,7 +622,8 @@
   "琵琶湖線": "/models/jr-west-225/consist.json",
   "JR京都線": "/models/jr-west-225/consist.json",
   "JR神戸線": "/models/jr-west-225/consist.json",
-  "北大阪急行南北線": "/models/kitaosaka-9000/consist.json"
+  "北大阪急行南北線": "/models/kitaosaka-9000/consist.json",
+  "大村線": "/models/jr-kyusyu-yc1/consist.json"
  },
  "rules": [
   {

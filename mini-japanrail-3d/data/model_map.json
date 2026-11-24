@@ -553,7 +553,10 @@
   "宿毛線": "/models/jr-shikoku-2700/consist.json",
   "本四備讃線": "/models/jr-shikoku-2700/consist.json",
   "鶴舞線": "/models/nagoyasub-n3000/consist.json",
-  "田原本線": "/models/kintetsu-8400/consist.json"
+  "田原本線": "/models/kintetsu-8400/consist.json",
+  "琴平線": "/models/kotoden-1080/consist.json",
+  "長尾線": "/models/kotoden-1080/consist.json",
+  "志度線": "/models/kotoden-1080/consist.json"
  },
  "rules": [
   {

@@ -632,7 +632,8 @@
   "宮崎空港線": "/models/jr-kyusyu-815/consist.json",
   "京成成田空港線": "/models/keisei-3100/consist.json",
   "みなとみらい線": "/models/minatomirai-y500/consist.json",
-  "都電荒川線": "/models/toden-8800/consist.json"
+  "都電荒川線": "/models/toden-8800/consist.json",
+  "ほくほく線": "/models/hokuetu-hk100/consist.json"
  },
  "rules": [
   {

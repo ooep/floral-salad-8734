@@ -569,7 +569,9 @@
   "阿佐東線": "/models/asakaigan-asa300/consist.json",
   "白新線": "/models/jr-east-e129/consist.json",
   "越後線": "/models/jr-east-e129/consist.json",
-  "弥彦線": "/models/jr-east-e129/consist.json"
+  "弥彦線": "/models/jr-east-e129/consist.json",
+  "鬼怒川線": "/models/tobu-20400/consist.json",
+  "東武日光線": "/models/tobu-20400/consist.json"
  },
  "rules": [
   {

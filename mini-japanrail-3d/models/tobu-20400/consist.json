@@ -1,0 +1,13 @@
+{
+  "name": "東武20400系",
+  "car_length_m": 18.43,
+  "middle_car_length_m": 18.73,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

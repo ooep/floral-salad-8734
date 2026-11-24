@@ -1,0 +1,16 @@
+{
+  "name": "北大阪急行9000系",
+  "car_length_m": 18.9,
+  "middle_car_length_m": 18.9,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    },
+    {
+      "model": "car3.glb"
+    }
+  ]
+}

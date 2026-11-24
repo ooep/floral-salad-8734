@@ -1,0 +1,16 @@
+{
+  "name": "阪急電鉄8000系",
+  "car_length_m": 18.44,
+  "middle_car_length_m": 18.44,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    },
+    {
+      "model": "car3.glb"
+    }
+  ]
+}

@@ -501,7 +501,8 @@
   "篠栗線": "/models/jr-kyusyu-103/consist.json",
   "近江鉄道本線": "/models/oumi-900/consist.json",
   "八日市線": "/models/oumi-900/consist.json",
-  "多賀線": "/models/oumi-900/consist.json"
+  "多賀線": "/models/oumi-900/consist.json",
+  "箕面線": "/models/hankyu-8000/consist.json"
  },
  "rules": [
   {

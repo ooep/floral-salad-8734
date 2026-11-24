@@ -1,0 +1,13 @@
+{
+  "name": "京都丹後鉄道KTR8000形",
+  "car_length_m": 21.1,
+  "middle_car_length_m": 21.1,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+ "name": "IGRいわて銀河鉄道 7000系",
+ "car_length_m": 20.0,
+ "cars": [
+  {
+   "model": "car1.glb"
+  },
+  {
+   "model": "car2.glb"
+  }
+ ]
+}

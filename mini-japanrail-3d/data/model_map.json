@@ -536,7 +536,8 @@
   "飯坂線": "/models/fukushimakotu-1000/consist.json",
   "花咲線": "/models/jr-hokkaido-kiha54/consist.json",
   "日豊本線": "/models/jr-kyusyu-783/consist.json",
-  "八栗ケーブル": "/models/yakuri-ko1/consist.json"
+  "八栗ケーブル": "/models/yakuri-ko1/consist.json",
+  "いわて銀河鉄道線": "/models/igriwate-7000/consist.json"
  },
  "rules": [
   {

@@ -523,7 +523,8 @@
   "津山線": "/models/jr-west-kiha47/consist.json",
   "吉備線": "/models/jr-west-kiha47/consist.json",
   "室蘭本線": "/models/jr-hokkaido-737/consist.json",
-  "西武多摩川線": "/models/seibu-101/consist.json"
+  "西武多摩川線": "/models/seibu-101/consist.json",
+  "越美北線": "/models/jr-west-kiha120-kuzuryuko/consist.json"
  },
  "rules": [
   {

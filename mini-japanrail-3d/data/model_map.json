@@ -646,7 +646,8 @@
   "わたらせ渓谷線": "/models/watarase-wkt500/consist.json",
   "山口線": "/models/jr-west-kiha187/consist.json",
   "和歌山港線": "/models/nankai-10000/consist.json",
-  "高山本線": "/models/jr-tokai-hc85/consist.json"
+  "高山本線": "/models/jr-tokai-hc85/consist.json",
+  "北しなの線": "/models/sinano-115/consist.json"
  },
  "rules": [
   {

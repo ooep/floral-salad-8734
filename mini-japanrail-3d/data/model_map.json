@@ -637,7 +637,8 @@
   "山万ユーカリが丘線": "/models/yamaman-1000/consist.json",
   "しなの鉄道線": "/models/sinano-sr1/consist.json",
   "西鉄貝塚線": "/models/nisitetu-600/consist.json",
-  "万葉線": "/models/manyosen-7070/consist.json"
+  "万葉線": "/models/manyosen-7070/consist.json",
+  "鳥海山ろく線": "/models/yurikogen-yr3000/consist.json"
  },
  "rules": [
   {

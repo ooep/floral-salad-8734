@@ -1,0 +1,13 @@
+{
+  "name": "山陽電鉄5030系",
+  "car_length_m": 18.45,
+  "middle_car_length_m": 18.45,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

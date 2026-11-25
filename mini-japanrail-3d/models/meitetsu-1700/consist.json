@@ -1,0 +1,10 @@
+{
+  "name": "名古屋鉄道1700系モ1700形",
+  "car_length_m": 19.415,
+  "middle_car_length_m": 19.415,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

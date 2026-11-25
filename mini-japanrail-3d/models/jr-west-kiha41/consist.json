@@ -1,0 +1,10 @@
+{
+  "name": "JR西日本キハ41形2000番代",
+  "car_length_m": 20.0,
+  "middle_car_length_m": 20.0,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

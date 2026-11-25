@@ -1,0 +1,10 @@
+{
+  "name": "札幌市交通局 210形",
+  "car_length_m": 12.5,
+  "middle_car_length_m": 12.5,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

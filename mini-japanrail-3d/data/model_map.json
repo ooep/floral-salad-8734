@@ -653,7 +653,8 @@
   "甘木線": "/models/nisitetu-7050/consist.json",
   "筑豊電気鉄道線": "/models/tikuden-5000/consist.json",
   "豊田線": "/models/meitetsu-100/consist.json",
-  "京成松戸線": "/models/keisei-8800/consist.json"
+  "京成松戸線": "/models/keisei-8800/consist.json",
+  "篠ノ井線": "/models/jr-tokai-383/consist.json"
  },
  "rules": [
   {

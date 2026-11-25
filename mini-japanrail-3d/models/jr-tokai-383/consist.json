@@ -1,0 +1,13 @@
+{
+  "name": "383系「ワイドビューしなの」",
+  "car_length_m": 21.92,
+  "middle_car_length_m": 21.92,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

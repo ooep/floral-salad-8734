@@ -1,0 +1,13 @@
+{
+ "model_id": "jr-kyusyu-kiha147",
+ "cars": [
+  {
+   "id": "car1",
+   "name": "キハ147形",
+   "length": 20.0,
+   "flip": false
+  }
+ ],
+ "lines": {},
+ "gap": 0.3
+}

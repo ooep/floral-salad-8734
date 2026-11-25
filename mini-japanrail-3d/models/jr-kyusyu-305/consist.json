@@ -1,0 +1,13 @@
+{
+  "name": "JR九州305系",
+  "car_length_m": 20.25,
+  "middle_car_length_m": 20.25,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

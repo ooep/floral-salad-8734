@@ -1,0 +1,13 @@
+{
+  "name": "860系",
+  "car_length_m": 18.5,
+  "middle_car_length_m": 18.5,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

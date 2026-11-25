@@ -1,0 +1,10 @@
+{
+  "name": "山形鉄道YR880形YR881「こぶし」",
+  "car_length_m": 18.5,
+  "middle_car_length_m": 18.5,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

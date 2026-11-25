@@ -639,7 +639,8 @@
   "西鉄貝塚線": "/models/nisitetu-600/consist.json",
   "万葉線": "/models/manyosen-7070/consist.json",
   "鳥海山ろく線": "/models/yurikogen-yr3000/consist.json",
-  "札幌市電": "/models/sapporosiden-1100/consist.json"
+  "札幌市電": "/models/sapporosiden-1100/consist.json",
+  "フラワー長井線": "/models/yamagata-yr880/consist.json"
  },
  "rules": [
   {

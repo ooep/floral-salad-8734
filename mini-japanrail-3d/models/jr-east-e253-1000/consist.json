@@ -1,0 +1,13 @@
+{
+  "name": "JR东日本253系1000番台「日光」「きぬがわ」",
+  "car_length_m": 20.5,
+  "middle_car_length_m": 20.5,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

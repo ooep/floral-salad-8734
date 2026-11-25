@@ -1,0 +1,10 @@
+{
+  "name": "東武N100系「スペーシアX」",
+  "car_length_m": 21.58,
+  "middle_car_length_m": 21.58,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

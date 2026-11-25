@@ -1,0 +1,13 @@
+{
+  "name": "小田急60000系「ロマンスカーMSE」",
+  "car_length_m": 19.72,
+  "middle_car_length_m": 19.72,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "name": "阪堺電気軌道 モ701形「標準塗装」",
+  "car_length_m": 13.71,
+  "middle_car_length_m": 13.71,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

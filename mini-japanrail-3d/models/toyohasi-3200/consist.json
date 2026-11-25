@@ -1,0 +1,10 @@
+{
+  "name": "豊橋鉄道 モ3200形「標準色」",
+  "car_length_m": 12.3,
+  "middle_car_length_m": 12.3,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

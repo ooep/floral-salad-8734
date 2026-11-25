@@ -1,0 +1,10 @@
+{
+  "name": "札幌市電1100形「シリウス」",
+  "car_length_m": 13.0,
+  "middle_car_length_m": 13.0,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

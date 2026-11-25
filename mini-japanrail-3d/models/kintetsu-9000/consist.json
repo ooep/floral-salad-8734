@@ -1,0 +1,13 @@
+{
+  "name": "近畿日本鉄道9000系",
+  "car_length_m": 20.77,
+  "middle_car_length_m": 20.67,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "name": "名古屋鉄道モ880形（福井鉄道880形）",
+  "car_length_m": 20.6,
+  "middle_car_length_m": 20.6,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

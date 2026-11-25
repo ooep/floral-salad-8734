@@ -1,0 +1,13 @@
+{
+  "name": "683系2000番台「サンダーバード」",
+  "car_length_m": 21.16,
+  "middle_car_length_m": 21.16,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

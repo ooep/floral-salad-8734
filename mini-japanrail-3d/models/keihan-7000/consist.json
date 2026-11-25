@@ -1,0 +1,16 @@
+{
+  "name": "京阪7000系",
+  "car_length_m": 18.7,
+  "middle_car_length_m": 18.7,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    },
+    {
+      "model": "car3.glb"
+    }
+  ]
+}

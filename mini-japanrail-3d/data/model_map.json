@@ -673,7 +673,8 @@
   "宇部線": "/models/jr-west-123/consist.json",
   "播但線": "/models/jr-west-kiha40/consist.json",
   "瀬戸大橋線": "/models/jr-shikoku-5000/consist.json",
-  "グリーンライン": "/models/yokohamasub-10000/consist.json"
+  "グリーンライン": "/models/yokohamasub-10000/consist.json",
+  "太宰府線": "/models/nisitetu-6000/consist.json"
  },
  "rules": [
   {

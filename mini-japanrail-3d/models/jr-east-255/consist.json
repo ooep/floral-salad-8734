@@ -1,0 +1,13 @@
+{
+  "name": "JR東日本255系「房総ビューエクスプレス」",
+  "car_length_m": 20.5,
+  "middle_car_length_m": 21.0,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

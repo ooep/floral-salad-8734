@@ -1,0 +1,13 @@
+{
+  "name": "東京メトロ07系",
+  "car_length_m": 20.07,
+  "middle_car_length_m": 20.07,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

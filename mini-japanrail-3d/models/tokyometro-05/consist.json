@@ -1,0 +1,16 @@
+{
+  "name": "東京メトロ05系",
+  "car_length_m": 20.0,
+  "middle_car_length_m": 20.0,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    },
+    {
+      "model": "car3.glb"
+    }
+  ]
+}

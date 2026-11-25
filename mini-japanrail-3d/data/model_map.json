@@ -678,7 +678,8 @@
   "ブルーライン": "/models/yokohamasub-3000v/consist.json",
   "アストラムライン": "/models/astram-7000/consist.json",
   "嵯峨野観光線": "/models/sagano-de10/consist.json",
-  "福岡市営地下鉄空港線": "/models/hukuokasub-2000/consist.json"
+  "福岡市営地下鉄空港線": "/models/hukuokasub-2000/consist.json",
+  "高野線": "/models/nankai-31000/consist.json"
  },
  "rules": [
   {

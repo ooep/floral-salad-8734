@@ -1,0 +1,16 @@
+{
+  "name": "200系「りょうもう」",
+  "car_length_m": 20.51,
+  "middle_car_length_m": 19.31,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    },
+    {
+      "model": "car3.glb"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "8200系",
+  "car_length_m": 19.0,
+  "middle_car_length_m": 19.0,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

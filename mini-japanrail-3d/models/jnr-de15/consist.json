@@ -1,0 +1,10 @@
+{
+  "name": "国鉄DE15形",
+  "car_length_m": 14.15,
+  "middle_car_length_m": 14.15,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

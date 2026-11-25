@@ -1,0 +1,10 @@
+{
+  "name": "小田急 4000系",
+  "car_length_m": 20.15,
+  "middle_car_length_m": 20.15,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

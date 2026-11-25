@@ -1,0 +1,13 @@
+{
+  "name": "京成電鉄3200形（2代目）",
+  "car_length_m": 18.0,
+  "middle_car_length_m": 18.0,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

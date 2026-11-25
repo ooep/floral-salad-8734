@@ -1,0 +1,13 @@
+{
+  "name": "JR东日本HB-E300系「海里」",
+  "car_length_m": 20.6,
+  "middle_car_length_m": 20.6,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

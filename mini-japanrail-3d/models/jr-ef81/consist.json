@@ -1,0 +1,10 @@
+{
+  "name": "国鉄EF81形電気機関車",
+  "car_length_m": 18.6,
+  "middle_car_length_m": 18.6,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

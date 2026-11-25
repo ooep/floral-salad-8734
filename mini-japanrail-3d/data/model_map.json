@@ -675,7 +675,8 @@
   "瀬戸大橋線": "/models/jr-shikoku-5000/consist.json",
   "グリーンライン": "/models/yokohamasub-10000/consist.json",
   "太宰府線": "/models/nisitetu-6000/consist.json",
-  "ブルーライン": "/models/yokohamasub-3000v/consist.json"
+  "ブルーライン": "/models/yokohamasub-3000v/consist.json",
+  "アストラムライン": "/models/astram-7000/consist.json"
  },
  "rules": [
   {

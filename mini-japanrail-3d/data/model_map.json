@@ -650,7 +650,8 @@
   "北しなの線": "/models/sinano-115/consist.json",
   "御所線": "/models/kintetsu-6820/consist.json",
   "仙石線": "/models/jr-east-hbe210/consist.json",
-  "甘木線": "/models/nisitetu-7050/consist.json"
+  "甘木線": "/models/nisitetu-7050/consist.json",
+  "筑豊電気鉄道線": "/models/tikuden-5000/consist.json"
  },
  "rules": [
   {

@@ -1,0 +1,10 @@
+{
+  "name": "筑豊電気鉄道 5000形",
+  "car_length_m": 17.6,
+  "middle_car_length_m": 17.6,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

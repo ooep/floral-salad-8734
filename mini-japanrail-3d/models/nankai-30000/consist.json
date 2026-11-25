@@ -1,0 +1,16 @@
+{
+  "name": "南海30000系「こうや」",
+  "car_length_m": 17.8,
+  "middle_car_length_m": 17.8,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    },
+    {
+      "model": "car3.glb"
+    }
+  ]
+}

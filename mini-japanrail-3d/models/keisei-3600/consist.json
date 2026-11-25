@@ -1,0 +1,16 @@
+{
+  "name": "京成電鉄3600形",
+  "car_length_m": 17.5,
+  "middle_car_length_m": 17.5,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    },
+    {
+      "model": "car3.glb"
+    }
+  ]
+}

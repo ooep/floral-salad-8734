@@ -1,0 +1,13 @@
+{
+  "name": "JR東海キヤ95系「ドクター東海」",
+  "car_length_m": 20.9,
+  "middle_car_length_m": 20.9,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

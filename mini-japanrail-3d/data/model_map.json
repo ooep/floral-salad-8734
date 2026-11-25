@@ -664,7 +664,8 @@
   "加太線": "/models/nankai-7100/consist.json",
   "菊池線": "/models/kumamotodentetu-01/consist.json",
   "東海道本線": "/models/jr-tokai-315/consist.json",
-  "天理線": "/models/kintetsu-3200/consist.json"
+  "天理線": "/models/kintetsu-3200/consist.json",
+  "きのくに線": "/models/jr-west-283/consist.json"
  },
  "rules": [
   {

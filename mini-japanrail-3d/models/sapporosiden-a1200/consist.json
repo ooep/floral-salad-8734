@@ -1,0 +1,16 @@
+{
+  "name": "札幌市交通局 A1200形「ポラリス」",
+  "car_length_m": 5.49,
+  "middle_car_length_m": 5.0,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    },
+    {
+      "model": "car3.glb"
+    }
+  ]
+}

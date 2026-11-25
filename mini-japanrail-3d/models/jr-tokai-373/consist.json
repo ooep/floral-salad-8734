@@ -1,0 +1,13 @@
+{
+  "name": "373系「伊那路」",
+  "car_length_m": 21.3,
+  "middle_car_length_m": 21.3,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

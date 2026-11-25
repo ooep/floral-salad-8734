@@ -655,7 +655,8 @@
   "豊田線": "/models/meitetsu-100/consist.json",
   "京成松戸線": "/models/keisei-8800/consist.json",
   "篠ノ井線": "/models/jr-tokai-383/consist.json",
-  "大井川鐵道線": "/models/oigawa-21000/consist.json"
+  "大井川鐵道線": "/models/oigawa-21000/consist.json",
+  "参宮線": "/models/jr-tokai-kiha75/consist.json"
  },
  "rules": [
   {

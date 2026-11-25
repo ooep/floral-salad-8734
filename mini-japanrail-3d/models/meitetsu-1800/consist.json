@@ -1,0 +1,13 @@
+{
+  "name": "名鉄1800系",
+  "car_length_m": 18.9,
+  "middle_car_length_m": 18.9,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

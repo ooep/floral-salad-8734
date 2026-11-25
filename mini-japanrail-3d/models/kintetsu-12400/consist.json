@@ -1,0 +1,13 @@
+{
+  "name": "近畿日本鉄道12400系",
+  "car_length_m": 20.83,
+  "middle_car_length_m": 20.47,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "叡山電鉄900系「きらら」",
+  "car_length_m": 15.27,
+  "middle_car_length_m": 15.27,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

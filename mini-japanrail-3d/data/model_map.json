@@ -648,7 +648,8 @@
   "和歌山港線": "/models/nankai-10000/consist.json",
   "高山本線": "/models/jr-tokai-hc85/consist.json",
   "北しなの線": "/models/sinano-115/consist.json",
-  "御所線": "/models/kintetsu-6820/consist.json"
+  "御所線": "/models/kintetsu-6820/consist.json",
+  "仙石線": "/models/jr-east-hbe210/consist.json"
  },
  "rules": [
   {

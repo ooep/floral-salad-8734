@@ -1,0 +1,10 @@
+{
+  "name": "わたらせ渓谷鐵道WKT500形501「けさまる」",
+  "car_length_m": 18.5,
+  "middle_car_length_m": 18.5,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

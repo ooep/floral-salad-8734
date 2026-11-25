@@ -1,0 +1,10 @@
+{
+  "name": "JR西日本キハ40系播但線",
+  "car_length_m": 21.3,
+  "middle_car_length_m": 21.3,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

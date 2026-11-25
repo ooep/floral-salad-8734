@@ -1,0 +1,13 @@
+{
+  "name": "大井川鐵道 21000系",
+  "car_length_m": 17.725,
+  "middle_car_length_m": 17.725,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

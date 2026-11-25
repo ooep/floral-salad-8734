@@ -1,0 +1,13 @@
+{
+  "name": "熊本電気鉄道 01系",
+  "car_length_m": 16.0,
+  "middle_car_length_m": 16.0,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

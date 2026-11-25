@@ -10,10 +10,12 @@
       "model": "car2.glb"
     },
     {
-      "model": "car3.glb"
+      "model": "car3.glb",
+      "flip": true
     },
     {
-      "model": "car4.glb"
+      "model": "car4.glb",
+      "flip": true
     },
     {
       "model": "car5.glb"

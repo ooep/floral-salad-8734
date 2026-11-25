@@ -1,0 +1,13 @@
+{
+  "name": "JR九州キハ71系「ゆふいんの森」",
+  "car_length_m": 20.8,
+  "middle_car_length_m": 20.8,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

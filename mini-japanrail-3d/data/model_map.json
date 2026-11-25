@@ -658,7 +658,8 @@
   "大井川鐵道線": "/models/oigawa-21000/consist.json",
   "参宮線": "/models/jr-tokai-kiha75/consist.json",
   "相鉄線": "/models/sotetsu-10000/consist.json",
-  "京阪鴨東線": "/models/keihan-9000/consist.json"
+  "京阪鴨東線": "/models/keihan-9000/consist.json",
+  "なんば線": "/models/hansin-9000/consist.json"
  },
  "rules": [
   {

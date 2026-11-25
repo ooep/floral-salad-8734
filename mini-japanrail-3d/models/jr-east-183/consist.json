@@ -1,0 +1,13 @@
+{
+  "name": "国鉄183系 あさま色",
+  "car_length_m": 21.0,
+  "middle_car_length_m": 21.0,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

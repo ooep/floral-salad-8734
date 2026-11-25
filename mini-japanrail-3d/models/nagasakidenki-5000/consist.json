@@ -1,0 +1,10 @@
+{
+  "name": "長崎電気軌道 5000形",
+  "car_length_m": 16.3,
+  "middle_car_length_m": 16.3,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "name": "JR九州 キハ72系「ゆふいんの森III」",
+  "car_length_m": 22.48,
+  "middle_car_length_m": 21.3,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    },
+    {
+      "model": "car3.glb"
+    }
+  ]
+}

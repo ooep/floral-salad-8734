@@ -641,7 +641,8 @@
   "鳥海山ろく線": "/models/yurikogen-yr3000/consist.json",
   "札幌市電": "/models/sapporosiden-1100/consist.json",
   "フラワー長井線": "/models/yamagata-yr880/consist.json",
-  "銚子電気鉄道線": "/models/tyousi-3000/consist.json"
+  "銚子電気鉄道線": "/models/tyousi-3000/consist.json",
+  "江ノ島線": "/models/osakyu-5000/consist.json"
  },
  "rules": [
   {

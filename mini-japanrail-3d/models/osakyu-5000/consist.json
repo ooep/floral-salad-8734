@@ -1,0 +1,13 @@
+{
+  "name": "小田急電鉄5000形（2代目）",
+  "car_length_m": 20.4,
+  "middle_car_length_m": 20.4,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

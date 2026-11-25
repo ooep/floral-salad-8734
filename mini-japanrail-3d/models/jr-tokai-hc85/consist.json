@@ -1,0 +1,13 @@
+{
+  "name": "HC85系",
+  "car_length_m": 21.94,
+  "middle_car_length_m": 21.94,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

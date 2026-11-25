@@ -1,0 +1,19 @@
+{
+  "name": "近鉄6A系",
+  "car_length_m": 20.72,
+  "middle_car_length_m": 20.72,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    },
+    {
+      "model": "car3.glb"
+    },
+    {
+      "model": "car4.glb"
+    }
+  ]
+}

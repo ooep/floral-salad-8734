@@ -1,0 +1,19 @@
+{
+  "name": "阪急8300系",
+  "car_length_m": 18.38,
+  "middle_car_length_m": 18.3,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    },
+    {
+      "model": "car3.glb"
+    },
+    {
+      "model": "car4.glb"
+    }
+  ]
+}

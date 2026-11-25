@@ -660,7 +660,8 @@
   "相鉄線": "/models/sotetsu-10000/consist.json",
   "京阪鴨東線": "/models/keihan-9000/consist.json",
   "なんば線": "/models/hansin-9000/consist.json",
-  "山陽電鉄本線": "/models/sanyo-6000/consist.json"
+  "山陽電鉄本線": "/models/sanyo-6000/consist.json",
+  "加太線": "/models/nankai-7100/consist.json"
  },
  "rules": [
   {

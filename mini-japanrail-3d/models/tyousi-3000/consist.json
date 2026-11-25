@@ -1,0 +1,13 @@
+{
+  "name": "銚子電気鉄道3000形「澪つくし号」",
+  "car_length_m": 18.0,
+  "middle_car_length_m": 18.0,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

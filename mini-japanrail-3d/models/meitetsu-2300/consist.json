@@ -1,0 +1,19 @@
+{
+  "name": "名鉄2300系",
+  "car_length_m": 18.115,
+  "middle_car_length_m": 18.23,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    },
+    {
+      "model": "car3.glb"
+    },
+    {
+      "model": "car4.glb"
+    }
+  ]
+}

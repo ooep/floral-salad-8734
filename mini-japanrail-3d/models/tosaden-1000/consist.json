@@ -1,0 +1,10 @@
+{
+  "name": "とさでん交通 1000形",
+  "car_length_m": 12.2,
+  "middle_car_length_m": 12.2,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

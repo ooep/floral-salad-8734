@@ -643,7 +643,9 @@
   "フラワー長井線": "/models/yamagata-yr880/consist.json",
   "銚子電気鉄道線": "/models/tyousi-3000/consist.json",
   "江ノ島線": "/models/osakyu-5000/consist.json",
-  "わたらせ渓谷線": "/models/watarase-wkt500/consist.json"
+  "わたらせ渓谷線": "/models/watarase-wkt500/consist.json",
+  "山口線": "/models/jr-west-kiha187/consist.json",
+  "和歌山港線": "/models/nankai-10000/consist.json"
  },
  "rules": [
   {

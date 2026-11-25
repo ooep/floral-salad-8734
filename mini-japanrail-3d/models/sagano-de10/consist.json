@@ -1,0 +1,13 @@
+{
+  "name": "嵯峨野観光鉄道DE10形+SK200形",
+  "car_length_m": 14.15,
+  "middle_car_length_m": 13.386,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

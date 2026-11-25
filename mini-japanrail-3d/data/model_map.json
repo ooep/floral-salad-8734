@@ -669,7 +669,8 @@
   "天神大牟田線": "/models/nisitetu-9000/consist.json",
   "長崎電気軌道線": "/models/nagasakidenki-6000/consist.json",
   "名松線": "/models/jr-tokai-kiha25/consist.json",
-  "駅前線": "/models/tosaden-1000/consist.json"
+  "駅前線": "/models/tosaden-1000/consist.json",
+  "宇部線": "/models/jr-west-123/consist.json"
  },
  "rules": [
   {

@@ -666,7 +666,8 @@
   "東海道本線": "/models/jr-tokai-315/consist.json",
   "天理線": "/models/kintetsu-3200/consist.json",
   "きのくに線": "/models/jr-west-283/consist.json",
-  "天神大牟田線": "/models/nisitetu-9000/consist.json"
+  "天神大牟田線": "/models/nisitetu-9000/consist.json",
+  "長崎電気軌道線": "/models/nagasakidenki-6000/consist.json"
  },
  "rules": [
   {

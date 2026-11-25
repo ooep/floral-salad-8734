@@ -1,0 +1,13 @@
+{
+  "name": "17000",
+  "car_length_m": 20.005,
+  "middle_car_length_m": 20.005,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

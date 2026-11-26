@@ -1,0 +1,16 @@
+{
+  "name": "長野電鉄3000系",
+  "car_length_m": 18.1,
+  "middle_car_length_m": 18.0,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    },
+    {
+      "model": "car3.glb"
+    }
+  ]
+}

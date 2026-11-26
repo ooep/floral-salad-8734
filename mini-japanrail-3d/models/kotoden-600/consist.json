@@ -1,1 +1,13 @@
-şÙ©şJ-¡×§ëM–†Ü¢{"²Øì¢vú
+{
+  "name": "é«˜æ¾ç´å¹³é›»æ°—é‰„é“600å½¢",
+  "car_length_m": 15.58,
+  "middle_car_length_m": 15.58,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ]
+}

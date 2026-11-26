@@ -1,0 +1,16 @@
+{
+  "name": "阿佐海岸鉄道DMV93形",
+  "car_length_m": 8.06,
+  "middle_car_length_m": 8.06,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    },
+    {
+      "model": "car3.glb"
+    }
+  ]
+}

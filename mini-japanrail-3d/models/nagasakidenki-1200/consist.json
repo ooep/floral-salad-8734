@@ -1,0 +1,10 @@
+{
+  "name": "長崎電気軌道1200形",
+  "car_length_m": 11.7,
+  "middle_car_length_m": 11.7,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

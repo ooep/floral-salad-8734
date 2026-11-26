@@ -1,0 +1,10 @@
+{
+  "name": "TKT8000形「くろしお」",
+  "car_length_m": 17.75,
+  "middle_car_length_m": 17.75,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

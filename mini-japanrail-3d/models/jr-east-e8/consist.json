@@ -1,0 +1,19 @@
+{
+  "name": "E8系「つばさ」",
+  "car_length_m": 23.075,
+  "middle_car_length_m": 20.5,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    },
+    {
+      "model": "car3.glb"
+    },
+    {
+      "model": "car4.glb"
+    }
+  ]
+}

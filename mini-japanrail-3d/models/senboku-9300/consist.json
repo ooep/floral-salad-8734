@@ -1,0 +1,10 @@
+{
+  "name": "泉北高速鉄道9300系",
+  "car_length_m": 20.765,
+  "middle_car_length_m": 20.765,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

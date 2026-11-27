@@ -1,10 +1,14 @@
 {
   "name": "相鉄12000系",
   "car_length_m": 20.0,
-  "middle_car_length_m": 20.0,
+  "middle_car_length_m": 19.35,
+  "gap_m": 0.3,
   "cars": [
     {
       "model": "car1.glb"
+    },
+    {
+      "model": "car10.glb"
     }
   ]
 }

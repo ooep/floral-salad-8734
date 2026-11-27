@@ -1,16 +1,19 @@
 {
- "name": "広島電鉄3900形",
- "car_length_m": 10.19,
- "cars": [
-  {
-   "model": "car1.glb"
-  },
-  {
-   "model": "car2.glb"
-  },
-  {
-   "model": "car3.glb"
-  }
- ],
- "middle_car_length_m": 7.124
+  "name": "広島電鉄3900形",
+  "car_length_m": 10.19,
+  "cars": [
+    {
+      "model": "car1.glb",
+      "length": 10.2
+    },
+    {
+      "model": "car2.glb",
+      "length": 7.12
+    },
+    {
+      "model": "car3.glb",
+      "length": 10.2
+    }
+  ],
+  "middle_car_length_m": 7.124
 }

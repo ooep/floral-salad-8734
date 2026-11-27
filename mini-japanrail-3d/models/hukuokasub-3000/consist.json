@@ -1,19 +1,23 @@
 {
- "name": "福岡市地下鉄3000系",
- "car_length_m": 16.71,
- "middle_car_length_m": 16.5,
- "cars": [
-  {
-   "model": "car1.glb"
-  },
-  {
-   "model": "car2.glb"
-  },
-  {
-   "model": "car5.glb"
-  },
-  {
-   "model": "car6.glb"
-  }
- ]
+  "name": "福岡市地下鉄3000系",
+  "car_length_m": 16.71,
+  "middle_car_length_m": 16.5,
+  "cars": [
+    {
+      "model": "car6.glb",
+      "length": 16.71
+    },
+    {
+      "model": "car5.glb",
+      "length": 16.5
+    },
+    {
+      "model": "car2.glb",
+      "length": 16.5
+    },
+    {
+      "model": "car1.glb",
+      "length": 16.71
+    }
+  ]
 }

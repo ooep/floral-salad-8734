@@ -8,6 +8,12 @@
     },
     {
       "model": "car2.glb"
+    },
+    {
+      "model": "car3.glb"
+    },
+    {
+      "model": "car4.glb"
     }
   ]
 }

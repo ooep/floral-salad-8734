@@ -4,13 +4,28 @@
   "middle_car_length_m": 19.31,
   "cars": [
     {
-      "model": "car1.glb"
+      "model": "car1.glb",
+      "length": 20.51
     },
     {
-      "model": "car2.glb"
+      "model": "car2.glb",
+      "length": 19.31
     },
     {
-      "model": "car3.glb"
+      "model": "car4.glb",
+      "length": 19.31
+    },
+    {
+      "model": "car5.glb",
+      "length": 19.31
+    },
+    {
+      "model": "car6.glb",
+      "length": 19.31
+    },
+    {
+      "model": "car3.glb",
+      "length": 20.51
     }
   ]
 }

@@ -1,0 +1,13 @@
+{
+  "name": "JR東海キヤ97系0番台「レール運搬車」",
+  "car_length_m": 18.2,
+  "middle_car_length_m": 18.2,
+  "cars": [
+    {
+      "model": "car2.glb"
+    },
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

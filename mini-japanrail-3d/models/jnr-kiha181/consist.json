@@ -5,6 +5,9 @@
   "cars": [
     {
       "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
     }
   ]
 }

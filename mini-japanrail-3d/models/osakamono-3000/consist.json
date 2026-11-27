@@ -1,15 +1,23 @@
 {
   "name": "大阪モノレール3000系",
-  "car_length_m": [
-    15.76,
-    14.48
-  ],
+  "car_length_m": 15.76,
+  "middle_car_length_m": 14.48,
   "cars": [
     {
-      "model": "car1.glb"
+      "model": "car1.glb",
+      "length": 15.76
     },
     {
-      "model": "car2.glb"
+      "model": "car2.glb",
+      "length": 14.48
+    },
+    {
+      "model": "car3.glb",
+      "length": 14.48
+    },
+    {
+      "model": "car4.glb",
+      "length": 15.76
     }
   ]
 }

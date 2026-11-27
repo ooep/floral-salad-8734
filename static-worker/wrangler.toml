@@ -1,0 +1,12 @@
+# jr-static — Mini JapanRail 静态资源 Worker（纯静态资产，无 Worker 脚本）
+# Workers Static Assets「仅资产」模式：资产由 CDN 边缘直服，任何请求(含 404)都不触发
+# Worker 执行 → 零 Worker 调用、零计费，从根上杜绝「404 刷爆请求配额」。
+# CORS 由 assets 根目录的 _headers 文件提供（平台层应用）。
+# 部署：CLOUDFLARE_API_TOKEN=... wrangler deploy --config static-worker/wrangler.toml
+
+name = "jr-static"
+compatibility_date = "2026-10-13"
+
+[assets]
+directory = "./assets"
+not_found_handling = "404-page"

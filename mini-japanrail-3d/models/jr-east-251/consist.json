@@ -1,19 +1,27 @@
 {
   "name": "JR東日本251系「スーパービュー踊り子」",
-  "car_length_m": 20.0,
+  "car_length_m": 20.5,
   "middle_car_length_m": 20.0,
   "cars": [
     {
-      "model": "car1.glb"
+      "model": "car5.glb",
+      "length": 20.5
     },
     {
-      "model": "car2.glb"
+      "model": "car1.glb",
+      "length": 20.0
     },
     {
-      "model": "car3.glb"
+      "model": "car2.glb",
+      "length": 20.0
     },
     {
-      "model": "car4.glb"
+      "model": "car3.glb",
+      "length": 20.0
+    },
+    {
+      "model": "car4.glb",
+      "length": 20.5
     }
   ]
 }

@@ -11,9 +11,14 @@
     {
       "length_m": 15.58,
       "file": "car3.glb"
+    },
+    {
+      "length_m": 15.58,
+      "file": "car4.glb"
     }
   ],
   "car_length_m": [
+    15.58,
     15.58,
     15.58,
     15.58

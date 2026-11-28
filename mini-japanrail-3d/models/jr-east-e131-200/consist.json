@@ -1,0 +1,16 @@
+{
+ "name": "E131系200番台",
+ "car_length_m": 20.0,
+ "middle_car_length_m": 20.0,
+ "cars": [
+  {
+   "model": "car3.glb"
+  },
+  {
+   "model": "car2.glb"
+  },
+  {
+   "model": "car1.glb"
+  }
+ ]
+}

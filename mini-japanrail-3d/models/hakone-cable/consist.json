@@ -1,0 +1,12 @@
+{
+ "name": "箱根登山ケーブルカー 5代目",
+ "car_length_m": 25.3,
+ "cars": [
+  {
+   "model": "car1.glb"
+  },
+  {
+   "model": "car2.glb"
+  }
+ ]
+}

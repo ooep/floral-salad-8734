@@ -1,0 +1,13 @@
+{
+  "name": "南海2000系",
+  "car_length_m": 17.725,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    }
+  ],
+  "middle_car_length_m": 17.725
+}

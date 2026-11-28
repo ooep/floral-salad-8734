@@ -1,0 +1,16 @@
+{
+  "name": "神戸電鉄2000系",
+  "car_length_m": 18.29,
+  "middle_car_length_m": 18.14,
+  "cars": [
+    {
+      "model": "car1.glb"
+    },
+    {
+      "model": "car2.glb"
+    },
+    {
+      "model": "car3.glb"
+    }
+  ]
+}

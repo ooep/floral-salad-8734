@@ -1,0 +1,10 @@
+{
+  "name": "広島電鉄800形",
+  "car_length_m": 13.68,
+  "middle_car_length_m": 13.68,
+  "cars": [
+    {
+      "model": "car1.glb"
+    }
+  ]
+}

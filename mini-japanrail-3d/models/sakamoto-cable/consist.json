@@ -1,0 +1,12 @@
+{
+ "name": "坂本ケーブル",
+ "car_length_m": 15.0,
+ "cars": [
+  {
+   "model": "car1.glb"
+  },
+  {
+   "model": "car2.glb"
+  }
+ ]
+}

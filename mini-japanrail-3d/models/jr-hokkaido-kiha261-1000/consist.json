@@ -1,0 +1,19 @@
+{
+ "name": "JR北海道キハ261系1000番台",
+ "car_length_m": 21.67,
+ "middle_car_length_m": 21.3,
+ "cars": [
+  {
+   "model": "car4.glb"
+  },
+  {
+   "model": "car3.glb"
+  },
+  {
+   "model": "car2.glb"
+  },
+  {
+   "model": "car1.glb"
+  }
+ ]
+}

@@ -1,0 +1,12 @@
+{
+ "name": "筑波山ケーブルカー",
+ "car_length_m": 12.0,
+ "cars": [
+  {
+   "model": "car1.glb"
+  },
+  {
+   "model": "car2.glb"
+  }
+ ]
+}

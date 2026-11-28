@@ -7,6 +7,12 @@
       "model": "car1.glb"
     },
     {
+      "model": "saha.glb"
+    },
+    {
+      "model": "moha.glb"
+    },
+    {
       "model": "car2.glb"
     }
   ]
